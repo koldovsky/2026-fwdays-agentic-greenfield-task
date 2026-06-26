@@ -1,0 +1,50 @@
+:root {
+  /* ── Brand ── */
+  --color-ink:         #16243d;
+  --color-ink-soft:    #5a6678;
+  --color-ink-muted:   #94a0b0;
+  --color-ink-faint:   #b3bcc8;
+  --color-brand:       #3257c5;
+  --color-brand-hover: #2a47a8;
+  --color-brand-wash:  #eaf0fd;
+
+  /* ── Surfaces ── */
+  --color-surface-card:   #ffffff;
+  --color-surface-canvas: #f4f5f7;
+  --color-surface-warm:   #faf7f2;
+  --color-surface-ink:    #16243d;
+  --color-hairline:       #e3e6ea;
+  --color-hairline-warm:  #ece7dd;
+
+  /* ── Status: met ── */
+  --color-met:      #2f8f5b;
+  --color-met-bg:   #e7f4ec;
+  --color-met-text: #2f8f5b;
+
+  /* ── Status: partial ── */
+  --color-partial:      #c79a1e;
+  --color-partial-bg:   #fbf3da;
+  --color-partial-text: #b08816;
+
+  /* ── Status: gap ── */
+  --color-gap:      #d05151;
+  --color-gap-bg:   #fbe9e9;
+  --color-gap-text: #c0403d;
+
+  /* ── Status: overclaim-risk ── */
+  --color-overclaim:      #e08a3c;
+  --color-overclaim-bg:   #fbeede;
+  --color-overclaim-text: #cf7726;
+
+  /* ── Semantic aliases ── */
+  --text-primary:   var(--color-ink);
+  --text-secondary: var(--color-ink-soft);
+  --text-muted:     var(--color-ink-muted);
+  --surface-card:   var(--color-surface-card);
+  --surface-page:   var(--color-surface-canvas);
+  --surface-warm:   var(--color-surface-warm);
+  --border:         var(--color-hairline);
+  --border-warm:    var(--color-hairline-warm);
+  --accent:         var(--color-brand);
+  --accent-wash:    var(--color-brand-wash);
+}

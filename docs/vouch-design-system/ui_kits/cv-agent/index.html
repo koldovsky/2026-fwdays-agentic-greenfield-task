@@ -1,0 +1,420 @@
+<!-- @startingPoint section="CV-Agent" subtitle="Main app — upload → process → results workflow" viewport="1280x860" -->
+<!-- @dsCard group="CV-Agent" viewport="1280x860" subtitle="Main app interface" name="CV-Agent App" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CV-Agent — Honest Resume Tailor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+  <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { font-family: var(--font-body); background: var(--color-surface-canvas); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
+    textarea { font-family: inherit; resize: none; outline: none; }
+    button  { font-family: inherit; cursor: pointer; border: none; outline: none; }
+    @keyframes spin { to { transform:rotate(360deg) } }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+var useState   = React.useState;
+var useEffect  = React.useEffect;
+var useRef     = React.useRef;
+
+/* ─── design tokens ─── */
+var ink        = '#16243d';
+var inkSoft    = '#5a6678';
+var inkMuted   = '#94a0b0';
+var brand      = '#3257c5';
+var brandWash  = '#eaf0fd';
+var card       = '#ffffff';
+var canvas     = '#f4f5f7';
+var warm       = '#faf7f2';
+var hairline   = '#e3e6ea';
+var hairlineW  = '#ece7dd';
+var met        = '#2f8f5b';
+var metBg      = '#e7f4ec';
+var partial    = '#c79a1e';
+var partialBg  = '#fbf3da';
+var partialTxt = '#b08816';
+var gap        = '#d05151';
+var gapBg      = '#fbe9e9';
+var gapTxt     = '#c0403d';
+var over       = '#e08a3c';
+var overBg     = '#fbeede';
+var overTxt    = '#cf7726';
+
+/* ─── data ─── */
+var CHECKLIST = [
+  { req:'5+ years React',    priority:'must', status:'met',       rat:'6 років фронтенду на React у двох продуктових компаніях.' },
+  { req:'TypeScript',        priority:'must', status:'met',       rat:'Проект на TypeScript згадується у двох ролях.' },
+  { req:'Team leadership',   priority:'must', status:'partial',   rat:'Менторив двох джуніорів, але формального лідерства команди немає.' },
+  { req:'System design',     priority:'must', status:'partial',   rat:'CV згадує архітектурні рішення, без деталей масштабу.' },
+  { req:'Kubernetes',        priority:'nice', status:'gap',       rat:'У CV немає згадок про Kubernetes чи оркестрацію контейнерів.' },
+  { req:'Scaled to 1M users',priority:'nice', status:'overclaim', rat:'CV згадує «зростання трафіку», але точної цифри 1M немає.' },
+];
+var BULLETS = [
+  { req:'High-traffic checkout conversion', before:'Worked on checkout and helped with payments.', after:'Rebuilt the checkout payment flow, cutting cart abandonment before launch.', status:'met', cvRef:'CV line 14' },
+  { req:'TypeScript migration',             before:'Helped migrate codebase to TypeScript.',        after:'Led the TypeScript migration of a 60k-line frontend codebase, shipping to production in Q3.', status:'met', cvRef:'CV line 22' },
+  { req:'Led a cross-functional team',      before:'Worked with designers and backend engineers.',  after:'Led a team of 8 engineers across three time zones, coordinating weekly syncs and sprint reviews.', status:'overclaim', cvRef:null },
+];
+
+/* ─── tiny helpers ─── */
+function Dot(props) {
+  var sz = props.size || 10;
+  var mt = props.mt || 0;
+  return React.createElement('span', {
+    style:{ width:sz, height:sz, borderRadius:'50%', background:props.color, flexShrink:0, display:'inline-block', marginTop:mt }
+  });
+}
+
+function EyeBrow(props) {
+  return React.createElement('div', {
+    style:{ fontFamily:'ui-monospace,monospace', fontSize:10, letterSpacing:'0.12em', textTransform:'uppercase', color:inkMuted, marginBottom:props.mb || 10 }
+  }, props.children);
+}
+
+function Badge(props) {
+  var s = props.priority === 'must'
+    ? { color:brand, background:brandWash }
+    : { color:inkMuted, background:'#f0f1f3' };
+  return React.createElement('span', {
+    style:Object.assign({ fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', padding:'2px 7px', borderRadius:5 }, s)
+  }, props.priority);
+}
+
+function StatusPill(props) {
+  var cfgs = {
+    queued:     { bg:canvas,    color:inkSoft, dot:inkMuted },
+    processing: { bg:brandWash, color:brand,   dot:brand    },
+    done:       { bg:metBg,     color:met,     dot:met      },
+  };
+  var c = cfgs[props.status] || cfgs.queued;
+  return React.createElement('span', {
+    style:{ display:'inline-flex', alignItems:'center', gap:7, background:c.bg, color:c.color, fontWeight:600, fontSize:12, padding:'5px 12px', borderRadius:999 }
+  }, React.createElement(Dot, { color:c.dot, size:7 }), props.status);
+}
+
+function GroundingBadge(props) {
+  var map = {
+    met:       { bg:metBg,      color:met,       dot:met,     label: props.cvRef ? ('Linked to '+props.cvRef) : 'Grounded' },
+    partial:   { bg:partialBg,  color:partialTxt, dot:partial, label:'Partial match' },
+    overclaim: { bg:overBg,     color:overTxt,   dot:over,    label:'No evidence found \u00b7 excluded from export' },
+    manual:    { bg:canvas,     color:inkSoft,   dot:inkMuted,label:'\u0432\u0456\u0434\u0440\u0435\u0434\u0430\u0433\u043e\u0432\u0430\u043d\u043e \u0432\u0440\u0443\u0447\u043d\u0443' },
+  };
+  var c = map[props.status] || map.met;
+  return React.createElement('span', {
+    style:{ display:'inline-flex', alignItems:'center', gap:7, background:c.bg, color:c.color, fontWeight:600, fontSize:12, padding:'5px 11px', borderRadius:999 }
+  }, React.createElement(Dot, { color:c.dot, size:8 }), c.label);
+}
+
+function ChecklistRow(props) {
+  var dotClr  = { met:met, partial:partial, gap:gap, overclaim:over }[props.status];
+  var lblClr  = { met:met, partial:partialTxt, gap:gapTxt, overclaim:overTxt }[props.status];
+  var lblText = { met:'met', partial:'partial', gap:'gap', overclaim:'overclaim-risk' }[props.status];
+  return React.createElement('div', {
+    style:{ display:'flex', gap:14, padding:'14px 0', borderBottom: props.last ? 'none' : '1px solid #f5f6f7' }
+  },
+    React.createElement(Dot, { color:dotClr, size:10, mt:5 }),
+    React.createElement('div', { style:{ flex:1 } },
+      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:8, marginBottom:3, flexWrap:'wrap' } },
+        React.createElement('span', { style:{ fontWeight:600, fontSize:14, color:ink } }, props.req),
+        React.createElement(Badge, { priority:props.priority })
+      ),
+      props.rat && React.createElement('div', { style:{ fontSize:13, color:inkSoft, lineHeight:1.4 } }, props.rat)
+    ),
+    React.createElement('span', { style:{ fontSize:11.5, fontWeight:600, color:lblClr, alignSelf:'center', whiteSpace:'nowrap', flexShrink:0 } }, lblText)
+  );
+}
+
+function MatchScoreRing(props) {
+  var score = props.score;
+  var clr = score >= 70 ? met : score >= 45 ? partial : gap;
+  return React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:18 } },
+    React.createElement('div', {
+      style:{ position:'relative', width:88, height:88, borderRadius:'50%', background:'conic-gradient('+clr+' 0 '+score+'%, #eef0f3 '+score+'% 100%)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }
+    },
+      React.createElement('div', {
+        style:{ width:68, height:68, borderRadius:'50%', background:'#fff', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }
+      },
+        React.createElement('span', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:700, fontSize:28, lineHeight:1, color:ink } }, score),
+        React.createElement('span', { style:{ fontSize:9, color:inkMuted, marginTop:1 } }, '/ 100')
+      )
+    ),
+    React.createElement('div', null,
+      React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:600, fontSize:20, lineHeight:1.15, marginBottom:4 } }, 'Strong, with two honest gaps'),
+      React.createElement('div', { style:{ fontSize:13, color:inkSoft } }, 'Weighted by must-have vs nice-to-have')
+    )
+  );
+}
+
+/* ─── Step 1: Upload ─── */
+function StepUpload(props) {
+  var jdState  = useState('');    var jd  = jdState[0];  var setJd  = jdState[1];
+  var cvState  = useState(null);  var cv  = cvState[0];  var setCv  = cvState[1];
+  var overState= useState(false); var over2= overState[0];var setOver= overState[1];
+  var inputRef = useRef(null);
+  var ready = cv && jd.trim().length > 40;
+
+  function handleDrop(e) {
+    e.preventDefault(); setOver(false);
+    var f = e.dataTransfer.files[0];
+    if (f) setCv(f.name);
+  }
+
+  return React.createElement('div', { style:{ maxWidth:900, margin:'0 auto', padding:'48px 24px' } },
+    React.createElement('div', { style:{ marginBottom:32 } },
+      React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:700, fontSize:34, letterSpacing:'-0.02em', marginBottom:10 } }, 'Tailor your résumé — honestly.'),
+      React.createElement('p', { style:{ fontSize:16, color:inkSoft, lineHeight:1.55, maxWidth:620 } }, 'Drop your CV and paste the job posting. We rewrite your bullets to fit, then verify every claim against what you\'ve actually done.')
+    ),
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:24 } },
+      /* Upload zone */
+      React.createElement('div', { style:{ background:card, border:'1px solid '+hairline, borderRadius:18, padding:24 } },
+        React.createElement(EyeBrow, { mb:12 }, 'Your CV \u00b7 FR-CV-01'),
+        React.createElement('div', {
+          onClick: function() { inputRef.current && inputRef.current.click(); },
+          onDragOver: function(e) { e.preventDefault(); setOver(true); },
+          onDragLeave: function() { setOver(false); },
+          onDrop: handleDrop,
+          style:{ border:'1.5px dashed '+(over2 ? brand : '#c3cbd6'), borderRadius:14, background: cv ? metBg : over2 ? brandWash : '#f8f9fb', padding:28, textAlign:'center', cursor:'pointer', transition:'all 0.15s' }
+        },
+          React.createElement('input', { ref:inputRef, type:'file', accept:'.pdf,.docx', style:{ display:'none' }, onChange: function(e) { setCv(e.target.files[0] ? e.target.files[0].name : null); } }),
+          React.createElement('div', { style:{ width:40, height:40, borderRadius:11, background: cv ? metBg : over2 ? brand : brandWash, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px', transition:'all 0.15s' } },
+            React.createElement('span', { style:{ color: cv ? met : over2 ? '#fff' : brand, fontSize:20 } }, cv ? '\u2713' : '\u2191')
+          ),
+          React.createElement('div', { style:{ fontWeight:600, fontSize:15, marginBottom:4, color: cv ? met : ink } }, cv || 'Drop your CV here'),
+          React.createElement('div', { style:{ fontSize:13, color:inkMuted } }, cv ? 'Click to replace' : 'PDF or DOCX \u00b7 parsed server-side')
+        )
+      ),
+      /* JD paste */
+      React.createElement('div', { style:{ background:card, border:'1px solid '+hairline, borderRadius:18, padding:24, display:'flex', flexDirection:'column' } },
+        React.createElement(EyeBrow, { mb:12 }, 'Job description \u00b7 FR-JD-01'),
+        React.createElement('textarea', {
+          value:jd, onChange: function(e) { setJd(e.target.value); },
+          placeholder:'Paste the full job posting here\u2026',
+          style:{ flex:1, minHeight:160, border:'1px solid '+(jd ? brand : hairline), borderRadius:12, padding:'12px 14px', fontSize:14, lineHeight:1.5, color:ink, background:card, transition:'border-color 0.15s' }
+        }),
+        React.createElement('div', { style:{ fontSize:12, color:inkMuted, marginTop:8 } }, jd.length > 0 ? jd.length+' chars \u00b7 we extract a ranked requirement list' : 'We extract must-haves and nice-to-haves.')
+      )
+    ),
+    /* trust strip */
+    React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:16, fontSize:13, color:'#bcae98', marginBottom:28, flexWrap:'wrap' } },
+      React.createElement('span', { style:{ color:'#a99b84', fontWeight:500 } }, 'Honest by default:'),
+      'Encrypted at rest', '\u00b7', 'Never used for training', '\u00b7', 'Deletable anytime'
+    ),
+    React.createElement('button', {
+      onClick: function() { if (ready) props.onNext(); },
+      style:{ background: ready ? brand : '#d4d9e0', color: ready ? '#fff' : '#aab2bf', fontWeight:600, fontSize:16, padding:'14px 32px', borderRadius:12, transition:'all 0.2s', boxShadow: ready ? '0 2px 8px rgba(50,87,197,0.28)' : 'none', cursor: ready ? 'pointer' : 'not-allowed' }
+    }, ready ? 'Tailor my CV \u2192' : 'Add your CV and job posting to continue')
+  );
+}
+
+/* ─── Step 2: Processing ─── */
+function StepProcessing(props) {
+  var progressState = useState(0);
+  var prog = progressState[0]; var setProg = progressState[1];
+  var phaseState = useState(0);
+  var phase = phaseState[0]; var setPhase = phaseState[1];
+  var phases = ['Parsing your CV\u2026','Extracting job requirements\u2026','Tailoring bullets\u2026','Grounding check \u2014 verifying claims\u2026','Building compliance checklist\u2026'];
+
+  useEffect(function() {
+    var done = false;
+    var t1 = setInterval(function() {
+      setProg(function(p) { return p >= 98 ? 98 : p + Math.random() * 4; });
+    }, 120);
+    var t2 = setInterval(function() {
+      setPhase(function(p) { return Math.min(p + 1, phases.length - 1); });
+    }, 900);
+    var t3 = setTimeout(function() {
+      clearInterval(t1);
+      clearInterval(t2);
+      setProg(100);
+      setTimeout(function() { if (!done) props.onNext(); }, 400);
+    }, 5000);
+    return function() { done = true; clearInterval(t1); clearInterval(t2); clearTimeout(t3); };
+  }, []);
+
+  var pct = Math.min(prog, 100);
+  var stepsDone = [prog > 30, prog > 60, prog > 88];
+  var stepLabels = ['Parsing CV','Tailoring','Grounding'];
+
+  return React.createElement('div', { style:{ maxWidth:620, margin:'80px auto', padding:'0 24px', textAlign:'center' } },
+    React.createElement('div', { style:{ width:52, height:52, borderRadius:'50%', border:'3px solid '+brandWash, borderTopColor:brand, animation:'spin 0.8s linear infinite', margin:'0 auto 28px' } }),
+    React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:600, fontSize:24, marginBottom:10 } }, 'Tailoring your résumé'),
+    React.createElement('div', { style:{ fontSize:15, color:inkSoft, marginBottom:32, minHeight:22 } }, phases[phase]),
+    React.createElement('div', { style:{ background:card, border:'1px solid '+hairline, borderRadius:16, padding:24, textAlign:'left', marginBottom:20 } },
+      React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 } },
+        React.createElement(StatusPill, { status:'processing' }),
+        React.createElement('span', { style:{ fontFamily:'ui-monospace,monospace', fontSize:12, color:inkMuted } }, Math.round(pct)+'%')
+      ),
+      React.createElement('div', { style:{ height:8, borderRadius:999, background:'#eef0f3', overflow:'hidden' } },
+        React.createElement('div', { style:{ height:'100%', background:'linear-gradient(90deg,'+brand+',#5b7ad6)', borderRadius:999, width:pct+'%', transition:'width 0.2s ease' } })
+      ),
+      React.createElement('div', { style:{ fontSize:12, color:inkMuted, marginTop:10 } }, 'First token in < 3 s \u00b7 grounding check runs separately')
+    ),
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 } },
+      stepsDone.map(function(done2, i) {
+        return React.createElement('div', { key:i, style:{ background: done2 ? metBg : card, border:'1px solid '+(done2 ? '#c4e8d4' : hairline), borderRadius:12, padding:'12px 14px', textAlign:'center', transition:'all 0.3s' } },
+          React.createElement('div', { style:{ fontSize:18, marginBottom:4 } }, done2 ? '\u2713' : '\u25cb'),
+          React.createElement('div', { style:{ fontSize:12, fontWeight:600, color: done2 ? met : inkMuted } }, stepLabels[i])
+        );
+      })
+    )
+  );
+}
+
+/* ─── Step 3: Results ─── */
+function StepResults(props) {
+  var tabState = useState('bullets');
+  var tab = tabState[0]; var setTab = tabState[1];
+  var expandState = useState(0);
+  var expanded = expandState[0]; var setExpanded = expandState[1];
+  var score = 72;
+
+  return React.createElement('div', { style:{ maxWidth:1100, margin:'0 auto', padding:'36px 24px' } },
+    /* top bar */
+    React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap', gap:14 } },
+      React.createElement('div', null,
+        React.createElement('div', { style:{ fontFamily:'ui-monospace,monospace', fontSize:10, letterSpacing:'0.12em', textTransform:'uppercase', color:inkMuted, marginBottom:5 } }, 'Senior Frontend Engineer \u00b7 Acme Corp'),
+        React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:700, fontSize:26, letterSpacing:'-0.02em' } }, 'Tailoring complete')
+      ),
+      React.createElement('div', { style:{ display:'flex', gap:10 } },
+        React.createElement(StatusPill, { status:'done' }),
+        React.createElement('button', { onClick:props.onReset, style:{ background:card, border:'1px solid '+hairline, color:ink, fontWeight:600, fontSize:14, padding:'8px 16px', borderRadius:10 } }, 'New tailoring'),
+        React.createElement('button', { style:{ background:ink, color:'#fff', fontWeight:600, fontSize:14, padding:'8px 18px', borderRadius:10 } }, 'Export PDF')
+      )
+    ),
+    /* two-col */
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'420px 1fr', gap:20 } },
+      /* LEFT: checklist */
+      React.createElement('div', { style:{ background:card, border:'1px solid '+hairline, borderRadius:20, padding:'24px 26px' } },
+        React.createElement('div', { style:{ paddingBottom:18, borderBottom:'1px solid #f0f1f3', marginBottom:4 } },
+          React.createElement(MatchScoreRing, { score:score })
+        ),
+        CHECKLIST.map(function(row, i) {
+          return React.createElement(ChecklistRow, Object.assign({ key:i, last: i === CHECKLIST.length - 1 }, row));
+        })
+      ),
+      /* RIGHT: bullets */
+      React.createElement('div', null,
+        /* tabs */
+        React.createElement('div', { style:{ display:'flex', gap:2, background:canvas, borderRadius:12, padding:4, marginBottom:16, width:'fit-content' } },
+          ['bullets','checklist'].map(function(t) {
+            return React.createElement('button', { key:t, onClick: function() { setTab(t); },
+              style:{ padding:'7px 18px', borderRadius:9, fontSize:13, fontWeight:600, background: tab===t ? card : 'transparent', color: tab===t ? ink : inkMuted, border: tab===t ? '1px solid '+hairline : 'none', boxShadow: tab===t ? '0 1px 2px rgba(22,36,61,0.08)' : 'none', transition:'all 0.12s' }
+            }, t === 'bullets' ? 'Tailored bullets' : 'Breakdown');
+          })
+        ),
+        tab === 'bullets'
+          ? React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
+              BULLETS.map(function(b, i) {
+                var isOpen = expanded === i;
+                return React.createElement('div', { key:i, style:{ background:card, border:'1px solid '+(b.status==='overclaim' ? '#f0d8c4' : hairline), borderRadius:16, overflow:'hidden' } },
+                  React.createElement('div', { onClick: function() { setExpanded(isOpen ? -1 : i); }, style:{ padding:'16px 20px', cursor:'pointer', display:'flex', alignItems:'flex-start', gap:12 } },
+                    React.createElement('span', { style:{ width:10, height:10, borderRadius:'50%', background: b.status==='met' ? met : over, marginTop:5, flexShrink:0 } }),
+                    React.createElement('div', { style:{ flex:1 } },
+                      React.createElement('div', { style:{ fontFamily:'ui-monospace,monospace', fontSize:10, letterSpacing:'0.1em', textTransform:'uppercase', color:inkMuted, marginBottom:4 } }, b.req),
+                      React.createElement('p', { style:{ fontSize:14.5, lineHeight:1.5, color:ink } }, b.after)
+                    ),
+                    React.createElement('span', { style:{ color:inkMuted, fontSize:12, marginTop:4, flexShrink:0 } }, isOpen ? '\u25b2' : '\u25bc')
+                  ),
+                  isOpen && React.createElement('div', { style:{ padding:'0 20px 18px 42px' } },
+                    React.createElement('div', { style:{ background:warm, border:'1px solid '+hairlineW, borderRadius:12, padding:'12px 14px', marginBottom:10 } },
+                      React.createElement('div', { style:{ fontFamily:'ui-monospace,monospace', fontSize:10, letterSpacing:'0.1em', textTransform:'uppercase', color:'#a99b84', marginBottom:6 } }, 'Before'),
+                      React.createElement('p', { style:{ fontSize:13.5, color:'#5a5345', lineHeight:1.5 } }, b.before)
+                    ),
+                    React.createElement(GroundingBadge, { status:b.status, cvRef:b.cvRef }),
+                    b.status === 'overclaim' && React.createElement('p', { style:{ fontSize:13, color:overTxt, marginTop:10, lineHeight:1.4 } }, "This bullet has no supporting evidence in your CV. It won't appear in your exported résumé unless you confirm it.")
+                  )
+                );
+              })
+            )
+          : React.createElement('div', { style:{ background:card, border:'1px solid '+hairline, borderRadius:16, padding:'20px 22px' } },
+              React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:600, fontSize:18, marginBottom:16 } }, 'Per-requirement breakdown'),
+              React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 } },
+                [{ label:'Must-haves', met2:2, total:4 },{ label:'Nice-to-haves', met2:0, total:2 }].map(function(g) {
+                  return React.createElement('div', { key:g.label, style:{ background:canvas, borderRadius:12, padding:'14px 16px' } },
+                    React.createElement('div', { style:{ fontSize:12, color:inkMuted, marginBottom:8 } }, g.label),
+                    React.createElement('div', { style:{ fontFamily:"'Bricolage Grotesque'", fontWeight:700, fontSize:28, marginBottom:6 } },
+                      g.met2, React.createElement('span', { style:{ fontSize:14, fontWeight:400, color:inkMuted } }, '/'+g.total)
+                    ),
+                    React.createElement('div', { style:{ height:6, borderRadius:999, background:'#e3e6ea', overflow:'hidden' } },
+                      React.createElement('div', { style:{ height:'100%', background:met, width:(g.met2/g.total*100)+'%', borderRadius:999 } })
+                    )
+                  );
+                })
+              ),
+              React.createElement('div', { style:{ padding:'14px 16px', background:overBg, borderRadius:12, display:'flex', gap:10, alignItems:'flex-start' } },
+                React.createElement('span', { style:{ fontSize:14, marginTop:1, flexShrink:0 } }, '!'),
+                React.createElement('div', null,
+                  React.createElement('div', { style:{ fontWeight:600, fontSize:14, color:overTxt, marginBottom:3 } }, '1 overclaim-risk bullet quarantined'),
+                  React.createElement('div', { style:{ fontSize:13, color:overTxt, lineHeight:1.4 } }, 'Review it in the "Tailored bullets" tab before exporting.')
+                )
+              )
+            )
+      )
+    )
+  );
+}
+
+/* ─── App shell ─── */
+function App() {
+  var stepState = useState('upload');
+  var step = stepState[0]; var setStep = stepState[1];
+
+  var stepLabels = [['upload','Upload'],['results','Review & export']];
+
+  return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', flexDirection:'column' } },
+    /* Nav */
+    React.createElement('nav', { style:{ background:card, borderBottom:'1px solid '+hairline, padding:'0 48px', height:58, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 } },
+      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:9 } },
+        React.createElement('div', { style:{ width:26, height:26, borderRadius:7, background:brand, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bricolage Grotesque'", fontWeight:700, fontSize:16, color:'#fff' } }, 'C'),
+        React.createElement('span', { style:{ fontWeight:600, fontSize:16, letterSpacing:'-0.01em' } }, 'CV-Agent')
+      ),
+      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:26, fontSize:14, fontWeight:500, color:inkSoft } },
+        React.createElement('span', null, 'Features'),
+        React.createElement('span', null, 'Pricing'),
+        React.createElement('span', { style:{ color:ink, fontWeight:600 } }, 'Sign in'),
+        React.createElement('button', { style:{ background:brand, color:'#fff', fontWeight:600, fontSize:14, padding:'8px 18px', borderRadius:10, boxShadow:'0 1px 3px rgba(50,87,197,0.25)' } }, 'Tailor my CV')
+      )
+    ),
+    /* Step indicator */
+    step !== 'processing' && React.createElement('div', { style:{ borderBottom:'1px solid '+hairline, background:card, padding:'0 48px', display:'flex', alignItems:'center', gap:8, height:44 } },
+      stepLabels.map(function(pair, i) {
+        var s = pair[0]; var label = pair[1];
+        var isActive = step === s;
+        var isDone   = (s === 'upload' && step === 'results');
+        return React.createElement('span', { key:s, style:{ display:'inline-flex', alignItems:'center', gap:8 } },
+          i > 0 && React.createElement('span', { style:{ color:inkMuted, fontSize:13, marginRight:4 } }, '\u203a'),
+          React.createElement('span', { style:{ fontSize:13.5, fontWeight:600, color: isDone ? met : isActive ? brand : inkMuted, height:'100%', display:'inline-flex', alignItems:'center', paddingBottom:2, borderBottom: isActive ? '2px solid '+brand : '2px solid transparent' } },
+            (isDone ? '\u2713 ' : (i+1)+' \u00b7 ') + label
+          )
+        );
+      })
+    ),
+    /* Content */
+    React.createElement('main', { style:{ flex:1, overflowY:'auto' } },
+      step === 'upload'     && React.createElement(StepUpload,      { onNext: function() { setStep('processing'); } }),
+      step === 'processing' && React.createElement(StepProcessing,  { onNext: function() { setStep('results');    } }),
+      step === 'results'    && React.createElement(StepResults,     { onReset: function() { setStep('upload');    } })
+    ),
+    /* Footer */
+    React.createElement('footer', { style:{ borderTop:'1px solid '+hairline, padding:'14px 48px', display:'flex', justifyContent:'space-between', fontSize:12, color:inkMuted, background:card } },
+      React.createElement('span', null, '\u00a9 2026 CV-Agent'),
+      React.createElement('span', null, 'Built with the ', React.createElement('span', { style:{ color:brand, fontWeight:600 } }, 'Anthropic API'), ' \u00b7 no trackers \u00b7 encrypted at rest')
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById('root'));
+</script>
+</body>
+</html>
