@@ -40,6 +40,21 @@ Open [http://localhost:3000](http://localhost:3000).
 The production build uses webpack (`next build --webpack`) because Serwist
 generates the service worker during the build.
 
+## Agentic Engineering practices
+
+This is a course project: the goal is a full engineering loop run through an
+agent. The practices applied, and where to see each one:
+
+| Practice | Evidence in this repo |
+| --- | --- |
+| Context engineering (static vs dynamic) | `AGENTS.md`, `DESIGN.md`, `docs/` (static); `docs/current-state.md` (dynamic); `.mcp.json` / skills (tooling) |
+| Loop engineering | one commit per capability in dependency order; the `npm run` harness as the loop's exit condition |
+| Verification | 58 tests over pure `lib/` logic, `openspec validate`, `fallow audit` |
+| maker ≠ checker | recorded checker pass in `docs/current-state.md` (incl. a mutation gate) |
+| Specifications first (SDD) | `openspec/changes/*` → `openspec/specs/*` |
+
+Full write-up: [docs/agentic-engineering.md](docs/agentic-engineering.md).
+
 ## Verify the project
 
 Run the same checks used by the project harness:
@@ -55,6 +70,7 @@ npx fallow audit
 
 ## Useful docs
 
+- Agentic Engineering practices: [docs/agentic-engineering.md](docs/agentic-engineering.md)
 - Product intent: [docs/product-brief.md](docs/product-brief.md)
 - Requirements: [docs/requirements.md](docs/requirements.md)
 - Design system: [DESIGN.md](DESIGN.md)
