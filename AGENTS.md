@@ -18,7 +18,28 @@ interview; answers land in Postgres; HR sees progress and gets an AI summary.
   tests, and commits.
 - `docs/product-brief.md` — the business narrative (*why / for whom*).
 - `DESIGN.md` + `docs/KoloDesign/` — the visual source of truth (*how it looks*).
+- `docs/mvp-capability-plan.md` — the slice plan (one owner per FR, dependencies).
+- `docs/current-state.md` — working-memory handoff between sessions (see below).
 - Build only what's in scope; the PRD's "Out of scope (MVP)" list is deferred.
+
+## State & memory (handoff)
+
+The agent starts each session with a blank context — **the agent forgets, the repo
+doesn't**. `docs/current-state.md` is the working memory that lets any session (or a
+fresh agent) pick up where the last one left off.
+
+- **Read `docs/current-state.md` first**, at the start of every session, before acting.
+- **Update it after any meaningful change** (a slice/spec done, files added, a decision
+  made). Keep it short and current — it records:
+  - an ISO timestamp of the last action;
+  - what was just done (which slice / `FR-*` / files);
+  - the current phase and the **next step**;
+  - any open question or blocker.
+- It is a pointer to durable memory, not a log: overwrite stale lines rather than
+  appending forever. **Keep it to about one screen** (~30 lines); the "Done so far"
+  list holds only the current phase. This file says "where we are now" — full history
+  lives in `git log`, `openspec/changes/archive/`, and `docs/adr/`, read on demand,
+  never carried in context.
 
 ## Stack & architecture
 
