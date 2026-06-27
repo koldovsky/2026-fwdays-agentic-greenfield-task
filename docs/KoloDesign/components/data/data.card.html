@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x220" name="Data — ScaleDots · ProgressBar" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;font-family:var(--font-ui);background:var(--surface);padding:24px;color:var(--ink)}
+  .lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted);margin-bottom:12px}
+  .row{display:flex;align-items:center;gap:14px;padding:5px 0}
+  .dots{display:flex;gap:7px}.d{width:10px;height:10px;border-radius:50%}
+  .f{background:var(--ink)}.e{background:var(--dot-empty)}
+  .score{font-size:13px;color:var(--ink-muted);width:54px}
+  .cap{font-size:12px;color:var(--ink-muted);width:130px}
+  .track{flex:1;height:4px;background:var(--line);border-radius:2px;max-width:280px}
+  .fill{height:4px;background:var(--green);border-radius:2px}
+</style></head><body>
+  <div class="lbl">ScaleDots</div>
+  <div class="row"><span class="score">4.4 / 5</span><div class="dots"><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d f"></span></div></div>
+  <div class="row"><span class="score">3.8 / 5</span><div class="dots"><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d e"></span><span class="d e"></span></div></div>
+  <div class="lbl" style="margin-top:22px">ProgressBar</div>
+  <div class="row"><span class="cap">5/6 responded</span><div class="track"><div class="fill" style="width:83%"></div></div></div>
+  <div class="row"><span class="cap">1/5 responded</span><div class="track"><div class="fill" style="width:20%"></div></div></div>
+</body></html>

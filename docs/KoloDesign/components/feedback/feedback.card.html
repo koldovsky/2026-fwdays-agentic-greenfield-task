@@ -1,0 +1,22 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Feedback — Dialog · Toast" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;font-family:var(--font-ui);background:var(--paper);padding:0;color:var(--ink);height:300px;position:relative;overflow:hidden}
+  .scrim{position:absolute;inset:0;background:rgba(26,26,24,.45);display:flex;align-items:center;justify-content:center}
+  .dialog{background:#fff;border:1px solid var(--line-strong);border-radius:8px;padding:28px 32px;width:380px;box-shadow:var(--shadow-dialog)}
+  .d-title{font-size:15px;font-weight:500;margin-bottom:8px}
+  .d-body{color:var(--ink-muted);line-height:1.55;margin-bottom:24px;font-size:14px}
+  .acts{display:flex;gap:8px;justify-content:flex-end}
+  .ghost{padding:8px 16px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink-muted);font-size:13px}
+  .primary{padding:8px 16px;border:none;border-radius:8px;background:var(--green);color:#fff;font-weight:500;font-size:13px}
+  .toast{position:absolute;bottom:18px;right:18px;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:var(--shadow-toast)}
+</style></head><body>
+  <div class="scrim">
+    <div class="dialog">
+      <div class="d-title">Approve report?</div>
+      <div class="d-body">Approving locks the report. The raw dialogs stay private to HR.</div>
+      <div class="acts"><span class="ghost">Cancel</span><span class="primary">Approve</span></div>
+    </div>
+  </div>
+  <div class="toast">Report approved</div>
+</body></html>

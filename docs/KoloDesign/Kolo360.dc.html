@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input, select, textarea { font-family: inherit; font-size: inherit; }
+    textarea { resize: vertical; }
+    [contenteditable]:focus { outline: none; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @keyframes hlFade { 0%,100%{ background:transparent; } 30%{ background:#EBF4F0; } }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#C9C7BF; border-radius:3px; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;font-family:'Inter',system-ui,sans-serif;font-size:14px;color:#1A1A18;background:#FAF9F6;line-height:1.45">
+
+  <!-- TOAST -->
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;right:24px;z-index:3000;background:#1A1A18;color:#FAF9F6;padding:10px 16px;border-radius:8px;font-size:13px;animation:toastIn .15s ease-out;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.18)">{{ toastText }}</div>
+  </sc-if>
+
+  <!-- APPROVE DIALOG -->
+  <sc-if value="{{ approveDialog }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(26,26,24,.45);z-index:900;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="background:#fff;border:1px solid #C9C7BF;border-radius:8px;padding:28px 32px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+        <div style="font-size:15px;font-weight:500;margin-bottom:8px">Approve report?</div>
+        <div style="color:#5B5A55;line-height:1.6;margin-bottom:24px">Approving locks the report. The raw dialogs stay private to HR.</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onClick="{{ closeApproveDialog }}" style="padding:8px 16px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#5B5A55;cursor:pointer">Cancel</button>
+          <button onClick="{{ confirmApprove }}" style="padding:8px 16px;border:none;border-radius:8px;background:#2E5E4E;color:#fff;cursor:pointer;font-weight:500">Approve</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- LAUNCH DIALOG -->
+  <sc-if value="{{ launchDialog }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(26,26,24,.45);z-index:900;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="background:#fff;border:1px solid #C9C7BF;border-radius:8px;padding:28px 32px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.12)">
+        <div style="font-size:15px;font-weight:500;margin-bottom:8px">Launch cycle?</div>
+        <div style="color:#5B5A55;line-height:1.6;margin-bottom:24px">The template is copied into this cycle. Later edits to the template won't affect it.</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onClick="{{ closeLaunchDialog }}" style="padding:8px 16px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#5B5A55;cursor:pointer">Cancel</button>
+          <button onClick="{{ confirmLaunch }}" style="padding:8px 16px;border:none;border-radius:8px;background:#2E5E4E;color:#fff;cursor:pointer;font-weight:500">Launch cycle</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ RESPONDENT SHELL ═══════════ -->
+  <sc-if value="{{ isRespond }}" hint-placeholder-val="{{ false }}">
+    <div style="min-height:100vh;background:#FAF9F6" data-screen-label="Respondent Form">
+      <header style="background:#fff;border-bottom:1px solid #C9C7BF;padding:16px 24px">
+        <div style="max-width:640px;margin:0 auto">
+          <div style="font-size:11px;color:#5B5A55;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:500">{{ respondSubjectLine }}</div>
+          <div style="font-size:15px;font-weight:500;color:#1A1A18">{{ respondTypeLabel }}</div>
+          <div style="font-size:12px;color:#5B5A55;margin-top:4px;line-height:1.5">{{ respondConfidentiality }}</div>
+        </div>
+      </header>
+
+      <sc-if value="{{ respondDone }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px;margin:0 auto;padding:80px 24px;text-align:center">
+          <div style="width:48px;height:48px;border-radius:50%;background:#EEFAF2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E5E4E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div style="font-size:16px;font-weight:500;color:#1A1A18;margin-bottom:8px">Responses sent</div>
+          <div style="color:#5B5A55;font-size:14px;line-height:1.6">Thank you. Your answers are included in the report in aggregated form.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRespondForm }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:640px;margin:0 auto;padding:32px 24px 100px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px">
+            <div style="flex:1;height:4px;background:#E0DED8;border-radius:2px">
+              <div style="{{ respondProgressBarStyle }}"></div>
+            </div>
+            <div style="font-size:12px;color:#5B5A55;white-space:nowrap;font-variant-numeric:tabular-nums">Section {{ respondSectionIndex }} of {{ respondTotalSections }}</div>
+          </div>
+          <div style="font-size:19px;font-weight:500;color:#1A1A18;margin-bottom:28px">{{ respondSectionTitle }}</div>
+          <sc-for list="{{ respondQuestions }}" as="q" hint-placeholder-count="2">
+            <div style="margin-bottom:32px">
+              <div style="font-weight:500;color:#1A1A18;line-height:1.55;margin-bottom:6px">{{ q.text }}<sc-if value="{{ q.required }}" hint-placeholder-val="{{ false }}"><span style="color:#2E5E4E;margin-left:3px">*</span></sc-if></div>
+              <sc-if value="{{ q.hasHint }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px;color:#5B5A55;margin-bottom:12px;line-height:1.5">{{ q.hint }}</div>
+              </sc-if>
+              <sc-if value="{{ q.isScale }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <sc-for list="{{ q.anchorItems }}" as="anchor" hint-placeholder-count="5">
+                    <button onClick="{{ anchor.handleClick }}" style="{{ anchor.buttonStyle }}">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#C9C7BF;min-width:18px;text-align:center;flex-shrink:0">{{ anchor.value }}</span>
+                      <span style="color:#1A1A18">{{ anchor.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ q.isOpen }}" hint-placeholder-val="{{ true }}">
+                <textarea onInput="{{ q.handleTextInput }}" rows="4" placeholder="Your answer…" style="width:100%;padding:12px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#1A1A18;font-size:14px;line-height:1.5"></textarea>
+              </sc-if>
+            </div>
+          </sc-for>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <button onClick="{{ respondBack }}" style="{{ respondBackStyle }}">← Back</button>
+            <button onClick="{{ respondNext }}" style="padding:9px 22px;border:none;border-radius:8px;background:#2E5E4E;color:#fff;cursor:pointer;font-weight:500">{{ respondNextLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ HR SHELL ═══════════ -->
+  <sc-if value="{{ isHRShell }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;height:100vh;overflow:hidden">
+
+      <!-- SIDEBAR -->
+      <aside style="width:220px;flex-shrink:0;background:#fff;border-right:1px solid #C9C7BF;display:flex;flex-direction:column">
+        <div style="padding:20px 20px 16px">
+          <span style="font-weight:600;font-size:15px;color:#1A1A18;letter-spacing:-.01em">Kolo360</span>
+        </div>
+        <div style="height:1px;background:#C9C7BF;margin:0 12px"></div>
+        <nav style="padding:8px;flex:1;display:flex;flex-direction:column;gap:2px;margin-top:4px">
+          <button onClick="{{ navToCycles }}" style="{{ navCyclesStyle }};padding:8px 12px;border-radius:6px;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;width:100%;font-size:14px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Cycles
+          </button>
+          <button onClick="{{ navToTemplates }}" style="{{ navTemplatesStyle }};padding:8px 12px;border-radius:6px;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;width:100%;font-size:14px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            Templates
+          </button>
+        </nav>
+        <div style="padding:12px 16px;border-top:1px solid #C9C7BF">
+          <div style="font-size:13px;font-weight:500;color:#1A1A18">Irina Smirnova</div>
+          <div style="font-size:12px;color:#5B5A55;margin-top:1px">HR Manager</div>
+        </div>
+      </aside>
+
+      <!-- MAIN SCROLL -->
+      <div id="main-scroll" style="flex:1;overflow-y:auto;background:#FAF9F6">
+
+        <!-- ── CYCLES LIST ── -->
+        <sc-if value="{{ isCycles }}" hint-placeholder-val="{{ true }}">
+          <div style="max-width:1100px;margin:0 auto;padding:0 32px 48px" data-screen-label="Cycles">
+            <div style="padding:22px 0 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#FAF9F6;z-index:10;border-bottom:1px solid #C9C7BF;margin-bottom:20px">
+              <h1 style="font-size:17px;font-weight:500;color:#1A1A18;margin:0">Cycles</h1>
+              <button onClick="{{ navToNewCycle }}" style="padding:7px 14px;background:#2E5E4E;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">New cycle</button>
+            </div>
+            <div style="display:grid;grid-template-columns:200px 110px 90px 1fr 110px 74px;padding:0 12px;margin-bottom:6px;column-gap:8px">
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Subject</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Methodology</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Deadline</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Progress</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Status</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Updated</div>
+            </div>
+            <sc-for list="{{ cycleRows }}" as="row" hint-placeholder-count="4">
+              <div onClick="{{ row.handleClick }}" style="display:grid;grid-template-columns:200px 110px 90px 1fr 110px 74px;column-gap:8px;padding:12px;border:1px solid #E8E7E3;border-radius:8px;background:#fff;cursor:pointer;margin-bottom:5px;align-items:center;transition:background .12s" style-hover="background:#F7F6F2">
+                <div>
+                  <div style="font-weight:500;color:#1A1A18">{{ row.subject }}</div>
+                  <div style="font-size:12px;color:#5B5A55;margin-top:2px">{{ row.role }}</div>
+                </div>
+                <div><span style="font-size:12px;border:1px solid #C9C7BF;border-radius:6px;padding:2px 6px;color:#5B5A55">{{ row.methodology }}</span></div>
+                <div style="color:#5B5A55;font-size:13px;font-variant-numeric:tabular-nums">{{ row.deadline }}</div>
+                <div>
+                  <div style="font-size:12px;color:#5B5A55;margin-bottom:5px;font-variant-numeric:tabular-nums">{{ row.progressText }}</div>
+                  <div style="{{ row.progressTrack }}"><div style="{{ row.progressBar }}"></div></div>
+                </div>
+                <div><span style="{{ row.badgeStyle }}">{{ row.badgeLabel }}</span></div>
+                <div style="color:#5B5A55;font-size:12px;font-variant-numeric:tabular-nums">{{ row.updated }}</div>
+              </div>
+            </sc-for>
+            <div style="margin-top:20px;padding:10px 14px;background:#fff;border:1px solid #E8E7E3;border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:13px;color:#5B5A55">Demo: preview respondent form (as R2 — peer)</div>
+              <button onClick="{{ navToRespond }}" style="padding:5px 12px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Open form →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ── NEW CYCLE ── -->
+        <sc-if value="{{ isNewCycle }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:760px;margin:0 auto;padding:0 32px 80px" data-screen-label="New Cycle">
+            <div style="padding:22px 0 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #C9C7BF;margin-bottom:32px">
+              <button onClick="{{ navBackFromNewCycle }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:13px">←</button>
+              <h1 style="font-size:17px;font-weight:500;color:#1A1A18;margin:0">New cycle</h1>
+            </div>
+            <div style="font-size:11px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Subject</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+              <div>
+                <label style="display:block;font-size:13px;color:#5B5A55;margin-bottom:5px">Name</label>
+                <input type="text" defaultValue="Марина Соколова" style="width:100%;max-width:400px;padding:8px 10px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#1A1A18;font-size:14px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:#5B5A55;margin-bottom:5px">Role <span style="color:#C9C7BF;font-size:11px">(optional)</span></label>
+                <input type="text" defaultValue="Senior Engineer" style="width:100%;max-width:400px;padding:8px 10px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#1A1A18;font-size:14px">
+              </div>
+            </div>
+            <div style="height:1px;background:#E8E7E3;margin-bottom:28px"></div>
+            <div style="font-size:11px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Template</div>
+            <div style="margin-bottom:28px">
+              <sc-for list="{{ cycleTemplates }}" as="tpl" hint-placeholder-count="3">
+                <div onClick="{{ tpl.handleSelect }}" style="{{ tpl.cardStyle }}">
+                  <div style="{{ tpl.dotStyle }}"></div>
+                  <div>
+                    <div style="font-weight:500;color:#1A1A18;font-size:14px">{{ tpl.name }}</div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:3px">
+                      <span style="font-size:11px;border:1px solid #C9C7BF;border-radius:6px;padding:1px 6px;color:#5B5A55">{{ tpl.methodology }}</span>
+                      <span style="font-size:12px;color:#5B5A55">{{ tpl.questionsLabel }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:1px;background:#E8E7E3;margin-bottom:28px"></div>
+            <div style="font-size:11px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Reviewers</div>
+            <sc-for list="{{ newReviewerRows }}" as="rv" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:1fr 114px 130px 1fr 34px;gap:8px;align-items:end;margin-bottom:8px;padding:12px;background:#fff;border:1px solid #E8E7E3;border-radius:8px">
+                <div>
+                  <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px">Name</label>
+                  <input type="text" defaultValue="{{ rv.name }}" style="width:100%;padding:6px 8px;border:1px solid #C9C7BF;border-radius:6px;font-size:13px;background:#FAF9F6">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px">Relation</label>
+                  <select defaultValue="{{ rv.relation }}" style="width:100%;padding:6px 8px;border:1px solid #C9C7BF;border-radius:6px;font-size:13px;background:#FAF9F6">
+                    <option value="manager">manager</option>
+                    <option value="peer">peer</option>
+                    <option value="report">report</option>
+                    <option value="self">self</option>
+                    <option value="buddy">buddy</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px">Channel</label>
+                  <div style="display:flex;border:1px solid #C9C7BF;border-radius:6px;overflow:hidden">
+                    <button onClick="{{ rv.handleSetWeb }}" style="{{ rv.webBtnStyle }}">web</button>
+                    <button onClick="{{ rv.handleSetTg }}" style="{{ rv.tgBtnStyle }}">telegram</button>
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px">Contact</label>
+                  <input type="text" defaultValue="{{ rv.contact }}" style="width:100%;padding:6px 8px;border:1px solid #C9C7BF;border-radius:6px;font-size:13px;background:#FAF9F6;font-family:'JetBrains Mono',monospace">
+                </div>
+                <div>
+                  <button onClick="{{ rv.handleRemove }}" style="padding:6px 7px;border:1px solid #E8E7E3;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;display:flex;align-items:center;line-height:1">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+              </div>
+            </sc-for>
+            <button onClick="{{ addReviewer }}" style="padding:6px 12px;border:1px dashed #C9C7BF;border-radius:8px;background:transparent;color:#5B5A55;cursor:pointer;font-size:13px;margin-top:4px">+ Add reviewer</button>
+            <div style="margin-top:16px;display:flex;align-items:center;gap:10px">
+              <label style="font-size:13px;color:#5B5A55;white-space:nowrap">Deadline</label>
+              <input type="date" defaultValue="2026-06-25" style="padding:6px 10px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;font-size:13px;color:#1A1A18">
+            </div>
+            <div style="height:1px;background:#E8E7E3;margin:24px 0 20px"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button style="padding:8px 16px;border:1px solid #C9C7BF;border-radius:8px;background:#fff;color:#5B5A55;cursor:pointer">Save draft</button>
+              <button onClick="{{ openLaunchDialog }}" style="padding:8px 16px;background:#2E5E4E;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500">Launch cycle</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ── CYCLE DETAIL ── -->
+        <sc-if value="{{ isCycleDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:1100px;margin:0 auto;padding:0 32px 48px" data-screen-label="Cycle Detail">
+            <div style="padding:22px 0 18px;border-bottom:1px solid #C9C7BF;margin-bottom:22px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <button onClick="{{ navBackFromCycleDetail }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:13px">←</button>
+                <h1 style="font-size:17px;font-weight:500;color:#1A1A18;margin:0">{{ cycleName }}</h1>
+                <span style="{{ cycleBadgeStyle }}">{{ cycleBadgeLabel }}</span>
+              </div>
+              <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+                <span style="font-size:13px;color:#5B5A55">{{ cycleRole }}</span>
+                <span style="font-size:12px;border:1px solid #C9C7BF;border-radius:6px;padding:2px 6px;color:#5B5A55">{{ cycleMethodology }}</span>
+                <span style="font-size:13px;color:#5B5A55;font-variant-numeric:tabular-nums">{{ cycleDeadline }} · {{ cycleDaysLeft }}</span>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #E8E7E3;border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:20px">
+              <div style="flex:1">
+                <div style="font-size:12px;color:#5B5A55;margin-bottom:6px">{{ coverageText }}</div>
+                <div style="height:4px;background:#E0DED8;border-radius:2px"><div style="{{ coverageBarStyle }}"></div></div>
+              </div>
+              <button onClick="{{ handleAnalyze }}" style="{{ analyzeButtonStyle }}">{{ analyzeButtonText }}</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 88px 78px 110px 90px 180px;padding:0 12px;margin-bottom:5px">
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Reviewer</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Relation</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Channel</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Status</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Activity</div>
+              <div style="font-size:11px;color:#5B5A55;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Actions</div>
+            </div>
+            <sc-for list="{{ reviewerRows }}" as="rv" hint-placeholder-count="6">
+              <div style="display:grid;grid-template-columns:1fr 88px 78px 110px 90px 180px;padding:10px 12px;border:1px solid #E8E7E3;border-radius:8px;background:#fff;margin-bottom:4px;align-items:center">
+                <div style="font-weight:500;font-size:13px">{{ rv.name }}</div>
+                <div style="font-size:12px;color:#5B5A55">{{ rv.relation }}</div>
+                <div><span style="{{ rv.channelStyle }}">{{ rv.channelLabel }}</span></div>
+                <div><span style="{{ rv.badgeStyle }}">{{ rv.badgeLabel }}</span></div>
+                <div style="font-size:12px;color:#5B5A55;font-variant-numeric:tabular-nums">{{ rv.activity }}</div>
+                <div style="display:flex;gap:6px">
+                  <sc-if value="{{ rv.showCopyLink }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ rv.handleCopyLink }}" style="padding:4px 8px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Copy link</button>
+                  </sc-if>
+                  <sc-if value="{{ rv.showRemind }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ rv.handleRemind }}" style="padding:4px 8px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Remind</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- ── REPORT ── -->
+        <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Report">
+            <sc-if value="{{ reportApproved }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#EEFAF2;border-bottom:1px solid #B8E0C9;padding:9px 32px;font-size:12px;color:#1E6B41;font-variant-numeric:tabular-nums">
+                Approved · 12 June 2026 · v1 · Irina Smirnova
+              </div>
+            </sc-if>
+            <div style="padding:18px 32px 16px;border-bottom:1px solid #C9C7BF;display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#FAF9F6;z-index:10">
+              <button onClick="{{ navBackFromReport }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:13px">←</button>
+              <div>
+                <h1 style="font-size:17px;font-weight:500;color:#1A1A18;margin:0">Report: {{ reportCycleName }}</h1>
+                <div style="font-size:12px;color:#5B5A55;margin-top:2px">360° Feedback · AI draft — review and approve</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 300px;max-width:1160px;margin:0 auto;padding:0 32px">
+              <div style="padding:32px 40px 120px 0;border-right:1px solid #E8E7E3">
+                <sc-for list="{{ reportSectionRows }}" as="sec" hint-placeholder-count="4">
+                  <div id="{{ sec.id }}" style="{{ sec.containerStyle }}">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:12px">
+                      <h2 style="font-family:'Source Serif 4','Lora',Georgia,serif;font-size:20px;font-weight:500;color:#1A1A18;line-height:1.2;margin:0">{{ sec.title }}</h2>
+                      <sc-if value="{{ sec.hasScore }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:13px;color:#5B5A55;white-space:nowrap;font-variant-numeric:tabular-nums;flex-shrink:0">{{ sec.scoreText }}</span>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ sec.hasScore }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:7px;align-items:center;margin-bottom:16px">
+                        <sc-for list="{{ sec.dots }}" as="dot" hint-placeholder-count="5">
+                          <div style="{{ dot.dotStyle }}"></div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div contentEditable="{{ bTrue }}" suppressContentEditableWarning="{{ bTrue }}" onBlur="{{ sec.handleBlur }}" style="font-family:'Source Serif 4','Lora',Georgia,serif;font-size:17px;line-height:1.75;color:#1A1A18;outline:none;border-radius:4px" style-hover="outline:1px dashed #C9C7BF;outline-offset:5px;cursor:text">{{ sec.summary }}</div>
+                    <sc-if value="{{ sec.isEdited }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:11px;color:#5B5A55;margin-top:4px">edited</div>
+                    </sc-if>
+                    <sc-for list="{{ sec.quotes }}" as="q" hint-placeholder-count="1">
+                      <div style="border-left:2px solid #2E5E4E;padding:10px 20px;margin-top:18px">
+                        <div style="font-family:'Source Serif 4','Lora',Georgia,serif;font-style:italic;font-size:16px;line-height:1.65;color:#1A1A18">{{ q.text }}</div>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5B5A55;margin-top:7px">{{ q.source }} · {{ q.role }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:32px 0 120px 24px;position:sticky;top:60px;max-height:calc(100vh - 60px);overflow-y:auto;align-self:start">
+                <div style="font-size:11px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Calibration flags</div>
+                <sc-for list="{{ flagRows }}" as="flag" hint-placeholder-count="3">
+                  <div onClick="{{ flag.handleClick }}" style="{{ flag.cardStyle }}">
+                    <div style="margin-bottom:8px"><span style="{{ flag.typeStyle }}">{{ flag.typeLabel }}</span></div>
+                    <div style="font-size:13px;color:#1A1A18;line-height:1.55">{{ flag.description }}</div>
+                    <sc-if value="{{ flag.isExpanded }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E8E7E3">
+                        <div style="font-size:11px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Sources</div>
+                        <sc-for list="{{ flag.sourceQuotes }}" as="fq" hint-placeholder-count="1">
+                          <div style="font-size:12px;color:#5B5A55;font-style:italic;line-height:1.5;margin-bottom:5px;border-left:2px solid #C9C7BF;padding-left:8px">"{{ fq.text }}" <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-style:normal">{{ fq.source }}</span></div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="font-size:11px;color:#2E5E4E;margin-top:8px;font-weight:500">{{ flag.toggleLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #C9C7BF;padding:12px 32px;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:12px;color:#5B5A55">Approving locks the report. The raw dialogs stay private to HR.</div>
+              <sc-if value="{{ reportApproved }}" hint-placeholder-val="{{ false }}">
+                <button disabled style="padding:8px 18px;background:#C9C7BF;color:#fff;border:none;border-radius:8px;cursor:default;font-weight:500;font-size:13px">Approved</button>
+              </sc-if>
+              <sc-if value="{{ reportNotApproved }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ openApproveDialog }}" style="padding:8px 18px;background:#2E5E4E;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:13px">Approve report</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ── TEMPLATES ── -->
+        <sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:1100px;margin:0 auto;padding:0 32px 48px" data-screen-label="Templates">
+            <div style="padding:22px 0 18px;border-bottom:1px solid #C9C7BF;margin-bottom:28px">
+              <h1 style="font-size:17px;font-weight:500;color:#1A1A18;margin:0">Templates</h1>
+            </div>
+            <div style="margin-bottom:32px">
+              <div style="font-size:12px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;display:flex;align-items:center;gap:7px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Methodologies
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <sc-for list="{{ methodologyCards }}" as="card" hint-placeholder-count="3">
+                  <div style="background:#fff;border:1px solid #E8E7E3;border-radius:8px;padding:16px">
+                    <div style="font-weight:500;color:#1A1A18;margin-bottom:4px">{{ card.name }}</div>
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px">
+                      <span style="font-size:11px;border:1px solid #C9C7BF;border-radius:6px;padding:1px 6px;color:#5B5A55">{{ card.methodology }}</span>
+                      <span style="font-size:12px;color:#5B5A55">{{ card.sectionsLabel }}</span>
+                    </div>
+                    <div style="display:flex;gap:6px">
+                      <button onClick="{{ card.handleClone }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Clone to edit</button>
+                      <button onClick="{{ card.handleEdit }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Preview</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:500;color:#5B5A55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Your templates</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <sc-for list="{{ userTemplateCards }}" as="card" hint-placeholder-count="2">
+                  <div style="background:#fff;border:1px solid #E8E7E3;border-radius:8px;padding:16px">
+                    <div style="font-weight:500;color:#1A1A18;margin-bottom:4px">{{ card.name }}</div>
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px">
+                      <span style="font-size:11px;border:1px solid #C9C7BF;border-radius:6px;padding:1px 6px;color:#5B5A55">{{ card.methodology }}</span>
+                      <span style="font-size:12px;color:#5B5A55">{{ card.sectionsLabel }}</span>
+                    </div>
+                    <div style="font-size:11px;color:#5B5A55;margin-bottom:14px">{{ card.lastEditedLabel }}</div>
+                    <div style="display:flex;gap:6px">
+                      <button onClick="{{ card.handleEdit }}" style="padding:5px 10px;border:none;border-radius:6px;background:#2E5E4E;color:#fff;cursor:pointer;font-size:12px;font-weight:500">Edit</button>
+                      <button onClick="{{ card.handleClone }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Clone</button>
+                      <button onClick="{{ card.handleArchive }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:12px">Archive</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ── TEMPLATE EDITOR ── -->
+        <sc-if value="{{ isTemplateEdit }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:800px;margin:0 auto;padding:0 32px 80px" data-screen-label="Template Editor">
+            <div style="padding:22px 0 18px;border-bottom:1px solid #C9C7BF;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:10px">
+                <button onClick="{{ navBackFromTemplateEdit }}" style="padding:5px 10px;border:1px solid #C9C7BF;border-radius:6px;background:#fff;color:#5B5A55;cursor:pointer;font-size:13px">←</button>
+                <div>
+                  <div style="font-size:17px;font-weight:500;color:#1A1A18">{{ tplName }}</div>
+                  <div style="font-size:12px;color:#5B5A55;margin-top:2px;display:flex;align-items:center;gap:6px">
+                    <span style="font-size:11px;border:1px solid #C9C7BF;border-radius:6px;padding:1px 6px">{{ tplMethodology }}</span>
+                    <span>Running cycles use their own copy of this template.</span>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:#5B5A55">Autosaved</div>
+            </div>
+            <sc-for list="{{ templateSectionRows }}" as="sec" hint-placeholder-count="2">
+              <div style="border:1px solid #E8E7E3;border-radius:8px;background:#fff;margin-bottom:8px;overflow:hidden">
+                <div onClick="{{ sec.handleToggle }}" style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none" style-hover="background:#F7F6F2">
+                  <div>
+                    <div style="font-weight:500;color:#1A1A18">{{ sec.title }}</div>
+                    <div style="font-size:12px;color:#5B5A55;margin-top:2px">{{ sec.hint }} · {{ sec.questionCount }} questions</div>
+                  </div>
+                  <div style="color:#5B5A55;font-size:16px;line-height:1">{{ sec.chevron }}</div>
+                </div>
+                <sc-if value="{{ sec.isExpanded }}" hint-placeholder-val="{{ false }}">
+                  <div style="border-top:1px solid #E8E7E3">
+                    <sc-for list="{{ sec.questionRows }}" as="q" hint-placeholder-count="3">
+                      <div style="border-bottom:1px solid #F2F1EE">
+                        <div onClick="{{ q.handleToggle }}" style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:10px" style-hover="background:#FAFAF8">
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#C9C7BF;min-width:20px">{{ q.idx }}</span>
+                          <div style="flex:1;font-size:13px;color:#1A1A18">{{ q.text }}</div>
+                          <span style="font-size:11px;border:1px solid #C9C7BF;border-radius:6px;padding:1px 6px;color:#5B5A55;white-space:nowrap">{{ q.typeLabel }}</span>
+                          <div style="color:#5B5A55;font-size:14px">{{ q.chevron }}</div>
+                        </div>
+                        <sc-if value="{{ q.isExpanded }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:0 16px 14px 46px;display:flex;flex-direction:column;gap:10px">
+                            <div>
+                              <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Question text</label>
+                              <textarea rows="2" defaultValue="{{ q.text }}" style="width:100%;padding:8px 10px;border:1px solid #C9C7BF;border-radius:6px;font-size:13px;background:#FAF9F6;line-height:1.5"></textarea>
+                            </div>
+                            <div style="display:flex;gap:10px">
+                              <div>
+                                <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Type</label>
+                                <select defaultValue="{{ q.type }}" style="padding:6px 8px;border:1px solid #C9C7BF;border-radius:6px;font-size:13px;background:#FAF9F6">
+                                  <option value="scale">Scale</option>
+                                  <option value="open">Open</option>
+                                  <option value="start-stop-continue">Start/Stop/Continue</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Audience</label>
+                                <div style="font-size:12px;color:#5B5A55;padding:6px 0">{{ q.audienceLabel }}</div>
+                              </div>
+                              <div>
+                                <label style="display:block;font-size:11px;color:#5B5A55;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Required</label>
+                                <div style="{{ q.reqToggleStyle }};width:34px;height:20px;border-radius:10px;cursor:pointer;position:relative;transition:background .15s" onClick="{{ q.handleToggleRequired }}">
+                                  <div style="{{ q.reqDotStyle }};width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left .15s"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                    <div style="padding:10px 16px">
+                      <button style="padding:5px 10px;border:1px dashed #C9C7BF;border-radius:6px;background:transparent;color:#5B5A55;cursor:pointer;font-size:12px">+ question</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <button style="padding:6px 12px;border:1px dashed #C9C7BF;border-radius:8px;background:transparent;color:#5B5A55;cursor:pointer;font-size:13px;margin-top:4px">+ section</button>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  cycles = [
+    { id:'c1', subject:'Marina Sokolova', role:'Senior Engineer', methodology:'360°', deadline:'Jun 25', daysLeft:13, progressR:5, progressT:6, status:'collecting', updated:'Jun 10' },
+    { id:'c2', subject:'Dmitry Volkov', role:'Product Manager', methodology:'Performance', deadline:'Jun 18', daysLeft:6, progressR:3, progressT:3, status:'done', updated:'Jun 9' },
+    { id:'c3', subject:'Anna Belova', role:'Designer', methodology:'360°', deadline:'Jun 30', daysLeft:18, progressR:1, progressT:5, status:'collecting', updated:'Jun 11' },
+    { id:'c4', subject:'Ivan Petrov', role:'Backend Developer', methodology:'Probation', deadline:'Jun 15', daysLeft:3, progressR:0, progressT:4, status:'pending', updated:'Jun 8' },
+  ];
+
+  reviewerData = {
+    c1: [
+      { id:'rv1', name:'Olga Kaminskaya', relation:'manager', channel:'telegram', status:'responded', activity:'Jun 8', reminders:0 },
+      { id:'rv2', name:'Andrey Lebedev', relation:'peer', channel:'web', status:'responded', activity:'Jun 9', reminders:0 },
+      { id:'rv3', name:'Svetlana Zaitseva', relation:'peer', channel:'web', status:'sent', activity:'Jun 5', reminders:1 },
+      { id:'rv4', name:'Kirill Nazarov', relation:'report', channel:'telegram', status:'responded', activity:'Jun 10', reminders:0 },
+      { id:'rv5', name:'Maria Orlova', relation:'peer', channel:'web', status:'responded', activity:'Jun 7', reminders:0 },
+      { id:'rv6', name:'Marina Sokolova', relation:'self', channel:'web', status:'responded', activity:'Jun 6', reminders:0 },
+    ],
+    c2: [
+      { id:'rv7', name:'Alexey Popov', relation:'manager', channel:'web', status:'responded', activity:'Jun 7', reminders:0 },
+      { id:'rv8', name:'Tatyana Novikova', relation:'peer', channel:'web', status:'responded', activity:'Jun 8', reminders:0 },
+      { id:'rv9', name:'Dmitry Volkov', relation:'self', channel:'web', status:'responded', activity:'Jun 6', reminders:0 },
+    ],
+    c3: [
+      { id:'rv10', name:'Sergey Morozov', relation:'manager', channel:'telegram', status:'responded', activity:'Jun 9', reminders:0 },
+      { id:'rv11', name:'Elena Solovyeva', relation:'peer', channel:'web', status:'sent', activity:'Jun 6', reminders:1 },
+      { id:'rv12', name:'Pavel Kozlov', relation:'peer', channel:'telegram', status:'sent', activity:'Jun 5', reminders:0 },
+      { id:'rv13', name:'Anna Belova', relation:'self', channel:'web', status:'sent', activity:'Jun 3', reminders:0 },
+    ],
+    c4: [
+      { id:'rv14', name:'Denis Krylov', relation:'manager', channel:'telegram', status:'sent', activity:'Jun 8', reminders:0 },
+      { id:'rv15', name:'Natalya Mikhailova', relation:'peer', channel:'web', status:'sent', activity:'Jun 8', reminders:0 },
+      { id:'rv16', name:'Boris Nikitin', relation:'peer', channel:'web', status:'sent', activity:'Jun 8', reminders:0 },
+      { id:'rv17', name:'Ivan Petrov', relation:'self', channel:'web', status:'sent', activity:'Jun 8', reminders:0 },
+    ],
+  };
+
+  templates = [
+    { id:'t1', name:'360° Feedback', methodology:'360°', sections:5, questions:24, system:true },
+    { id:'t2', name:'Performance Review', methodology:'Performance', sections:4, questions:18, system:true },
+    { id:'t3', name:'Probation Check-in', methodology:'Probation', sections:3, questions:12, system:true },
+    { id:'t4', name:'Marina 360° (custom)', methodology:'360°', sections:5, questions:22, system:false, lastEdited:'Jun 2' },
+    { id:'t5', name:'Q4 Performance', methodology:'Performance', sections:4, questions:20, system:false, lastEdited:'Jun 1' },
+  ];
+
+  reportSections = [
+    { id:'s-comm', title:'Communication & collaboration', score:4.1, dots:[1,1,1,1,0],
+      summary:'Marina demonstrates exceptional clarity in communication — multiple reviewers noted that her written explanations of technical decisions are accessible even to colleagues without deep technical backgrounds. In team discussions she proactively initiates alignment, though under deadline pressure her sync cadence decreases noticeably.',
+      quotes:[
+        { text:'On the last release Marina wrote a doc explaining the architecture decision — three colleagues understood it without any additional meetings.', source:'R2', role:'peer' },
+        { text:'During quarterly planning the communication became less systematic — I found out about risks after the fact several times.', source:'R1', role:'manager' },
+      ],
+    },
+    { id:'s-tech', title:'Technical leadership', score:4.4, dots:[1,1,1,1,1],
+      summary:'Demonstrates deep technical expertise and actively transfers knowledge to the team. Marina\'s code reviews are substantive — they develop understanding rather than merely fix errors. Several reviewers expressed a desire for a more structured mentoring role.',
+      quotes:[
+        { text:'In reviews Marina always explains "why", not just "what to fix". That\'s more valuable than just pointing to a mistake.', source:'R4', role:'report' },
+      ],
+    },
+    { id:'s-perf', title:'Delivery & execution', score:3.8, dots:[1,1,1,1,0],
+      summary:'Work quality is consistently high and urgent tasks are closed on time. However, several reviewers flag unpredictability in estimating task complexity, which creates end-of-sprint pressure for the broader team.',
+      quotes:[
+        { text:'The tasks Marina owns are always completed. But time estimates are often underestimated, and that creates sprint pressure.', source:'R3', role:'peer' },
+      ],
+    },
+    { id:'s-grow', title:'Growth areas', score:null, dots:null,
+      summary:'Three development directions emerge from this cycle: structuring the mentoring role, improving task-complexity estimation, and restoring regular cadence of syncs with the direct manager.',
+      quotes:[],
+    },
+  ];
+
+  reportFlags = [
+    { id:'f1', type:'contradiction', description:'Delivery scores diverge: manager 3/5 vs peers 4.4/5 average. Possible context gap — manager observes sprint planning, peers observe execution.', section:'s-perf',
+      sourceQuotes:[{ text:'Executes well, meets expectations.', source:'R1 · manager' },{ text:'Sprint pressure is always from estimation, not effort.', source:'R3 · peer' }] },
+    { id:'f2', type:'possible-bias', description:'R1 (manager) — all 5 scores from this reviewer are 0.8 pts above average. Check for systematic overrating.', section:'s-tech',
+      sourceQuotes:[{ text:'Always exceeds expectations.', source:'R1 · manager' }] },
+    { id:'f3', type:'low-coverage', description:'"Growth areas" received only 2 open-text responses out of 6 possible. Development direction assessment may be incomplete.', section:'s-grow', sourceQuotes:[] },
+  ];
+
+  respondSections = [
+    { id:'rs1', title:'Communication', questions:[
+        { id:'rq1', type:'scale', text:'How clearly does Marina explain technical solutions?', required:true, hint:null,
+          anchors:['Extremely hard to follow','Often requires clarification','Generally understandable','Clear and structured','Sets the standard for the team'] },
+        { id:'rq2', type:'open', text:'Give a concrete example where Marina\'s communication affected a work outcome.', required:false, hint:'A specific situation from the last few months is most useful.' },
+    ]},
+    { id:'rs2', title:'Technical leadership', questions:[
+        { id:'rq3', type:'scale', text:'How effectively does Marina share knowledge with the team?', required:true, hint:null,
+          anchors:['Rarely shares','Shares occasionally','Sometimes shares','Often and usefully','Proactively and systematically'] },
+        { id:'rq4', type:'open', text:'What could be improved in her approach to code review or mentoring?', required:false, hint:null },
+    ]},
+    { id:'rs3', title:'Delivery & execution', questions:[
+        { id:'rq5', type:'scale', text:'How predictable are Marina\'s task-complexity estimates?', required:true, hint:null,
+          anchors:['Rarely accurate','Often off','Roughly correct','Well calibrated','Almost always accurate'] },
+        { id:'rq6', type:'open', text:'Can you give an example of a particularly accurate or inaccurate estimate?', required:false, hint:null },
+    ]},
+    { id:'rs4', title:'Growth areas', questions:[
+        { id:'rq7', type:'open', text:'What should Marina focus on developing first?', required:true, hint:'Specific skills or behavior patterns are most helpful.' },
+    ]},
+    { id:'rs5', title:'Overall impression', questions:[
+        { id:'rq8', type:'open', text:'Is there anything important about Marina\'s work that wasn\'t covered above?', required:false, hint:null },
+    ]},
+  ];
+
+  templateSections = [
+    { id:'ts1', title:'Communication', hint:'Questions about communication effectiveness and collaboration.',
+      questions:[
+        { id:'tq1', text:'How clearly does the employee explain technical solutions?', type:'scale', required:true, audience:['manager','peer','report'] },
+        { id:'tq2', text:'Give an example where their communication affected a work outcome.', type:'open', required:false, audience:['manager','peer'] },
+        { id:'tq3', text:'How does the employee behave in conflict situations?', type:'open', required:false, audience:['manager','peer','report'] },
+        { id:'tq4', text:'Rate how open the employee is to feedback.', type:'scale', required:true, audience:['manager','peer'] },
+      ],
+    },
+    { id:'ts2', title:'Technical leadership', hint:'Questions about technical expertise and knowledge transfer.',
+      questions:[
+        { id:'tq5', text:'How effectively does the employee share knowledge?', type:'scale', required:true, audience:['manager','peer','report'] },
+        { id:'tq6', text:'Describe a time when they helped you with a technical problem.', type:'open', required:false, audience:['peer','report'] },
+        { id:'tq7', text:'How substantive are their code reviews?', type:'scale', required:false, audience:['peer','report'] },
+      ],
+    },
+  ];
+
+  state = {
+    screen: 'cycles',
+    selectedCycleId: 'c1',
+    selectedTemplateId: 't1',
+    respondPage: 0,
+    respondDone: false,
+    reportApproved: false,
+    approveDialog: false,
+    launchDialog: false,
+    toast: null,
+    flagExpanded: {},
+    highlightedSection: null,
+    editedBlocks: {},
+    newReviewers: [
+      { id:'nr1', name:'Olga Kaminskaya', relation:'manager', channel:'telegram', contact:'@okaminskaya' },
+      { id:'nr2', name:'Andrey Lebedev', relation:'peer', channel:'web', contact:'lebedev@co.ru' },
+    ],
+    selectedTplForCycle: 't1',
+    tplSectionExpanded: { ts1:true, ts2:false },
+    tplQExpanded: {},
+    tplQRequired: { tq1:true, tq4:true, tq5:true },
+    respondAnswers: {},
+    analyzeRunning: false,
+    analyzeStep: 0,
+  };
+
+  _toastTimer = null;
+
+  _sc(status) {
+    const m = {
+      collecting:{ label:'collecting', bg:'#FEF9EC', color:'#92690E' },
+      done:{ label:'done', bg:'#EEFAF2', color:'#1E6B41' },
+      pending:{ label:'draft', bg:'#F2F2F1', color:'#5B5A55' },
+      approved:{ label:'approved', bg:'#EEFAF2', color:'#1E6B41' },
+      sent:{ label:'sent', bg:'#F2F2F1', color:'#5B5A55' },
+      responded:{ label:'responded', bg:'#EEFAF2', color:'#1E6B41' },
+      declined:{ label:'declined', bg:'#FDEEED', color:'#8B2E28' },
+    };
+    return m[status] || m.pending;
+  }
+
+  _badge(status) {
+    const s = this._sc(status);
+    return { label:s.label, style:{ background:s.bg, color:s.color, padding:'2px 8px', borderRadius:'6px', fontSize:'12px', fontWeight:'500', display:'inline-block', whiteSpace:'nowrap' } };
+  }
+
+  _toast(text) {
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this.setState({ toast:text });
+    this._toastTimer = setTimeout(() => this.setState({ toast:null }), 2800);
+  }
+
+  renderVals() {
+    const {
+      screen, selectedCycleId, selectedTemplateId, respondPage, respondDone,
+      reportApproved, approveDialog, launchDialog, toast,
+      flagExpanded, highlightedSection, editedBlocks,
+      newReviewers, selectedTplForCycle, tplSectionExpanded, tplQExpanded, tplQRequired,
+      respondAnswers, analyzeRunning, analyzeStep,
+    } = this.state;
+
+    const isHRShell = screen !== 'respond';
+    const isCycles = screen === 'cycles';
+    const isNewCycle = screen === 'newCycle';
+    const isCycleDetail = screen === 'cycleDetail';
+    const isReport = screen === 'report';
+    const isTemplates = screen === 'templates';
+    const isTemplateEdit = screen === 'templateEdit';
+    const isRespond = screen === 'respond';
+
+    const navCyclesActive = ['cycles','newCycle','cycleDetail','report'].includes(screen);
+    const navTemplatesActive = ['templates','templateEdit'].includes(screen);
+    const navAct = { background:'#EBF4F0', color:'#2E5E4E', fontWeight:'500' };
+    const navInact = { background:'transparent', color:'#5B5A55' };
+    const navCyclesStyle = navCyclesActive ? navAct : navInact;
+    const navTemplatesStyle = navTemplatesActive ? navAct : navInact;
+
+    // === CYCLE LIST ===
+    const cycleRows = this.cycles.map(c => {
+      const b = this._badge(c.status);
+      return {
+        id: c.id,
+        subject: c.subject,
+        role: c.role,
+        methodology: c.methodology,
+        deadline: c.deadline,
+        progressText: `${c.progressR}/${c.progressT} responded`,
+        progressTrack: { height:'4px', background:'#E0DED8', borderRadius:'2px' },
+        progressBar: { width:`${Math.round(c.progressR/Math.max(c.progressT,1)*100)}%`, height:'4px', background:'#2E5E4E', borderRadius:'2px' },
+        badgeLabel: b.label,
+        badgeStyle: b.style,
+        updated: c.updated,
+        handleClick: () => this.setState({ screen:'cycleDetail', selectedCycleId:c.id }),
+      };
+    });
+
+    // === CYCLE DETAIL ===
+    const cycle = this.cycles.find(c => c.id === selectedCycleId) || this.cycles[0];
+    const rawRvs = this.reviewerData[selectedCycleId] || [];
+    const respondedCnt = rawRvs.filter(r => r.status === 'responded').length;
+    const totalCnt = rawRvs.length;
+    const minReq = 3;
+    const canAnalyze = respondedCnt >= minReq && !analyzeRunning;
+    const coverageBarStyle = { width:`${Math.round(respondedCnt/Math.max(totalCnt,1)*100)}%`, height:'4px', background:'#2E5E4E', borderRadius:'2px' };
+    const analyzeLabels = ['Extracting signals…', 'Building draft… 2/3', 'Finalizing report…'];
+    const analyzeButtonText = analyzeRunning ? (analyzeLabels[analyzeStep] || 'Processing…') : 'Analyze';
+    const analyzeButtonStyle = {
+      padding:'8px 16px', border:'none', borderRadius:'8px', fontWeight:'500', fontSize:'13px',
+      cursor: canAnalyze ? 'pointer' : 'default',
+      background: analyzeRunning ? '#5B5A55' : canAnalyze ? '#2E5E4E' : '#C9C7BF',
+      color:'#fff', whiteSpace:'nowrap',
+    };
+    const reviewerRows = rawRvs.map(r => {
+      const b = this._badge(r.status);
+      return {
+        id: r.id,
+        name: r.name,
+        relation: r.relation,
+        channelLabel: r.channel === 'telegram' ? 'Telegram' : 'Web',
+        channelStyle: { fontSize:'11px', fontFamily:"'JetBrains Mono',monospace", color:'#5B5A55', padding:'2px 5px', border:'1px solid #C9C7BF', borderRadius:'4px' },
+        badgeLabel: b.label,
+        badgeStyle: b.style,
+        activity: r.activity,
+        showCopyLink: r.channel === 'web' && r.status !== 'responded',
+        showRemind: r.channel === 'telegram' && r.status === 'sent' && (r.reminders || 0) < 2,
+        handleCopyLink: () => this._toast('Link copied'),
+        handleRemind: () => this._toast('Reminder sent'),
+      };
+    });
+
+    // === REPORT ===
+    const reportSectionRows = this.reportSections.map(s => {
+      const isHl = highlightedSection === s.id;
+      return {
+        id: s.id,
+        title: s.title,
+        hasScore: !!s.score,
+        scoreText: s.score ? `${s.score.toFixed(1)} / 5` : '',
+        dots: (s.dots || []).map((f, i) => ({
+          key: i,
+          dotStyle: { width:'10px', height:'10px', borderRadius:'50%', background: f ? '#1A1A18' : '#DEDCD5', display:'inline-block', flexShrink:0 },
+        })),
+        summary: s.summary,
+        quotes: s.quotes,
+        isEdited: !!editedBlocks[s.id],
+        containerStyle: { marginBottom:'44px', padding:'12px 16px', borderRadius:'8px', background: isHl ? '#F0F7F4' : 'transparent', outline: isHl ? '1px solid #B8DDD2' : 'none', transition:'background .3s ease-out' },
+        handleBlur: () => this.setState(prev => ({ editedBlocks:{ ...prev.editedBlocks, [s.id]:true } })),
+      };
+    });
+
+    const flagTypeMap = {
+      'contradiction':{ label:'contradiction', bg:'#FDEEED', color:'#8B2E28' },
+      'possible-bias':{ label:'possible bias', bg:'#FEF9EC', color:'#92690E' },
+      'low-coverage':{ label:'low coverage', bg:'#F2F2F1', color:'#5B5A55' },
+    };
+    const flagRows = this.reportFlags.map(f => {
+      const tc = flagTypeMap[f.type] || { label:f.type, bg:'#F2F2F1', color:'#5B5A55' };
+      const isExp = !!flagExpanded[f.id];
+      const isAct = highlightedSection === f.section;
+      return {
+        id: f.id,
+        typeLabel: tc.label,
+        typeStyle: { background:tc.bg, color:tc.color, padding:'2px 7px', borderRadius:'6px', fontSize:'11px', fontWeight:'500', display:'inline-block' },
+        description: f.description,
+        isExpanded: isExp,
+        toggleLabel: isExp ? 'Hide sources' : 'Show sources →',
+        cardStyle: { border:`1px solid ${isAct ? '#2E5E4E' : '#C9C7BF'}`, borderRadius:'8px', padding:'14px 16px', background:'#fff', marginBottom:'8px', cursor:'pointer', transition:'border-color .15s' },
+        sourceQuotes: f.sourceQuotes || [],
+        handleClick: () => {
+          this.setState(prev => ({
+            flagExpanded: { ...prev.flagExpanded, [f.id]:!prev.flagExpanded[f.id] },
+            highlightedSection: f.section,
+          }));
+          setTimeout(() => {
+            const el = document.getElementById(f.section);
+            if (el) {
+              const sc = document.getElementById('main-scroll');
+              if (sc) sc.scrollTop = el.offsetTop - 80;
+            }
+          }, 60);
+        },
+      };
+    });
+
+    // === NEW CYCLE ===
+    const cycleTemplates = this.templates.map(t => ({
+      id: t.id,
+      name: t.name,
+      methodology: t.methodology,
+      questionsLabel: `${t.sections} sections · ${t.questions} q`,
+      cardStyle: { border:`${selectedTplForCycle===t.id?'2':'1'}px solid ${selectedTplForCycle===t.id?'#2E5E4E':'#C9C7BF'}`, borderRadius:'8px', background: selectedTplForCycle===t.id?'#F5FAF8':'#fff', padding:'12px 14px', cursor:'pointer', display:'flex', alignItems:'flex-start', gap:'12px', marginBottom:'6px', transition:'border-color .12s' },
+      dotStyle: { width:'16px', height:'16px', borderRadius:'50%', border:`${selectedTplForCycle===t.id?'5px solid #2E5E4E':'1.5px solid #C9C7BF'}`, flexShrink:0, marginTop:'2px', transition:'border .12s' },
+      handleSelect: () => this.setState({ selectedTplForCycle:t.id }),
+    }));
+
+    const newReviewerRows = newReviewers.map(rv => ({
+      id: rv.id,
+      name: rv.name,
+      relation: rv.relation,
+      contact: rv.contact,
+      webBtnStyle: { flex:1, padding:'6px', fontSize:'12px', border:'none', cursor:'pointer', background:rv.channel==='web'?'#2E5E4E':'#fff', color:rv.channel==='web'?'#fff':'#5B5A55', fontWeight:rv.channel==='web'?'500':'400', transition:'background .12s' },
+      tgBtnStyle: { flex:1, padding:'6px', fontSize:'12px', border:'none', borderLeft:'1px solid #C9C7BF', cursor:'pointer', background:rv.channel==='telegram'?'#2E5E4E':'#fff', color:rv.channel==='telegram'?'#fff':'#5B5A55', fontWeight:rv.channel==='telegram'?'500':'400', transition:'background .12s' },
+      handleSetWeb: () => this.setState(prev => ({ newReviewers:prev.newReviewers.map(r => r.id===rv.id?{...r,channel:'web'}:r) })),
+      handleSetTg: () => this.setState(prev => ({ newReviewers:prev.newReviewers.map(r => r.id===rv.id?{...r,channel:'telegram'}:r) })),
+      handleRemove: () => this.setState(prev => ({ newReviewers:prev.newReviewers.filter(r => r.id!==rv.id) })),
+    }));
+
+    // === TEMPLATES ===
+    const methodologyCards = this.templates.filter(t => t.system).map(t => ({
+      id:t.id, name:t.name, methodology:t.methodology, sectionsLabel:`${t.sections} sec · ${t.questions} q`,
+      handleClone: (e) => { e.stopPropagation(); this._toast('Template cloned'); },
+      handleEdit: () => this.setState({ screen:'templateEdit', selectedTemplateId:t.id }),
+    }));
+    const userTemplateCards = this.templates.filter(t => !t.system).map(t => ({
+      id:t.id, name:t.name, methodology:t.methodology, sectionsLabel:`${t.sections} sec · ${t.questions} q`,
+      lastEditedLabel: `Edited ${t.lastEdited}`,
+      handleEdit: () => this.setState({ screen:'templateEdit', selectedTemplateId:t.id }),
+      handleClone: (e) => { e.stopPropagation(); this._toast('Template cloned'); },
+      handleArchive: (e) => { e.stopPropagation(); this._toast('Template archived'); },
+    }));
+
+    // === TEMPLATE EDITOR ===
+    const editTpl = this.templates.find(t => t.id === selectedTemplateId) || this.templates[0];
+    const templateSectionRows = this.templateSections.map(s => ({
+      id: s.id,
+      title: s.title,
+      hint: s.hint,
+      isExpanded: !!tplSectionExpanded[s.id],
+      questionCount: s.questions.length,
+      chevron: tplSectionExpanded[s.id] ? '▾' : '▸',
+      handleToggle: () => this.setState(prev => ({ tplSectionExpanded:{ ...prev.tplSectionExpanded, [s.id]:!prev.tplSectionExpanded[s.id] } })),
+      questionRows: s.questions.map((q, qi) => {
+        const isReq = !!tplQRequired[q.id];
+        return {
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          typeLabel: { scale:'Scale', open:'Open', 'start-stop-continue':'Start/Stop/Continue' }[q.type]||q.type,
+          audienceLabel: (q.audience||[]).join(', '),
+          required: isReq,
+          idx: String(qi+1).padStart(2,'0'),
+          isExpanded: !!tplQExpanded[q.id],
+          chevron: tplQExpanded[q.id] ? '▾' : '▸',
+          reqToggleStyle: { background: isReq ? '#2E5E4E' : '#C9C7BF' },
+          reqDotStyle: { left: isReq ? '17px' : '3px' },
+          handleToggle: () => this.setState(prev => ({ tplQExpanded:{ ...prev.tplQExpanded, [q.id]:!prev.tplQExpanded[q.id] } })),
+          handleToggleRequired: (e) => { e.stopPropagation(); this.setState(prev => ({ tplQRequired:{ ...prev.tplQRequired, [q.id]:!prev.tplQRequired[q.id] } })); },
+        };
+      }),
+    }));
+
+    // === RESPONDENT ===
+    const rSection = this.respondSections[respondPage] || this.respondSections[0];
+    const respondProgressBarStyle = { width:`${Math.round(respondPage/this.respondSections.length*100)}%`, height:'4px', background:'#2E5E4E', borderRadius:'2px', transition:'width .25s ease-out' };
+    const respondQuestions = rSection.questions.map(q => ({
+      id: q.id,
+      text: q.text,
+      required: q.required,
+      isScale: q.type === 'scale',
+      isOpen: q.type === 'open',
+      hasHint: !!q.hint,
+      hint: q.hint || '',
+      anchorItems: (q.anchors||[]).map((a,i) => ({
+        key: i,
+        value: String(i+1),
+        label: a,
+        buttonStyle: { border: respondAnswers[q.id]===i+1 ? '2px solid #2E5E4E' : '1px solid #C9C7BF', background: respondAnswers[q.id]===i+1 ? '#F0F7F4':'#fff', borderRadius:'8px', padding:'11px 14px', textAlign:'left', cursor:'pointer', lineHeight:'1.45', fontSize:'14px', width:'100%', display:'flex', alignItems:'center', gap:'10px', transition:'border-color .12s,background .12s' },
+        handleClick: () => this.setState(prev => ({ respondAnswers:{ ...prev.respondAnswers, [q.id]:i+1 } })),
+      })),
+      handleTextInput: (e) => this.setState(prev => ({ respondAnswers:{ ...prev.respondAnswers, [q.id]:e.target.value } })),
+    }));
+
+    return {
+      isHRShell, isRespond,
+      isCycles, isNewCycle, isCycleDetail, isReport, isTemplates, isTemplateEdit,
+      isRespondForm: !respondDone,
+      respondDone,
+
+      navCyclesStyle, navTemplatesStyle,
+      navToCycles: () => this.setState({ screen:'cycles' }),
+      navToTemplates: () => this.setState({ screen:'templates' }),
+      navToNewCycle: () => this.setState({ screen:'newCycle' }),
+      navToRespond: () => this.setState({ screen:'respond', respondPage:0, respondDone:false, respondAnswers:{} }),
+      navBackFromNewCycle: () => this.setState({ screen:'cycles' }),
+      navBackFromCycleDetail: () => this.setState({ screen:'cycles' }),
+      navBackFromReport: () => this.setState({ screen:'cycleDetail' }),
+      navBackFromTemplateEdit: () => this.setState({ screen:'templates' }),
+
+      cycleRows,
+
+      cycleName: cycle.subject,
+      cycleRole: cycle.role,
+      cycleMethodology: cycle.methodology,
+      cycleDeadline: cycle.deadline,
+      cycleDaysLeft: `${cycle.daysLeft} days left`,
+      cycleBadgeLabel: this._badge(cycle.status).label,
+      cycleBadgeStyle: this._badge(cycle.status).style,
+      coverageText: `${respondedCnt} of ${totalCnt} responded · minimum ${minReq}`,
+      coverageBarStyle,
+      reviewerRows,
+      canAnalyze,
+      analyzeButtonText,
+      analyzeButtonStyle,
+      handleAnalyze: () => {
+        if (!canAnalyze) return;
+        this.setState({ analyzeRunning:true, analyzeStep:0 });
+        [0,1,2].forEach((step,i) => {
+          setTimeout(() => {
+            this.setState({ analyzeStep:step });
+            if (i===2) setTimeout(() => this.setState({ analyzeRunning:false, screen:'report' }), 1200);
+          }, i*1200);
+        });
+      },
+
+      reportApproved,
+      reportNotApproved: !reportApproved,
+      reportCycleName: cycle.subject,
+      reportSectionRows,
+      flagRows,
+      approveDialog,
+      openApproveDialog: () => this.setState({ approveDialog:true }),
+      closeApproveDialog: () => this.setState({ approveDialog:false }),
+      confirmApprove: () => { this.setState({ approveDialog:false, reportApproved:true }); this._toast('Report approved'); },
+      bTrue: true,
+
+      cycleTemplates,
+      newReviewerRows,
+      addReviewer: () => {
+        const id = 'nr'+Date.now();
+        this.setState(prev => ({ newReviewers:[...prev.newReviewers, { id, name:'', relation:'peer', channel:'web', contact:'' }] }));
+      },
+      launchDialog,
+      openLaunchDialog: () => this.setState({ launchDialog:true }),
+      closeLaunchDialog: () => this.setState({ launchDialog:false }),
+      confirmLaunch: () => { this.setState({ launchDialog:false, screen:'cycles' }); this._toast('Cycle launched'); },
+
+      methodologyCards,
+      userTemplateCards,
+
+      tplName: editTpl.name,
+      tplMethodology: editTpl.methodology,
+      templateSectionRows,
+
+      respondSubjectLine: 'Feedback on Marina Sokolova',
+      respondTypeLabel: '360° Feedback · Deadline: Jun 25',
+      respondConfidentiality: 'Visible to HR only, in aggregated form. Not anonymous, but confidential.',
+      respondSectionTitle: rSection.title,
+      respondSectionIndex: String(respondPage+1),
+      respondTotalSections: String(this.respondSections.length),
+      respondProgressBarStyle,
+      respondQuestions,
+      respondBack: () => this.setState(prev => ({ respondPage:Math.max(0,prev.respondPage-1) })),
+      respondNext: () => {
+        if (respondPage < this.respondSections.length-1) this.setState(prev => ({ respondPage:prev.respondPage+1 }));
+        else this.setState({ respondDone:true });
+      },
+      respondBackStyle: { padding:'9px 16px', border:'1px solid #C9C7BF', borderRadius:'8px', background:'#fff', color:'#5B5A55', cursor:'pointer', visibility: respondPage>0?'visible':'hidden' },
+      respondNextLabel: respondPage < this.respondSections.length-1 ? 'Next →' : 'Submit',
+
+      showToast: !!toast,
+      toastText: toast || '',
+    };
+  }
+}
+</script>
+</body>
+</html>

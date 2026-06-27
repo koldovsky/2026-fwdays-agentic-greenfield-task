@@ -1,0 +1,103 @@
+<!-- @dsCard group="Kolo360" viewport="1100x560" subtitle="Cycles list — HR home with status & progress" -->
+<!-- @startingPoint section="Kolo360" subtitle="Cycles list — dense table with status + progress" viewport="1100x700" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Kolo360 — Cycles</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-ui);font-size:var(--text-body);color:var(--ink);background:var(--paper);line-height:var(--leading-snug)}
+  .shell{display:flex;min-height:100vh}
+  .side{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--line-strong);display:flex;flex-direction:column}
+  .brand{padding:20px 20px 16px;font-weight:var(--weight-semibold);font-size:15px;letter-spacing:-.01em}
+  .div{height:1px;background:var(--line-strong);margin:0 12px}
+  .nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+  .nav-item{padding:8px 12px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-muted);cursor:pointer}
+  .nav-item.active{background:var(--green-tint-3);color:var(--green);font-weight:var(--weight-medium)}
+  .user{margin-top:auto;padding:12px 16px;border-top:1px solid var(--line-strong)}
+  .user-name{font-size:13px;font-weight:var(--weight-medium)}
+  .user-role{font-size:12px;color:var(--ink-muted);margin-top:1px}
+  .main{flex:1;overflow-y:auto}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 32px 48px}
+  .head{padding:22px 0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line-strong);margin-bottom:20px}
+  h1{font-size:var(--text-lg);font-weight:var(--weight-medium);margin:0}
+  .new{padding:7px 14px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-md);cursor:pointer;font-size:13px;font-weight:var(--weight-medium)}
+  .cols,.row{display:grid;grid-template-columns:200px 110px 90px 1fr 110px 74px;column-gap:8px;align-items:center}
+  .cols{padding:0 12px;margin-bottom:6px}
+  .col-h{font-size:11px;color:var(--ink-muted);font-weight:var(--weight-medium);text-transform:uppercase;letter-spacing:.05em}
+  .row{padding:12px;border:1px solid var(--line-soft);border-radius:var(--radius-md);background:#fff;margin-bottom:5px;cursor:pointer}
+  .row:hover{background:#F7F6F2}
+  .subj{font-weight:var(--weight-medium)}
+  .role{font-size:12px;color:var(--ink-muted);margin-top:2px}
+  .chip{font-size:12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:2px 6px;color:var(--ink-muted)}
+  .cell-muted{color:var(--ink-muted);font-size:13px}
+  .prog-text{font-size:12px;color:var(--ink-muted);margin-bottom:5px}
+  .track{height:4px;background:var(--line);border-radius:2px}
+  .fill{height:4px;background:var(--green);border-radius:2px}
+  .badge{padding:2px 8px;border-radius:var(--radius-sm);font-size:12px;font-weight:var(--weight-medium);display:inline-block}
+  .updated{color:var(--ink-muted);font-size:12px}
+</style></head>
+<body>
+  <div class="shell">
+    <aside class="side">
+      <div class="brand">Kolo360</div>
+      <div class="div"></div>
+      <nav class="nav">
+        <div class="nav-item active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Cycles
+        </div>
+        <div class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          Templates
+        </div>
+      </nav>
+      <div class="user">
+        <div class="user-name">Irina Smirnova</div>
+        <div class="user-role">HR Manager</div>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="wrap">
+        <div class="head">
+          <h1>Cycles</h1>
+          <button class="new">New cycle</button>
+        </div>
+        <div class="cols">
+          <div class="col-h">Subject</div><div class="col-h">Methodology</div><div class="col-h">Deadline</div>
+          <div class="col-h">Progress</div><div class="col-h">Status</div><div class="col-h">Updated</div>
+        </div>
+        <div class="row">
+          <div><div class="subj">Marina Sokolova</div><div class="role">Senior Engineer</div></div>
+          <div><span class="chip">360°</span></div>
+          <div class="cell-muted">Jun 25</div>
+          <div><div class="prog-text">5/6 responded</div><div class="track"><div class="fill" style="width:83%"></div></div></div>
+          <div><span class="badge" style="background:var(--warn-fill);color:var(--warn-ink)">collecting</span></div>
+          <div class="updated">Jun 10</div>
+        </div>
+        <div class="row">
+          <div><div class="subj">Dmitry Volkov</div><div class="role">Product Manager</div></div>
+          <div><span class="chip">Performance</span></div>
+          <div class="cell-muted">Jun 18</div>
+          <div><div class="prog-text">3/3 responded</div><div class="track"><div class="fill" style="width:100%"></div></div></div>
+          <div><span class="badge" style="background:var(--green-tint-4);color:var(--green-ink)">done</span></div>
+          <div class="updated">Jun 9</div>
+        </div>
+        <div class="row">
+          <div><div class="subj">Anna Belova</div><div class="role">Designer</div></div>
+          <div><span class="chip">360°</span></div>
+          <div class="cell-muted">Jun 30</div>
+          <div><div class="prog-text">1/5 responded</div><div class="track"><div class="fill" style="width:20%"></div></div></div>
+          <div><span class="badge" style="background:var(--warn-fill);color:var(--warn-ink)">collecting</span></div>
+          <div class="updated">Jun 11</div>
+        </div>
+        <div class="row">
+          <div><div class="subj">Ivan Petrov</div><div class="role">Backend Developer</div></div>
+          <div><span class="chip">Probation</span></div>
+          <div class="cell-muted">Jun 15</div>
+          <div><div class="prog-text">0/4 responded</div><div class="track"><div class="fill" style="width:0%"></div></div></div>
+          <div><span class="badge" style="background:var(--neutral-fill);color:var(--ink-muted)">draft</span></div>
+          <div class="updated">Jun 8</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body></html>

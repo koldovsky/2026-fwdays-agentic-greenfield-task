@@ -1,0 +1,50 @@
+:root {
+  /* ── Spacing scale (px) ────────────────────────────────────
+     Roughly a 4px base. Dense UI leans on 4–16; the report on 24–44. */
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  6px;
+  --space-4:  8px;
+  --space-5:  10px;
+  --space-6:  12px;
+  --space-7:  16px;
+  --space-8:  20px;
+  --space-9:  24px;
+  --space-10: 32px;
+  --space-11: 40px;
+  --space-12: 44px;
+
+  /* ── Radii ─────────────────────────────────────────────────
+     Two workhorse radii. 6px for small controls/chips, 8px for
+     cards, inputs, buttons & dialogs. 50% for dots/avatars. */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-pill: 999px;
+  --radius-full: 50%;
+
+  /* ── Borders ───────────────────────────────────────────────
+     1px hairlines everywhere; selection promotes to 2px. */
+  --border-width:     1px;
+  --border-width-sel: 2px;
+
+  /* ── Elevation ─────────────────────────────────────────────
+     Shadows are rare and soft — reserved for overlays. Surfaces
+     are separated by hairline borders, not shadow. */
+  --shadow-dialog: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-toast:  0 4px 16px rgba(0,0,0,0.18);
+  --shadow-card:   0 1px 3px rgba(0,0,0,0.08);
+
+  /* ── Motion ────────────────────────────────────────────────
+     Quick, functional. 120ms for hover/state; 250–300ms for
+     progress & section highlight. Default ease-out, no bounce. */
+  --motion-fast:  120ms;
+  --motion-mid:   250ms;
+  --motion-slow:  300ms;
+  --ease:         ease-out;
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  --sidebar-width:   220px;
+  --content-narrow:  640px;  /* respondent form, dialogs */
+  --content-form:    760px;  /* new cycle, template editor */
+  --content-wide:    1100px; /* lists, detail, report */
+}

@@ -1,0 +1,41 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Core — Button · Badge · Chip · Card" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;font-family:var(--font-ui);background:var(--paper);padding:22px;color:var(--ink)}
+  .grp{margin-bottom:20px}
+  .lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted);margin-bottom:10px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{font-family:var(--font-ui);font-weight:500;border-radius:8px;cursor:pointer;line-height:1.2}
+  .primary{background:var(--green);color:#fff;border:none;padding:8px 16px;font-size:13px}
+  .secondary{background:#fff;color:var(--ink-muted);border:1px solid var(--line-strong);padding:8px 16px;font-size:13px}
+  .ghost{background:transparent;color:var(--ink-muted);border:none;padding:8px 16px;font-size:13px}
+  .dashed{background:transparent;color:var(--ink-muted);border:1px dashed var(--line-strong);padding:6px 12px;font-size:13px}
+  .disabled{background:var(--line-strong);color:#fff;border:none;padding:8px 16px;font-size:13px}
+  .badge{padding:2px 8px;border-radius:6px;font-size:12px;font-weight:500}
+  .chip{font-size:11px;border:1px solid var(--line-strong);border-radius:6px;padding:2px 6px;color:var(--ink-muted)}
+  .card{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:14px 16px;font-size:13px;width:150px}
+  .card.sel{border:2px solid var(--green);background:var(--green-tint-1)}
+</style></head><body>
+  <div class="grp"><div class="lbl">Button</div><div class="row">
+    <button class="primary">Launch cycle</button>
+    <button class="secondary">Save draft</button>
+    <button class="ghost">Cancel</button>
+    <button class="dashed">+ Add reviewer</button>
+    <button class="disabled">Approved</button>
+  </div></div>
+  <div class="grp"><div class="lbl">StatusBadge</div><div class="row">
+    <span class="badge" style="background:var(--green-tint-4);color:var(--green-ink)">done</span>
+    <span class="badge" style="background:var(--warn-fill);color:var(--warn-ink)">collecting</span>
+    <span class="badge" style="background:var(--neutral-fill);color:var(--ink-muted)">sent</span>
+    <span class="badge" style="background:var(--danger-fill);color:var(--danger-ink)">declined</span>
+  </div></div>
+  <div class="grp"><div class="lbl">Chip</div><div class="row">
+    <span class="chip">360°</span><span class="chip">Performance</span>
+    <span class="chip" style="font-family:var(--font-mono)">web</span>
+    <span class="chip" style="font-family:var(--font-mono)">telegram</span>
+  </div></div>
+  <div class="grp" style="margin-bottom:0"><div class="lbl">Card</div><div class="row">
+    <div class="card"><div style="font-weight:500">360° Feedback</div><div style="color:var(--ink-muted);font-size:12px;margin-top:3px">5 sec · 24 q</div></div>
+    <div class="card sel"><div style="font-weight:500">Performance Review</div><div style="color:var(--ink-muted);font-size:12px;margin-top:3px">selected</div></div>
+  </div></div>
+</body></html>

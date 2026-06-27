@@ -1,0 +1,102 @@
+<!-- @dsCard group="Kolo360" viewport="1180x620" subtitle="Report — the AI-drafted approval gate" -->
+<!-- @startingPoint section="Kolo360" subtitle="Report screen — editable AI draft + calibration flags" viewport="1180x900" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Kolo360 — Report</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-ui);font-size:var(--text-body);color:var(--ink);background:var(--paper);line-height:var(--leading-snug)}
+  .approved-banner{background:var(--green-tint-4);border-bottom:1px solid var(--green-line-2);padding:9px 32px;font-size:12px;color:var(--green-ink);font-family:var(--font-mono)}
+  .topbar{padding:18px 32px 16px;border-bottom:1px solid var(--line-strong);display:flex;align-items:center;gap:10px;background:var(--paper)}
+  .back{padding:5px 10px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:#fff;color:var(--ink-muted);cursor:pointer;font-size:13px}
+  h1{font-size:var(--text-lg);font-weight:var(--weight-medium);margin:0}
+  .sub{font-size:12px;color:var(--ink-muted);margin-top:2px}
+  .layout{display:grid;grid-template-columns:1fr 300px;max-width:1160px;margin:0 auto;padding:0 32px}
+  .main{padding:32px 40px 40px 0;border-right:1px solid var(--line-soft)}
+  .section{margin-bottom:44px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:12px}
+  .sec-title{font-family:var(--font-serif);font-size:var(--text-serif-h);font-weight:var(--weight-medium);line-height:var(--leading-tight);margin:0}
+  .score{font-size:13px;color:var(--ink-muted);white-space:nowrap;flex-shrink:0}
+  .dots{display:flex;gap:7px;align-items:center;margin-bottom:16px}
+  .d{width:10px;height:10px;border-radius:50%}.f{background:var(--ink)}.e{background:var(--dot-empty)}
+  .prose{font-family:var(--font-serif);font-size:var(--text-serif);line-height:var(--leading-relaxed);color:var(--ink);border-radius:4px;padding:2px 4px}
+  .prose:hover{outline:1px dashed var(--line-strong);outline-offset:5px;cursor:text}
+  .quote{border-left:2px solid var(--green);padding:10px 20px;margin-top:18px}
+  .quote-text{font-family:var(--font-serif);font-style:italic;font-size:16px;line-height:1.65}
+  .quote-src{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);margin-top:7px}
+  .rail{padding:32px 0 40px 24px}
+  .rail-lbl{font-size:11px;font-weight:var(--weight-medium);color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+  .flag{border:1px solid var(--line-strong);border-radius:var(--radius-md);padding:14px 16px;background:#fff;margin-bottom:8px;cursor:pointer}
+  .flag-type{padding:2px 7px;border-radius:var(--radius-sm);font-size:11px;font-weight:var(--weight-medium);display:inline-block;margin-bottom:8px;white-space:nowrap}
+  .flag-desc{font-size:13px;line-height:1.55}
+  .flag-toggle{font-size:11px;color:var(--green);margin-top:8px;font-weight:var(--weight-medium)}
+  .footer{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line-strong);padding:12px 32px;display:flex;align-items:center;justify-content:space-between}
+  .footer-note{font-size:12px;color:var(--ink-muted)}
+  .approve{padding:8px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-md);cursor:pointer;font-weight:var(--weight-medium);font-size:13px}
+</style></head>
+<body>
+  <div class="topbar">
+    <button class="back">←</button>
+    <div>
+      <h1>Report: Marina Sokolova</h1>
+      <div class="sub">360° Feedback · AI draft — review and approve</div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="main">
+      <div class="section">
+        <div class="sec-head">
+          <h2 class="sec-title">Communication &amp; collaboration</h2>
+          <span class="score">4.1 / 5</span>
+        </div>
+        <div class="dots"><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d e"></span></div>
+        <div class="prose" contenteditable="true">Marina demonstrates exceptional clarity in communication — multiple reviewers noted that her written explanations of technical decisions are accessible even to colleagues without deep technical backgrounds. In team discussions she proactively initiates alignment, though under deadline pressure her sync cadence decreases noticeably.</div>
+        <div class="quote">
+          <div class="quote-text">On the last release Marina wrote a doc explaining the architecture decision — three colleagues understood it without any additional meetings.</div>
+          <div class="quote-src">R2 · peer</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-head">
+          <h2 class="sec-title">Technical leadership</h2>
+          <span class="score">4.4 / 5</span>
+        </div>
+        <div class="dots"><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d f"></span></div>
+        <div class="prose" contenteditable="true">Demonstrates deep technical expertise and actively transfers knowledge to the team. Marina's code reviews are substantive — they develop understanding rather than merely fix errors. Several reviewers expressed a desire for a more structured mentoring role.</div>
+        <div class="quote">
+          <div class="quote-text">In reviews Marina always explains "why", not just "what to fix". That's more valuable than just pointing to a mistake.</div>
+          <div class="quote-src">R4 · report</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-head">
+          <h2 class="sec-title">Delivery &amp; execution</h2>
+          <span class="score">3.8 / 5</span>
+        </div>
+        <div class="dots"><span class="d f"></span><span class="d f"></span><span class="d f"></span><span class="d e"></span><span class="d e"></span></div>
+        <div class="prose" contenteditable="true">Work quality is consistently high and urgent tasks are closed on time. However, several reviewers flag unpredictability in estimating task complexity, which creates end-of-sprint pressure for the broader team.</div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="rail-lbl">Calibration flags</div>
+      <div class="flag">
+        <span class="flag-type" style="background:var(--danger-fill);color:var(--danger-ink)">contradiction</span>
+        <div class="flag-desc">Delivery scores diverge: manager 3/5 vs peers 4.4/5 average. Possible context gap — manager observes sprint planning, peers observe execution.</div>
+        <div class="flag-toggle">Show sources →</div>
+      </div>
+      <div class="flag">
+        <span class="flag-type" style="background:var(--warn-fill);color:var(--warn-ink)">possible bias</span>
+        <div class="flag-desc">R1 (manager) — all 5 scores from this reviewer are 0.8 pts above average. Check for systematic overrating.</div>
+        <div class="flag-toggle">Show sources →</div>
+      </div>
+      <div class="flag">
+        <span class="flag-type" style="background:var(--neutral-fill);color:var(--ink-muted)">low coverage</span>
+        <div class="flag-desc">"Growth areas" received only 2 open-text responses out of 6 possible.</div>
+        <div class="flag-toggle">Show sources →</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-note">Approving locks the report. The raw dialogs stay private to HR.</div>
+    <button class="approve">Approve report</button>
+  </div>
+</body></html>

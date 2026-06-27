@@ -1,0 +1,45 @@
+:root {
+  /* ── Base neutrals ─────────────────────────────────────────
+     A warm, paper-like greyscale. Never pure white/black. */
+  --paper:        #FAF9F6;  /* app background */
+  --surface:      #FFFFFF;  /* cards, sidebar, dialogs */
+  --ink:          #1A1A18;  /* primary text, scale dots */
+  --ink-muted:    #5B5A55;  /* secondary text, labels, captions */
+
+  /* Borders & hairlines, light → strong */
+  --line-faint:   #F2F1EE;  /* row dividers inside cards */
+  --line-soft:    #E8E7E3;  /* default card borders */
+  --line:         #E0DED8;  /* progress tracks */
+  --line-strong:  #C9C7BF;  /* inputs, sidebar divider, emphasised borders */
+  --dot-empty:    #DEDCD5;  /* unfilled scale dots */
+
+  /* ── Brand green ───────────────────────────────────────────
+     A single deep evergreen carries every primary action. */
+  --green:        #2E5E4E;  /* primary buttons, active state, selection */
+  --green-ink:    #1E6B41;  /* green text on light tints (approved, done) */
+  --green-tint-1: #F5FAF8;  /* selected card fill */
+  --green-tint-2: #F0F7F4;  /* highlighted section / selected option fill */
+  --green-tint-3: #EBF4F0;  /* active nav item fill */
+  --green-tint-4: #EEFAF2;  /* success badge fill */
+  --green-line:   #B8DDD2;  /* highlighted section outline */
+  --green-line-2: #B8E0C9;  /* approved banner border */
+
+  /* ── Semantic status ───────────────────────────────────────
+     Muted, low-chroma. Used only in badges & flags. */
+  --warn-fill:    #FEF9EC;
+  --warn-ink:     #92690E;
+  --danger-fill:  #FDEEED;
+  --danger-ink:   #8B2E28;
+  --neutral-fill: #F2F2F1;  /* draft / sent / low-coverage chip */
+
+  /* ── Semantic aliases (prefer these in product code) ──────── */
+  --bg-app:           var(--paper);
+  --surface-card:     var(--surface);
+  --text-primary:     var(--ink);
+  --text-secondary:   var(--ink-muted);
+  --border-default:   var(--line-soft);
+  --border-input:     var(--line-strong);
+  --accent:           var(--green);
+  --accent-text:      var(--green-ink);
+  --focus-ring:       var(--green);
+}

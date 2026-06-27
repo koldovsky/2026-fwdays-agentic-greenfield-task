@@ -1,0 +1,40 @@
+:root {
+  /* ── Families ──────────────────────────────────────────────
+     Inter        — UI, everything chrome & data.
+     Source Serif 4 — report prose & section headings only. The
+                      editorial serif signals "human writing", not UI.
+     JetBrains Mono — IDs, contacts, scale values, source codes. */
+  --font-ui:     "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif:  "Source Serif 4", "Lora", Georgia, serif;
+  --font-mono:   "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* ── Type scale (px) ───────────────────────────────────────
+     UI runs small and dense; the report runs large and airy. */
+  --text-xs:     11px;  /* uppercase labels, badges, mono meta */
+  --text-sm:     12px;  /* captions, table meta */
+  --text-base:   13px;  /* dense table cells, controls */
+  --text-body:   14px;  /* default body */
+  --text-md:     15px;  /* dialog titles, sidebar brand */
+  --text-lg:     17px;  /* page (h1) titles */
+  --text-xl:     19px;  /* respondent section title */
+  --text-serif:  17px;  /* report body prose (serif) */
+  --text-serif-h:20px;  /* report section heading (serif) */
+
+  /* ── Weights ───────────────────────────────────────────────
+     Restrained: 400 body, 500 for nearly all emphasis, 600 only
+     for the wordmark. No bold (700) in UI. */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  /* ── Line heights ──────────────────────────────────────────  */
+  --leading-tight:  1.2;   /* headings */
+  --leading-snug:   1.45;  /* UI body */
+  --leading-normal: 1.55;  /* secondary text */
+  --leading-relaxed:1.75;  /* report serif prose */
+
+  /* Uppercase label treatment (section eyebrows, table heads) */
+  --label-size:    11px;
+  --label-spacing: 0.05em;
+  --label-transform: uppercase;
+}

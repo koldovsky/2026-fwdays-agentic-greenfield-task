@@ -1,0 +1,118 @@
+/* Kolo360 design tokens — the live, in-app copy of docs/KoloDesign/tokens/*.
+   Source of truth for the brand is docs/KoloDesign/ (see DESIGN.md). Font
+   families resolve to the next/font variables wired in app/layout.tsx. */
+:root {
+  /* ── Base neutrals (warm, paper-like greyscale; never pure white/black) ── */
+  --paper:        #FAF9F6;  /* app background */
+  --surface:      #FFFFFF;  /* cards, sidebar, dialogs */
+  --ink:          #1A1A18;  /* primary text, scale dots */
+  --ink-muted:    #5B5A55;  /* secondary text, labels, captions */
+
+  /* Borders & hairlines, light → strong */
+  --line-faint:   #F2F1EE;
+  --line-soft:    #E8E7E3;
+  --line:         #E0DED8;
+  --line-strong:  #C9C7BF;
+  --dot-empty:    #DEDCD5;
+
+  /* ── Brand green (single deep evergreen accent) ── */
+  --green:        #2E5E4E;
+  --green-ink:    #1E6B41;
+  --green-tint-1: #F5FAF8;
+  --green-tint-2: #F0F7F4;
+  --green-tint-3: #EBF4F0;
+  --green-tint-4: #EEFAF2;
+  --green-line:   #B8DDD2;
+  --green-line-2: #B8E0C9;
+
+  /* ── Semantic status (muted, low-chroma; badges & flags only) ── */
+  --warn-fill:    #FEF9EC;
+  --warn-ink:     #92690E;
+  --danger-fill:  #FDEEED;
+  --danger-ink:   #8B2E28;
+  --neutral-fill: #F2F2F1;
+
+  /* ── Semantic aliases (prefer these in product code) ── */
+  --bg-app:         var(--paper);
+  --surface-card:   var(--surface);
+  --text-primary:   var(--ink);
+  --text-secondary: var(--ink-muted);
+  --border-default: var(--line-soft);
+  --border-input:   var(--line-strong);
+  --accent:         var(--green);
+  --accent-text:    var(--green-ink);
+  --focus-ring:     var(--green);
+
+  /* ── Type families (resolve to next/font vars from app/layout.tsx) ── */
+  --font-ui:    var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-source-serif), "Lora", Georgia, serif;
+  --font-mono:  var(--font-jetbrains-mono), ui-monospace, "SF Mono", monospace;
+
+  /* ── Type scale (px) ── */
+  --text-xs:      11px;
+  --text-sm:      12px;
+  --text-base:    13px;
+  --text-body:    14px;
+  --text-md:      15px;
+  --text-lg:      17px;
+  --text-xl:      19px;
+  --text-serif:   17px;
+  --text-serif-h: 20px;
+
+  /* ── Weights (400 body, 500 emphasis, 600 wordmark only; no 700 in UI) ── */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  /* ── Line heights ── */
+  --leading-tight:   1.2;
+  --leading-snug:    1.45;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.75;
+
+  /* Uppercase label treatment (eyebrows, table heads) */
+  --label-size:      11px;
+  --label-spacing:   0.05em;
+  --label-transform: uppercase;
+
+  /* ── Spacing scale (~4px base) ── */
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  6px;
+  --space-4:  8px;
+  --space-5:  10px;
+  --space-6:  12px;
+  --space-7:  16px;
+  --space-8:  20px;
+  --space-9:  24px;
+  --space-10: 32px;
+  --space-11: 40px;
+  --space-12: 44px;
+
+  /* ── Radii (6px small controls, 8px cards/inputs/buttons; pill; full) ── */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-pill: 999px;
+  --radius-full: 50%;
+
+  /* ── Borders (1px hairlines; 2px on selection) ── */
+  --border-width:     1px;
+  --border-width-sel: 2px;
+
+  /* ── Elevation (shadows only on overlays; surfaces use hairline borders) ── */
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-toast:  0 4px 16px rgba(0, 0, 0, 0.18);
+  --shadow-card:   0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* ── Motion (quick, functional, ease-out, no bounce) ── */
+  --motion-fast: 120ms;
+  --motion-mid:  250ms;
+  --motion-slow: 300ms;
+  --ease:        ease-out;
+
+  /* ── Layout widths ── */
+  --sidebar-width:  220px;
+  --content-narrow: 640px;
+  --content-form:   760px;
+  --content-wide:   1100px;
+}

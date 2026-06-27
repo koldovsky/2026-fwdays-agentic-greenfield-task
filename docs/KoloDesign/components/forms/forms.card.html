@@ -1,0 +1,42 @@
+<!-- @dsCard group="Components" viewport="700x440" name="Forms — Input · Select · Switch · Textarea · ScaleOption" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;font-family:var(--font-ui);background:var(--paper);padding:22px;color:var(--ink)}
+  .lbl{display:block;font-size:13px;color:var(--ink-muted);margin-bottom:5px}
+  .hint{color:var(--line-strong);font-size:11px;margin-left:5px}
+  input,select{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);font-family:var(--font-ui);font-size:14px;box-sizing:border-box}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:520px}
+  .sw{display:flex;align-items:center;gap:10px;margin-top:18px}
+  .toggle{width:34px;height:20px;border-radius:999px;position:relative}
+  .knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px}
+</style></head><body>
+  <div class="grid">
+    <label><span class="lbl">Name</span><input value="Marina Sokolova"></label>
+    <label><span class="lbl">Role<span class="hint">(optional)</span></span><input value="Senior Engineer"></label>
+    <label><span class="lbl">Relation</span><select><option>peer</option><option>manager</option><option>report</option></select></label>
+    <label><span class="lbl">Deadline</span><input value="2026-06-25"></label>
+  </div>
+  <div class="sw">
+    <div class="toggle" style="background:var(--green)"><div class="knob" style="left:17px"></div></div>
+    <span style="font-size:13px;color:var(--ink-muted)">Required — on</span>
+  </div>
+  <div class="sw">
+    <div class="toggle" style="background:var(--line-strong)"><div class="knob" style="left:3px"></div></div>
+    <span style="font-size:13px;color:var(--ink-muted)">Required — off</span>
+  </div>
+  <div style="max-width:520px;margin-top:22px">
+    <span class="lbl">Open answer (Textarea)</span>
+    <textarea rows="2" style="width:100%;padding:12px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;font-family:var(--font-ui);font-size:14px;box-sizing:border-box;resize:vertical" placeholder="Your answer…"></textarea>
+  </div>
+  <div style="max-width:520px;margin-top:18px">
+    <span class="lbl">Scale options (ScaleOption)</span>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:1px solid var(--line-strong);background:#fff;cursor:pointer;font-family:var(--font-ui);font-size:14px">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--line-strong);min-width:18px;text-align:center">3</span><span>Generally understandable</span>
+      </button>
+      <button style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:2px solid var(--green);background:var(--green-tint-2);cursor:pointer;font-family:var(--font-ui);font-size:14px">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--line-strong);min-width:18px;text-align:center">4</span><span>Clear and structured</span>
+      </button>
+    </div>
+  </div>
+</body></html>

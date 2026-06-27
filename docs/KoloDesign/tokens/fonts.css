@@ -1,0 +1,5 @@
+/* Webfonts for Kolo360.
+   The product uses three Google Fonts. We load them via @import so consumers
+   pick them up from this single CSS closure. If you need offline binaries,
+   replace these with @font-face rules pointing at copied .woff2 files. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400;1,8..60,500&family=JetBrains+Mono:wght@400;500&display=swap");

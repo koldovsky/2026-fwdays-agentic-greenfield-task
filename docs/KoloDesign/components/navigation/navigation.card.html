@@ -1,0 +1,21 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Navigation — NavItem (sidebar)" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;font-family:var(--font-ui);background:var(--paper);padding:22px;color:var(--ink)}
+  .side{width:220px;background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:2px}
+  .brand{padding:12px 12px 10px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--ink-muted);cursor:pointer}
+  .item.active{background:var(--green-tint-3);color:var(--green);font-weight:500}
+</style></head><body>
+  <div class="side">
+    <div class="brand">Kolo360</div>
+    <div class="item active">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Cycles
+    </div>
+    <div class="item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+      Templates
+    </div>
+  </div>
+</body></html>
