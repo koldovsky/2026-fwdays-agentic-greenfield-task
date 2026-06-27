@@ -1,47 +1,61 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# Pause — break reminder
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+Small local-first PWA that reminds you to take breaks while the app is open.
+Settings are stored in `localStorage`; break stats are stored in IndexedDB.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+## Requirements
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+- Node.js 20 or newer
+- npm
 
-## Що зробити
+## Install
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+```bash
+npm install
+```
 
-## Як здати
+## Run in development
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+```bash
+npm run dev
+```
 
-## Як оцінюється
+Open [http://localhost:3000](http://localhost:3000).
 
-Дивимось на **докази процесу**, а не на стек:
+Notes:
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+- Development uses Next.js Turbopack.
+- The service worker is disabled in development, so offline/PWA behavior should
+  be checked from a production build.
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+## Production build and local preview
 
----
+```bash
+npm run build
+npm run start
+```
 
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+Open [http://localhost:3000](http://localhost:3000).
+
+The production build uses webpack (`next build --webpack`) because Serwist
+generates the service worker during the build.
+
+## Verify the project
+
+Run the same checks used by the project harness:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npx openspec validate --all --strict
+npx fallow audit
+```
+
+## Useful docs
+
+- Product intent: [docs/product-brief.md](docs/product-brief.md)
+- Requirements: [docs/requirements.md](docs/requirements.md)
+- Design system: [DESIGN.md](DESIGN.md)
+- Living specs: [openspec/specs/](openspec/specs/)
