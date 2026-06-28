@@ -8,17 +8,18 @@
  */
 
 /** Stable key used to resolve the label (i18n) and icon (components) by lookup. */
-export type CabinetNavKey = "cycles" | "employees";
+export type CabinetNavKey = "cycles" | "employees" | "usage";
 
 export type CabinetNavItem = {
   key: CabinetNavKey;
   href: string;
 };
 
-/** Ordered primary navigation: Cycles, then Employees. */
+/** Ordered primary navigation: Cycles, Employees, Usage. */
 export const CABINET_NAV: readonly CabinetNavItem[] = [
   { key: "cycles", href: "/cycles" },
   { key: "employees", href: "/employees" },
+  { key: "usage", href: "/usage" },
 ];
 
 /**

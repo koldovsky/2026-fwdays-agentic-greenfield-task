@@ -25,13 +25,15 @@ describe("isActiveNavItem", () => {
 });
 
 describe("CABINET_NAV", () => {
-  it("lists Cycles then Employees in order with stable keys", () => {
+  it("lists Cycles, Employees, Usage in order with stable keys", () => {
     expect(CABINET_NAV[0]?.key).toBe("cycles");
     expect(CABINET_NAV[1]?.key).toBe("employees");
+    expect(CABINET_NAV[2]?.key).toBe("usage");
   });
 
   it("carries a stable href for each entry", () => {
     expect(CABINET_NAV[0]?.href).toBe("/cycles");
     expect(CABINET_NAV[1]?.href).toBe("/employees");
+    expect(CABINET_NAV[2]?.href).toBe("/usage");
   });
 });

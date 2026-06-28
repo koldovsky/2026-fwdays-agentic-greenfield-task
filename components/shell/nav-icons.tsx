@@ -1,4 +1,4 @@
-import { CalendarRange, Users } from "lucide-react";
+import { CalendarRange, Users, BarChart2 } from "lucide-react";
 import type { ReactElement } from "react";
 import type { CabinetNavKey } from "@/lib/nav/cabinet-nav";
 
@@ -17,5 +17,7 @@ export function navIcon(key: CabinetNavKey): ReactElement {
       return <CalendarRange {...props} />;
     case "employees":
       return <Users {...props} />;
+    case "usage":
+      return <BarChart2 {...props} />;
   }
 }

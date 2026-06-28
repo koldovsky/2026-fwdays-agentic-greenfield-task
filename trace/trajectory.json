@@ -43,8 +43,11 @@
     {
       "slice": "2026-06-28-add-form",
       "reviewEvidence": "missing",
-      "trailerCommits": 0,
-      "libDomains": [],
+      "trailerCommits": 1,
+      "libDomains": [
+        "cycles",
+        "i18n"
+      ],
       "processComplete": true
     },
     {
@@ -90,6 +93,13 @@
       "trailerCommits": 0,
       "libDomains": [],
       "processComplete": true
+    },
+    {
+      "slice": "2026-06-28-add-usage-accounting",
+      "reviewEvidence": "missing",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -99,9 +109,17 @@
         "2026-06-28-add-cabinet-shell",
         "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
+        "2026-06-28-add-form",
         "2026-06-28-add-link",
         "2026-06-28-add-respond",
         "2026-06-28-add-templates"
+      ]
+    },
+    {
+      "domain": "cycles",
+      "slices": [
+        "2026-06-28-add-cycles",
+        "2026-06-28-add-form"
       ]
     },
     {
@@ -129,10 +147,6 @@
       "msg": "2026-06-28-add-form: review-findings.json is missing (review must have run clean before archive)"
     },
     {
-      "check": "trailer",
-      "msg": "2026-06-28-add-form: no commit carries a \"Slice: add-form\" trailer"
-    },
-    {
       "check": "review-evidence",
       "msg": "2026-06-28-add-foundation: review-findings.json is missing (review must have run clean before archive)"
     },
@@ -149,8 +163,20 @@
       "msg": "2026-06-28-add-token-cost-calculator: no commit carries a \"Slice: add-token-cost-calculator\" trailer"
     },
     {
+      "check": "review-evidence",
+      "msg": "2026-06-28-add-usage-accounting: review-findings.json is missing (review must have run clean before archive)"
+    },
+    {
+      "check": "trailer",
+      "msg": "2026-06-28-add-usage-accounting: no commit carries a \"Slice: add-usage-accounting\" trailer"
+    },
+    {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 6 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/i18n/ modified by 7 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/cycles/ modified by 2 slices (2026-06-28-add-cycles, 2026-06-28-add-form) — review for scope drift"
     },
     {
       "check": "in-scope",

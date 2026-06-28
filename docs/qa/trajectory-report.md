@@ -5,8 +5,8 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 10 archived slice(s).
-Result: PASS, 10 warning(s)
+Scope: 11 archived slice(s).
+Result: PASS, 12 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
@@ -14,16 +14,18 @@ Result: PASS, 10 warning(s)
 | 2026-06-28-add-cabinet-shell | clean | 3 | yes | http, i18n, nav |
 | 2026-06-28-add-cycles | clean | 2 | yes | cycles, i18n, schemas |
 | 2026-06-28-add-directory | clean | 3 | yes | i18n, schemas |
-| 2026-06-28-add-form | **missing** | **0** | yes | - |
+| 2026-06-28-add-form | **missing** | 1 | yes | cycles, i18n |
 | 2026-06-28-add-foundation | **missing** | **0** | yes | - |
 | 2026-06-28-add-link | clean | 1 | yes | i18n |
 | 2026-06-28-add-respond | clean | 1 | yes | i18n, schemas |
 | 2026-06-28-add-templates | clean | 3 | yes | schemas, templates, i18n |
 | 2026-06-28-add-token-cost-calculator | **missing** | **0** | yes | - |
+| 2026-06-28-add-usage-accounting | **missing** | **0** | yes | - |
 
 ## Cross-slice module overlap
 
-- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates
+- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates
+- `lib/cycles/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-form
 - `lib/schemas/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates
 
 ## Failures
@@ -35,10 +37,12 @@ None.
 - **review-evidence**: 2026-06-28-add-auth: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-auth: no commit carries a "Slice: add-auth" trailer
 - **review-evidence**: 2026-06-28-add-form: review-findings.json is missing (review must have run clean before archive)
-- **trailer**: 2026-06-28-add-form: no commit carries a "Slice: add-form" trailer
 - **review-evidence**: 2026-06-28-add-foundation: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-foundation: no commit carries a "Slice: add-foundation" trailer
 - **review-evidence**: 2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-token-cost-calculator: no commit carries a "Slice: add-token-cost-calculator" trailer
-- **in-scope**: lib/i18n/ modified by 6 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift
+- **review-evidence**: 2026-06-28-add-usage-accounting: review-findings.json is missing (review must have run clean before archive)
+- **trailer**: 2026-06-28-add-usage-accounting: no commit carries a "Slice: add-usage-accounting" trailer
+- **in-scope**: lib/i18n/ modified by 7 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift
+- **in-scope**: lib/cycles/ modified by 2 slices (2026-06-28-add-cycles, 2026-06-28-add-form) — review for scope drift
 - **in-scope**: lib/schemas/ modified by 4 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift

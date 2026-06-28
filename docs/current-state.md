@@ -3,15 +3,16 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — completed `form` slice (FR-FORM-01..04), archived
-(`archive/2026-06-28-add-form`). One-question-per-screen form UI: `FormFlow.tsx` (sequential
-`currentIndex`, `findResumeIndex` for all-questions resume, `hydratedQuestionId` re-hydration
-pattern), `ScaleAnswerField.tsx`, `OpenAnswerField.tsx`, `saveAnswer` server action
-(`form-actions.ts`), `lib/cycles/resume.ts` (`firstUnansweredRequiredQuestion`). Review-gate
-found 3 confirmed findings (all fixed): missing mode guard on `saveAnswer` (interview-mode
-write blocked), `as`-casts replaced with type narrowing, TOCTOU done-transition hardened via
-`updateMany`. 228 tests. 3 deferred to security backlog (rate limit, ARIA radiogroup,
-savedAnswers RSC payload).
+**Last action:** 2026-06-28 — completed `usage-accounting` slice (FR-USAGE-01, FR-USAGE-03),
+archived (`archive/2026-06-28-add-usage-accounting`). `UsageRow` Prisma model + `UsagePurpose`
+enum, migration `add-usage-row`; `lib/ai/record-usage.ts` (server-only, validates with
+`recordUsageInputSchema`, computes `costUsd = cost(...)` at write time, throws on failure — never
+swallows); `app/(cabinet)/usage/page.tsx` (spend view: grand total + per-cycle + BreakdownTable by
+model×purpose, EmptyState + ErrorState); `lib/nav` + `nav-icons` extended with `usage` entry.
+9 new unit tests (record-usage.test.ts). 237 tests total. 3 findings deferred to security backlog
+(SEC-BL-08 float precision, SEC-BL-09 single-layer auth, SEC-BL-10 cycleId ownership).
+
+**STOP** — `ai-interview` and `report` slices are manual. Do NOT proceed.
 
 **Earlier:** completed `respond` slice (FR-RESP-01..03), archived.
 
@@ -94,10 +95,10 @@ ai-interview → deferred until after the manual slices.
   per-screen: `FormFlow.tsx` (sequential `currentIndex` + `findResumeIndex` for resume),
   `ScaleAnswerField.tsx`, `OpenAnswerField.tsx`, `saveAnswer` action (`form-actions.ts`),
   `lib/cycles/resume.ts`. 3 review-gate findings fixed (mode guard, as-casts, TOCTOU). 228 tests.
-- Next: `usage-accounting` (FR-USAGE-01, FR-USAGE-03). `generateCycleToken` in
-  `lib/cycles/link-token.ts` is the one shared home. `lib/schemas/answer.ts` is the shared
-  answer-write contract `form`/`ai-interview` MUST import. `results` (FR-PROGRESS) waits on
-  ai-interview (manual).
+- **usage-accounting (FR-USAGE-01, FR-USAGE-03) — DONE, archived**
+  (`archive/2026-06-28-add-usage-accounting`). `UsageRow` model + migration; `recordUsage`
+  server-only helper; `/usage` spend view; nav entry. 9 new tests (237 total). 3 deferred
+  security findings (SEC-BL-08..10).
 - Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
   concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).
 
@@ -125,15 +126,11 @@ repo-wide; token-generator (FR-CYCLE-02 / FR-LINK-02) needs one named `lib/` hom
 
 ## Next step
 
-1. Next slice: `cabinet-shell` (FR-SHELL-01..03 — sidebar + sticky header + respondent shell),
-   rendered inside the now-protected area. Reuses `lib/i18n` and the session/cookie helpers.
-   Propose via `/opsx:propose`, then `/opsx:apply`.
-2. Carry-over nits from the add-auth review (archived tasks.md 7.3): #3 make guarded `/api/*`
-   return 401 JSON (not a redirect) when those routes land; #5 revisit CSRF token. Address when
-   the cabinet slice adds routes/APIs behind the guard.
-3. Set `AUTH_JWT_SECRET` in env per environment; provision the HR account with
-   `node scripts/create-hr-user.mts <email> "<password>" ["Name"]`. `DATABASE_URL`/`DIRECT_URL`
-   already in `.env.local`. (A test row `test.user@test.com` exists in Neon — drop before prod.)
+**STOP.** All autonomous mechanical slices are complete.
+
+`ai-interview` (FR-AI-01..09) and `report` (FR-REPORT) are done manually — do not pick
+them up autonomously. `results` (FR-PROGRESS) depends on `ai-interview` and is deferred
+until after the manual slices land.
 
 ## Open questions / blockers
 

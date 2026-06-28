@@ -27,3 +27,15 @@ export const tokenCountsSchema = z.object({
 });
 
 export type TokenCounts = z.infer<typeof tokenCountsSchema>;
+
+/** Inbound payload for recordUsage (FR-USAGE-01). */
+export const recordUsageInputSchema = z.object({
+  cycleId: z.string().min(1),
+  purpose: z.enum(["interview", "summary"]),
+  model: z.string().min(1),
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  cachedInputTokens: z.number().int().nonnegative().optional(),
+});
+
+export type RecordUsageInput = z.infer<typeof recordUsageInputSchema>;

@@ -130,6 +130,7 @@ export const uk = {
       label: "Основна навігація",
       cycles: "Цикли",
       employees: "Працівники",
+      usage: "Витрати",
     },
     signedInAs: "Ви увійшли як",
     signOut: "Вийти",
@@ -179,6 +180,19 @@ export const uk = {
     formOpenLabel: "Ваша відповідь",
     formEmptyTitle: "Немає питань для відповіді",
     formEmptyBody: "У цьому циклі оцінювання немає жодного питання",
+  },
+  usage: {
+    pageTitle: "Витрати на AI",
+    grandTotal: "Загалом",
+    perCycle: "По циклах",
+    model: "Модель",
+    purpose: "Призначення",
+    purposeInterview: "Інтерв'ю",
+    purposeSummary: "Підсумок",
+    costUsd: "Вартість, USD",
+    emptyTitle: "Витрат поки що немає",
+    emptyBody: "Витрати з'являться після перших AI-дзвінків",
+    unknownCycle: "Цикл видалено",
   },
 };
 
