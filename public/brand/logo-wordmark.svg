@@ -1,0 +1,13 @@
+<svg width="240" height="64" viewBox="0 0 240 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Надворі — Weather Explorer">
+  <defs>
+    <clipPath id="hzn2"><rect x="4" y="12" width="40" height="40" rx="11"></rect></clipPath>
+  </defs>
+  <g clip-path="url(#hzn2)">
+    <rect x="4" y="12" width="40" height="40" rx="11" fill="#2f6fb3"></rect>
+    <circle cx="24" cy="34" r="7.5" fill="#e9b457"></circle>
+    <rect x="4" y="38" width="40" height="14" fill="#255a96"></rect>
+    <rect x="4" y="38" width="40" height="1.4" fill="#84b2dd" opacity="0.6"></rect>
+  </g>
+  <text x="58" y="30" font-family="Onest, sans-serif" font-size="24" font-weight="700" fill="#141d25" letter-spacing="-0.01em">Надворі</text>
+  <text x="58" y="52" font-family="Onest, sans-serif" font-size="11" font-weight="500" fill="#647686" letter-spacing="0.08em">WEATHER EXPLORER</text>
+</svg>

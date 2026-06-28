@@ -1,0 +1,176 @@
+/* ============================================================
+   Colors — Weather Explorer "Clear Sky"
+   ------------------------------------------------------------
+   A calm, sky-led palette. Sky blue is the primary; warm amber
+   is the sun accent. Comfort semantics (good / fair / poor) are
+   muted, not neon, so the score reads as honest rather than loud.
+   A tasteful nod to Ukraine lives in sky-blue + warm-amber — never
+   the literal flag.
+
+   Structure:
+     1. Base ramps   — raw, theme-agnostic color values
+     2. Semantic     — light theme (default, :root)
+     3. Semantic     — dark theme ([data-theme="dark"])
+   Always consume the SEMANTIC aliases in components, not raw ramps.
+   ============================================================ */
+
+:root {
+  /* ---- 1. Base ramps ------------------------------------- */
+
+  /* Sky (primary) */
+  --sky-50: #eef5fb;
+  --sky-100: #d8e8f6;
+  --sky-200: #b3d0ec;
+  --sky-300: #84b2dd;
+  --sky-400: #5491cb;
+  --sky-500: #2f6fb3; /* primary */
+  --sky-600: #255a96;
+  --sky-700: #1e4877;
+  --sky-800: #1a3a5e;
+  --sky-900: #16304c;
+
+  /* Amber (sun accent) */
+  --amber-50: #fdf6ea;
+  --amber-100: #f9e8c8;
+  --amber-200: #f2cf8e;
+  --amber-300: #e9b457;
+  --amber-400: #e09a2f;
+  --amber-500: #c97f1d;
+  --amber-600: #a8651a;
+  --amber-700: #855019;
+
+  /* Slate neutrals (cool gray) */
+  --slate-0: #ffffff;
+  --slate-25: #f8fafc;
+  --slate-50: #f1f5f9;
+  --slate-100: #e6edf3;
+  --slate-200: #d3dde6;
+  --slate-300: #b3c1cd;
+  --slate-400: #889aa8;
+  --slate-500: #647686;
+  --slate-600: #4c5c6a;
+  --slate-700: #394753;
+  --slate-800: #283643;
+  --slate-850: #1d2832;
+  --slate-900: #141d25;
+  --slate-950: #0d141a;
+
+  /* Comfort semantics — muted, honest */
+  --good-soft: #def0e3;
+  --good: #3f9d6b;
+  --good-deep: #2f7a52;
+  --fair-soft: #faeccf;
+  --fair: #cf9230;
+  --fair-deep: #9c6c1f;
+  --poor-soft: #f7ddd8;
+  --poor: #c75d4f;
+  --poor-deep: #9c4339;
+
+  /* ---- 2. Semantic aliases — LIGHT (default) ------------- */
+
+  /* Brand */
+  --brand: var(--sky-500);
+  --brand-hover: var(--sky-600);
+  --brand-active: var(--sky-700);
+  --brand-soft: var(--sky-50);
+  --brand-soft-hover: var(--sky-100);
+  --brand-border: var(--sky-200);
+  --brand-on: #ffffff;
+
+  --accent: var(--amber-400);
+  --accent-hover: var(--amber-500);
+  --accent-soft: var(--amber-50);
+  --accent-on: #3a2a08;
+
+  /* Surfaces */
+  --bg: var(--slate-25); /* page */
+  --surface: #ffffff; /* card */
+  --surface-raised: #ffffff;
+  --surface-sunken: var(--slate-50);
+  --surface-hover: var(--slate-50);
+  --scrim: rgba(20, 29, 37, 0.45);
+
+  /* Text */
+  --text: var(--slate-900);
+  --text-secondary: var(--slate-600);
+  --text-muted: var(--slate-500);
+  --text-faint: var(--slate-400);
+  --text-on-brand: #ffffff;
+  --text-link: var(--sky-600);
+
+  /* Borders & lines */
+  --border: var(--slate-200);
+  --border-strong: var(--slate-300);
+  --border-subtle: var(--slate-100);
+  --ring: color-mix(in oklab, var(--sky-500) 45%, transparent);
+
+  /* Comfort role aliases (resolve per theme) */
+  --comfort-good-bg: var(--good-soft);
+  --comfort-good-fg: var(--good-deep);
+  --comfort-good-solid: var(--good);
+  --comfort-fair-bg: var(--fair-soft);
+  --comfort-fair-fg: var(--fair-deep);
+  --comfort-fair-solid: var(--fair);
+  --comfort-poor-bg: var(--poor-soft);
+  --comfort-poor-fg: var(--poor-deep);
+  --comfort-poor-solid: var(--poor);
+
+  /* Sky-mood gradients (animated background) */
+  --sky-day-top: #aed3f0;
+  --sky-day-bottom: #e9f3fb;
+  --sky-dusk-top: #d79a6b;
+  --sky-dusk-bottom: #f2d7b8;
+  --sky-night-top: #16304c;
+  --sky-night-bottom: #2b4a6b;
+}
+
+/* ---- 3. Semantic aliases — DARK ------------------------- */
+
+[data-theme="dark"] {
+  --brand: var(--sky-400);
+  --brand-hover: var(--sky-300);
+  --brand-active: var(--sky-200);
+  --brand-soft: color-mix(in oklab, var(--sky-500) 22%, var(--slate-900));
+  --brand-soft-hover: color-mix(in oklab, var(--sky-500) 30%, var(--slate-900));
+  --brand-border: color-mix(in oklab, var(--sky-400) 40%, var(--slate-900));
+  --brand-on: #07121d;
+
+  --accent: var(--amber-300);
+  --accent-hover: var(--amber-200);
+  --accent-soft: color-mix(in oklab, var(--amber-400) 20%, var(--slate-900));
+  --accent-on: #1c1305;
+
+  --bg: var(--slate-950);
+  --surface: var(--slate-900);
+  --surface-raised: var(--slate-850);
+  --surface-sunken: #0a1117;
+  --surface-hover: var(--slate-850);
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --text: #eef4f8;
+  --text-secondary: var(--slate-300);
+  --text-muted: var(--slate-400);
+  --text-faint: var(--slate-500);
+  --text-on-brand: #07121d;
+  --text-link: var(--sky-300);
+
+  --border: color-mix(in oklab, var(--slate-400) 24%, var(--slate-900));
+  --border-strong: color-mix(in oklab, var(--slate-400) 38%, var(--slate-900));
+  --border-subtle: color-mix(in oklab, var(--slate-400) 14%, var(--slate-900));
+  --ring: color-mix(in oklab, var(--sky-400) 60%, transparent);
+
+  --comfort-good-bg: color-mix(in oklab, var(--good) 26%, var(--slate-900));
+  --comfort-good-fg: #8fd6ab;
+  --comfort-good-solid: var(--good);
+  --comfort-fair-bg: color-mix(in oklab, var(--fair) 26%, var(--slate-900));
+  --comfort-fair-fg: #ecc474;
+  --comfort-fair-solid: var(--fair);
+  --comfort-poor-bg: color-mix(in oklab, var(--poor) 26%, var(--slate-900));
+  --comfort-poor-fg: #eaa195;
+  --comfort-poor-solid: var(--poor);
+
+  --sky-day-top: #1f456b;
+  --sky-day-bottom: #16304c;
+  --sky-night-top: #0a1722;
+  --sky-night-bottom: #16304c;
+}

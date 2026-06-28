@@ -1,0 +1,16 @@
+/* ============================================================
+   Radius — Weather Explorer
+   Soft, rounded-but-not-bubbly. Cards and surfaces are calm
+   rectangles with gently rounded corners.
+   ============================================================ */
+
+:root {
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px; /* default — inputs, buttons */
+  --radius-lg: 16px; /* cards */
+  --radius-xl: 22px; /* large panels, hero */
+  --radius-2xl: 28px;
+  --radius-pill: 999px; /* chips, comfort badges, toggles */
+  --radius-circle: 50%;
+}

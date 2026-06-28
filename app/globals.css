@@ -1,26 +1,287 @@
 @import "tailwindcss";
+@import "./design-system/index.css";
 
+/* ============================================================
+   Z-index scale (FR-ANIM-04, animated-bg capability).
+   --z-bg:      animated background layer (fixed, behind all)
+   --z-content: normal page content (shell, cards, nav)
+   --z-modal:   overlays, dialogs, tooltips
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --z-bg: 0;
+  --z-content: 1;
+  --z-modal: 10;
+}
+
+/* ------------------------------------------------------------
+   Font bridge — point the design-system family tokens at the
+   next/font CSS variables declared in app/layout.tsx. The literal
+   "Onest" / "JetBrains Mono" names remain as graceful fallbacks.
+   ------------------------------------------------------------ */
+:root {
+  --font-sans:
+    var(--font-onest), "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+/* ------------------------------------------------------------
+   Expose design tokens to Tailwind v4 utilities, so utilities like
+   bg-surface, text-brand, rounded-lg, shadow-md resolve to the
+   Надворі design system. Consume these semantic aliases in markup —
+   never the raw color ramps.
+   ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   Theme indicator — SSR-safe, zero-JS reflection of the active
+   data-theme. Both variants render; CSS shows the matching one.
+   Used by app/components/TopBar.tsx (FR-SHELL-01).
+   ------------------------------------------------------------ */
+.theme-indicator__dark {
+  display: none;
+}
+[data-theme="dark"] .theme-indicator__light {
+  display: none;
+}
+[data-theme="dark"] .theme-indicator__dark {
+  display: inline-flex;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Brand & accent */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-on: var(--brand-on);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-on: var(--accent-on);
+
+  /* Surfaces & text */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-hover: var(--surface-hover);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-on-brand: var(--text-on-brand);
+  --color-text-link: var(--text-link);
+
+  /* Lines */
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+
+  /* Comfort semantics */
+  --color-comfort-good: var(--comfort-good-solid);
+  --color-comfort-good-bg: var(--comfort-good-bg);
+  --color-comfort-good-fg: var(--comfort-good-fg);
+  --color-comfort-fair: var(--comfort-fair-solid);
+  --color-comfort-fair-bg: var(--comfort-fair-bg);
+  --color-comfort-fair-fg: var(--comfort-fair-fg);
+  --color-comfort-poor: var(--comfort-poor-solid);
+  --color-comfort-poor-bg: var(--comfort-poor-bg);
+  --color-comfort-poor-fg: var(--comfort-poor-fg);
+
+  /* Radius */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-pill: var(--radius-pill);
+
+  /* Elevation */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ============================================================
+   Animated weather background — FR-ANIM-01..04
+   Base layer + gradient states + particle / cloud overlays.
+   All animation is CSS-only (@keyframes), no JS loop.
+   ============================================================ */
+
+/* Base layer: fixed, full-screen, never blocks interaction.
+   CSS cannot tween linear-gradient values; opacity is transitioned instead.
+   Neutral state fades to opacity:0 so the body bg (#f8fafc) shows through. */
+.bg-anim-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-bg);
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+/* --- Gradient states (FR-ANIM-01, FR-ANIM-02) --- */
+.bg-anim-neutral {
+  opacity: 0;
+  background: transparent;
+}
+.bg-anim-clear-day,
+.bg-anim-clear-night,
+.bg-anim-cloudy-day,
+.bg-anim-cloudy-night,
+.bg-anim-rain,
+.bg-anim-snow {
+  opacity: 1;
+}
+
+.bg-anim-clear-day {
+  /* sky-400 → sky-100: vivid midday-blue fading to pale horizon */
+  background: linear-gradient(to bottom, var(--sky-400), var(--sky-100));
+}
+.bg-anim-clear-night {
+  background: linear-gradient(to bottom, var(--sky-night-top), var(--sky-night-bottom));
+}
+.bg-anim-cloudy-day {
+  /* slate-400 → slate-200: medium grey-blue, clearly distinct from neutral */
+  background: linear-gradient(to bottom, var(--slate-400), var(--slate-200));
+}
+.bg-anim-cloudy-night {
+  background: linear-gradient(to bottom, var(--slate-800), var(--slate-700));
+}
+.bg-anim-rain {
+  background: linear-gradient(to bottom, var(--sky-800), var(--slate-700));
+}
+.bg-anim-snow {
+  /* sky-200 → sky-50: light icy blue, clearly distinct from neutral */
+  background: linear-gradient(to bottom, var(--sky-200), var(--sky-50));
+}
+
+/* --- Rain particles — two-layer nearly-vertical streaks fall downward (FR-ANIM-02) ---
+   95deg = 5° past horizontal → bands are 5° tilted from vertical, like real rain
+   in a light breeze. Animating both X (slight leftward drift) and Y (one full
+   tile height) makes the streaks visually fall straight down without diagonal
+   banding artefacts. Each layer uses a rectangular tile so the pattern aligns. */
+.bg-anim-rain-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      95deg,
+      transparent 0px 18px,
+      rgba(174, 214, 241, 0.55) 18px 19.5px,
+      transparent 19.5px 45px
+    ),
+    repeating-linear-gradient(
+      95deg,
+      transparent 0px 30px,
+      rgba(174, 214, 241, 0.38) 30px 31px,
+      transparent 31px 68px
+    );
+  background-size:
+    45px 70px,
+    68px 110px;
+  background-position:
+    0 0,
+    15px 35px;
+  animation: anim-rain 0.55s linear infinite;
+  will-change: background-position;
+}
+
+@keyframes anim-rain {
+  from {
+    background-position:
+      0 0,
+      15px 35px;
+  }
+  to {
+    background-position:
+      -6px 70px,
+      9px 145px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* --- Snow particles — white dots drift down and slightly sideways --- */
+.bg-anim-snow-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle 1px, rgba(255, 255, 255, 0.85) 0%, transparent 100%),
+    radial-gradient(circle 1.5px, rgba(255, 255, 255, 0.65) 0%, transparent 100%),
+    radial-gradient(circle 1px, rgba(255, 255, 255, 0.75) 0%, transparent 100%);
+  background-size:
+    48px 48px,
+    72px 72px,
+    60px 60px;
+  background-position:
+    0 0,
+    24px 16px,
+    12px 32px;
+  animation: anim-snow 5s linear infinite;
+  will-change: background-position;
+}
+
+@keyframes anim-snow {
+  from {
+    background-position:
+      0 -48px,
+      24px -56px,
+      12px -28px;
+  }
+  to {
+    background-position:
+      6px 0,
+      30px 0,
+      18px 0;
+  }
+}
+
+/* --- Cloud drift — white blobs translate horizontally --- */
+.bg-anim-clouds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 200px 80px, rgba(255, 255, 255, 0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 280px 100px, rgba(255, 255, 255, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 160px 60px, rgba(255, 255, 255, 0.38) 0%, transparent 70%);
+  background-size:
+    70% 50%,
+    90% 60%,
+    55% 40%;
+  background-position:
+    -20% 15%,
+    40% 30%,
+    10% 60%;
+  animation: anim-cloud-drift 30s ease-in-out infinite alternate;
+  will-change: background-position;
+}
+
+@keyframes anim-cloud-drift {
+  0% {
+    background-position:
+      -20% 15%,
+      40% 30%,
+      10% 60%;
+  }
+  100% {
+    background-position:
+      20% 20%,
+      80% 25%,
+      50% 55%;
+  }
+}
+
+/* FR-ANIM-03 — prefers-reduced-motion: static gradient only, no JS nodes */
+@media (prefers-reduced-motion: reduce) {
+  .bg-anim-rain-particles,
+  .bg-anim-snow-particles,
+  .bg-anim-clouds {
+    animation: none;
+  }
 }
