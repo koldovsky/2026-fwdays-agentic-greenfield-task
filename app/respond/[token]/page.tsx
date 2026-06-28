@@ -1,8 +1,9 @@
 // @trace FR-LINK-01 FR-LINK-02 FR-LINK-03
 import { uk } from "@/lib/i18n/uk";
-import { formatDaysRemaining } from "@/lib/i18n/format";
 import { tokenBoundarySchema } from "./schemas";
 import { getRespondentCycleByToken } from "./queries";
+import { ModeChoice } from "./ModeChoice";
+import { ModeStub } from "./ModeStub";
 
 const t = uk.respondent;
 
@@ -51,79 +52,25 @@ export default async function RespondentPage({ params }: Props) {
   }
 
   // status === "collecting"
-  const deadlineDate = cycle.deadline.toISOString().slice(0, 10);
-  const deadlineText = formatDaysRemaining(cycle.daysRemaining, uk.cycles.overdue);
-  const greeting = t.greeting.replace("{name}", cycle.subjectFirstName);
+  if (cycle.mode === null) {
+    return (
+      <ModeChoice
+        token={parseResult.data}
+        subjectFirstName={cycle.subjectFirstName}
+        methodology={cycle.methodology}
+        deadline={cycle.deadline}
+      />
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-2xl px-[var(--space-9)] py-[var(--space-10)]">
-      <h1 className="text-[var(--text-xl)] font-[var(--weight-semibold)] text-ink">
-        {greeting}
-      </h1>
-
-      {/* Meta */}
-      <dl className="mt-[var(--space-8)] grid grid-cols-2 gap-x-[var(--space-9)] gap-y-[var(--space-6)] rounded-[var(--radius-lg)] border border-line-soft bg-surface p-[var(--space-8)]">
-        <div>
-          <dt className="text-[var(--text-xs)] font-[var(--weight-medium)] text-ink-muted uppercase tracking-wide">
-            {t.methodology}
-          </dt>
-          <dd className="mt-[var(--space-2)] text-[var(--text-base)] text-ink">
-            {cycle.methodology}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="text-[var(--text-xs)] font-[var(--weight-medium)] text-ink-muted uppercase tracking-wide">
-            {t.deadline}
-          </dt>
-          <dd className="mt-[var(--space-2)] text-[var(--text-base)] text-ink" title={deadlineDate}>
-            {deadlineDate} — {deadlineText}
-          </dd>
-        </div>
-      </dl>
-
-      {/* Questions (read-only — answer capture is the form slice) */}
-      <section className="mt-[var(--space-9)]">
-        <h2 className="mb-[var(--space-6)] text-[var(--text-md)] font-[var(--weight-medium)] text-ink">
-          {t.questions}{" "}
-          <span className="font-[var(--weight-regular)] text-ink-muted">
-            ({cycle.questions.length} {t.questionsCount})
-          </span>
-        </h2>
-        <ol className="flex flex-col gap-[var(--space-5)]">
-          {cycle.questions.map((question, index) => (
-            <li
-              key={question.id}
-              className="rounded-[var(--radius-md)] border border-line-soft bg-surface p-[var(--space-7)]"
-            >
-              <p className="text-[var(--text-base)] font-[var(--weight-medium)] text-ink">
-                {index + 1}. {question.text}
-              </p>
-              <p className="mt-[var(--space-3)] text-[var(--text-xs)] text-ink-muted">
-                {question.type === "scale"
-                  ? uk.templates.scaleHint
-                  : uk.templates.openHint}
-                {" · "}
-                {question.required
-                  ? uk.templates.requiredLabel
-                  : uk.templates.optionalLabel}
-              </p>
-              {question.type === "scale" ? (
-                <ul className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-4)]">
-                  {question.anchors.map((anchor) => (
-                    <li
-                      key={anchor.value}
-                      className="rounded-[var(--radius-sm)] border border-line-soft bg-paper px-[var(--space-5)] py-[var(--space-3)] text-[var(--text-xs)] text-ink-muted"
-                    >
-                      {anchor.value} — {anchor.label}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </section>
-    </div>
+    <ModeStub
+      mode={cycle.mode}
+      subjectFirstName={cycle.subjectFirstName}
+      methodology={cycle.methodology}
+      deadline={cycle.deadline}
+      daysRemaining={cycle.daysRemaining}
+      questions={cycle.questions}
+    />
   );
 }

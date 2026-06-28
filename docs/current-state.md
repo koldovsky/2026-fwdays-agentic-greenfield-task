@@ -3,7 +3,7 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — completed `link` slice (FR-LINK-01..03), archived.
+**Last action:** 2026-06-28 — completed `respond` slice (FR-RESP-01..03), archived.
 
 **Earlier:** **onboarded Project Factory loop** (`/project-factory:onboard
 --no-reverse`, Claude adapter only). Installed: 11 agents → `.claude/agents/`, 6 workflows →
@@ -68,8 +68,22 @@ ai-interview → deferred until after the manual slices.
   missing `server-only` guard on cabinet cycles/queries.ts). 167 tests. 3 findings deferred to
   `docs/qa/security-backlog.md` (SEC-BL-05..07: cabinet IDOR — no HR-user scoping, token in RSC
   payload, first-name-to-token linkage — all accepted/moot for single-HR-account MVP).
-- Next: `respond` → `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts`
-  is the one shared home (FR-LINK-02 reuses it). `results` (FR-PROGRESS) waits on ai-interview (manual).
+- **respond (FR-RESP-01..03) — DONE, archived** (`archive/2026-06-28-add-respond`). Mode-choice
+  gate added to the `link` slice's respondent page: `Cycle.mode` unset → `ModeChoice` (intro +
+  confidentiality note + two buttons, no question preview); set → `ModeStub` (explicit
+  placeholder, flagged for wholesale replacement by `form`/`ai-interview`). `chooseMode` server
+  action persists the choice race-safely via `db.cycle.updateMany({ where: { mode: null, status:
+  "collecting" }, ... })` — first-write-wins, loser re-reads and reports the winner's mode, never
+  a conflict error. Shared answer-write contract `lib/schemas/answer.ts` (open/scale Zod schemas,
+  `isValidAnchorValue`) defined for `form`/`ai-interview` to import — no write in this slice. 1
+  review round (3 parallel reviewers), 4 confirmed findings fixed (ModeChoice was hiding the
+  entire intro not just the question preview; non-collecting cycle reused the generic
+  write-failure message instead of a dedicated "closed" message; `questionId` had no upper
+  bound; TOCTOU on the conditional write's WHERE clause). 198 tests.
+- Next: `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts` is the
+  one shared home (FR-LINK-02 reuses it). `lib/schemas/answer.ts` is the shared answer-write
+  contract `form`/`ai-interview` MUST import, never redefine. `results` (FR-PROGRESS) waits on
+  ai-interview (manual).
 - Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
   concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).
 

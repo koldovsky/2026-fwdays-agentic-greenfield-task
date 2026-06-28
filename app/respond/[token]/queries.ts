@@ -6,6 +6,7 @@ import { snapshotSchema } from "@/lib/cycles/snapshot";
 import { daysRemaining } from "@/lib/cycles/status";
 import type { CycleStatus } from "@/lib/cycles/status";
 import type { TemplateSnapshot } from "@/lib/cycles/snapshot";
+import type { RespondMode } from "@prisma/client";
 
 /**
  * The public-facing view of a cycle for the respondent landing page.
@@ -20,6 +21,7 @@ export type RespondentCycle = {
   daysRemaining: number;
   status: CycleStatus;
   subjectFirstName: string;
+  mode: RespondMode | null;
 };
 
 /**
@@ -41,6 +43,7 @@ export async function getRespondentCycleByToken(
       status: true,
       deadline: true,
       templateSnapshot: true,
+      mode: true,
       subject: { select: { fullName: true } },
     },
   });
@@ -77,5 +80,6 @@ export async function getRespondentCycleByToken(
     daysRemaining: daysRemaining(cycle.deadline, now),
     status,
     subjectFirstName,
+    mode: cycle.mode,
   };
 }

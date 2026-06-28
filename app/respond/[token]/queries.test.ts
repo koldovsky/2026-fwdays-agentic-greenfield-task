@@ -266,4 +266,54 @@ describe("getRespondentCycleByToken", () => {
     // Should be at most 7 days (could be 6 due to floor rounding)
     expect(result?.daysRemaining).toBeLessThanOrEqual(7);
   });
+
+  // -------------------------------------------------------------------------
+  // 11. mode — null on the DB row → mode: null on the RespondentCycle
+  // (add-respond, FR-RESP-02 — RED until queries.ts returns `mode`)
+  // -------------------------------------------------------------------------
+  it("returns mode: null when the cycle's mode column is null", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({ mode: null }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.mode).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // 12. mode — "form" on the DB row → mode: "form" on the RespondentCycle
+  // (add-respond, FR-RESP-02 — RED until queries.ts returns `mode`)
+  // -------------------------------------------------------------------------
+  it("returns mode: 'form' when the cycle's mode column is 'form'", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({ mode: "form" }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result?.mode).toBe("form");
+  });
+
+  // -------------------------------------------------------------------------
+  // 13. mode — "interview" on the DB row → mode: "interview" on the
+  // RespondentCycle (add-respond, FR-RESP-02 — RED until queries.ts returns
+  // `mode`)
+  // -------------------------------------------------------------------------
+  it("returns mode: 'interview' when the cycle's mode column is 'interview'", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({ mode: "interview" }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result?.mode).toBe("interview");
+  });
 });

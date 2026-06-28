@@ -50,6 +50,15 @@
     {
       "slice": "2026-06-28-add-link",
       "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-28-add-respond",
+      "reviewEvidence": "clean",
       "trailerCommits": 0,
       "libDomains": [],
       "processComplete": true
@@ -80,6 +89,7 @@
         "2026-06-28-add-cabinet-shell",
         "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
+        "2026-06-28-add-link",
         "2026-06-28-add-templates"
       ]
     },
@@ -112,7 +122,7 @@
     },
     {
       "check": "trailer",
-      "msg": "2026-06-28-add-link: no commit carries a \"Slice: add-link\" trailer"
+      "msg": "2026-06-28-add-respond: no commit carries a \"Slice: add-respond\" trailer"
     },
     {
       "check": "review-evidence",
@@ -124,7 +134,7 @@
     },
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 4 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/i18n/ modified by 5 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-templates) — review for scope drift"
     },
     {
       "check": "in-scope",

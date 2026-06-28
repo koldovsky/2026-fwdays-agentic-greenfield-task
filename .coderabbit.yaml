@@ -14,6 +14,26 @@ reviews:
   request_changes_workflow: false
   high_level_summary: true
   poem: false
+  # Keep CodeRabbit under its per-PR file cap and focused on the student's OWN
+  # code. Exclude vendored design assets, installed factory tooling, generated
+  # reports, lockfiles, and archived history from line-by-line review — the
+  # process/proof assessment still reads the PR description + high-level summary,
+  # and the real source (app/, lib/, components/, prisma/, active specs, docs)
+  # stays reviewed.
+  path_filters:
+    - "!docs/KoloDesign/**"
+    - "!.claude/agents/**"
+    - "!.claude/workflows/**"
+    - "!.claude/commands/**"
+    - "!.claude/skills/**"
+    - "!.githooks/**"
+    - "!scripts/*.reference.*"
+    - "!openspec/changes/archive/**"
+    - "!docs/qa/**"
+    - "!trace/**"
+    - "!**/*.tsbuildinfo"
+    - "!package-lock.json"
+    - "!pnpm-lock.yaml"
   auto_review:
     enabled: true
     drafts: false

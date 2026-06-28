@@ -156,6 +156,18 @@ export const uk = {
     copyLink: "Скопіювати посилання",
     linkCopied: "Посилання скопійовано",
     copyFailed: "Не вдалося скопіювати",
+    confidentiality: "Ваші відповіді конфіденційні та використовуються лише для цієї оцінки",
+    modeChoiceTitle: "Як вам зручніше відповісти",
+    modeForm: "Заповнити форму",
+    modeFormHint: "Питання одне за одним, з прогресом",
+    modeInterview: "Відповісти в чаті з AI",
+    modeInterviewHint: "Розмова замість форми",
+    modeChoosing: "Зберігаємо вибір…",
+    modeChoiceFailed: "Не вдалося зберегти вибір. Спробуйте ще раз",
+    modeChoiceClosed: "Цей цикл уже закрито, вибір формату відповіді недоступний",
+    modeChosenForm: "Ви обрали форму",
+    modeChosenInterview: "Ви обрали чат з AI",
+    modeStubBody: "Цей екран — заглушка. Реальна форма зʼявиться найближчим часом",
   },
 };
 

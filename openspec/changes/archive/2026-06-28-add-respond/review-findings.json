@@ -1,0 +1,37 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-respond",
+  "change": "add-respond",
+  "baseRef": "HEAD~1",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 2
+    },
+    "spec-compliance": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [],
+  "fixedTitles": [
+    "FR-RESP-01: ModeChoice screen withheld the entire intro (subject, methodology, deadline) instead of only the question preview, contradicting the spec's literal scenario text and the design doc's own Decision 5 — added intro block (greeting, methodology, deadline) above the confidentiality note and mode buttons",
+    "chooseMode returned the same generic 'could not save, try again' message for a non-collecting (done/expired) cycle as for an actual write failure, inviting a pointless retry instead of explaining the cycle is closed — added dedicated respondent.modeChoiceClosed i18n key and wired it into the status guard",
+    "lib/schemas/answer.ts questionId field had .min(1) but no upper bound, unlike the capped text/value fields — added .max(100) for DoS-hygiene consistency",
+    "TOCTOU: updateMany's WHERE clause only guarded on mode IS NULL, not re-checking status, leaving a narrow window where a mode could be set on a cycle that became non-collecting between the initial read and the write — added status: \"collecting\" to the updateMany WHERE clause"
+  ],
+  "deferredTitles": [
+    "No rate limiting on chooseMode or any /respond/* server action — general recommendation for an edge/middleware rate limit, not specific to this slice, tracked alongside existing SEC-BL-01 auth rate-limit backlog item"
+  ],
+  "clean": true,
+  "generatedAt": "2026-06-28T17:25:00Z",
+  "fixedAt": "2026-06-28T17:32:00Z"
+}
