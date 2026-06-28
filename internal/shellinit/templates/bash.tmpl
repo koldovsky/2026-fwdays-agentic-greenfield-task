@@ -1,0 +1,30 @@
+# ctxline shell integration (bash) — eval "$({{.Cmd}} init bash)"
+if [ -z "${__CTXLINE_BASH_LOADED:-}" ]; then
+  __CTXLINE_BASH_LOADED=1
+  __CTXLINE_ORIG_PS1="$PS1"
+
+  __ctxline_prompt() {
+    local __ctxline_seg
+    __ctxline_seg="$({{.Cmd}} --shell bash)"
+    if [ -n "$__ctxline_seg" ]; then
+      PS1="${__ctxline_seg} ${__CTXLINE_ORIG_PS1}"
+    else
+      PS1="${__CTXLINE_ORIG_PS1}"
+    fi
+  }
+
+  case ";${PROMPT_COMMAND:-};" in
+    *";__ctxline_prompt;"*) ;;
+    *) PROMPT_COMMAND="__ctxline_prompt;${PROMPT_COMMAND:-}" ;;
+  esac
+
+  ctxon()  { export CTXLINE_ENABLED=true; }
+  ctxoff() { export CTXLINE_ENABLED=false; }
+  ctxtoggle() {
+    if [ "${CTXLINE_ENABLED:-true}" = "true" ]; then
+      export CTXLINE_ENABLED=false
+    else
+      export CTXLINE_ENABLED=true
+    fi
+  }
+fi

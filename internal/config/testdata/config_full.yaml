@@ -1,0 +1,7 @@
+enabled: true
+segments: [kube, azure]
+icons: false
+separator: " | "
+colors:
+  azure: green
+  kube: magenta

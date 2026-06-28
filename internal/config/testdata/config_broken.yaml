@@ -1,0 +1,5 @@
+enabled: true
+segments: [azure, kube
+icons: : : not valid
+  - dangling
+colors: "this should be a map not a string
