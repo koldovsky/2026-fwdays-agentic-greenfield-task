@@ -20,6 +20,16 @@
       "processComplete": true
     },
     {
+      "slice": "2026-06-28-add-directory",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "i18n",
+        "schemas"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-06-28-add-foundation",
       "reviewEvidence": "missing",
       "trailerCommits": 0,
@@ -34,7 +44,15 @@
       "processComplete": true
     }
   ],
-  "overlaps": [],
+  "overlaps": [
+    {
+      "domain": "i18n",
+      "slices": [
+        "2026-06-28-add-cabinet-shell",
+        "2026-06-28-add-directory"
+      ]
+    }
+  ],
   "failures": [],
   "warnings": [
     {
@@ -60,6 +78,10 @@
     {
       "check": "trailer",
       "msg": "2026-06-28-add-token-cost-calculator: no commit carries a \"Slice: add-token-cost-calculator\" trailer"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/i18n/ modified by 2 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-directory) — review for scope drift"
     }
   ]
 }

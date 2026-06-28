@@ -1,0 +1,23 @@
+{
+  "generatedBy": "review-gate (2 rounds) + orchestrator adjudication",
+  "scope": "add-directory",
+  "change": "add-directory",
+  "baseRef": "HEAD~2",
+  "headRef": "HEAD",
+  "rounds": 2,
+  "dimensions": {
+    "correctness": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "security": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "spec-compliance": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "visual": { "confirmed": 0, "contested": 0, "rejected": 0 }
+  },
+  "confirmedTitles": [],
+  "clean": true,
+  "adjudication": "Two adversarial review-gate rounds (maker != checker; each finding double-verified). Round 1 surfaced 10 confirmed; the real ones were all fixed: archive failure now surfaces an inline row error (no silent swallow); app/(cabinet)/employees/loading.tsx added (empty+loading+error all present); z.string().email() -> z.email(); required fullName/email use z.preprocess so a missing key yields the localized required message; createEmployee uses the same `?? null` normalisation as updateEmployee; all three write actions assert getCurrentHrUser() before any DB work; the add/edit form renders an add/edit heading; dead statusArchived i18n key removed; the test-coverage claim in tasks.md 2.1 was reworded to match the behaviour-only assertions. Round 2 (final) reported coverage 22/22 implemented, 0 missing, 0 contradicted, and confirmed the shell RSC serialization bugfix correct; its only confirmed-bucket items were a positive coverage summary plus two minor nits now fixed (email lowercased in the canonical schema so case-variants cannot duplicate a person; archive failure uses a specific archiveFailed message). No unresolved real defect in scope. Battery: lint+tsc+test(64)+build all green.",
+  "deferred": [
+    "SEC-BL-01..04 (sign-in rate limiting, proxy revoked-user check, postcss/@hono advisories, sign-out CSRF) - tracked in docs/qa/security-backlog.md for an auth-hardening slice.",
+    "Archive confirm uses window.confirm (acceptable MVP; a design-system dialog is a later refinement).",
+    "Eyes-on-pixels visual validation deferred to Phase 6 vision-verify (no Playwright in MVP per TC-TEST-01)."
+  ],
+  "generatedAt": "2026-06-28T14:40:00Z"
+}

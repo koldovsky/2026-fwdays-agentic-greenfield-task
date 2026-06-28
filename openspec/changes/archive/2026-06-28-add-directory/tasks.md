@@ -56,5 +56,7 @@
 - [x] 6.2 Static + review verification: build resolves `/employees`; create/edit/archive parse at the
   Zod boundary; archive is soft (row retained, dropped from active list); empty/loading/error states
   present; status by text label. Eyes-on-pixels deferred to Phase 6 vision-verify (no Playwright, TC-TEST-01).
-- [ ] 6.3 Independent review pass (review-gate, separate agents; maker ≠ checker) against FR-DIR-01..04
-  and the typing/validation/a11y/privacy rules before archive.
+- [x] 6.3 Independent review pass — two review-gate rounds (separate agents; maker ≠ checker; each
+  finding double-verified) against FR-DIR-01..04 and the typing/validation/a11y/privacy rules. All
+  confirmed findings fixed; final coverage 22/22 scenarios, 0 missing / 0 contradicted. Evidence:
+  `review-findings.json` (clean). (maker ≠ checker)
