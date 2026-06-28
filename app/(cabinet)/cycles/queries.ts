@@ -1,4 +1,6 @@
 // @trace FR-CYCLE-05
+import "server-only";
+
 import { db } from "@/lib/db";
 import { deriveStatus, daysRemaining } from "@/lib/cycles/status";
 import { snapshotSchema } from "@/lib/cycles/snapshot";

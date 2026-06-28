@@ -3,7 +3,9 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — **onboarded Project Factory loop** (`/project-factory:onboard
+**Last action:** 2026-06-28 — completed `link` slice (FR-LINK-01..03), archived.
+
+**Earlier:** **onboarded Project Factory loop** (`/project-factory:onboard
 --no-reverse`, Claude adapter only). Installed: 11 agents → `.claude/agents/`, 6 workflows →
 `.claude/workflows/`, `check-*`/`gate-status`/`qa-verify`/`record-demos` scripts, git hooks
 (`.githooks/` + `core.hooksPath`, verified firing), Claude Code ESLint hook → `.claude/settings.json`,
@@ -56,7 +58,17 @@ ai-interview → deferred until after the manual slices.
   P2002 retry OUTSIDE transaction, HR session guard); /cycles list + create form + /cycles/[id] detail;
   `lib/i18n/format.ts` formatDaysRemaining with correct Ukrainian plural. 2 review rounds, 9 confirmed
   findings fixed (critical: P2002 retry loop, UA plurals, empty state, loading.tsx). 149 tests.
-- Next: `link` → `respond` → `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts`
+- **link (FR-LINK-01..03) — DONE, archived** (`archive/2026-06-28-add-link`). Public
+  `/respond/[token]` server component (no auth, token-gated only); `getRespondentCycleByToken`
+  in `app/respond/[token]/queries.ts` reads persisted `status` directly (not re-derived from
+  deadline); `tokenBoundarySchema` validated before any DB call (same calm not-found page for
+  malformed and unknown tokens — no oracle); `CopyLinkButton` client component on cycle detail
+  page. 1 review round (code/spec-compliance/security in parallel), 4 confirmed findings fixed
+  (missing server log on broken snapshot, setTimeout leak on unmount, missing schemas.test.ts,
+  missing `server-only` guard on cabinet cycles/queries.ts). 167 tests. 3 findings deferred to
+  `docs/qa/security-backlog.md` (SEC-BL-05..07: cabinet IDOR — no HR-user scoping, token in RSC
+  payload, first-name-to-token linkage — all accepted/moot for single-HR-account MVP).
+- Next: `respond` → `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts`
   is the one shared home (FR-LINK-02 reuses it). `results` (FR-PROGRESS) waits on ai-interview (manual).
 - Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
   concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).

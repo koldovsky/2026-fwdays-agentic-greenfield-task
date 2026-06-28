@@ -5,16 +5,17 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 7 archived slice(s).
-Result: PASS, 8 warning(s)
+Scope: 8 archived slice(s).
+Result: PASS, 9 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-28-add-auth | **missing** | **0** | yes | - |
 | 2026-06-28-add-cabinet-shell | clean | 3 | yes | http, i18n, nav |
-| 2026-06-28-add-cycles | clean | 1 | yes | cycles, i18n, schemas |
+| 2026-06-28-add-cycles | clean | 2 | yes | cycles, i18n, schemas |
 | 2026-06-28-add-directory | clean | 3 | yes | i18n, schemas |
 | 2026-06-28-add-foundation | **missing** | **0** | yes | - |
+| 2026-06-28-add-link | clean | **0** | yes | - |
 | 2026-06-28-add-templates | clean | 3 | yes | schemas, templates, i18n |
 | 2026-06-28-add-token-cost-calculator | **missing** | **0** | yes | - |
 
@@ -33,6 +34,7 @@ None.
 - **trailer**: 2026-06-28-add-auth: no commit carries a "Slice: add-auth" trailer
 - **review-evidence**: 2026-06-28-add-foundation: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-foundation: no commit carries a "Slice: add-foundation" trailer
+- **trailer**: 2026-06-28-add-link: no commit carries a "Slice: add-link" trailer
 - **review-evidence**: 2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-token-cost-calculator: no commit carries a "Slice: add-token-cost-calculator" trailer
 - **in-scope**: lib/i18n/ modified by 4 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift

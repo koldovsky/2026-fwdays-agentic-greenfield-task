@@ -1,9 +1,10 @@
-// @trace FR-CYCLE-05
+// @trace FR-CYCLE-05 FR-LINK-02
 import { PageHeader } from "@/components/shell/PageHeader";
 import { uk } from "@/lib/i18n/uk";
 import { formatDaysRemaining } from "@/lib/i18n/format";
 import { getCycleById } from "../queries";
 import { deriveStatus, daysRemaining } from "@/lib/cycles/status";
+import { CopyLinkButton } from "./CopyLinkButton";
 
 const t = uk.cycles;
 
@@ -84,6 +85,11 @@ export default async function CycleDetailPage({ params }: Props) {
             </dd>
           </div>
         </dl>
+
+        {/* Copy respondent link (FR-LINK-02) */}
+        <div>
+          <CopyLinkButton token={cycle.token} />
+        </div>
 
         {/* Questions */}
         {cycle.snapshot !== null ? (

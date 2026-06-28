@@ -1,0 +1,41 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-link",
+  "change": "add-link",
+  "baseRef": "HEAD~1",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 4
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 4
+    },
+    "spec-compliance": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [],
+  "fixedTitles": [
+    "Broken templateSnapshot returns null silently with no server-side log (NFR-OBS-01 gap)",
+    "CopyLinkButton setTimeout callback fires on unmounted component (stale state update leak)",
+    "Task 5.2 schemas.test.ts (tokenBoundarySchema boundary cases) was missing — added with 8 tests",
+    "app/(cabinet)/cycles/queries.ts missing import \"server-only\" guard despite importing Prisma db client"
+  ],
+  "deferredTitles": [
+    "IDOR: cabinet getCycleById/listCycles have no HR-user ownership filter — moot with single HR account in MVP, becomes critical with a second account (logged as SEC-BL-05)",
+    "Cycle token serialised into RSC client HTML payload via CopyLinkButton prop — cabinet is auth-guarded, accepted risk in MVP (logged as SEC-BL-06)",
+    "Subject first name tied to token in respondent greeting — deliberate per BC-PRIVACY-02 (logged as SEC-BL-07)",
+    "window.location.origin spoofable in adversarial browser environments — low severity, requires compromised HR browser",
+    "formatDaysRemaining hardcodes Ukrainian locale on the respondent page — not a defect while app is Ukrainian-only"
+  ],
+  "clean": true,
+  "generatedAt": "2026-06-28T16:55:00Z",
+  "fixedAt": "2026-06-28T17:01:00Z"
+}

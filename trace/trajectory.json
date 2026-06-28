@@ -22,7 +22,7 @@
     {
       "slice": "2026-06-28-add-cycles",
       "reviewEvidence": "clean",
-      "trailerCommits": 1,
+      "trailerCommits": 2,
       "libDomains": [
         "cycles",
         "i18n",
@@ -43,6 +43,13 @@
     {
       "slice": "2026-06-28-add-foundation",
       "reviewEvidence": "missing",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-28-add-link",
+      "reviewEvidence": "clean",
       "trailerCommits": 0,
       "libDomains": [],
       "processComplete": true
@@ -102,6 +109,10 @@
     {
       "check": "trailer",
       "msg": "2026-06-28-add-foundation: no commit carries a \"Slice: add-foundation\" trailer"
+    },
+    {
+      "check": "trailer",
+      "msg": "2026-06-28-add-link: no commit carries a \"Slice: add-link\" trailer"
     },
     {
       "check": "review-evidence",

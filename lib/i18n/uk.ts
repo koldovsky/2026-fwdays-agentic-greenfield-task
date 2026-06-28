@@ -141,6 +141,22 @@ export const uk = {
       retry: "Спробувати ще раз",
     },
   },
+  respondent: {
+    notFound: "Посилання не знайдено або застаріло",
+    notFoundBody: "Перевірте посилання або зверніться до HR",
+    expired: "Час на відповідь сплив",
+    expiredBody: "Дедлайн цього циклу минув",
+    done: "Відповідь вже надано",
+    doneBody: "Цей цикл оцінювання вже завершено",
+    greeting: "Вітаємо, {name}",
+    methodology: "Методологія",
+    deadline: "Дедлайн",
+    questions: "Питання",
+    questionsCount: "питань",
+    copyLink: "Скопіювати посилання",
+    linkCopied: "Посилання скопійовано",
+    copyFailed: "Не вдалося скопіювати",
+  },
 };
 
 export type Messages = typeof uk;

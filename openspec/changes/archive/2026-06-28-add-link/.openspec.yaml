@@ -1,0 +1,5 @@
+name: add-link
+capability: link
+version: "1.0.0"
+status: proposed
+refs: [FR-LINK-01, FR-LINK-02, FR-LINK-03]

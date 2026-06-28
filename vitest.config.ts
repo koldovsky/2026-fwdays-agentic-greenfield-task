@@ -10,8 +10,9 @@ export default defineConfig({
     },
   },
   test: {
-    // lib/ holds pure, framework-free logic; restrict unit tests to it for now.
-    include: ["lib/**/*.test.ts"],
+    // lib/ holds pure, framework-free logic; app/ holds co-located route tests
+    // (e.g. queries.test.ts next to server components). Both are included.
+    include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
     environment: "node",
   },
 });
