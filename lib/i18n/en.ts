@@ -12,4 +12,21 @@ export const en: Messages = {
     invalidCredentials: "Wrong email or password",
     genericError: "Could not sign in. Please try again",
   },
+  shell: {
+    nav: {
+      label: "Primary navigation",
+      cycles: "Cycles",
+      employees: "Employees",
+    },
+    signedInAs: "Signed in as",
+    signOut: "Sign out",
+    states: {
+      loading: "Loading…",
+      emptyTitle: "Nothing here yet",
+      emptyBody: "There are no records yet",
+      errorTitle: "Could not load",
+      errorBody: "Something went wrong while loading. Please try again",
+      retry: "Try again",
+    },
+  },
 };

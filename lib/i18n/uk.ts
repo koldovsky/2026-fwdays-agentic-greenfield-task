@@ -14,6 +14,23 @@ export const uk = {
     invalidCredentials: "Невірний email або пароль",
     genericError: "Не вдалося увійти. Спробуйте ще раз",
   },
+  shell: {
+    nav: {
+      label: "Основна навігація",
+      cycles: "Цикли",
+      employees: "Працівники",
+    },
+    signedInAs: "Ви увійшли як",
+    signOut: "Вийти",
+    states: {
+      loading: "Завантаження…",
+      emptyTitle: "Поки що порожньо",
+      emptyBody: "Тут ще немає записів",
+      errorTitle: "Не вдалося завантажити",
+      errorBody: "Сталася помилка під час завантаження. Спробуйте ще раз",
+      retry: "Спробувати ще раз",
+    },
+  },
 };
 
 export type Messages = typeof uk;
