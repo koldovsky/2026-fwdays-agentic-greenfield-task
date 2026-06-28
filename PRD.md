@@ -43,11 +43,10 @@ The following is **done** on `feat/omnictx` and must remain working:
 - ANSI colors with shell-correct escaping: `--shell bash` → `\[ \]`, `zsh` → `%{ %}`, `none` → raw.
 - Config `~/.config/omnictx/config.yaml`; precedence **flag > env > config > default**.
 - Env prefix `OMNICTX_*`.
-- `omnictx init bash|zsh` emits idempotent, non-clobbering prompt integration and
-  defines toggles **`omnion` / `omnioff` / `omnitoggle`** (driving `OMNICTX_ENABLED`).
+- `omnictx init bash|zsh` emits idempotent, non-clobbering prompt integration
 - Custom grouped `--help` (replaces `flag.PrintDefaults()`): description, usage,
-  subcommands, flags with allowed values + matching env var, single
-  `--enabled[=<bool>]` master flag (the old `--enabled`/`--disabled` ambiguity is gone).
+  subcommands, `--shell` flag, `--version`, `-h/--help`. All other settings via
+  env vars (`OMNICTX_*`) or config file.
 - Tests: table-driven per package, golden tests for `render`, a `bash -c` eval
   smoke test for `init`, a `--help` test, a render benchmark.
 - CI on node24-pinned actions: `actions/checkout@v6`, `actions/setup-go@v6`,
@@ -94,9 +93,10 @@ width correctly. Each segment has its own color from config.
 
 ### 4.3 Flags / env / config
 Precedence **flag > env > config > default**. Env prefix `OMNICTX_*`. Config at
-`~/.config/omnictx/config.yaml` (`OMNICTX_CONFIG` / `--config` to override).
-A missing/broken config silently falls back to defaults (diagnostics only under
-`--debug`). `--shell` is supplied by `init`, never persisted in config.
+`~/.config/omnictx/config.yaml` (`OMNICTX_CONFIG` env var to override path).
+A missing/broken config silently falls back to defaults.
+Only CLI flag in render mode: `--shell <bash|zsh|none>` (supplied by `init`, never
+persisted in config). All other settings via env vars or config file.
 
 ### 4.4 Data sources (existing)
 - **Kubernetes:** files from `$KUBECONFIG` (colon list) else `~/.kube/config`;
@@ -106,26 +106,24 @@ A missing/broken config silently falls back to defaults (diagnostics only under
 
 ### 4.5 Error behavior & init
 Always `exit 0` in render mode; top-level `recover`; `OMNICTX_ENABLED=false` →
-print empty (drives `omnion`/`omnioff`). `init` output is idempotent and prepends
-to the user's prompt without clobbering it.
+print empty. `init` output is idempotent and prepends to the user's prompt without
+clobbering it. `omnictx on` / `omnictx off` persist the enabled state to config.
 
-### 4.6 Global on/off (`-G` flag on shell toggles)
-`omnion`/`omnioff`/`omnitoggle` accept an optional `-G` flag that **persists** the
-state to `~/.config/omnictx/config.yaml` so new terminal sessions also see it:
+### 4.6 Global on/off
+`omnictx on` / `omnictx off` persist the enabled state to config so all future
+shells see it:
 
 ```
-omnioff -G    # writes enabled: false to config — all future shells start quiet
-omnion  -G    # writes enabled: true  to config — restores default behaviour
-omnitoggle -G # flips the current persisted state
+omnictx off   # writes enabled: false to config — all future shells start quiet
+omnictx on    # writes enabled: true  to config — restores default behaviour
 ```
 
-Without `-G` the behaviour is unchanged (session-local `OMNICTX_ENABLED` env var).
+Session-only: `export OMNICTX_ENABLED=false` (not persisted).
 
-Implementation: three new subcommands in the binary — `omnictx enable`,
-`omnictx disable`, `omnictx toggle` — that read the config path
+Implementation: subcommands in the binary that read the config path
 (`OMNICTX_CONFIG` > `~/.config/omnictx/config.yaml`), update only the `enabled:`
 line in the YAML (preserving comments and other keys), and create the file/dir if
-absent. The shell functions call the subcommand when `-G` is passed.
+absent. No shell functions needed.
 
 ---
 
@@ -193,11 +191,10 @@ A minimal INI parser (sections `[name]`, `key = value`, comments `#`/`;`, a defa
 section) used by both AWS and GCP. ~40–60 lines, stdlib only — **no new dependency**.
 Graceful: any parse error yields no value (never breaks the prompt).
 
-### 5.6 Config / flags / env additions
+### 5.6 Config / env additions
 - Config: `cloud:` key (§5.1); `colors.cloud` (+ optional `colors.azure|aws|gcp`).
-- Flag: `--cloud <azure|aws|gcp|auto|none>`. Env: `OMNICTX_CLOUD`.
-- `--help` updated to document `--cloud` (values + env), consistent with the
-  existing grouped usage.
+- Env: `OMNICTX_CLOUD=azure|aws|gcp|auto|none`.
+- `--help` lists env vars under the Configuration section.
 
 ### 5.7 Icons / ASCII
 Icon mode: per-provider Nerd Font glyph + value (`󰠅 ` Azure, ` ` AWS, `󱇶 ` GCP).
@@ -263,7 +260,7 @@ is a thin glue layer.
 - [ ] Each new source is offline-only and degrades gracefully (no prompt breakage).
 - [ ] Only one cloud is ever shown; kube remains independent.
 - [ ] No dependency beyond `yaml.v3`.
-- [ ] `--help` documents `--cloud`; usage stays grouped and unambiguous.
+- [ ] `--help` stays grouped and unambiguous; env vars listed in Configuration section.
 - [ ] `go build`, `go vet`, `go test ./... -race`, `golangci-lint` all green; CI green.
 - [ ] `AGENTS.md`, `README.md`, `Makefile` reflect AWS/GCP + the `cloud` config.
 

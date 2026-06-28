@@ -96,7 +96,7 @@ func Resolve(flags Flags, lookupEnv LookupEnv, home string) (Config, []string) {
 	cfg := Defaults()
 
 	// Layer 1: config file (lowest above defaults).
-	path := resolveConfigPath(flags, lookupEnv, home)
+	path := resolveConfigPath(lookupEnv, home)
 	if fc, note, ok := loadFile(path); ok {
 		applyFile(&cfg, fc)
 	} else if note != "" {
@@ -118,7 +118,7 @@ func Resolve(flags Flags, lookupEnv LookupEnv, home string) (Config, []string) {
 }
 
 // resolveConfigPath applies precedence (env > default) to the config path.
-func resolveConfigPath(flags Flags, lookupEnv LookupEnv, home string) string {
+func resolveConfigPath(lookupEnv LookupEnv, home string) string {
 	if v, ok := lookupEnv("OMNICTX_CONFIG"); ok && v != "" {
 		return v
 	}

@@ -23,10 +23,12 @@ No panics in production (top-level recover in main).
 - Update golden: go test ./internal/render -update
 
 ## Structure
-- cmd/omnictx/main.go — flags/env, glue, top-level recover; dispatches `init` subcommand.
+- cmd/omnictx/main.go — flags/env, glue, top-level recover; dispatches subcommands.
   `--help`/`-h` prints a custom grouped usage (description, usage, subcommands,
-  flags with allowed values + env vars, `--flag` double-dash display) and exits 0;
-  the master on/off is a single `--enabled[=<bool>]` flag (no `--disabled`).
+  flags, `--flag` double-dash display) and exits 0.
+  Only flag exposed in render mode: `--shell <bash|zsh|none>` (supplied by `init`,
+  not persisted in config). All other settings via env vars or config file.
+  Subcommands: `init <bash|zsh>`, `on` / `off` (persist enabled state to config).
 - internal/cloud — Provider interface + active-cloud Select (azure|aws|gcp|auto|none).
 - internal/azure — Azure provider: active subscription from azureProfile.json (UTF-8 BOM).
 - internal/aws — AWS provider: profile (+region) from ~/.aws/config (offline; no STS).
@@ -38,17 +40,17 @@ No panics in production (top-level recover in main).
   with optional per-provider colors[key] override).
 - internal/config — merge flags + env + YAML config file → struct
   (precedence: flag > env > config > default). Config: ~/.config/omnictx/config.yaml.
-- internal/shellinit — `init bash|zsh` code generation (go:embed templates) +
-  omnion/omnioff/omnitoggle functions. Output must be idempotent.
+- internal/shellinit — `init bash|zsh` code generation (go:embed templates).
+  Output must be idempotent. No shell functions defined (omnion/omnioff removed).
 - testdata — fixtures and golden files.
 
 ## Conventions
 - Business logic lives in internal/*, tested against fixtures in testdata/.
 - Errors reading/parsing sources OR config are NOT propagated as fatal — the segment
-  is simply skipped / defaults are used. Diagnostics only under --debug to stderr.
+  is simply skipped / defaults are used.
 - Each data source, config merge, render, and shellinit output is covered by
   table-driven tests.
-- When OMNICTX_ENABLED=false, print empty and exit 0 (drives omnion/omnioff).
+- When OMNICTX_ENABLED=false, print empty and exit 0.
 - Mandatory test cases: UTF-8 BOM in azureProfile.json; $KUBECONFIG merge
   (current-context from the first file); color escaping for bash and zsh;
   config precedence; idempotent init output; AWS profile/region precedence and
@@ -60,13 +62,12 @@ No panics in production (top-level recover in main).
   `context:namespace` (icons) / `context/namespace` (ASCII). It has no standalone
   representation: if kube is disabled/unavailable, namespace is not shown.
 - Exactly ONE cloud is shown. `cloud: azure|aws|gcp|auto|none` selects it
-  (precedence flag `--cloud` > `OMNICTX_CLOUD` > config > default `auto`); `auto`
-  picks the single present cloud by priority azure→aws→gcp. Kubernetes is an
-  independent segment, unaffected by the cloud selection.
+  (precedence `OMNICTX_CLOUD` > config > default `auto`); `auto` picks the single
+  present cloud by priority azure→aws→gcp. Kubernetes is an independent segment,
+  unaffected by the cloud selection.
 - The `segments` list uses a single `cloud` slot; `azure`/`az`/`aws`/`gcp` are
   accepted aliases for `cloud` (kube aliases k/k8s; namespace alias ns). Unknown
-  and duplicate entries are dropped while preserving order. `--no-azure` drops the
-  cloud slot.
+  and duplicate entries are dropped while preserving order.
 - A `default` namespace is shown as-is (no special suppression) when the segment is
   enabled and the value is non-empty.
 - `init` snippets call the binary via its bare name `omnictx` (must be on PATH),
