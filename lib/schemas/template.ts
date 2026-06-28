@@ -28,8 +28,14 @@ export const anchorSchema = z.object({
 
 export type Anchor = z.infer<typeof anchorSchema>;
 
-/** A non-empty anchor list whose `value`s are unique within the question. */
-const scaleAnchorsSchema = z
+/**
+ * A non-empty anchor list whose `value`s are unique within the question. This
+ * is the single canonical scale-anchor schema (TC-ARCH-01): both the seed
+ * boundary (`questionSchema`) and the DB read side (`questionRowSchema`,
+ * parsing the `anchors Json?` column for a `scale` row) parse through it, so
+ * the uniqueness invariant is enforced once, everywhere.
+ */
+export const scaleAnchorsSchema = z
   .array(anchorSchema)
   .min(1)
   .refine(
@@ -71,6 +77,32 @@ export const questionSchema = z.discriminatedUnion("type", [
 ]);
 
 export type Question = z.infer<typeof questionSchema>;
+
+/**
+ * Parse a Prisma `Question` row into the canonical `Question` shape, reusing
+ * the SAME rules as the seed boundary (TC-ARCH-01): `scale` rows must carry a
+ * non-empty unique-value anchor list (the `anchors Json?` column), `open` rows
+ * carry none. A DB row stores `anchors` as `null` for an `open` question, so
+ * the row variant tolerates (and drops) an explicit `null` anchors rather than
+ * rejecting it the way the strict seed schema does. The output type is exactly
+ * `Question`, so callers gain no parallel type and need no cast.
+ *
+ * A row that fails this parse is malformed; the read side degrades to a calm
+ * not-found rather than rendering a broken question or throwing.
+ */
+export const questionRowSchema = z.discriminatedUnion("type", [
+  z.object({
+    ...baseQuestion,
+    type: z.literal("scale"),
+    anchors: scaleAnchorsSchema,
+  }),
+  // An `open` DB row stores SQL NULL in `anchors`; the non-strict object simply
+  // strips that extra key, yielding the canonical anchor-less `open` shape.
+  z.object({
+    ...baseQuestion,
+    type: z.literal("open"),
+  }),
+]);
 
 /**
  * A read-only template: a trimmed 1–200 name, a non-empty methodology tag, and

@@ -1,8 +1,12 @@
 // Seed the two read-only templates (FR-TPL-01, FR-TPL-03). Idempotent and
 // re-runnable: upserts each template by its natural key (name) and each
-// question by (templateId, order), never deletes. Every seed template is
-// re-validated with `templateSchema` BEFORE any write, so malformed seed data
-// fails fast at the boundary and nothing is written.
+// question by its stable id (the seed-provided id IS the DB primary key, so it
+// is stable across reads and re-seeds — FR-TPL-02). After upserting, any
+// question row of THAT template whose id is not in the seeded set is removed,
+// so a re-seed always leaves exactly the seeded question set (no stale rows if
+// a template later shrinks). Other templates are never touched. Every seed
+// template is re-validated with `templateSchema` BEFORE any write, so malformed
+// seed data fails fast at the boundary and nothing is written.
 //
 //   node scripts/seed-templates.mts
 //
@@ -38,6 +42,16 @@ for (const candidate of seedTemplates) {
         data: { name: template.name, methodology: template.methodology },
       });
 
+  // Remove any stale question of this template that is no longer seeded BEFORE
+  // upserting. This drops pre-existing rows (e.g. earlier cuid-keyed seeds, or
+  // a shrunk count) that would otherwise collide on the (templateId, order)
+  // unique constraint when a seeded id reclaims their order. Scoped to this
+  // template only; other templates are untouched.
+  const seededIds = template.questions.map((question) => question.id);
+  await db.question.deleteMany({
+    where: { templateId: row.id, id: { notIn: seededIds } },
+  });
+
   for (const question of template.questions) {
     // `anchors` is the Json? column: the validated anchor array for scale, a
     // true SQL NULL for open. `Prisma.DbNull` writes NULL (not the JSON null
@@ -45,16 +59,19 @@ for (const candidate of seedTemplates) {
     const anchors = question.type === "scale" ? question.anchors : Prisma.DbNull;
 
     await db.question.upsert({
-      // Keyed by (templateId, order) so re-runs leave existing question ids
-      // untouched — downstream cycle snapshots reference those ids.
-      where: { templateId_order: { templateId: row.id, order: question.order } },
+      // Keyed by the stable seed id, so the DB primary key IS that id and stays
+      // stable across re-seeds — downstream cycle snapshots reference it.
+      where: { id: question.id },
       update: {
+        templateId: row.id,
+        order: question.order,
         text: question.text,
         type: question.type,
         required: question.required,
         anchors,
       },
       create: {
+        id: question.id,
         templateId: row.id,
         order: question.order,
         text: question.text,
