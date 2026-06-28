@@ -134,6 +134,24 @@ describe("answerInputSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects an open-answer payload with a questionId longer than 100 characters", () => {
+    const result = answerInputSchema.safeParse({
+      type: "open",
+      questionId: "q".repeat(101),
+      text: "hello",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a scale-answer payload with a questionId longer than 100 characters", () => {
+    const result = answerInputSchema.safeParse({
+      type: "scale",
+      questionId: "q".repeat(101),
+      value: 3,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

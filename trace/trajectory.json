@@ -59,8 +59,11 @@
     {
       "slice": "2026-06-28-add-respond",
       "reviewEvidence": "clean",
-      "trailerCommits": 0,
-      "libDomains": [],
+      "trailerCommits": 1,
+      "libDomains": [
+        "i18n",
+        "schemas"
+      ],
       "processComplete": true
     },
     {
@@ -90,6 +93,7 @@
         "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
         "2026-06-28-add-link",
+        "2026-06-28-add-respond",
         "2026-06-28-add-templates"
       ]
     },
@@ -98,6 +102,7 @@
       "slices": [
         "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
+        "2026-06-28-add-respond",
         "2026-06-28-add-templates"
       ]
     }
@@ -121,10 +126,6 @@
       "msg": "2026-06-28-add-foundation: no commit carries a \"Slice: add-foundation\" trailer"
     },
     {
-      "check": "trailer",
-      "msg": "2026-06-28-add-respond: no commit carries a \"Slice: add-respond\" trailer"
-    },
-    {
       "check": "review-evidence",
       "msg": "2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)"
     },
@@ -134,11 +135,11 @@
     },
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 5 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/i18n/ modified by 6 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift"
     },
     {
       "check": "in-scope",
-      "msg": "lib/schemas/ modified by 3 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/schemas/ modified by 4 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift"
     }
   ]
 }

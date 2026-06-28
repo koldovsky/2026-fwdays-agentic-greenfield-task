@@ -23,7 +23,7 @@ export const answerInputSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("scale"),
-    questionId: z.string().min(1),
+    questionId: z.string().min(1).max(100),
     value: scaleAnswerSchema,
   }),
 ]);
