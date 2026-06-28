@@ -7,17 +7,17 @@ import (
 )
 
 func TestGenerateBash(t *testing.T) {
-	out, err := Generate("bash", "ctxline")
+	out, err := Generate("bash", "omnictx")
 	if err != nil {
 		t.Fatal(err)
 	}
 	mustContain(t, out, []string{
-		"__CTXLINE_BASH_LOADED",       // idempotency guard
-		"__CTXLINE_ORIG_PS1=\"$PS1\"", // captures original prompt once
-		"ctxline --shell bash",        // passes correct shell
+		"__OMNICTX_BASH_LOADED",       // idempotency guard
+		"__OMNICTX_ORIG_PS1=\"$PS1\"", // captures original prompt once
+		"omnictx --shell bash",        // passes correct shell
 		"PROMPT_COMMAND",              // registers hook
-		"ctxon()", "ctxoff()", "ctxtoggle()",
-		"CTXLINE_ENABLED=true", "CTXLINE_ENABLED=false",
+		"omnion()", "omnioff()", "omnitoggle()",
+		"OMNICTX_ENABLED=true", "OMNICTX_ENABLED=false",
 	})
 	if strings.Contains(out, "precmd_functions") {
 		t.Errorf("bash output should not reference zsh precmd_functions")
@@ -25,31 +25,31 @@ func TestGenerateBash(t *testing.T) {
 }
 
 func TestGenerateZsh(t *testing.T) {
-	out, err := Generate("zsh", "ctxline")
+	out, err := Generate("zsh", "omnictx")
 	if err != nil {
 		t.Fatal(err)
 	}
 	mustContain(t, out, []string{
-		"__CTXLINE_ZSH_LOADED",                 // idempotency guard
-		"__CTXLINE_ORIG_PROMPT=\"$PROMPT\"",    // captures original prompt once
-		"ctxline --shell zsh",                  // passes correct shell
-		"precmd_functions+=(__ctxline_precmd)", // registers hook
-		"ctxon()", "ctxoff()", "ctxtoggle()",
+		"__OMNICTX_ZSH_LOADED",                 // idempotency guard
+		"__OMNICTX_ORIG_PROMPT=\"$PROMPT\"",    // captures original prompt once
+		"omnictx --shell zsh",                  // passes correct shell
+		"precmd_functions+=(__omnictx_precmd)", // registers hook
+		"omnion()", "omnioff()", "omnitoggle()",
 	})
 }
 
 func TestGenerateUsesCmd(t *testing.T) {
-	out, err := Generate("bash", "/opt/bin/ctxline")
+	out, err := Generate("bash", "/opt/bin/omnictx")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "/opt/bin/ctxline --shell bash") {
+	if !strings.Contains(out, "/opt/bin/omnictx --shell bash") {
 		t.Fatalf("expected custom command path in output, got:\n%s", out)
 	}
 }
 
 func TestGenerateUnsupportedShell(t *testing.T) {
-	if _, err := Generate("fish", "ctxline"); err == nil {
+	if _, err := Generate("fish", "omnictx"); err == nil {
 		t.Fatal("expected error for unsupported shell")
 	}
 }
@@ -59,8 +59,8 @@ func TestGenerateDefaultsCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "ctxline --shell bash") {
-		t.Fatalf("empty cmd should default to 'ctxline', got:\n%s", out)
+	if !strings.Contains(out, "omnictx --shell bash") {
+		t.Fatalf("empty cmd should default to 'omnictx', got:\n%s", out)
 	}
 }
 
@@ -80,11 +80,11 @@ func TestBashSnippetIsValidAndIdempotent(t *testing.T) {
 	script := `PS1='orig> '
 ` + snippet + `
 ` + snippet + `
-type ctxon >/dev/null 2>&1 && echo HAS_CTXON
-type ctxoff >/dev/null 2>&1 && echo HAS_CTXOFF
-type ctxtoggle >/dev/null 2>&1 && echo HAS_CTXTOGGLE
-echo "ORIG=${__CTXLINE_ORIG_PS1}"
-__ctxline_prompt
+type omnion >/dev/null 2>&1 && echo HAS_OMNION
+type omnioff >/dev/null 2>&1 && echo HAS_OMNIOFF
+type omnitoggle >/dev/null 2>&1 && echo HAS_OMNITOGGLE
+echo "ORIG=${__OMNICTX_ORIG_PS1}"
+__omnictx_prompt
 echo "PS1=${PS1}"
 `
 	cmd := exec.Command(bash, "--norc", "--noprofile", "-c", script)
@@ -93,7 +93,7 @@ echo "PS1=${PS1}"
 		t.Fatalf("bash eval failed: %v\n%s", err, outBytes)
 	}
 	out := string(outBytes)
-	for _, want := range []string{"HAS_CTXON", "HAS_CTXOFF", "HAS_CTXTOGGLE", "ORIG=orig> "} {
+	for _, want := range []string{"HAS_OMNION", "HAS_OMNIOFF", "HAS_OMNITOGGLE", "ORIG=orig> "} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in bash output:\n%s", want, out)
 		}

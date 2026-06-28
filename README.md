@@ -1,4 +1,4 @@
-# ctxline
+# omnictx
 
 A tiny, fast Go binary that prints a shell-prompt segment showing your current
 **Azure subscription**, **kube-context**, and **namespace**.
@@ -10,7 +10,7 @@ A tiny, fast Go binary that prints a shell-prompt segment showing your current
 It reads config files **directly** — no `kubectl`, no `az`, no network calls — so
 it fits comfortably inside the prompt-render budget (cold start + render < 10 ms).
 
-**Core invariant:** `ctxline` never breaks your prompt. Any error (missing file,
+**Core invariant:** `omnictx` never breaks your prompt. Any error (missing file,
 broken YAML/JSON, not logged into Azure) silently skips the affected segment and
 exits 0.
 
@@ -19,7 +19,7 @@ exits 0.
 ## Install
 
 ```bash
-make install      # builds and copies the binary to ~/.local/bin/ctxline
+make install      # builds and copies the binary to ~/.local/bin/omnictx
 ```
 
 Make sure `~/.local/bin` is on your `PATH`.
@@ -28,13 +28,13 @@ Make sure `~/.local/bin` is on your `PATH`.
 
 ```bash
 # bash — ~/.bashrc
-eval "$(ctxline init bash)"
+eval "$(omnictx init bash)"
 
 # zsh — ~/.zshrc
-eval "$(ctxline init zsh)"
+eval "$(omnictx init zsh)"
 ```
 
-This captures your existing prompt once, **prepends** the ctxline segment without
+This captures your existing prompt once, **prepends** the omnictx segment without
 clobbering it, registers the render hook (`PROMPT_COMMAND` for bash, a `precmd`
 hook for zsh), and defines the toggle functions. The snippet is idempotent — it is
 safe to `eval` more than once in the same shell.
@@ -42,27 +42,27 @@ safe to `eval` more than once in the same shell.
 ### Daily use — live toggles (no rc edits)
 
 ```bash
-ctxoff      # hide the segment in this shell
-ctxon       # show it again
-ctxtoggle   # flip the current state
+omnioff      # hide the segment in this shell
+omnion       # show it again
+omnitoggle   # flip the current state
 ```
 
-These just flip `CTXLINE_ENABLED`; the change takes effect on the very next prompt.
+These just flip `OMNICTX_ENABLED`; the change takes effect on the very next prompt.
 
 ### Manual integration (advanced)
 
 ```bash
 # bash
-__ctxline_prompt() { PS1="$(ctxline --shell bash) ${__ORIG_PS1}"; }
-__ORIG_PS1="$PS1"; PROMPT_COMMAND=__ctxline_prompt
+__omnictx_prompt() { PS1="$(omnictx --shell bash) ${__ORIG_PS1}"; }
+__ORIG_PS1="$PS1"; PROMPT_COMMAND=__omnictx_prompt
 ```
 
 ```zsh
 # zsh
 setopt PROMPT_SUBST
-__ctxline_precmd() { CTXLINE="$(ctxline --shell zsh)"; }
-precmd_functions+=(__ctxline_precmd)
-PROMPT='${CTXLINE} '"$PROMPT"
+__omnictx_precmd() { OMNICTX="$(omnictx --shell zsh)"; }
+precmd_functions+=(__omnictx_precmd)
+PROMPT='${OMNICTX} '"$PROMPT"
 ```
 
 ---
@@ -70,13 +70,13 @@ PROMPT='${CTXLINE} '"$PROMPT"
 ## Usage
 
 ```bash
-ctxline                      # print the segment (standalone / debugging)
-ctxline --no-namespace       # hide the namespace
-ctxline --no-icons           # ASCII labels:  az:<sub> k8s:<ctx>/<ns>
-ctxline --segments azure,kube
-ctxline --shell bash|zsh|none
-ctxline --version
-ctxline init bash|zsh        # print shell integration code
+omnictx                      # print the segment (standalone / debugging)
+omnictx --no-namespace       # hide the namespace
+omnictx --no-icons           # ASCII labels:  az:<sub> k8s:<ctx>/<ns>
+omnictx --segments azure,kube
+omnictx --shell bash|zsh|none
+omnictx --version
+omnictx init bash|zsh        # print shell integration code
 ```
 
 ### Output format
@@ -98,7 +98,7 @@ miscalculates line width and breaks line editing. `--shell` controls this:
 | `zsh`  | `%{ <ansi> %}` |
 | `none` (default) | raw ANSI (for pipes / standalone) |
 
-`ctxline init` passes the correct `--shell` value automatically.
+`omnictx init` passes the correct `--shell` value automatically.
 
 ---
 
@@ -112,19 +112,19 @@ Flags, env vars, and an optional YAML config file are merged with this precedenc
 
 | Flag | Env | Default | Purpose |
 |---|---|---|---|
-| `--segments az,kube,ns` | `CTXLINE_SEGMENTS` | `azure,kube,namespace` | which segments, in what order |
+| `--segments az,kube,ns` | `OMNICTX_SEGMENTS` | `azure,kube,namespace` | which segments, in what order |
 | `--no-azure` / `--no-kube` / `--no-namespace` | — | off | disable a segment |
-| `--shell bash\|zsh\|none` | `CTXLINE_SHELL` | `none` | color escaping mode |
-| `--icons` / `--no-icons` | `CTXLINE_ICONS` | icons on | icons vs ASCII |
-| `--separator <str>` | `CTXLINE_SEPARATOR` | `" "` | separator between groups |
-| `--enabled` / `--disabled` | `CTXLINE_ENABLED` | enabled | master on/off (`ctxon`/`ctxoff`) |
-| `--config <path>` | `CTXLINE_CONFIG` | `~/.config/ctxline/config.yaml` | config file path |
+| `--shell bash\|zsh\|none` | `OMNICTX_SHELL` | `none` | color escaping mode |
+| `--icons` / `--no-icons` | `OMNICTX_ICONS` | icons on | icons vs ASCII |
+| `--separator <str>` | `OMNICTX_SEPARATOR` | `" "` | separator between groups |
+| `--enabled[=<bool>]` | `OMNICTX_ENABLED` | enabled | master on/off (normally via `omnion`/`omnioff`) |
+| `--config <path>` | `OMNICTX_CONFIG` | `~/.config/omnictx/config.yaml` | config file path |
 | `--debug` | — | off | diagnostics to stderr |
 | `--version` | — | — | print version |
 
 Segment names accept aliases: `az`→azure, `k`/`k8s`→kube, `ns`→namespace.
 
-### Config file (`~/.config/ctxline/config.yaml`)
+### Config file (`~/.config/omnictx/config.yaml`)
 
 All keys are optional; a missing or broken config falls back to defaults and never
 breaks the prompt.
@@ -141,7 +141,7 @@ colors:                              # names or raw SGR codes (e.g. "1;34")
 ```
 
 > `shell` is intentionally **not** a config key — it is supplied per-shell by
-> `ctxline init`, not persisted.
+> `omnictx init`, not persisted.
 
 ---
 
@@ -159,7 +159,7 @@ colors:                              # names or raw SGR codes (e.g. "1;34")
 ## Development
 
 ```bash
-make build     # go build -> bin/ctxline
+make build     # go build -> bin/omnictx
 make test      # go test ./... -race -count=1
 make vet       # go vet ./...
 make lint      # golangci-lint run

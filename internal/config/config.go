@@ -1,4 +1,4 @@
-// Package config resolves the effective ctxline configuration by merging four
+// Package config resolves the effective omnictx configuration by merging four
 // layers with a strict precedence: flag > env > config file > built-in default.
 //
 // Nothing here is fatal. A missing or broken config file is ignored silently
@@ -119,10 +119,10 @@ func resolveConfigPath(flags Flags, lookupEnv LookupEnv, home string) string {
 	if flags.ConfigPath != nil && *flags.ConfigPath != "" {
 		return *flags.ConfigPath
 	}
-	if v, ok := lookupEnv("CTXLINE_CONFIG"); ok && v != "" {
+	if v, ok := lookupEnv("OMNICTX_CONFIG"); ok && v != "" {
 		return v
 	}
-	return filepath.Join(home, ".config", "ctxline", "config.yaml")
+	return filepath.Join(home, ".config", "omnictx", "config.yaml")
 }
 
 // loadFile reads and parses the YAML config file. ok=false means "no usable
@@ -164,27 +164,27 @@ func applyFile(cfg *Config, fc fileConfig) {
 }
 
 func applyEnv(cfg *Config, lookupEnv LookupEnv, debug *[]string) {
-	if v, ok := lookupEnv("CTXLINE_ENABLED"); ok {
+	if v, ok := lookupEnv("OMNICTX_ENABLED"); ok {
 		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
 			cfg.Enabled = b
 		} else {
-			*debug = append(*debug, fmt.Sprintf("env: invalid CTXLINE_ENABLED=%q", v))
+			*debug = append(*debug, fmt.Sprintf("env: invalid OMNICTX_ENABLED=%q", v))
 		}
 	}
-	if v, ok := lookupEnv("CTXLINE_SEGMENTS"); ok {
+	if v, ok := lookupEnv("OMNICTX_SEGMENTS"); ok {
 		cfg.Segments = splitSegments(v)
 	}
-	if v, ok := lookupEnv("CTXLINE_ICONS"); ok {
+	if v, ok := lookupEnv("OMNICTX_ICONS"); ok {
 		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
 			cfg.Icons = b
 		} else {
-			*debug = append(*debug, fmt.Sprintf("env: invalid CTXLINE_ICONS=%q", v))
+			*debug = append(*debug, fmt.Sprintf("env: invalid OMNICTX_ICONS=%q", v))
 		}
 	}
-	if v, ok := lookupEnv("CTXLINE_SEPARATOR"); ok {
+	if v, ok := lookupEnv("OMNICTX_SEPARATOR"); ok {
 		cfg.Separator = v
 	}
-	if v, ok := lookupEnv("CTXLINE_SHELL"); ok {
+	if v, ok := lookupEnv("OMNICTX_SHELL"); ok {
 		cfg.Shell = v
 	}
 }

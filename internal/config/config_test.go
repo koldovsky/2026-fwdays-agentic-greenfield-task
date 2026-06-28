@@ -68,9 +68,9 @@ func TestResolveDisabledViaConfig(t *testing.T) {
 
 func TestPrecedenceFlagOverEnvOverFile(t *testing.T) {
 	env := map[string]string{
-		"CTXLINE_SEPARATOR": "ENV_SEP",
-		"CTXLINE_ICONS":     "true",
-		"CTXLINE_CONFIG":    fixturePath("config_full.yaml"),
+		"OMNICTX_SEPARATOR": "ENV_SEP",
+		"OMNICTX_ICONS":     "true",
+		"OMNICTX_CONFIG":    fixturePath("config_full.yaml"),
 	}
 	// File says separator " | " & icons false; env overrides both; flag overrides separator again.
 	cfg, _ := Resolve(Flags{Separator: strp("FLAG_SEP")}, envFunc(env), "/home")
@@ -85,8 +85,8 @@ func TestPrecedenceFlagOverEnvOverFile(t *testing.T) {
 
 func TestEnvOverFile(t *testing.T) {
 	env := map[string]string{
-		"CTXLINE_CONFIG":   fixturePath("config_full.yaml"),
-		"CTXLINE_SEGMENTS": "azure,namespace",
+		"OMNICTX_CONFIG":   fixturePath("config_full.yaml"),
+		"OMNICTX_SEGMENTS": "azure,namespace",
 	}
 	cfg, _ := Resolve(Flags{}, envFunc(env), "/home")
 	if !reflect.DeepEqual(cfg.Segments, []string{SegmentAzure, SegmentNamespace}) {
@@ -131,7 +131,7 @@ func TestShellOnlyFromFlagOrEnvNotFile(t *testing.T) {
 	if cfg.Shell != ShellBash {
 		t.Errorf("shell = %q, want bash from flag", cfg.Shell)
 	}
-	cfg, _ = Resolve(Flags{}, envFunc(map[string]string{"CTXLINE_SHELL": "zsh"}), "/home")
+	cfg, _ = Resolve(Flags{}, envFunc(map[string]string{"OMNICTX_SHELL": "zsh"}), "/home")
 	if cfg.Shell != ShellZsh {
 		t.Errorf("shell = %q, want zsh from env", cfg.Shell)
 	}

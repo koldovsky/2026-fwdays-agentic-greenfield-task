@@ -1,7 +1,7 @@
-# AGENTS.md — ctxline
+# AGENTS.md — omnictx
 
 ## What this is
-`ctxline` is a Go CLI that prints a prompt segment with the current kube-context,
+`omnictx` is a Go CLI that prints a prompt segment with the current kube-context,
 namespace, and active Azure subscription. It reads config files directly, without
 kubectl/az and without network access.
 
@@ -15,21 +15,24 @@ No panics in production (top-level recover in main).
 - Do not add client-go or network libraries.
 
 ## Commands
-- Build:    make build   (go build -o bin/ctxline ./cmd/ctxline)
+- Build:    make build   (go build -o bin/omnictx ./cmd/omnictx)
 - Test:     make test    (go test ./... -race -count=1)
 - Lint:     make lint    (golangci-lint run)
 - Install:  make install (copy binary to ~/.local/bin)
 - Update golden: go test ./internal/render -update
 
 ## Structure
-- cmd/ctxline/main.go — flags/env, glue, top-level recover; dispatches `init` subcommand.
+- cmd/omnictx/main.go — flags/env, glue, top-level recover; dispatches `init` subcommand.
+  `--help`/`-h` prints a custom grouped usage (description, usage, subcommands,
+  flags with allowed values + env vars, `--flag` double-dash display) and exits 0;
+  the master on/off is a single `--enabled[=<bool>]` flag (no `--disabled`).
 - internal/kube — current-context + namespace from kubeconfig ($KUBECONFIG-aware).
 - internal/azure — active subscription from azureProfile.json (handle UTF-8 BOM).
 - internal/render — format, ANSI colors, bash (\[ \]) / zsh (%{ %}) escaping.
 - internal/config — merge flags + env + YAML config file → struct
-  (precedence: flag > env > config > default). Config: ~/.config/ctxline/config.yaml.
+  (precedence: flag > env > config > default). Config: ~/.config/omnictx/config.yaml.
 - internal/shellinit — `init bash|zsh` code generation (go:embed templates) +
-  ctxon/ctxoff/ctxtoggle functions. Output must be idempotent.
+  omnion/omnioff/omnitoggle functions. Output must be idempotent.
 - testdata — fixtures and golden files.
 
 ## Conventions
@@ -38,7 +41,7 @@ No panics in production (top-level recover in main).
   is simply skipped / defaults are used. Diagnostics only under --debug to stderr.
 - Each data source, config merge, render, and shellinit output is covered by
   table-driven tests.
-- When CTXLINE_ENABLED=false, print empty and exit 0 (drives ctxon/ctxoff).
+- When OMNICTX_ENABLED=false, print empty and exit 0 (drives omnion/omnioff).
 - Mandatory test cases: UTF-8 BOM in azureProfile.json; $KUBECONFIG merge
   (current-context from the first file); color escaping for bash and zsh;
   config precedence; idempotent init output.
@@ -51,10 +54,16 @@ No panics in production (top-level recover in main).
   duplicate entries are dropped while preserving order.
 - A `default` namespace is shown as-is (no special suppression) when the segment is
   enabled and the value is non-empty.
-- `init` snippets call the binary via its bare name `ctxline` (must be on PATH),
+- `init` snippets call the binary via its bare name `omnictx` (must be on PATH),
   matching starship/zoxide/direnv conventions.
+
+## CI
+GitHub Actions pinned to node24 majors (checkout@v6, setup-go@v6,
+golangci-lint-action@v9 with `version: v2.12`, upload-artifact@v7); no Node-20
+deprecation warnings. Job shape: go vet → golangci-lint → go test -race → build
+matrix linux/amd64,arm64.
 
 ## Definition of Done
 See section 7.5 of PRD.md. In short: build+test(-race) green, edge cases covered,
 prompt never breaks, config + init/toggles work, CI green, README with the
-`eval "$(ctxline init bash)"` install path.
+`eval "$(omnictx init bash)"` install path.

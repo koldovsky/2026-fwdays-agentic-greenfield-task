@@ -5,7 +5,7 @@ package render
 import (
 	"strings"
 
-	"ctxline/internal/config"
+	"omnictx/internal/config"
 )
 
 // Data carries the resolved values for each segment. An empty field means the

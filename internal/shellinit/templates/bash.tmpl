@@ -1,30 +1,30 @@
-# ctxline shell integration (bash) — eval "$({{.Cmd}} init bash)"
-if [ -z "${__CTXLINE_BASH_LOADED:-}" ]; then
-  __CTXLINE_BASH_LOADED=1
-  __CTXLINE_ORIG_PS1="$PS1"
+# omnictx shell integration (bash) — eval "$({{.Cmd}} init bash)"
+if [ -z "${__OMNICTX_BASH_LOADED:-}" ]; then
+  __OMNICTX_BASH_LOADED=1
+  __OMNICTX_ORIG_PS1="$PS1"
 
-  __ctxline_prompt() {
-    local __ctxline_seg
-    __ctxline_seg="$({{.Cmd}} --shell bash)"
-    if [ -n "$__ctxline_seg" ]; then
-      PS1="${__ctxline_seg} ${__CTXLINE_ORIG_PS1}"
+  __omnictx_prompt() {
+    local __omnictx_seg
+    __omnictx_seg="$({{.Cmd}} --shell bash)"
+    if [ -n "$__omnictx_seg" ]; then
+      PS1="${__omnictx_seg} ${__OMNICTX_ORIG_PS1}"
     else
-      PS1="${__CTXLINE_ORIG_PS1}"
+      PS1="${__OMNICTX_ORIG_PS1}"
     fi
   }
 
   case ";${PROMPT_COMMAND:-};" in
-    *";__ctxline_prompt;"*) ;;
-    *) PROMPT_COMMAND="__ctxline_prompt;${PROMPT_COMMAND:-}" ;;
+    *";__omnictx_prompt;"*) ;;
+    *) PROMPT_COMMAND="__omnictx_prompt;${PROMPT_COMMAND:-}" ;;
   esac
 
-  ctxon()  { export CTXLINE_ENABLED=true; }
-  ctxoff() { export CTXLINE_ENABLED=false; }
-  ctxtoggle() {
-    if [ "${CTXLINE_ENABLED:-true}" = "true" ]; then
-      export CTXLINE_ENABLED=false
+  omnion()  { export OMNICTX_ENABLED=true; }
+  omnioff() { export OMNICTX_ENABLED=false; }
+  omnitoggle() {
+    if [ "${OMNICTX_ENABLED:-true}" = "true" ]; then
+      export OMNICTX_ENABLED=false
     else
-      export CTXLINE_ENABLED=true
+      export OMNICTX_ENABLED=true
     fi
   }
 fi

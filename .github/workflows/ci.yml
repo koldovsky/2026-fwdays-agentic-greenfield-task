@@ -12,17 +12,17 @@ jobs:
     name: vet + lint + test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
           cache: true
       - name: go vet
         run: go vet ./...
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12   # pin, not "latest"; matches .golangci.yml version: "2"
       - name: go test -race
         run: go test ./... -race -count=1
 
@@ -34,8 +34,8 @@ jobs:
         goos: [linux]
         goarch: [amd64, arm64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
           cache: true
@@ -44,8 +44,8 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: "0"
-        run: go build -ldflags "-s -w" -o bin/ctxline-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/ctxline
-      - uses: actions/upload-artifact@v4
+        run: go build -ldflags "-s -w" -o bin/omnictx-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/omnictx
+      - uses: actions/upload-artifact@v7
         with:
-          name: ctxline-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: bin/ctxline-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: omnictx-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: bin/omnictx-${{ matrix.goos }}-${{ matrix.goarch }}

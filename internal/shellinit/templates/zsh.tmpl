@@ -1,29 +1,29 @@
-# ctxline shell integration (zsh) — eval "$({{.Cmd}} init zsh)"
-if [ -z "${__CTXLINE_ZSH_LOADED:-}" ]; then
-  __CTXLINE_ZSH_LOADED=1
-  __CTXLINE_ORIG_PROMPT="$PROMPT"
+# omnictx shell integration (zsh) — eval "$({{.Cmd}} init zsh)"
+if [ -z "${__OMNICTX_ZSH_LOADED:-}" ]; then
+  __OMNICTX_ZSH_LOADED=1
+  __OMNICTX_ORIG_PROMPT="$PROMPT"
 
-  __ctxline_precmd() {
-    local __ctxline_seg
-    __ctxline_seg="$({{.Cmd}} --shell zsh)"
-    if [ -n "$__ctxline_seg" ]; then
-      PROMPT="${__ctxline_seg} ${__CTXLINE_ORIG_PROMPT}"
+  __omnictx_precmd() {
+    local __omnictx_seg
+    __omnictx_seg="$({{.Cmd}} --shell zsh)"
+    if [ -n "$__omnictx_seg" ]; then
+      PROMPT="${__omnictx_seg} ${__OMNICTX_ORIG_PROMPT}"
     else
-      PROMPT="${__CTXLINE_ORIG_PROMPT}"
+      PROMPT="${__OMNICTX_ORIG_PROMPT}"
     fi
   }
 
-  if [[ -z "${precmd_functions[(r)__ctxline_precmd]}" ]]; then
-    precmd_functions+=(__ctxline_precmd)
+  if [[ -z "${precmd_functions[(r)__omnictx_precmd]}" ]]; then
+    precmd_functions+=(__omnictx_precmd)
   fi
 
-  ctxon()  { export CTXLINE_ENABLED=true; }
-  ctxoff() { export CTXLINE_ENABLED=false; }
-  ctxtoggle() {
-    if [ "${CTXLINE_ENABLED:-true}" = "true" ]; then
-      export CTXLINE_ENABLED=false
+  omnion()  { export OMNICTX_ENABLED=true; }
+  omnioff() { export OMNICTX_ENABLED=false; }
+  omnitoggle() {
+    if [ "${OMNICTX_ENABLED:-true}" = "true" ]; then
+      export OMNICTX_ENABLED=false
     else
-      export CTXLINE_ENABLED=true
+      export OMNICTX_ENABLED=true
     fi
   }
 fi

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"ctxline/internal/config"
+	"omnictx/internal/config"
 )
 
 var update = flag.Bool("update", false, "update golden files")

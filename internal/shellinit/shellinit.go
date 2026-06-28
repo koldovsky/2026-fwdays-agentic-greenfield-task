@@ -1,5 +1,5 @@
 // Package shellinit generates the shell integration code emitted by
-// `ctxline init <bash|zsh>`. The generated snippet is meant to be eval'd from
+// `omnictx init <bash|zsh>`. The generated snippet is meant to be eval'd from
 // an rc file and must be idempotent and non-destructive to the user's prompt.
 package shellinit
 
@@ -15,15 +15,15 @@ var templatesFS embed.FS
 
 // templateData is the data passed to the shell templates.
 type templateData struct {
-	// Cmd is the command used to invoke ctxline from the prompt hook.
+	// Cmd is the command used to invoke omnictx from the prompt hook.
 	Cmd string
 }
 
 // Generate returns the shell integration code for the given shell ("bash" or
-// "zsh"). cmd is the command name used inside the snippet (e.g. "ctxline").
+// "zsh"). cmd is the command name used inside the snippet (e.g. "omnictx").
 func Generate(shell, cmd string) (string, error) {
 	if cmd == "" {
-		cmd = "ctxline"
+		cmd = "omnictx"
 	}
 
 	var name string

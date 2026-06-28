@@ -1,16 +1,20 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
 func TestParseRenderArgsUnsetFlagsAreNil(t *testing.T) {
-	flags, showVersion, ok := parseRenderArgs(nil)
+	flags, showVersion, showHelp, ok := parseRenderArgs(nil)
 	if !ok {
 		t.Fatal("parse should succeed on empty args")
 	}
 	if showVersion {
 		t.Error("version should be false by default")
+	}
+	if showHelp {
+		t.Error("help should be false by default")
 	}
 	if flags.Segments != nil || flags.Shell != nil || flags.Separator != nil ||
 		flags.ConfigPath != nil || flags.Icons != nil || flags.Enabled != nil {
@@ -22,7 +26,7 @@ func TestParseRenderArgsUnsetFlagsAreNil(t *testing.T) {
 }
 
 func TestParseRenderArgsValues(t *testing.T) {
-	flags, _, ok := parseRenderArgs([]string{
+	flags, _, _, ok := parseRenderArgs([]string{
 		"--segments", "azure,kube",
 		"--shell", "bash",
 		"--separator", " | ",
@@ -66,7 +70,7 @@ func TestParseRenderArgsIconsReconciliation(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			flags, _, ok := parseRenderArgs(tt.args)
+			flags, _, _, ok := parseRenderArgs(tt.args)
 			if !ok {
 				t.Fatal("parse failed")
 			}
@@ -75,6 +79,9 @@ func TestParseRenderArgsIconsReconciliation(t *testing.T) {
 	}
 }
 
+// The master on/off is a single --enabled flag (Go bool flag): bare --enabled
+// means true, --enabled=false disables, and an unset flag stays nil so the env
+// var keeps driving omnion/omnioff.
 func TestParseRenderArgsEnabledReconciliation(t *testing.T) {
 	tests := []struct {
 		name string
@@ -83,12 +90,12 @@ func TestParseRenderArgsEnabledReconciliation(t *testing.T) {
 	}{
 		{"neither", []string{}, nil},
 		{"enabled", []string{"--enabled"}, boolp(true)},
-		{"disabled", []string{"--disabled"}, boolp(false)},
-		{"both: disabled wins", []string{"--enabled", "--disabled"}, boolp(false)},
+		{"enabled=true", []string{"--enabled=true"}, boolp(true)},
+		{"enabled=false", []string{"--enabled=false"}, boolp(false)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			flags, _, ok := parseRenderArgs(tt.args)
+			flags, _, _, ok := parseRenderArgs(tt.args)
 			if !ok {
 				t.Fatal("parse failed")
 			}
@@ -98,16 +105,67 @@ func TestParseRenderArgsEnabledReconciliation(t *testing.T) {
 }
 
 func TestParseRenderArgsVersion(t *testing.T) {
-	_, showVersion, ok := parseRenderArgs([]string{"--version"})
+	_, showVersion, _, ok := parseRenderArgs([]string{"--version"})
 	if !ok || !showVersion {
 		t.Fatalf("expected version=true ok=true, got version=%v ok=%v", showVersion, ok)
 	}
 }
 
 func TestParseRenderArgsBadFlag(t *testing.T) {
-	_, _, ok := parseRenderArgs([]string{"--definitely-not-a-flag"})
+	_, _, _, ok := parseRenderArgs([]string{"--definitely-not-a-flag"})
 	if ok {
 		t.Fatal("parse of an unknown flag must report ok=false so the prompt is protected")
+	}
+}
+
+// --help / -h must be reported as a clean help request (ok=true, showHelp=true),
+// not as a parse error, so the caller can print usage and exit 0.
+func TestParseRenderArgsHelp(t *testing.T) {
+	for _, arg := range []string{"--help", "-h"} {
+		_, _, showHelp, ok := parseRenderArgs([]string{arg})
+		if !ok || !showHelp {
+			t.Fatalf("%s: expected ok=true showHelp=true, got ok=%v showHelp=%v", arg, ok, showHelp)
+		}
+	}
+}
+
+// printUsage must be the grouped custom usage: description, usage, subcommands,
+// flags with allowed values + env vars, double-dash display, and the resolved
+// single --enabled flag (no --disabled).
+func TestUsageContainsSections(t *testing.T) {
+	var sb strings.Builder
+	printUsage(&sb)
+	out := sb.String()
+
+	for _, want := range []string{
+		"omnictx —",                      // one-line description
+		"Usage:",                         // usage section
+		`eval "$(omnictx init bash)"`,    // quick example
+		"Subcommands:",                   // subcommands section
+		"init <bash|zsh>",                // init subcommand
+		"Flags:",                         // flags section
+		"--shell <bash|zsh|none>",        // flag with allowed values
+		"OMNICTX_SHELL",                  // env mapping inline
+		"--segments <list>",              //
+		"OMNICTX_SEGMENTS",               //
+		"--icons / --no-icons",           // icons on one line
+		"--enabled[=<bool>]",             // single resolved master flag
+		"OMNICTX_ENABLED",                //
+		"--config <path>",                //
+		"-h, --help",                     //
+		"omnion / omnioff / omnitoggle",  // toggles named
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("usage missing %q\n---\n%s", want, out)
+		}
+	}
+
+	if strings.Contains(out, "--disabled") {
+		t.Errorf("usage should not mention the removed --disabled flag\n%s", out)
+	}
+	// Display must use double-dash, never the single-dash flag dump.
+	if strings.Contains(out, " -shell ") || strings.Contains(out, " -enabled ") {
+		t.Errorf("usage should display --flag (double dash), got single-dash form:\n%s", out)
 	}
 }
 
