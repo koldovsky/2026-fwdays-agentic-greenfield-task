@@ -1,0 +1,64 @@
+schema: spec-driven
+
+context: |
+  Project: Надворі (Weather Explorer) — a keyless, privacy-first, Ukrainian-first
+  web app that helps a visitor decide whether a weekend trip is weather-worth-it.
+  Single anonymous actor; no accounts, no cookies, no trackers, no paid API keys.
+
+  Tech stack:
+    - Framework: Next.js 16.2 App Router, React 19.2, TypeScript 5 (strict)
+    - Styling: Tailwind CSS 4 (PostCSS plugin); design tokens in app/design-system/
+    - Maps: Leaflet + react-leaflet; OSM raster tiles (keyless)
+    - Charts: Recharts (48-hour hourly temperature line chart)
+    - Data: Open-Meteo forecast + geocoding APIs (keyless); Nominatim for reverse-geocode
+    - Tests: Vitest; E2E verification via chrome-devtools / Playwright MCP
+    - Linting/formatting: ESLint (next/core-web-vitals + next/typescript), Prettier
+    - Hosting: Vercel (preview URL per PR)
+
+  Repository layout:
+    - app/                    — Next.js App Router (pages, layouts, API Route Handlers)
+    - app/api/forecast/       — GET /api/forecast?lat=&lon= (proxies Open-Meteo)
+    - app/api/geocode/        — GET /api/geocode?name= (proxies Open-Meteo geocoding)
+    - app/api/reverse-geocode/— GET /api/reverse-geocode?lat=&lon= (proxies Nominatim)
+    - app/components/         — React components (client + server)
+    - app/design-system/      — CSS design tokens (semantic aliases, never raw ramps)
+    - app/hooks/              — custom React hooks
+    - lib/                    — framework-free pure logic (no next/*, no react, no DOM)
+    - lib/forecast/           — types, transform, cache, weatherIcon, weekendDays
+    - lib/scoring/            — comfortScore pure function
+    - lib/weather/            — getWeatherState (WMO codes → WeatherState)
+    - lib/i18n/               — uk.ts (primary) + en.ts (fallback); Strings interface
+    - docs/                   — product brief, requirements (FR/NFR/TC/BC IDs), current-state log
+    - openspec/               — specs, changes, this config
+
+  Conventions:
+    - Requirements have stable IDs (FR-*, NFR-*, TC-*, BC-*) — reference them in
+      proposals, specs, tasks, PRs, and commit messages for traceability.
+    - lib/ must stay framework-free (TC-PURE-01): no next/*, no react, no DOM globals.
+    - All Open-Meteo calls happen in Server Components or Route Handlers (TC-DATA-01).
+    - UI strings centralised in lib/i18n/uk.ts; English fallback in lib/i18n/en.ts (NFR-I18N-01).
+    - Consume semantic design tokens only — never raw ramps (e.g. --brand not --sky-500).
+    - Ukrainian-first tone: calm, practical, no exclamation marks (BC-BRAND-01).
+    - WCAG AA contrast, always-visible focus rings, prefers-reduced-motion respected everywhere.
+    - Console must be silent (0 errors, 0 warnings) on a healthy session (NFR-OBS-01).
+    - Quality gate (Stop hook): tsc --noEmit + eslint + prettier --check must all pass before finishing.
+
+  Current state (as of 2026-06-27):
+    All 9 planned capabilities shipped: app-shell, top-clock, bottom-jokes,
+    city-search, forecast, comfort-score, animated-bg, map, weekend-compare.
+    56 Vitest tests pass. Build clean on Vercel.
+
+rules:
+  proposal:
+    - Reference all relevant requirement IDs (FR-*, NFR-*, TC-*, BC-*)
+    - Include a "Non-goals" section
+    - Note which lib/ files are affected (they must stay framework-free)
+  specs:
+    - Use Given/When/Then format for behavioral scenarios
+    - Include accessibility acceptance criteria (NFR-A11Y-01/02)
+  design:
+    - Use semantic token names from app/design-system/ (never raw ramps)
+    - Include prefers-reduced-motion handling for any animation
+  tasks:
+    - Break tasks so each touches one logical layer (lib/, app/components/, app/api/, tests)
+    - Include a Vitest test task for any new lib/ function

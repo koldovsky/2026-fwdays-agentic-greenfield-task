@@ -1,0 +1,20 @@
+/* ============================================================
+   Надворі — Weather Explorer Design System (token entry point)
+   ------------------------------------------------------------
+   Imports every design token layer. Fonts are intentionally NOT
+   imported here — next/font loads Onest + JetBrains Mono and
+   exposes them via CSS variables (see app/layout.tsx and the
+   --font-sans / --font-mono bridge in app/globals.css).
+
+   Canonical source of truth lives in:
+     docs/design-system/Weather Explorer Design System/
+   See DESIGN.md before changing tokens or adding components.
+   ============================================================ */
+
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/shadows.css";
+@import "./tokens/motion.css";
+@import "./tokens/base.css";

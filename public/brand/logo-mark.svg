@@ -1,0 +1,15 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Надворі logo mark">
+  
+  <defs>
+    <clipPath id="hzn"><rect x="0" y="0" width="80" height="80" rx="20"></rect></clipPath>
+  </defs>
+  <g clip-path="url(#hzn)">
+    <rect width="80" height="80" rx="20" fill="#2f6fb3"></rect>
+    
+    <circle cx="40" cy="44" r="15" fill="#e9b457"></circle>
+    
+    <rect x="0" y="52" width="80" height="28" fill="#255a96"></rect>
+    
+    <rect x="0" y="52" width="80" height="2.5" fill="#84b2dd" opacity="0.6"></rect>
+  </g>
+</svg>
