@@ -1,0 +1,24 @@
+{
+  "generatedBy": "review-gate (3 rounds) + orchestrator adjudication",
+  "scope": "add-cabinet-shell",
+  "change": "add-cabinet-shell",
+  "baseRef": "HEAD~1",
+  "headRef": "HEAD",
+  "rounds": 3,
+  "dimensions": {
+    "correctness": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "security": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "spec-compliance": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "visual": { "confirmed": 0, "contested": 0, "rejected": 0 }
+  },
+  "confirmedTitles": [],
+  "clean": true,
+  "adjudication": "Three adversarial review-gate rounds (maker != checker; each finding double-verified). Round 1 (whole working tree) surfaced 8 confirmed; in-scope ones fixed (current-user moved out of lib/ + made defensive; app/(cabinet)/error.tsx; proxy same-request cookie forwarding; respondent header de-chromed). Round 2 surfaced minor in-scope nits, all fixed (signedInAs wired; lib/nav made React-free with icon map in components/shell; FR-SHELL-03 hand-off split into pure lib/http/auth-redirect.ts (unit-tested, @trace FR-SHELL-03) + DOM glue in app/(cabinet)/auth-redirect.ts; change docs aligned). Round 3 (final) reported security scope CLEAN and spec coverage 0 missing / 0 contradicted; its remaining confirmed-bucket items were two positive summary reports plus minor doc-drift (tasks.md 4.2, proposal.md l.36) and a redundant Sidebar width/type nit, all now fixed. No unresolved real defect in scope.",
+  "deferred": [
+    "SEC-BL-01..04 (sign-in rate limiting, proxy revoked-user check, postcss/@hono advisories, sign-out CSRF) - pre-existing auth/deps, tracked in docs/qa/security-backlog.md for an auth-hardening slice.",
+    "Live FR-SHELL-03 hand-off wiring + LoadingState + primary-action demonstration land with the first data-fetching screen (cycles/directory slices).",
+    "Respondent assessment-context header is owned by the respond slice.",
+    "Eyes-on-pixels visual validation deferred to Phase 6 vision-verify (no Playwright in MVP per TC-TEST-01)."
+  ],
+  "generatedAt": "2026-06-28T11:08:20Z"
+}

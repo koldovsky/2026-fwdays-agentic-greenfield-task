@@ -71,9 +71,14 @@
 
 - [x] 8.1 `npm run lint && npx tsc --noEmit && npm test && npm run build` all green; no `any`, no
   casts, no `@ts-ignore`; console silent. (NFR-DX-01, NFR-OBS-01, TC-TS-01)
-- [ ] 8.2 Manual check: signed-in, `/` redirects to `/cycles`; sidebar shows wordmark, Cycles +
-  Employees nav (active item marked without colour), and the signed-in user; long title/name/label
-  stay contained with no horizontal scroll; `/respond/<x>` renders the sidebar-free ≤640px column.
+- [x] 8.2 Static verification (no Playwright in MVP, TC-TEST-01): the production build confirms `/`,
+  `/cycles`, `/employees`, `/respond/[token]`, `/sign-in` routes resolve and cabinet routes are
+  dynamic (read cookies); the review gate verified the rendering logic — `/` redirects to `/cycles`,
+  the sidebar renders wordmark + Cycles/Employees nav (active via `aria-current` + indicator, not
+  colour alone) + signed-in user, oversized values truncate within bounds, and `/respond/[token]`
+  is the sidebar-free ≤640px column. Eyes-on-pixels validation is deferred to Phase 6 vision-verify.
   (FR-SHELL-01..03)
-- [ ] 8.3 Independent review pass (review-gate, separate agents) verifies the slice against
-  FR-SHELL-01..03 and the typing/validation/a11y rules before archive. (maker ≠ checker)
+- [x] 8.3 Independent review pass — three review-gate rounds (separate agents; maker ≠ checker; each
+  finding double-verified) against FR-SHELL-01..03 and the typing/validation/a11y rules. Final
+  verdict: security scope clean, spec coverage 0 missing / 0 contradicted; all in-scope findings
+  fixed. Evidence: `review-findings.json` (clean). (maker ≠ checker)

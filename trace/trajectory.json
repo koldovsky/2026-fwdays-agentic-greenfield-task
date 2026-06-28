@@ -9,6 +9,17 @@
       "processComplete": true
     },
     {
+      "slice": "2026-06-28-add-cabinet-shell",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "http",
+        "i18n",
+        "nav"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-06-28-add-foundation",
       "reviewEvidence": "missing",
       "trailerCommits": 0,
