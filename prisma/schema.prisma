@@ -1,0 +1,142 @@
+// Kolo360 data model — slice 0 (foundation). Defines all MVP entities from the
+// glossary in docs/requirements.md (TC-STACK-02, TC-STACK-04). Generated and
+// validated offline; no live migration runs in this slice (see openspec change
+// add-foundation). All DB access goes through the shared client in lib/db/.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7: connection URLs live in prisma.config.ts (migrations) and the
+  // runtime driver adapter in lib/db/ (DATABASE_URL), not in this block.
+}
+
+enum QuestionType {
+  scale
+  open
+}
+
+enum CycleStatus {
+  collecting
+  done
+  expired
+}
+
+enum RespondMode {
+  form
+  interview
+}
+
+enum UsagePurpose {
+  interview
+  summary
+}
+
+model Employee {
+  id             String   @id @default(cuid())
+  fullName       String
+  email          String   @unique
+  role           String?
+  phone          String?
+  telegramHandle String?
+  archived       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  cycles         Cycle[]
+}
+
+model Template {
+  id          String     @id @default(cuid())
+  name        String
+  methodology String
+  createdAt   DateTime   @default(now())
+  questions   Question[]
+  cycles      Cycle[]
+}
+
+model Question {
+  id         String       @id @default(cuid())
+  templateId String
+  template   Template     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  order      Int
+  text       String
+  type       QuestionType
+  required   Boolean      @default(true)
+  anchors    Json? // [{ value: Int, label: String }] for scale; null for open
+
+  @@unique([templateId, order])
+}
+
+model Cycle {
+  id               String       @id @default(cuid())
+  token            String       @unique
+  status           CycleStatus  @default(collecting)
+  mode             RespondMode?
+  deadline         DateTime
+  subjectId        String
+  subject          Employee     @relation(fields: [subjectId], references: [id])
+  templateId       String?
+  template         Template?    @relation(fields: [templateId], references: [id])
+  templateSnapshot Json // frozen template + questions at launch (FR-CYCLE-03)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  response         Response?
+  dialog           Dialog?
+  summary          Summary?
+  usageRows        UsageRow[]
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  cycleId   String   @unique
+  cycle     Cycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  answers   Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String // stable id from the cycle's template snapshot
+  scaleValue Int? // chosen anchor value for scale; null for open
+  text       String? // respondent's words for open; null for scale
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([responseId, questionId])
+}
+
+model Dialog {
+  id        String   @id @default(cuid())
+  cycleId   String   @unique
+  cycle     Cycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  messages  Json // [{ role, content, questionId? }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Summary {
+  id        String   @id @default(cuid())
+  cycleId   String   @unique
+  cycle     Cycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  model     String
+  content   Json // { sections: [...], quotes: [{ text, questionId }] } (FR-REPORT-04)
+  createdAt DateTime @default(now())
+}
+
+model UsageRow {
+  id                String       @id @default(cuid())
+  cycleId           String
+  cycle             Cycle        @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  purpose           UsagePurpose
+  model             String
+  inputTokens       Int
+  outputTokens      Int
+  cachedInputTokens Int?
+  costUsd           Float // precomputed cost() result, USD (FR-USAGE-02)
+  createdAt         DateTime     @default(now())
+}
