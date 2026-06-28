@@ -140,3 +140,31 @@ model UsageRow {
   costUsd           Float // precomputed cost() result, USD (FR-USAGE-02)
   createdAt         DateTime     @default(now())
 }
+
+// ── Auth (slice add-auth) ──────────────────────────────────────────────────
+
+// The single HR account (FR-AUTH-02). Provisioned by an administrator (no
+// self-registration); credentials live here, not in env. Only the scrypt
+// password hash is stored — never the plaintext.
+model HrUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
+// Refresh-token store (FR-AUTH-05): the server state that lets a prior refresh
+// token be invalidated on sign-out and rotation. Only a SHA-256 hash of the
+// opaque refresh token is stored. `subject` is the owning HrUser id.
+model Session {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  subject      String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @unique // rotation chain → the successor session
+  replacedBy   Session?  @relation("Rotation", fields: [replacedById], references: [id])
+  replaces     Session?  @relation("Rotation")
+  createdAt    DateTime  @default(now())
+}

@@ -1,3 +1,6 @@
 allowBuilds:
+  '@fission-ai/openspec': true
+  '@prisma/engines': true
+  prisma: true
   sharp: set this to true or false
   unrs-resolver: set this to true or false

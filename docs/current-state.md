@@ -3,46 +3,42 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — implemented slice `add-foundation`: Prisma data model
-(`prisma/schema.prisma`, 9 models + 4 enums), shared client `lib/db/`, `prisma.config.ts`,
-`.env.example`. Adapted to Prisma 7 (URLs out of schema → config + driver adapter). Schema
-validates + client generates offline; full loop green. No migration, no DB provisioned yet.
+**Last action:** 2026-06-28 — implemented slice `add-auth` (FR-AUTH-01..05): single HR account
+in DB (`HrUser`), access JWT (jose) + rotating refresh token (opaque, hashed in `Session`),
+httpOnly/Secure/SameSite cookies, transparent refresh + route guard in `proxy.ts` (Next 16
+renamed `middleware`→`proxy`, Node runtime), minimal token-styled sign-in page, sign-out.
+Migration `add_auth_tables` applied. Full loop green (lint/tsc/32 tests/build) + a live
+proxy smoke test (guard redirect, valid pass, transparent refresh, rotation revokes old token).
 
-**Phase:** Implementation. Foundation built and archived; next slice is `shell`.
+**Phase:** Implementation. Auth reviewed (APPROVE-WITH-NITS), spec synced → `openspec/specs/auth/`,
+and **archived** (`archive/2026-06-28-add-auth`). No active change. Next slice: `cabinet-shell`.
 
 ## Done so far
 
-- `docs/requirements.md` (PRD) + `docs/product-brief.md`, `DESIGN.md`, design system in
-  the app, `AGENTS.md` rules, OpenSpec, `docs/mvp-capability-plan.md` (12 slices).
-- **Slice `add-token-cost-calculator`** (FR-USAGE-02/-04, TC-AI-02/PURE-01/VALID-01/TS-01):
-  - `lib/schemas/usage.ts` — Zod price-entry / price-table / token-counts schemas (+ `z.infer` types).
-  - `lib/ai/pricing.ts` — `SEED_PRICE_TABLE` (opus $5/$25, sonnet $3/$15, haiku $1/$5 per 1M).
-  - `lib/ai/cost.ts` — pure `cost(modelId, in, out, priceTable=seed)`; throws `UnknownModelError`.
-  - `lib/ai/*.test.ts` — 8 Vitest specs (known/zero/custom-table/unknown-model/bad-counts).
-  - Infra: installed `zod` + `vitest`, added `vitest.config.ts` (`@/` alias) and `test`/`typecheck`
-    scripts; `eslint.config.mjs` now ignores vendored `docs/**`.
-  - Independent review (maker≠checker): passed — tsc/lint/8 tests green, no any/casts,
-    spec-faithful. Archived.
-- **Slice `add-foundation`** (TC-STACK-02/-04, TC-DEPLOY-01) — data model laid down:
-  - `prisma/schema.prisma` — 9 models (Employee, Template, Question, Cycle, Response,
-    Answer, Dialog, Summary, UsageRow) + 4 enums; unique email/token; JSON for snapshot,
-    anchors, dialog messages, summary content.
-  - **Prisma 7 break:** connection URLs left the schema → `prisma.config.ts` (migration URL)
-    + runtime driver adapter `@prisma/adapter-pg` in `lib/db/index.ts` (pooled `DATABASE_URL`).
-  - `lib/db/index.ts` — one shared `db` client, globalThis-cached, no casts.
-  - `.env.example` — `DATABASE_URL` + `DIRECT_URL` placeholders (`.env` gitignored).
-  - Neon Postgres provisioned; first migration `20260628060745_init` applied via the direct
-    endpoint (`prisma.config.ts` loads `.env.local` for `DIRECT_URL`). Full loop green
-    (lint/tsc/8 tests/build). Synced spec → `openspec/specs/data-model/` and archived.
+- Groundwork: `docs/requirements.md` (PRD), `product-brief.md`, `DESIGN.md` + in-app design
+  system, `AGENTS.md`, OpenSpec, `docs/mvp-capability-plan.md`. (archived)
+- **Slice `add-token-cost-calculator`** (archived) — pure `cost()` in `lib/ai/`, Zod usage
+  schemas in `lib/schemas/usage.ts`, seed price table; `zod`+`vitest` infra, `@/` alias.
+- **Slice `add-foundation`** (archived) — `prisma/schema.prisma` (9 models + 4 enums), shared
+  `lib/db/` client, Prisma 7 adapter; Neon provisioned, migration `init` applied.
+- **Slice `add-auth`** (FR-AUTH-01..05; reviewed + archived; spec → `openspec/specs/auth/`) — credentials in `HrUser`; pure
+  `lib/auth/{tokens,password,redirect,cookies}.ts` (+ tests) and DB-backed `session.ts`;
+  `lib/schemas/auth.ts` + lazy `lib/env.ts` (only `AUTH_JWT_SECRET` in env); `proxy.ts` guard +
+  transparent refresh; `app/sign-in/` (server action + client form) and `app/api/auth/sign-out`;
+  `lib/i18n/{uk,en}.ts`; `scripts/{hash-password,create-hr-user}.mts`; migration `add_auth_tables`.
+  Added `jose`; `tsconfig` got `allowImportingTsExtensions` (for `.mts` scripts). 32 tests.
 
 ## Next step
 
-1. Next slice: `shell` (auth + cabinet shell, FR-AUTH/FR-SHELL) per the dependency order in
-   `docs/mvp-capability-plan.md`. Propose via `/opsx:propose`, then `/opsx:apply`.
-2. Reminder (maker≠checker): a separate review pass should verify the archived foundation
-   slice's code before it is relied on.
-3. Done: Neon Postgres provisioned and migrated (`init`). `DATABASE_URL` (pooled, runtime)
-   and `DIRECT_URL` (direct, migrations) are set in `.env.local`.
+1. Next slice: `cabinet-shell` (FR-SHELL-01..03 — sidebar + sticky header + respondent shell),
+   rendered inside the now-protected area. Reuses `lib/i18n` and the session/cookie helpers.
+   Propose via `/opsx:propose`, then `/opsx:apply`.
+2. Carry-over nits from the add-auth review (archived tasks.md 7.3): #3 make guarded `/api/*`
+   return 401 JSON (not a redirect) when those routes land; #5 revisit CSRF token. Address when
+   the cabinet slice adds routes/APIs behind the guard.
+3. Set `AUTH_JWT_SECRET` in env per environment; provision the HR account with
+   `node scripts/create-hr-user.mts <email> "<password>" ["Name"]`. `DATABASE_URL`/`DIRECT_URL`
+   already in `.env.local`. (A test row `test.user@test.com` exists in Neon — drop before prod.)
 
 ## Open questions / blockers
 
