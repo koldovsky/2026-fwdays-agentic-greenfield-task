@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
-import { isActiveNavItem } from "@/lib/nav/cabinet-nav";
+import { isActiveNavItem, type CabinetNavKey } from "@/lib/nav/cabinet-nav";
+import { navIcon } from "@/components/shell/nav-icons";
 
 /**
  * A sidebar navigation row (FR-SHELL-01, NFR-A11Y-01/02). Client component
@@ -13,15 +13,19 @@ import { isActiveNavItem } from "@/lib/nav/cabinet-nav";
  * `aria-current="page"` (assistive tech), a left accent indicator bar, and a
  * medium font weight. A Lucide outline icon inherits `currentColor`. The shared
  * 2px accent focus ring applies on keyboard focus.
+ *
+ * The icon is resolved here from the pure `navKey` (a string) rather than passed
+ * in as a component: a server parent cannot serialise a React component function
+ * across the server -> client boundary, so only the key crosses it.
  */
 export function NavItem({
   href,
   label,
-  icon: Icon,
+  navKey,
 }: {
   href: string;
   label: string;
-  icon: LucideIcon;
+  navKey: CabinetNavKey;
 }) {
   const pathname = usePathname();
   const active = isActiveNavItem(pathname, href);
@@ -45,7 +49,7 @@ export function NavItem({
           className="absolute top-[var(--space-3)] bottom-[var(--space-3)] left-0 w-[3px] rounded-r-[var(--radius-pill)] bg-accent"
         />
       ) : null}
-      <Icon aria-hidden="true" size={16} strokeWidth={1.8} className="shrink-0" />
+      {navIcon(navKey)}
       <span className="truncate">{label}</span>
     </Link>
   );

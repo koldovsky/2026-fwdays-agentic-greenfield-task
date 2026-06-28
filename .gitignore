@@ -25,3 +25,6 @@ venv/
 target/
 bin/
 obj/
+
+# TypeScript incremental build cache (regenerated; was masking stale type errors)
+tsconfig.tsbuildinfo

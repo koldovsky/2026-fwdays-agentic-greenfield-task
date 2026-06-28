@@ -1,7 +1,6 @@
 import { LogOut } from "lucide-react";
 import { Wordmark } from "@/components/shell/Wordmark";
 import { NavItem } from "@/components/shell/NavItem";
-import { navIcon } from "@/components/shell/nav-icons";
 import { CABINET_NAV } from "@/lib/nav/cabinet-nav";
 import { uk } from "@/lib/i18n/uk";
 import type { CurrentHrUser } from "@/app/(cabinet)/current-user";
@@ -33,7 +32,7 @@ export function Sidebar({ user }: { user: SidebarUser | null }) {
             key={item.key}
             href={item.href}
             label={t.nav[item.key]}
-            icon={navIcon(item.key)}
+            navKey={item.key}
           />
         ))}
       </nav>
