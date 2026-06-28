@@ -11,6 +11,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
+    "db:seed:templates": "node scripts/seed-templates.mts",
     "qa:verify": "node scripts/qa-verify.mjs",
     "qa:record-demos": "node scripts/record-demos.mjs",
     "qa:record-proof": "node scripts/record-demos.mjs",

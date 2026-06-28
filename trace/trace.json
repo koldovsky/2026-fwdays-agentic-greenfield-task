@@ -965,6 +965,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-USAGE-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-templates\" is not archived"
     }
   ]
 }

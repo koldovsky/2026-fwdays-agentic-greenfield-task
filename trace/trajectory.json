@@ -22,7 +22,7 @@
     {
       "slice": "2026-06-28-add-directory",
       "reviewEvidence": "clean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "i18n",
         "schemas"

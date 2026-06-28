@@ -12,7 +12,7 @@ Result: PASS, 7 warning(s)
 |---|---|---|---|---|
 | 2026-06-28-add-auth | **missing** | **0** | yes | - |
 | 2026-06-28-add-cabinet-shell | clean | 3 | yes | http, i18n, nav |
-| 2026-06-28-add-directory | clean | 2 | yes | i18n, schemas |
+| 2026-06-28-add-directory | clean | 3 | yes | i18n, schemas |
 | 2026-06-28-add-foundation | **missing** | **0** | yes | - |
 | 2026-06-28-add-token-cost-calculator | **missing** | **0** | yes | - |
 

@@ -22,6 +22,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // `prisma db seed` runs the idempotent template seeder (FR-TPL-01). It
+    // upserts the seeded read-only templates; safe to re-run, never deletes.
+    seed: "node scripts/seed-templates.mts",
   },
   datasource: {
     // Direct connection for migrations (DIRECT_URL); falls back to the pooled

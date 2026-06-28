@@ -36,7 +36,18 @@ ai-interview → deferred until after the manual slices.
   server-only `app/(cabinet)/current-user.ts`, proxy same-request cookie forwarding. 3 review-gate
   rounds, clean evidence. 45 tests. Deferred security findings → `docs/qa/security-backlog.md`
   (SEC-BL-01..04: sign-in rate limit, proxy revoked-user check, dep advisories, sign-out CSRF).
-- Next: `directory` → `templates` → `cycles` → `link` → `respond` → `form` → `usage-accounting`.
+- **directory (FR-DIR-01..04) — DONE, archived** (`archive/2026-06-28-add-directory`). Canonical
+  `lib/schemas/employee.ts` (Zod, exact field rules, lowercased email, `toFieldErrors`) shared by
+  on-blur client + server-action boundary; create/update/archive actions (typed result, P2002→email,
+  HR-session assert, soft archive); `/employees` list + add/edit form + empty/loading/error; shared
+  `components/forms/{Input,Field,Button}`. 2 review rounds, clean. 64 tests.
+- **cabinet-shell RSC bugfix** (`6c4807c`): server Sidebar was passing a Lucide component fn to the
+  client NavItem → runtime 500 on /cycles+/employees (build+static review missed it). Now only the
+  string `navKey` crosses; nav-icons returns a JSX element. `tsconfig.tsbuildinfo` untracked. LESSON:
+  add an RSC server→client serialization check to review focus; rely on Phase 6 runtime/vision for UI.
+- Next: `templates` → `cycles` → `link` → `respond` → `form` → `usage-accounting`.
+- Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
+  concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).
 
 Process note: review-gate must be invoked with HARDCODED args in its persisted scriptPath (the
 harness arg-passing bug drops `args`), and scoped to the committed slice diff (`baseRef HEAD~1`) so
