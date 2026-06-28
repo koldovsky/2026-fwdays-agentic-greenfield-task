@@ -17,20 +17,5 @@ if [ -z "${__OMNICTX_ZSH_LOADED:-}" ]; then
     precmd_functions+=(__omnictx_precmd)
   fi
 
-  omnion()  {
-    if [ "$1" = "-G" ]; then {{.Cmd}} enable;  fi
-    export OMNICTX_ENABLED=true
-  }
-  omnioff() {
-    if [ "$1" = "-G" ]; then {{.Cmd}} disable; fi
-    export OMNICTX_ENABLED=false
-  }
-  omnitoggle() {
-    if [ "$1" = "-G" ]; then {{.Cmd}} toggle; fi
-    if [ "${OMNICTX_ENABLED:-true}" = "true" ]; then
-      export OMNICTX_ENABLED=false
-    else
-      export OMNICTX_ENABLED=true
-    fi
-  }
+
 fi

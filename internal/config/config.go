@@ -54,17 +54,7 @@ type Config struct {
 // flag was not provided, which is what lets flags sit at the top of the
 // precedence chain without clobbering lower layers.
 type Flags struct {
-	Segments    *string
-	NoKube      bool
-	NoNamespace bool
-	NoAzure     bool
-	Cloud       *string
-	Shell       *string
-	Icons       *bool
-	Separator   *string
-	Enabled     *bool
-	ConfigPath  *string
-	Debug       bool
+	Shell *string
 }
 
 // LookupEnv mirrors os.LookupEnv and is injected for testability.
@@ -119,10 +109,7 @@ func Resolve(flags Flags, lookupEnv LookupEnv, home string) (Config, []string) {
 	// Layer 3: flags (highest).
 	applyFlags(&cfg, flags)
 
-	// Canonicalize segments first, then drop the ones named by --no-* so the
-	// disable set can match canonical names regardless of the alias used.
 	cfg.Segments = normalizeSegments(cfg.Segments)
-	applyDisables(&cfg, flags)
 
 	cfg.Shell = normalizeShell(cfg.Shell)
 	cfg.Cloud = normalizeCloud(cfg.Cloud)
@@ -130,11 +117,8 @@ func Resolve(flags Flags, lookupEnv LookupEnv, home string) (Config, []string) {
 	return cfg, debug
 }
 
-// resolveConfigPath applies precedence (flag > env > default) to the config path.
+// resolveConfigPath applies precedence (env > default) to the config path.
 func resolveConfigPath(flags Flags, lookupEnv LookupEnv, home string) string {
-	if flags.ConfigPath != nil && *flags.ConfigPath != "" {
-		return *flags.ConfigPath
-	}
 	if v, ok := lookupEnv("OMNICTX_CONFIG"); ok && v != "" {
 		return v
 	}
@@ -212,51 +196,11 @@ func applyEnv(cfg *Config, lookupEnv LookupEnv, debug *[]string) {
 }
 
 func applyFlags(cfg *Config, flags Flags) {
-	if flags.Enabled != nil {
-		cfg.Enabled = *flags.Enabled
-	}
-	if flags.Segments != nil {
-		cfg.Segments = splitSegments(*flags.Segments)
-	}
-	if flags.Cloud != nil {
-		cfg.Cloud = *flags.Cloud
-	}
-	if flags.Icons != nil {
-		cfg.Icons = *flags.Icons
-	}
-	if flags.Separator != nil {
-		cfg.Separator = *flags.Separator
-	}
 	if flags.Shell != nil {
 		cfg.Shell = *flags.Shell
 	}
 }
 
-// applyDisables drops segments named by --no-* flags. These take precedence
-// over --segments per the spec. It runs on canonical names; --no-azure drops
-// the (single) cloud slot.
-func applyDisables(cfg *Config, flags Flags) {
-	drop := map[string]bool{}
-	if flags.NoAzure {
-		drop[SegmentCloud] = true
-	}
-	if flags.NoKube {
-		drop[SegmentKube] = true
-	}
-	if flags.NoNamespace {
-		drop[SegmentNamespace] = true
-	}
-	if len(drop) == 0 {
-		return
-	}
-	filtered := cfg.Segments[:0:0]
-	for _, s := range cfg.Segments {
-		if !drop[s] {
-			filtered = append(filtered, s)
-		}
-	}
-	cfg.Segments = filtered
-}
 
 func splitSegments(v string) []string {
 	parts := strings.Split(v, ",")

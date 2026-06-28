@@ -16,10 +16,6 @@ func TestGenerateBash(t *testing.T) {
 		"__OMNICTX_ORIG_PS1=\"$PS1\"", // captures original prompt once
 		"omnictx --shell bash",        // passes correct shell
 		"PROMPT_COMMAND",              // registers hook
-		"omnion()", "omnioff()", "omnitoggle()",
-		"OMNICTX_ENABLED=true", "OMNICTX_ENABLED=false",
-		`"$1" = "-G"`,   // global flag branch
-		"omnictx enable", "omnictx disable", "omnictx toggle",
 	})
 	if strings.Contains(out, "precmd_functions") {
 		t.Errorf("bash output should not reference zsh precmd_functions")
@@ -36,7 +32,6 @@ func TestGenerateZsh(t *testing.T) {
 		"__OMNICTX_ORIG_PROMPT=\"$PROMPT\"",    // captures original prompt once
 		"omnictx --shell zsh",                  // passes correct shell
 		"precmd_functions+=(__omnictx_precmd)", // registers hook
-		"omnion()", "omnioff()", "omnitoggle()",
 	})
 }
 
@@ -84,7 +79,8 @@ func TestBashSnippetIsValidAndIdempotent(t *testing.T) {
 ` + snippet + `
 type omnion >/dev/null 2>&1 && echo HAS_OMNION
 type omnioff >/dev/null 2>&1 && echo HAS_OMNIOFF
-type omnitoggle >/dev/null 2>&1 && echo HAS_OMNITOGGLE
+type omnitoggle >/dev/null 2>&1 && echo HAS_OMNITOGGLE_SHOULD_NOT_EXIST
+type omnion    >/dev/null 2>&1 && echo HAS_OMNION_SHOULD_NOT_EXIST
 echo "ORIG=${__OMNICTX_ORIG_PS1}"
 __omnictx_prompt
 echo "PS1=${PS1}"
@@ -95,7 +91,7 @@ echo "PS1=${PS1}"
 		t.Fatalf("bash eval failed: %v\n%s", err, outBytes)
 	}
 	out := string(outBytes)
-	for _, want := range []string{"HAS_OMNION", "HAS_OMNIOFF", "HAS_OMNITOGGLE", "ORIG=orig> "} {
+	for _, want := range []string{"ORIG=orig> "} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in bash output:\n%s", want, out)
 		}
@@ -104,6 +100,12 @@ echo "PS1=${PS1}"
 	// doubled/clobbered value.
 	if strings.Contains(out, "ORIG=orig> orig>") {
 		t.Errorf("original prompt was double-captured (not idempotent):\n%s", out)
+	}
+	if strings.Contains(out, "HAS_OMNITOGGLE_SHOULD_NOT_EXIST") {
+		t.Errorf("omnitoggle should not be defined:\n%s", out)
+	}
+	if strings.Contains(out, "HAS_OMNION_SHOULD_NOT_EXIST") {
+		t.Errorf("omnion should not be defined:\n%s", out)
 	}
 }
 
