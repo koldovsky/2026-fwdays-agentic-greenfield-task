@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Pokémon type colors — the 18 canonical type hues
+   --------------------------------------------------------------------------
+   Used ONLY for small type badges. Each type exposes three tokens:
+     --type-<t>        canonical hue (reference / dot)
+     --type-<t>-bg     soft tinted background for the badge (AA-safe under text)
+     --type-<t>-text   darkened hue for the badge label (passes AA on its bg)
+   Backgrounds/text are derived with color-mix so they stay in harmony.
+   ========================================================================== */
+
+:root {
+  --type-normal:   #9a9a82;
+  --type-fire:     #e8702a;
+  --type-water:    #4f86d6;
+  --type-electric: #e0b021;
+  --type-grass:    #5fa83f;
+  --type-ice:      #5bbfba;
+  --type-fighting: #c0392b;
+  --type-poison:   #9b4d9b;
+  --type-ground:   #c79b4b;
+  --type-flying:   #8a7de8;
+  --type-psychic:  #e84d7a;
+  --type-bug:      #8a9a1a;
+  --type-rock:     #a8923f;
+  --type-ghost:    #62548a;
+  --type-dragon:   #5a36d6;
+  --type-dark:     #5a4a3f;
+  --type-steel:    #7d7d96;
+  --type-fairy:    #d46a9e;
+}
+
+/* Derived badge tokens. Kept in a second block for readability. */
+:root {
+  --type-normal-bg:   color-mix(in oklab, var(--type-normal)   16%, white);
+  --type-fire-bg:     color-mix(in oklab, var(--type-fire)     16%, white);
+  --type-water-bg:    color-mix(in oklab, var(--type-water)    16%, white);
+  --type-electric-bg: color-mix(in oklab, var(--type-electric) 18%, white);
+  --type-grass-bg:    color-mix(in oklab, var(--type-grass)    16%, white);
+  --type-ice-bg:      color-mix(in oklab, var(--type-ice)      18%, white);
+  --type-fighting-bg: color-mix(in oklab, var(--type-fighting) 14%, white);
+  --type-poison-bg:   color-mix(in oklab, var(--type-poison)   15%, white);
+  --type-ground-bg:   color-mix(in oklab, var(--type-ground)   18%, white);
+  --type-flying-bg:   color-mix(in oklab, var(--type-flying)   16%, white);
+  --type-psychic-bg:  color-mix(in oklab, var(--type-psychic)  15%, white);
+  --type-bug-bg:      color-mix(in oklab, var(--type-bug)      18%, white);
+  --type-rock-bg:     color-mix(in oklab, var(--type-rock)     18%, white);
+  --type-ghost-bg:    color-mix(in oklab, var(--type-ghost)    15%, white);
+  --type-dragon-bg:   color-mix(in oklab, var(--type-dragon)   14%, white);
+  --type-dark-bg:     color-mix(in oklab, var(--type-dark)     15%, white);
+  --type-steel-bg:    color-mix(in oklab, var(--type-steel)    16%, white);
+  --type-fairy-bg:    color-mix(in oklab, var(--type-fairy)    16%, white);
+
+  --type-normal-text:   color-mix(in oklab, var(--type-normal)   68%, black);
+  --type-fire-text:     color-mix(in oklab, var(--type-fire)     70%, black);
+  --type-water-text:    color-mix(in oklab, var(--type-water)    72%, black);
+  --type-electric-text: color-mix(in oklab, var(--type-electric) 72%, black);
+  --type-grass-text:    color-mix(in oklab, var(--type-grass)    72%, black);
+  --type-ice-text:      color-mix(in oklab, var(--type-ice)      74%, black);
+  --type-fighting-text: color-mix(in oklab, var(--type-fighting) 74%, black);
+  --type-poison-text:   color-mix(in oklab, var(--type-poison)   72%, black);
+  --type-ground-text:   color-mix(in oklab, var(--type-ground)   72%, black);
+  --type-flying-text:   color-mix(in oklab, var(--type-flying)   72%, black);
+  --type-psychic-text:  color-mix(in oklab, var(--type-psychic)  72%, black);
+  --type-bug-text:      color-mix(in oklab, var(--type-bug)      72%, black);
+  --type-rock-text:     color-mix(in oklab, var(--type-rock)     72%, black);
+  --type-ghost-text:    color-mix(in oklab, var(--type-ghost)    74%, black);
+  --type-dragon-text:   color-mix(in oklab, var(--type-dragon)   74%, black);
+  --type-dark-text:     color-mix(in oklab, var(--type-dark)     78%, black);
+  --type-steel-text:    color-mix(in oklab, var(--type-steel)    72%, black);
+  --type-fairy-text:    color-mix(in oklab, var(--type-fairy)    72%, black);
+}

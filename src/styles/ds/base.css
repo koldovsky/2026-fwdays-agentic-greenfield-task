@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Base — minimal resets + element defaults so specimen cards and kits
+   inherit the brand without per-file boilerplate. Scoped to be safe.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-weight: var(--weight-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings reset — components/utilities set their own scale */
+h1, h2, h3, h4, h5, h6, p, figure {
+  margin: 0;
+}
+
+a {
+  color: var(--text-link);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+/* Accessible, monochrome focus treatment (NFR-A11Y-01) */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--ink-900);
+  color: var(--paper);
+}
+
+/* Mono numerals look best with tabular figures for stat alignment */
+.ds-tabular {
+  font-variant-numeric: tabular-nums;
+}

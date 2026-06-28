@@ -1,0 +1,70 @@
+/* ==========================================================================
+   Colors — near-monochrome editorial neutrals
+   --------------------------------------------------------------------------
+   The UI is intentionally near-monochrome. Pokémon artwork and small type
+   badges are the only color in a typical view. The neutral ramp ("ink") is
+   a subtly warm gray that reads like printed paper.
+   ========================================================================== */
+
+:root {
+  /* ---- Base neutral ramp (warm gray "ink") ---- */
+  --ink-0:   #ffffff;
+  --ink-50:  #f7f7f5;
+  --ink-100: #efefec;
+  --ink-150: #e7e6e2;
+  --ink-200: #dcdbd6;
+  --ink-300: #c6c5be;
+  --ink-400: #a3a29a;
+  --ink-500: #7c7b73;
+  --ink-600: #5d5c55;
+  --ink-700: #44433e;
+  --ink-800: #2b2a27;
+  --ink-900: #1a1a17;
+  --ink-950: #0e0e0c;
+
+  /* Paper background carries a faint warmth so white cards lift off it */
+  --paper:   #fbfbf9;
+
+  /* ---- Semantic surfaces ---- */
+  --color-bg:             var(--paper);
+  --surface-card:         var(--ink-0);
+  --surface-sunken:       var(--ink-50);
+  --surface-raised:       var(--ink-0);
+  --surface-inverse:      var(--ink-950);
+  --surface-hover:        var(--ink-50);
+  --surface-active:       var(--ink-100);
+
+  /* ---- Semantic text ---- */
+  --text-primary:    var(--ink-900);
+  --text-secondary:  var(--ink-600);
+  --text-tertiary:   var(--ink-500);
+  --text-disabled:   var(--ink-400);
+  --text-inverse:    var(--paper);
+  --text-link:       var(--ink-900);
+
+  /* ---- Borders & dividers ---- */
+  --border-subtle:   var(--ink-150);
+  --border-default:  var(--ink-200);
+  --border-strong:   var(--ink-300);
+  --border-inverse:  var(--ink-800);
+
+  /* ---- Interactive / action (monochrome) ---- */
+  --action-primary:        var(--ink-900);
+  --action-primary-hover:  var(--ink-800);
+  --action-primary-active: var(--ink-950);
+  --action-on-primary:     var(--paper);
+
+  /* ---- Focus ring — monochrome, high-contrast, AA-friendly ---- */
+  --focus-ring:    var(--ink-900);
+  --focus-offset:  var(--paper);
+
+  /* ---- Semantic status (used sparingly; e.g. error/empty states) ---- */
+  --danger:        #b23b32;
+  --danger-bg:     #fbeae8;
+  --success:       #3f7a4f;
+  --success-bg:    #e8f2ea;
+
+  /* ---- Legendary / Mythical accent (the one warm metallic accent) ---- */
+  --legendary:     #9a7b1f;
+  --legendary-bg:  #f6efd9;
+}

@@ -5,6 +5,12 @@
 language: "uk-UA"
 tone_instructions: "Ментор курсу Agentic Engineering (greenfield). Українською, дружньо, але вимогливо. Оцінюй процес (застосовані агентні практики), а не лише код. Стек будь-який — не вимагай конкретної технології."
 
+path_filters:
+  - "!.agents/**"
+  - "!openspec/**"
+  - "!.claude/**"
+  - "!proof-of-work.mp4"
+
 reviews:
   profile: "assertive"
   request_changes_workflow: false

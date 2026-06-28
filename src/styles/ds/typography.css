@@ -1,0 +1,64 @@
+/* ==========================================================================
+   Typography — Hanken Grotesk (UI/display) + JetBrains Mono (data/labels)
+   --------------------------------------------------------------------------
+   Sans carries all prose and headings. Mono is reserved for "machine" data:
+   dex numbers (#0151), base-stat values, height/weight, and the small
+   uppercase eyebrow/label treatment. This pairing is the editorial signature.
+   ========================================================================== */
+
+:root {
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* ---- Weights ---- */
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+
+  /* ---- Type scale (px) ---- */
+  --text-2xs:  11px;
+  --text-xs:   12px;
+  --text-sm:   14px;
+  --text-base: 16px;
+  --text-md:   18px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  30px;
+  --text-3xl:  38px;
+  --text-4xl:  48px;
+  --text-5xl:  60px;
+
+  /* ---- Line heights ---- */
+  --leading-none:    1;
+  --leading-tight:   1.12;
+  --leading-snug:    1.28;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* ---- Letter spacing ---- */
+  --tracking-tighter: -0.03em;
+  --tracking-tight:   -0.02em;
+  --tracking-normal:  0;
+  --tracking-wide:    0.02em;
+  --tracking-wider:   0.08em;  /* mono uppercase eyebrows */
+
+  /* ---- Semantic roles ---- */
+  --display-family: var(--font-sans);
+  --display-weight: var(--weight-extrabold);
+  --display-tracking: var(--tracking-tighter);
+
+  --heading-family: var(--font-sans);
+  --heading-weight: var(--weight-bold);
+  --heading-tracking: var(--tracking-tight);
+
+  --body-family: var(--font-sans);
+  --body-weight: var(--weight-regular);
+
+  --label-family: var(--font-mono);
+  --label-weight: var(--weight-medium);
+  --label-tracking: var(--tracking-wider);
+
+  --data-family: var(--font-mono);
+}
