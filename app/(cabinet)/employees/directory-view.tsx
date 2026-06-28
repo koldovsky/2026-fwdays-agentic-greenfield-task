@@ -139,7 +139,7 @@ export function DirectoryView({ employees }: { employees: EmployeeRow[] }) {
                 </div>
                 {archiveError === row.id ? (
                   <p role="alert" className="text-[var(--text-base)] text-[var(--danger-ink)]">
-                    {t.errors.saveFailed}
+                    {t.errors.archiveFailed}
                   </p>
                 ) : null}
               </li>

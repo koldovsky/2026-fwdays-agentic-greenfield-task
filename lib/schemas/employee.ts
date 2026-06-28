@@ -47,7 +47,11 @@ export const employeeInputSchema = z.object({
       .min(1, m.emailRequired)
       .min(3, m.emailTooShort)
       .max(254, m.emailTooLong)
-      .pipe(z.email(m.emailInvalid)),
+      .pipe(z.email(m.emailInvalid))
+      // Canonicalise after format validation so case-variants of the same
+      // address (John@x.com vs john@x.com) normalise identically on the client
+      // and the server, letting the unique constraint catch the collision.
+      .transform((value) => value.toLowerCase()),
   ),
   role: optionalText()
     .pipe(z.string().max(80, m.roleTooLong).optional())

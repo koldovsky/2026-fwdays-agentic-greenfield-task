@@ -49,6 +49,7 @@ export const uk = {
       phoneInvalid: "Формат телефону некоректний",
       telegramInvalid: "Telegram вказано некоректно",
       saveFailed: "Не вдалося зберегти. Спробуйте ще раз",
+      archiveFailed: "Не вдалося заархівувати працівника. Спробуйте ще раз",
     },
   },
   shell: {

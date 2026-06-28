@@ -67,6 +67,13 @@ describe("employeeInputSchema — email", () => {
     expect(fieldFailed({ ...allFields, email: "not-an-email" }, "email")).toBe(true);
   });
 
+  it("lowercases a mixed-case email so case-variants canonicalise", () => {
+    const result = employeeInputSchema.safeParse({ ...allFields, email: "John@Kolo.Example" });
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.email).toBe("john@kolo.example");
+  });
+
   it("rejects a 255-character email with an issue on email", () => {
     // 255 chars total, still shaped like an email so length is the failing rule.
     const local = "a".repeat(255 - "@kolo.example".length);

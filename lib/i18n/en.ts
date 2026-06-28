@@ -47,6 +47,7 @@ export const en: Messages = {
       phoneInvalid: "Phone format is not valid",
       telegramInvalid: "Telegram handle is not valid",
       saveFailed: "Could not save. Please try again",
+      archiveFailed: "Could not archive the employee. Try again",
     },
   },
   shell: {
