@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Still Water brand mark for "Pause": the pause glyph on deep teal accent.
+       Full-bleed background keeps it maskable; glyph sits within the safe zone. -->
+  <rect width="512" height="512" fill="#2F7A6B"/>
+  <rect x="186" y="158" width="48" height="196" rx="24" fill="#FFFFFF"/>
+  <rect x="278" y="158" width="48" height="196" rx="24" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Still Water design tokens (DESIGN.md). Light theme only for the MVP. */
+@theme {
+  --color-bg: #eef1f0; /* app background — soft mist */
+  --color-surface: #ffffff; /* cards, sheets */
+  --color-ink: #16201c; /* primary text — deep forest near-black */
+  --color-muted: #5e6e66; /* secondary text, labels */
+  --color-accent: #2f7a6b; /* primary — deep teal, used with restraint */
+  --color-signal: #e8915b; /* warm clay — ONLY the active "break is due" state */
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+
+  /* Slow ~6s breathing pulse for the ring; gated by motion-reduce: in markup. */
+  --animate-breathe: breathe 6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
