@@ -4,6 +4,7 @@ import { tokenBoundarySchema } from "./schemas";
 import { getRespondentCycleByToken } from "./queries";
 import { ModeChoice } from "./ModeChoice";
 import { ModeStub } from "./ModeStub";
+import { FormFlow } from "./FormFlow";
 
 const t = uk.respondent;
 
@@ -63,6 +64,23 @@ export default async function RespondentPage({ params }: Props) {
     );
   }
 
+  if (cycle.mode === "form") {
+    return (
+      <FormFlow
+        token={parseResult.data}
+        questions={cycle.questions}
+        savedAnswers={cycle.savedAnswers}
+        subjectFirstName={cycle.subjectFirstName}
+        methodology={cycle.methodology}
+        deadline={cycle.deadline}
+        daysRemaining={cycle.daysRemaining}
+      />
+    );
+  }
+
+  // cycle.mode === "interview" — unchanged, ai-interview slice's
+  // responsibility (design.md Decision 4). ModeStub itself is not touched
+  // by this slice.
   return (
     <ModeStub
       mode={cycle.mode}

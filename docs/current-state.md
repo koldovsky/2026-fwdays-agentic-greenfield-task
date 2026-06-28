@@ -3,11 +3,15 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — UI refactor (no spec, presentational only): create-cycle
-moved into a modal. New shared `components/feedback/Dialog.tsx` (ported from KoloDesign +
-a11y: Esc/scrim close, focus-trap, focus restore, scroll-lock, `role=dialog`); `/cycles`
-now shows a "Створити цикл" trigger → `CreateCycleModal` wrapping the unchanged
-`CreateCycleForm` (createCycle action/validation untouched). lint/tsc/200 tests/build green.
+**Last action:** 2026-06-28 — completed `form` slice (FR-FORM-01..04), archived
+(`archive/2026-06-28-add-form`). One-question-per-screen form UI: `FormFlow.tsx` (sequential
+`currentIndex`, `findResumeIndex` for all-questions resume, `hydratedQuestionId` re-hydration
+pattern), `ScaleAnswerField.tsx`, `OpenAnswerField.tsx`, `saveAnswer` server action
+(`form-actions.ts`), `lib/cycles/resume.ts` (`firstUnansweredRequiredQuestion`). Review-gate
+found 3 confirmed findings (all fixed): missing mode guard on `saveAnswer` (interview-mode
+write blocked), `as`-casts replaced with type narrowing, TOCTOU done-transition hardened via
+`updateMany`. 228 tests. 3 deferred to security backlog (rate limit, ARIA radiogroup,
+savedAnswers RSC payload).
 
 **Earlier:** completed `respond` slice (FR-RESP-01..03), archived.
 
@@ -86,9 +90,13 @@ ai-interview → deferred until after the manual slices.
   entire intro not just the question preview; non-collecting cycle reused the generic
   write-failure message instead of a dedicated "closed" message; `questionId` had no upper
   bound; TOCTOU on the conditional write's WHERE clause). 198 tests.
-- Next: `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts` is the
-  one shared home (FR-LINK-02 reuses it). `lib/schemas/answer.ts` is the shared answer-write
-  contract `form`/`ai-interview` MUST import, never redefine. `results` (FR-PROGRESS) waits on
+- **form (FR-FORM-01..04) — DONE, archived** (`archive/2026-06-28-add-form`). One-question-
+  per-screen: `FormFlow.tsx` (sequential `currentIndex` + `findResumeIndex` for resume),
+  `ScaleAnswerField.tsx`, `OpenAnswerField.tsx`, `saveAnswer` action (`form-actions.ts`),
+  `lib/cycles/resume.ts`. 3 review-gate findings fixed (mode guard, as-casts, TOCTOU). 228 tests.
+- Next: `usage-accounting` (FR-USAGE-01, FR-USAGE-03). `generateCycleToken` in
+  `lib/cycles/link-token.ts` is the one shared home. `lib/schemas/answer.ts` is the shared
+  answer-write contract `form`/`ai-interview` MUST import. `results` (FR-PROGRESS) waits on
   ai-interview (manual).
 - Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
   concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).

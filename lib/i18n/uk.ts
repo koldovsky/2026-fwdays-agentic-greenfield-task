@@ -169,6 +169,16 @@ export const uk = {
     modeChosenForm: "Ви обрали форму",
     modeChosenInterview: "Ви обрали чат з AI",
     modeStubBody: "Цей екран — заглушка. Реальна форма зʼявиться найближчим часом",
+    questionPosition: "Питання {n} з {m}",
+    formRequiredMissing: "Це питання обов'язкове. Будь ласка, дайте відповідь, щоб продовжити",
+    formAdvancing: "Зберігаємо відповідь…",
+    formSaveFailed: "Не вдалося зберегти відповідь. Спробуйте ще раз",
+    formNext: "Далі",
+    formComplete: "Дякуємо. Вашу відповідь збережено",
+    formScaleLabel: "Оберіть варіант відповіді",
+    formOpenLabel: "Ваша відповідь",
+    formEmptyTitle: "Немає питань для відповіді",
+    formEmptyBody: "У цьому циклі оцінювання немає жодного питання",
   },
 };
 

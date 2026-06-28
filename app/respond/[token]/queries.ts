@@ -22,6 +22,7 @@ export type RespondentCycle = {
   status: CycleStatus;
   subjectFirstName: string;
   mode: RespondMode | null;
+  savedAnswers: Record<string, number | string>;
 };
 
 /**
@@ -45,6 +46,13 @@ export async function getRespondentCycleByToken(
       templateSnapshot: true,
       mode: true,
       subject: { select: { fullName: true } },
+      response: {
+        select: {
+          answers: {
+            select: { questionId: true, scaleValue: true, text: true },
+          },
+        },
+      },
     },
   });
 
@@ -73,6 +81,21 @@ export async function getRespondentCycleByToken(
     ? firstWord
     : cycle.subject.fullName;
 
+  // savedAnswers (add-form, FR-FORM-03/04, Decision 3): flatten the nested
+  // Response/Answer rows into a Record keyed by questionId, the same shape
+  // isResponseComplete/firstUnansweredRequiredQuestion both expect. No
+  // Response row yet, or a Response row with zero Answer rows, both map to
+  // an empty object.
+  const answerRows = cycle.response?.answers ?? [];
+  const savedAnswers: Record<string, number | string> = {};
+  for (const row of answerRows) {
+    if (row.scaleValue !== null) {
+      savedAnswers[row.questionId] = row.scaleValue;
+    } else if (row.text !== null) {
+      savedAnswers[row.questionId] = row.text;
+    }
+  }
+
   return {
     methodology: snapshot.methodology,
     questions: snapshot.questions,
@@ -81,5 +104,6 @@ export async function getRespondentCycleByToken(
     status,
     subjectFirstName,
     mode: cycle.mode,
+    savedAnswers,
   };
 }

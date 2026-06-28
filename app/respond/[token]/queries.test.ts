@@ -66,6 +66,12 @@ function makeCycleRow(overrides: Record<string, unknown> = {}) {
       phone: null,
       telegramHandle: null,
     },
+    // add-form (FR-FORM-03/04): no Response row yet by default — the
+    // queries.ts select shape is `response: { select: { answers: { ... } } }`
+    // per design.md Decision 3. `response: null` is the "no answers saved
+    // yet" default and keeps every pre-existing test (which never overrides
+    // `response`) passing unchanged.
+    response: null,
     ...overrides,
   };
 }
@@ -315,5 +321,99 @@ describe("getRespondentCycleByToken", () => {
     );
 
     expect(result?.mode).toBe("interview");
+  });
+
+  // -------------------------------------------------------------------------
+  // 14. savedAnswers — no Response row yet → {}
+  // (add-form, FR-FORM-03/04 — RED until queries.ts returns `savedAnswers`)
+  // -------------------------------------------------------------------------
+  it("returns savedAnswers: {} when the cycle has no Response row yet", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({ response: null }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.savedAnswers).toEqual({});
+  });
+
+  // -------------------------------------------------------------------------
+  // 15. savedAnswers — a Response row with zero Answer rows → {}
+  // -------------------------------------------------------------------------
+  it("returns savedAnswers: {} when the Response row exists but has zero answers", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({ response: { answers: [] } }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.savedAnswers).toEqual({});
+  });
+
+  // -------------------------------------------------------------------------
+  // 16. savedAnswers — one scale answer maps questionId -> number
+  // -------------------------------------------------------------------------
+  it("maps a saved scale answer row to a numeric savedAnswers entry", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({
+        response: {
+          answers: [{ questionId: "q1", scaleValue: 3, text: null }],
+        },
+      }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result?.savedAnswers).toEqual({ q1: 3 });
+  });
+
+  // -------------------------------------------------------------------------
+  // 17. savedAnswers — one open answer maps questionId -> string
+  // -------------------------------------------------------------------------
+  it("maps a saved open answer row to a string savedAnswers entry", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({
+        response: {
+          answers: [{ questionId: "q2", scaleValue: null, text: "my answer" }],
+        },
+      }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result?.savedAnswers).toEqual({ q2: "my answer" });
+  });
+
+  // -------------------------------------------------------------------------
+  // 18. savedAnswers — mixed types map each by questionId to the right value
+  // -------------------------------------------------------------------------
+  it("maps multiple mixed-type answer rows by questionId to their respective value types", async () => {
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(
+      makeCycleRow({
+        response: {
+          answers: [
+            { questionId: "q1", scaleValue: 3, text: null },
+            { questionId: "q2", scaleValue: null, text: "my answer" },
+            { questionId: "q3", scaleValue: 1, text: null },
+          ],
+        },
+      }),
+    );
+
+    const result = await getRespondentCycleByToken(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    );
+
+    expect(result?.savedAnswers).toEqual({ q1: 3, q2: "my answer", q3: 1 });
   });
 });
