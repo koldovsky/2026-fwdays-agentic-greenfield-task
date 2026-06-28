@@ -12,9 +12,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"omnictx/internal/aws"
 	"omnictx/internal/azure"
+	"omnictx/internal/cloud"
 	"omnictx/internal/config"
+	"omnictx/internal/gcp"
 	"omnictx/internal/kube"
 	"omnictx/internal/render"
 	"omnictx/internal/shellinit"
@@ -32,8 +37,17 @@ func main() {
 	}()
 
 	args := os.Args[1:]
-	if len(args) > 0 && args[0] == "init" {
-		os.Exit(runInit(args[1:]))
+	if len(args) > 0 {
+		switch args[0] {
+		case "init":
+			os.Exit(runInit(args[1:]))
+		case "enable":
+			os.Exit(runEnable(true))
+		case "disable":
+			os.Exit(runEnable(false))
+		case "toggle":
+			os.Exit(runToggle())
+		}
 	}
 
 	runRender(args)
@@ -116,12 +130,19 @@ Usage:
 
 Subcommands:
   init <bash|zsh>   shell integration; defines omnion / omnioff / omnitoggle
+                    pass -G to omnion/omnioff/omnitoggle to persist to config
+  enable / disable  write enabled: true/false to config (all future shells)
+  toggle            flip the persisted enabled state in config
   --version         print version and exit
 
 Flags:
+  --cloud <azure|aws|gcp|auto|none>
+                              active cloud; auto = first present (azure→aws→gcp)
+                              one-shot flag — session: OMNICTX_CLOUD=aws;
+                              permanent: cloud: aws in config (env: OMNICTX_CLOUD)
   --shell <bash|zsh|none>     color escaping for the prompt (env: OMNICTX_SHELL)
   --segments <list>           ordered segments, comma-separated:
-                              azure,kube,namespace (env: OMNICTX_SEGMENTS)
+                              cloud,kube,namespace (env: OMNICTX_SEGMENTS)
   --separator <str>           separator between segments (env: OMNICTX_SEPARATOR)
   --icons / --no-icons        icons (default) vs ASCII labels (env: OMNICTX_ICONS)
   --no-azure / --no-kube / --no-namespace
@@ -150,7 +171,8 @@ func parseRenderArgs(args []string) (flags config.Flags, showVersion, showHelp, 
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {}
 
-	segments := fs.String("segments", "", "comma-separated segments and order (azure,kube,namespace)")
+	segments := fs.String("segments", "", "comma-separated segments and order (cloud,kube,namespace)")
+	cloudSel := fs.String("cloud", "", "active cloud: azure|aws|gcp|auto|none")
 	noKube := fs.Bool("no-kube", false, "disable the kube-context segment")
 	noNamespace := fs.Bool("no-namespace", false, "disable the namespace segment")
 	noAzure := fs.Bool("no-azure", false, "disable the Azure subscription segment")
@@ -182,6 +204,8 @@ func parseRenderArgs(args []string) (flags config.Flags, showVersion, showHelp, 
 		switch f.Name {
 		case "segments":
 			flags.Segments = segments
+		case "cloud":
+			flags.Cloud = cloudSel
 		case "shell":
 			flags.Shell = shell
 		case "separator":
@@ -208,22 +232,114 @@ func parseRenderArgs(args []string) (flags config.Flags, showVersion, showHelp, 
 	return flags, *version, false, true
 }
 
+// globalConfigPath returns the path to the config file honoring OMNICTX_CONFIG.
+func globalConfigPath() string {
+	if p := os.Getenv("OMNICTX_CONFIG"); p != "" {
+		return p
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".config", "omnictx", "config.yaml")
+}
+
+// setConfigKey updates (or creates) the config file, changing only the line
+// for the given key and preserving all other content including comments.
+func setConfigKey(path, key, value string) error {
+	newLine := key + ": " + value
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				return err
+			}
+			return os.WriteFile(path, []byte(newLine+"\n"), 0o644)
+		}
+		return err
+	}
+
+	prefix := key + ":"
+	lines := strings.Split(string(data), "\n")
+	replaced := false
+	for i, l := range lines {
+		if strings.HasPrefix(strings.TrimSpace(l), prefix) {
+			lines[i] = newLine
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		lines = append([]string{newLine}, lines...)
+	}
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
+}
+
+func setGlobalEnabled(path string, enabled bool) error {
+	val := "true"
+	if !enabled {
+		val = "false"
+	}
+	return setConfigKey(path, "enabled", val)
+}
+
+// runEnable handles `omnictx enable` and `omnictx disable`.
+func runEnable(enabled bool) int {
+	if err := setGlobalEnabled(globalConfigPath(), enabled); err != nil {
+		fmt.Fprintf(os.Stderr, "omnictx: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+// runToggle handles `omnictx toggle`: reads the persisted state and flips it.
+func runToggle() int {
+	path := globalConfigPath()
+	enabled := true
+	if data, err := os.ReadFile(path); err == nil {
+		for _, l := range strings.Split(string(data), "\n") {
+			t := strings.TrimSpace(l)
+			if strings.HasPrefix(t, "enabled:") {
+				enabled = strings.TrimSpace(strings.TrimPrefix(t, "enabled:")) != "false"
+				break
+			}
+		}
+	}
+	if err := setGlobalEnabled(path, !enabled); err != nil {
+		fmt.Fprintf(os.Stderr, "omnictx: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+// cloudProviders is the priority-ordered provider list used for `auto` detection
+// (azure → aws → gcp).
+func cloudProviders() []cloud.Provider {
+	return []cloud.Provider{azure.New(), aws.New(), gcp.New()}
+}
+
 // gather reads only the data sources required by the enabled segments.
 func gather(cfg config.Config, home string) render.Data {
 	needKube := false
-	needAzure := false
+	needCloud := false
 	for _, s := range cfg.Segments {
 		switch s {
 		case config.SegmentKube:
 			needKube = true
-		case config.SegmentAzure:
-			needAzure = true
+		case config.SegmentCloud:
+			needCloud = true
 		}
 	}
 
 	var data render.Data
-	if needAzure {
-		data.Azure = azure.Read(os.LookupEnv, home)
+	if needCloud {
+		if active, ok := cloud.Select(cloudProviders(), cfg.Cloud, os.LookupEnv, home); ok {
+			if r := active.Read(os.LookupEnv, home); r.OK {
+				data.Cloud = render.Cloud{
+					Key:   active.Key(),
+					Label: active.Label(cfg.Icons),
+					Value: r.Text,
+				}
+			}
+		}
 	}
 	// The namespace renders only as a suffix of the kube segment, so reading
 	// the kubeconfig is only worthwhile when kube itself is enabled.

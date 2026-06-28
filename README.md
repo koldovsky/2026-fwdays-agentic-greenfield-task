@@ -1,18 +1,23 @@
 # omnictx
 
-A tiny, fast Go binary that prints a shell-prompt segment showing your current
-**Azure subscription**, **kube-context**, and **namespace**.
+A tiny, fast Go binary that prints a shell-prompt segment showing your active
+**cloud** (Azure, AWS, or GCP — exactly one), **kube-context**, and **namespace**.
 
 ```
 ☁ prod-subscription ⎈ prod-cluster:payments
 ```
 
-It reads config files **directly** — no `kubectl`, no `az`, no network calls — so
-it fits comfortably inside the prompt-render budget (cold start + render < 10 ms).
+It reads local config files **directly** — no `kubectl`/`az`/`aws`/`gcloud`, no
+network calls — so it fits comfortably inside the prompt-render budget (cold start
++ render < 10 ms).
 
 **Core invariant:** `omnictx` never breaks your prompt. Any error (missing file,
-broken YAML/JSON, not logged into Azure) silently skips the affected segment and
+broken YAML/JSON/INI, not logged in) silently skips the affected segment and
 exits 0.
+
+**One active cloud.** The cloud slot shows a single provider, chosen by `cloud:`
+(`azure`/`aws`/`gcp`/`auto`/`none`). `auto` (default) picks the one whose local
+config is present, by priority **azure → aws → gcp**. Kubernetes is independent.
 
 ---
 
@@ -72,8 +77,10 @@ PROMPT='${OMNICTX} '"$PROMPT"
 ```bash
 omnictx                      # print the segment (standalone / debugging)
 omnictx --no-namespace       # hide the namespace
-omnictx --no-icons           # ASCII labels:  az:<sub> k8s:<ctx>/<ns>
-omnictx --segments azure,kube
+omnictx --no-icons           # ASCII labels:  aws:<prof>/<region> k8s:<ctx>/<ns>
+omnictx --cloud aws          # pin AWS as the active cloud
+omnictx --cloud none         # kube-only (no cloud slot)
+omnictx --segments cloud,kube
 omnictx --shell bash|zsh|none
 omnictx --version
 omnictx init bash|zsh        # print shell integration code
@@ -81,11 +88,13 @@ omnictx init bash|zsh        # print shell integration code
 
 ### Output format
 
-- Icons (default): `☁ <subscription> ⎈ <context>:<namespace>`
-- ASCII (`--no-icons`): `az:<subscription> k8s:<context>/<namespace>`
+- Icons (default): `☁ <cloud> ⎈ <context>:<namespace>` (one `☁` for any provider).
+- ASCII (`--no-icons`): `az:`/`aws:`/`gcp:` `<cloud>` `k8s:<context>/<namespace>`.
 
-The `namespace` is visually coupled to `kube` (`context:namespace`). If a segment's
-data is unavailable, it is skipped entirely — no empty placeholders.
+The cloud value is provider-specific: Azure subscription, AWS `profile[/region]`,
+or GCP project. The `namespace` is visually coupled to `kube`
+(`context:namespace`). If a segment's data is unavailable, it is skipped entirely
+— no empty placeholders.
 
 ### Colors and shell escaping
 
@@ -112,8 +121,9 @@ Flags, env vars, and an optional YAML config file are merged with this precedenc
 
 | Flag | Env | Default | Purpose |
 |---|---|---|---|
-| `--segments az,kube,ns` | `OMNICTX_SEGMENTS` | `azure,kube,namespace` | which segments, in what order |
-| `--no-azure` / `--no-kube` / `--no-namespace` | — | off | disable a segment |
+| `--segments cloud,kube,ns` | `OMNICTX_SEGMENTS` | `cloud,kube,namespace` | which segments, in what order |
+| `--cloud azure\|aws\|gcp\|auto\|none` | `OMNICTX_CLOUD` | `auto` | active cloud provider |
+| `--no-azure` / `--no-kube` / `--no-namespace` | — | off | disable a segment (`--no-azure` drops the cloud slot) |
 | `--shell bash\|zsh\|none` | `OMNICTX_SHELL` | `none` | color escaping mode |
 | `--icons` / `--no-icons` | `OMNICTX_ICONS` | icons on | icons vs ASCII |
 | `--separator <str>` | `OMNICTX_SEPARATOR` | `" "` | separator between groups |
@@ -122,7 +132,9 @@ Flags, env vars, and an optional YAML config file are merged with this precedenc
 | `--debug` | — | off | diagnostics to stderr |
 | `--version` | — | — | print version |
 
-Segment names accept aliases: `az`→azure, `k`/`k8s`→kube, `ns`→namespace.
+Segment names accept aliases: `azure`/`az`/`aws`/`gcp`→`cloud`, `k`/`k8s`→kube,
+`ns`→namespace. The concrete cloud provider is chosen by `cloud:`, not by the
+segment name.
 
 ### Config file (`~/.config/omnictx/config.yaml`)
 
@@ -131,11 +143,12 @@ breaks the prompt.
 
 ```yaml
 enabled: true
-segments: [azure, kube, namespace]   # order matters
+cloud: auto                          # azure | aws | gcp | auto | none
+segments: [cloud, kube, namespace]   # order matters
 icons: true
 separator: " "
 colors:                              # names or raw SGR codes (e.g. "1;34")
-  azure: blue
+  cloud: blue                        # optional per-provider overrides: azure/aws/gcp
   kube: cyan
   namespace: dim
 ```
@@ -153,6 +166,14 @@ colors:                              # names or raw SGR codes (e.g. "1;34")
 - **Azure:** `$AZURE_CONFIG_DIR/azureProfile.json` or `~/.azure/azureProfile.json`.
   The leading UTF-8 BOM is stripped before parsing; the subscription with
   `isDefault: true` is used.
+- **AWS:** profile = `AWS_PROFILE` > `AWS_VAULT` > `default`; region = `AWS_REGION`
+  > `AWS_DEFAULT_REGION` > the profile's `region` in `~/.aws/config`
+  (`AWS_CONFIG_FILE` overrides the path; non-default profiles are `[profile NAME]`).
+  Shows `profile[/region]`. Account-id is out of scope (needs STS/network).
+- **GCP:** active config = `CLOUDSDK_ACTIVE_CONFIG_NAME` > `<gcloud>/active_config`
+  (`<gcloud>` = `CLOUDSDK_CONFIG` or `~/.config/gcloud`); project =
+  `CLOUDSDK_CORE_PROJECT` > `GOOGLE_CLOUD_PROJECT` > `[core] project` in
+  `<gcloud>/configurations/config_<name>`. Shows the project.
 
 ---
 
@@ -170,12 +191,3 @@ make golden    # regenerate render golden files
 Only one external dependency: `gopkg.in/yaml.v3`. Everything else is stdlib.
 See [`AGENTS.md`](./AGENTS.md) for the project conventions and the
 [`PRD.md`](./PRD.md) for the full product requirements.
-
----
-
-## About this repository
-
-This project was built as a homework submission for the **fwdays Academy ·
-Agentic Engineering: Greenfield** course — the emphasis is on the *engineering
-process* (context engineering via `AGENTS.md`, spec-driven development, test/lint
-loops, and a separate maker ≠ checker review pass), not the size of the product.

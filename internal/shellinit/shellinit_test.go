@@ -18,6 +18,8 @@ func TestGenerateBash(t *testing.T) {
 		"PROMPT_COMMAND",              // registers hook
 		"omnion()", "omnioff()", "omnitoggle()",
 		"OMNICTX_ENABLED=true", "OMNICTX_ENABLED=false",
+		`"$1" = "-G"`,   // global flag branch
+		"omnictx enable", "omnictx disable", "omnictx toggle",
 	})
 	if strings.Contains(out, "precmd_functions") {
 		t.Errorf("bash output should not reference zsh precmd_functions")

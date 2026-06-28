@@ -56,6 +56,34 @@ func TestReadMissingFile(t *testing.T) {
 	}
 }
 
+func TestProviderInterface(t *testing.T) {
+	p := New()
+	if p.Key() != "azure" {
+		t.Errorf("Key() = %q, want azure", p.Key())
+	}
+	if p.Label(false) != "az:" {
+		t.Errorf("Label(ascii) = %q, want az:", p.Label(false))
+	}
+
+	dir := withProfile(t, "azureProfile_default.json")
+	env := envFunc(map[string]string{"AZURE_CONFIG_DIR": dir})
+	if !p.Present(env, "/nonexistent") {
+		t.Error("Present() should be true when azureProfile.json exists")
+	}
+	if r := p.Read(env, "/nonexistent"); !r.OK || r.Text != "prod-subscription" {
+		t.Errorf("Read() = %q/%v, want prod-subscription/true", r.Text, r.OK)
+	}
+
+	// No profile -> not present, empty reading.
+	empty := envFunc(map[string]string{"AZURE_CONFIG_DIR": t.TempDir()})
+	if p.Present(empty, "/nonexistent") {
+		t.Error("Present() should be false with no profile")
+	}
+	if r := p.Read(empty, "/nonexistent"); r.OK {
+		t.Errorf("Read() = %q/%v, want empty/false", r.Text, r.OK)
+	}
+}
+
 func TestReadDefaultPath(t *testing.T) {
 	home := t.TempDir()
 	azDir := filepath.Join(home, ".azure")

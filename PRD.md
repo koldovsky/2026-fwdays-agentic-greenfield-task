@@ -1,212 +1,347 @@
-# PRD — Rename `ctxline` → `omnictx` (+ `--help` rewrite, CI node24)
+# PRD — `omnictx`: a zero-config multi-cloud context segment for the shell prompt
 
-> Status: Draft (spec-first input for Claude Code)
-> Branch: `omnictx`
-> Scope: **rename only**, plus two adjacent cleanups (`--help`, CI actions).
-> Explicitly NOT in this PRD: AWS/GCP multi-cloud — that is the next PRD.
-> This document supersedes the v1 `ctxline` PRD on this branch once merged.
-
----
-
-## 0. Why this PRD
-
-The branch was renamed to `omnictx`, but the code is still `ctxline` everywhere
-(binary, module, env vars, config dir, shell hooks). This PRD makes the code
-match the new name, and while the CI/CLI surface is being touched, fixes two
-small things that are already visible:
-
-1. `--help` prints a raw, confusing flag dump (e.g. bare `-enabled` / `-disabled`
-   with no values, no env mapping).
-2. CI emits a Node-20 deprecation warning from an outdated `golangci-lint-action`.
-
-No behavior of the rendered prompt segment changes. This is a refactor + polish
-pass; all existing tests must stay green (after mechanical renames).
+> Status: Living spec (current state documented; multi-cloud is the next build).
+> Branch: `feat/omnictx`
+> Implementation language: **Go** · Single external dependency: `gopkg.in/yaml.v3`
+> Intended executor: Claude Code / any coding agent, driven by this spec + `AGENTS.md`.
 
 ---
 
-## 1. Rename map (authoritative)
+## 1. Goal and problem
 
-Apply consistently across code, tests, docs, fixtures, and templates.
+When working across multiple Kubernetes clusters and cloud accounts it is easy to
+run a command "in the wrong place." `omnictx` is a small Go binary that prints a
+single prompt segment showing **which cloud account and which kube-context are
+active right now**:
 
-| Area | Before | After |
-|---|---|---|
-| Binary | `ctxline` | `omnictx` |
-| Module path (go.mod) | `ctxline` | `omnictx` (bare — see note) |
-| Import paths | `ctxline/internal/...` | `omnictx/internal/...` |
-| Main package dir | `cmd/ctxline/` | `cmd/omnictx/` |
-| Env prefix | `CTXLINE_*` | `OMNICTX_*` |
-| Config dir/file | `~/.config/ctxline/config.yaml` | `~/.config/omnictx/config.yaml` |
-| Config env | `CTXLINE_CONFIG` | `OMNICTX_CONFIG` |
-| Enabled env | `CTXLINE_ENABLED` | `OMNICTX_ENABLED` |
-| Install target | `~/.local/bin/ctxline` | `~/.local/bin/omnictx` |
-| Shell guard vars | `__CTXLINE_*` | `__OMNICTX_*` |
-| Shell hook funcs | `__ctxline_prompt` / `__ctxline_precmd` | `__omnictx_prompt` / `__omnictx_precmd` |
-| Toggle functions | `ctxon` / `ctxoff` / `ctxtoggle` | **`omnion` / `omnioff` / `omnitoggle`** |
-| `init` subcommand invocation inside templates | `ctxline --shell ...` | `omnictx --shell ...` |
-| All user-facing strings, comments, README, AGENTS.md, Makefile | `ctxline` | `omnictx` |
-
-> **Module path note:** keep it **bare** (`module omnictx`) for now. It builds and
-> tests locally; `go install` from a remote path is intentionally out of scope.
-> A future task will move the project to its own repo and switch the path to
-> `github.com/<user>/omnictx`. Do not introduce the domain path in this PRD.
-
-### 1.1. Env var precedence is unchanged
-Only names change (`CTXLINE_` → `OMNICTX_`). Precedence stays **flag > env >
-config > default**. There is **no backward-compatible fallback** to the old
-`CTXLINE_*` names — this is a clean rename (the tool has no external users yet).
-
----
-
-## 2. `--help` / usage rewrite
-
-### 2.1. Problem
-Today the flag set prints Go's default dump. Paired booleans like `-enabled` /
-`-disabled` appear with no allowed values, no env mapping, and ambiguous meaning.
-
-### 2.2. Requirements
-- Replace the default usage with a **custom `fs.Usage`** (not `flag.PrintDefaults()`).
-- Structure the output into clear sections:
-  1. **One-line description** of what `omnictx` does.
-  2. **Usage line** + a quick example: `eval "$(omnictx init bash)"`.
-  3. **Subcommands:** `init <bash|zsh>`, `--version`.
-  4. **Flags:** each with allowed values and the matching env var inline, e.g.
-     ```
-     --shell <bash|zsh|none>     color escaping for the prompt (env: OMNICTX_SHELL)
-     --segments <list>           ordered segments, comma-separated (env: OMNICTX_SEGMENTS)
-     --separator <str>           separator between segments (env: OMNICTX_SEPARATOR)
-     --icons / --no-icons        icons vs ASCII labels (env: OMNICTX_ICONS)
-     --config <path>             config file path (env: OMNICTX_CONFIG)
-     --debug                     print diagnostics to stderr
-     --version                   print version and exit
-     ```
-- **Resolve the enabled/disabled confusion.** Pick ONE model and document it:
-  - **Preferred:** a single `--enabled=<true|false>` flag (Go `flag` supports
-    `-enabled=false`). Drop the separate `--disabled` flag.
-  - The master on/off is normally driven by the env var `OMNICTX_ENABLED`
-    (set by `omnion`/`omnioff`), so the flag is rarely used directly — say so in
-    the help text for `--enabled`.
-  - If keeping two flags is strongly preferred, then `--disabled` must win over
-    `--enabled` and the help must state that explicitly. (Default to the single
-    `--enabled=<bool>` form unless there is a concrete reason not to.)
-- **Dash consistency:** Go's `flag` prints single-dash (`-flag`) but README uses
-  `--flag`. The custom usage MUST print `--flag` (double dash) so help and docs
-  match. (Parsing still accepts both; this is display-only.)
-- Same treatment for `--icons` / `--no-icons`: present as one line with clear
-  semantics rather than two unrelated booleans.
-
-### 2.3. Behavior
-- `omnictx --help` / `-h` prints the custom usage and exits 0.
-- A genuinely bad flag in **render mode** must still NOT break the prompt
-  (parse error → print nothing, exit 0) — the help rewrite must not regress the
-  "never break the prompt" invariant.
-
----
-
-## 3. CI actions update (node24, no deprecation warnings)
-
-Current CI triggers a Node-20 deprecation warning from `golangci-lint-action`.
-Update `.github/workflows/ci.yml`:
-
-- `golangci/golangci-lint-action@v6` → **`@v9`** (runs on node24), and set an
-  explicit pinned linter version in `with:`:
-  ```yaml
-  - uses: golangci/golangci-lint-action@v9
-    with:
-      version: v2.12   # pin, not "latest"; matches .golangci.yml version: "2"
-  ```
-- Refresh the other actions to current node24 majors:
-  - `actions/checkout@v4` → **`@v6`**
-  - `actions/setup-go@v5` → **`@v6`**
-  - `actions/upload-artifact@v4` → current major (verify latest at implementation time)
-- Keep the existing job shape: `go vet` → `golangci-lint` → `go test -race` →
-  build matrix `linux/amd64,arm64`.
-- `.golangci.yml` already declares `version: "2"`, which is compatible with
-  `golangci-lint-action@v9`; do not downgrade it.
-
-Acceptance: CI is green **with no Node-20 deprecation warnings** in the logs.
-
----
-
-## 4. Out of scope (this PRD)
-- AWS / GCP providers and the single-active-cloud config (next PRD).
-- Any change to rendered output, segment logic, data sources, or precedence.
-- Windows / fish support.
-- Backward-compatible `CTXLINE_*` env aliases.
-- Switching module path to a domain path.
-
----
-
-## 5. Implementation order (for the agent loop)
-
-Do it in this order so tests stay green and review stays easy:
-
-1. **Mechanical rename** per §1: rename `cmd/ctxline` → `cmd/omnictx`, update
-   `module` in go.mod, fix all imports, rename env constants, config dir, install
-   target, shell guard vars/hook funcs, and the in-template binary invocation.
-2. **Toggle rename:** `ctxon/ctxoff/ctxtoggle` → `omnion/omnioff/omnitoggle` in
-   templates and any tests asserting on them.
-3. `make test` → fix anything the rename broke → green. (Most changes are
-   string/path; golden files and fixtures that embed the old name must be updated
-   too — search testdata and `.golden` files for `ctxline`/`CTXLINE`.)
-4. **`--help` rewrite** per §2 + a test in `cmd/omnictx` asserting the usage
-   contains the sections and that `--help` exits 0.
-5. **CI update** per §3.
-6. `make lint` → fix → green.
-7. Self-review against §6, then hand to the checker (§7).
-
-A fast guard against missed spots:
-```bash
-grep -rniE 'ctxline|CTXLINE|ctxon|ctxoff|ctxtoggle' \
-  --include='*.go' --include='*.tmpl' --include='*.md' \
-  --include='*.yml' --include='*.yaml' --include='Makefile' .
 ```
-After the rename this should return **nothing** (except, if you choose, an
-intentional note in README/CHANGELOG about the former name).
+☁ prod-subscription ⎈ aks-prod:payments
+```
+
+It reads local config files **directly** (no `kubectl`/`az`/`aws`/`gcloud`, no
+network), so it is fast enough to run on every prompt render.
+
+**Core invariant — the prompt never breaks.** Any error (missing file, broken
+YAML/JSON/INI, not logged in) causes the affected segment to be silently skipped
+and the process to `exit 0`. There is never an error in the prompt line.
+
+**Positioning.** Tools like `kube-ps1` (Kubernetes only) and `starship` (built-in
+`kubernetes`/`aws`/`gcloud`/`azure` modules, assembled and configured separately)
+cover parts of this. `omnictx`'s niche is a **single self-contained binary that
+shows the active cloud + kube context out of the box, zero-config**, reading all
+sources directly with one consistent format and one set of toggles.
 
 ---
 
-## 6. Acceptance criteria (Definition of Done)
-- [ ] `grep -rniE 'ctxline|CTXLINE'` over the repo returns no code/doc hits
-      (an explicit "formerly ctxline" mention in README is allowed).
-- [ ] Binary builds as `omnictx`; `cmd/omnictx/main.go` exists; module is `omnictx`.
-- [ ] `go build ./...`, `go vet ./...`, `go test ./... -race -count=1` all green.
-- [ ] Env vars are `OMNICTX_*`; config resolves `~/.config/omnictx/config.yaml`.
-- [ ] `omnictx init bash|zsh` defines `omnion`/`omnioff`/`omnitoggle`; the snippet
-      stays idempotent and does not clobber the prompt; toggles flip
-      `OMNICTX_ENABLED` and take effect on the next render (test present, incl. a
-      real `bash -c` eval smoke test).
-- [ ] `omnictx --help` prints the grouped custom usage (description, usage,
-      subcommands, flags with values + env), uses `--flag` double-dash display,
-      resolves the enabled/disabled ambiguity, and exits 0 (test present).
-- [ ] A bad flag in render mode still prints nothing and exits 0 (invariant intact).
-- [ ] CI green with no Node-20 deprecation warnings; actions pinned per §3.
-- [ ] README, AGENTS.md, CLAUDE.md, Makefile updated to `omnictx`; `CLAUDE.md`
-      still references `@AGENTS.md`.
+## 2. Current state (already implemented and green)
+
+The following is **done** on `feat/omnictx` and must remain working:
+
+- Binary `omnictx`; module `omnictx` (bare path); packages under `internal/*`.
+- Segments: active **Azure subscription**, **kube-context**, **namespace**.
+- Reads `~/.azure/azureProfile.json` (BOM-aware) and kubeconfig (`$KUBECONFIG`-aware).
+- ANSI colors with shell-correct escaping: `--shell bash` → `\[ \]`, `zsh` → `%{ %}`, `none` → raw.
+- Config `~/.config/omnictx/config.yaml`; precedence **flag > env > config > default**.
+- Env prefix `OMNICTX_*`.
+- `omnictx init bash|zsh` emits idempotent, non-clobbering prompt integration and
+  defines toggles **`omnion` / `omnioff` / `omnitoggle`** (driving `OMNICTX_ENABLED`).
+- Custom grouped `--help` (replaces `flag.PrintDefaults()`): description, usage,
+  subcommands, flags with allowed values + matching env var, single
+  `--enabled[=<bool>]` master flag (the old `--enabled`/`--disabled` ambiguity is gone).
+- Tests: table-driven per package, golden tests for `render`, a `bash -c` eval
+  smoke test for `init`, a `--help` test, a render benchmark.
+- CI on node24-pinned actions: `actions/checkout@v6`, `actions/setup-go@v6`,
+  `golangci/golangci-lint-action@v9` (`version: v2.12`), `actions/upload-artifact@v7`;
+  steps `go vet` → `golangci-lint` → `go test -race` → build matrix `linux/amd64,arm64`.
+
+**The next functionality to add is multi-cloud (AWS + GCP) — §5.**
 
 ---
 
-## 7. Checker pass (maker ≠ checker)
-Independent reviewer verifies (by running, not reading):
-- [ ] All §6 criteria actually hold; `go test ./... -race` is green.
-- [ ] No stray `ctxline`/`CTXLINE`/`ctxon`/`ctxoff` anywhere (run the grep from §5).
-- [ ] `--help` is actually readable and unambiguous about enabled/disabled and icons.
-- [ ] CI logs show no Node-20 deprecation warning; lint version is pinned.
-- [ ] "Never breaks the prompt" invariant intact after the help/usage changes.
-- [ ] AGENTS.md matches the renamed structure and commands (not stale).
+## 3. Scope
 
-Findings go back to the maker; the loop repeats until clean.
+### In scope
+- Existing Azure + Kubernetes segments (§2, §4).
+- **New:** AWS and GCP cloud providers, read offline from local config (§5).
+- **New:** a single *active cloud* selected via config (`azure`/`aws`/`gcp`/`auto`/`none`).
+- A tiny shared INI reader for `~/.aws/config` and gcloud config (no new dependency).
+
+### Out of scope
+- Network calls or shelling out to `kubectl`/`az`/`aws`/`gcloud`.
+- Showing **more than one** cloud at a time (by design: one active cloud).
+- AWS account-id (requires `sts`/network) and GCP account email (best-effort, off).
+- Windows and fish shells.
+- Watch mode, daemon, caching (direct reads are already < 10 ms).
+- Switching the module path to a domain path (a future, separate task).
 
 ---
 
-## 8. Required doc updates (carry the rename into context files)
+## 4. Functional requirements (base — the current contract)
 
-`AGENTS.md` and `Makefile` must be updated as part of the rename. Key deltas:
+### 4.1 Segments and output
+Order follows the configured `segments` list. Default (with icons):
+```
+☁ <cloud>  ⎈ <context>:<namespace>
+```
+ASCII mode (`--no-icons`): `az:<...> k8s:<context>/<namespace>` (provider label per §5.3).
+Rules: a segment whose data is unavailable is **skipped entirely** (no empty
+placeholders); namespace renders only as a suffix of the kube segment; if nothing
+renders, print an empty string and exit 0; `--separator` (default `" "`) joins parts.
 
-- `Makefile`: `BIN := bin/omnictx`, build `./cmd/omnictx`, install
-  `~/.local/bin/omnictx`.
-- `AGENTS.md`: replace every `ctxline`/`CTXLINE` with `omnictx`/`OMNICTX`;
-  structure now lists `cmd/omnictx`; toggles are `omnion`/`omnioff`/`omnitoggle`;
-  note the `--help` is a custom grouped usage; CI uses node24-pinned actions.
-- `CLAUDE.md`: unchanged except it stays a thin `@AGENTS.md` import.
-- `README.md`: install path `eval "$(omnictx init bash)"`, toggles renamed,
-  config path `~/.config/omnictx/config.yaml`.
+### 4.2 Colors and escaping
+ANSI codes wrapped per `--shell` (`bash`/`zsh`/`none`) so the shell measures prompt
+width correctly. Each segment has its own color from config.
+
+### 4.3 Flags / env / config
+Precedence **flag > env > config > default**. Env prefix `OMNICTX_*`. Config at
+`~/.config/omnictx/config.yaml` (`OMNICTX_CONFIG` / `--config` to override).
+A missing/broken config silently falls back to defaults (diagnostics only under
+`--debug`). `--shell` is supplied by `init`, never persisted in config.
+
+### 4.4 Data sources (existing)
+- **Kubernetes:** files from `$KUBECONFIG` (colon list) else `~/.kube/config`;
+  current-context = first file that sets it; namespace from the matching context.
+- **Azure:** `$AZURE_CONFIG_DIR/azureProfile.json` else `~/.azure/azureProfile.json`;
+  strip UTF-8 BOM; subscription with `isDefault: true` → its `name`.
+
+### 4.5 Error behavior & init
+Always `exit 0` in render mode; top-level `recover`; `OMNICTX_ENABLED=false` →
+print empty (drives `omnion`/`omnioff`). `init` output is idempotent and prepends
+to the user's prompt without clobbering it.
+
+### 4.6 Global on/off (`-G` flag on shell toggles)
+`omnion`/`omnioff`/`omnitoggle` accept an optional `-G` flag that **persists** the
+state to `~/.config/omnictx/config.yaml` so new terminal sessions also see it:
+
+```
+omnioff -G    # writes enabled: false to config — all future shells start quiet
+omnion  -G    # writes enabled: true  to config — restores default behaviour
+omnitoggle -G # flips the current persisted state
+```
+
+Without `-G` the behaviour is unchanged (session-local `OMNICTX_ENABLED` env var).
+
+Implementation: three new subcommands in the binary — `omnictx enable`,
+`omnictx disable`, `omnictx toggle` — that read the config path
+(`OMNICTX_CONFIG` > `~/.config/omnictx/config.yaml`), update only the `enabled:`
+line in the YAML (preserving comments and other keys), and create the file/dir if
+absent. The shell functions call the subcommand when `-G` is passed.
+
+---
+
+## 5. NEXT: multi-cloud (AWS + GCP) — the new work
+
+### 5.1 Model: exactly one active cloud, chosen in config
+A new config key selects the active cloud provider:
+
+```yaml
+cloud: auto        # azure | aws | gcp | auto | none
+```
+
+- `azure` / `aws` / `gcp` — pin that provider as the active cloud.
+- `auto` (default) — pick the **single** cloud whose local config is present, by
+  priority **azure → aws → gcp** (first present wins). If none are present, the
+  cloud slot is empty.
+- `none` — no cloud segment (kube-only).
+
+Override order (same precedence as everything): `--cloud <v>` > `OMNICTX_CLOUD` >
+`cloud:` in config > default (`auto`). **Kubernetes is independent** — it is its
+own segment and is unaffected by the cloud selection.
+
+The `segments` list uses a single **`cloud`** slot (not per-provider names).
+Default segments: `[cloud, kube, namespace]`. (`azure` remains accepted as a
+backward-compatible alias for `cloud`.)
+
+### 5.2 Provider interface (refactor FIRST, before adding AWS/GCP)
+Introduce a small interface and make the existing Azure reader implement it, so
+`render` stops special-casing Azure. Do this first and keep all tests green.
+
+```go
+// internal/cloud
+type Reading struct { Text string; OK bool }
+
+type Provider interface {
+    Key() string                       // "azure" | "aws" | "gcp"
+    Label(icons bool) string           // icon prefix "☁ " or ASCII "az:"/"aws:"/"gcp:"
+    Present(lookup LookupEnv, home string) bool   // for `auto` detection
+    Read(lookup LookupEnv, home string) Reading
+}
+```
+`render` asks the **active** provider (per §5.1) for its `Reading` and renders the
+cloud slot with `colors["cloud"]` (optional per-provider color overrides allowed).
+
+### 5.3 AWS provider (`internal/aws`, offline)
+- **profile:** `AWS_PROFILE` > `AWS_VAULT` > `default`.
+- **region:** `AWS_REGION` > `AWS_DEFAULT_REGION` > the profile's `region` in
+  `~/.aws/config` (`AWS_CONFIG_FILE` overrides the path). Note: non-default
+  profiles are sections `[profile NAME]`; the default is `[default]`.
+- **display:** `profile` + (`/<region>` if known). Label: icon `☁ ` / ASCII `aws:`.
+- **Present():** `~/.aws/config` or `~/.aws/credentials` exists, or `AWS_PROFILE`/`AWS_REGION` set.
+- account-id is **out of scope** (needs `sts`).
+
+### 5.4 GCP provider (`internal/gcp`, offline)
+- **active config name:** `CLOUDSDK_ACTIVE_CONFIG_NAME` > the single line in
+  `<gcloud>/active_config` (default `default`), where `<gcloud>` = `CLOUDSDK_CONFIG`
+  or `~/.config/gcloud`.
+- **project:** `CLOUDSDK_CORE_PROJECT` > `GOOGLE_CLOUD_PROJECT` > `[core] project`
+  in `<gcloud>/configurations/config_<name>`.
+- **display:** `project`. Label: icon `☁ ` / ASCII `gcp:`.
+- **Present():** `<gcloud>` dir exists, or `CLOUDSDK_*`/`GOOGLE_CLOUD_PROJECT` set.
+
+### 5.5 Shared INI reader (`internal/ini`)
+A minimal INI parser (sections `[name]`, `key = value`, comments `#`/`;`, a default
+section) used by both AWS and GCP. ~40–60 lines, stdlib only — **no new dependency**.
+Graceful: any parse error yields no value (never breaks the prompt).
+
+### 5.6 Config / flags / env additions
+- Config: `cloud:` key (§5.1); `colors.cloud` (+ optional `colors.azure|aws|gcp`).
+- Flag: `--cloud <azure|aws|gcp|auto|none>`. Env: `OMNICTX_CLOUD`.
+- `--help` updated to document `--cloud` (values + env), consistent with the
+  existing grouped usage.
+
+### 5.7 Icons / ASCII
+Icon mode: per-provider Nerd Font glyph + value (`󰠅 ` Azure, ` ` AWS, `󱇶 ` GCP).
+ASCII mode: provider label `az:` / `aws:` / `gcp:` + value.
+
+---
+
+## 6. Non-functional requirements
+- **Performance:** cold start + render < 10 ms; keep the `render` benchmark.
+- **Dependencies:** only `gopkg.in/yaml.v3` (+ stdlib). No cloud SDKs, no `client-go`,
+  no network libraries. The INI reader is hand-written stdlib.
+- **Binary:** single static file; cross-compiled `linux/amd64` + `linux/arm64`.
+
+---
+
+## 7. Architecture and repository structure (target)
+```
+omnictx/
+├── cmd/omnictx/            # flags/env, init dispatch, grouped --help, top-level recover
+├── internal/cloud/         # Provider interface + active-cloud selection (auto/none)
+├── internal/azure/         # Azure provider (subscription)
+├── internal/aws/           # AWS provider (profile + region)        [NEW]
+├── internal/gcp/           # GCP provider (project)                 [NEW]
+├── internal/ini/           # tiny shared INI reader                 [NEW]
+├── internal/kube/          # current-context + namespace
+├── internal/render/        # format, colors, bash/zsh escaping (provider-driven)
+├── internal/config/        # flags+env+YAML → Config (adds `cloud`)
+├── internal/shellinit/     # init bash|zsh + omnion/omnioff/omnitoggle (go:embed)
+├── testdata/               # kubeconfig/azureProfile/aws/gcloud fixtures + goldens
+├── .github/workflows/ci.yml
+├── AGENTS.md · CLAUDE.md · README.md · Makefile · PRD.md · go.mod
+```
+Principle: business logic in `internal/*`, tested against fixtures; `cmd/omnictx`
+is a thin glue layer.
+
+---
+
+## 8. Verification plan
+
+### 8.1 New fixtures (`testdata/`)
+- AWS: `aws_config_default` (`[default]` with region), `aws_config_named`
+  (`[profile prod]` with region), and one with no region.
+- GCP: `gcloud/active_config` (name), `gcloud/configurations/config_<name>` with
+  `[core] project`; plus a "no project" case.
+- Broken INI files for both → graceful empty.
+
+### 8.2 New tests (table-driven)
+- `internal/ini`: sections, default section, comments, `key=value` spacing, broken input → empty.
+- `internal/aws`: profile precedence (`AWS_PROFILE`/`AWS_VAULT`/default); region
+  precedence (env → config → none); display string; missing files → empty.
+- `internal/gcp`: active-config resolution; project precedence (env → config); missing → empty.
+- `internal/cloud`: selection — explicit pins; `auto` picks the single present by
+  priority; `auto` with none present → empty; `none` → empty; Azure still works
+  through the Provider interface.
+- `internal/render`: golden tests extended for aws/gcp cloud values × icons/shell.
+
+### 8.3 Acceptance criteria (Definition of Done)
+- [ ] `PRD.md` (this file) contains the course task and is fully `omnictx` (no `ctxline`).
+- [ ] Provider interface added; Azure routed through it; existing tests stay green.
+- [ ] `internal/ini`, `internal/aws`, `internal/gcp` implemented with tests + fixtures.
+- [ ] `cloud: azure|aws|gcp|auto|none` works; `auto` picks exactly one present cloud
+      by priority; `none` disables the cloud slot; `--cloud`/`OMNICTX_CLOUD` honored.
+- [ ] Each new source is offline-only and degrades gracefully (no prompt breakage).
+- [ ] Only one cloud is ever shown; kube remains independent.
+- [ ] No dependency beyond `yaml.v3`.
+- [ ] `--help` documents `--cloud`; usage stays grouped and unambiguous.
+- [ ] `go build`, `go vet`, `go test ./... -race`, `golangci-lint` all green; CI green.
+- [ ] `AGENTS.md`, `README.md`, `Makefile` reflect AWS/GCP + the `cloud` config.
+
+---
+
+## 9. CI
+Current (keep): `actions/checkout@v6`, `actions/setup-go@v6`,
+`golangci/golangci-lint-action@v9` (`version: v2.12`), `actions/upload-artifact@v7`;
+steps `go vet` → `golangci-lint` → `go test -race -count=1` → build matrix. Must
+stay green with **no Node-20 deprecation warnings**.
+
+---
+
+## 10. Implementation order (loop engineering)
+Single branch, single PR at the end. The agent works the loop
+(`implement → make test → fix → repeat → make lint`) without step-by-step prompting,
+in this order so tests stay green and review stays easy:
+
+1. **Provider-interface refactor** (`internal/cloud`); route Azure through it; keep green.
+2. **`internal/ini`** + tests.
+3. **AWS provider** + fixtures + tests.
+4. **GCP provider** + fixtures + tests.
+5. **Active-cloud selection** (config `cloud`, `auto`/`none`, `--cloud`/`OMNICTX_CLOUD`).
+6. **Render/segments** use the `cloud` slot; extend golden tests.
+7. **Docs:** `--help`, `AGENTS.md`, `README.md`, `Makefile`, config example.
+8. Self-review against §8.3 → hand to the checker (§11).
+
+---
+
+## 11. Maker ≠ Checker (separate review pass)
+An independent checker verifies **by running, not reading**:
+- [ ] All §8.3 criteria actually hold; `go test ./... -race` green; CI green.
+- [ ] "Never breaks the prompt": top-level `recover`; missing/broken AWS/GCP/INI → empty, exit 0.
+- [ ] `auto` selects exactly one cloud; `none` works; explicit pins work; kube independent.
+- [ ] AWS profile/region precedence and GCP active-config/project precedence are correct.
+- [ ] No dependency beyond `yaml.v3`; INI reader is stdlib-only.
+- [ ] `grep -rniE 'ctxline|CTXLINE'` returns nothing (a "formerly ctxline" note in README is allowed).
+- [ ] `AGENTS.md` matches the real structure/commands.
+
+Findings go back to the maker; the loop repeats.
+
+---
+
+## 12. Agentic Engineering practices applied
+- **Context engineering.** `AGENTS.md` is the single source of truth (rules,
+  commands, structure, invariants); `CLAUDE.md` is a thin `@AGENTS.md` import.
+  *Static* context = `AGENTS.md` + this `PRD.md`; *dynamic* context = the specific
+  files/fixtures the agent reads per task and `REVIEW.md` findings.
+- **Loop engineering.** §10 defines an autonomous `implement → make test → fix`
+  loop; the agent iterates against tests/lint, not step-by-step human prompts.
+- **Verification.** Table-driven tests, golden files, fixtures, a `bash -c` eval
+  smoke test, a `--help` test, and a benchmark — real checks, not "seems to work."
+- **Maker ≠ checker.** §11 is an independent review pass (separate session /
+  reviewer) that runs the suite and the grep, and returns findings.
+- **SDD.** This PRD is written before the multi-cloud code; the spec drives the
+  tests, the tests drive the implementation.
+- **Tooling.** Claude Code (terminal) as maker; a separate review pass as checker;
+  CI (GitHub Actions) + golangci-lint as automated verification; CodeRabbit on PRs.
+
+---
+
+## Appendix A — config example (target, with multi-cloud)
+```yaml
+# ~/.config/omnictx/config.yaml
+enabled: true
+cloud: auto                    # azure | aws | gcp | auto | none
+segments: [cloud, kube, namespace]
+icons: true
+separator: " "
+colors:
+  cloud: blue                  # optional per-provider overrides: azure/aws/gcp
+  kube: cyan
+  namespace: dim
+```
+
+## Appendix B — `CLAUDE.md` (unchanged, thin reference)
+```markdown
+# CLAUDE.md
+Project context and rules live in @AGENTS.md (the single source of truth).
+This file is intentionally thin: do not duplicate content, read AGENTS.md.
+```

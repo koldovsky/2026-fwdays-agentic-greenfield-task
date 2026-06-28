@@ -138,22 +138,26 @@ func TestUsageContainsSections(t *testing.T) {
 	out := sb.String()
 
 	for _, want := range []string{
-		"omnictx —",                      // one-line description
-		"Usage:",                         // usage section
-		`eval "$(omnictx init bash)"`,    // quick example
-		"Subcommands:",                   // subcommands section
-		"init <bash|zsh>",                // init subcommand
-		"Flags:",                         // flags section
-		"--shell <bash|zsh|none>",        // flag with allowed values
-		"OMNICTX_SHELL",                  // env mapping inline
-		"--segments <list>",              //
-		"OMNICTX_SEGMENTS",               //
-		"--icons / --no-icons",           // icons on one line
-		"--enabled[=<bool>]",             // single resolved master flag
-		"OMNICTX_ENABLED",                //
-		"--config <path>",                //
-		"-h, --help",                     //
-		"omnion / omnioff / omnitoggle",  // toggles named
+		"omnictx —",                         // one-line description
+		"Usage:",                            // usage section
+		`eval "$(omnictx init bash)"`,       // quick example
+		"Subcommands:",                      // subcommands section
+		"init <bash|zsh>",                   // init subcommand
+		"Flags:",                            // flags section
+		"--cloud <azure|aws|gcp|auto|none>", // cloud selection flag
+		"OMNICTX_CLOUD",                     // env mapping inline
+		"--shell <bash|zsh|none>",           // flag with allowed values
+		"OMNICTX_SHELL",                     // env mapping inline
+		"--segments <list>",                 //
+		"OMNICTX_SEGMENTS",                  //
+		"--icons / --no-icons",              // icons on one line
+		"--enabled[=<bool>]",                // single resolved master flag
+		"OMNICTX_ENABLED",                   //
+		"--config <path>",                   //
+		"-h, --help",                        //
+		"omnion / omnioff / omnitoggle",     // toggles named
+		"enable / disable",                  // global subcommands
+		"-G",                                // global flag documented
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("usage missing %q\n---\n%s", want, out)

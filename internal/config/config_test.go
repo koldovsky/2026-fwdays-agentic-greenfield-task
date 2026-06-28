@@ -37,8 +37,8 @@ func TestResolveConfigFile(t *testing.T) {
 	if cfg.Separator != " | " {
 		t.Errorf("separator = %q, want %q", cfg.Separator, " | ")
 	}
-	if !reflect.DeepEqual(cfg.Segments, []string{SegmentKube, SegmentAzure}) {
-		t.Errorf("segments = %v, want [kube azure]", cfg.Segments)
+	if !reflect.DeepEqual(cfg.Segments, []string{SegmentKube, SegmentCloud}) {
+		t.Errorf("segments = %v, want [kube cloud]", cfg.Segments)
 	}
 	// Partial colors map merges over defaults.
 	if cfg.Colors[SegmentAzure] != "green" || cfg.Colors[SegmentKube] != "magenta" {
@@ -89,8 +89,8 @@ func TestEnvOverFile(t *testing.T) {
 		"OMNICTX_SEGMENTS": "azure,namespace",
 	}
 	cfg, _ := Resolve(Flags{}, envFunc(env), "/home")
-	if !reflect.DeepEqual(cfg.Segments, []string{SegmentAzure, SegmentNamespace}) {
-		t.Fatalf("segments = %v, want [azure namespace] (env over file)", cfg.Segments)
+	if !reflect.DeepEqual(cfg.Segments, []string{SegmentCloud, SegmentNamespace}) {
+		t.Fatalf("segments = %v, want [cloud namespace] (env over file)", cfg.Segments)
 	}
 }
 
@@ -99,8 +99,8 @@ func TestNoFlagsOverrideSegments(t *testing.T) {
 		Segments:    strp("azure,kube,namespace"),
 		NoNamespace: true,
 	}, envFunc(nil), "/home")
-	if !reflect.DeepEqual(cfg.Segments, []string{SegmentAzure, SegmentKube}) {
-		t.Fatalf("segments = %v, want [azure kube] (--no-namespace drops it)", cfg.Segments)
+	if !reflect.DeepEqual(cfg.Segments, []string{SegmentCloud, SegmentKube}) {
+		t.Fatalf("segments = %v, want [cloud kube] (--no-namespace drops it)", cfg.Segments)
 	}
 }
 
@@ -109,15 +109,42 @@ func TestNoFlagsOverrideConfigSegments(t *testing.T) {
 		ConfigPath: strp(fixturePath("config_full.yaml")), // [kube, azure]
 		NoKube:     true,
 	}, envFunc(nil), "/home")
-	if !reflect.DeepEqual(cfg.Segments, []string{SegmentAzure}) {
-		t.Fatalf("segments = %v, want [azure] (--no-kube drops kube from file segments)", cfg.Segments)
+	if !reflect.DeepEqual(cfg.Segments, []string{SegmentCloud}) {
+		t.Fatalf("segments = %v, want [cloud] (--no-kube drops kube from file segments)", cfg.Segments)
 	}
 }
 
 func TestSegmentAliasesAndDedup(t *testing.T) {
+	// az and azure both alias the single cloud slot, so the duplicate is dropped.
 	cfg, _ := Resolve(Flags{Segments: strp("az, k8s , ns, azure, bogus")}, envFunc(nil), "/home")
-	if !reflect.DeepEqual(cfg.Segments, []string{SegmentAzure, SegmentKube, SegmentNamespace}) {
-		t.Fatalf("segments = %v, want [azure kube namespace] (aliases normalized, dups/unknown dropped)", cfg.Segments)
+	if !reflect.DeepEqual(cfg.Segments, []string{SegmentCloud, SegmentKube, SegmentNamespace}) {
+		t.Fatalf("segments = %v, want [cloud kube namespace] (aliases normalized, dups/unknown dropped)", cfg.Segments)
+	}
+}
+
+func TestCloudSelectionPrecedenceAndNormalize(t *testing.T) {
+	// Default is auto.
+	if cfg, _ := Resolve(Flags{}, envFunc(nil), "/home"); cfg.Cloud != CloudAuto {
+		t.Errorf("default cloud = %q, want auto", cfg.Cloud)
+	}
+	// Env over default; flag over env.
+	cfg, _ := Resolve(Flags{}, envFunc(map[string]string{"OMNICTX_CLOUD": "aws"}), "/home")
+	if cfg.Cloud != "aws" {
+		t.Errorf("cloud = %q, want aws (from env)", cfg.Cloud)
+	}
+	cfg, _ = Resolve(Flags{Cloud: strp("gcp")}, envFunc(map[string]string{"OMNICTX_CLOUD": "aws"}), "/home")
+	if cfg.Cloud != "gcp" {
+		t.Errorf("cloud = %q, want gcp (flag over env)", cfg.Cloud)
+	}
+	// Valid values pass through; "none" is allowed.
+	for _, v := range []string{"azure", "aws", "gcp", "none", "auto"} {
+		if cfg, _ := Resolve(Flags{Cloud: strp(v)}, envFunc(nil), "/home"); cfg.Cloud != v {
+			t.Errorf("cloud %q normalized to %q, want unchanged", v, cfg.Cloud)
+		}
+	}
+	// Garbage falls back to auto.
+	if cfg, _ := Resolve(Flags{Cloud: strp("nonsense")}, envFunc(nil), "/home"); cfg.Cloud != CloudAuto {
+		t.Errorf("invalid cloud normalized to %q, want auto", cfg.Cloud)
 	}
 }
 

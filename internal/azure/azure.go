@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"omnictx/internal/cloud"
 )
 
 // utf8BOM is the byte-order mark that azureProfile.json is (in)famously written
@@ -25,7 +27,36 @@ type profile struct {
 }
 
 // LookupEnv mirrors os.LookupEnv and is injected for testability.
-type LookupEnv func(string) (string, bool)
+type LookupEnv = cloud.LookupEnv
+
+// Provider implements cloud.Provider for Azure.
+type Provider struct{}
+
+// New returns the Azure provider.
+func New() Provider { return Provider{} }
+
+// Key identifies the provider.
+func (Provider) Key() string { return "azure" }
+
+// Label is the segment prefix: the Azure Nerd Font glyph, or the ASCII "az:".
+func (Provider) Label(icons bool) string {
+	if icons {
+		return cloud.IconAzure
+	}
+	return "az:"
+}
+
+// Present reports whether azureProfile.json exists, used by auto-detection.
+func (Provider) Present(lookup LookupEnv, home string) bool {
+	info, err := os.Stat(resolvePath(lookup, home))
+	return err == nil && !info.IsDir()
+}
+
+// Read returns the active subscription as a cloud.Reading.
+func (Provider) Read(lookup LookupEnv, home string) cloud.Reading {
+	name := Read(lookup, home)
+	return cloud.Reading{Text: name, OK: name != ""}
+}
 
 // Read returns the name of the default (active) Azure subscription, or an empty
 // string when it cannot be determined. home is used to build the default

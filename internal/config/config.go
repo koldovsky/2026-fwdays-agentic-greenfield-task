@@ -15,11 +15,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Segment identifiers in canonical form.
+// Segment identifiers in canonical form. The cloud slot is a single segment;
+// the concrete provider is chosen separately via the Cloud selection.
 const (
-	SegmentAzure     = "azure"
+	SegmentCloud     = "cloud"
 	SegmentKube      = "kube"
 	SegmentNamespace = "namespace"
+
+	// SegmentAzure is the legacy name, kept as a color key and a segment alias.
+	SegmentAzure = "azure"
+)
+
+// Cloud selection values, in addition to the provider keys azure|aws|gcp.
+const (
+	CloudAuto = "auto"
+	CloudNone = "none"
 )
 
 // Shell escaping modes.
@@ -33,6 +43,7 @@ const (
 type Config struct {
 	Enabled   bool
 	Segments  []string
+	Cloud     string // active cloud: azure|aws|gcp|auto|none
 	Icons     bool
 	Separator string
 	Shell     string
@@ -47,6 +58,7 @@ type Flags struct {
 	NoKube      bool
 	NoNamespace bool
 	NoAzure     bool
+	Cloud       *string
 	Shell       *string
 	Icons       *bool
 	Separator   *string
@@ -63,6 +75,7 @@ type LookupEnv func(string) (string, bool)
 type fileConfig struct {
 	Enabled   *bool             `yaml:"enabled"`
 	Segments  []string          `yaml:"segments"`
+	Cloud     *string           `yaml:"cloud"`
 	Icons     *bool             `yaml:"icons"`
 	Separator *string           `yaml:"separator"`
 	Colors    map[string]string `yaml:"colors"`
@@ -72,12 +85,13 @@ type fileConfig struct {
 func Defaults() Config {
 	return Config{
 		Enabled:   true,
-		Segments:  []string{SegmentAzure, SegmentKube, SegmentNamespace},
+		Segments:  []string{SegmentCloud, SegmentKube, SegmentNamespace},
+		Cloud:     CloudAuto,
 		Icons:     true,
 		Separator: " ",
 		Shell:     ShellNone,
 		Colors: map[string]string{
-			SegmentAzure:     "blue",
+			SegmentCloud:     "blue",
 			SegmentKube:      "cyan",
 			SegmentNamespace: "dim",
 		},
@@ -105,11 +119,13 @@ func Resolve(flags Flags, lookupEnv LookupEnv, home string) (Config, []string) {
 	// Layer 3: flags (highest).
 	applyFlags(&cfg, flags)
 
-	// --no-* removes segments after order/segment resolution.
+	// Canonicalize segments first, then drop the ones named by --no-* so the
+	// disable set can match canonical names regardless of the alias used.
+	cfg.Segments = normalizeSegments(cfg.Segments)
 	applyDisables(&cfg, flags)
 
-	cfg.Segments = normalizeSegments(cfg.Segments)
 	cfg.Shell = normalizeShell(cfg.Shell)
+	cfg.Cloud = normalizeCloud(cfg.Cloud)
 
 	return cfg, debug
 }
@@ -149,6 +165,9 @@ func applyFile(cfg *Config, fc fileConfig) {
 	if fc.Segments != nil {
 		cfg.Segments = fc.Segments
 	}
+	if fc.Cloud != nil {
+		cfg.Cloud = *fc.Cloud
+	}
 	if fc.Icons != nil {
 		cfg.Icons = *fc.Icons
 	}
@@ -174,6 +193,9 @@ func applyEnv(cfg *Config, lookupEnv LookupEnv, debug *[]string) {
 	if v, ok := lookupEnv("OMNICTX_SEGMENTS"); ok {
 		cfg.Segments = splitSegments(v)
 	}
+	if v, ok := lookupEnv("OMNICTX_CLOUD"); ok && v != "" {
+		cfg.Cloud = v
+	}
 	if v, ok := lookupEnv("OMNICTX_ICONS"); ok {
 		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
 			cfg.Icons = b
@@ -196,6 +218,9 @@ func applyFlags(cfg *Config, flags Flags) {
 	if flags.Segments != nil {
 		cfg.Segments = splitSegments(*flags.Segments)
 	}
+	if flags.Cloud != nil {
+		cfg.Cloud = *flags.Cloud
+	}
 	if flags.Icons != nil {
 		cfg.Icons = *flags.Icons
 	}
@@ -208,11 +233,12 @@ func applyFlags(cfg *Config, flags Flags) {
 }
 
 // applyDisables drops segments named by --no-* flags. These take precedence
-// over --segments per the spec.
+// over --segments per the spec. It runs on canonical names; --no-azure drops
+// the (single) cloud slot.
 func applyDisables(cfg *Config, flags Flags) {
 	drop := map[string]bool{}
 	if flags.NoAzure {
-		drop[SegmentAzure] = true
+		drop[SegmentCloud] = true
 	}
 	if flags.NoKube {
 		drop[SegmentKube] = true
@@ -244,10 +270,16 @@ func splitSegments(v string) []string {
 	return out
 }
 
-// segmentAliases maps shorthand names to canonical segment identifiers.
+// segmentAliases maps shorthand names to canonical segment identifiers. The
+// cloud slot accepts the generic "cloud" plus the legacy/provider names, which
+// all resolve to the single cloud segment (the active provider is chosen by the
+// Cloud selection, not by the segment name).
 var segmentAliases = map[string]string{
-	"azure":     SegmentAzure,
-	"az":        SegmentAzure,
+	"cloud":     SegmentCloud,
+	"azure":     SegmentCloud,
+	"az":        SegmentCloud,
+	"aws":       SegmentCloud,
+	"gcp":       SegmentCloud,
 	"kube":      SegmentKube,
 	"k":         SegmentKube,
 	"k8s":       SegmentKube,
@@ -279,5 +311,16 @@ func normalizeShell(s string) string {
 		return ShellZsh
 	default:
 		return ShellNone
+	}
+}
+
+// normalizeCloud validates the cloud selection; anything unrecognized falls
+// back to the default (auto).
+func normalizeCloud(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case SegmentAzure, "aws", "gcp", CloudNone:
+		return strings.ToLower(strings.TrimSpace(s))
+	default:
+		return CloudAuto
 	}
 }

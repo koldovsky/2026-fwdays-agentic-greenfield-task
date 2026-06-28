@@ -1,0 +1,82 @@
+package gcp
+
+import (
+	"path/filepath"
+	"testing"
+
+	"omnictx/internal/cloud"
+)
+
+func env(m map[string]string) LookupEnv {
+	return func(k string) (string, bool) {
+		v, ok := m[k]
+		return v, ok
+	}
+}
+
+func gcloudDirFixture() string { return filepath.Join("..", "..", "testdata", "gcloud") }
+
+func TestReadProjectPrecedence(t *testing.T) {
+	dir := gcloudDirFixture()
+
+	cases := []struct {
+		name string
+		env  map[string]string
+		want string
+	}{
+		{"CLOUDSDK_CORE_PROJECT wins", map[string]string{"CLOUDSDK_CONFIG": dir, "CLOUDSDK_CORE_PROJECT": "env-proj", "GOOGLE_CLOUD_PROJECT": "g-proj"}, "env-proj"},
+		{"GOOGLE_CLOUD_PROJECT next", map[string]string{"CLOUDSDK_CONFIG": dir, "GOOGLE_CLOUD_PROJECT": "g-proj"}, "g-proj"},
+		{"active_config file -> work config", map[string]string{"CLOUDSDK_CONFIG": dir}, "my-work-project"},
+		{"explicit active config name -> default", map[string]string{"CLOUDSDK_CONFIG": dir, "CLOUDSDK_ACTIVE_CONFIG_NAME": "default"}, "my-default-project"},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			got := New().Read(env(tt.env), "/nonexistent")
+			if !got.OK || got.Text != tt.want {
+				t.Fatalf("Read() = %q/%v, want %q", got.Text, got.OK, tt.want)
+			}
+		})
+	}
+}
+
+func TestReadNoProjectIsEmpty(t *testing.T) {
+	got := New().Read(env(map[string]string{
+		"CLOUDSDK_CONFIG":             gcloudDirFixture(),
+		"CLOUDSDK_ACTIVE_CONFIG_NAME": "noproject",
+	}), "/nonexistent")
+	if got.OK || got.Text != "" {
+		t.Fatalf("Read() = %q/%v, want empty/false", got.Text, got.OK)
+	}
+}
+
+func TestReadMissingIsEmpty(t *testing.T) {
+	got := New().Read(env(nil), t.TempDir())
+	if got.OK || got.Text != "" {
+		t.Fatalf("Read() = %q/%v, want empty/false", got.Text, got.OK)
+	}
+}
+
+func TestPresent(t *testing.T) {
+	if New().Present(env(nil), t.TempDir()) {
+		t.Error("no gcloud dir and no env should not be present")
+	}
+	if !New().Present(env(map[string]string{"CLOUDSDK_CONFIG": gcloudDirFixture()}), "/nonexistent") {
+		t.Error("existing gcloud dir should be present")
+	}
+	if !New().Present(env(map[string]string{"GOOGLE_CLOUD_PROJECT": "p"}), t.TempDir()) {
+		t.Error("GOOGLE_CLOUD_PROJECT env should make it present")
+	}
+}
+
+func TestKeyAndLabel(t *testing.T) {
+	p := New()
+	if p.Key() != "gcp" {
+		t.Errorf("Key() = %q, want gcp", p.Key())
+	}
+	if p.Label(true) != cloud.IconGCP {
+		t.Errorf("Label(icons) = %q, want %q", p.Label(true), cloud.IconGCP)
+	}
+	if p.Label(false) != "gcp:" {
+		t.Errorf("Label(ascii) = %q, want gcp:", p.Label(false))
+	}
+}

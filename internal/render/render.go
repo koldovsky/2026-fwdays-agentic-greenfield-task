@@ -11,16 +11,23 @@ import (
 // Data carries the resolved values for each segment. An empty field means the
 // value is unavailable and the segment is skipped.
 type Data struct {
-	Azure     string
+	Cloud     Cloud
 	Kube      string
 	Namespace string
 }
 
+// Cloud is the resolved active-cloud slot. Value=="" means no cloud is shown.
+// Label is the provider-chosen prefix (icon "☁ " or ASCII "az:"/"aws:"/"gcp:")
+// and Key selects an optional per-provider color override.
+type Cloud struct {
+	Key   string
+	Label string
+	Value string
+}
+
 const (
 	ansiReset  = "\033[0m"
-	iconAzure  = "\u2601" // ☁
-	iconKube   = "\u2388" // ⎈
-	asciiAzure = "az:"
+	iconKube   = "⎈" // ⎈
 	asciiKube  = "k8s:"
 	nsSepIcon  = ":"
 	nsSepASCII = "/"
@@ -48,38 +55,40 @@ var namedColors = map[string]string{
 // segment produces output (the caller then prints nothing and exits 0).
 func Render(d Data, cfg config.Config) string {
 	pieces := make([]string, 0, len(cfg.Segments))
-	kubeRendered := false
 
 	for _, seg := range cfg.Segments {
 		switch seg {
-		case config.SegmentAzure:
-			if d.Azure == "" {
+		case config.SegmentCloud:
+			if d.Cloud.Value == "" {
 				continue
 			}
-			pieces = append(pieces, azurePiece(d.Azure, cfg))
+			pieces = append(pieces, cloudPiece(d.Cloud, cfg))
 		case config.SegmentKube:
 			if d.Kube == "" {
 				continue
 			}
 			pieces = append(pieces, kubePiece(d, cfg))
-			kubeRendered = true
 		case config.SegmentNamespace:
 			// Namespace is visually coupled to the kube segment (context:ns).
 			// It is appended to the kube piece in kubePiece(); on its own it
 			// has no standalone representation, so skip it here.
-			_ = kubeRendered
 		}
 	}
 
 	return strings.Join(pieces, cfg.Separator)
 }
 
-func azurePiece(sub string, cfg config.Config) string {
-	prefix := iconAzure + " "
-	if !cfg.Icons {
-		prefix = asciiAzure
+// cloudPiece renders the active cloud slot. The label (icon or ASCII) is chosen
+// by the provider; the color is colors["cloud"], overridden by a per-provider
+// colors[key] when present.
+func cloudPiece(c Cloud, cfg config.Config) string {
+	colorKey := config.SegmentCloud
+	if c.Key != "" {
+		if _, ok := cfg.Colors[c.Key]; ok {
+			colorKey = c.Key
+		}
 	}
-	return colorize(cfg, config.SegmentAzure, prefix+sub)
+	return colorize(cfg, colorKey, c.Label+c.Value)
 }
 
 // kubePiece renders the kube context and, when enabled and present, appends the
