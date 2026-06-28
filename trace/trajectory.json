@@ -20,6 +20,17 @@
       "processComplete": true
     },
     {
+      "slice": "2026-06-28-add-cycles",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "cycles",
+        "i18n",
+        "schemas"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-06-28-add-directory",
       "reviewEvidence": "clean",
       "trailerCommits": 3,
@@ -60,6 +71,7 @@
       "domain": "i18n",
       "slices": [
         "2026-06-28-add-cabinet-shell",
+        "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
         "2026-06-28-add-templates"
       ]
@@ -67,6 +79,7 @@
     {
       "domain": "schemas",
       "slices": [
+        "2026-06-28-add-cycles",
         "2026-06-28-add-directory",
         "2026-06-28-add-templates"
       ]
@@ -100,11 +113,11 @@
     },
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 3 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/i18n/ modified by 4 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
     },
     {
       "check": "in-scope",
-      "msg": "lib/schemas/ modified by 2 slices (2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
+      "msg": "lib/schemas/ modified by 3 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
     }
   ]
 }

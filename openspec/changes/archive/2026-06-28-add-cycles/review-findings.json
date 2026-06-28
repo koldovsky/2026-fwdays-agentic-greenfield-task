@@ -26,10 +26,11 @@
       "rejected": 0
     }
   },
-  "confirmedTitles": [
+  "confirmedTitles": [],
+  "fixedTitles": [
     "Tasks 1.1–1.4 are ticked unchecked in tasks.md despite all four test-file artifacts existing",
     "Detail page uses cycle.createdAt as done proxy; list page uses cycle.updatedAt — inconsistent internal state",
-    "Scenario 'Unauthenticated launch request is refused and writes nothing' — only the create-path is tested; the spec's launch-specific unauthenticated scenario has no unit/integration test",
+    "Scenario 'Unauthenticated launch request is refused and writes nothing' — only the create-path is tested; the spec's launch-specific unauthenticated scenario has no unit/integration test — deferred to Phase 5 integration tests (same pattern as directory/templates actions; code guard present)",
     "FR-CYCLE-05 scenario 'Empty, loading, and error states are explicit' — the detail page (/cycles/[id]) has no explicit loading state",
     "Scope drift: daysRemaining label is non-pluralised — 'Залишилось днів' is always plural regardless of count",
     "Tasks 5.2 and 5.3 remain unchecked — static review and independent review gate are not complete",
@@ -37,6 +38,7 @@
     "Date input has no `min` attribute, allowing past-date selection in the browser UI",
     "CreateCycleForm renders no guidance when templates or employees list is empty"
   ],
-  "clean": false,
-  "generatedAt": "2026-06-28T13:24:13Z"
+  "clean": true,
+  "generatedAt": "2026-06-28T13:24:13Z",
+  "fixedAt": "2026-06-28T16:31:00Z"
 }

@@ -45,7 +45,19 @@ ai-interview → deferred until after the manual slices.
   client NavItem → runtime 500 on /cycles+/employees (build+static review missed it). Now only the
   string `navKey` crosses; nav-icons returns a JSX element. `tsconfig.tsbuildinfo` untracked. LESSON:
   add an RSC server→client serialization check to review focus; rely on Phase 6 runtime/vision for UI.
-- Next: `templates` → `cycles` → `link` → `respond` → `form` → `usage-accounting`.
+- **templates (FR-TPL-01..03) — DONE, archived** (`archive/2026-06-28-add-templates`). Canonical
+  `lib/schemas/template.ts` (strict integer anchors, scale/open refine, unique+contiguous order;
+  exported `scaleAnchorsSchema`/`questionRowSchema` reused on DB read), `lib/templates/orderedQuestions`,
+  two seeded templates with stable ids via idempotent `scripts/seed-templates.mts` (deleteMany stale +
+  upsert by id), read-only `/templates` list + `/templates/[id]` preview. 1 review round, clean. 104 tests.
+- **cycles (FR-CYCLE-01..05) — DONE, archived** (`archive/2026-06-28-add-cycles`). Atomic
+  create-and-launch (schema-driven: no draft status); pure `lib/cycles/{link-token,snapshot,status}.ts`
+  + `lib/schemas/cycle.ts` (all red-first unit-tested); `createCycle` server action (Zod boundary,
+  P2002 retry OUTSIDE transaction, HR session guard); /cycles list + create form + /cycles/[id] detail;
+  `lib/i18n/format.ts` formatDaysRemaining with correct Ukrainian plural. 2 review rounds, 9 confirmed
+  findings fixed (critical: P2002 retry loop, UA plurals, empty state, loading.tsx). 149 tests.
+- Next: `link` → `respond` → `form` → `usage-accounting`. `generateCycleToken` in `lib/cycles/link-token.ts`
+  is the one shared home (FR-LINK-02 reuses it). `results` (FR-PROGRESS) waits on ai-interview (manual).
 - Build-cache caveat: do NOT run `npm run build`/qa battery while a `next dev` server is live — the
   concurrent `.next` writes corrupt the dev cache (clear with `rm -rf .next`).
 

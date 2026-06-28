@@ -212,6 +212,11 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 - Dark mode (design light-only in v1; keep tokens semantic).
 - Self-hosting on the team's own AWS server (for a later, confidentiality-hardened
   production deployment; MVP ships on Vercel).
+- Two-phase draft cycles ("Save draft" then launch later, as the design brief shows). In
+  the MVP, creating a cycle launches it **atomically** — mints the link token, snapshots the
+  template, and starts `collecting` in one step (FR-CYCLE-01/02/03); there is no persisted
+  `draft` state and no separate relaunch. A true draft phase would need a schema migration
+  (nullable `token`/`templateSnapshot` + a `draft` status) and is deferred.
 - Automated email delivery of the respondent link (e.g. via Resend, with a verified
   sending domain). MVP delivers the link by **manual copy-to-clipboard** (FR-LINK-01);
   email send is a fast-follow.

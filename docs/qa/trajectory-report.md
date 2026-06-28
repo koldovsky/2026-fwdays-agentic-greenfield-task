@@ -5,13 +5,14 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 6 archived slice(s).
+Scope: 7 archived slice(s).
 Result: PASS, 8 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-28-add-auth | **missing** | **0** | yes | - |
 | 2026-06-28-add-cabinet-shell | clean | 3 | yes | http, i18n, nav |
+| 2026-06-28-add-cycles | clean | 1 | yes | cycles, i18n, schemas |
 | 2026-06-28-add-directory | clean | 3 | yes | i18n, schemas |
 | 2026-06-28-add-foundation | **missing** | **0** | yes | - |
 | 2026-06-28-add-templates | clean | 3 | yes | schemas, templates, i18n |
@@ -19,8 +20,8 @@ Result: PASS, 8 warning(s)
 
 ## Cross-slice module overlap
 
-- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-directory, 2026-06-28-add-templates
-- `lib/schemas/` touched by: 2026-06-28-add-directory, 2026-06-28-add-templates
+- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates
+- `lib/schemas/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates
 
 ## Failures
 
@@ -34,5 +35,5 @@ None.
 - **trailer**: 2026-06-28-add-foundation: no commit carries a "Slice: add-foundation" trailer
 - **review-evidence**: 2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-token-cost-calculator: no commit carries a "Slice: add-token-cost-calculator" trailer
-- **in-scope**: lib/i18n/ modified by 3 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift
-- **in-scope**: lib/schemas/ modified by 2 slices (2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift
+- **in-scope**: lib/i18n/ modified by 4 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift
+- **in-scope**: lib/schemas/ modified by 3 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift
