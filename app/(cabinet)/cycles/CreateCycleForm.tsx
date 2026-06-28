@@ -14,6 +14,7 @@ const t = uk.cycles;
 type Props = {
   templates: Array<{ id: string; name: string }>;
   employees: Array<{ id: string; fullName: string }>;
+  onCancel: () => void;
 };
 
 const initialState: CreateCycleResult = {
@@ -27,7 +28,7 @@ const initialState: CreateCycleResult = {
  * the createCycle server action; renders fieldErrors inline; on success
  * navigates to the new cycle's detail page.
  */
-export function CreateCycleForm({ templates, employees }: Props) {
+export function CreateCycleForm({ templates, employees, onCancel }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -57,12 +58,8 @@ export function CreateCycleForm({ templates, employees }: Props) {
     <form
       ref={formRef}
       action={formAction}
-      className="flex flex-col gap-[var(--space-7)] rounded-[var(--radius-lg)] border border-line-soft bg-surface p-[var(--space-8)]"
+      className="flex flex-col gap-[var(--space-7)]"
     >
-      <h2 className="text-[var(--text-md)] font-[var(--weight-medium)] text-ink">
-        {t.createCycle}
-      </h2>
-
       {globalError !== undefined ? (
         <p role="alert" className="text-[var(--text-base)] text-[var(--danger-ink)]">
           {globalError}
@@ -141,7 +138,10 @@ export function CreateCycleForm({ templates, employees }: Props) {
         />
       </Field>
 
-      <div>
+      <div className="mt-[var(--space-5)] flex justify-end gap-[var(--space-5)]">
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isPending}>
+          {t.form.cancel}
+        </Button>
         <Button
           type="submit"
           variant="primary"

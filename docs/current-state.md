@@ -3,7 +3,13 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — completed `respond` slice (FR-RESP-01..03), archived.
+**Last action:** 2026-06-28 — UI refactor (no spec, presentational only): create-cycle
+moved into a modal. New shared `components/feedback/Dialog.tsx` (ported from KoloDesign +
+a11y: Esc/scrim close, focus-trap, focus restore, scroll-lock, `role=dialog`); `/cycles`
+now shows a "Створити цикл" trigger → `CreateCycleModal` wrapping the unchanged
+`CreateCycleForm` (createCycle action/validation untouched). lint/tsc/200 tests/build green.
+
+**Earlier:** completed `respond` slice (FR-RESP-01..03), archived.
 
 **Earlier:** **onboarded Project Factory loop** (`/project-factory:onboard
 --no-reverse`, Claude adapter only). Installed: 11 agents → `.claude/agents/`, 6 workflows →

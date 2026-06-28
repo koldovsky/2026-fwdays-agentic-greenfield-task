@@ -97,6 +97,7 @@ export const uk = {
       deadlineLabel: "Дедлайн",
       submit: "Створити",
       submitting: "Створення...",
+      cancel: "Скасувати",
       noTemplates: "Немає шаблонів — спочатку додайте шаблон",
       noEmployees: "Немає активних учасників — спочатку додайте учасника",
     },

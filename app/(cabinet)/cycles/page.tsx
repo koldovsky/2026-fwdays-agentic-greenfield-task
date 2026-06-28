@@ -9,7 +9,7 @@ import { formatDaysRemaining } from "@/lib/i18n/format";
 import { listCycles } from "./queries";
 import { listTemplates } from "@/app/(cabinet)/templates/queries";
 import { listActiveEmployees } from "@/app/(cabinet)/employees/queries";
-import { CreateCycleForm } from "./CreateCycleForm";
+import { CreateCycleModal } from "./CreateCycleModal";
 import type { CycleListRow } from "./queries";
 
 const t = uk.cycles;
@@ -43,7 +43,7 @@ async function CyclesContent() {
 
   return (
     <div className="flex flex-col gap-[var(--space-9)]">
-      <CreateCycleForm templates={templates} employees={employeeRows} />
+      <CreateCycleModal templates={templates} employees={employeeRows} />
       {cycles.length === 0 ? (
         <EmptyState title={t.empty.title} body={t.empty.description} />
       ) : (
