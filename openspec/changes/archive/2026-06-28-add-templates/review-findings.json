@@ -1,0 +1,22 @@
+{
+  "generatedBy": "review-gate (1 round) + orchestrator adjudication",
+  "scope": "add-templates",
+  "change": "add-templates",
+  "baseRef": "HEAD~1",
+  "headRef": "HEAD",
+  "rounds": 1,
+  "dimensions": {
+    "correctness": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "security": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "spec-compliance": { "confirmed": 0, "contested": 0, "rejected": 0 },
+    "visual": { "confirmed": 0, "contested": 0, "rejected": 0 }
+  },
+  "confirmedTitles": [],
+  "clean": true,
+  "adjudication": "One adversarial review-gate round (4 dimensions; maker != checker; each finding double-verified), 0 rejected. Security found the slice CLEAN (auth enforced server-side by the proxy guard; read-only, no mutation/write path), and spec coverage was 17/17 implemented, 0 missing, 0 contradicted. All actionable findings (all minor) were then fixed: queries.ts now parses DB rows through the canonical questionRowSchema + uniqueness-enforcing scaleAnchorsSchema exported from lib/schemas/template.ts (one shared home; a bad row degrades to a calm null, never renders malformed); the seeder keys questions by descriptive stable ids and deleteMany's stale rows before upsert so a re-seed is exactly the seeded set (verified idempotent twice against the dev DB: 2 templates / 10 questions); the dead templates.preview i18n key is now a visible card affordance. Anchor value admitting zero/negative was left as-is (spec-silent, benign). No unresolved real defect in scope. Battery: lint+tsc+test(104)+build all green.",
+  "deferred": [
+    "SEC-BL-01..04 (sign-in rate limiting, proxy revoked-user check, postcss/@hono advisories, sign-out CSRF) - tracked in docs/qa/security-backlog.md for an auth-hardening slice.",
+    "Eyes-on-pixels visual validation deferred to Phase 6 vision-verify (no Playwright in MVP per TC-TEST-01)."
+  ],
+  "generatedAt": "2026-06-28T14:55:00Z"
+}

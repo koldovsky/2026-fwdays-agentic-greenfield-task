@@ -37,6 +37,17 @@
       "processComplete": true
     },
     {
+      "slice": "2026-06-28-add-templates",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "schemas",
+        "templates",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-06-28-add-token-cost-calculator",
       "reviewEvidence": "missing",
       "trailerCommits": 0,
@@ -49,7 +60,15 @@
       "domain": "i18n",
       "slices": [
         "2026-06-28-add-cabinet-shell",
-        "2026-06-28-add-directory"
+        "2026-06-28-add-directory",
+        "2026-06-28-add-templates"
+      ]
+    },
+    {
+      "domain": "schemas",
+      "slices": [
+        "2026-06-28-add-directory",
+        "2026-06-28-add-templates"
       ]
     }
   ],
@@ -81,7 +100,11 @@
     },
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 2 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-directory) — review for scope drift"
+      "msg": "lib/i18n/ modified by 3 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/schemas/ modified by 2 slices (2026-06-28-add-directory, 2026-06-28-add-templates) — review for scope drift"
     }
   ]
 }
