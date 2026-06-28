@@ -45,3 +45,12 @@ next-env.d.ts
 # IDE / editors
 .idea/
 .vscode/
+
+# Logs
+*.log
+
+# AI Assistants
+.claude/settings.local.json
+
+# MCP
+.playwright-mcp
