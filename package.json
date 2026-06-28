@@ -8,7 +8,19 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "qa:verify": "node scripts/qa-verify.mjs",
+    "qa:record-demos": "node scripts/record-demos.mjs",
+    "qa:record-proof": "node scripts/record-demos.mjs",
+    "check:trace": "node scripts/check-traceability.mjs",
+    "check:coverage": "node scripts/check-coverage-ratchet.mjs",
+    "check:eval": "node scripts/check-eval-ratchet.mjs",
+    "check:trajectory": "node scripts/check-trajectory.mjs",
+    "check:recordings": "node scripts/check-recordings.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "gate:status": "node scripts/gate-status.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

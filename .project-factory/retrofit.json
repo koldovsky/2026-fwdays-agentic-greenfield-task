@@ -1,0 +1,8 @@
+{
+  "note": "Slices that existed before the Project Factory loop was installed (onboard --no-reverse, 2026-06-28). They carry OpenSpec specs and archives but no earned red-first / review-findings.json evidence, because there were no failing-tests-first commits or gated review passes to point at. gate-status / check-trajectory flag them as RETROFITTED, not earned. Only NEW slices get genuine red-first evidence.",
+  "slices": [
+    "add-token-cost-calculator",
+    "add-foundation",
+    "add-auth"
+  ]
+}

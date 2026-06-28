@@ -3,15 +3,32 @@
 > Working-memory handoff between sessions. Read this first; update it after any
 > meaningful change. Short and current — overwrite stale lines, don't append a log.
 
-**Last action:** 2026-06-28 — implemented slice `add-auth` (FR-AUTH-01..05): single HR account
-in DB (`HrUser`), access JWT (jose) + rotating refresh token (opaque, hashed in `Session`),
-httpOnly/Secure/SameSite cookies, transparent refresh + route guard in `proxy.ts` (Next 16
-renamed `middleware`→`proxy`, Node runtime), minimal token-styled sign-in page, sign-out.
-Migration `add_auth_tables` applied. Full loop green (lint/tsc/32 tests/build) + a live
-proxy smoke test (guard redirect, valid pass, transparent refresh, rotation revokes old token).
+**Last action:** 2026-06-28 — **onboarded Project Factory loop** (`/project-factory:onboard
+--no-reverse`, Claude adapter only). Installed: 11 agents → `.claude/agents/`, 6 workflows →
+`.claude/workflows/`, `check-*`/`gate-status`/`qa-verify`/`record-demos` scripts, git hooks
+(`.githooks/` + `core.hooksPath`, verified firing), Claude Code ESLint hook → `.claude/settings.json`,
+CI → `.github/workflows/ci.yml`, package.json `check:*`/`qa:*`/`gate:*` scripts, ADR-0001 (stack) +
+ADR-0002 (context arch), `.project-factory/retrofit.json` (3 pre-loop slices flagged retrofitted).
+Non-destructive: no existing code touched.
 
-**Phase:** Implementation. Auth reviewed (APPROVE-WITH-NITS), spec synced → `openspec/specs/auth/`,
-and **archived** (`archive/2026-06-28-add-auth`). No active change. Next slice: `cabinet-shell`.
+**Phase 2 baseline specs — DONE (traceability gate now GREEN).** Ran `spec-pipeline` (11
+spec-writers + critique/revise + cross-capability coverage check) → authored baseline OpenSpec
+specs for every remaining MVP capability: `cabinet-shell` (FR-SHELL-01..03), `directory` (FR-DIR),
+`templates` (FR-TPL), `cycles` (FR-CYCLE), `link` (FR-LINK), `respond` (FR-RESP), `form` (FR-FORM),
+`ai-interview` (FR-AI-01..09), `results` (FR-PROGRESS), `report` (FR-REPORT), `usage-accounting`
+(FR-USAGE-01/03 only; 02/04 stay with `token-cost-calculation`). `check-traceability.mjs` → **0
+failures** (50 MVP FRs; 100 warnings = missing test-traces/recordings, expected pre-build).
+`openspec validate --all --strict` → 14/14. Fixed one cross-check contradiction: the cycle `done`
+predicate now defers everywhere to the canonical rule in `cycles` (FR-CYCLE-04: required questions
+answered); `ai-interview` no longer redefined it.
+
+**Gates:** G0/G2/G4/G7/G8 PASS, G5 SKIP (coverage), G1/G3 need human sign-off. CI template still
+needs adaptation before green (`BETTER_AUTH_SECRET`→`AUTH_JWT_SECRET`; no `test:integration`/`test:e2e` yet).
+
+**Phase:** Baseline specs complete. Next: pick up the build at slice `cabinet-shell` via
+`/opsx:propose` → `/opsx:apply` (full gated Phase 4 loop). Soft cross-check notes to carry: NFR-PERF-01
+unowned; NFR-DX-01 only cited by ai-interview though it is repo-wide; token-generator (FR-CYCLE-02 /
+FR-LINK-02) should get one named `lib/` home when those slices build.
 
 ## Done so far
 

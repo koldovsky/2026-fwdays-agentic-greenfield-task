@@ -1,0 +1,54 @@
+{
+  "generatedBy": "scripts/check-trajectory.mjs",
+  "slices": [
+    {
+      "slice": "2026-06-28-add-auth",
+      "reviewEvidence": "missing",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-28-add-foundation",
+      "reviewEvidence": "missing",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-28-add-token-cost-calculator",
+      "reviewEvidence": "missing",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
+    }
+  ],
+  "overlaps": [],
+  "failures": [],
+  "warnings": [
+    {
+      "check": "review-evidence",
+      "msg": "2026-06-28-add-auth: review-findings.json is missing (review must have run clean before archive)"
+    },
+    {
+      "check": "trailer",
+      "msg": "2026-06-28-add-auth: no commit carries a \"Slice: add-auth\" trailer"
+    },
+    {
+      "check": "review-evidence",
+      "msg": "2026-06-28-add-foundation: review-findings.json is missing (review must have run clean before archive)"
+    },
+    {
+      "check": "trailer",
+      "msg": "2026-06-28-add-foundation: no commit carries a \"Slice: add-foundation\" trailer"
+    },
+    {
+      "check": "review-evidence",
+      "msg": "2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)"
+    },
+    {
+      "check": "trailer",
+      "msg": "2026-06-28-add-token-cost-calculator: no commit carries a \"Slice: add-token-cost-calculator\" trailer"
+    }
+  ]
+}

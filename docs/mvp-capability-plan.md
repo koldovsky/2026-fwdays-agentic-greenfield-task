@@ -90,17 +90,17 @@ graph TD
 
 ## Coverage check — every MVP FR owned exactly once
 
-- `shell` → FR-AUTH-01, -02, -03, -04, -05 · FR-SHELL-01, -02, -03
-- `directory` → FR-DIR-01, -02, -03, -04
-- `templates` → FR-TPL-01, -02, -03
-- `cycles` → FR-CYCLE-01, -02, -03, -04, -05
-- `link` → FR-LINK-01, -02, -03
-- `respond` → FR-RESP-01, -02, -03
-- `form` → FR-FORM-01, -02, -03, -04
-- `ai-interview` → FR-AI-01, -02, -03, -04, -05, -06, -07, -08, -09
-- `results` → FR-PROGRESS-01, -02, -03
-- `report` → FR-REPORT-01, -02, -03, -04
-- `usage-accounting` → FR-USAGE-01, -02, -03, -04
+- `shell` (→ slices `auth` + `cabinet-shell`) → FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-04, FR-AUTH-05, FR-SHELL-01, FR-SHELL-02, FR-SHELL-03
+- `directory` → FR-DIR-01, FR-DIR-02, FR-DIR-03, FR-DIR-04
+- `templates` → FR-TPL-01, FR-TPL-02, FR-TPL-03
+- `cycles` → FR-CYCLE-01, FR-CYCLE-02, FR-CYCLE-03, FR-CYCLE-04, FR-CYCLE-05
+- `link` → FR-LINK-01, FR-LINK-02, FR-LINK-03
+- `respond` → FR-RESP-01, FR-RESP-02, FR-RESP-03
+- `form` → FR-FORM-01, FR-FORM-02, FR-FORM-03, FR-FORM-04
+- `ai-interview` → FR-AI-01, FR-AI-02, FR-AI-03, FR-AI-04, FR-AI-05, FR-AI-06, FR-AI-07, FR-AI-08, FR-AI-09
+- `results` → FR-PROGRESS-01, FR-PROGRESS-02, FR-PROGRESS-03
+- `report` → FR-REPORT-01, FR-REPORT-02, FR-REPORT-03, FR-REPORT-04
+- `usage-accounting` → FR-USAGE-01, FR-USAGE-02, FR-USAGE-03, FR-USAGE-04
 
 No FR appears twice; no MVP FR is unassigned. ✅
 
