@@ -11,7 +11,7 @@
     {
       "slice": "2026-06-28-add-cabinet-shell",
       "reviewEvidence": "clean",
-      "trailerCommits": 1,
+      "trailerCommits": 2,
       "libDomains": [
         "http",
         "i18n",

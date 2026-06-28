@@ -25,10 +25,25 @@ answered); `ai-interview` no longer redefined it.
 **Gates:** G0/G2/G4/G7/G8 PASS, G5 SKIP (coverage), G1/G3 need human sign-off. CI template still
 needs adaptation before green (`BETTER_AUTH_SECRET`→`AUTH_JWT_SECRET`; no `test:integration`/`test:e2e` yet).
 
-**Phase:** Baseline specs complete. Next: pick up the build at slice `cabinet-shell` via
-`/opsx:propose` → `/opsx:apply` (full gated Phase 4 loop). Soft cross-check notes to carry: NFR-PERF-01
-unowned; NFR-DX-01 only cited by ai-interview though it is repo-wide; token-generator (FR-CYCLE-02 /
-FR-LINK-02) should get one named `lib/` home when those slices build.
+**Phase 4 build (orchestrated).** Mechanical slices run autonomously with the full gated loop
+(spec → red test → implement → review-gate maker≠checker → trajectory → archive, one Slice:/Refs:
+commit). STOP before `ai-interview` and `report` (manual). `results` (FR-PROGRESS) depends on
+ai-interview → deferred until after the manual slices.
+
+- **cabinet-shell (FR-SHELL-01..03) — DONE, archived** (`archive/2026-06-28-add-cabinet-shell`).
+  Cabinet route group + sidebar/sticky header, sidebar-free respondent shell, canonical
+  empty/loading/error state components, pure `lib/nav` + `lib/http/auth-redirect` (unit-tested),
+  server-only `app/(cabinet)/current-user.ts`, proxy same-request cookie forwarding. 3 review-gate
+  rounds, clean evidence. 45 tests. Deferred security findings → `docs/qa/security-backlog.md`
+  (SEC-BL-01..04: sign-in rate limit, proxy revoked-user check, dep advisories, sign-out CSRF).
+- Next: `directory` → `templates` → `cycles` → `link` → `respond` → `form` → `usage-accounting`.
+
+Process note: review-gate must be invoked with HARDCODED args in its persisted scriptPath (the
+harness arg-passing bug drops `args`), and scoped to the committed slice diff (`baseRef HEAD~1`) so
+it reviews only the slice, not the whole tree.
+
+Soft cross-check notes to carry: NFR-PERF-01 unowned; NFR-DX-01 only cited by ai-interview though
+repo-wide; token-generator (FR-CYCLE-02 / FR-LINK-02) needs one named `lib/` home when those build.
 
 ## Done so far
 

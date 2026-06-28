@@ -11,7 +11,7 @@ Result: PASS, 6 warning(s)
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-28-add-auth | **missing** | **0** | yes | - |
-| 2026-06-28-add-cabinet-shell | clean | 1 | yes | http, i18n, nav |
+| 2026-06-28-add-cabinet-shell | clean | 2 | yes | http, i18n, nav |
 | 2026-06-28-add-foundation | **missing** | **0** | yes | - |
 | 2026-06-28-add-token-cost-calculator | **missing** | **0** | yes | - |
 
