@@ -2,7 +2,7 @@
 // @trace FR-CYCLE-01
 
 import { useRouter } from "next/navigation";
-import { useActionState, useRef } from "react";
+import { useActionState, useMemo, useRef } from "react";
 import { Field } from "@/components/forms/Field";
 import { Button } from "@/components/forms/Button";
 import { createCycle } from "./actions";
@@ -30,6 +30,14 @@ const initialState: CreateCycleResult = {
 export function CreateCycleForm({ templates, employees }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Compute tomorrow's ISO date for the date picker min attribute (client-side,
+  // so no hydration mismatch; prevents selection of past/today dates in the UI).
+  const tomorrowISO = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   const [state, formAction, isPending] = useActionState(
     async (_prev: CreateCycleResult, formData: FormData): Promise<CreateCycleResult> => {
@@ -66,22 +74,26 @@ export function CreateCycleForm({ templates, employees }: Props) {
         label={t.form.templateLabel}
         error={fieldErrors["templateId"]?.[0]}
       >
-        <select
-          id="templateId"
-          name="templateId"
-          aria-invalid={fieldErrors["templateId"] !== undefined}
-          aria-describedby={
-            fieldErrors["templateId"] !== undefined ? "templateId-error" : undefined
-          }
-          className="focus-ring w-full rounded-[var(--radius-md)] border border-line-strong bg-paper px-[var(--space-6)] py-[var(--space-5)] text-[var(--text-body)] text-ink aria-[invalid=true]:border-[var(--danger-ink)]"
-        >
-          <option value="">{t.form.templateLabel}</option>
-          {templates.map((tpl) => (
-            <option key={tpl.id} value={tpl.id}>
-              {tpl.name}
-            </option>
-          ))}
-        </select>
+        {templates.length === 0 ? (
+          <p className="text-ink-muted">{t.form.noTemplates}</p>
+        ) : (
+          <select
+            id="templateId"
+            name="templateId"
+            aria-invalid={fieldErrors["templateId"] !== undefined}
+            aria-describedby={
+              fieldErrors["templateId"] !== undefined ? "templateId-error" : undefined
+            }
+            className="focus-ring w-full rounded-[var(--radius-md)] border border-line-strong bg-paper px-[var(--space-6)] py-[var(--space-5)] text-[var(--text-body)] text-ink aria-[invalid=true]:border-[var(--danger-ink)]"
+          >
+            <option value="">{t.form.templateLabel}</option>
+            {templates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
+              </option>
+            ))}
+          </select>
+        )}
       </Field>
 
       <Field
@@ -89,22 +101,26 @@ export function CreateCycleForm({ templates, employees }: Props) {
         label={t.form.subjectLabel}
         error={fieldErrors["subjectId"]?.[0]}
       >
-        <select
-          id="subjectId"
-          name="subjectId"
-          aria-invalid={fieldErrors["subjectId"] !== undefined}
-          aria-describedby={
-            fieldErrors["subjectId"] !== undefined ? "subjectId-error" : undefined
-          }
-          className="focus-ring w-full rounded-[var(--radius-md)] border border-line-strong bg-paper px-[var(--space-6)] py-[var(--space-5)] text-[var(--text-body)] text-ink aria-[invalid=true]:border-[var(--danger-ink)]"
-        >
-          <option value="">{t.form.subjectLabel}</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={emp.id}>
-              {emp.fullName}
-            </option>
-          ))}
-        </select>
+        {employees.length === 0 ? (
+          <p className="text-ink-muted">{t.form.noEmployees}</p>
+        ) : (
+          <select
+            id="subjectId"
+            name="subjectId"
+            aria-invalid={fieldErrors["subjectId"] !== undefined}
+            aria-describedby={
+              fieldErrors["subjectId"] !== undefined ? "subjectId-error" : undefined
+            }
+            className="focus-ring w-full rounded-[var(--radius-md)] border border-line-strong bg-paper px-[var(--space-6)] py-[var(--space-5)] text-[var(--text-body)] text-ink aria-[invalid=true]:border-[var(--danger-ink)]"
+          >
+            <option value="">{t.form.subjectLabel}</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.fullName}
+              </option>
+            ))}
+          </select>
+        )}
       </Field>
 
       <Field
@@ -116,6 +132,7 @@ export function CreateCycleForm({ templates, employees }: Props) {
           id="deadline"
           name="deadline"
           type="date"
+          min={tomorrowISO}
           aria-invalid={fieldErrors["deadline"] !== undefined}
           aria-describedby={
             fieldErrors["deadline"] !== undefined ? "deadline-error" : undefined
@@ -125,7 +142,11 @@ export function CreateCycleForm({ templates, employees }: Props) {
       </Field>
 
       <div>
-        <Button type="submit" variant="primary" disabled={isPending}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isPending || templates.length === 0 || employees.length === 0}
+        >
           {isPending ? t.form.submitting : t.form.submit}
         </Button>
       </div>

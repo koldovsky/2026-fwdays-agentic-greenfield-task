@@ -97,6 +97,8 @@ export const uk = {
       deadlineLabel: "Дедлайн",
       submit: "Створити",
       submitting: "Створення...",
+      noTemplates: "Немає шаблонів — спочатку додайте шаблон",
+      noEmployees: "Немає активних учасників — спочатку додайте учасника",
     },
     validation: {
       templateRequired: "Оберіть шаблон",

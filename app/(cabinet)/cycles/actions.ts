@@ -104,7 +104,11 @@ export async function createCycle(formData: FormData): Promise<CreateCycleResult
       };
     }
 
-    // 4. Transaction: build snapshot + mint token + create cycle
+    // 4. Build snapshot (pure, outside DB) + mint unique token with retry.
+    // The retry loop must be OUTSIDE the transaction: on PostgreSQL a constraint
+    // violation transitions the connection into ABORT state, so a subsequent
+    // create inside the same transaction callback would always fail. Each attempt
+    // is an independent db.cycle.create (single-row creates are atomic by default).
     const snapshot = buildTemplateSnapshot({
       name: template.name,
       methodology: template.methodology,
@@ -118,37 +122,36 @@ export async function createCycle(formData: FormData): Promise<CreateCycleResult
       })),
     });
 
-    const cycleId = await db.$transaction(async (tx) => {
-      const MAX_RETRIES = 5;
-      let lastError: unknown;
+    const MAX_RETRIES = 5;
+    let lastError: unknown;
+    let cycleId: string | null = null;
 
-      for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
-        const token = generateCycleToken();
-        try {
-          const cycle = await tx.cycle.create({
-            data: {
-              token,
-              status: "collecting",
-              deadline: new Date(input.deadline),
-              subjectId: input.subjectId,
-              templateId: input.templateId,
-              templateSnapshot: snapshot,
-            },
-          });
-          return cycle.id;
-        } catch (err) {
-          if (isPrismaP2002(err)) {
-            lastError = err;
-            // Retry with a fresh token
-          } else {
-            throw err;
-          }
+    for (let attempt = 0; attempt < MAX_RETRIES && cycleId === null; attempt += 1) {
+      const token = generateCycleToken();
+      try {
+        const cycle = await db.cycle.create({
+          data: {
+            token,
+            status: "collecting",
+            deadline: new Date(input.deadline),
+            subjectId: input.subjectId,
+            templateId: input.templateId,
+            templateSnapshot: snapshot,
+          },
+          select: { id: true },
+        });
+        cycleId = cycle.id;
+      } catch (err) {
+        if (isPrismaP2002(err)) {
+          lastError = err;
+          // Retry with a fresh token on the rare collision
+        } else {
+          throw err;
         }
       }
+    }
 
-      // All 5 retries exhausted
-      throw lastError;
-    });
+    if (cycleId === null) throw lastError;
 
     revalidatePath("/cycles");
     return { ok: true, id: cycleId };

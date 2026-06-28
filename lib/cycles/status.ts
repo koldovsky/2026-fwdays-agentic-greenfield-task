@@ -66,6 +66,9 @@ export function isResponseComplete(
     } else if (question.type === "open") {
       if (typeof answer !== "string") return false;
       if (answer.trim().length === 0) return false;
+    } else {
+      // Unrecognised required question type → treat as incomplete (defensive)
+      return false;
     }
   }
   return true;

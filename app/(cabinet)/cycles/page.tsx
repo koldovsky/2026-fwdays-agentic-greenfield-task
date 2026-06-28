@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { EmptyState } from "@/components/states/EmptyState";
 import { LoadingState } from "@/components/states/LoadingState";
 import { uk } from "@/lib/i18n/uk";
+import { formatDaysRemaining } from "@/lib/i18n/format";
 import { listCycles } from "./queries";
 import { listTemplates } from "@/app/(cabinet)/templates/queries";
 import { listActiveEmployees } from "@/app/(cabinet)/employees/queries";
@@ -88,10 +89,7 @@ function CycleTable({ cycles }: { cycles: CycleListRow[] }) {
 function CycleRow({ cycle }: { cycle: CycleListRow }) {
   const methodology = cycle.snapshot?.methodology ?? "—";
   const statusLabel = t.status[cycle.status];
-  const deadlineText =
-    cycle.daysRemaining > 0
-      ? `${cycle.daysRemaining} ${t.daysRemaining}`
-      : t.overdue;
+  const deadlineText = formatDaysRemaining(cycle.daysRemaining, t.overdue);
 
   const deadlineDate = cycle.deadline.toISOString().slice(0, 10);
 

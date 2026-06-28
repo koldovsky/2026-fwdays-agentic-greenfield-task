@@ -1,6 +1,7 @@
 // @trace FR-CYCLE-05
 import { PageHeader } from "@/components/shell/PageHeader";
 import { uk } from "@/lib/i18n/uk";
+import { formatDaysRemaining } from "@/lib/i18n/format";
 import { getCycleById } from "../queries";
 import { deriveStatus, daysRemaining } from "@/lib/cycles/status";
 
@@ -31,15 +32,14 @@ export default async function CycleDetailPage({ params }: Props) {
   }
 
   const now = new Date();
-  const completedAt = cycle.status === "done" ? cycle.createdAt : null;
+  const completedAt = cycle.status === "done" ? cycle.updatedAt : null;
   const status = deriveStatus(
     { completedAt, deadline: cycle.deadline },
     now,
   );
   const days = daysRemaining(cycle.deadline, now);
   const statusLabel = t.status[status];
-  const deadlineText =
-    days > 0 ? `${days} ${t.daysRemaining}` : t.overdue;
+  const deadlineText = formatDaysRemaining(days, t.overdue);
   const deadlineDate = cycle.deadline.toISOString().slice(0, 10);
 
   return (

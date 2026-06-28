@@ -94,6 +94,7 @@ export async function getCycleById(id: string) {
     status: cycle.status,
     deadline: cycle.deadline,
     createdAt: cycle.createdAt,
+    updatedAt: cycle.updatedAt,
     subject: cycle.subject,
     template: cycle.template,
     snapshot,

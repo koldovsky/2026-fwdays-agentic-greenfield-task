@@ -95,6 +95,8 @@ export const en: Messages = {
       deadlineLabel: "Deadline",
       submit: "Create",
       submitting: "Creating...",
+      noTemplates: "No templates — add a template first",
+      noEmployees: "No active participants — add a participant first",
     },
     validation: {
       templateRequired: "Select a template",

@@ -1,0 +1,42 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-cycles",
+  "change": "add-cycles",
+  "baseRef": "HEAD~1",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 0,
+      "contested": 1,
+      "rejected": 5
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 1,
+      "rejected": 5
+    },
+    "spec-compliance": {
+      "confirmed": 6,
+      "contested": 2,
+      "rejected": 0
+    },
+    "visual": {
+      "confirmed": 3,
+      "contested": 1,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "Tasks 1.1–1.4 are ticked unchecked in tasks.md despite all four test-file artifacts existing",
+    "Detail page uses cycle.createdAt as done proxy; list page uses cycle.updatedAt — inconsistent internal state",
+    "Scenario 'Unauthenticated launch request is refused and writes nothing' — only the create-path is tested; the spec's launch-specific unauthenticated scenario has no unit/integration test",
+    "FR-CYCLE-05 scenario 'Empty, loading, and error states are explicit' — the detail page (/cycles/[id]) has no explicit loading state",
+    "Scope drift: daysRemaining label is non-pluralised — 'Залишилось днів' is always plural regardless of count",
+    "Tasks 5.2 and 5.3 remain unchecked — static review and independent review gate are not complete",
+    "P2002 retry loop is inoperable inside a Prisma interactive transaction on PostgreSQL",
+    "Date input has no `min` attribute, allowing past-date selection in the browser UI",
+    "CreateCycleForm renders no guidance when templates or employees list is empty"
+  ],
+  "clean": false,
+  "generatedAt": "2026-06-28T13:24:13Z"
+}

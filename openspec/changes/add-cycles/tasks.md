@@ -1,18 +1,18 @@
 ## 1. Pure logic + tests-first (TC-PURE-01, TC-VALID-01, red before green)
 
-- [ ] 1.1 Write `lib/cycles/link-token.test.ts` FIRST (red), `// @trace FR-CYCLE-02`: `generateCycleToken()`
+- [x] 1.1 Write `lib/cycles/link-token.test.ts` FIRST (red), `// @trace FR-CYCLE-02`: `generateCycleToken()`
   returns a URL-safe base64url string of the expected length (charset `[A-Za-z0-9_-]`), a large sample
   is all-distinct (no collisions), and tokens contain no separator / sequential pattern.
-- [ ] 1.2 Write `lib/cycles/snapshot.test.ts` FIRST (red), `// @trace FR-CYCLE-03`: `buildTemplateSnapshot`
+- [x] 1.2 Write `lib/cycles/snapshot.test.ts` FIRST (red), `// @trace FR-CYCLE-03`: `buildTemplateSnapshot`
   yields name+methodology+ordered questions equal to the source at build time; mutating the source
   object afterward does NOT change a previously-built snapshot; the snapshot parses against
   `snapshotSchema`; a malformed snapshot is rejected.
-- [ ] 1.3 Write `lib/cycles/status.test.ts` FIRST (red), `// @trace FR-CYCLE-04`: `deriveStatus`
+- [x] 1.3 Write `lib/cycles/status.test.ts` FIRST (red), `// @trace FR-CYCLE-04`: `deriveStatus`
   returns `done` when completedAt set (even past deadline), `expired` when incomplete and now>deadline,
   `collecting` otherwise; `daysRemaining` is positive for a future deadline and ≤0 (overdue) for a past
   one; `isResponseComplete` true only when every required question has a valid answer (scale value
   matches an anchor; open non-empty), ignoring optional questions.
-- [ ] 1.4 Write `lib/schemas/cycle.test.ts` FIRST (red), `// @trace FR-CYCLE-01`: `createCycleInputSchema`
+- [x] 1.4 Write `lib/schemas/cycle.test.ts` FIRST (red), `// @trace FR-CYCLE-01`: `createCycleInputSchema`
   ACCEPTS a strictly-future ISO `YYYY-MM-DD` within 365 days; REJECTS the locale form `28.06.2026`,
   today, a past date, `9999-12-31` (>365d), an oversized id, and a missing template/subject — each
   flagged on the right field. Inject "today" so the test is deterministic.
@@ -54,10 +54,10 @@
 
 - [x] 5.1 `npm run lint && npx tsc --noEmit && npm test && npm run build` all green; no `any`, no casts,
   no `@ts-ignore`; console silent. (NFR-DX-01, NFR-OBS-01, TC-TS-01)
-- [ ] 5.2 Static + review verification: create rejects locale/past/out-of-range deadlines and
+- [x] 5.2 Static + review verification: create rejects locale/past/out-of-range deadlines and
   archived/unknown subject + unknown template at the Zod/DB boundary (no 500); a created cycle has a
   unique token + frozen snapshot + `collecting`; later template changes don't alter the snapshot;
   status derives correctly; list shows all five columns with a text status label; behind the proxy
   guard. Eyes-on-pixels deferred to Phase 6 vision-verify (no Playwright, TC-TEST-01).
-- [ ] 5.3 Independent review pass (review-gate, separate agents; maker ≠ checker) against FR-CYCLE-01..05
+- [x] 5.3 Independent review pass (review-gate, separate agents; maker ≠ checker) against FR-CYCLE-01..05
   and the typing/validation/privacy rules, plus the create-and-launch atomic design decision, before archive.
