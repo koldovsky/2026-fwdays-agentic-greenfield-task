@@ -4,7 +4,7 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** **Phase 4 COMPLETE — MVP feature-complete.** All 5 slices (app-shell, plants, growth, watering, charts) implemented, reviewed (1 economical pass each + fixes), and archived. 290 unit/integration tests green; lint/build/`openspec validate --all --strict` green; HTTP render-smokes green per slice. **Next: Phase 5** (cross-cutting Playwright E2E + seed helper), then **Phase 6** (QA pack + headless demo recordings + vision-verify + eval-suite), then **Phase 7** (global review + docs; deploy is out of MVP scope per ADR-0001).
+- **Phase:** **Phase 4 COMPLETE + «Поливайко» design/reminders scope change COMPLETE.** All 7 changes archived: 5 MVP (app-shell, plants, growth, watering, charts) + slice 6 `add-design-system` (design tokens, fonts, components, single paper theme, rebrand) + slice 7 `add-reminders` (interval, status, home summary, water-now, status pills). 433 tests green; lint/build/`openspec validate --all --strict` (7/7) green; render-smokes green incl. the reminder home. App is «Поливайко»: a watering-reminder + growth/watering tracker with charts. **Next (pending user go-ahead): Phase 5** (Playwright E2E + seed helper), **Phase 6** (QA pack + headless recordings + vision-verify + eval-suite + axe — this is where the design's rendered fidelity + a11y get validated), **Phase 7** (global review + docs; deploy out of MVP scope per ADR-0001).
 
 <details><summary>Slice 5 detail (add-charts)</summary>
 
