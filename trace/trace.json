@@ -71,7 +71,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -80,7 +80,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -89,7 +89,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -98,7 +98,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -107,7 +107,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -116,7 +116,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -127,7 +127,7 @@
         "openspec/specs/plants/spec.md",
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -136,7 +136,7 @@
       "specs": [
         "openspec/specs/plants/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -145,7 +145,7 @@
       "specs": [
         "openspec/specs/growth/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -155,7 +155,7 @@
         "openspec/specs/charts/spec.md",
         "openspec/specs/growth/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -164,7 +164,7 @@
       "specs": [
         "openspec/specs/growth/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -173,7 +173,7 @@
       "specs": [
         "openspec/specs/growth/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -184,7 +184,7 @@
         "openspec/specs/charts/spec.md",
         "openspec/specs/growth/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -193,7 +193,7 @@
       "specs": [
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -202,7 +202,7 @@
       "specs": [
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -212,7 +212,7 @@
         "openspec/specs/charts/spec.md",
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -221,7 +221,7 @@
       "specs": [
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -230,7 +230,7 @@
       "specs": [
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -240,7 +240,7 @@
         "openspec/specs/charts/spec.md",
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -249,7 +249,7 @@
       "specs": [
         "openspec/specs/charts/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -258,7 +258,7 @@
       "specs": [
         "openspec/specs/charts/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -267,7 +267,7 @@
       "specs": [
         "openspec/specs/charts/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -276,7 +276,7 @@
       "specs": [
         "openspec/specs/app-shell/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -285,7 +285,7 @@
       "specs": [
         "openspec/specs/app-shell/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -296,17 +296,13 @@
         "openspec/specs/plants/spec.md",
         "openspec/specs/watering/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     }
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "plan-ownership",
-      "msg": "docs/mvp-capability-plan.md not found - ownership check skipped (expected before Phase 3; mandatory at --release)"
-    },
     {
       "check": "test-trace",
       "msg": "FR-PLANT-01 has no test annotated \"@trace FR-PLANT-01\""

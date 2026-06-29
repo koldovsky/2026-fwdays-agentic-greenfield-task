@@ -4,7 +4,7 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** End of Phase 0 (scaffold) + Phase 1 (requirements signed off). Next: Phase 2 (baseline specs).
+- **Phase:** Phases 0–3 done (scaffold, requirements, baseline specs, capability plan all signed off). **Now: Phase 4 autonomous build**, slice 1 of 5 (`add-app-shell`). Next slices: plants → growth → watering → charts.
 
 ## What this is
 
