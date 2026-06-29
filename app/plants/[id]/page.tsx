@@ -1,15 +1,21 @@
-// Plant detail (placeholder) — server component (design.md D1, D5).
-// No DB yet (slice 2 wires the real lookup); this page demonstrates the
-// detail route + the not-found boundary. A non-existent id calls notFound() so
-// an unknown /plants/[id] renders the friendly not-found state, never a 500.
+// Plant detail (design D6, D5) — thin server component. getPlant(id) -> the
+// detail render (name, species, DD.MM.YYYY acquired date) + edit link + the
+// delete-with-confirm control; notFound() on a missing/stale id (no raw 500).
+//
+// @trace FR-PLANT-05
+// @trace FR-PLANT-07
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import { DeletePlantButton } from "@/components/plants/DeletePlantButton";
+import { db } from "@/db/client";
 import { uk } from "@/lib/i18n/uk";
+import { formatAcquiredDate } from "@/lib/plants/date";
+import { getPlant } from "@/lib/plants/queries";
 
-// Placeholder "known" ids until slice 2 introduces a real plant store.
-const KNOWN_PLACEHOLDER_IDS = new Set(["1", "2", "3"]);
+// Reads a mutable plant per request — never prerendered at build time.
+export const dynamic = "force-dynamic";
 
 export default async function PlantDetail({
   params,
@@ -17,22 +23,55 @@ export default async function PlantDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const numericId = Number(id);
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    notFound();
+  }
 
-  if (!KNOWN_PLACEHOLDER_IDS.has(id)) {
+  const plant = await getPlant(db, numericId);
+  if (!plant) {
     notFound();
   }
 
   return (
     <section>
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        {uk.nav.plants} #{id}
+        {plant.name}
       </h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Деталі рослини зʼявляться у наступному етапі.
-      </p>
+
+      <dl className="mt-4 space-y-2 text-sm">
+        <div className="flex gap-2">
+          <dt className="font-medium text-zinc-600 dark:text-zinc-400">
+            {uk.plants.detailSpecies}:
+          </dt>
+          <dd className="text-foreground">{plant.species}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="font-medium text-zinc-600 dark:text-zinc-400">
+            {uk.plants.detailAcquiredDate}:
+          </dt>
+          <dd className="text-foreground">
+            {plant.acquiredDate
+              ? formatAcquiredDate(plant.acquiredDate)
+              : uk.plants.noAcquiredDate}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="mt-6 flex gap-3">
+        <Link
+          href={`/plants/${plant.id}/edit`}
+          className="inline-flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
+          {uk.plants.edit}
+        </Link>
+      </div>
+
+      <DeletePlantButton id={plant.id} />
+
       <Link
         href="/"
-        className="mt-4 inline-flex rounded-md text-sm font-medium text-zinc-900 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:text-zinc-100"
+        className="mt-6 inline-flex rounded-md text-sm font-medium text-zinc-900 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:text-zinc-100"
       >
         {uk.nav.backToList}
       </Link>

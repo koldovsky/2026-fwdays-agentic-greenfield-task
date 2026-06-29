@@ -4,7 +4,7 @@
     {
       "slice": "2026-06-29-add-app-shell",
       "reviewEvidence": "clean",
-      "trailerCommits": 3,
+      "trailerCommits": 4,
       "libDomains": [
         "forms",
         "theme",

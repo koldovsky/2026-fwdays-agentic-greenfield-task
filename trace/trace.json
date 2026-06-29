@@ -69,55 +69,77 @@
     {
       "id": "FR-PLANT-01",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/plants/actions.test.ts",
+        "lib/plants/validation.test.ts",
+        "tests/integration/plants-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-02",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/plants/validation.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-03",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/plants/date.test.ts",
+        "lib/plants/validation.test.ts",
+        "evals/cases/plants.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-04",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/plants-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-05",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/plants-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-06",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/plants-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -125,19 +147,25 @@
       "specs": [
         "openspec/specs/growth/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/plants-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-PLANT-08",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "evals/cases/plants.eval.ts"
+      ],
       "recordings": []
     },
     {
@@ -302,12 +330,13 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-plants/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
         "lib/forms/result.test.ts",
-        "components/forms/ExampleForm.test.tsx",
+        "lib/plants/actions.test.ts",
         "components/forms/FieldError.test.tsx",
         "evals/cases/app-shell.eval.ts"
       ],
@@ -316,38 +345,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-01 has no test annotated \"@trace FR-PLANT-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-02 has no test annotated \"@trace FR-PLANT-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-03 has no test annotated \"@trace FR-PLANT-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-04 has no test annotated \"@trace FR-PLANT-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-05 has no test annotated \"@trace FR-PLANT-05\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-06 has no test annotated \"@trace FR-PLANT-06\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-07 has no test annotated \"@trace FR-PLANT-07\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-PLANT-08 has no test annotated \"@trace FR-PLANT-08\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-GROWTH-01 has no test annotated \"@trace FR-GROWTH-01\""
@@ -503,6 +500,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-plants\" is not archived"
     }
   ]
 }

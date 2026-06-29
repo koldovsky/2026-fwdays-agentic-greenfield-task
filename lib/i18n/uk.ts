@@ -28,6 +28,48 @@ export const uk = {
     /** Generic whole-form failure (banner) when the cause is not field-specific. */
     generic: "Не вдалося зберегти запис. Спробуйте ще раз.",
   },
+  // Plants capability copy (slice 2) — labels, field validation messages,
+  // empty state, delete-confirm prompt, not-found. Ukrainian text, English
+  // identifiers (NFR-LOC-01). The validation messages are the source the
+  // FieldError shows inline and the error-clarity eval grades.
+  plants: {
+    /** Empty-state copy shown on the list when there are no plants (FR-PLANT-08). */
+    empty:
+      "У вас ще немає жодної рослини. Додайте першу — і вона зʼявиться тут.",
+    listTitle: "Мої рослини",
+    add: "Додати рослину",
+    addTitle: "Нова рослина",
+    editTitle: "Редагувати рослину",
+    edit: "Редагувати",
+    save: "Зберегти",
+    cancel: "Скасувати",
+    nameLabel: "Назва",
+    namePlaceholder: "Наприклад: Грошове дерево на підвіконні",
+    speciesLabel: "Вид",
+    speciesHint: "Можна змінити або залишити запропонований вид.",
+    acquiredDateLabel: "Дата придбання",
+    acquiredDateHint: "Необовʼязково. Не може бути в майбутньому.",
+    noAcquiredDate: "Не вказано",
+    // Detail field labels.
+    detailSpecies: "Вид",
+    detailAcquiredDate: "Дата придбання",
+    // Delete-with-confirm control (FR-PLANT-07, SC-5).
+    delete: "Видалити",
+    deleteConfirmPrompt:
+      "Видалити цю рослину разом з усіма її вимірюваннями та поливами? Цю дію не можна скасувати.",
+    deleteConfirm: "Так, видалити",
+    deleteCancel: "Скасувати",
+    /** Friendly not-found result for an edit/delete of a missing plant. */
+    notFound: "Цю рослину не знайдено. Можливо, її вже видалено.",
+    fieldErrors: {
+      nameRequired: "Вкажіть назву рослини.",
+      nameTooLong: "Назва має містити не більше 200 символів.",
+      speciesTooLong: "Вид має містити не більше 200 символів.",
+      acquiredDateInvalid: "Вкажіть коректну дату у форматі ДД.ММ.РРРР.",
+      acquiredDateFuture:
+        "Дата придбання не може бути в майбутньому. Оберіть сьогодні або раніше.",
+    },
+  },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field
   // messages live with their domain in slices 2–5.

@@ -36,12 +36,8 @@ export const cases: EvalCase[] = [
     // user-visible inline message string for the judge to score.
     produce: async () => {
       // Imported lazily so authoring/collecting this file does not require the
-      // implementation to exist yet (RED phase). The eval-suite collect step
-      // resolves these once slice 1 is green.
-      // @ts-expect-error slice-2 module: lib/plants/validation does not exist
-      // yet (this eval is collected/graded in Phase 6 once slice 2 lands). The
-      // narrow ts-expect-error keeps every OTHER eval file under typecheck
-      // coverage instead of excluding the whole evals/ tree.
+      // implementation to exist yet. lib/plants/validation lands with slice 2
+      // (add-plants); this eval is collected/graded in Phase 6.
       const { validatePlantInput } = await import("@/lib/plants/validation");
       const form = new FormData();
       form.set("name", ""); // required name omitted

@@ -18,6 +18,10 @@ const globalForDb = globalThis as unknown as { __sqlite?: Database.Database };
 const sqlite = globalForDb.__sqlite ?? new Database(resolveDbPath());
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+// Wait (don't throw SQLITE_BUSY) when another connection holds the lock — e.g.
+// parallel Next build workers each evaluating a DB-backed route module, or a
+// concurrent dev request. Degrades honestly to a short wait instead of a crash.
+sqlite.pragma("busy_timeout = 5000");
 if (process.env.NODE_ENV !== "production") globalForDb.__sqlite = sqlite;
 
 export const db = drizzle(sqlite, { schema });
