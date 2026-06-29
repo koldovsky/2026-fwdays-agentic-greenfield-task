@@ -280,6 +280,7 @@
       ],
       "planned": true,
       "tests": [
+        "app/not-found.test.tsx",
         "components/shell/Shell.test.tsx"
       ],
       "recordings": []
@@ -292,6 +293,7 @@
       ],
       "planned": true,
       "tests": [
+        "lib/theme/no-flash-script.test.ts",
         "lib/theme/persistence.test.ts",
         "components/shell/Shell.test.tsx"
       ],

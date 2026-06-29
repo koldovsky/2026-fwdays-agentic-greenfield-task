@@ -1,0 +1,41 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-app-shell",
+  "change": "add-app-shell",
+  "baseRef": "4baa802",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 3,
+      "contested": 0,
+      "rejected": 2
+    },
+    "security": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 4,
+      "contested": 2,
+      "rejected": 2
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "No-flash theme script mutates <html> class without suppressHydrationWarning, causing a hydration mismatch when stored theme is dark",
+    "Global not-found uses plant-specific copy, mislabeling arbitrary 404s",
+    "getClientTheme can desync label from rendered theme if the no-flash script fails to set the class but localStorage holds 'dark'",
+    "Moderate-severity PostCSS advisory pulled in transitively via Next.js",
+    "No-flash 'applied before first paint' guarantee (FR-SHELL-02) is not covered by an executable test, contrary to design R1 and task 1.4",
+    "Not-found test (task 1.5) is unchecked and absent, yet the not-found boundaries are shipped",
+    "Accessibility task group (axe, AA contrast, keyboard, 360px) entirely unchecked — NFR-A11Y-01/02, NFR-COMPAT-01 unverified",
+    "Eval case references a slice-2 artifact (@/lib/plants/validation) that does not exist; tsconfig was broadened to exclude evals to keep typecheck green"
+  ],
+  "clean": false,
+  "generatedAt": "2026-06-29T11:38:41Z"
+}

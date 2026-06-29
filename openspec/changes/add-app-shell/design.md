@@ -155,3 +155,17 @@ the same source and copy stays consistent (NFR-LOC-01).
 - **Contrast drift between themes (R5).** Dark tokens can fall below AA.
   Mitigation: axe + contrast checks gated in BOTH themes (NFR-A11Y-01/02) in the
   a11y task group.
+
+## Known advisories
+
+- **PostCSS `<8.5.10` — GHSA-qx2v-qp2m-jg93 (moderate, accepted/transitive).**
+  `npm audit` flags PostCSS 8.4.31 with an XSS-via-unescaped-`</style>`-in-CSS-
+  stringify advisory. It is **transitive**: pulled in only through the nested
+  `node_modules/next/node_modules/postcss` of the pinned `next@16.2.9`; our own
+  top-level PostCSS (`@tailwindcss/postcss`) already resolves to a patched
+  8.5.x. No non-breaking fix exists — `npm audit fix` resolves nothing and the
+  only `--force` path is a major downgrade to `next@9.3.3`, which we do NOT
+  apply. Exploitability here is low: this app processes only first-party
+  Tailwind/CSS at build time; no user-supplied stylesheet reaches PostCSS's
+  stringifier. **Action:** accepted as a transitive advisory; revisit and bump
+  when a Next.js patch release depends on PostCSS `>=8.5.10`.

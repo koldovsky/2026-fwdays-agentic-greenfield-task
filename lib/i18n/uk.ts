@@ -19,6 +19,9 @@ export const uk = {
   },
   notFound: {
     title: "Сторінку не знайдено",
+    /** Generic copy for the global catch-all 404 (any unknown route). */
+    genericDescription: "Сторінку за цією адресою не знайдено.",
+    /** Plant-specific copy for the /plants/[id] not-found boundary. */
     description: "Рослину за цією адресою не знайдено.",
   },
   errors: {

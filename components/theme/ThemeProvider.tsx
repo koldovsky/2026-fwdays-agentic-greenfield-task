@@ -10,7 +10,7 @@
 
 import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
 
-import { DEFAULT_THEME, persistTheme, readTheme, type Theme } from "@/lib/theme/persistence";
+import { DEFAULT_THEME, persistTheme, type Theme } from "@/lib/theme/persistence";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -34,7 +34,11 @@ function subscribe(listener: () => void) {
 
 function getClientTheme(): Theme {
   if (typeof document === "undefined") return DEFAULT_THEME;
-  return document.documentElement.classList.contains("dark") ? "dark" : readTheme();
+  // The `dark` class on <html> is the SINGLE source of truth (set by the
+  // pre-hydration no-flash script). Derive the theme solely from it so the
+  // toggle label/aria-pressed can never contradict what is actually painted,
+  // even if the script was stripped (e.g. a strict CSP, design.md R3).
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 function setTheme(next: Theme) {

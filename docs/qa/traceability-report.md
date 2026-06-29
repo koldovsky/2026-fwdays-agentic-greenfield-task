@@ -30,8 +30,8 @@ Result: PASS, 48 warning(s)
 | FR-CHART-02 | yes | yes | - | - |
 | FR-CHART-03 | yes | yes | - | - |
 | FR-CHART-04 | yes | yes | - | - |
-| FR-SHELL-01 | yes | yes | 1 | - |
-| FR-SHELL-02 | yes | yes | 2 | - |
+| FR-SHELL-01 | yes | yes | 2 | - |
+| FR-SHELL-02 | yes | yes | 3 | - |
 | FR-SHELL-03 | yes | yes | 3 | - |
 
 ## Failures
