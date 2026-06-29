@@ -48,8 +48,8 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 
 | id | status | kind | wave | blocked-by | US | milestone | title |
 |----|--------|------|------|-----------|-----|-----------|-------|
-| provision | todo | manual | 0 | — | — | M0 | Coolify provisioning: project + capped Postgres + env/secrets + GHCR — [runbook](../docs/runbooks/coolify-setup.md) |
-| pipe | todo | agent | 0 | provision | — | M0 | Pipe: skeleton + webhook + `/start` echo + Dockerfile + CI→GHCR + Coolify deploy |
+| provision | done | manual | 0 | — | — | M0 | Coolify provisioning: project + capped Postgres + env/secrets + GHCR — [runbook](../docs/runbooks/coolify-setup.md) (GHCR public toggle deferred to first `pipe` push, path A) |
+| pipe | todo | agent | 0 | provision | — | M0 | Pipe: skeleton + long-poll + `/start` echo + Dockerfile + CI→GHCR + Coolify deploy |
 | data | todo | agent | 1 | pipe | — | M1 | Data layer: Prisma schema + migrations + connection + multi-tenancy (against provisioned PG) |
 | router | todo | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
 | onboarding | todo | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
@@ -89,16 +89,18 @@ provision (manual) → pipe → data ─┬─ router ─┬─ food-text ─┬
 One-time Coolify infra the loop can't do — see [docs/runbooks/coolify-setup.md](../docs/runbooks/coolify-setup.md).
 Create the `nutrition-bot` project; add a Postgres resource capped ≤256 MB + tuned (must never
 OOM-kill the co-resident crypto-bot mysqld); set env/secrets (env only, never repo/DB) per AGENTS.md
-§Environment; connect GHCR so Coolify can pull. Deploy + webhook registration happen in `pipe` once
-the first image exists. **Done when the project + capped Postgres + env + GHCR pull are in place** —
-the human flips this to `done`.
+§Environment; connect GHCR so Coolify can pull. Deploy happens in `pipe` once the first image exists.
+Telegram delivery is **long-polling** ([ADR-0014](../docs/adr/0014-long-polling-over-webhook.md)) — no
+public domain/TLS/webhook secret needed (the free `sslip.io` URL can't get valid TLS). **Done when the
+project + capped Postgres + env + GHCR pull are in place** — the human flips this to `done`.
 
 ### pipe — M0 · blocked-by: provision
-Thinnest end-to-end tracer bullet: plain-TS + grammY repo (`src/` per requirements §4), webhook
-handler, `/start` echo, multi-stage Dockerfile, zod env validation in `config/`, GitHub Actions →
-GHCR, deploy on the provisioned Coolify project + register the Telegram webhook (script/curl with the
-Coolify URL). **Done when a message round-trips through the deployed bot.** Also wires the deferred
-`typecheck` + Fallow CI steps (need `src/` to exist).
+Thinnest end-to-end tracer bullet: plain-TS + grammY repo (`src/` per requirements §4), **long-poll**
+update handling ([ADR-0014](../docs/adr/0014-long-polling-over-webhook.md)) + a minimal `/health` HTTP
+server on `PORT` (Coolify liveness, not public), `/start` echo, multi-stage Dockerfile, zod env
+validation in `config/`, GitHub Actions → GHCR, deploy on the provisioned Coolify project. **Done when
+a message round-trips through the deployed bot.** Also wires the deferred `typecheck` + Fallow CI steps
+(need `src/` to exist).
 
 ### data — M1 · blocked-by: pipe
 Prisma schema + migrations + connection against the provisioned Postgres. Tables per requirements §6:

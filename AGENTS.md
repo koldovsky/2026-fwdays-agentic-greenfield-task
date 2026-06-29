@@ -135,7 +135,7 @@ workflows/ci.yml`) runs the same gates on PRs + pushes to `main`.
 *(planned — land with the runtime scaffold / M0)*
 
 ```bash
-npm run dev            # local bot (long-poll or local webhook)
+npm run dev            # local bot (long-poll — ADR-0014)
 npm run build          # tsc → dist/ (multi-stage Dockerfile for prod)
 npx prisma migrate dev # apply schema migrations locally
 npx prisma generate    # regenerate client
@@ -150,14 +150,16 @@ Required env vars (no secret committed; never store secrets in the DB):
 | Var | Purpose |
 |---|---|
 | `TELEGRAM_BOT_TOKEN` | grammY bot auth |
-| `TELEGRAM_WEBHOOK_SECRET` | verify inbound webhook calls |
 | `ANTHROPIC_API_KEY` | LLM (Sonnet 4.6 primary) |
 | `DATABASE_URL` | Postgres connection (Prisma) |
-| `NOTION_TOKEN` | owner's integration token (mirror); env only, never in DB |
-| `NOTION_DB_FOODLOG_ID` / `_REVIEWS_ID` / `_METRICS_ID` / `_FOODDB_ID` | owner's 4 Notion DB IDs |
+| `PORT` | internal `/health` probe port (no public ingress — long-poll, ADR-0014); default `3000` |
+| `NOTION_TOKEN` | owner's integration token (mirror); env only, never in DB · **optional until M7** |
+| `NOTION_DB_FOODLOG_ID` / `_REVIEWS_ID` / `_METRICS_ID` / `_FOODDB_ID` | owner's 4 Notion DB IDs · **optional until M7** |
 | `TZ` / default user tz | review cron timing (default `Europe/Kyiv`) |
 
-Confirm exact names against the `config/` schema when scaffolded.
+The `NOTION_*` vars are **optional in the zod schema** (the Notion mirror is M7, feature-flagged) —
+the bot must boot without them. All others are required. Confirm exact names against the `config/`
+schema when scaffolded.
 
 ## Workflow & verification
 

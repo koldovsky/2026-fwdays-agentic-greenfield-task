@@ -23,17 +23,22 @@ rule 7 (memory caps).
 3. **Application.** Create the app from the **GHCR image** (Coolify *pulls*, does not build):
    `ghcr.io/ivolchkov/2026-fwdays-agentic-greenfield-task:latest` (or the tag CI publishes).
    - Set the container **memory limit = 512 MB** (hard).
-   - Expose the webhook port; note the public URL Coolify assigns (needed in `pipe` step below).
+   - **No public domain needed** — delivery is **long-polling** ([ADR-0014](../adr/0014-long-polling-over-webhook.md));
+     the free `sslip.io` URL can't get valid TLS. Leave Domains empty. Set **Ports Exposes = `3000`**
+     for the internal `/health` probe only (not publicly routed); leave Port Mappings empty.
 
-4. **GHCR pull access.** Connect Coolify to GHCR so it can pull the package:
-   - Make the GHCR package readable (public, or add a registry credential in Coolify with a PAT
-     scoped to `read:packages`).
+4. **GHCR pull access.** The package doesn't exist until `pipe`'s first CI push. Chosen approach
+   (**public**): after that first push, GitHub → Packages → the package → Package settings → Danger
+   Zone → **Change visibility → Public**. Then Coolify pulls with no creds. This is the one manual
+   step that happens **mid-`pipe`** (the runner will prompt for it). *(Alt: keep private + add a
+   Coolify registry credential with a PAT scoped `read:packages`.)*
 
 5. **Env / secrets** (Coolify env vars only — **never** committed, never in the DB). Per AGENTS.md
    §Environment:
-   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
+   - `TELEGRAM_BOT_TOKEN`
    - `ANTHROPIC_API_KEY`
    - `DATABASE_URL` (from step 2)
+   - `PORT=3000` (internal `/health` probe)
    - `NOTION_TOKEN`, `NOTION_DB_FOODLOG_ID`, `NOTION_DB_REVIEWS_ID`, `NOTION_DB_METRICS_ID`,
      `NOTION_DB_FOODDB_ID` (owner only; Notion mirror lands in M7)
    - `TZ` (default `Europe/Kyiv`)
@@ -45,8 +50,8 @@ rule 7 (memory caps).
 
 Not part of this runbook — the loop does these once a GHCR image exists:
 - Deploy the image on the Coolify app.
-- Register the Telegram webhook to the Coolify URL + `TELEGRAM_WEBHOOK_SECRET`
-  (`curl https://api.telegram.org/bot<token>/setWebhook ...`, or a `npm run set-webhook` script).
+- The bot opens an outbound **long-poll** (`getUpdates`) to `api.telegram.org` on boot — no webhook
+  registration needed ([ADR-0014](../adr/0014-long-polling-over-webhook.md)).
 - Verify a `/start` round-trips through the deployed bot (the `pipe` done-condition).
 
 ## After provisioning

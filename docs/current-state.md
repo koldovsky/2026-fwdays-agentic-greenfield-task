@@ -1,6 +1,6 @@
 # Current State — Sport & Nutrition Coach
 
-*Last updated: 2026-06-29 · by: Ihor + agent · Update rule: see bottom*
+*Last updated: 2026-06-30 · by: Ihor + agent · Update rule: see bottom*
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
 session end or after meaningful progress. This is the cross-cutting status — per-change specs and
@@ -14,7 +14,7 @@ scaffolded yet.** Next milestone: **M0 — Pipe** (repo skeleton → deployed me
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
 |---|---|
-| M0 — Pipe (skeleton, webhook, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (lint/format tooling landed; runtime skeleton next) |
+| M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (Coolify provisioned: capped+tuned PG + app shell + env; runtime skeleton next) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | ⬜ not started |
 | M2 — Onboarding (`/start` + targets) | ⬜ not started |
 | M3 — Core logging (text + Food DB) | ⬜ not started |
@@ -43,20 +43,25 @@ Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (14 changes + 
 driven by `/run-backlog` (ADR-0012/0013).
 
 ## Next up
-1. **`provision` (manual, M0):** Coolify project + capped Postgres + env/secrets + GHCR pull — see
-   [docs/runbooks/coolify-setup.md](./runbooks/coolify-setup.md). Gates everything; the loop can't do it.
-2. `pipe` (M0): scaffold plain-TS + grammY repo (`src/` per requirements §4), multi-stage Dockerfile,
-   zod env in `config/`, CI → GHCR, deploy on Coolify + register webhook, prove a round-trip. Also
-   wires the deferred `typecheck` + Fallow CI steps (ADR-0011) — both need `src/` to exist.
+1. ✅ **`provision` (manual, M0): DONE** — Coolify `nutrition-bot` project; Postgres capped 256 MB +
+   tuned (`shared_buffers=64MB`, `max_connections=20`, `work_mem=4MB`); app shell (Docker Image from
+   GHCR, 512 MB cap, long-poll so no domain/TLS, `PORT=3000` for `/health`); env set
+   (`TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `DATABASE_URL`, `TZ`, `PORT`; `NOTION_*` deferred to M7).
+   GHCR package goes **public after `pipe`'s first CI push** (path A — one click, mid-`pipe`).
+2. **`pipe` (M0): NEXT** — scaffold plain-TS + grammY repo (`src/` per requirements §4), long-poll +
+   `/health`, multi-stage Dockerfile, zod env in `config/` (`NOTION_*` optional), CI → GHCR, deploy on
+   Coolify, prove a round-trip. Also wires the deferred `typecheck` + Fallow CI steps (ADR-0011).
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
 - Postgres = source of truth; Notion = async best-effort mirror.
 - Images never persisted. Totals always from SQL SUM. (Full rules: `AGENTS.md`.)
+- Telegram delivery = **long-polling**, not webhook (ADR-0014) — free `sslip.io` URL can't get valid TLS.
 
 ## Open questions / blockers
 Tracked in [prd.md](./prd.md) §11 (Food DB sharing, onboarding length, template fidelity, registry).
-No hard blockers — but `provision` (manual Coolify setup) must land before `pipe` can deploy.
+No hard blockers — `provision` is done; `pipe` is ready to run. One mid-`pipe` manual step remains:
+flip the GHCR package to public after the first CI push (path A).
 
 ---
 ### Update rule (keep this file honest)

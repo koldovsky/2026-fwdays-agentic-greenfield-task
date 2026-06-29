@@ -182,10 +182,11 @@ process it picks. Logical isolation is real; physical RAM contention is not. The
 3. **Tune Postgres down** (see §6).
 
 ### Deployment shape
-- **1 Application** resource (the bot: webhook receiver + worker + cron, one Node process)
+- **1 Application** resource (the bot: long-poll receiver + worker + cron, one Node process)
 - **1 PostgreSQL** resource
 - No frontend in v1 (add a web dashboard later if wanted)
-- Telegram delivery via **webhook** (Coolify provides a public HTTPS URL)
+- Telegram delivery via **long-polling** (`getUpdates`) — see [ADR-0014](./adr/0014-long-polling-over-webhook.md);
+  no public domain/TLS needed. The app exposes `PORT` only for an internal `/health` probe.
 
 ---
 
@@ -350,7 +351,7 @@ an OAuth onboarding flow; **the mirror worker and all write paths stay unchanged
 ---
 
 ## 12. Suggested build order
-1. Repo skeleton (plain TS + grammY) + webhook + `/start` echo + multi-stage Dockerfile.
+1. Repo skeleton (plain TS + grammY) + long-poll + `/start` echo + multi-stage Dockerfile.
 2. GitHub Actions → GHCR pipeline; Coolify project + app pulling the image; prove the pipe.
 3. PostgreSQL resource in Coolify (capped + tuned); Prisma schema + migrations + connection.
 4. Onboarding flow + target calculation.

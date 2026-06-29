@@ -8,8 +8,12 @@ the Telegram library must itself provide enough structure — routing, middlewar
 keep handlers organized. The codebase is TypeScript-first; type safety on the Bot API matters.
 
 ## Decision
-Use **grammY** as the Telegram bot library. Delivery is via **webhook** (Coolify provides a public
-HTTPS URL); grammY's composers/middleware organize command and message handlers.
+Use **grammY** as the Telegram bot library. grammY's composers/middleware organize command and
+message handlers.
+
+> **Delivery method superseded by [ADR-0014](./0014-long-polling-over-webhook.md):** updates arrive
+> via **long-polling** (`getUpdates`), not webhook — the free `sslip.io` URL can't get valid TLS.
+> The grammY library choice below is unaffected.
 
 ## Consequences
 - **+** TS-first with strong typings over the Bot API — fewer runtime surprises.

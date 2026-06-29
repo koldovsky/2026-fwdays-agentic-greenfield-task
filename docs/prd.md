@@ -171,7 +171,7 @@ and why*; requirements.md owns the *how*.
   guarantees a review exists for every day.
 - **Privacy/security:** images never stored; Notion token in env only (never in DB plaintext);
   tight DB access; avoid logging raw body values.
-- **Availability:** single Node process (webhook + worker + cron); Coolify restart on crash.
+- **Availability:** single Node process (long-poll + worker + cron); Coolify restart on crash.
 
 ## 9. Release Plan
 
@@ -179,7 +179,7 @@ Maps to **requirements.md §12 (build order)**. Milestone gates:
 
 | Milestone | Delivers | Done when |
 |---|---|---|
-| **M0 — Pipe** | Repo skeleton, webhook, `/start` echo, multi-stage Dockerfile, CI→GHCR, Coolify pull | A message round-trips through the deployed bot |
+| **M0 — Pipe** | Repo skeleton, long-poll, `/start` echo, multi-stage Dockerfile, CI→GHCR, Coolify pull | A message round-trips through the deployed bot |
 | **M1 — Data** | Postgres (capped+tuned), Prisma schema + migrations | App reads/writes the DB on the box |
 | **M2 — Onboarding** | `/start` flow + target calculation | US-1 passes |
 | **M3 — Core logging** | Text log + Food Database lookup/add | US-2, US-4, US-5, US-6 pass |

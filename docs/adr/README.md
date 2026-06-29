@@ -21,5 +21,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0011](./0011-fallow-static-analysis.md) | Fallow for static analysis (dead code, duplication, complexity) | Accepted (impl deferred to M0) |
 | [0012](./0012-implementation-loop-runner.md) | Implementation loop runner (backlog-driven orchestrator skill) | Accepted (runner hand-built next) |
 | [0013](./0013-eval-framework.md) | Eval framework (deterministic-first, local-run + CI ratchet) | Accepted (suites built per-capability) |
+| [0014](./0014-long-polling-over-webhook.md) | Long-polling instead of Telegram webhook | Accepted (supersedes ADR-0002 delivery) |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.
