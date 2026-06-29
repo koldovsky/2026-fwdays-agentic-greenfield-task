@@ -122,6 +122,7 @@ function makeAnswerRow(overrides: Record<string, unknown> = {}) {
     questionId: "q-open",
     scaleValue: null,
     text: null,
+    insufficient: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

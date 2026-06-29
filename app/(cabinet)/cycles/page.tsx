@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { EmptyState } from "@/components/states/EmptyState";
 import { LoadingState } from "@/components/states/LoadingState";
+import { ProgressBar } from "@/components/data/ProgressBar";
 import { uk } from "@/lib/i18n/uk";
 import { formatDaysRemaining } from "@/lib/i18n/format";
 import { listCycles } from "./queries";
@@ -109,8 +110,8 @@ function CycleRow({ cycle }: { cycle: CycleListRow }) {
       <td className="px-[var(--space-7)] py-[var(--space-6)] text-ink-muted">
         <span title={deadlineDate}>{deadlineText}</span>
       </td>
-      <td className="px-[var(--space-7)] py-[var(--space-6)] text-ink-muted">
-        {cycle.answered}/{cycle.total}
+      <td className="px-[var(--space-7)] py-[var(--space-6)] text-ink-muted min-w-[140px]">
+        <ProgressBar answered={cycle.answered} total={cycle.total} />
       </td>
       <td className="px-[var(--space-7)] py-[var(--space-6)] text-ink">
         {statusLabel}

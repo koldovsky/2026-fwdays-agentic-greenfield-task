@@ -104,6 +104,11 @@ model Answer {
   questionId String // stable id from the cycle's template snapshot
   scaleValue Int? // chosen anchor value for scale; null for open
   text       String? // respondent's words for open; null for scale
+  // True only when the AI interview capped out follow-ups without a satisfying
+  // answer (FR-AI-03): a scale row with a null value, or an open row with the
+  // best-available-but-thin / empty text. Keeps a capped-out row distinguishable
+  // from a satisfied one. Form-mode answers always write this false.
+  insufficient Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

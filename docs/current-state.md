@@ -12,7 +12,40 @@ model×purpose, EmptyState + ErrorState); `lib/nav` + `nav-icons` extended with 
 9 new unit tests (record-usage.test.ts). 237 tests total. 3 findings deferred to security backlog
 (SEC-BL-08 float precision, SEC-BL-09 single-layer auth, SEC-BL-10 cycleId ownership).
 
-**STOP** — `ai-interview` and `report` slices are manual. Do NOT proceed.
+**Last action:** 2026-06-29 — manual AI slices ALL DONE + reviewed: `ai-interview`, `results`,
+`report`. 300 tests, lint/tsc/build green. NOT yet committed (one combined commit pending the
+user's go). Set `ANTHROPIC_API_KEY` in `.env.local` to run the interview/summary live + `npm run
+eval:ai`.
+
+**results (FR-PROGRESS-01..03) — DONE (manual), reviewed clean.** Pure `lib/cycles/progress.ts`
+(answered = required questions with a VALID answer — fixes `listCycles`' old raw `_count` bug that
+would miscount optional + insufficient rows). Cycle detail rewritten: live `LiveProgress` (polls
+`/api/cycles/[id]/progress` every 5s, no sockets), per-question answers (ScaleDots + numeral / full
+open text / explicit unanswered + insufficient note), on-demand raw dialog (`QuestionDialog` →
+`/api/cycles/[id]/dialog`, AI-answered only). Both API routes re-check HR session (401) + calm 404.
+Ported `components/data/{ProgressBar,ScaleDots}`.
+
+**report (FR-REPORT-01..04) — DONE (manual, Opus), reviewed clean.** `lib/ai/summary/`: pure quote
+normalisation (NFC+collapse+case-sensitive) + `validateSummaryGrounding` (every quote attributed by
+snapshot questionId AND verbatim in that open answer, else not persisted); `summarise` (Opus,
+structured tool output, Zod-validated). `draftSummary` action: HR-auth, done-only, in-process
+single-flight + `Summary.cycleId` unique + P2002 → at most one model call/one summary; data-min
+prompt; usage recorded (purpose summary). `ReportSection`: Draft button w/ inline progress →
+read-only typeset serif render. SEC-BL note: cross-instance single-flight deferred.
+
+**ai-interview (FR-AI-01..09) — DONE (manual, Opus), reviewed.** Server-side streamed chat at
+`/respond/[token]/interview` (Node Route Handler, no WebSockets). Architecture: a cheap haiku
+**judge** (structured tool output, Zod-validated) decides `addressesQuestion`/`scaleCandidate`;
+pure `decideTurn` (lib/ai/interview/) applies the follow-up cap (default 2) → record / followup /
+capped-out insufficient row; sonnet **interviewer** streams the Ukrainian reply. Pure modules
+(scale mapping, transcript traversal, turn machine) unit-tested (38 tests). `Answer.insufficient`
+flag added (migration `add_answer_insufficient`). Data minimisation: only questions + transcript +
+first name reach the model. Injection-resistant system prompt + offline guard test + gated live
+`npm run eval:ai` (`*.eval.test.ts`, excluded from `npm test`). Graceful degradation → calm retry +
+`fallbackToForm` (interview→form, answers preserved in the shared Answer model). ModeStub deleted
+(form + interview both real now). Independent review: 2 findings fixed (prompt name label), 1 by
+design (capped required → cycle stays collecting, FR-CYCLE-04); SEC-BL-11/12 logged. 275 tests,
+build green. NOT yet committed.
 
 **Earlier:** completed `respond` slice (FR-RESP-01..03), archived.
 
@@ -126,11 +159,13 @@ repo-wide; token-generator (FR-CYCLE-02 / FR-LINK-02) needs one named `lib/` hom
 
 ## Next step
 
-**STOP.** All autonomous mechanical slices are complete.
+Manual AI slices (Opus, by hand — not the factory): `ai-interview`, `results`, `report` — ALL DONE
++ independently reviewed (see top). All MVP FRs now built.
 
-`ai-interview` (FR-AI-01..09) and `report` (FR-REPORT) are done manually — do not pick
-them up autonomously. `results` (FR-PROGRESS) depends on `ai-interview` and is deferred
-until after the manual slices land.
+Next: (1) commit the three AI slices (one branch is fine; commit-msg hook needs a `Refs:`/`Slice:`
+trailer); (2) set `ANTHROPIC_API_KEY` and smoke-test the interview + summary live + `npm run
+eval:ai`; (3) PR prep — confirm changed-file count under CodeRabbit's cap (`.coderabbit.yaml`
+path_filters), PR description with homework proofs (real name, 1–2 min video, practices).
 
 ## Open questions / blockers
 

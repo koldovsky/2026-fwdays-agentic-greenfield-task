@@ -20,13 +20,14 @@ Result: PASS, 12 warning(s)
 | 2026-06-28-add-respond | clean | 1 | yes | i18n, schemas |
 | 2026-06-28-add-templates | clean | 3 | yes | schemas, templates, i18n |
 | 2026-06-28-add-token-cost-calculator | **missing** | **0** | yes | - |
-| 2026-06-28-add-usage-accounting | **missing** | **0** | yes | - |
+| 2026-06-28-add-usage-accounting | **missing** | 1 | yes | ai, i18n, nav, schemas |
 
 ## Cross-slice module overlap
 
-- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates
+- `lib/i18n/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates, 2026-06-28-add-usage-accounting
+- `lib/nav/` touched by: 2026-06-28-add-cabinet-shell, 2026-06-28-add-usage-accounting
 - `lib/cycles/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-form
-- `lib/schemas/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates
+- `lib/schemas/` touched by: 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates, 2026-06-28-add-usage-accounting
 
 ## Failures
 
@@ -42,7 +43,7 @@ None.
 - **review-evidence**: 2026-06-28-add-token-cost-calculator: review-findings.json is missing (review must have run clean before archive)
 - **trailer**: 2026-06-28-add-token-cost-calculator: no commit carries a "Slice: add-token-cost-calculator" trailer
 - **review-evidence**: 2026-06-28-add-usage-accounting: review-findings.json is missing (review must have run clean before archive)
-- **trailer**: 2026-06-28-add-usage-accounting: no commit carries a "Slice: add-usage-accounting" trailer
-- **in-scope**: lib/i18n/ modified by 7 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift
+- **in-scope**: lib/i18n/ modified by 8 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-form, 2026-06-28-add-link, 2026-06-28-add-respond, 2026-06-28-add-templates, 2026-06-28-add-usage-accounting) — review for scope drift
+- **in-scope**: lib/nav/ modified by 2 slices (2026-06-28-add-cabinet-shell, 2026-06-28-add-usage-accounting) — review for scope drift
 - **in-scope**: lib/cycles/ modified by 2 slices (2026-06-28-add-cycles, 2026-06-28-add-form) — review for scope drift
-- **in-scope**: lib/schemas/ modified by 4 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates) — review for scope drift
+- **in-scope**: lib/schemas/ modified by 5 slices (2026-06-28-add-cycles, 2026-06-28-add-directory, 2026-06-28-add-respond, 2026-06-28-add-templates, 2026-06-28-add-usage-accounting) — review for scope drift

@@ -3,8 +3,9 @@ import { uk } from "@/lib/i18n/uk";
 import { tokenBoundarySchema } from "./schemas";
 import { getRespondentCycleByToken } from "./queries";
 import { ModeChoice } from "./ModeChoice";
-import { ModeStub } from "./ModeStub";
 import { FormFlow } from "./FormFlow";
+import { InterviewChat } from "./InterviewChat";
+import { getInterviewTranscript } from "./interview-queries";
 
 const t = uk.respondent;
 
@@ -78,17 +79,18 @@ export default async function RespondentPage({ params }: Props) {
     );
   }
 
-  // cycle.mode === "interview" — unchanged, ai-interview slice's
-  // responsibility (design.md Decision 4). ModeStub itself is not touched
-  // by this slice.
+  // cycle.mode === "interview" — the AI interview chat. Load the saved
+  // transcript so a reopened link resumes from the conversation so far
+  // (FR-AI-06); the chat itself streams further turns from the Route Handler.
+  const transcript = await getInterviewTranscript(parseResult.data);
   return (
-    <ModeStub
-      mode={cycle.mode}
+    <InterviewChat
+      token={parseResult.data}
+      initialMessages={transcript.map((m) => ({ role: m.role, content: m.content }))}
       subjectFirstName={cycle.subjectFirstName}
       methodology={cycle.methodology}
       deadline={cycle.deadline}
       daysRemaining={cycle.daysRemaining}
-      questions={cycle.questions}
     />
   );
 }

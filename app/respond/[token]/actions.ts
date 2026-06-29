@@ -66,3 +66,41 @@ export async function chooseMode(input: unknown): Promise<ChooseModeResult> {
 
   return { ok: true, mode: winner.mode };
 }
+
+const fallbackInputSchema = z.object({ token: tokenBoundarySchema });
+
+type FallbackResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Switch a collecting interview-mode cycle to form mode when the AI interviewer
+ * is unavailable (FR-AI-07). A deliberate later transition, distinct from the
+ * first-write-wins `chooseMode`: it only ever moves `interview` → `form`, never
+ * the reverse, and only while collecting. Already-recorded interview answers
+ * live in the shared Answer model, so the form resumes from them seamlessly.
+ * Never throws; every failure path returns `{ ok: false, error }`.
+ */
+export async function fallbackToForm(input: unknown): Promise<FallbackResult> {
+  const parseResult = fallbackInputSchema.safeParse(input);
+  if (!parseResult.success) return { ok: false, error: t.modeChoiceFailed };
+
+  try {
+    const result = await db.cycle.updateMany({
+      where: { token: parseResult.data.token, status: "collecting", mode: "interview" },
+      data: { mode: "form" },
+    });
+    if (result.count === 1) return { ok: true };
+    // Either the cycle is gone, no longer collecting, or already in form mode.
+    // A cycle already in form mode is the desired end state, so treat a found
+    // form-mode cycle as success; otherwise decline calmly.
+    const cycle = await db.cycle.findUnique({
+      where: { token: parseResult.data.token },
+      select: { status: true, mode: true },
+    });
+    if (cycle !== null && cycle.status === "collecting" && cycle.mode === "form") {
+      return { ok: true };
+    }
+    return { ok: false, error: t.modeChoiceFailed };
+  } catch {
+    return { ok: false, error: t.modeChoiceFailed };
+  }
+}

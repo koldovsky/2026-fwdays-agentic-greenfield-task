@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:run": "vitest run",
+    "eval:ai": "vitest run --config vitest.eval.config.ts",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "db:seed:templates": "node scripts/seed-templates.mts",
@@ -24,6 +25,7 @@
     "gate:status": "node scripts/gate-status.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "jose": "^6.2.3",

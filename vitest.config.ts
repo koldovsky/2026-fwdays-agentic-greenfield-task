@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -13,6 +13,9 @@ export default defineConfig({
     // lib/ holds pure, framework-free logic; app/ holds co-located route tests
     // (e.g. queries.test.ts next to server components). Both are included.
     include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
+    // *.eval.test.ts make real (paid) Claude API calls — never part of the
+    // default unit run; run them with `npm run eval:ai` (vitest.eval.config.ts).
+    exclude: [...configDefaults.exclude, "**/*.eval.test.ts"],
     environment: "node",
   },
 });
