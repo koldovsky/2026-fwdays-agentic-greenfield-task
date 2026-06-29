@@ -25,3 +25,21 @@ venv/
 target/
 bin/
 obj/
+
+# Project Factory — ignore only temp. NOTE: docs/qa/** is committed PROOF
+# (videos, screenshots, reports) and must NOT be ignored.
+coverage/
+**/raw/
+
+# Next.js / app runtime
+.next/
+next-env.d.ts
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Playwright
+/test-results/
+/playwright-report/
+/.playwright/

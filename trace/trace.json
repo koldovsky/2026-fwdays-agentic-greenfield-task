@@ -1,0 +1,552 @@
+{
+  "generatedBy": "scripts/check-traceability.mjs",
+  "requirements": {
+    "FR-PLANT-01": "MVP",
+    "FR-PLANT-02": "MVP",
+    "FR-PLANT-03": "MVP",
+    "FR-PLANT-04": "MVP",
+    "FR-PLANT-05": "MVP",
+    "FR-PLANT-06": "MVP",
+    "FR-PLANT-07": "MVP",
+    "FR-PLANT-08": "MVP",
+    "FR-PLANT-09": "Future",
+    "FR-PLANT-10": "Future",
+    "FR-GROWTH-01": "MVP",
+    "FR-GROWTH-02": "MVP",
+    "FR-GROWTH-03": "MVP",
+    "FR-GROWTH-04": "MVP",
+    "FR-GROWTH-05": "MVP",
+    "FR-GROWTH-06": "Future",
+    "FR-WATER-01": "MVP",
+    "FR-WATER-02": "MVP",
+    "FR-WATER-03": "MVP",
+    "FR-WATER-04": "MVP",
+    "FR-WATER-05": "MVP",
+    "FR-WATER-06": "Future",
+    "FR-WATER-07": "Future",
+    "FR-CHART-01": "MVP",
+    "FR-CHART-02": "MVP",
+    "FR-CHART-03": "MVP",
+    "FR-CHART-04": "MVP",
+    "FR-CHART-05": "Future",
+    "FR-CHART-06": "Future",
+    "FR-SHELL-01": "MVP",
+    "FR-SHELL-02": "MVP",
+    "FR-SHELL-03": "MVP",
+    "FR-SHELL-04": "Future",
+    "FR-SHELL-05": "Future",
+    "NFR-USA-01": "MVP",
+    "NFR-USA-02": "MVP",
+    "NFR-USA-03": "MVP",
+    "NFR-A11Y-01": "MVP",
+    "NFR-A11Y-02": "MVP",
+    "NFR-A11Y-03": "MVP",
+    "NFR-A11Y-04": "MVP",
+    "NFR-PERF-01": "MVP",
+    "NFR-PERF-02": "MVP",
+    "NFR-PERF-03": "Future",
+    "NFR-DATA-01": "MVP",
+    "NFR-DATA-02": "MVP",
+    "NFR-COMPAT-01": "MVP",
+    "NFR-COMPAT-02": "MVP",
+    "NFR-COMPAT-03": "Future",
+    "NFR-SEC-01": "MVP",
+    "NFR-SEC-02": "Future",
+    "NFR-LOC-01": "MVP",
+    "NFR-LOC-02": "Future",
+    "TC-01": "MVP",
+    "TC-02": "MVP",
+    "TC-03": "MVP",
+    "TC-04": "MVP",
+    "TC-05": "MVP",
+    "TC-06": "MVP",
+    "BC-01": "MVP",
+    "BC-02": "MVP",
+    "BC-03": "MVP",
+    "BC-04": "MVP"
+  },
+  "links": [
+    {
+      "id": "FR-PLANT-01",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-05",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-06",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-07",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-PLANT-08",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GROWTH-01",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GROWTH-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GROWTH-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GROWTH-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GROWTH-05",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-WATER-01",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-WATER-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-WATER-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-WATER-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-WATER-05",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CHART-01",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CHART-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CHART-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CHART-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SHELL-01",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SHELL-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SHELL-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-07 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-PLANT-08 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GROWTH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GROWTH-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GROWTH-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GROWTH-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GROWTH-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-WATER-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-WATER-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-WATER-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-WATER-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-WATER-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-CHART-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-CHART-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-CHART-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-CHART-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-SHELL-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-SHELL-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-SHELL-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "plan-ownership",
+      "msg": "docs/mvp-capability-plan.md not found - ownership check skipped (expected before Phase 3; mandatory at --release)"
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-01 has no test annotated \"@trace FR-PLANT-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-02 has no test annotated \"@trace FR-PLANT-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-03 has no test annotated \"@trace FR-PLANT-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-04 has no test annotated \"@trace FR-PLANT-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-05 has no test annotated \"@trace FR-PLANT-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-06 has no test annotated \"@trace FR-PLANT-06\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-07 has no test annotated \"@trace FR-PLANT-07\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-PLANT-08 has no test annotated \"@trace FR-PLANT-08\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GROWTH-01 has no test annotated \"@trace FR-GROWTH-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GROWTH-02 has no test annotated \"@trace FR-GROWTH-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GROWTH-03 has no test annotated \"@trace FR-GROWTH-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GROWTH-04 has no test annotated \"@trace FR-GROWTH-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GROWTH-05 has no test annotated \"@trace FR-GROWTH-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-WATER-01 has no test annotated \"@trace FR-WATER-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-WATER-02 has no test annotated \"@trace FR-WATER-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-WATER-03 has no test annotated \"@trace FR-WATER-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-WATER-04 has no test annotated \"@trace FR-WATER-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-WATER-05 has no test annotated \"@trace FR-WATER-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CHART-01 has no test annotated \"@trace FR-CHART-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CHART-02 has no test annotated \"@trace FR-CHART-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CHART-03 has no test annotated \"@trace FR-CHART-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CHART-04 has no test annotated \"@trace FR-CHART-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-01 has no test annotated \"@trace FR-SHELL-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-02 has no test annotated \"@trace FR-SHELL-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-03 has no test annotated \"@trace FR-SHELL-03\""
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-06 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-07 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-PLANT-08 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GROWTH-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GROWTH-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GROWTH-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GROWTH-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GROWTH-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-WATER-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-WATER-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-WATER-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-WATER-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-WATER-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CHART-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CHART-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CHART-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CHART-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    }
+  ]
+}
