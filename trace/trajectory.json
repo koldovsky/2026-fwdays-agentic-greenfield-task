@@ -36,7 +36,7 @@
     {
       "slice": "2026-06-29-add-watering",
       "reviewEvidence": "clean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "watering",
         "i18n"

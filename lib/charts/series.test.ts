@@ -1,0 +1,220 @@
+// RED (Phase 4b) — written FROM the spec/design BEFORE the implementation.
+// This is the slice's load-bearing seam (design D1): the chart's pixels cannot
+// be proven in jsdom, so ALL data shaping is extracted into PURE, Recharts-
+// agnostic functions in `lib/charts/series.ts`. These tests are the red->green
+// unit target — they assert the SPECIFIED data shape (sort order, DD.MM.YYYY
+// labels via @/lib/dates, count-per-day grouping, value preservation, empty ->
+// []), independent of any rendering. They stay RED until `lib/charts/series.ts`
+// exists with the exact exports design.md defines (D2, D3).
+//
+// The RENDERED chart's legibility / contrast / axis ticks / 500 ms perf budget
+// (NFR-PERF-02) are NOT provable here — jsdom does not lay out or paint
+// Recharts (ResponsiveContainer resolves to 0x0). They are validated in PHASE 6
+// (vision-verify + axe + perf gate), per design D1/D6/R1.
+//
+// @trace FR-CHART-01
+// @trace FR-CHART-02
+// @trace SC-1
+import { describe, expect, it } from "vitest";
+
+import { toGrowthSeries, toWateringSeries } from "@/lib/charts/series";
+import type { Measurement } from "@/db/schema/growth";
+import type { Watering } from "@/db/schema/watering";
+
+// ---- builders (the row shapes the detail page already loads) ----------------
+
+function measurement(overrides: Partial<Measurement> = {}): Measurement {
+  return {
+    id: 1,
+    plantId: 1,
+    heightCm: 10,
+    measuredOn: "2026-06-01",
+    createdAt: "2026-06-01 10:00:00",
+    ...overrides,
+  };
+}
+
+function watering(overrides: Partial<Watering> = {}): Watering {
+  return {
+    id: 1,
+    plantId: 1,
+    wateredOn: "2026-06-01",
+    note: null,
+    createdAt: "2026-06-01 10:00:00",
+    ...overrides,
+  };
+}
+
+// =============================================================================
+// toGrowthSeries(measurements) — height (cm) line over measurement dates ASC
+// (design D3, FR-CHART-02, SC-1)
+// =============================================================================
+describe("toGrowthSeries(measurements) (FR-CHART-02, SC-1)", () => {
+  it("returns [] for empty input (the chart renders its empty state, not a blank plot)", () => {
+    expect(toGrowthSeries([])).toEqual([]);
+  });
+
+  it("maps a single measurement to one point { date, label DD.MM.YYYY, heightCm }", () => {
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 12.5, measuredOn: "2026-06-15" }),
+    ]);
+    expect(series).toEqual([
+      { date: "2026-06-15", label: "15.06.2026", heightCm: 12.5 },
+    ]);
+  });
+
+  it("sorts chronologically ASCENDING by measuredOn (time axis runs oldest -> newest, R3)", () => {
+    // Supplied newest-first (as the DESC list would be); the series must reverse
+    // it to ascending for a left->right time axis.
+    const series = toGrowthSeries([
+      measurement({ id: 3, heightCm: 30, measuredOn: "2026-06-20" }),
+      measurement({ id: 2, heightCm: 20, measuredOn: "2026-06-10" }),
+      measurement({ id: 1, heightCm: 10, measuredOn: "2026-06-01" }),
+    ]);
+    expect(series.map((p) => p.date)).toEqual([
+      "2026-06-01",
+      "2026-06-10",
+      "2026-06-20",
+    ]);
+    expect(series.map((p) => p.heightCm)).toEqual([10, 20, 30]);
+  });
+
+  it("labels every point DD.MM.YYYY with zero-padding (SC-1, via @/lib/dates)", () => {
+    const series = toGrowthSeries([
+      measurement({ id: 1, measuredOn: "2026-01-05" }),
+    ]);
+    expect(series[0].label).toBe("05.01.2026");
+  });
+
+  it("preserves the exact stored decimal height (no round, no drop, no re-parse) (R4)", () => {
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 12.5, measuredOn: "2026-06-01" }),
+    ]);
+    // The stored value is the number 12.5 (normalized upstream from "12,5" per
+    // FR-GROWTH-05); the series carries it through unchanged as a number.
+    expect(series[0].heightCm).toBe(12.5);
+    expect(typeof series[0].heightCm).toBe("number");
+    expect(Number.isNaN(series[0].heightCm)).toBe(false);
+  });
+
+  it("carries a trailing-zero / large-magnitude height through unchanged (R4, FR-GROWTH-05 upper bound)", () => {
+    // 12.50 stored is the number 12.5; a large permitted height scales the axis
+    // without being dropped, NaN'd, or re-parsed by the shaping step.
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 12.5, measuredOn: "2026-06-01" }),
+      measurement({ id: 2, heightCm: 999.9, measuredOn: "2026-06-02" }),
+    ]);
+    expect(series[0].heightCm).toBe(12.5);
+    expect(series[1].heightCm).toBe(999.9);
+  });
+
+  it("keeps two same-date measurements as TWO distinct points, tie-broken by id ASC (deterministic, D3)", () => {
+    // The list's deterministic total order is date DESC then id DESC; the chart
+    // is the SAME total order reversed: date ASC then id ASC.
+    const series = toGrowthSeries([
+      measurement({ id: 8, heightCm: 22, measuredOn: "2026-06-10" }),
+      measurement({ id: 5, heightCm: 21, measuredOn: "2026-06-10" }),
+    ]);
+    expect(series).toHaveLength(2);
+    expect(series.map((p) => p.heightCm)).toEqual([21, 22]); // id 5 before id 8
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [
+      measurement({ id: 2, measuredOn: "2026-06-10" }),
+      measurement({ id: 1, measuredOn: "2026-06-01" }),
+    ];
+    const snapshot = input.map((m) => m.measuredOn);
+    toGrowthSeries(input);
+    expect(input.map((m) => m.measuredOn)).toEqual(snapshot);
+  });
+});
+
+// =============================================================================
+// toWateringSeries(waterings) — COUNT PER DAY line, same-day events collapse
+// (design D2, FR-CHART-01, SC-1)
+// =============================================================================
+describe("toWateringSeries(waterings) (FR-CHART-01, SC-1)", () => {
+  it("returns [] for empty input (the chart renders its empty state, not a blank plot)", () => {
+    expect(toWateringSeries([])).toEqual([]);
+  });
+
+  it("maps a single watering to one count-per-day point { date, label DD.MM.YYYY, count: 1 }", () => {
+    const series = toWateringSeries([
+      watering({ id: 1, wateredOn: "2026-06-15" }),
+    ]);
+    expect(series).toEqual([
+      { date: "2026-06-15", label: "15.06.2026", count: 1 },
+    ]);
+  });
+
+  it("collapses N same-day events into ONE point whose count equals N (D2, no stacked markers)", () => {
+    const series = toWateringSeries([
+      watering({ id: 1, wateredOn: "2026-06-10" }),
+      watering({ id: 2, wateredOn: "2026-06-10" }),
+      watering({ id: 3, wateredOn: "2026-06-10" }),
+    ]);
+    expect(series).toHaveLength(1);
+    expect(series[0]).toEqual({
+      date: "2026-06-10",
+      label: "10.06.2026",
+      count: 3,
+    });
+  });
+
+  it("emits one ascending-date point per distinct calendar day (R3, no zero-filling between days)", () => {
+    // Supplied newest-first (as the DESC list would be); the series must group
+    // by day and order ascending. Days with no watering are simply absent.
+    const series = toWateringSeries([
+      watering({ id: 5, wateredOn: "2026-06-20" }),
+      watering({ id: 4, wateredOn: "2026-06-12" }),
+      watering({ id: 3, wateredOn: "2026-06-12" }),
+      watering({ id: 2, wateredOn: "2026-06-05" }),
+    ]);
+    expect(series.map((p) => p.date)).toEqual([
+      "2026-06-05",
+      "2026-06-12",
+      "2026-06-20",
+    ]);
+    expect(series.map((p) => p.count)).toEqual([1, 2, 1]);
+    // No zero-valued points inserted for the days in between (FR-CHART-01).
+    expect(series).toHaveLength(3);
+  });
+
+  it("labels every day point DD.MM.YYYY with zero-padding (SC-1, via @/lib/dates)", () => {
+    const series = toWateringSeries([
+      watering({ id: 1, wateredOn: "2026-01-05" }),
+    ]);
+    expect(series[0].label).toBe("05.01.2026");
+  });
+
+  it("orders strictly ascending and the total count equals the number of input events", () => {
+    const waterings = [
+      watering({ id: 1, wateredOn: "2026-06-01" }),
+      watering({ id: 2, wateredOn: "2026-06-01" }),
+      watering({ id: 3, wateredOn: "2026-06-03" }),
+      watering({ id: 4, wateredOn: "2026-06-03" }),
+      watering({ id: 5, wateredOn: "2026-06-03" }),
+      watering({ id: 6, wateredOn: "2026-06-09" }),
+    ];
+    const series = toWateringSeries(waterings);
+
+    // Strictly ascending dates.
+    const dates = series.map((p) => p.date);
+    expect([...dates].sort()).toEqual(dates);
+
+    // No information lost: the sum of per-day counts equals the event count.
+    const total = series.reduce((sum, p) => sum + p.count, 0);
+    expect(total).toBe(waterings.length);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [
+      watering({ id: 2, wateredOn: "2026-06-10" }),
+      watering({ id: 1, wateredOn: "2026-06-01" }),
+    ];
+    const snapshot = input.map((w) => w.wateredOn);
+    toWateringSeries(input);
+    expect(input.map((w) => w.wateredOn)).toEqual(snapshot);
+  });
+});

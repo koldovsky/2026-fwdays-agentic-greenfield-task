@@ -8,10 +8,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import { GrowthChart } from "@/components/charts/GrowthChart";
+import { WateringChart } from "@/components/charts/WateringChart";
 import { MeasurementsSection } from "@/components/growth/MeasurementsSection";
 import { DeletePlantButton } from "@/components/plants/DeletePlantButton";
 import { WateringsSection } from "@/components/watering/WateringsSection";
 import { db } from "@/db/client";
+import { toGrowthSeries, toWateringSeries } from "@/lib/charts/series";
 import { formatAcquiredDate, todayInKiev } from "@/lib/dates";
 import { listMeasurements } from "@/lib/growth/queries";
 import { uk } from "@/lib/i18n/uk";
@@ -40,6 +43,12 @@ export default async function PlantDetail({
   const measurements = await listMeasurements(db, numericId);
   const waterings = await listWaterings(db, numericId);
   const today = todayInKiev();
+
+  // Charts derive their series on the SERVER from the SAME arrays the page
+  // already loaded (design D5, D6) — no new query, no client fetch. Each action's
+  // revalidatePath re-renders this force-dynamic page, so the charts re-derive.
+  const growthSeries = toGrowthSeries(measurements);
+  const wateringSeries = toWateringSeries(waterings);
 
   return (
     <section>
@@ -77,11 +86,19 @@ export default async function PlantDetail({
 
       <DeletePlantButton id={plant.id} />
 
+      <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <GrowthChart series={growthSeries} />
+      </section>
+
       <MeasurementsSection
         plantId={plant.id}
         measurements={measurements}
         today={today}
       />
+
+      <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <WateringChart series={wateringSeries} />
+      </section>
 
       <WateringsSection
         plantId={plant.id}

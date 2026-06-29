@@ -4,7 +4,7 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** Phase 4 autonomous build. **Slice 1 `add-app-shell` DONE** (archived). **Slice 2 `add-plants` GREEN** (Phase 4c implement). **Slice 3 `add-growth` GREEN** (Phase 4c implement): growth is the SECOND DB slice and the FIRST child of the plant aggregate — `growth_measurements` schema + committed migration `0001_dizzy_maggott.sql` landed (FK `plant_id → plants.id ON DELETE CASCADE`), `lib/growth/` (validation/queries/service/actions) on the shared `ActionResult` contract, a measurements SECTION on `/plants/[id]` (log form + list ordered date DESC, id DESC + per-row edit + delete-with-confirm + empty state), and the shared date helpers PROMOTED `lib/plants/date.ts → lib/dates.ts`. All unit + integration tests pass (177), lint/build/openspec-validate green. Awaiting review-gate + archive. Remaining: watering → charts.
+- **Phase:** Phase 4 autonomous build. **Slice 1 `add-app-shell` DONE** (archived). **Slices 2 `add-plants`, 3 `add-growth`, 4 `add-watering` GREEN** (Phase 4c implement). **Slice 5 `add-charts` GREEN — FINAL MVP slice landed** (Phase 4c implement): the headline visualization slice. No schema change, no migration — the two charts read the SAME row arrays the `force-dynamic` `/plants/[id]` page already loads. The PURE, Recharts-agnostic seam `lib/charts/series.ts` (`toGrowthSeries` = one point per measurement, height-over-time, sorted `measuredOn` ASC then id ASC, exact decimal height preserved; `toWateringSeries` = COUNT-PER-DAY line, same-day events collapse, date ASC, no bucketing/zero-fill; both empty → `[]`, never mutate, never throw). Thin client islands `components/charts/{GrowthChart,WateringChart}.tsx` (Recharts `LineChart` in a labelled `<figure>`, DD.MM.YYYY axis via `@/lib/dates`) + shared `components/charts/ChartEmptyState.tsx` (Ukrainian per-chart empty state, distinct from error/loading). The watering chart (headline) sits above the waterings section, the growth chart above the measurements section. NFR-A11Y-03 satisfied by the EXISTING growth + waterings lists (charts add no redundant table). FR-CHART-04 needs NO new machinery — the page is `force-dynamic` and the existing growth/watering actions' `revalidatePath('/plants/<id>')` re-render the page so the charts re-derive. New `uk.charts.*` copy. All 281 unit tests pass, lint/build/`openspec validate --all --strict` green. Remaining: real-DB smoke (4.6), then review-gate + manual archive (4.8). Rendered legibility/contrast/360px/perf (NFR-A11Y-*, NFR-PERF-02) DEFERRED to Phase 6 vision-verify + axe + perf gate.
 
 ### Deferred to Phase 6 (cross-cutting QA, tracked here so it isn't lost)
 - Rendered a11y for every capability: `npm run check:a11y` (axe light+dark), WCAG AA contrast, keyboard-only, 360px responsive (NFR-A11Y-01/02/04, NFR-COMPAT-01) — run once over the whole app in Phase 6 with vision-verify + recordings.
@@ -53,6 +53,25 @@ watering, with a watering chart and a growth chart. Scope is deliberately small
   ISO `YYYY-MM-DD` (default today Kiev, future rejected). **Shared date helpers
   promoted** `lib/plants/date.ts → lib/dates.ts` (`todayInKiev`/`isAfterToday`/
   `formatAcquiredDate`); plant importers re-pointed; old module + its test removed.
+- **Slice 5 `add-charts` (Phase 4, implemented — FINAL MVP slice)** — the headline
+  visualization slice. NO schema change, NO migration: the charts read the SAME
+  `listMeasurements` / `listWaterings` arrays the `force-dynamic` `/plants/[id]`
+  page already loads. Pure seam `lib/charts/series.ts` — `toGrowthSeries` (one
+  point per measurement `{ date, label DD.MM.YYYY, heightCm }`, sorted `measuredOn`
+  ASC then id ASC, exact stored decimal height preserved) and `toWateringSeries`
+  (group by `wateredOn` → one count-per-day point `{ date, label, count }`, sorted
+  date ASC, same-day events collapse, no bucketing/zero-fill); both `[]` for empty
+  input, never mutate, never throw — no Recharts/React/DOM import. Thin client
+  islands `components/charts/GrowthChart.tsx` (height-over-time line) and
+  `WateringChart.tsx` (count-per-day frequency line, the headline), each a Recharts
+  `LineChart` in a labelled `<figure>` (accessible name = chart title, SC-6) with a
+  DD.MM.YYYY X axis; shared `components/charts/ChartEmptyState.tsx` renders the
+  Ukrainian per-chart empty state (distinct from error/loading, FR-CHART-03) when a
+  series is empty. Wired into `/plants/[id]`: growth chart above the measurements
+  section, watering chart above the waterings section; the lists STAY (NFR-A11Y-03).
+  FR-CHART-04 = the existing `force-dynamic` + `revalidatePath` (no new machinery,
+  D5). New Ukrainian `uk.charts.*` copy block (titles, per-chart empty states, axis
+  labels). Rendered a11y/contrast/360px/perf DEFERRED to Phase 6.
 
 ## Next step
 

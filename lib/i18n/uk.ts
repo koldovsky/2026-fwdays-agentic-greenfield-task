@@ -151,6 +151,30 @@ export const uk = {
         "Дата поливу не може бути в майбутньому. Оберіть сьогодні або раніше.",
     },
   },
+  // Charts capability copy (slice 5) — the per-chart titles (also the accessible
+  // names of the chart <figure> regions, SC-6), the per-chart empty-state
+  // messages (distinct from error/loading, FR-CHART-03), and the axis labels.
+  // The watering chart plots a COUNT PER DAY line (design D2), so countAxis names
+  // frequency, not a measurement or a cumulative total. Ukrainian text, English
+  // identifiers (NFR-LOC-01).
+  charts: {
+    /** Growth chart title + accessible name of its <figure> region (SC-6). */
+    growthTitle: "Графік росту рослини",
+    /** Watering chart title + accessible name of its <figure> region (SC-6). */
+    wateringTitle: "Графік поливів рослини",
+    /** Empty state when there are no measurements to plot (FR-CHART-03). */
+    growthEmpty:
+      "Ще немає вимірювань для графіка. Запишіть висоту — і тут зʼявиться крива росту.",
+    /** Empty state when there are no waterings to plot (FR-CHART-03). */
+    wateringEmpty:
+      "Ще немає поливів для графіка. Запишіть полив — і тут зʼявиться частота поливів.",
+    /** X-axis label: the time axis (oldest -> newest). */
+    dateAxis: "Дата",
+    /** Y-axis label for the growth chart: height in centimetres. */
+    heightAxis: "Висота (см)",
+    /** Y-axis label for the watering chart: waterings per day (frequency, D2). */
+    countAxis: "Поливів за день",
+  },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field
   // messages live with their domain in slices 2–5.

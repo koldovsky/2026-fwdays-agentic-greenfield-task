@@ -181,7 +181,8 @@
       "id": "FR-GROWTH-02",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -221,7 +222,8 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/charts/spec.md",
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -263,7 +265,8 @@
       "id": "FR-WATER-03",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -302,34 +305,47 @@
       "id": "FR-CHART-01",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/charts/series.test.ts",
+        "evals/cases/charts.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-CHART-02",
       "specs": [
-        "openspec/specs/charts/spec.md"
+        "openspec/specs/charts/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/charts/series.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-CHART-03",
       "specs": [
-        "openspec/specs/charts/spec.md"
+        "openspec/specs/charts/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/charts/GrowthChart.test.tsx",
+        "components/charts/WateringChart.test.tsx",
+        "evals/cases/charts.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-CHART-04",
       "specs": [
-        "openspec/specs/charts/spec.md"
+        "openspec/specs/charts/spec.md",
+        "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -385,18 +401,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-CHART-01 has no test annotated \"@trace FR-CHART-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-CHART-02 has no test annotated \"@trace FR-CHART-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-CHART-03 has no test annotated \"@trace FR-CHART-03\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-CHART-04 has no test annotated \"@trace FR-CHART-04\""
@@ -500,6 +504,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-charts\" is not archived"
     }
   ]
 }
