@@ -40,10 +40,9 @@ export function DeletePlantButton({ id }: { id: number }) {
       <div className="mt-6">
         <FormErrorBanner message={error} />
         <Button
-          variant="ghost"
+          variant="danger-ghost"
           type="button"
           onClick={() => setConfirming(true)}
-          className="text-danger hover:bg-status-overdue-chip"
         >
           {uk.plants.delete}
         </Button>

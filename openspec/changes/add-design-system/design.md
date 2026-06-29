@@ -127,6 +127,7 @@ New `components/ui/Button.tsx` — a single component with a `variant` prop:
 | secondary | transparent | forest | 1.5px forest | 14 | bg mist |
 | soft | mist | pine | — | 14 | `#CBDCB8` |
 | ghost | transparent | stone | — | 14 | bg `#EEE9DC` |
+| danger-ghost | transparent | danger `#B5462E` | — | 14 | bg overdue-chip `#F3DAD0` |
 | danger | `#B5462E` | paper | — | 14 | `#9D3B25` |
 | icon | clay (filled) / cloud (outline) | paper / — | outline: 1.5px border | 14, 48×48 | outline: border forest |
 
@@ -148,10 +149,21 @@ red token `#B5462E` (dropping `text-red-600 dark:text-red-400`).
 `FormErrorBanner`: keep `role="alert"`, restyle onto the danger token family on
 a soft tinted surface, radius 13, 1px border; drop the `dark:` classes.
 
+The `danger-ghost` variant is a ghost-shaped DESTRUCTIVE trigger (the collapsed
+delete affordance): transparent bg, danger-red text, overdue-chip hover. Its
+danger color is BAKED INTO the variant string, not appended via `className` over
+`ghost`. With no `tailwind-merge` in this project, an appended `text-danger` over
+the ghost variant's `text-stone` would lose to whichever single-property `color`
+utility appears later in the generated stylesheet (Tailwind v4 resolves equal-
+specificity conflicts by CSS source order, not class-attribute order), muting the
+destructive affordance to stone. A dedicated variant guarantees danger-red
+regardless of CSS source order. The delete-with-confirm buttons
+(`DeletePlantButton`, `DeleteMeasurementButton`, `DeleteWateringButton`) use it.
+
 **Trade-off (one Button vs per-variant components):** a single variant-prop
-component keeps the six variants in one place and matches the test ("renders each
+component keeps the variants in one place and matches the test ("renders each
 variant with expected role/classes"), at the cost of a `variant` union to
-maintain. Simpler than six files. Not ADR-worthy.
+maintain. Simpler than separate files. Not ADR-worthy.
 
 ### D5 — Botanical line-icon set (FR-DS-04)
 
@@ -199,8 +211,8 @@ spec is explicit that the WIRING is slice 7 so this is not mis-scoped.
 
 ### D7 — Restyle the screens (FR-DS-06)
 
-- Shell header: «Поливайко» wordmark (Quicksand 700) replacing the
-  `uk.appTitle` text + toggle; `paper` page bg, `cloud` header surface, 1px
+- Shell header: «Поливайко» wordmark (`uk.brand`, Quicksand 700) replacing the
+  old app-title text + toggle; `paper` page bg, `cloud` header surface, 1px
   `border` bottom, `ink` text.
 - List (`app/page.tsx`): H1 Quicksand, "add plant" as a primary `Button`, cards
   via `PlantCard`, empty state on `cloud` with `border` dashed → restyled to
@@ -253,3 +265,40 @@ slice's card pill is a static placeholder.
 - **R5 — 360 px overflow** from the 56px section padding / 1080px max-width.
   Mitigation: padding scales down on mobile; verified in the Phase 6 360 px
   responsive pass (NFR-COMPAT-01), not asserted in unit tests.
+
+## Review-gate dispositions (slice-6 review)
+
+Recorded so the dispositions survive in the spec, not just the gate output:
+
+- **FR-DS-03 card action is a presentational placeholder — accepted.** The whole
+  card is a single keyboard-operable `<Link href="/plants/[id]">`; the
+  "water now" affordance is rendered as an `aria-hidden` `<span>` styled like a
+  Button (a nested interactive control inside the card link would be invalid
+  HTML). The real INTERACTIVE water action lands in slice 7 (FR-REM-*) with a
+  proper accessible name. This is the spec-mandated state for this slice (the
+  pill + action ship as a static placeholder pattern, healthy by default) and is
+  not a defect.
+
+- **FR-DS-06 chart palette legibility.** The named forest/clay strokes
+  (growth `#2F6B3F`, watering `#A9744E`) are now locked against regression by a
+  cheap unit assertion (`components/charts/chart-palette.test.tsx`, `@trace
+  FR-DS-06`) that captures the `stroke` prop each chart passes to its Recharts
+  `<Line>`. The RENDERED legibility / AA contrast of the lines on the paper
+  theme remains verified in the Phase 6 vision-verify + axe pass (jsdom paints
+  no pixels), as the FR-DS-06 contrast scenarios state.
+
+- **Security dimension — clean, no defects.** The review's security pass found
+  no introduced vulnerability: (a) authentication & sessions — N/A (the slice
+  removes a pre-hydration `<head>` theme script and adds no cookie/token/session
+  surface; net attack-surface reduction), and authorization is N/A in this
+  intentionally authless single-Owner app (NFR-SEC-01, TC-04); (b) injection —
+  clean (all new dynamic content renders through React-escaped JSX text nodes;
+  no `dangerouslySetInnerHTML`/href-injection sink; the only `href` interpolates
+  a numeric `id`); (c) secrets & config — clean (no `.env`/package/lockfile
+  changes, no `NEXT_PUBLIC` additions; `next/font` self-hosts the Google fonts at
+  build time with no credentials). The two contested security notes —
+  dependencies (no manifest changed; per-diff audit delta empty) and abuse
+  resistance / mass assignment (forms changed cosmetically only; no field names,
+  submit handlers, or server actions touched; single-role schema with no
+  privileged attribute to over-post; no auth endpoint to rate-limit) — are
+  likewise clean-dimension non-defects for this slice.

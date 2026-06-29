@@ -53,6 +53,12 @@ const ACTION_LABEL: Record<PlantCardStatus, string> = {
   overdue: uk.plants.card.actionOverdue,
 };
 
+const STATUS_LINE: Record<PlantCardStatus, string> = {
+  healthy: uk.plants.card.statusLineHealthy,
+  soon: uk.plants.card.statusLineSoon,
+  overdue: uk.plants.card.statusLineOverdue,
+};
+
 const ACTION_VARIANT = {
   healthy: "soft",
   soon: "primary",
@@ -113,7 +119,7 @@ export function PlantCard({
           }`}
         >
           <WaterDropIcon size={15} />
-          {uk.plants.card.statusLine}
+          {STATUS_LINE[status]}
         </p>
 
         {/* Presentational action styled as a Button. The whole card is the

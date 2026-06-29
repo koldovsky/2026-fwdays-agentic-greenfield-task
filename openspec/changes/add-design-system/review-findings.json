@@ -1,0 +1,41 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-design-system",
+  "change": "add-design-system",
+  "baseRef": "64dbeb3",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 3,
+      "contested": 0,
+      "rejected": 0
+    },
+    "security": {
+      "confirmed": 3,
+      "contested": 2,
+      "rejected": 1
+    },
+    "spec-compliance": {
+      "confirmed": 2,
+      "contested": 2,
+      "rejected": 1
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "Ghost delete-trigger color override may not win over the variant's text-stone (Tailwind class-order pitfall)",
+    "PlantCard status line copy is hardcoded to the 'healthy' message while pill/action vary by status",
+    "Dead i18n key `appTitle` left behind after brand rename",
+    "Authentication & sessions — clean: change removes a client-side theme script but introduces no auth/session surface",
+    "Injection (HTML/JSX) — clean: all new dynamic content renders through JSX text nodes which React auto-escapes",
+    "Secrets & config — clean: no secrets, no NEXT_PUBLIC additions, no env/package changes in scope",
+    "Ticked task 1.7/4.2 claims a PlantCard test that does not exist",
+    "Documentation tasks 4.6/4.7/4.8 unchecked — README and current-state not updated, change not archived"
+  ],
+  "clean": false,
+  "generatedAt": "2026-06-29T22:00:07Z"
+}

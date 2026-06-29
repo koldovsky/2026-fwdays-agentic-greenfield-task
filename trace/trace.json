@@ -124,7 +124,8 @@
       ],
       "planned": true,
       "tests": [
-        "tests/integration/plants-lifecycle.test.ts"
+        "tests/integration/plants-lifecycle.test.ts",
+        "components/plants/PlantCard.test.tsx"
       ],
       "recordings": []
     },
@@ -444,7 +445,9 @@
         "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/plants/PlantCard.test.tsx"
+      ],
       "recordings": []
     },
     {
@@ -478,7 +481,9 @@
         "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/charts/chart-palette.test.tsx"
+      ],
       "recordings": []
     },
     {
@@ -547,14 +552,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-DS-03 has no test annotated \"@trace FR-DS-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DS-06 has no test annotated \"@trace FR-DS-06\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-REM-01 has no test annotated \"@trace FR-REM-01\""

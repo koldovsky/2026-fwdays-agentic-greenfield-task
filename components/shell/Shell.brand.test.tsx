@@ -6,8 +6,8 @@
 //      and exposes NO theme-toggle control (FR-SHELL-02a).
 //
 // Both currently FAIL for the right reason: `uk.brand` does not exist yet, the
-// Shell still renders `uk.appTitle` + a <ThemeToggle/>, and `<Shell>` today
-// cannot render outside a <ThemeProvider> (the toggle's useTheme throws). The
+// Shell still renders the old app-title text + a <ThemeToggle/>, and `<Shell>`
+// today cannot render outside a <ThemeProvider> (the toggle's useTheme throws). The
 // green step adds `uk.brand`, swaps the wordmark in, and removes the toggle +
 // provider dependency.
 //

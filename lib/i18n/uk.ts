@@ -4,7 +4,6 @@
 // inline literals. No i18n switching (NFR-LOC-02 is Future) — Ukrainian only.
 
 export const uk = {
-  appTitle: "Трекер рослин",
   /** «Поливайко» brand wordmark shown in the shell header (FR-DS-05). */
   brand: "Поливайко",
   nav: {
@@ -43,8 +42,11 @@ export const uk = {
       actionHealthy: "Доглянути",
       actionSoon: "Полити",
       actionOverdue: "Полити зараз",
-      /** Status line next to the droplet icon on a healthy card (placeholder). */
-      statusLine: "Полив за графіком",
+      /** Status line next to the droplet icon, keyed by status so the line
+          matches the pill/action once slice 7 supplies the real status. */
+      statusLineHealthy: "Полив за графіком",
+      statusLineSoon: "Скоро час поливати",
+      statusLineOverdue: "Потрібно полити",
     },
     addTitle: "Нова рослина",
     editTitle: "Редагувати рослину",

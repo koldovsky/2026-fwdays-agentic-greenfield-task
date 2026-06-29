@@ -17,6 +17,7 @@ export type ButtonVariant =
   | "secondary"
   | "soft"
   | "ghost"
+  | "danger-ghost"
   | "danger"
   | "icon";
 
@@ -34,6 +35,12 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   soft: "rounded-[14px] bg-mist px-6 py-3 text-[15px] text-pine hover:bg-soft-hover",
   ghost:
     "rounded-[14px] bg-transparent px-6 py-3 text-[15px] text-stone hover:bg-ghost-hover",
+  // A ghost-shaped DESTRUCTIVE trigger: transparent bg, danger-red text baked
+  // into the variant (not appended via className) so the destructive color does
+  // not lose to the ghost variant's `text-stone` under Tailwind's source-order
+  // cascade (no tailwind-merge in this project). Hover tints the overdue chip.
+  "danger-ghost":
+    "rounded-[14px] bg-transparent px-6 py-3 text-[15px] text-danger hover:bg-status-overdue-chip",
   danger:
     "rounded-[14px] bg-danger px-6 py-3 text-[15px] text-paper hover:bg-danger-hover",
   icon: "h-12 w-12 rounded-[14px] bg-clay text-paper hover:bg-forest",

@@ -52,10 +52,9 @@ export function DeleteMeasurementButton({
       <div>
         <FormErrorBanner message={error} />
         <Button
-          variant="ghost"
+          variant="danger-ghost"
           type="button"
           onClick={() => setConfirming(true)}
-          className="text-danger hover:bg-status-overdue-chip"
         >
           {uk.growth.delete}
         </Button>

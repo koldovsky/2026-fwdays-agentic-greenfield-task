@@ -20,6 +20,7 @@ const VARIANTS = [
   "secondary",
   "soft",
   "ghost",
+  "danger-ghost",
   "danger",
   "icon",
 ] as const;
@@ -73,6 +74,17 @@ describe("<Button> — variants (FR-DS-02)", () => {
     expect(
       screen.getByRole("button", { name: "Редагувати" }),
     ).toBeInTheDocument();
+  });
+
+  it("the danger-ghost variant bakes danger-red text into the variant (not text-stone)", () => {
+    // A destructive ghost trigger must render danger-red regardless of CSS
+    // source order. The variant itself carries `text-danger`; it must NOT carry
+    // the ghost variant's `text-stone` (which, with no tailwind-merge, could win
+    // by cascade order and mute the destructive affordance).
+    render(<Button variant="danger-ghost">Видалити</Button>);
+    const btn = screen.getByRole("button", { name: "Видалити" });
+    expect(btn.className).toContain("text-danger");
+    expect(btn.className).not.toContain("text-stone");
   });
 });
 
