@@ -1,0 +1,89 @@
+<!-- @dsCard group="Bookshelf App" viewport="1280x760" name="Bookshelf web app" subtitle="Shelf · book page · note editor — click through" -->
+<!-- @startingPoint section="Bookshelf" subtitle="Full book-notes web app" viewport="1280x800" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookshelf</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--surface-page); }
+  #root { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="data.js"></script>
+<script type="text/babel" src="Icon.jsx"></script>
+<script type="text/babel" src="Sidebar.jsx"></script>
+<script type="text/babel" src="HomeShelf.jsx"></script>
+<script type="text/babel" src="BookPage.jsx"></script>
+<script type="text/babel" src="NoteEditor.jsx"></script>
+
+<script type="text/babel">
+const { books, notes, shelves } = window.BS_DATA;
+
+function App() {
+  const [route, setRoute] = React.useState({ view: 'home', nav: 'home' });
+  const [editing, setEditing] = React.useState(null); // null | {} (new) | note
+  const [dark, setDark] = React.useState(false);
+  const [data, setData] = React.useState({ books, notes });
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  const openBook = (id) => setRoute({ view: 'book', nav: route.nav, bookId: id });
+  const book = route.bookId && data.books.find((b) => b.id === route.bookId);
+  const bookNotes = book ? data.notes.filter((n) => n.bookId === book.id) : [];
+
+  const rate = (v) => setData((d) => ({ ...d, books: d.books.map((b) => b.id === book.id ? { ...b, rating: v } : b) }));
+
+  const saveNote = (payload) => {
+    setData((d) => {
+      if (editing && editing.id) {
+        return { ...d, notes: d.notes.map((n) => n.id === editing.id ? { ...n, ...payload } : n) };
+      }
+      const n = { id: 'n' + Date.now(), bookId: book.id, links: 0, tags: [], ...payload, page: payload.page || null };
+      return { ...d, notes: [n, ...d.notes] };
+    });
+    setEditing(null);
+  };
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar shelves={shelves} current={route.nav}
+        onNav={(nav) => setRoute({ view: 'home', nav })}
+        dark={dark} onToggleDark={() => setDark((v) => !v)} />
+      <main style={{ flex: 1, overflowY: 'auto' }}>
+        {route.view === 'home' && (
+          <HomeShelf books={data.books} shelves={shelves} onOpenBook={openBook} />
+        )}
+        {route.view === 'book' && book && (
+          <BookPage book={book} notes={bookNotes}
+            onBack={() => setRoute({ view: 'home', nav: route.nav })}
+            onAddNote={() => setEditing({})}
+            onOpenNote={(id) => setEditing(data.notes.find((n) => n.id === id))}
+            onRate={rate} />
+        )}
+      </main>
+      {editing !== null && (
+        <NoteEditor note={editing.id ? editing : null} books={data.books}
+          onClose={() => setEditing(null)} onSave={saveNote} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

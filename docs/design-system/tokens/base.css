@@ -1,0 +1,73 @@
+/* ============================================================
+   Bookshelf — base resets & helpful primitives.
+   Light-touch: sets page defaults so cards/kits look right.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display headings default to the serif */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+p { margin: 0; }
+
+a { color: var(--text-link); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+::selection { background: var(--hl-yellow-mark); }
+
+/* Eyebrow / overline helper */
+.bs-eyebrow {
+  font-family: var(--font-meta);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---- Component interaction states (shipped to consumers) ---- */
+.bs-button:hover:not(:disabled) { filter: brightness(0.97); }
+.bs-button[data-variant="ghost"]:hover:not(:disabled) { background: var(--surface-sunken); filter: none; }
+.bs-button:active:not(:disabled) { transform: translateY(1px); }
+.bs-button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.bs-iconbtn:hover:not(:disabled) { background: var(--surface-sunken); }
+.bs-iconbtn:active:not(:disabled) { transform: scale(0.94); }
+.bs-iconbtn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.bs-input:hover { border-color: var(--ink-4); }
+.bs-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.bs-input::placeholder { color: var(--text-faint); }
+
+.bs-tag:hover { filter: brightness(0.97); }
+
+.bs-tab:hover { color: var(--text-primary); }
+
+.bs-card-int:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.bs-card-int:active { transform: translateY(-1px); }
+
+/* Reusable highlighter mark — paint over inline text */
+.bs-mark {
+  background: var(--hl-yellow-mark);
+  border-radius: 3px;
+  padding: 0.04em 0.18em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

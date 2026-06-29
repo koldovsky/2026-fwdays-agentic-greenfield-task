@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  Bookshelf — local single-device Next.js (App Router) + React + TypeScript app for
+  reading notes. Data is stored as Markdown + YAML frontmatter under content/books/<slug>/
+  (book.md + notes/<id>.md). NO auth, NO database, NO cloud, NO full-text search.
+  UI is English (sentence case) built on the design system in docs/design-system/.
+  Tests: Vitest + @testing-library/react, TDD. Only lib/content/* and Server Actions
+  touch the filesystem; file writes are atomic (temp + rename).
+  Capability breakdown & execution order: docs/openspec/README.md.
+  Requirements: docs/requirements.md. Plan: docs/superpowers/plans/2026-06-27-bookshelf.md.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours

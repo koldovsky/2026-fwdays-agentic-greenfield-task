@@ -1,0 +1,48 @@
+/* ============================================================
+   Bookshelf — Typography tokens
+   Display: Newsreader (serif) · UI: Hanken Grotesk · Mono: Spline Sans Mono
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale (1.225 minor-third-ish, tuned) */
+  --text-xs:   0.75rem;   /* 12 */
+  --text-sm:   0.8125rem; /* 13 */
+  --text-base: 0.9375rem; /* 15 — UI body */
+  --text-md:   1.0625rem; /* 17 — reading body */
+  --text-lg:   1.25rem;   /* 20 */
+  --text-xl:   1.5rem;    /* 24 */
+  --text-2xl:  1.875rem;  /* 30 */
+  --text-3xl:  2.375rem;  /* 38 */
+  --text-4xl:  3rem;      /* 48 */
+  --text-5xl:  3.875rem;  /* 62 */
+
+  /* Weights */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    800;
+
+  /* Line heights */
+  --leading-tight:   1.08;
+  --leading-snug:    1.25;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* Letter spacing */
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;
+  --tracking-caps:   0.08em; /* eyebrows / overlines */
+
+  /* Semantic roles */
+  --font-title:  var(--font-display);
+  --font-body:   var(--font-sans);
+  --font-meta:   var(--font-mono);
+}

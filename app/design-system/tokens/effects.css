@@ -1,0 +1,55 @@
+/* ============================================================
+   Bookshelf — Effects: radii, shadows, borders, motion, textures
+   Vibe: soft paper. Low, warm-tinted shadows. Generous rounding.
+   ============================================================ */
+
+:root {
+  /* Corner radii — friendly, notebook-soft */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+  --radius-2xl:  30px;
+  --radius-full: 999px;
+
+  /* Borders */
+  --border-w:       1px;
+  --border-w-thick: 1.5px;
+
+  /* Shadows — warm, low, paper-like (no cool greys) */
+  --shadow-xs:  0 1px 2px #2a24190f;
+  --shadow-sm:  0 1px 2px #2a24190f, 0 2px 6px #2a241910;
+  --shadow-md:  0 2px 4px #2a24190d, 0 6px 16px #2a241914;
+  --shadow-lg:  0 6px 14px #2a241914, 0 18px 40px #2a24191f;
+  --shadow-xl:  0 12px 28px #2a24191a, 0 32px 64px #2a241926;
+
+  /* Lifted card edge (subtle warm hairline + drop) */
+  --shadow-card: 0 1px 0 #ffffff80 inset, var(--shadow-sm);
+
+  /* Focus */
+  --focus-ring: 0 0 0 3px var(--blue-200);
+
+  /* Motion — quick, gently springy; no long fades */
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1); /* @kind other */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* @kind other */
+  --dur-fast:    120ms; /* @kind other */
+  --dur-base:    180ms; /* @kind other */
+  --dur-slow:    280ms; /* @kind other */
+
+  /* Textures (apply as background) */
+  --texture-rule: repeating-linear-gradient(
+      to bottom, transparent 0, transparent calc(var(--rule-height) - 1px),
+      var(--rule-line) calc(var(--rule-height) - 1px), var(--rule-line) var(--rule-height));
+  --texture-dot: radial-gradient(var(--rule-line) 1px, transparent 1.4px);
+}
+
+:root[data-theme="dark"],
+.dark {
+  --shadow-xs:  0 1px 2px #00000040;
+  --shadow-sm:  0 1px 2px #00000040, 0 2px 6px #00000033;
+  --shadow-md:  0 2px 4px #0000003d, 0 6px 16px #00000047;
+  --shadow-lg:  0 6px 14px #0000004d, 0 18px 40px #00000059;
+  --shadow-xl:  0 12px 28px #00000059, 0 32px 64px #00000066;
+  --shadow-card: 0 1px 0 #ffffff0a inset, var(--shadow-sm);
+}

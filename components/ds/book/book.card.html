@@ -1,0 +1,36 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Book — rating, notes, covers" subtitle="Rating, highlighter picker, NoteCard, BookCard" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:22px;background:var(--surface-page)}
+  .row{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .lbl{font-family:var(--font-meta);font-size:10px;color:var(--text-muted);width:84px;flex-shrink:0}
+  .split{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Rating, HighlighterPicker, NoteCard, BookCard } = window.BookshelfDesignSystem_18192e;
+function Demo(){
+  const [score,setScore]=React.useState(8);
+  const [hl,setHl]=React.useState('coral');
+  return (<div>
+    <div className="row"><span className="lbl">rating</span>
+      <Rating value={9} readOnly />
+      <Rating value={score} onChange={setScore} size="lg" />
+    </div>
+    <div className="row"><span className="lbl">highlighters</span>
+      <HighlighterPicker value={hl} onChange={setHl} />
+    </div>
+    <div className="split">
+      <NoteCard color={hl} page={88} links={3} tags={['ethics','re-read']}
+        excerpt="The opposite of love is not hate, it's indifference."
+        note="Connects to Fromm — attention as the real currency of care." />
+      <BookCard title="The Human Condition" author="Hannah Arendt" cover="coral"
+        rating={9} status="finished" tags={['philosophy','re-read']} notes={24} />
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

@@ -1,0 +1,41 @@
+<!-- @dsCard group="Components" viewport="700x280" name="Buttons & icon buttons" subtitle="Variants, sizes, states" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:22px;background:var(--surface-page)}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .lbl{font-family:var(--font-meta);font-size:10px;color:var(--text-muted);width:62px;flex-shrink:0}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton } = window.BookshelfDesignSystem_18192e;
+const Ic = ({n,s=16}) => <i data-lucide={n} style={{width:s,height:s,display:'inline-flex'}}></i>;
+function Demo(){
+  React.useEffect(()=>{ lucide.createIcons(); });
+  return (<div>
+    <div className="row"><span className="lbl">variants</span>
+      <Button variant="primary" iconLeft={<Ic n="plus"/>}>Add book</Button>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="soft">Link note</Button>
+      <Button variant="ghost">Skip</Button>
+      <Button variant="danger" iconLeft={<Ic n="trash-2"/>}>Delete</Button>
+    </div>
+    <div className="row"><span className="lbl">sizes</span>
+      <Button size="sm" variant="primary">Small</Button>
+      <Button size="md" variant="primary">Medium</Button>
+      <Button size="lg" variant="primary">Large</Button>
+      <Button variant="primary" disabled>Disabled</Button>
+    </div>
+    <div className="row"><span className="lbl">icon</span>
+      <IconButton label="Edit"><Ic n="pencil"/></IconButton>
+      <IconButton label="Bookmark" variant="outline"><Ic n="bookmark"/></IconButton>
+      <IconButton label="Save" variant="solid"><Ic n="check"/></IconButton>
+      <IconButton label="Active" active><Ic n="star"/></IconButton>
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

@@ -1,0 +1,37 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Tags, badges & avatars" subtitle="Pills, status labels, avatars, cards" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:22px;background:var(--surface-page)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .lbl{font-family:var(--font-meta);font-size:10px;color:var(--text-muted);width:60px;flex-shrink:0}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Tag, Badge, Avatar } = window.BookshelfDesignSystem_18192e;
+function Demo(){
+  return (<div>
+    <div className="row"><span className="lbl">tags</span>
+      <Tag>#philosophy</Tag>
+      <Tag color="var(--hl-pink)">#re-read</Tag>
+      <Tag active onClick={()=>{}}>#fiction</Tag>
+      <Tag onRemove={()=>{}}>#essays</Tag>
+    </div>
+    <div className="row"><span className="lbl">badges</span>
+      <Badge tone="brand">Reading</Badge>
+      <Badge tone="success" dot>Finished</Badge>
+      <Badge tone="warning">Draft</Badge>
+      <Badge tone="danger">Overdue</Badge>
+      <Badge>24 notes</Badge>
+    </div>
+    <div className="row"><span className="lbl">avatars</span>
+      <Avatar name="Hannah Arendt" size="sm" />
+      <Avatar name="Italo Calvino" />
+      <Avatar name="Susan Sontag" size="lg" />
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

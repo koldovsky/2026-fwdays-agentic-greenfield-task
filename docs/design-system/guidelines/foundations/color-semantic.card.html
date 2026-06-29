@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x130" name="Semantic status" subtitle="Success · warning · danger — used sparingly" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;padding:18px;background:var(--surface-page);font-family:var(--font-body)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .cell{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .dot{width:22px;height:22px;border-radius:999px}
+  .nm{font-family:var(--font-meta);font-size:11px}
+  .tk{font-family:var(--font-meta);font-size:10px;opacity:.7}
+</style></head>
+<body>
+  <div class="grid">
+    <div class="cell" style="background:var(--success-soft)">
+      <div class="dot" style="background:var(--success)"></div>
+      <div class="nm" style="color:var(--success)">Success</div><div class="tk">--success · finished reading</div>
+    </div>
+    <div class="cell" style="background:var(--warning-soft)">
+      <div class="dot" style="background:var(--warning)"></div>
+      <div class="nm" style="color:var(--warning)">Warning</div><div class="tk">--warning · unsaved draft</div>
+    </div>
+    <div class="cell" style="background:var(--danger-soft)">
+      <div class="dot" style="background:var(--danger)"></div>
+      <div class="nm" style="color:var(--danger)">Danger</div><div class="tk">--danger · delete note</div>
+    </div>
+  </div>
+</body></html>
