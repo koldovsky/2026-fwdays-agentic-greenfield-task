@@ -83,6 +83,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | FR-CYCLE-03 | On launch the chosen template is **snapshotted** into the cycle; later template/seed changes never alter it        | proposed   |
 | FR-CYCLE-04 | Cycle status is one of `collecting` · `done` (auto-set to `done` when the response is complete) · `expired` (past deadline, incomplete) | proposed   |
 | FR-CYCLE-05 | Cycles list shows: subject name, methodology tag, deadline (days remaining), progress, status; row opens the cycle  | proposed   |
+| FR-CYCLE-06 | HR can delete a cycle in any status (incl. expired) after an explicit confirmation; the delete cascades to its response/answers/dialog/summary/usage rows and is HR-only | proposed   |
 
 ### Link delivery (capability `link`)
 

@@ -90,7 +90,7 @@ function CycleTable({ cycles }: { cycles: CycleListRow[] }) {
 function CycleRow({ cycle }: { cycle: CycleListRow }) {
   const methodology = cycle.snapshot?.methodology ?? "—";
   const statusLabel = t.status[cycle.status];
-  const deadlineText = formatDaysRemaining(cycle.daysRemaining, t.overdue);
+  const deadlineText = formatDaysRemaining(cycle.daysRemaining, t.overdue, t.lastDayToday);
 
   const deadlineDate = cycle.deadline.toISOString().slice(0, 10);
 

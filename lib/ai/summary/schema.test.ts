@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { normalizeForMatch, quoteOccursInAnswer } from "./quote";
-import { summaryShapeSchema, validateSummaryGrounding, type SummaryShape } from "./schema";
+import {
+  summaryShapeSchema,
+  validateSummaryGrounding,
+  pruneUngroundedQuotes,
+  type SummaryShape,
+} from "./schema";
 
 describe("normalizeForMatch", () => {
   it("collapses whitespace and trims, preserving Ukrainian text and case", () => {
@@ -60,5 +65,39 @@ describe("validateSummaryGrounding", () => {
 
   it("passes trivially when there are no quotes", () => {
     expect(validateSummaryGrounding({ strengths: [], growthAreas: [], quotes: [] }, ids, answers)).toEqual({ ok: true });
+  });
+});
+
+describe("pruneUngroundedQuotes", () => {
+  const ids = new Set(["q1", "q2"]);
+  const answers = { q1: "Він завжди доводить задачі до кінця" };
+
+  it("keeps grounded quotes and drops ungrounded ones, preserving the report", () => {
+    const summary: SummaryShape = {
+      strengths: ["наставництво"],
+      growthAreas: ["делегування"],
+      quotes: [
+        { text: "доводить задачі", questionId: "q1" }, // grounded
+        { text: "вигадана цитата", questionId: "q1" }, // not verbatim
+        { text: "будь-що", questionId: "q2" }, // scale / no answer text
+        { text: "доводить задачі", questionId: "qX" }, // unknown id
+      ],
+    };
+    const result = pruneUngroundedQuotes(summary, ids, answers);
+    expect(result.summary.quotes).toEqual([{ text: "доводить задачі", questionId: "q1" }]);
+    expect(result.summary.strengths).toEqual(["наставництво"]);
+    expect(result.summary.growthAreas).toEqual(["делегування"]);
+    expect(result.dropped).toHaveLength(3);
+  });
+
+  it("keeps everything when all quotes are grounded", () => {
+    const summary: SummaryShape = {
+      strengths: [],
+      growthAreas: [],
+      quotes: [{ text: "доводить задачі", questionId: "q1" }],
+    };
+    const result = pruneUngroundedQuotes(summary, ids, answers);
+    expect(result.summary.quotes).toHaveLength(1);
+    expect(result.dropped).toHaveLength(0);
   });
 });

@@ -46,7 +46,13 @@ export async function saveAnswer(input: unknown): Promise<SaveAnswerResult> {
       return { ok: false, error: t.notFound };
     }
 
-    if (cycle.status !== "collecting") {
+    // Accept answers while collecting, and on a cycle that already auto-completed
+    // (status "done"): the form walks every question in order and only the LAST
+    // required answer flips the cycle to done, so a trailing OPTIONAL question is
+    // still reachable and saveable afterwards (FR-FORM-04). The form is
+    // forward-only (no back navigation), so this never re-edits an earlier
+    // answer. Expired or any other status is closed.
+    if (cycle.status !== "collecting" && cycle.status !== "done") {
       return { ok: false, error: t.modeChoiceClosed };
     }
 

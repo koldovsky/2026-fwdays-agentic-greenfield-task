@@ -16,13 +16,19 @@ function uaDayForm(count: number): string {
 }
 
 /**
- * Format a days-remaining value with correct Ukrainian grammar.
- * Positive: "3 дні залишилось" | Negative/zero: "Прострочено"
+ * Format a days-remaining value with correct Ukrainian grammar. The deadline
+ * day is INCLUSIVE: a positive count shows "N днів залишилось"; exactly 0 means
+ * the deadline is today (still open) and shows `todayLabel`; only a negative
+ * count (the deadline day has fully passed) is overdue. This fixes the
+ * off-by-one where a next-day-midnight deadline floored to 0 and read as
+ * overdue.
  */
 export function formatDaysRemaining(
   days: number,
   overdueLabel: string,
+  todayLabel: string,
 ): string {
-  if (days <= 0) return overdueLabel;
+  if (days < 0) return overdueLabel;
+  if (days === 0) return todayLabel;
   return `${days} ${uaDayForm(days)} залишилось`;
 }

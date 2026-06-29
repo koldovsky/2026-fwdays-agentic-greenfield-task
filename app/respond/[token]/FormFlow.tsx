@@ -5,7 +5,6 @@ import { useState, useTransition } from "react";
 import { uk } from "@/lib/i18n/uk";
 import { formatDaysRemaining } from "@/lib/i18n/format";
 import { EmptyState } from "@/components/states/EmptyState";
-import { firstUnansweredRequiredQuestion } from "@/lib/cycles/resume";
 import type { TemplateSnapshot } from "@/lib/cycles/snapshot";
 import { ScaleAnswerField } from "./ScaleAnswerField";
 import { OpenAnswerField } from "./OpenAnswerField";
@@ -97,13 +96,12 @@ export function FormFlow({
   const [answers, setAnswers] = useState(savedAnswers);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(
-    firstUnansweredRequiredQuestion(questions, savedAnswers) === null,
-  );
+  // Walk EVERY question in order (required and optional). Completion is reaching
+  // the end of the list, not "all required answered" — so a trailing optional
+  // question is shown and answerable rather than skipped when the last required
+  // answer auto-completes the cycle (FR-FORM-04).
   const [currentIndex, setCurrentIndex] = useState(() =>
-    firstUnansweredRequiredQuestion(questions, savedAnswers) === null
-      ? questions.length
-      : findResumeIndex(questions, savedAnswers),
+    findResumeIndex(questions, savedAnswers),
   );
 
   const currentQuestion: Question | null =
@@ -136,7 +134,7 @@ export function FormFlow({
     return <EmptyState title={t.formEmptyTitle} body={t.formEmptyBody} />;
   }
 
-  if (done || currentQuestion === null) {
+  if (currentQuestion === null) {
     return <FormComplete />;
   }
 
@@ -183,7 +181,6 @@ export function FormFlow({
         });
         if (!result.ok) { setError(result.error); return; }
         setAnswers((prev) => ({ ...prev, [questionId]: value }));
-        if (result.done) { setDone(true); return; }
         setCurrentIndex((index) => index + 1);
       });
     } else {
@@ -200,7 +197,6 @@ export function FormFlow({
         });
         if (!result.ok) { setError(result.error); return; }
         setAnswers((prev) => ({ ...prev, [questionId]: text }));
-        if (result.done) { setDone(true); return; }
         setCurrentIndex((index) => index + 1);
       });
     }
@@ -225,7 +221,7 @@ export function FormFlow({
           <dt className="text-ink-muted">{t.deadline}</dt>
           <dd className="mt-[var(--space-1)] text-ink">
             {deadline.toISOString().slice(0, 10)} —{" "}
-            {formatDaysRemaining(daysRemaining, uk.cycles.overdue)}
+            {formatDaysRemaining(daysRemaining, uk.cycles.overdue, uk.cycles.lastDayToday)}
           </dd>
         </div>
       </dl>
@@ -277,8 +273,15 @@ export function FormFlow({
  */
 function FormComplete() {
   return (
-    <div className="mx-auto max-w-2xl px-[var(--space-9)] py-[var(--space-10)]">
-      <p className="text-[var(--text-base)] text-ink">{t.formComplete}</p>
+    <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center px-[var(--space-9)] py-[var(--space-10)]">
+      <div className="text-center">
+        <p className="text-[var(--text-xl)] font-[var(--weight-semibold)] text-ink">
+          {t.formCompleteTitle}
+        </p>
+        <p className="mt-[var(--space-4)] text-[var(--text-base)] text-ink-muted">
+          {t.formComplete}
+        </p>
+      </div>
     </div>
   );
 }

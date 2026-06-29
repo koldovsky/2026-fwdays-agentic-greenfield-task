@@ -20,7 +20,7 @@ export const SUMMARISER_RULES = [
   "Use ONLY the collected answers below. Never invent facts, numeric scores, ratings, or any detail that is not present in the answers.",
   "Never introduce a person's name or any individual who does not appear in the answers, and never output a surname, email, phone number, or Telegram handle.",
   "Write in Ukrainian, sentence case, calm and confidential tone, with no exclamation marks and no emoji.",
-  "Every quote must be copied VERBATIM from a single collected answer and attributed by that answer's questionId. Do not paraphrase a quote and do not merge text from different answers.",
+  "Every quote must be copied VERBATIM (character for character, no added quotation marks, no edits) from a single OPEN free-text answer, and attributed by that answer's questionId. Never quote a scale answer (it has no quotable text), never paraphrase, and never merge text from different answers. If no open answer supports a quote, return an empty quotes list.",
   "If the answers do not support a strength or growth area, leave that list shorter or empty rather than inventing one.",
   "Answer only by calling the report_summary tool.",
 ] as const;
@@ -58,7 +58,10 @@ export function buildSummariserUserPrompt(args: {
   const items = args.questions.map((q) => {
     const answer = args.answersById[q.id];
     const body = answer !== undefined && answer.length > 0 ? truncate(answer) : "(no answer)";
-    return `questionId: ${q.id}\nquestion: ${q.text}\nanswer: ${body}`;
+    // Mark scale answers as non-quotable so the model never attributes a quote
+    // to a question that has no free text.
+    const kind = q.type === "scale" ? " (scale answer — NOT quotable)" : "";
+    return `questionId: ${q.id}\nquestion: ${q.text}\nanswer${kind}: ${body}`;
   });
 
   return [

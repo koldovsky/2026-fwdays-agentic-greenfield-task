@@ -206,19 +206,28 @@ describe("saveAnswer", () => {
   // Cycle status not "collecting"
   // -------------------------------------------------------------------------
 
-  it("returns ok:false when the cycle status is 'done', with no write", async () => {
-    vi.mocked(db.cycle.findUnique).mockResolvedValue(
-      makeCycleRow({ status: "done" }),
+  it("accepts an answer for a trailing OPTIONAL question on a 'done' cycle (form is forward-only)", async () => {
+    // A cycle auto-completes when its required questions are answered; the
+    // optional q-scale-2 comes after them, so the form still shows it and the
+    // answer must save even though status is already "done".
+    vi.mocked(db.cycle.findUnique).mockResolvedValue(makeCycleRow({ status: "done" }));
+    vi.mocked(db.response.upsert).mockResolvedValue(makeResponseRow());
+    vi.mocked(db.answer.upsert).mockResolvedValue(
+      makeAnswerRow({ questionId: "q-scale-2", scaleValue: 10, text: null }),
     );
+    vi.mocked(db.answer.findMany).mockResolvedValue([
+      makeAnswerRow({ questionId: "q-scale", scaleValue: 1, text: null }),
+      makeAnswerRow({ questionId: "q-open", text: "done" }),
+      makeAnswerRow({ questionId: "q-scale-2", scaleValue: 10, text: null }),
+    ]);
 
     const result = await saveAnswer({
       token: VALID_TOKEN,
-      answer: { type: "open", questionId: "q-open", text: "hello" },
+      answer: { type: "scale", questionId: "q-scale-2", value: 10 },
     });
 
-    expect(result.ok).toBe(false);
-    expect(db.response.upsert).not.toHaveBeenCalled();
-    expect(db.answer.upsert).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(db.answer.upsert).toHaveBeenCalledTimes(1);
   });
 
   it("returns ok:false when the cycle status is 'expired', with no write", async () => {

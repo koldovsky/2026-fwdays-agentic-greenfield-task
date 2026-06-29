@@ -229,6 +229,40 @@ NFR-A11Y-02, NFR-SEC-01).
 - **THEN** the request is redirected to sign-in with the intended path as `next`, and no cycle data
   is rendered
 
+### Requirement: HR can delete a cycle
+
+The system SHALL let an authenticated HR manager delete a cycle in ANY status — including
+`expired` — after an explicit confirmation step. Deleting a cycle SHALL cascade to its dependent
+rows (the response and its answers, the AI dialog, the summary, and the usage rows) so no orphans
+remain, and SHALL remove only the targeted cycle. The action SHALL be HR-only and SHALL refuse an
+unauthenticated request; a missing or malformed cycle id SHALL resolve calmly (treated as already
+gone), never a stack trace or 500 (FR-CYCLE-06, NFR-SEC-01, NFR-OBS-01).
+
+#### Scenario: HR deletes a cycle after confirming
+
+- **GIVEN** an authenticated HR manager viewing a cycle in any status
+- **WHEN** they choose delete and confirm the explicit confirmation prompt
+- **THEN** the cycle and all its dependent rows (response, answers, dialog, summary, usage) are
+  removed, and HR is returned to the cycles list where the cycle no longer appears
+
+#### Scenario: Delete is confirmed, not one-click
+
+- **WHEN** HR triggers delete
+- **THEN** a confirmation step is shown first, and no cycle is deleted unless HR confirms
+
+#### Scenario: Delete requires an authenticated HR session
+
+- **GIVEN** an unauthenticated (or non-refreshable) request to the delete action
+- **WHEN** the request is made
+- **THEN** it is refused and no cycle is deleted
+
+#### Scenario: Deleting a nonexistent or malformed cycle id resolves calmly
+
+- **GIVEN** an authenticated HR manager
+- **WHEN** the delete action is invoked with a cycle id that does not exist or is malformed
+- **THEN** the action resolves calmly (the cycle is already gone) without a stack trace or 500, and
+  no other cycle is affected
+
 ## Exclusions
 
 - Cycle **creation deadline** is a calendar date only; time-of-day scheduling, timezone pickers, and
@@ -237,7 +271,8 @@ NFR-A11Y-02, NFR-SEC-01).
   relations, and coverage minimums are intentionally unsupported.
 - Cycle **editing after launch** (changing template, subject, or deadline) and **manual status
   override** are intentionally unsupported; the snapshot and lifecycle are authoritative.
-- **Cancelling, deleting, or reopening** a cycle is not in MVP scope.
+- **Cancelling or reopening** a cycle is not in MVP scope (deletion IS supported — see the
+  "HR can delete a cycle" requirement, FR-CYCLE-06).
 - **Respondent link delivery** (`/respond/[token]`, copy-link, expired-token page) is owned by the
   `link` capability; **answer capture, progress detail, and AI summary** are owned by `respond`,
   `form`, `ai-interview`, `results`, and `report` — not by `cycles`.

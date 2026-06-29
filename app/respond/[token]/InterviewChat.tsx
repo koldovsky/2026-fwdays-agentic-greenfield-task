@@ -134,13 +134,18 @@ export function InterviewChat({
     });
   }
 
-  // Greet on an empty history, exactly once. Deferred to a macrotask so the
-  // turn's setState calls do not run synchronously inside the effect.
+  // Greet on an empty history, exactly once. The de-dupe ref guard lives INSIDE
+  // the deferred callback (not the effect body) so React 19 Strict Mode's
+  // mount → cleanup → remount in dev — which clears the first timeout — still
+  // re-arms and fires the greeting on the second mount. setState runs in the
+  // macrotask, never synchronously inside the effect.
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
     if (initialMessages.length > 0) return;
-    const id = setTimeout(() => void runTurn(undefined, false), 0);
+    const id = setTimeout(() => {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      void runTurn(undefined, false);
+    }, 0);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -187,7 +192,7 @@ export function InterviewChat({
           <dt className="text-ink-muted">{t.deadline}</dt>
           <dd className="mt-[var(--space-1)] text-ink">
             {deadline.toISOString().slice(0, 10)} —{" "}
-            {formatDaysRemaining(daysRemaining, uk.cycles.overdue)}
+            {formatDaysRemaining(daysRemaining, uk.cycles.overdue, uk.cycles.lastDayToday)}
           </dd>
         </div>
       </dl>
@@ -244,7 +249,11 @@ export function InterviewChat({
       ) : null}
 
       {!complete && error === null ? (
-        <div className="mt-[var(--space-6)] flex items-end gap-[var(--space-5)]">
+        <div className="mt-[var(--space-6)] flex flex-col gap-[var(--space-3)]">
+          <p id="interview-hint" className="text-[var(--text-xs)] text-ink-muted">
+            {t.interviewInputHint}
+          </p>
+          <div className="flex items-end gap-[var(--space-5)]">
           <label htmlFor="interview-input" className="sr-only">
             {t.interviewInputLabel}
           </label>
@@ -260,6 +269,7 @@ export function InterviewChat({
             }}
             rows={2}
             disabled={streaming}
+            aria-describedby="interview-hint"
             placeholder={t.interviewInputLabel}
             className="focus-ring min-h-[44px] flex-1 resize-none rounded-[var(--radius-md)] border border-line-strong bg-paper px-[var(--space-6)] py-[var(--space-5)] text-[var(--text-base)] text-ink disabled:opacity-60"
           />
@@ -271,6 +281,7 @@ export function InterviewChat({
           >
             {streaming ? t.interviewSending : t.interviewSend}
           </button>
+          </div>
         </div>
       ) : null}
     </div>

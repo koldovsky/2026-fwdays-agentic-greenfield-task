@@ -9,7 +9,7 @@ import { getCurrentHrUser } from "@/app/(cabinet)/current-user";
 import { snapshotSchema } from "@/lib/cycles/snapshot";
 import { summarise } from "@/lib/ai/summary/summarise";
 import { MAX_ANSWER_CHARS_IN_PROMPT } from "@/lib/ai/summary/prompts";
-import { validateSummaryGrounding } from "@/lib/ai/summary/schema";
+import { pruneUngroundedQuotes } from "@/lib/ai/summary/schema";
 import { recordUsage } from "@/lib/ai/record-usage";
 
 const t = uk.cycles.report;
@@ -98,16 +98,22 @@ export async function draftSummary(input: unknown): Promise<DraftResult> {
     const result = await summarise({ questions: snapshot.questions, answersById: promptAnswers, subjectFirstName });
     if (result === null) return { ok: false, error: t.draftFailed };
 
+    // Keep the report; drop only quotes that are not verbatim-grounded (e.g. a
+    // lightly-edited quote or one attributed to a scale question). A fabricated
+    // quote is still never persisted (FR-REPORT-02).
     const validIds = new Set(snapshot.questions.map((q) => q.id));
-    const grounding = validateSummaryGrounding(result.summary, validIds, groundingAnswers);
-    if (!grounding.ok) {
-      console.warn(`[report] grounding rejected for cycle ${cycleId}: ${grounding.reason}`);
-      return { ok: false, error: t.draftFailed };
+    const { summary: groundedSummary, dropped } = pruneUngroundedQuotes(
+      result.summary,
+      validIds,
+      groundingAnswers,
+    );
+    if (dropped.length > 0) {
+      console.warn(`[report] dropped ${dropped.length} ungrounded quote(s) for cycle ${cycleId}`);
     }
 
     try {
       await db.summary.create({
-        data: { cycleId, model: result.model, content: result.summary },
+        data: { cycleId, model: result.model, content: groundedSummary },
       });
     } catch (error) {
       // Lost the persist race — another draft already stored a summary.

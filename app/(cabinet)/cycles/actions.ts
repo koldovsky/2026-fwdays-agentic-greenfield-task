@@ -9,7 +9,7 @@ import { buildTemplateSnapshot } from "@/lib/cycles/snapshot";
 import { generateCycleToken } from "@/lib/cycles/link-token";
 import { getCurrentHrUser } from "@/app/(cabinet)/current-user";
 import { uk } from "@/lib/i18n/uk";
-import type { z } from "zod";
+import { z } from "zod";
 
 /**
  * Create-cycle action result — typed, never a raw throw (TC-VALID-01).
@@ -157,5 +157,47 @@ export async function createCycle(formData: FormData): Promise<CreateCycleResult
     return { ok: true, id: cycleId };
   } catch {
     return { ok: false, fieldErrors: {}, error: uk.cycles.createFailed };
+  }
+}
+
+/** True when the throw is Prisma's "record to delete does not exist". */
+function isPrismaP2025(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025"
+  );
+}
+
+const deleteCycleInputSchema = z.object({ cycleId: z.string().min(1).max(60) });
+
+export type DeleteCycleResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Delete a cycle in any status, HR-only (FR-CYCLE-06). The dependent rows
+ * (response + answers, dialog, summary, usage) are removed by the schema's
+ * onDelete: Cascade, so no orphans remain, and only the targeted cycle id is
+ * affected. Never throws: a missing/already-deleted cycle resolves calmly as
+ * success (it is gone, which is the desired end state); any other failure
+ * returns a typed error. The caller confirms before invoking and redirects to
+ * the cycles list on success.
+ */
+export async function deleteCycle(input: unknown): Promise<DeleteCycleResult> {
+  const hrUser = await getCurrentHrUser();
+  if (hrUser === null) return { ok: false, error: uk.cycles.deleteFailed };
+
+  const parsed = deleteCycleInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: uk.cycles.deleteFailed };
+
+  try {
+    await db.cycle.delete({ where: { id: parsed.data.cycleId } });
+    revalidatePath("/cycles");
+    return { ok: true };
+  } catch (error) {
+    // Already gone is the desired end state — treat as success (idempotent).
+    if (isPrismaP2025(error)) {
+      revalidatePath("/cycles");
+      return { ok: true };
+    }
+    console.error("[cycles] deleteCycle failed", error);
+    return { ok: false, error: uk.cycles.deleteFailed };
   }
 }

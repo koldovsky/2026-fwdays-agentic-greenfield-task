@@ -11,6 +11,7 @@ import { CopyLinkButton } from "./CopyLinkButton";
 import { LiveProgress } from "./LiveProgress";
 import { QuestionDialog } from "./QuestionDialog";
 import { ReportSection } from "./ReportSection";
+import { DeleteCycleButton } from "./DeleteCycleButton";
 
 const t = uk.cycles;
 
@@ -46,7 +47,7 @@ export default async function CycleDetailPage({ params }: Props) {
   }
 
   const statusLabel = t.status[results.status];
-  const deadlineText = formatDaysRemaining(results.daysRemaining, t.overdue);
+  const deadlineText = formatDaysRemaining(results.daysRemaining, t.overdue, t.lastDayToday);
   const deadlineDate = results.deadline.toISOString().slice(0, 10);
 
   return (
@@ -98,6 +99,10 @@ export default async function CycleDetailPage({ params }: Props) {
         </section>
 
         <ReportSection cycleId={results.id} isDone={results.status === "done"} summary={summary} />
+
+        <div className="border-t border-line-soft pt-[var(--space-7)]">
+          <DeleteCycleButton cycleId={results.id} />
+        </div>
       </div>
     </>
   );

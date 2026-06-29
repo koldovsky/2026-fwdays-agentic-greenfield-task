@@ -28,7 +28,7 @@ verification loop). They are enforced by `AGENTS.md` + the verification gates.
 | 1  | shell | `add-cabinet-shell` | FR-AUTH-01..05, FR-SHELL-01..03 | 0 | — | Sign-in + httpOnly access/refresh cookies; HR cabinet layout (sidebar + sticky header) and the separate respondent shell. |
 | 2a | directory | `add-employee-directory` | FR-DIR-01..04 | 0, 1 | 2b | Add/list/edit/archive employees; name+email required. |
 | 2b | templates | `add-templates` | FR-TPL-01..03 | 0, 1 | 2a | Seeded read-only templates (scale + open questions); respondent preview. |
-| 3  | cycles | `add-cycles` | FR-CYCLE-01..05 | 2a, 2b | — | Create + launch a cycle (subject + template snapshot + deadline + status). |
+| 3  | cycles | `add-cycles` | FR-CYCLE-01..06 | 2a, 2b | — | Create + launch a cycle (subject + template snapshot + deadline + status); HR delete with cascade. |
 | 4  | link | `add-respondent-link` | FR-LINK-01..03 | 3 | — | Private `/respond/[token]`; copy link; expired/unknown token page. |
 | 5  | respond | `add-respond-entry` | FR-RESP-01..03 | 4, 2b | — | Intro + confidentiality, mode choice, and the **shared per-question answer-write** (FR-RESP-03) that form & interview both reuse. |
 | 6a | form | `add-web-form` | FR-FORM-01..04 | 5 | 6b | Paged form, scale/open controls, per-section autosave, resumable. |
@@ -93,7 +93,7 @@ graph TD
 - `shell` (→ slices `auth` + `cabinet-shell`) → FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-04, FR-AUTH-05, FR-SHELL-01, FR-SHELL-02, FR-SHELL-03
 - `directory` → FR-DIR-01, FR-DIR-02, FR-DIR-03, FR-DIR-04
 - `templates` → FR-TPL-01, FR-TPL-02, FR-TPL-03
-- `cycles` → FR-CYCLE-01, FR-CYCLE-02, FR-CYCLE-03, FR-CYCLE-04, FR-CYCLE-05
+- `cycles` → FR-CYCLE-01, FR-CYCLE-02, FR-CYCLE-03, FR-CYCLE-04, FR-CYCLE-05, FR-CYCLE-06
 - `link` → FR-LINK-01, FR-LINK-02, FR-LINK-03
 - `respond` → FR-RESP-01, FR-RESP-02, FR-RESP-03
 - `form` → FR-FORM-01, FR-FORM-02, FR-FORM-03, FR-FORM-04

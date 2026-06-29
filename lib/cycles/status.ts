@@ -7,29 +7,38 @@
 
 export type CycleStatus = "collecting" | "done" | "expired";
 
+const ONE_DAY_MS = 86_400_000;
+
+/** Midnight (UTC) of a date's calendar day, as an epoch ms. */
+function utcMidnight(date: Date): number {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+/**
+ * Whole CALENDAR days from today to the deadline day, deadline-day inclusive:
+ * the deadline date minus today's date. > 0 = days left; 0 = deadline is today
+ * (still open); < 0 = the deadline day has passed. Deadlines are date-only
+ * (stored at UTC midnight), so this compares dates, not instants — a deadline
+ * "tomorrow" is 1, never 0, fixing the old partial-day floor that read a
+ * next-day deadline as overdue.
+ */
+export function daysRemaining(deadline: Date, now: Date): number {
+  return Math.round((utcMidnight(deadline) - utcMidnight(now)) / ONE_DAY_MS);
+}
+
 /**
  * Derive the current status of a cycle:
  * - done:       completedAt is set (regardless of deadline — done stays done)
- * - expired:    not completed and now > deadline
- * - collecting: not completed and deadline is still in the future
+ * - expired:    not completed and the deadline day has fully passed (< 0 days)
+ * - collecting: not completed and the deadline is today or later (>= 0 days)
  */
 export function deriveStatus(
   { completedAt, deadline }: { completedAt: Date | null; deadline: Date },
   now: Date,
 ): CycleStatus {
   if (completedAt !== null) return "done";
-  if (now > deadline) return "expired";
+  if (daysRemaining(deadline, now) < 0) return "expired";
   return "collecting";
-}
-
-/**
- * Whole days from `now` to `deadline`.
- * Positive for a future deadline; zero or negative for a past/today deadline
- * (overdue indicator). Uses Math.floor so a partial-day remainder is NOT
- * counted as a remaining day — the test asserts <= 0 for past deadlines.
- */
-export function daysRemaining(deadline: Date, now: Date): number {
-  return Math.floor((deadline.getTime() - now.getTime()) / 86_400_000);
 }
 
 /**

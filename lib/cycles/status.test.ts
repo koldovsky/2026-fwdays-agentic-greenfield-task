@@ -56,6 +56,25 @@ describe("deriveStatus", () => {
   });
 });
 
+describe("deriveStatus — deadline-day inclusive boundary", () => {
+  const today = new Date("2026-06-29T08:31:00.000Z");
+  const todayDeadline = new Date("2026-06-29T00:00:00.000Z"); // due today
+  const tomorrowDeadline = new Date("2026-06-30T00:00:00.000Z"); // due tomorrow
+  const yesterdayDeadline = new Date("2026-06-28T00:00:00.000Z"); // day passed
+
+  it("a deadline due TODAY is still collecting (not expired)", () => {
+    expect(deriveStatus({ completedAt: null, deadline: todayDeadline }, today)).toBe("collecting");
+  });
+
+  it("a deadline due TOMORROW is collecting", () => {
+    expect(deriveStatus({ completedAt: null, deadline: tomorrowDeadline }, today)).toBe("collecting");
+  });
+
+  it("a deadline whose day has fully passed is expired", () => {
+    expect(deriveStatus({ completedAt: null, deadline: yesterdayDeadline }, today)).toBe("expired");
+  });
+});
+
 describe("daysRemaining", () => {
   it("is positive for a future deadline", () => {
     expect(daysRemaining(FUTURE, NOW)).toBeGreaterThan(0);
@@ -63,6 +82,13 @@ describe("daysRemaining", () => {
 
   it("is <= 0 (overdue) for a past deadline", () => {
     expect(daysRemaining(PAST, NOW)).toBeLessThanOrEqual(0);
+  });
+
+  it("counts whole calendar days, deadline-day inclusive (tomorrow = 1, not 0)", () => {
+    const today = new Date("2026-06-29T20:00:00.000Z");
+    expect(daysRemaining(new Date("2026-06-30T00:00:00.000Z"), today)).toBe(1);
+    expect(daysRemaining(new Date("2026-06-29T00:00:00.000Z"), today)).toBe(0);
+    expect(daysRemaining(new Date("2026-06-28T00:00:00.000Z"), today)).toBe(-1);
   });
 });
 

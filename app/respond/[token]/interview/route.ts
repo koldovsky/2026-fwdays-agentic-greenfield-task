@@ -189,12 +189,23 @@ export async function POST(
   const askedQuestionId = turn.kind === "complete" ? undefined : turn.question.id;
   const assistantKind = turn.kind === "greeting" ? "greeting" : turn.kind === "ask" ? "question" : turn.kind;
 
+  // The streamer MUST see the respondent's current reply (appended here),
+  // otherwise it answers the PREVIOUS turn — e.g. declining an earlier
+  // off-topic message after the respondent has already given a valid answer.
+  const transcriptForPrompt =
+    userMessage !== null ? [...transcript, userMessage] : transcript;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let fullText = "";
       try {
-        const ai = streamInterviewerReply({ questions, transcript, subjectFirstName, turn });
+        const ai = streamInterviewerReply({
+          questions,
+          transcript: transcriptForPrompt,
+          subjectFirstName,
+          turn,
+        });
         ai.on("text", (delta) => {
           fullText += delta;
           controller.enqueue(encoder.encode(delta));

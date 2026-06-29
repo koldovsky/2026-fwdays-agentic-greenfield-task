@@ -12,10 +12,25 @@ model×purpose, EmptyState + ErrorState); `lib/nav` + `nav-icons` extended with 
 9 new unit tests (record-usage.test.ts). 237 tests total. 3 findings deferred to security backlog
 (SEC-BL-08 float precision, SEC-BL-09 single-layer auth, SEC-BL-10 cycleId ownership).
 
-**Last action:** 2026-06-29 — manual AI slices ALL DONE + reviewed: `ai-interview`, `results`,
-`report`. 300 tests, lint/tsc/build green. NOT yet committed (one combined commit pending the
-user's go). Set `ANTHROPIC_API_KEY` in `.env.local` to run the interview/summary live + `npm run
-eval:ai`.
+**Last action:** 2026-06-29 — post-demo fix batch (6 items), 309 tests + lint/tsc/build green,
+NOT yet committed (AI slices commit `91dea7f` is in; this batch is uncommitted):
+1. AI-interview chat input now shows a hint/example (placeholder + helper line).
+2. Form completion screen made a clear centered calm "thank you" (FR-FORM-04), no exclamation.
+3. **Delete cycle (FR-CYCLE-06, new — added to PRD + cycles spec):** HR-only `deleteCycle` action
+   (cascade via schema onDelete), confirm `Dialog`, redirect to list. P2025 → idempotent success.
+4. **Deadline off-by-one bug fixed:** `daysRemaining`/`deriveStatus` now count whole CALENDAR days,
+   deadline-day INCLUSIVE (a "tomorrow" deadline no longer floors to 0 and reads "Прострочено").
+   `formatDaysRemaining` gained a `todayLabel` (0 days = "Сьогодні останній день", only <0 overdue).
+5. **Report grounding too strict bug fixed:** policy changed (report spec FR-REPORT-02 updated) from
+   "one bad quote rejects the whole summary" → `pruneUngroundedQuotes` drops ungrounded quotes,
+   keeps the report; summariser prompt now forbids quoting scale answers + demands verbatim.
+6. **Form ended before a trailing OPTIONAL question:** FormFlow now walks ALL questions
+   (findResumeIndex), completes only at the end; `saveAnswer` accepts answers on a `done` cycle
+   (form is forward-only, no edits) so the optional tail is reachable. (Q5 stays optional — not
+   counted toward required progress, by design.)
+
+Earlier: manual AI slices ALL DONE + reviewed: `ai-interview`, `results`, `report` (commit
+`91dea7f`). Set `ANTHROPIC_API_KEY` in `.env.local` for live interview/summary + `npm run eval:ai`.
 
 **results (FR-PROGRESS-01..03) — DONE (manual), reviewed clean.** Pure `lib/cycles/progress.ts`
 (answered = required questions with a VALID answer — fixes `listCycles`' old raw `_count` bug that

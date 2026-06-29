@@ -21,6 +21,7 @@
     "FR-CYCLE-03": "MVP",
     "FR-CYCLE-04": "MVP",
     "FR-CYCLE-05": "MVP",
+    "FR-CYCLE-06": "MVP",
     "FR-LINK-01": "MVP",
     "FR-LINK-02": "MVP",
     "FR-LINK-03": "MVP",
@@ -273,6 +274,15 @@
     },
     {
       "id": "FR-CYCLE-05",
+      "specs": [
+        "openspec/specs/cycles/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CYCLE-06",
       "specs": [
         "openspec/specs/cycles/spec.md"
       ],
@@ -648,6 +658,10 @@
     },
     {
       "check": "test-trace",
+      "msg": "FR-CYCLE-06 has no test annotated \"@trace FR-CYCLE-06\""
+    },
+    {
+      "check": "test-trace",
       "msg": "FR-LINK-01 has no test annotated \"@trace FR-LINK-01\""
     },
     {
@@ -845,6 +859,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-CYCLE-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CYCLE-06 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

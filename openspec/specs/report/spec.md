@@ -19,9 +19,15 @@ serif document per the design brief; raw answers and AI dialogs stay private to 
 Every verbatim quote in the summary SHALL be attributed by the **stable question id** taken
 from the cycle's template snapshot (FR-TPL-02, FR-CYCLE-03) — never by free-text question
 wording, position, or label. The structured-summary Zod schema SHALL require each quote to
-carry exactly this `questionId`, and a quote whose `questionId` does not match a question id
-present in the cycle's snapshot SHALL fail validation. This single key is the only
-machine-checkable attribution rule for the whole capability (FR-REPORT-02, FR-REPORT-04).
+carry exactly this `questionId`. A quote whose `questionId` does not match a question id
+present in the cycle's snapshot — or whose text is not verbatim in that question's answer —
+SHALL be DROPPED from the persisted summary rather than rejecting the whole report; the
+strengths, growth areas, and every remaining grounded quote are still stored, and the
+dropped quotes are logged server-side. A fabricated or mis-attributed quote is therefore
+never persisted, while a model that lightly edits one quote (or attributes one to a scale
+question, which has no quotable text) does not sink the entire summary. This single key is
+the only machine-checkable attribution rule for the whole capability (FR-REPORT-02,
+FR-REPORT-04).
 
 #### Scenario: Quote attribution uses the snapshot question id
 
@@ -31,13 +37,16 @@ machine-checkable attribution rule for the whole capability (FR-REPORT-02, FR-RE
   that cycle's template snapshot, and attribution is verified solely by matching that
   `questionId` against the snapshot — never by comparing free-text question wording
 
-#### Scenario: Quote with an unknown question id fails validation
+#### Scenario: Quote with an unknown or non-verbatim question id is dropped, the report is kept
 
-- **GIVEN** model output containing a quote whose `questionId` is not one of the cycle
-  snapshot's question ids
-- **WHEN** the structured-summary Zod schema parses the output
-- **THEN** the parse is rejected at the boundary, no summary is persisted, and HR sees the
-  calm "could not draft the summary, try again" state
+- **GIVEN** model output containing one quote whose `questionId` is not one of the cycle
+  snapshot's question ids (or whose text is not verbatim in that answer) alongside other
+  valid content
+- **WHEN** the summary is grounded before persisting
+- **THEN** only the ungrounded quote is dropped (and logged server-side); the strengths,
+  growth areas, and remaining grounded quotes are persisted, so a single bad quote never
+  sinks the whole report. (A summary whose overall SHAPE fails the Zod schema is still
+  rejected with no summary persisted, per the grounded-summary requirement below.)
 
 ### Requirement: HR triggers Draft summary with inline progress
 
