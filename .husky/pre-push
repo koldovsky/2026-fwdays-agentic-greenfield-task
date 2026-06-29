@@ -1,0 +1,4 @@
+# Guard the push: docs must be in sync, and the test suite must be green.
+# Same gates CI runs — surface failures here, not from a red CI run.
+npm run docs:check || exit 1
+npm test || exit 1

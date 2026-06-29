@@ -1,0 +1,46 @@
+schema: spec-driven
+
+# `context` is injected into EVERY artifact prompt (proposal/specs/design/tasks/apply).
+# Keep it tight — this is the invariant contract the generated artifacts MUST honor.
+# Full detail lives in AGENTS.md + docs/; this is the distilled, non-negotiable subset.
+context: |
+  Product: Telegram bot = personal cutting/nutrition coach. Onboards a user, computes
+  calorie/macro targets, logs food (text + plate photo), logs body metrics, and produces
+  daily/weekly/monthly reviews. Postgres = source of truth; Notion = best-effort mirror.
+
+  Stack: TypeScript + Node.js, NO framework (RAM-constrained host) · grammY (Telegram) ·
+  Prisma + PostgreSQL · Anthropic API (Sonnet 4.6, raw API + tool-use, NO agent loop) ·
+  node-cron · Notion SDK. CI builds the image off-box → GHCR; Coolify only pulls/runs.
+
+  Non-negotiable invariants — any spec/design/task that violates one is wrong:
+  1. DB is the memory. Never reconstruct facts/totals from chat history; read via SQL.
+  2. Totals = SUM of food_log rows, computed in code. The LLM writes prose only, never numbers.
+  3. Every food entry tagged source = fact | estimate (catalog match = fact, else estimate ±20-30%).
+  4. Images are NEVER persisted — stream to the model, discard. No disk/DB/storage write.
+  5. No agent loop — deterministic single LLM calls w/ structured output / tool-use; cache the stable system prefix.
+  6. Mirror the user's language (RU/UA/EN/mixed) in PROSE only; DB fields, enums, literals stay English (meal:"lunch").
+  7. Memory caps are sacred: bot <=512MB, Postgres <=256MB. Build off-box; never run npm install/tsc on the server.
+  8. Multi-tenancy: every domain row carries user_id; the service layer enforces the filter. users keyed on Telegram chat_id.
+  9. Privacy: secrets in env only, never in the DB; don't log raw body/progress values.
+
+  Authoritative docs: docs/prd.md (US-1..US-10 + success metrics), docs/requirements.md
+  (architecture, data model, core flows §8), docs/review-templates.md (exact review output
+  specs), docs/adr/ (stack decision records — add one for any significant/reversed decision).
+
+# `rules` are injected ONLY into the matching artifact's prompt.
+rules:
+  proposal:
+    - Name the user stories (US-#) this change serves; tie the Why to PRD goals/metrics.
+    - Flag which non-negotiable invariants the change touches and how it stays compliant.
+    - Call out memory-cap and LLM-cost impact under Impact (host is RAM-tight; cost is a design constraint).
+  specs:
+    - Every invariant the change touches gets an explicit, testable scenario (e.g. totals==SUM, fact-vs-estimate tagging, images-never-persisted, date back-dating on "вчера").
+    - Keep DB fields, enum values, and meal/source literals in English even when prose mirrors the user's language.
+  design:
+    - State the memory footprint and confirm build-off-box (CI -> GHCR; no build steps on the production host).
+    - Justify every LLM call: single deterministic call, structured output / tool-use, prompt-cache the stable system prefix — no agent loop.
+    - Add or cite an ADR in docs/adr/ for any significant or reversed architectural decision.
+  tasks:
+    - Add a verification task per touched invariant (test/eval: SUM totals, fact/estimate tag, image-never-on-disk, "вчера" back-dating).
+    - Final task is always - hand the diff to a SEPARATE reviewer subagent (the `review` skill: Standards + Spec axes) before commit. Maker != checker; no self-approval.
+    - Keep each task to <= one session; order by dependency.

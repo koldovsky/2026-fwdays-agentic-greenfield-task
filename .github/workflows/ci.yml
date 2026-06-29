@@ -1,0 +1,45 @@
+name: CI
+
+# Quality guardrails for every change. Runs on PRs into main and on pushes to main.
+# Build → GHCR → Coolify deploy is a separate workflow that lands with M0 (needs src/ +
+# Dockerfile, which don't exist yet) — see docs/adr/0006-build-off-box-ghcr.md.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint · Format · Docs · Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Docs sync
+        run: npm run docs:check
+
+      - name: Test
+        run: npm test
+
+      # `npm run typecheck` is intentionally omitted until src/ exists (tsc errors TS18003 with
+      # no inputs). Add it here in the same M0 change that adds the first src/**/*.ts.

@@ -1,0 +1,12 @@
+{
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "caveman@caveman": true,
+    "claude-md-management@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/statusline.mjs\""
+  }
+}
