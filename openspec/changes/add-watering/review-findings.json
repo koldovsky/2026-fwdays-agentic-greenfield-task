@@ -1,0 +1,39 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-watering",
+  "change": "add-watering",
+  "baseRef": "50cfb66",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 3,
+      "contested": 1,
+      "rejected": 0
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "Exported getWatering query is unused dead code",
+    "Note textarea has no maxLength, allowing large payloads to round-trip",
+    "Transitive moderate vuln: postcss XSS (via Next.js) — informational",
+    "\"Reject a missing date\" scenario is not enforced — empty date always defaults to today, never errors",
+    "WateringForm hardcodes field ids `wateredOn`/`note`, producing duplicate DOM ids when multiple rows + add form render — contradicts design R7 \"namespaced field ids\"",
+    "Inline error replaces the field hint in aria-describedby instead of appending — hint is no longer announced when an error shows"
+  ],
+  "clean": false,
+  "generatedAt": "2026-06-29T15:55:43Z"
+}

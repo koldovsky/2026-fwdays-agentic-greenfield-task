@@ -22,6 +22,7 @@ import {
   createWateringAction,
   updateWateringAction,
 } from "@/lib/watering/actions";
+import { NOTE_MAX_LEN } from "@/lib/watering/validation";
 
 export interface WateringFormDefaults {
   wateredOn?: string;
@@ -50,6 +51,14 @@ export function WateringForm({
 }: WateringFormProps) {
   const isEdit = id != null;
   const router = useRouter();
+
+  // Namespace field ids per form instance so the always-present add form and any
+  // number of inline edit forms can coexist on /plants/[id] without duplicate DOM
+  // ids breaking label[for]/aria-describedby association (design R7). The add form
+  // is "new"; an edit form is scoped by its watering id.
+  const scope = isEdit ? `watering-${id}` : "watering-new";
+  const dateFieldId = `${scope}-wateredOn`;
+  const noteFieldId = `${scope}-note`;
 
   async function action(
     _prev: ActionResult | undefined,
@@ -82,60 +91,71 @@ export function WateringForm({
   const dateValue = failed?.values?.wateredOn ?? defaults?.wateredOn ?? today;
   const noteValue = failed?.values?.note ?? defaults?.note ?? "";
 
+  // When a field has both a hint and an error, reference BOTH ids so assistive
+  // tech keeps announcing the format/constraint hint alongside the error (append,
+  // not replace).
+  const dateDescribedBy = dateError
+    ? `${dateFieldId}-error ${dateFieldId}-hint`
+    : `${dateFieldId}-hint`;
+  const noteDescribedBy = noteError
+    ? `${noteFieldId}-error ${noteFieldId}-hint`
+    : `${noteFieldId}-hint`;
+
   return (
     <form action={formAction} className="max-w-md" noValidate>
       <FormErrorBanner message={formErr} />
 
       <div className="mt-3">
         <label
-          htmlFor="wateredOn"
+          htmlFor={dateFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.watering.wateredOnLabel}
         </label>
         <input
-          id="wateredOn"
+          id={dateFieldId}
           name="wateredOn"
           type="date"
           max={today}
           defaultValue={dateValue}
           aria-invalid={dateError ? true : undefined}
-          aria-describedby={dateError ? "wateredOn-error" : "wateredOn-hint"}
+          aria-describedby={dateDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <p
-          id="wateredOn-hint"
+          id={`${dateFieldId}-hint`}
           className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
         >
           {uk.watering.wateredOnHint}
         </p>
-        <FieldError id="wateredOn" message={dateError} />
+        <FieldError id={dateFieldId} message={dateError} />
       </div>
 
       <div className="mt-3">
         <label
-          htmlFor="note"
+          htmlFor={noteFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.watering.noteLabel}
         </label>
         <textarea
-          id="note"
+          id={noteFieldId}
           name="note"
           rows={2}
+          maxLength={NOTE_MAX_LEN}
           placeholder={uk.watering.notePlaceholder}
           defaultValue={noteValue}
           aria-invalid={noteError ? true : undefined}
-          aria-describedby={noteError ? "note-error" : "note-hint"}
+          aria-describedby={noteDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <p
-          id="note-hint"
+          id={`${noteFieldId}-hint`}
           className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
         >
           {uk.watering.noteHint}
         </p>
-        <FieldError id="note" message={noteError} />
+        <FieldError id={noteFieldId} message={noteError} />
       </div>
 
       <div className="mt-4 flex gap-3">

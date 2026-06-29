@@ -93,14 +93,19 @@ describe("<PlantForm> — failed submit shows + repopulates (FR-SHELL-03)", () =
 
     await user.click(screen.getByRole("button", { name: uk.plants.save }));
 
-    // The per-field FieldError renders the Ukrainian message via role=alert.
+    // The per-field FieldError renders the Ukrainian message via role=alert. Ids
+    // are namespaced per form instance (the add form is the "plant-new" scope) so
+    // the pattern matches the watering/measurement forms (design R7).
     const fieldError = await screen.findByText(
       uk.plants.fieldErrors.nameRequired,
     );
-    // Associated via the {id}-error convention so the input aria-describedby it.
-    expect(fieldError).toHaveAttribute("id", "name-error");
+    expect(fieldError).toHaveAttribute("id", "plant-new-name-error");
+    // The name field has no hint, so its describedby is just the error id.
     await waitFor(() =>
-      expect(nameInput).toHaveAttribute("aria-describedby", "name-error"),
+      expect(nameInput).toHaveAttribute(
+        "aria-describedby",
+        "plant-new-name-error",
+      ),
     );
     expect(nameInput).toHaveAttribute("aria-invalid", "true");
 
@@ -126,5 +131,57 @@ describe("<PlantForm> — failed submit shows + repopulates (FR-SHELL-03)", () =
     await user.click(screen.getByRole("button", { name: uk.plants.save }));
 
     expect(await screen.findByText(uk.errors.generic)).toBeInTheDocument();
+  });
+});
+
+describe("<PlantForm> — namespaced field ids avoid DOM-id collisions (design R7)", () => {
+  it("scopes field ids per instance so an add form + an edit form do not collide", () => {
+    const { container } = render(
+      <div>
+        <PlantForm />
+        <PlantForm
+          id={9}
+          defaults={{ name: "Фікус", species: "Кактус", acquiredDate: "" }}
+        />
+      </div>,
+    );
+
+    const ids = Array.from(container.querySelectorAll("[id]")).map(
+      (el) => el.id,
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+
+    expect(container.querySelector("#plant-new-name")).not.toBeNull();
+    expect(container.querySelector("#plant-9-name")).not.toBeNull();
+  });
+
+  it("keeps the hint id in aria-describedby alongside the error id when a hinted field errors", async () => {
+    const user = userEvent.setup();
+    createPlantAction.mockResolvedValue({
+      ok: false,
+      fieldErrors: { species: uk.plants.fieldErrors.speciesTooLong },
+      values: { name: "Фікус", species: "x", acquiredDate: "" },
+    });
+
+    render(<PlantForm />);
+    await user.type(
+      screen.getByRole("textbox", { name: uk.plants.nameLabel }),
+      "Фікус",
+    );
+    await user.click(screen.getByRole("button", { name: uk.plants.save }));
+
+    const speciesInput = screen.getByRole("textbox", {
+      name: uk.plants.speciesLabel,
+    });
+    await waitFor(() =>
+      expect(speciesInput).toHaveAttribute(
+        "aria-describedby",
+        "plant-new-species-error plant-new-species-hint",
+      ),
+    );
+    expect(
+      document.getElementById("plant-new-species-error"),
+    ).not.toBeNull();
+    expect(document.getElementById("plant-new-species-hint")).not.toBeNull();
   });
 });

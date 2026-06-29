@@ -32,7 +32,14 @@ export async function listWaterings(
     .all();
 }
 
-/** One watering by id, or undefined when it does not exist (not-found). */
+/**
+ * One watering by id, or undefined when it does not exist (not-found).
+ *
+ * Read/test helper: not wired into a production write path (edit/delete derive
+ * their not-found signal from UPDATE/DELETE returning/changes, not a prior
+ * read). Retained for a potential later slice and exercised by the watering
+ * integration/action tests — intentional, not an oversight.
+ */
 export async function getWatering(
   db: WateringDb,
   id: number,

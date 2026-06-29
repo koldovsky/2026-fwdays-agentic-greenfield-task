@@ -114,14 +114,20 @@ describe("<WateringForm> — failed submit shows + repopulates (FR-WATER-02, FR-
     await user.type(noteInput, "забагато");
     await user.click(screen.getByRole("button", { name: uk.watering.add }));
 
-    // The per-field FieldError renders the Ukrainian message.
+    // The per-field FieldError renders the Ukrainian message. Ids are namespaced
+    // per form instance (the add form is the "watering-new" scope) so a row's edit
+    // form on the same page never collides (design R7).
     const fieldError = await screen.findByText(
       uk.watering.fieldErrors.noteTooLong,
     );
-    // Associated via the {id}-error convention so the input aria-describedby it.
-    expect(fieldError).toHaveAttribute("id", "note-error");
+    expect(fieldError).toHaveAttribute("id", "watering-new-note-error");
+    // When an error shows, aria-describedby references BOTH the error and the hint
+    // so assistive tech keeps announcing the constraint hint (append, not replace).
     await waitFor(() =>
-      expect(noteInput).toHaveAttribute("aria-describedby", "note-error"),
+      expect(noteInput).toHaveAttribute(
+        "aria-describedby",
+        "watering-new-note-error watering-new-note-hint",
+      ),
     );
     expect(noteInput).toHaveAttribute("aria-invalid", "true");
 
@@ -147,7 +153,7 @@ describe("<WateringForm> — failed submit shows + repopulates (FR-WATER-02, FR-
     const fieldError = await screen.findByText(
       uk.watering.fieldErrors.dateFuture,
     );
-    expect(fieldError).toHaveAttribute("id", "wateredOn-error");
+    expect(fieldError).toHaveAttribute("id", "watering-new-wateredOn-error");
     const dateInput = screen.getByLabelText(
       uk.watering.wateredOnLabel,
     ) as HTMLInputElement;
@@ -166,5 +172,63 @@ describe("<WateringForm> — failed submit shows + repopulates (FR-WATER-02, FR-
     await user.click(screen.getByRole("button", { name: uk.watering.add }));
 
     expect(await screen.findByText(uk.errors.generic)).toBeInTheDocument();
+  });
+});
+
+describe("<WateringForm> — namespaced field ids avoid DOM-id collisions (design R7)", () => {
+  it("scopes field ids per instance so an add form + an edit form do not collide", () => {
+    const { container } = render(
+      <div>
+        {/* The always-present add form... */}
+        <WateringForm plantId={1} today={TODAY} />
+        {/* ...alongside an inline edit form for an existing row. */}
+        <WateringForm
+          plantId={1}
+          id={42}
+          today={TODAY}
+          defaults={{ wateredOn: "2026-06-01", note: "колись" }}
+        />
+      </div>,
+    );
+
+    // Every element id in the combined tree must be unique (duplicate ids break
+    // label[for] / aria-describedby association per the HTML spec).
+    const ids = Array.from(container.querySelectorAll("[id]")).map(
+      (el) => el.id,
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+
+    // The two instances expose distinct, scoped ids.
+    expect(container.querySelector("#watering-new-wateredOn")).not.toBeNull();
+    expect(container.querySelector("#watering-new-note")).not.toBeNull();
+    expect(container.querySelector("#watering-42-wateredOn")).not.toBeNull();
+    expect(container.querySelector("#watering-42-note")).not.toBeNull();
+  });
+
+  it("keeps the hint id in aria-describedby alongside the error id when an error shows", async () => {
+    const user = userEvent.setup();
+    createWateringAction.mockResolvedValue({
+      ok: false,
+      fieldErrors: { wateredOn: uk.watering.fieldErrors.dateFuture },
+      values: { wateredOn: "2999-01-01", note: "" },
+    });
+
+    render(<WateringForm plantId={1} today={TODAY} />);
+    await user.click(screen.getByRole("button", { name: uk.watering.add }));
+
+    const dateInput = screen.getByLabelText(uk.watering.wateredOnLabel);
+    await waitFor(() =>
+      expect(dateInput).toHaveAttribute(
+        "aria-describedby",
+        "watering-new-wateredOn-error watering-new-wateredOn-hint",
+      ),
+    );
+    // Both referenced ids resolve to real nodes.
+    expect(
+      document.getElementById("watering-new-wateredOn-error"),
+    ).not.toBeNull();
+    expect(
+      document.getElementById("watering-new-wateredOn-hint"),
+    ).not.toBeNull();
   });
 });

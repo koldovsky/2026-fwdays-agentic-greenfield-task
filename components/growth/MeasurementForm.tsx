@@ -51,6 +51,14 @@ export function MeasurementForm({
   const isEdit = id != null;
   const router = useRouter();
 
+  // Namespace field ids per form instance so the always-present add form and any
+  // number of inline edit forms can coexist on /plants/[id] without duplicate DOM
+  // ids breaking label[for]/aria-describedby association (design R7). The add form
+  // is "new"; an edit form is scoped by its measurement id.
+  const scope = isEdit ? `measurement-${id}` : "measurement-new";
+  const heightFieldId = `${scope}-heightCm`;
+  const dateFieldId = `${scope}-measuredOn`;
+
   async function action(
     _prev: ActionResult | undefined,
     formData: FormData,
@@ -82,19 +90,29 @@ export function MeasurementForm({
   const heightValue = failed?.values?.heightCm ?? defaults?.heightCm ?? "";
   const dateValue = failed?.values?.measuredOn ?? defaults?.measuredOn ?? today;
 
+  // When a field has both a hint and an error, reference BOTH ids so assistive
+  // tech keeps announcing the format/constraint hint alongside the error (append,
+  // not replace).
+  const heightDescribedBy = heightError
+    ? `${heightFieldId}-error ${heightFieldId}-hint`
+    : `${heightFieldId}-hint`;
+  const dateDescribedBy = dateError
+    ? `${dateFieldId}-error ${dateFieldId}-hint`
+    : `${dateFieldId}-hint`;
+
   return (
     <form action={formAction} className="max-w-md" noValidate>
       <FormErrorBanner message={formErr} />
 
       <div className="mt-3">
         <label
-          htmlFor="heightCm"
+          htmlFor={heightFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.growth.heightLabel}
         </label>
         <input
-          id="heightCm"
+          id={heightFieldId}
           name="heightCm"
           type="text"
           inputMode="decimal"
@@ -102,42 +120,42 @@ export function MeasurementForm({
           placeholder={uk.growth.heightPlaceholder}
           defaultValue={heightValue}
           aria-invalid={heightError ? true : undefined}
-          aria-describedby={heightError ? "heightCm-error" : "heightCm-hint"}
+          aria-describedby={heightDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <p
-          id="heightCm-hint"
+          id={`${heightFieldId}-hint`}
           className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
         >
           {uk.growth.heightHint}
         </p>
-        <FieldError id="heightCm" message={heightError} />
+        <FieldError id={heightFieldId} message={heightError} />
       </div>
 
       <div className="mt-3">
         <label
-          htmlFor="measuredOn"
+          htmlFor={dateFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.growth.measuredOnLabel}
         </label>
         <input
-          id="measuredOn"
+          id={dateFieldId}
           name="measuredOn"
           type="date"
           max={today}
           defaultValue={dateValue}
           aria-invalid={dateError ? true : undefined}
-          aria-describedby={dateError ? "measuredOn-error" : "measuredOn-hint"}
+          aria-describedby={dateDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <p
-          id="measuredOn-hint"
+          id={`${dateFieldId}-hint`}
           className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
         >
           {uk.growth.measuredOnHint}
         </p>
-        <FieldError id="measuredOn" message={dateError} />
+        <FieldError id={dateFieldId} message={dateError} />
       </div>
 
       <div className="mt-4 flex gap-3">

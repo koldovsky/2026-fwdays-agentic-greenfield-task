@@ -279,6 +279,21 @@ watering_events
   that renders the waterings section in isolation; the smoke flow confirms each
   section mutates only its own entity.
 
+## Known advisories
+
+- **PostCSS `<8.5.10` — GHSA-qx2v-qp2m-jg93 (moderate, accepted/transitive).**
+  Same disposition as slices 1-3 (app-shell, plants, growth). `npm audit` flags
+  PostCSS 8.4.31 with an XSS-via-unescaped-`</style>`-in-CSS-stringify advisory.
+  It is **transitive**: pulled in only through the nested
+  `node_modules/next/node_modules/postcss` of the pinned `next@16.2.9`; our own
+  top-level PostCSS (`@tailwindcss/postcss`) already resolves to a patched 8.5.x.
+  It is **not introduced by this slice** — add-watering adds no dependencies and
+  touches no CSS/PostCSS path — and is **not reachable here**: no user-controlled
+  CSS is stringified (only first-party Tailwind at build time). No non-breaking
+  fix exists (`npm audit fix` resolves nothing; the only `--force` path is a major
+  Next downgrade we do NOT apply). **Action:** accepted as a transitive advisory;
+  revisit and bump when a Next.js patch release depends on PostCSS `>=8.5.10`.
+
 ## Accepted limitations (MVP)
 
 - **No water amount.** A quantity (ml) is FR-WATER-06 (Future). Accepted: the

@@ -11,9 +11,9 @@ The system SHALL let the Owner log a watering event for a specific plant on a gi
 - **WHEN** the Owner picks a valid past calendar date with the native date picker and submits
 - **THEN** the value is stored as an ISO `YYYY-MM-DD` date in the local calendar (Europe/Kiev) with no time-of-day stored, a watering event is created for that plant on that date, and the date is displayed back as `DD.MM.YYYY` (FR-WATER-01, SC-1)
 
-#### Scenario: Reject a missing date
-- **WHEN** the Owner clears the date field and submits a value that cannot default
-- **THEN** an inline validation error is shown next to the date field, no watering event is created, and no raw 500 or silent failure occurs (SC-1, FR-SHELL-03)
+#### Scenario: Missing date defaults to today
+- **WHEN** the Owner clears (or never fills) the date field and submits
+- **THEN** the watering date defaults to today in the Owner's local calendar (Europe/Kiev), the watering event is created on that date, and no inline error, raw 500, or silent failure occurs — the date is required but a blank submission resolves to today rather than being rejected (FR-WATER-01, NFR-USA-03, SC-1)
 
 #### Scenario: Reject a value that is not a real calendar date
 - **WHEN** the Owner submits a date value that does not denote a real calendar date (e.g. "2026-13-40", "2026-02-30", or "not-a-date")
@@ -77,8 +77,9 @@ The system SHALL let the Owner edit an existing watering event's date and note p
 - **THEN** the watering event is updated to have no note (stored as `NULL`), the rest of the event unchanged (FR-WATER-04, FR-WATER-02)
 
 #### Scenario: Reject an invalid or future date on edit
-- **WHEN** the Owner clears the date, enters a value that does not denote a real calendar date (e.g. "2026-02-30"), or sets a date after today in Europe/Kiev while editing and saves
+- **WHEN** the Owner enters a value that does not denote a real calendar date (e.g. "2026-02-30"), or sets a date after today in Europe/Kiev while editing and saves
 - **THEN** an inline validation error is shown next to the date field, the original event is left unchanged, and no raw 500 occurs (SC-1, SC-2, NFR-DATA-02)
+- **AND** a cleared/blank date defaults to today in Europe/Kiev (the same default-to-today rule as logging, FR-WATER-01) rather than being rejected
 
 #### Scenario: Reject an over-length note on edit
 - **WHEN** the Owner edits a watering event's note to more than 500 characters and saves

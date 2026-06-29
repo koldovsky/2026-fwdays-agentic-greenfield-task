@@ -37,6 +37,16 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
   const isEdit = id != null;
   const router = useRouter();
 
+  // Namespace field ids per form instance (design R7). PlantForm renders one per
+  // page today (the new/edit routes), but scoping the ids keeps it consistent with
+  // the watering/measurement forms and forecloses a future collision if an add +
+  // edit form ever co-render on one page. The add form is "new"; an edit form is
+  // scoped by its plant id.
+  const scope = isEdit ? `plant-${id}` : "plant-new";
+  const nameFieldId = `${scope}-name`;
+  const speciesFieldId = `${scope}-species`;
+  const dateFieldId = `${scope}-acquiredDate`;
+
   async function action(
     _prev: ActionResult | undefined,
     formData: FormData,
@@ -74,19 +84,31 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
   const dateValue =
     failed?.values?.acquiredDate ?? defaults?.acquiredDate ?? "";
 
+  // The name field has no hint, so its describedby is just the error (or nothing).
+  // Species + acquired-date have hints: when an error shows, reference BOTH ids so
+  // assistive tech keeps announcing the hint alongside the error (append, not
+  // replace).
+  const nameDescribedBy = nameError ? `${nameFieldId}-error` : undefined;
+  const speciesDescribedBy = speciesError
+    ? `${speciesFieldId}-error ${speciesFieldId}-hint`
+    : `${speciesFieldId}-hint`;
+  const dateDescribedBy = dateError
+    ? `${dateFieldId}-error ${dateFieldId}-hint`
+    : `${dateFieldId}-hint`;
+
   return (
     <form action={formAction} className="max-w-md" noValidate>
       <FormErrorBanner message={formErr} />
 
       <div className="mt-3">
         <label
-          htmlFor="name"
+          htmlFor={nameFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.plants.nameLabel}
         </label>
         <input
-          id="name"
+          id={nameFieldId}
           name="name"
           type="text"
           required
@@ -94,62 +116,58 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           placeholder={uk.plants.namePlaceholder}
           defaultValue={nameValue}
           aria-invalid={nameError ? true : undefined}
-          aria-describedby={nameError ? "name-error" : undefined}
+          aria-describedby={nameDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
-        <FieldError id="name" message={nameError} />
+        <FieldError id={nameFieldId} message={nameError} />
       </div>
 
       <div className="mt-3">
         <label
-          htmlFor="species"
+          htmlFor={speciesFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.plants.speciesLabel}
         </label>
         <input
-          id="species"
+          id={speciesFieldId}
           name="species"
           type="text"
           maxLength={200}
           defaultValue={speciesValue}
           aria-invalid={speciesError ? true : undefined}
-          aria-describedby={
-            speciesError ? "species-error" : "species-hint"
-          }
+          aria-describedby={speciesDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
-        <p id="species-hint" className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p id={`${speciesFieldId}-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           {uk.plants.speciesHint}
         </p>
-        <FieldError id="species" message={speciesError} />
+        <FieldError id={speciesFieldId} message={speciesError} />
       </div>
 
       <div className="mt-3">
         <label
-          htmlFor="acquiredDate"
+          htmlFor={dateFieldId}
           className="block text-sm font-medium text-foreground"
         >
           {uk.plants.acquiredDateLabel}
         </label>
         <input
-          id="acquiredDate"
+          id={dateFieldId}
           name="acquiredDate"
           type="date"
           defaultValue={dateValue}
           aria-invalid={dateError ? true : undefined}
-          aria-describedby={
-            dateError ? "acquiredDate-error" : "acquiredDate-hint"
-          }
+          aria-describedby={dateDescribedBy}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <p
-          id="acquiredDate-hint"
+          id={`${dateFieldId}-hint`}
           className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
         >
           {uk.plants.acquiredDateHint}
         </p>
-        <FieldError id="acquiredDate" message={dateError} />
+        <FieldError id={dateFieldId} message={dateError} />
       </div>
 
       <button

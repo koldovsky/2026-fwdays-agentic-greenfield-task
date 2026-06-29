@@ -91,16 +91,19 @@ describe("<MeasurementForm> — failed submit shows + repopulates (FR-GROWTH-05,
     await user.type(heightInput, "abc");
     await user.click(screen.getByRole("button", { name: uk.growth.add }));
 
-    // The per-field FieldError renders the Ukrainian message.
+    // The per-field FieldError renders the Ukrainian message. Ids are namespaced
+    // per form instance (the add form is the "measurement-new" scope) so a row's
+    // edit form on the same page never collides (design R7).
     const fieldError = await screen.findByText(
       uk.growth.fieldErrors.heightInvalid,
     );
-    // Associated via the {id}-error convention so the input aria-describedby it.
-    expect(fieldError).toHaveAttribute("id", "heightCm-error");
+    expect(fieldError).toHaveAttribute("id", "measurement-new-heightCm-error");
+    // When an error shows, aria-describedby references BOTH the error and the hint
+    // so assistive tech keeps announcing the constraint hint (append, not replace).
     await waitFor(() =>
       expect(heightInput).toHaveAttribute(
         "aria-describedby",
-        "heightCm-error",
+        "measurement-new-heightCm-error measurement-new-heightCm-hint",
       ),
     );
     expect(heightInput).toHaveAttribute("aria-invalid", "true");
@@ -127,5 +130,60 @@ describe("<MeasurementForm> — failed submit shows + repopulates (FR-GROWTH-05,
     await user.click(screen.getByRole("button", { name: uk.growth.add }));
 
     expect(await screen.findByText(uk.errors.generic)).toBeInTheDocument();
+  });
+});
+
+describe("<MeasurementForm> — namespaced field ids avoid DOM-id collisions (design R7)", () => {
+  it("scopes field ids per instance so an add form + an edit form do not collide", () => {
+    const { container } = render(
+      <div>
+        <MeasurementForm plantId={1} today={TODAY} />
+        <MeasurementForm
+          plantId={1}
+          id={7}
+          today={TODAY}
+          defaults={{ heightCm: "12", measuredOn: "2026-06-01" }}
+        />
+      </div>,
+    );
+
+    const ids = Array.from(container.querySelectorAll("[id]")).map(
+      (el) => el.id,
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+
+    expect(
+      container.querySelector("#measurement-new-heightCm"),
+    ).not.toBeNull();
+    expect(container.querySelector("#measurement-7-heightCm")).not.toBeNull();
+  });
+
+  it("keeps the hint id in aria-describedby alongside the error id when an error shows", async () => {
+    const user = userEvent.setup();
+    createMeasurementAction.mockResolvedValue({
+      ok: false,
+      fieldErrors: { heightCm: uk.growth.fieldErrors.heightInvalid },
+      values: { heightCm: "abc", measuredOn: TODAY },
+    });
+
+    render(<MeasurementForm plantId={1} today={TODAY} />);
+    const heightInput = screen.getByRole("textbox", {
+      name: uk.growth.heightLabel,
+    });
+    await user.type(heightInput, "abc");
+    await user.click(screen.getByRole("button", { name: uk.growth.add }));
+
+    await waitFor(() =>
+      expect(heightInput).toHaveAttribute(
+        "aria-describedby",
+        "measurement-new-heightCm-error measurement-new-heightCm-hint",
+      ),
+    );
+    expect(
+      document.getElementById("measurement-new-heightCm-error"),
+    ).not.toBeNull();
+    expect(
+      document.getElementById("measurement-new-heightCm-hint"),
+    ).not.toBeNull();
   });
 });
