@@ -16,11 +16,11 @@ Result: PASS, 35 warning(s)
 | FR-PLANT-06 | yes | yes | 2 | - |
 | FR-PLANT-07 | yes | yes | 3 | - |
 | FR-PLANT-08 | yes | yes | 1 | - |
-| FR-GROWTH-01 | yes | yes | 3 | - |
-| FR-GROWTH-02 | yes | yes | 2 | - |
+| FR-GROWTH-01 | yes | yes | 4 | - |
+| FR-GROWTH-02 | yes | yes | 3 | - |
 | FR-GROWTH-03 | yes | yes | 2 | - |
-| FR-GROWTH-04 | yes | yes | 2 | - |
-| FR-GROWTH-05 | yes | yes | 2 | - |
+| FR-GROWTH-04 | yes | yes | 3 | - |
+| FR-GROWTH-05 | yes | yes | 3 | - |
 | FR-WATER-01 | yes | yes | - | - |
 | FR-WATER-02 | yes | yes | - | - |
 | FR-WATER-03 | yes | yes | - | - |
@@ -32,7 +32,7 @@ Result: PASS, 35 warning(s)
 | FR-CHART-04 | yes | yes | - | - |
 | FR-SHELL-01 | yes | yes | 2 | - |
 | FR-SHELL-02 | yes | yes | 4 | - |
-| FR-SHELL-03 | yes | yes | 6 | - |
+| FR-SHELL-03 | yes | yes | 7 | - |
 
 ## Failures
 

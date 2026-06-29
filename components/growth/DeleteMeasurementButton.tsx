@@ -36,6 +36,12 @@ export function DeleteMeasurementButton({
       } else {
         setError(result.formError ?? uk.errors.generic);
         setConfirming(false);
+        // A not-found result means the row was already deleted elsewhere (e.g. a
+        // second tab) and the on-screen list is stale — refresh so the rendered
+        // rows reconcile with server state while the message stays visible.
+        if (result.formError === uk.growth.notFound) {
+          router.refresh();
+        }
       }
     });
   }

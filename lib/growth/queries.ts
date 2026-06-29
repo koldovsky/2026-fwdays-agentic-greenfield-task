@@ -32,7 +32,14 @@ export async function listMeasurements(
     .all();
 }
 
-/** One measurement by id, or undefined when it does not exist (not-found). */
+/**
+ * One measurement by id, or undefined when it does not exist (not-found).
+ *
+ * Read/test helper: not wired into a production write path (edit/delete derive
+ * their not-found signal from UPDATE/DELETE returning/changes, not a prior
+ * read). Retained for the upcoming chart slice and exercised by the growth
+ * integration/action tests — intentional, not an oversight.
+ */
 export async function getMeasurement(
   db: GrowthDb,
   id: number,

@@ -296,7 +296,9 @@ growth_measurements
 - **One decimal place of precision; metric only.** Imperial units and finer
   precision are Future. Accepted: a tenth of a centimetre is ample for a houseplant.
 - **No optimistic UI.** Mutations round-trip then revalidate. Accepted: well within
-  NFR-PERF-01's 300 ms locally for the realistic dataset.
+  NFR-PERF-01's 300 ms locally for the realistic dataset. The perf budget itself is
+  not asserted per-slice; it is verified in Phase 6 (the cross-cutting performance
+  gate), consistent with the other capabilities.
 - **Rendered-result a11y / AA-contrast / 360 px-responsive / vision verification is
   DEFERRED to Phase 6** (the cross-cutting axe light+dark + vision-verify gate runs
   once over the whole app). The jsdom-level a11y for this slice's measurement

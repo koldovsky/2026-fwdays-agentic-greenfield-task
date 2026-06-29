@@ -174,7 +174,8 @@
       "tests": [
         "lib/growth/actions.test.ts",
         "lib/growth/validation.test.ts",
-        "tests/integration/growth-lifecycle.test.ts"
+        "tests/integration/growth-lifecycle.test.ts",
+        "components/growth/MeasurementForm.test.tsx"
       ],
       "recordings": []
     },
@@ -188,6 +189,7 @@
       "planned": true,
       "tests": [
         "tests/integration/growth-lifecycle.test.ts",
+        "components/growth/MeasurementsSection.test.tsx",
         "evals/cases/growth.eval.ts"
       ],
       "recordings": []
@@ -214,7 +216,8 @@
       "planned": true,
       "tests": [
         "lib/growth/actions.test.ts",
-        "tests/integration/growth-lifecycle.test.ts"
+        "tests/integration/growth-lifecycle.test.ts",
+        "components/growth/DeleteMeasurementButton.test.tsx"
       ],
       "recordings": []
     },
@@ -229,6 +232,7 @@
       "planned": true,
       "tests": [
         "lib/growth/validation.test.ts",
+        "components/growth/MeasurementForm.test.tsx",
         "evals/cases/growth.eval.ts"
       ],
       "recordings": []
@@ -356,6 +360,7 @@
         "lib/growth/actions.test.ts",
         "lib/plants/actions.test.ts",
         "components/forms/FieldError.test.tsx",
+        "components/growth/MeasurementForm.test.tsx",
         "components/plants/PlantForm.test.tsx",
         "evals/cases/app-shell.eval.ts"
       ],
