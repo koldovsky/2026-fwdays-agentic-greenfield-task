@@ -101,10 +101,10 @@
 - [x] 4.3 Run build (`npm run build`) — succeeds; `next/font` fonts resolve.
 - [x] 4.4 `npx openspec validate add-design-system --strict` — passes.
 - [x] 4.5 `npx openspec validate --all --strict` — passes.
-- [ ] 4.6 Update `README.md` and `docs/current-state.md` (or equivalent): the
+- [x] 4.6 Update `README.md` and `docs/current-state.md` (or equivalent): the
       app is «Поливайко», single light "paper" theme (no toggle); note
       FR-SHELL-02 superseded by FR-SHELL-02a.
-- [ ] 4.7 Manual real-DB smoke test (real SQLite, `npm run dev`):
+- [x] 4.7 Manual real-DB smoke test (real SQLite, `npm run dev`):
       1. Open `/` — header shows the «Поливайко» wordmark; page bg is warm
          paper, NOT white; there is NO theme toggle control.
       2. With ≥1 plant present, confirm each plant renders as a rounded
@@ -124,7 +124,7 @@
          DB write survives reload).
       7. Reload `/` twice — the paper theme is stable; no flash; nothing reads
          or writes a persisted theme key.
-- [ ] 4.8 Manual archive (OpenSpec CLI 1.5 — no auto-archive in this repo):
+- [x] 4.8 Manual archive (OpenSpec CLI 1.5 — no auto-archive in this repo):
       GATED on 4.7 passing, run
       `npx openspec archive add-design-system --yes`; if that is unavailable,
       move the folder to

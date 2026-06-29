@@ -52,9 +52,26 @@
         "i18n"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-06-30-add-design-system",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "i18n",
+        "theme"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
+    {
+      "domain": "theme",
+      "slices": [
+        "2026-06-29-add-app-shell",
+        "2026-06-30-add-design-system"
+      ]
+    },
     {
       "domain": "i18n",
       "slices": [
@@ -62,7 +79,8 @@
         "2026-06-29-add-charts",
         "2026-06-29-add-growth",
         "2026-06-29-add-plants",
-        "2026-06-29-add-watering"
+        "2026-06-29-add-watering",
+        "2026-06-30-add-design-system"
       ]
     },
     {
@@ -77,7 +95,11 @@
   "warnings": [
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 5 slices (2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering) — review for scope drift"
+      "msg": "lib/theme/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-30-add-design-system) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/i18n/ modified by 6 slices (2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system) — review for scope drift"
     },
     {
       "check": "in-scope",

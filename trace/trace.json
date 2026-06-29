@@ -378,8 +378,7 @@
     {
       "id": "FR-SHELL-02",
       "specs": [
-        "openspec/specs/app-shell/spec.md",
-        "openspec/changes/add-design-system/specs/app-shell/spec.md"
+        "openspec/specs/app-shell/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -395,8 +394,7 @@
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
         "openspec/specs/reminders/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -416,9 +414,7 @@
       "id": "FR-DS-01",
       "specs": [
         "openspec/specs/app-shell/spec.md",
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/app-shell/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -429,8 +425,7 @@
     {
       "id": "FR-DS-02",
       "specs": [
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -441,8 +436,7 @@
     {
       "id": "FR-DS-03",
       "specs": [
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -453,8 +447,7 @@
     {
       "id": "FR-DS-04",
       "specs": [
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -465,8 +458,7 @@
     {
       "id": "FR-DS-05",
       "specs": [
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -477,8 +469,7 @@
     {
       "id": "FR-DS-06",
       "specs": [
-        "openspec/specs/design-system/spec.md",
-        "openspec/changes/add-design-system/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -731,10 +722,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-REM-07 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"add-design-system\" is not archived"
     }
   ]
 }
