@@ -51,7 +51,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
 
   return (
     <figure aria-label={uk.charts.growthTitle} className="m-0 w-full">
-      <figcaption className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+      <figcaption className="mb-2 font-display text-sm font-semibold text-bark">
         {uk.charts.growthTitle}
       </figcaption>
       <div className="h-64 w-full">
@@ -60,10 +60,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
             data={data}
             margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              className="stroke-zinc-200 dark:stroke-zinc-700"
-            />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
               type="number"
               dataKey="index"
@@ -71,12 +68,12 @@ export function GrowthChart({ series }: GrowthChartProps) {
               ticks={data.map((point) => point.index)}
               tickFormatter={(value) => labelOf(Number(value))}
               tick={{ fontSize: 12 }}
-              className="text-zinc-700 dark:text-zinc-300"
+              className="text-stone"
             />
             <YAxis
               allowDecimals
               tick={{ fontSize: 12 }}
-              className="text-zinc-700 dark:text-zinc-300"
+              className="text-stone"
               label={{
                 value: uk.charts.heightAxis,
                 angle: -90,
@@ -93,7 +90,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
             <Line
               type="monotone"
               dataKey="heightCm"
-              stroke="#16a34a"
+              stroke="#2F6B3F"
               strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}

@@ -6,8 +6,8 @@
 // @trace FR-PLANT-07
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
 
+import { Button } from "@/components/ui/Button";
 import { ChartErrorBoundary } from "@/components/charts/ChartErrorBoundary";
 import { GrowthChart } from "@/components/charts/GrowthChart";
 import { WateringChart } from "@/components/charts/WateringChart";
@@ -53,22 +53,22 @@ export default async function PlantDetail({
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">
         {plant.name}
       </h1>
 
-      <dl className="mt-4 space-y-2 text-sm">
+      <dl className="mt-4 space-y-2 font-body text-sm">
         <div className="flex gap-2">
-          <dt className="font-medium text-zinc-600 dark:text-zinc-400">
+          <dt className="font-semibold text-bark">
             {uk.plants.detailSpecies}:
           </dt>
-          <dd className="text-foreground">{plant.species}</dd>
+          <dd className="text-ink">{plant.species}</dd>
         </div>
         <div className="flex gap-2">
-          <dt className="font-medium text-zinc-600 dark:text-zinc-400">
+          <dt className="font-semibold text-bark">
             {uk.plants.detailAcquiredDate}:
           </dt>
-          <dd className="text-foreground">
+          <dd className="text-ink">
             {plant.acquiredDate
               ? formatAcquiredDate(plant.acquiredDate)
               : uk.plants.noAcquiredDate}
@@ -77,17 +77,14 @@ export default async function PlantDetail({
       </dl>
 
       <div className="mt-6 flex gap-3">
-        <Link
-          href={`/plants/${plant.id}/edit`}
-          className="inline-flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
-        >
+        <Button variant="secondary" href={`/plants/${plant.id}/edit`}>
           {uk.plants.edit}
-        </Link>
+        </Button>
       </div>
 
       <DeletePlantButton id={plant.id} />
 
-      <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+      <section className="mt-10 border-t border-border pt-8">
         <ChartErrorBoundary fallbackMessage={uk.charts.renderError}>
           <GrowthChart series={growthSeries} />
         </ChartErrorBoundary>
@@ -99,7 +96,7 @@ export default async function PlantDetail({
         today={today}
       />
 
-      <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+      <section className="mt-10 border-t border-border pt-8">
         <ChartErrorBoundary fallbackMessage={uk.charts.renderError}>
           <WateringChart series={wateringSeries} />
         </ChartErrorBoundary>
@@ -111,12 +108,11 @@ export default async function PlantDetail({
         today={today}
       />
 
-      <Link
-        href="/"
-        className="mt-6 inline-flex rounded-md text-sm font-medium text-zinc-900 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:text-zinc-100"
-      >
-        {uk.nav.backToList}
-      </Link>
+      <div className="mt-8">
+        <Button variant="ghost" href="/">
+          {uk.nav.backToList}
+        </Button>
+      </div>
     </section>
   );
 }

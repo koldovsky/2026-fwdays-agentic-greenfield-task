@@ -12,6 +12,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { FormErrorBanner } from "@/components/forms/FormErrorBanner";
+import { Button } from "@/components/ui/Button";
 import { uk } from "@/lib/i18n/uk";
 import { deleteWateringAction } from "@/lib/watering/actions";
 
@@ -50,13 +51,14 @@ export function DeleteWateringButton({
     return (
       <div>
         <FormErrorBanner message={error} />
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => setConfirming(true)}
-          className="inline-flex items-center rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950"
+          className="text-danger hover:bg-status-overdue-chip"
         >
           {uk.watering.delete}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -65,28 +67,28 @@ export function DeleteWateringButton({
     <div
       role="group"
       aria-label={uk.watering.delete}
-      className="rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950"
+      className="rounded-[14px] border border-status-overdue-dot/40 bg-status-overdue-chip p-3"
     >
-      <p className="text-sm text-red-800 dark:text-red-200">
+      <p className="font-body text-sm text-status-overdue-text">
         {uk.watering.deleteConfirmPrompt}
       </p>
       <div className="mt-2 flex gap-2">
-        <button
+        <Button
+          variant="danger"
           type="button"
           onClick={onConfirm}
           disabled={pending}
-          className="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-60"
         >
           {uk.watering.deleteConfirm}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => setConfirming(false)}
           disabled={pending}
-          className="inline-flex items-center rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 disabled:opacity-60 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {uk.watering.deleteCancel}
-        </button>
+        </Button>
       </div>
     </div>
   );

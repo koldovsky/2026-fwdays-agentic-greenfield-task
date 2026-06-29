@@ -27,13 +27,13 @@ export function WateringsSection({
   today,
 }: WateringsSectionProps) {
   return (
-    <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-      <h2 className="text-xl font-semibold tracking-tight text-foreground">
+    <section className="mt-10 border-t border-border pt-8">
+      <h2 className="font-display text-xl font-bold tracking-tight text-ink">
         {uk.watering.sectionTitle}
       </h2>
 
       <div className="mt-4">
-        <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <h3 className="font-display text-sm font-semibold text-bark">
           {uk.watering.addTitle}
         </h3>
         <WateringForm plantId={plantId} today={today} />
@@ -41,7 +41,7 @@ export function WateringsSection({
 
       <div className="mt-8">
         {waterings.length === 0 ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="font-body text-sm text-stone">
             {uk.watering.empty}
           </p>
         ) : (

@@ -15,7 +15,7 @@ export interface FieldErrorProps {
 export function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null;
   return (
-    <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+    <p id={`${id}-error`} role="alert" className="mt-1 font-body text-sm text-danger">
       {message}
     </p>
   );

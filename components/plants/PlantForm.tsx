@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation";
 
 import { FieldError } from "@/components/forms/FieldError";
 import { FormErrorBanner } from "@/components/forms/FormErrorBanner";
+import { Button } from "@/components/ui/Button";
+import { fieldInputClass, fieldLabelClass, fieldHintClass } from "@/components/forms/fieldStyles";
 import type { ActionResult } from "@/lib/forms/result";
 import { uk } from "@/lib/i18n/uk";
 import { createPlantAction, updatePlantAction } from "@/lib/plants/actions";
@@ -100,11 +102,8 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
     <form action={formAction} className="max-w-md" noValidate>
       <FormErrorBanner message={formErr} />
 
-      <div className="mt-3">
-        <label
-          htmlFor={nameFieldId}
-          className="block text-sm font-medium text-foreground"
-        >
+      <div className="mt-4">
+        <label htmlFor={nameFieldId} className={fieldLabelClass}>
           {uk.plants.nameLabel}
         </label>
         <input
@@ -117,16 +116,13 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           defaultValue={nameValue}
           aria-invalid={nameError ? true : undefined}
           aria-describedby={nameDescribedBy}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className={fieldInputClass}
         />
         <FieldError id={nameFieldId} message={nameError} />
       </div>
 
-      <div className="mt-3">
-        <label
-          htmlFor={speciesFieldId}
-          className="block text-sm font-medium text-foreground"
-        >
+      <div className="mt-4">
+        <label htmlFor={speciesFieldId} className={fieldLabelClass}>
           {uk.plants.speciesLabel}
         </label>
         <input
@@ -137,19 +133,16 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           defaultValue={speciesValue}
           aria-invalid={speciesError ? true : undefined}
           aria-describedby={speciesDescribedBy}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className={fieldInputClass}
         />
-        <p id={`${speciesFieldId}-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p id={`${speciesFieldId}-hint`} className={fieldHintClass}>
           {uk.plants.speciesHint}
         </p>
         <FieldError id={speciesFieldId} message={speciesError} />
       </div>
 
-      <div className="mt-3">
-        <label
-          htmlFor={dateFieldId}
-          className="block text-sm font-medium text-foreground"
-        >
+      <div className="mt-4">
+        <label htmlFor={dateFieldId} className={fieldLabelClass}>
           {uk.plants.acquiredDateLabel}
         </label>
         <input
@@ -159,24 +152,17 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           defaultValue={dateValue}
           aria-invalid={dateError ? true : undefined}
           aria-describedby={dateDescribedBy}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className={fieldInputClass}
         />
-        <p
-          id={`${dateFieldId}-hint`}
-          className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-        >
+        <p id={`${dateFieldId}-hint`} className={fieldHintClass}>
           {uk.plants.acquiredDateHint}
         </p>
         <FieldError id={dateFieldId} message={dateError} />
       </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-4 inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <Button variant="primary" type="submit" disabled={pending} className="mt-5">
         {uk.plants.save}
-      </button>
+      </Button>
     </form>
   );
 }

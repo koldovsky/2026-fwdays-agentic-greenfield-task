@@ -52,7 +52,7 @@ export class ChartErrorBoundary extends Component<
       return (
         <div
           role="alert"
-          className="flex min-h-[16rem] items-center justify-center rounded-md border border-amber-300 bg-amber-50 p-6 text-center text-sm text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300"
+          className="flex min-h-[16rem] items-center justify-center rounded-[14px] border border-status-soon-dot/40 bg-status-soon-chip p-6 text-center font-body text-sm text-status-soon-text"
         >
           {this.props.fallbackMessage}
         </div>

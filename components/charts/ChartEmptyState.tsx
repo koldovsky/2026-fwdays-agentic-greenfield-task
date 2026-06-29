@@ -17,7 +17,7 @@ export function ChartEmptyState({ message }: ChartEmptyStateProps) {
   return (
     <div
       role="status"
-      className="flex min-h-[16rem] items-center justify-center rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400"
+      className="flex min-h-[16rem] items-center justify-center rounded-[14px] border border-dashed border-border bg-cloud p-6 text-center font-body text-sm text-stone"
     >
       {message}
     </div>

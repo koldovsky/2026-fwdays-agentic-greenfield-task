@@ -43,7 +43,7 @@ export function WateringChart({ series }: WateringChartProps) {
 
   return (
     <figure aria-label={uk.charts.wateringTitle} className="m-0 w-full">
-      <figcaption className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+      <figcaption className="mb-2 font-display text-sm font-semibold text-bark">
         {uk.charts.wateringTitle}
       </figcaption>
       <div className="h-64 w-full">
@@ -52,19 +52,16 @@ export function WateringChart({ series }: WateringChartProps) {
             data={series}
             margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              className="stroke-zinc-200 dark:stroke-zinc-700"
-            />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
               dataKey="label"
               tick={{ fontSize: 12 }}
-              className="text-zinc-700 dark:text-zinc-300"
+              className="text-stone"
             />
             <YAxis
               allowDecimals={false}
               tick={{ fontSize: 12 }}
-              className="text-zinc-700 dark:text-zinc-300"
+              className="text-stone"
               label={{
                 value: uk.charts.countAxis,
                 angle: -90,
@@ -79,7 +76,7 @@ export function WateringChart({ series }: WateringChartProps) {
             <Line
               type="monotone"
               dataKey="count"
-              stroke="#2563eb"
+              stroke="#A9744E"
               strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}

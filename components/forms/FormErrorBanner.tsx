@@ -14,7 +14,7 @@ export function FormErrorBanner({ message }: FormErrorBannerProps) {
   return (
     <div
       role="alert"
-      className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+      className="mb-4 rounded-[13px] border border-status-overdue-dot/40 bg-status-overdue-chip px-4 py-3 font-body text-sm text-status-overdue-text"
     >
       {message}
     </div>

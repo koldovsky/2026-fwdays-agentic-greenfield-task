@@ -16,6 +16,8 @@ import { useRouter } from "next/navigation";
 
 import { FieldError } from "@/components/forms/FieldError";
 import { FormErrorBanner } from "@/components/forms/FormErrorBanner";
+import { Button } from "@/components/ui/Button";
+import { fieldInputClass, fieldLabelClass, fieldHintClass } from "@/components/forms/fieldStyles";
 import type { ActionResult } from "@/lib/forms/result";
 import { uk } from "@/lib/i18n/uk";
 import {
@@ -105,11 +107,8 @@ export function WateringForm({
     <form action={formAction} className="max-w-md" noValidate>
       <FormErrorBanner message={formErr} />
 
-      <div className="mt-3">
-        <label
-          htmlFor={dateFieldId}
-          className="block text-sm font-medium text-foreground"
-        >
+      <div className="mt-4">
+        <label htmlFor={dateFieldId} className={fieldLabelClass}>
           {uk.watering.wateredOnLabel}
         </label>
         <input
@@ -120,22 +119,16 @@ export function WateringForm({
           defaultValue={dateValue}
           aria-invalid={dateError ? true : undefined}
           aria-describedby={dateDescribedBy}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className={fieldInputClass}
         />
-        <p
-          id={`${dateFieldId}-hint`}
-          className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-        >
+        <p id={`${dateFieldId}-hint`} className={fieldHintClass}>
           {uk.watering.wateredOnHint}
         </p>
         <FieldError id={dateFieldId} message={dateError} />
       </div>
 
-      <div className="mt-3">
-        <label
-          htmlFor={noteFieldId}
-          className="block text-sm font-medium text-foreground"
-        >
+      <div className="mt-4">
+        <label htmlFor={noteFieldId} className={fieldLabelClass}>
           {uk.watering.noteLabel}
         </label>
         <textarea
@@ -147,34 +140,27 @@ export function WateringForm({
           defaultValue={noteValue}
           aria-invalid={noteError ? true : undefined}
           aria-describedby={noteDescribedBy}
-          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+          className={fieldInputClass}
         />
-        <p
-          id={`${noteFieldId}-hint`}
-          className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-        >
+        <p id={`${noteFieldId}-hint`} className={fieldHintClass}>
           {uk.watering.noteHint}
         </p>
         <FieldError id={noteFieldId} message={noteError} />
       </div>
 
-      <div className="mt-4 flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+      <div className="mt-5 flex gap-3">
+        <Button variant="primary" type="submit" disabled={pending}>
           {isEdit ? uk.watering.save : uk.watering.add}
-        </button>
+        </Button>
         {isEdit && onSaved ? (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={onSaved}
             disabled={pending}
-            className="inline-flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 disabled:opacity-60 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             {uk.watering.cancel}
-          </button>
+          </Button>
         ) : null}
       </div>
     </form>

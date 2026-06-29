@@ -4,24 +4,22 @@
 //
 // @trace FR-PLANT-01
 
-import Link from "next/link";
-
 import { PlantForm } from "@/components/plants/PlantForm";
+import { Button } from "@/components/ui/Button";
 import { uk } from "@/lib/i18n/uk";
 
 export default function NewPlantPage() {
   return (
     <section>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">
         {uk.plants.addTitle}
       </h1>
       <PlantForm />
-      <Link
-        href="/"
-        className="mt-4 inline-flex rounded-md text-sm font-medium text-zinc-900 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:text-zinc-100"
-      >
-        {uk.nav.backToList}
-      </Link>
+      <div className="mt-4">
+        <Button variant="ghost" href="/">
+          {uk.nav.backToList}
+        </Button>
+      </div>
     </section>
   );
 }

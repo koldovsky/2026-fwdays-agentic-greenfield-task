@@ -5,17 +5,13 @@
 
 export const uk = {
   appTitle: "Трекер рослин",
+  /** «Поливайко» brand wordmark shown in the shell header (FR-DS-05). */
+  brand: "Поливайко",
   nav: {
     /** Primary list view (plants) link, points to `/`. */
     plants: "Рослини",
     /** Generic "back to list" affordance reused by detail/not-found views. */
     backToList: "Повернутися до списку",
-  },
-  theme: {
-    /** Accessible name for the light/dark toggle button. */
-    toggleLabel: "Перемкнути тему",
-    light: "Світла тема",
-    dark: "Темна тема",
   },
   notFound: {
     title: "Сторінку не знайдено",
@@ -38,6 +34,18 @@ export const uk = {
       "У вас ще немає жодної рослини. Додайте першу — і вона зʼявиться тут.",
     listTitle: "Мої рослини",
     add: "Додати рослину",
+    /** Plant-card status pill labels + action labels (FR-DS-03; status WIRING
+        is slice 7 — these drive the placeholder pattern here). */
+    card: {
+      statusHealthy: "Здорова",
+      statusSoon: "Скоро полив",
+      statusOverdue: "Потребує поливу",
+      actionHealthy: "Доглянути",
+      actionSoon: "Полити",
+      actionOverdue: "Полити зараз",
+      /** Status line next to the droplet icon on a healthy card (placeholder). */
+      statusLine: "Полив за графіком",
+    },
     addTitle: "Нова рослина",
     editTitle: "Редагувати рослину",
     edit: "Редагувати",

@@ -377,14 +377,14 @@
     {
       "id": "FR-SHELL-02",
       "specs": [
-        "openspec/specs/app-shell/spec.md"
+        "openspec/specs/app-shell/spec.md",
+        "openspec/changes/add-design-system/specs/app-shell/spec.md"
       ],
       "planned": true,
       "tests": [
-        "lib/theme/no-flash-script.test.ts",
-        "lib/theme/persistence.test.ts",
+        "lib/theme/tokens.test.ts",
         "app/layout.test.tsx",
-        "components/shell/Shell.test.tsx"
+        "components/shell/Shell.brand.test.tsx"
       ],
       "recordings": []
     },
@@ -394,7 +394,8 @@
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
         "openspec/specs/reminders/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -414,25 +415,33 @@
       "id": "FR-DS-01",
       "specs": [
         "openspec/specs/app-shell/spec.md",
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/app-shell/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/theme/tokens.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-DS-02",
       "specs": [
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/ui/Button.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-DS-03",
       "specs": [
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -441,25 +450,32 @@
     {
       "id": "FR-DS-04",
       "specs": [
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/icons/icons.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-DS-05",
       "specs": [
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/shell/Shell.brand.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-DS-06",
       "specs": [
-        "openspec/specs/design-system/spec.md"
+        "openspec/specs/design-system/spec.md",
+        "openspec/changes/add-design-system/specs/design-system/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -533,23 +549,7 @@
   "warnings": [
     {
       "check": "test-trace",
-      "msg": "FR-DS-01 has no test annotated \"@trace FR-DS-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DS-02 has no test annotated \"@trace FR-DS-02\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-DS-03 has no test annotated \"@trace FR-DS-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DS-04 has no test annotated \"@trace FR-DS-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DS-05 has no test annotated \"@trace FR-DS-05\""
     },
     {
       "check": "test-trace",
@@ -734,6 +734,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-REM-07 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-design-system\" is not archived"
     }
   ]
 }

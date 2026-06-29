@@ -1,21 +1,26 @@
-// Pins the WIRING half of FR-SHELL-02 / design.md R1: it is not enough that the
-// no-flash script string is correct (covered by no-flash-script.test.ts) — the
-// root layout must actually inject it into <head> before paint. This test walks
-// the RootLayout element tree and asserts a <script dangerouslySetInnerHTML> in
-// <head> carries `noFlashThemeScript`, so deleting that injection fails CI (no
-// silent flash regression).
+// This file used to pin the WIRING half of FR-SHELL-02 (design.md R1): that the
+// root layout injects the pre-hydration no-flash <script> into <head>. Slice 6
+// collapses the app to a single paper theme (FR-SHELL-02a, superseding
+// FR-SHELL-02): there is no wrong theme to flash, so the no-flash script — and
+// its module `lib/theme/no-flash-script.ts` — are deliberately deleted. The
+// no-flash-injection assertion is therefore meaningless and is removed with the
+// module (same deliberate-removal category as tasks.md 1.8).
 //
-// @trace FR-SHELL-02
+// The honest regression value is preserved by INVERTING it: assert the layout no
+// longer injects any inline <script> (no half-wired theme machinery creeps back
+// in), while keeping the `lang="uk"` assertion (NFR-LOC-01).
+//
+// @trace FR-SHELL-02a
+// @trace NFR-LOC-01
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
-
-import { noFlashThemeScript } from "@/lib/theme/no-flash-script";
 
 // next/font/google would do network/font work at module load; stub it to a
 // plain variable shape so we can render the layout element tree in jsdom.
 vi.mock("next/font/google", () => ({
-  Geist: () => ({ variable: "--font-geist-sans" }),
-  Geist_Mono: () => ({ variable: "--font-geist-mono" }),
+  Quicksand: () => ({ variable: "--font-display-handle" }),
+  Mulish: () => ({ variable: "--font-body-handle" }),
+  Spline_Sans_Mono: () => ({ variable: "--font-mono-handle" }),
 }));
 
 import RootLayout from "@/app/layout";
@@ -40,8 +45,8 @@ function findNode(
   return undefined;
 }
 
-describe("RootLayout no-flash script injection (FR-SHELL-02)", () => {
-  it("injects the no-flash theme script into <head> before paint", () => {
+describe("RootLayout — single paper theme, no theme machinery (FR-SHELL-02a)", () => {
+  it("injects NO inline no-flash <script> (single theme has nothing to flash)", () => {
     const tree = RootLayout({ children: null }) as ReactElement;
 
     const script = findNode(
@@ -52,11 +57,7 @@ describe("RootLayout no-flash script injection (FR-SHELL-02)", () => {
         n.props?.dangerouslySetInnerHTML !== null,
     );
 
-    expect(script, "RootLayout must render an inline <script> in <head>").toBeDefined();
-    const html = (
-      script?.props?.dangerouslySetInnerHTML as { __html?: string } | undefined
-    )?.__html;
-    expect(html).toBe(noFlashThemeScript);
+    expect(script).toBeUndefined();
   });
 
   it("sets the document language to Ukrainian (NFR-LOC-01)", () => {

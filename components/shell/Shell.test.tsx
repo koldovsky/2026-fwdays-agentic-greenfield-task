@@ -1,29 +1,23 @@
-// RED (Phase 4b) — shell smoke test written from the spec BEFORE the
-// implementation exists. Asserts the shell renders the list/detail navigation
-// and that the theme toggle exists, is labeled, and is keyboard-reachable
-// (SC-6 / NFR-A11Y-04). Imports will fail until the shell, ThemeToggle, the uk
-// copy module, and the theme provider are built.
+// Shell navigation smoke test. The light/dark theme-toggle assertions that used
+// to live here pinned the superseded FR-SHELL-02 (ThemeProvider + ThemeToggle).
+// Slice 6 collapses the app to a single paper theme (FR-SHELL-02a): those
+// modules are deleted, so the toggle/provider assertions are removed with them.
+// The brand wordmark + no-theme-machinery contract is covered by
+// `Shell.brand.test.tsx`; this file keeps the navigation/landmark assertions.
 //
 // @trace FR-SHELL-01
-// @trace FR-SHELL-02
 // @trace NFR-A11Y-04
 import { cleanup, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Shell } from "@/components/shell/Shell";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { uk } from "@/lib/i18n/uk";
 
 afterEach(cleanup);
 
 function renderShell(children?: React.ReactNode) {
-  // ThemeProvider wraps the toggle (client island, design.md D1/D2).
-  return render(
-    <ThemeProvider>
-      <Shell>{children ?? <p>placeholder content</p>}</Shell>
-    </ThemeProvider>,
-  );
+  // Single paper theme: the Shell renders with no provider wrapper (FR-SHELL-02a).
+  return render(<Shell>{children ?? <p>placeholder content</p>}</Shell>);
 }
 
 describe("app shell — navigation (FR-SHELL-01)", () => {
@@ -32,9 +26,9 @@ describe("app shell — navigation (FR-SHELL-01)", () => {
     expect(screen.getByRole("navigation")).toBeInTheDocument();
   });
 
-  it("renders the app title from the Ukrainian copy module (not an inline literal)", () => {
+  it("renders the brand wordmark from the Ukrainian copy module (not an inline literal)", () => {
     renderShell();
-    expect(screen.getByText(uk.appTitle)).toBeInTheDocument();
+    expect(screen.getByText(uk.brand)).toBeInTheDocument();
   });
 
   it("exposes a link back to the plant list at /", () => {
@@ -47,35 +41,5 @@ describe("app shell — navigation (FR-SHELL-01)", () => {
   it("renders the shell's children (the active list/detail view content)", () => {
     renderShell(<p>detail view body</p>);
     expect(screen.getByText("detail view body")).toBeInTheDocument();
-  });
-});
-
-describe("app shell — theme toggle is operable & labeled (FR-SHELL-02 / SC-6 / NFR-A11Y-04)", () => {
-  it("renders a theme toggle control with an accessible name from the uk copy", () => {
-    renderShell();
-    const toggle = screen.getByRole("button", { name: uk.theme.toggleLabel });
-    expect(toggle).toBeInTheDocument();
-  });
-
-  it("the toggle is keyboard-reachable (focusable, not removed from tab order)", () => {
-    renderShell();
-    const toggle = screen.getByRole("button", { name: uk.theme.toggleLabel });
-    toggle.focus();
-    expect(toggle).toHaveFocus();
-    // A negative tabindex would remove it from keyboard navigation — must not happen.
-    expect(toggle.getAttribute("tabindex")).not.toBe("-1");
-  });
-
-  it("the toggle responds to keyboard activation (Enter) the same as a click", async () => {
-    const user = userEvent.setup();
-    renderShell();
-    const toggle = screen.getByRole("button", { name: uk.theme.toggleLabel });
-    toggle.focus();
-    // Activating via keyboard must not throw and must keep the control present
-    // (same affordance as a pointer click — NFR-A11Y-04 keyboard-only scenario).
-    await user.keyboard("{Enter}");
-    expect(
-      screen.getByRole("button", { name: uk.theme.toggleLabel }),
-    ).toBeInTheDocument();
   });
 });
