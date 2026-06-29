@@ -35,6 +35,20 @@
     "FR-SHELL-03": "MVP",
     "FR-SHELL-04": "Future",
     "FR-SHELL-05": "Future",
+    "FR-DS-01": "MVP",
+    "FR-DS-02": "MVP",
+    "FR-DS-03": "MVP",
+    "FR-DS-04": "MVP",
+    "FR-DS-05": "MVP",
+    "FR-DS-06": "MVP",
+    "FR-REM-01": "MVP",
+    "FR-REM-02": "MVP",
+    "FR-REM-03": "MVP",
+    "FR-REM-04": "MVP",
+    "FR-REM-05": "MVP",
+    "FR-REM-06": "MVP",
+    "FR-REM-07": "MVP",
+    "FR-REM-08": "Future",
     "NFR-USA-01": "MVP",
     "NFR-USA-02": "MVP",
     "NFR-USA-03": "MVP",
@@ -234,6 +248,7 @@
     {
       "id": "FR-WATER-01",
       "specs": [
+        "openspec/specs/reminders/spec.md",
         "openspec/specs/watering/spec.md"
       ],
       "planned": true,
@@ -378,6 +393,7 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
+        "openspec/specs/reminders/spec.md",
         "openspec/specs/watering/spec.md"
       ],
       "planned": true,
@@ -393,10 +409,180 @@
         "evals/cases/app-shell.eval.ts"
       ],
       "recordings": []
+    },
+    {
+      "id": "FR-DS-01",
+      "specs": [
+        "openspec/specs/app-shell/spec.md",
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-DS-02",
+      "specs": [
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-DS-03",
+      "specs": [
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-DS-04",
+      "specs": [
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-DS-05",
+      "specs": [
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-DS-06",
+      "specs": [
+        "openspec/specs/design-system/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-01",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-02",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-03",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-04",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-05",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-06",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REM-07",
+      "specs": [
+        "openspec/specs/reminders/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
     }
   ],
   "failures": [],
   "warnings": [
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-01 has no test annotated \"@trace FR-DS-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-02 has no test annotated \"@trace FR-DS-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-03 has no test annotated \"@trace FR-DS-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-04 has no test annotated \"@trace FR-DS-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-05 has no test annotated \"@trace FR-DS-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-DS-06 has no test annotated \"@trace FR-DS-06\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-01 has no test annotated \"@trace FR-REM-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-02 has no test annotated \"@trace FR-REM-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-03 has no test annotated \"@trace FR-REM-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-04 has no test annotated \"@trace FR-REM-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-05 has no test annotated \"@trace FR-REM-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-06 has no test annotated \"@trace FR-REM-06\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-REM-07 has no test annotated \"@trace FR-REM-07\""
+    },
     {
       "check": "recording-evidence",
       "msg": "FR-PLANT-01 is not referenced by any recording manifest under docs/qa/"
@@ -496,6 +682,58 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DS-06 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-06 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REM-07 is not referenced by any recording manifest under docs/qa/"
     }
   ]
 }

@@ -160,3 +160,48 @@ Total: **25 MVP FRs across 5 slices** (no gaps, no duplicates).
 Implement in dependency order (1→2→3→4→5). After each archive run
 `npx openspec validate --all --strict` before starting the next slice. Future
 work (FR-*-Future, NFRs deploy-gated) is NOT in this plan.
+
+---
+
+## 7. Scope change (2026-06-30) — «Поливайко» design system + reminders
+
+Triggered by `docs/design.md`. Two new slices, run after the MVP slices (1–5),
+before resuming Phase 5–7 QA (so QA/recordings capture the redesigned app).
+Sign-off captured 2026-06-30: **design + reminders**, **light-only paper theme**.
+
+| # | Change name | Specs | FRs owned | Depends on | Parallel |
+|---|---|---|---|---|---|
+| 6 | `add-design-system` | design-system (new); app-shell (amend: paper theme) | FR-DS-01..06, FR-SHELL-02a (supersedes FR-SHELL-02), FR-DS-05 | 1–5 | serialize (touches shared shell/components + globals.css; removes theme toggle) |
+| 7 | `add-reminders` | reminders (new); plants (amend: +intervalDays) | FR-REM-01..07 | 6 | serialize (migration: plants.intervalDays; reshapes home/list) |
+
+**Slice 6 `add-design-system`** — design tokens into the Tailwind theme + CSS vars
+(palette, Quicksand/Mulish/Spline-Sans-Mono via next/font, radii, spacing);
+restyle shared components (buttons primary/secondary/soft/ghost/danger/icon,
+inputs, FieldError/banner, cards) + the botanical line-icon set incl. the
+water-drop brand glyph; **remove** the light/dark toggle + ThemeProvider +
+no-flash script (single paper theme, amends FR-SHELL-02→02a); rebrand to
+«Поливайко»; restyle existing screens (list, detail, growth/watering sections,
+charts use forest/clay). Validation is largely VISUAL → Phase 6 vision-verify +
+axe (paper theme); unit-testable bits: tokens present, components render with the
+right roles/variants, no theme-toggle remains.
+
+**Slice 7 `add-reminders`** — `plants.intervalDays` (migration, default 7,
+positive-int validation); pure status derivation `lib/reminders/status.ts`
+(lastWateredAt = latest watering event; +intervalDays vs today Kiev →
+healthy/soon/overdue; never-watered = due); home redesign (summary "сьогодні
+полити" count card, urgency-ordered reminder rows with striped thumb + due line +
+"water now" droplet button, all-done empty state); "water now" action (logs a
+watering today → updates status/count, swaps row to done); status pill on cards +
+detail. Strong unit surface (status logic, interval validation, water-now action,
+count/all-done derivation); rendered home → Phase 6 vision-verify.
+
+### Updated FR coverage (delta) — one owner per id
+
+Slice 6 `add-design-system` owns: FR-DS-01, FR-DS-02, FR-DS-03, FR-DS-04,
+FR-DS-05, FR-DS-06, FR-SHELL-02a (supersedes FR-SHELL-02).
+
+Slice 7 `add-reminders` owns: FR-REM-01, FR-REM-02, FR-REM-03, FR-REM-04,
+FR-REM-05, FR-REM-06, FR-REM-07.
+
+Amended: FR-SHELL-02 superseded by FR-SHELL-02a (slice 6); NFR-A11Y-01/02 now
+single paper theme. FR-REM-08 is Future (notifications).

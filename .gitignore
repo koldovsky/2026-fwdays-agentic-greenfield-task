@@ -46,3 +46,7 @@ next-env.d.ts
 
 # TS incremental build info
 *.tsbuildinfo
+
+# Design handoff: keep docs/design.md + the .dc.html reference; ignore the raw archive + prototype runtime
+design.zip
+docs/design/support.js

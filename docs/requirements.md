@@ -61,10 +61,46 @@
 | ID | Phase | Area | Description |
 |----|-------|------|-------------|
 | FR-SHELL-01 | MVP | App shell | The app has a single shell with navigation between the plant list and a plant's detail view. |
-| FR-SHELL-02 | MVP | App shell | The Owner can toggle between light and dark themes; the choice persists across reloads. |
+| FR-SHELL-02 | ~~MVP~~ Superseded | App shell | ~~The Owner can toggle between light and dark themes; the choice persists across reloads.~~ **AMENDED 2026-06-30 by FR-SHELL-02a** (design-system scope change): the app uses a single light "paper" theme; the light/dark toggle is removed. |
+| FR-SHELL-02a | MVP | App shell | The app renders in a single light "paper" theme per the «Поливайко» design system (no theme toggle). |
 | FR-SHELL-03 | MVP | App shell | Invalid input is surfaced inline next to the field, not via raw errors or silent failure. |
 | FR-SHELL-04 | Future | App shell | The Owner can export/import their data (e.g. JSON/CSV backup). |
 | FR-SHELL-05 | Future | App shell | The app supports multiple users with authenticated accounts. |
+
+### Design System — «Поливайко» (FR-DS) — added 2026-06-30 (scope change)
+
+Source of truth: `docs/design.md` (+ the `.dc.html` visual spec under `docs/design/`).
+Aesthetic: organic/soft/natural — warm paper backgrounds, rounded corners,
+botanical line icons, forest-green primary + earthy accents.
+
+| ID | Phase | Area | Description |
+|----|-------|------|-------------|
+| FR-DS-01 | MVP | Design system | The app adopts the «Поливайко» design tokens as its single theme source: the color palette (forest/pine/sage/moss/mist, bark/clay/sand, paper/cloud/ink/stone/border, status colors), typography (Quicksand display/headings, Mulish body, Spline Sans Mono meta), radii (inputs 13, soft buttons 14, cards 18–22, pills 999), and spacing per design.md. |
+| FR-DS-02 | MVP | Design system | Shared interactive components are restyled to the design: buttons (primary/secondary/soft/ghost/danger/icon), text & search inputs, segmented control, switch, checkbox, progress meter — with the specified hover/focus states. Only the components the app actually uses are required. |
+| FR-DS-03 | MVP | Design system | Plant cards follow the design: radius 22, cloud bg, 1px border, image area with striped placeholder + filename chip, top-right status pill, body (Quicksand title, Mulish-italic latin name, status line, full-width action button). |
+| FR-DS-04 | MVP | Design system | Botanical line icons (stroke 1.8, round caps, no fill): the water-drop brand glyph (also the water action), leaf, sprout, sun, pot, bell — via the codebase icon approach (inline SVG components). |
+| FR-DS-05 | MVP | Design system | The app is branded «Поливайко» (wordmark in the shell/header). |
+| FR-DS-06 | MVP | Design system | Existing screens (plant list/home, plant detail, growth & watering sections, charts) are restyled with the tokens & components; charts use the forest (positive) / clay (countdown) palette and remain legible. |
+
+### Reminders & watering status (FR-REM) — added 2026-06-30 (scope change)
+
+| ID | Phase | Area | Description |
+|----|-------|------|-------------|
+| FR-REM-01 | MVP | Reminders | Each plant has a watering interval in days (`intervalDays`), editable, with a sensible default (7); validated as a positive integer. |
+| FR-REM-02 | MVP | Reminders | A plant's watering status — **healthy / soon / overdue** — is derived from its last watering date (latest watering event) + `intervalDays` vs today (Europe/Kiev). A plant never watered is treated as due. |
+| FR-REM-03 | MVP | Reminders | The home view shows a summary card with the count of plants that need watering today (status soon/overdue, i.e. due). |
+| FR-REM-04 | MVP | Reminders | The home view lists reminder rows for plants needing water: thumb, name, a due line colored by urgency, and a "water now" action; rows ordered by urgency (most overdue first). |
+| FR-REM-05 | MVP | Reminders | "Water now" logs a watering event dated today for that plant, updates the plant's status and the today-count, and swaps the row's control to a "done"/confirmation state. |
+| FR-REM-06 | MVP | Reminders | When no plant needs water, the home shows an all-done empty state ("Усі политі! 🌱" + reassurance line). |
+| FR-REM-07 | MVP | Reminders | The watering status is shown as a status pill on plant cards and the plant detail view. |
+| FR-REM-08 | Future | Reminders | Push/OS notifications when a plant is due (was FR-WATER-07). |
+
+> **Scope note (2026-06-30):** This change reframes the home/list view around
+> watering reminders (the design's Home screen) while KEEPING the existing
+> tracker capabilities (growth measurements, watering history, charts) on the
+> plant detail view. Growth/watering history + charts are unchanged in behavior;
+> they are restyled (FR-DS-06). `lastWateredAt` is derived from the existing
+> watering events — no duplicate state.
 
 ## Non-Functional Requirements (NFR)
 
@@ -84,8 +120,8 @@ release gate, not skipped).
 
 | ID | Phase | Verifiability | Description |
 |----|-------|---------------|-------------|
-| NFR-A11Y-01 | MVP | local-verifiable | UI passes automated accessibility checks (axe) in BOTH light and dark themes, including a vision pass on the settled screen. |
-| NFR-A11Y-02 | MVP | local-verifiable | Text and interactive elements meet WCAG 2.1 AA contrast in both themes. |
+| NFR-A11Y-01 | MVP | local-verifiable | UI passes automated accessibility checks (axe) in the single light "paper" theme (FR-SHELL-02a), including a vision pass on the settled screen. (Amended 2026-06-30 — was light+dark.) |
+| NFR-A11Y-02 | MVP | local-verifiable | Text and interactive elements meet WCAG 2.1 AA contrast in the paper theme (notably forest #2F6B3F / paper #F4F1E8 and the status chip colors). |
 | NFR-A11Y-03 | MVP | local-verifiable | Charts are not the only way to read the data: the underlying values are also available as a list/table (FR-GROWTH-02, FR-WATER-03). |
 | NFR-A11Y-04 | MVP | local-verifiable | All interactive controls are keyboard operable and have accessible labels. |
 

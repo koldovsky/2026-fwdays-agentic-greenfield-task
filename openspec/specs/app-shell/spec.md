@@ -1,9 +1,9 @@
 # app-shell capability
 
 ## Purpose
-The app shell provides the single navigational frame for the Plant Growth & Watering Tracker, letting the Owner move between the plant list and a plant's detail view and switch between light and dark themes that persist across reloads. It also DEFINES the shared inline form-error pattern that every other capability (plants, growth, watering) reuses. UI copy is Ukrainian; this capability is the home for the cross-cutting accessibility, responsive, and localization NFRs that all capabilities must honor.
+The app shell provides the single navigational frame for the Plant Growth & Watering Tracker, letting the Owner move between the plant list and a plant's detail view, rendered in a single light "paper" theme per the «Поливайко» design system (FR-SHELL-02a; no light/dark toggle). It also DEFINES the shared inline form-error pattern that every other capability (plants, growth, watering) reuses. UI copy is Ukrainian; this capability is the home for the cross-cutting accessibility, responsive, and localization NFRs that all capabilities must honor.
 
-Future (excluded from MVP, do not report as bugs): data export/import (FR-SHELL-04), authenticated multi-user accounts (FR-SHELL-05), and any additional top-level navigation beyond list and detail views.
+Future (excluded from MVP, do not report as bugs): data export/import (FR-SHELL-04), authenticated multi-user accounts (FR-SHELL-05), a light/dark theme toggle (FR-SHELL-02 was SUPERSEDED on 2026-06-30 by FR-SHELL-02a — the app now ships a single light "paper" theme and the toggle is removed), and any additional top-level navigation beyond list and detail views.
 
 ## Requirements
 
@@ -34,24 +34,24 @@ The system SHALL present a single application shell that lets the Owner navigate
 - **WHEN** the Owner opens a route for a plant id that does not exist
 - **THEN** the shell shows a not-found state with a link back to the plant list, never a raw 500 or blank screen
 
-### Requirement: Persisted light/dark theme toggle
-The system SHALL let the Owner toggle between light and dark themes, and the chosen theme SHALL persist across page reloads and app restarts (FR-SHELL-02). The UI SHALL pass automated accessibility (axe) checks in BOTH themes (NFR-A11Y-01) and text and interactive elements SHALL meet WCAG 2.1 AA contrast in both themes (NFR-A11Y-02).
+### Requirement: Single light "paper" theme
+The system SHALL render the app in a single light "paper" theme per the «Поливайко» design system, with NO light/dark theme toggle (FR-SHELL-02a). This requirement SUPERSEDES the former persisted light/dark theme toggle (FR-SHELL-02, superseded 2026-06-30 by the design-system scope change). The UI SHALL pass automated accessibility (axe) checks in the paper theme (NFR-A11Y-01) and text and interactive elements SHALL meet WCAG 2.1 AA contrast in the paper theme (NFR-A11Y-02). The «Поливайко» tokens and components themselves are defined in the design-system capability (FR-DS-01..06).
 
-#### Scenario: Toggle theme
-- **WHEN** the Owner activates the theme toggle while in light theme
-- **THEN** the UI switches to dark theme and the toggle reflects the dark state
+#### Scenario: App renders in the paper theme
+- **WHEN** the app is loaded
+- **THEN** the shell renders in the single light "paper" theme (warm paper background per the «Поливайко» design system) and the document's rendered theme is the paper theme on first paint (FR-SHELL-02a)
 
-#### Scenario: Theme persists across reload
-- **WHEN** the Owner selects dark theme and then reloads the app
-- **THEN** the persisted preference is read and the dark theme is applied to the document root before the first paint, so no frame is painted with the light theme (the document's initial rendered state is dark)
+#### Scenario: No theme toggle is present
+- **WHEN** the Owner inspects the shell controls
+- **THEN** no light/dark theme toggle control is present, and there is no theme preference to persist (FR-SHELL-02a, superseding FR-SHELL-02)
 
-#### Scenario: Contrast in both themes
-- **WHEN** the settled plant list and plant detail screens are inspected in light theme and again in dark theme
-- **THEN** text and interactive elements meet WCAG 2.1 AA contrast and axe reports no violations in either theme (NFR-A11Y-01, NFR-A11Y-02)
+#### Scenario: Theme is stable across reload
+- **WHEN** the Owner reloads the app
+- **THEN** the app re-renders in the same single paper theme without reading or writing any persisted theme preference (FR-SHELL-02a)
 
-#### Scenario: Missing or corrupt persisted theme value
-- **WHEN** the persisted theme preference is absent or unreadable on load
-- **THEN** the app falls back to a defined default theme without error, rather than failing to render
+#### Scenario: Contrast in the paper theme
+- **WHEN** the settled plant list and plant detail screens are inspected in the paper theme
+- **THEN** text and interactive elements meet WCAG 2.1 AA contrast and axe reports no violations (NFR-A11Y-01, NFR-A11Y-02)
 
 ### Requirement: Shared inline form-error pattern
 The system SHALL surface invalid input inline next to the offending field, never as a raw server error (e.g. an unhandled 500) and never as a silent failure (FR-SHELL-03). All forms SHALL show clear validation messages and confirm destructive actions (NFR-USA-02). This pattern is DEFINED here and reused by the plants, growth, and watering capabilities. Validation messages SHALL be presented in Ukrainian (NFR-LOC-01) and SHALL be programmatically associated with their field for assistive technology (NFR-A11Y-04).
