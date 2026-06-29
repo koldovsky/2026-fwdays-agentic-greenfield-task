@@ -4,7 +4,12 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** Phases 0–3 done (scaffold, requirements, baseline specs, capability plan all signed off). **Now: Phase 4 autonomous build**, slice 1 of 5 (`add-app-shell`). Next slices: plants → growth → watering → charts.
+- **Phase:** Phase 4 autonomous build. **Slice 1 `add-app-shell` DONE** (implemented, reviewed across 3 rounds, archived). **Now: slice 2 `add-plants`.** Remaining: growth → watering → charts.
+
+### Deferred to Phase 6 (cross-cutting QA, tracked here so it isn't lost)
+- Rendered a11y for every capability: `npm run check:a11y` (axe light+dark), WCAG AA contrast, keyboard-only, 360px responsive (NFR-A11Y-01/02/04, NFR-COMPAT-01) — run once over the whole app in Phase 6 with vision-verify + recordings.
+- E2E enforcement of NFR-USA-01 (≤2 clicks) and NFR-COMPAT-02 (evergreen browsers) — Phase 5/6.
+- Global `review-gate` re-run at Phase 7 (the per-slice security/spec "findings" that were clean-dimension reports or by-design no-auth should clear there).
 
 ## What this is
 

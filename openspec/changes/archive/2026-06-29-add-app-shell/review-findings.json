@@ -1,0 +1,52 @@
+{
+  "generatedBy": "review-gate + orchestrator-adjudication",
+  "scope": "add-app-shell",
+  "change": "add-app-shell",
+  "baseRef": "4baa802",
+  "headRef": "HEAD",
+  "gateRaw": {
+    "confirmed": 14,
+    "dimensions": {
+      "correctness": {
+        "confirmed": 2,
+        "contested": 0,
+        "rejected": 1
+      },
+      "security": {
+        "confirmed": 5,
+        "contested": 1,
+        "rejected": 0
+      },
+      "spec-compliance": {
+        "confirmed": 7,
+        "contested": 2,
+        "rejected": 2
+      },
+      "visual": {
+        "confirmed": 0,
+        "contested": 0,
+        "rejected": 0
+      }
+    },
+    "confirmedTitles": [
+      "ThemeToggle label/aria-pressed flash to the wrong value on initial hydration when stored theme is dark",
+      "Theme can desync from another tab — no storage-event bridge in the provider's subscribe()",
+      "Authorization matrix — no authz surface exists in this slice (clean, by design)",
+      "Auth & sessions — not applicable in this slice (clean)",
+      "Secrets & config — hygiene is clean for this diff",
+      "Dependency audit — only moderate transitive issues, none exploitable via this app",
+      "Abuse resistance — demo server action has no persistence/mass-assignment, but is unauthenticated and rate-limit-free (note for slice 2)",
+      "Two-clicks (NFR-USA-01) scenario has no enforceable artifact in this slice",
+      "NFR-A11Y-01/02 and NFR-COMPAT-01 scenarios are deferred to Phase 6 but the requirements use SHALL with no in-slice enforcement",
+      "NFR-COMPAT-02 (evergreen browsers) has no enforcement point or test anywhere in the slice",
+      "Tasks 4.6/4.7/4.8 unchecked: manual smoke, current-state.md update, and archive not done — consistent with reality",
+      "All ticked implementation tasks (1.x, 2.x, 4.1-4.5) have matching artifacts and green tests",
+      "No-flash script test pins the exported string but layout.test.tsx now closes the injection gap",
+      "Cross-tab theme desync is an accepted limitation, not a spec contradiction"
+    ]
+  },
+  "adjudication": "All gate-confirmed items triaged in review-triage.md: 0 unresolved defects. Two real bugs (hydration mismatch; React19 form-action reset wiping input) were fixed with tests. Security items are clean-dimension reports or by-design no-auth (NFR-SEC-01). Spec items are NFRs verified in Phase 5 E2E + Phase 6 axe/vision/recordings (deferred by design) or informational/in-progress notes. Cosmetic theme items accepted+documented.",
+  "adjudicatedBy": "orchestrator",
+  "clean": true,
+  "generatedAt": "2026-06-29T12:06:24Z"
+}
