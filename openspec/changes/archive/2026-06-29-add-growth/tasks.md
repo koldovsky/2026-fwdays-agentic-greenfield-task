@@ -43,7 +43,7 @@
 - [x] 4.3 Run `npm run build` — production build succeeds.
 - [x] 4.4 Run `npx openspec validate add-growth --strict` — no errors.
 - [x] 4.5 Run `npx openspec validate --all --strict` — no errors.
-- [ ] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file (or rely on `db/client.ts` auto-migrate), then `npm run dev` and:
+- [x] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file (or rely on `db/client.ts` auto-migrate), then `npm run dev` and:
   1. open an existing plant's detail `/plants/<id>` — confirm the measurements section shows the helpful Ukrainian empty state (no measurements yet);
   2. log a measurement with height "12,5" (decimal comma) and NO date — confirm it is accepted, stored as 12.5 cm, dated today, and appears in the list as `DD.MM.YYYY`;
   3. log a second measurement on the SAME date — confirm both appear and the more recently created one is listed first (SC-3 tie-break);
@@ -55,4 +55,4 @@
   9. delete the PARENT plant via its confirm step — confirm its measurements are cascade-removed while another plant's measurements remain (FK cascade);
   10. open `/plants/<bad-id>` — confirm the friendly not-found state (no measurements section error).
 - [x] 4.7 Update `docs/current-state.md` (date/time in Europe/Kiev, current phase, growth moved planned -> implemented, second DB slice + first plant child landed, shared `lib/dates.ts` promotion noted). README is the course/homework README with no growth/DB section — N/A there; the DB/growth notes live in `docs/current-state.md`.
-- [ ] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-growth/` to `openspec/changes/archive/YYYY-MM-DD-add-growth/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.
+- [x] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-growth/` to `openspec/changes/archive/YYYY-MM-DD-add-growth/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.

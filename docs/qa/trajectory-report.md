@@ -5,17 +5,19 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 2 archived slice(s).
-Result: PASS, 1 warning(s)
+Scope: 3 archived slice(s).
+Result: PASS, 2 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-29-add-app-shell | clean | 4 | yes | forms, theme, i18n |
+| 2026-06-29-add-growth | clean | 2 | yes | growth, i18n, plants |
 | 2026-06-29-add-plants | clean | 4 | yes | plants, i18n |
 
 ## Cross-slice module overlap
 
-- `lib/i18n/` touched by: 2026-06-29-add-app-shell, 2026-06-29-add-plants
+- `lib/i18n/` touched by: 2026-06-29-add-app-shell, 2026-06-29-add-growth, 2026-06-29-add-plants
+- `lib/plants/` touched by: 2026-06-29-add-growth, 2026-06-29-add-plants
 
 ## Failures
 
@@ -23,4 +25,5 @@ None.
 
 ## Warnings
 
-- **in-scope**: lib/i18n/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-29-add-plants) — review for scope drift
+- **in-scope**: lib/i18n/ modified by 3 slices (2026-06-29-add-app-shell, 2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift
+- **in-scope**: lib/plants/ modified by 2 slices (2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift

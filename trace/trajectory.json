@@ -13,6 +13,17 @@
       "processComplete": true
     },
     {
+      "slice": "2026-06-29-add-growth",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "growth",
+        "i18n",
+        "plants"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-06-29-add-plants",
       "reviewEvidence": "clean",
       "trailerCommits": 4,
@@ -28,6 +39,14 @@
       "domain": "i18n",
       "slices": [
         "2026-06-29-add-app-shell",
+        "2026-06-29-add-growth",
+        "2026-06-29-add-plants"
+      ]
+    },
+    {
+      "domain": "plants",
+      "slices": [
+        "2026-06-29-add-growth",
         "2026-06-29-add-plants"
       ]
     }
@@ -36,7 +55,11 @@
   "warnings": [
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-29-add-plants) — review for scope drift"
+      "msg": "lib/i18n/ modified by 3 slices (2026-06-29-add-app-shell, 2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/plants/ modified by 2 slices (2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift"
     }
   ]
 }
