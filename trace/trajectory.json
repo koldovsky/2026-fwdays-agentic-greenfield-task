@@ -11,9 +11,32 @@
         "i18n"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-plants",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "plants",
+        "i18n"
+      ],
+      "processComplete": true
     }
   ],
-  "overlaps": [],
+  "overlaps": [
+    {
+      "domain": "i18n",
+      "slices": [
+        "2026-06-29-add-app-shell",
+        "2026-06-29-add-plants"
+      ]
+    }
+  ],
   "failures": [],
-  "warnings": []
+  "warnings": [
+    {
+      "check": "in-scope",
+      "msg": "lib/i18n/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-29-add-plants) — review for scope drift"
+    }
+  ]
 }

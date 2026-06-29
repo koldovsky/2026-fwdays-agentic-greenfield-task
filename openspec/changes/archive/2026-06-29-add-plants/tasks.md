@@ -44,7 +44,7 @@
 - [x] 4.3 Run `npm run build` — production build succeeds.
 - [x] 4.4 Run `npx openspec validate add-plants --strict` — no errors.
 - [x] 4.5 Run `npx openspec validate --all --strict` — no errors.
-- [ ] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file, then `npm run dev` and:
+- [x] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file, then `npm run dev` and:
   1. open `/` — confirm the helpful empty state in Ukrainian (no plants yet, no demo form);
   2. add a plant with ONLY a name — confirm species is prefilled with the default "Грошове дерево (Crassula ovata)" and the plant appears in the list;
   3. open its detail — confirm name + species show and acquired date shows as empty/placeholder;
@@ -54,4 +54,4 @@
   7. delete the plant via the explicit confirm step, first CANCEL (data intact), then CONFIRM — confirm it is gone from the list and other plants are untouched (cascade of its own children verified once the child slices exist);
   8. open `/plants/<bad-id>` — confirm the friendly not-found state.
 - [x] 4.7 Update `docs/current-state.md` (date/time in Europe/Kiev, current phase, plants moved planned → implemented, first DB slice landed). (README is the course/homework README with no plants/DB section — N/A there; the DB/plants notes live in `docs/current-state.md`.)
-- [ ] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-plants/` to `openspec/changes/archive/YYYY-MM-DD-add-plants/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.
+- [x] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-plants/` to `openspec/changes/archive/YYYY-MM-DD-add-plants/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.

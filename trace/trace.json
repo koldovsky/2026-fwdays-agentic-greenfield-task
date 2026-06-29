@@ -69,8 +69,7 @@
     {
       "id": "FR-PLANT-01",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -84,8 +83,7 @@
     {
       "id": "FR-PLANT-02",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -96,8 +94,7 @@
     {
       "id": "FR-PLANT-03",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -110,8 +107,7 @@
     {
       "id": "FR-PLANT-04",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -122,8 +118,7 @@
     {
       "id": "FR-PLANT-05",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -134,8 +129,7 @@
     {
       "id": "FR-PLANT-06",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -149,8 +143,7 @@
       "specs": [
         "openspec/specs/growth/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -163,8 +156,7 @@
     {
       "id": "FR-PLANT-08",
       "specs": [
-        "openspec/specs/plants/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -334,8 +326,7 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-plants/specs/plants/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -505,10 +496,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"add-plants\" is not archived"
     }
   ]
 }

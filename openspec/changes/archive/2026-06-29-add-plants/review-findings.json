@@ -1,0 +1,42 @@
+{
+  "generatedBy": "review-gate + orchestrator-adjudication",
+  "scope": "add-plants",
+  "change": "add-plants",
+  "baseRef": "ec3ccf0",
+  "headRef": "HEAD",
+  "gateRaw": {
+    "confirmed": 4,
+    "dimensions": {
+      "correctness": {
+        "confirmed": 0,
+        "contested": 2,
+        "rejected": 2
+      },
+      "security": {
+        "confirmed": 2,
+        "contested": 0,
+        "rejected": 0
+      },
+      "spec-compliance": {
+        "confirmed": 2,
+        "contested": 3,
+        "rejected": 1
+      },
+      "visual": {
+        "confirmed": 0,
+        "contested": 0,
+        "rejected": 0
+      }
+    },
+    "confirmedTitles": [
+      "Server actions trust client-supplied plant id without integer validation",
+      "Transitive postcss moderate XSS advisory pulled in via Next.js",
+      "Component-test task (1.6) is unchecked but its green-dependent tasks (2.8, 2.9) are ticked 'Green for 1.6' — no component test artifact exists",
+      "Manual real-DB smoke test (4.6) and archive (4.8) are unchecked, yet docs/current-state.md was updated (4.7) marking plants implemented"
+    ]
+  },
+  "adjudication": "All confirmed + actionable contested findings FIXED (id validation, species trim, edit-form key, component+persistence+not-found tests); postcss advisory accepted+documented. Manual smoke additionally caught and FIXED a runtime 500 (migrations not applied to data/app.db). See review-triage.md. 0 unresolved defects.",
+  "adjudicatedBy": "orchestrator",
+  "clean": true,
+  "generatedAt": "2026-06-29T15:05:53Z"
+}
