@@ -7,9 +7,15 @@
 //
 // The data branch is wrapped in a labelled <figure> (accessible name from the
 // `charts` copy) so a screen reader announces the chart region (SC-6,
-// NFR-A11Y-04). The X axis is keyed on the DD.MM.YYYY label (SC-1) and the Y axis
-// is the numeric height in cm. The rendered legibility/contrast/perf are
-// validated in Phase 6 (vision-verify + axe + perf gate) — jsdom paints nothing.
+// NFR-A11Y-04). The Y axis is the numeric height in cm. The X axis is keyed on a
+// monotonic INDEX (a numeric axis), NOT the DD.MM.YYYY label string: growth keeps
+// one point PER measurement (design D3), so two same-date measurements must stay
+// SEPARABLE on the axis — a categorical label axis would map both to the same
+// DD.MM.YYYY tick and visually merge them. Each point gets its own integer index
+// tick, and `tickFormatter` renders the DD.MM.YYYY label (SC-1) for that index, so
+// every measurement is a distinct plotted point while the axis still reads as
+// dates. The rendered legibility/contrast/perf are validated in Phase 6
+// (vision-verify + axe + perf gate) — jsdom paints nothing.
 //
 // @trace FR-CHART-02
 // @trace FR-CHART-03
@@ -25,7 +31,7 @@ import {
 } from "recharts";
 
 import { ChartEmptyState } from "@/components/charts/ChartEmptyState";
-import type { GrowthPoint } from "@/lib/charts/series";
+import { type GrowthPoint, toGrowthXAxis } from "@/lib/charts/series";
 import { uk } from "@/lib/i18n/uk";
 
 export interface GrowthChartProps {
@@ -38,6 +44,11 @@ export function GrowthChart({ series }: GrowthChartProps) {
     return <ChartEmptyState message={uk.charts.growthEmpty} />;
   }
 
+  // Map onto a numeric X axis (one tick per measurement) so two same-date
+  // measurements stay distinct, separable points (design D3). `toGrowthXAxis` is
+  // the pure, unit-tested seam; the chart only wires its output to Recharts.
+  const { data, labelOf } = toGrowthXAxis(series);
+
   return (
     <figure aria-label={uk.charts.growthTitle} className="m-0 w-full">
       <figcaption className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -46,7 +57,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={series}
+            data={data}
             margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
           >
             <CartesianGrid
@@ -54,7 +65,11 @@ export function GrowthChart({ series }: GrowthChartProps) {
               className="stroke-zinc-200 dark:stroke-zinc-700"
             />
             <XAxis
-              dataKey="label"
+              type="number"
+              dataKey="index"
+              domain={[0, data.length - 1]}
+              ticks={data.map((point) => point.index)}
+              tickFormatter={(value) => labelOf(Number(value))}
               tick={{ fontSize: 12 }}
               className="text-zinc-700 dark:text-zinc-300"
             />
@@ -70,7 +85,9 @@ export function GrowthChart({ series }: GrowthChartProps) {
               }}
             />
             <Tooltip
-              labelFormatter={(label) => `${uk.charts.dateAxis}: ${label}`}
+              labelFormatter={(value) =>
+                `${uk.charts.dateAxis}: ${labelOf(Number(value))}`
+              }
               formatter={(value) => [value, uk.charts.heightAxis]}
             />
             <Line

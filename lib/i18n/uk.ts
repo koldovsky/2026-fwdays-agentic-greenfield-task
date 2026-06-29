@@ -174,6 +174,13 @@ export const uk = {
     heightAxis: "Висота (см)",
     /** Y-axis label for the watering chart: waterings per day (frequency, D2). */
     countAxis: "Поливів за день",
+    /**
+     * Chart render-failure fallback (FR-CHART-03, NFR-A11Y-03): shown by the
+     * error boundary when a chart throws while rendering, directing the Owner to
+     * the list below — the data stays readable, distinct from the empty state.
+     */
+    renderError:
+      "Не вдалося показати графік — дані доступні у списку нижче.",
   },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field

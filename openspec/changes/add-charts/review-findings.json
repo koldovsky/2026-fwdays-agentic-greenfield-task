@@ -1,0 +1,39 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-charts",
+  "change": "add-charts",
+  "baseRef": "d12e47d",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 0,
+      "contested": 1,
+      "rejected": 2
+    },
+    "security": {
+      "confirmed": 3,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 3,
+      "contested": 1,
+      "rejected": 2
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "Scope note: add-charts slice introduces no authorization, authentication, or injection surface (checklist items mostly N/A for this single-user app)",
+    "Injection sinks clean: parameterized ORM, React-escaped chart rendering, no CSV/PDF/path/download handlers",
+    "Dependency add (recharts 3.9.0) has no advisory; pre-existing moderate vulns are dev-only and not introduced by this slice",
+    "Baseline charts spec requires an inline chart load-failure error state that the implementation omits",
+    "NFR-PERF-02 500ms render budget has no enforcement point and is only deferred, not verified",
+    "FR-CHART-04 (charts reflect mutations) has no chart-level test; relies on action-level revalidatePath assertions only"
+  ],
+  "clean": false,
+  "generatedAt": "2026-06-29T16:23:58Z"
+}

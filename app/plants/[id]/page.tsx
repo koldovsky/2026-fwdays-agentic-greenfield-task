@@ -8,6 +8,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import { ChartErrorBoundary } from "@/components/charts/ChartErrorBoundary";
 import { GrowthChart } from "@/components/charts/GrowthChart";
 import { WateringChart } from "@/components/charts/WateringChart";
 import { MeasurementsSection } from "@/components/growth/MeasurementsSection";
@@ -87,7 +88,9 @@ export default async function PlantDetail({
       <DeletePlantButton id={plant.id} />
 
       <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <GrowthChart series={growthSeries} />
+        <ChartErrorBoundary fallbackMessage={uk.charts.renderError}>
+          <GrowthChart series={growthSeries} />
+        </ChartErrorBoundary>
       </section>
 
       <MeasurementsSection
@@ -97,7 +100,9 @@ export default async function PlantDetail({
       />
 
       <section className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <WateringChart series={wateringSeries} />
+        <ChartErrorBoundary fallbackMessage={uk.charts.renderError}>
+          <WateringChart series={wateringSeries} />
+        </ChartErrorBoundary>
       </section>
 
       <WateringsSection

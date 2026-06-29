@@ -16,9 +16,9 @@ The system SHALL display a watering chart on the plant detail view that plots th
 - **WHEN** the plant has exactly one watering event
 - **THEN** the watering chart renders that single point on the timeline without error and without an empty state
 
-#### Scenario: Render data unavailable
-- **WHEN** the underlying watering data cannot be loaded for the plant
-- **THEN** the chart area shows an inline non-blocking error message (e.g. "Couldn't load watering data") instead of a raw 500 page or a silently blank panel
+#### Scenario: Chart render failure is contained
+- **WHEN** the watering chart throws while rendering (a chart-island render error)
+- **THEN** a chart-level error boundary shows an inline non-blocking Ukrainian fallback ("chart unavailable — see the list below") in the chart area instead of a raw 500 page or a silently blank panel, and the waterings list on the same page stays readable (NFR-A11Y-03)
 
 ### Requirement: Growth chart
 The system SHALL display a growth chart on the plant detail view that plots that plant's height measurements (in centimetres) over time, each measurement as an individual point on a daily timeline with no bucketing (FR-CHART-02).
@@ -35,9 +35,9 @@ The system SHALL display a growth chart on the plant detail view that plots that
 - **WHEN** a plant has a measurement at the maximum height value FR-GROWTH-05 permits (the upstream-validated upper bound for a stored height)
 - **THEN** the growth chart's value axis scales to include that value and renders the point in-bounds, without overflow, label clipping that hides the value, axis-tick collapse, or a render error — value validation itself is owned by FR-GROWTH-05 and is not re-enforced here
 
-#### Scenario: Render data unavailable
-- **WHEN** the underlying measurement data cannot be loaded for the plant
-- **THEN** the chart area shows an inline non-blocking error message (e.g. "Couldn't load growth data") instead of a raw 500 page or a silently blank panel
+#### Scenario: Chart render failure is contained
+- **WHEN** the growth chart throws while rendering (a chart-island render error)
+- **THEN** a chart-level error boundary shows an inline non-blocking Ukrainian fallback ("chart unavailable — see the list below") in the chart area instead of a raw 500 page or a silently blank panel, and the measurements list on the same page stays readable (NFR-A11Y-03)
 
 ### Requirement: Empty state
 The system SHALL show a clear empty state in each chart when the plant has no corresponding data yet, distinct from a loading or error state (FR-CHART-03).
@@ -52,7 +52,7 @@ The system SHALL show a clear empty state in each chart when the plant has no co
 
 #### Scenario: Empty state is not an error
 - **WHEN** a chart is in its empty state
-- **THEN** the empty state is visually and semantically distinct from the load-failure error state and from a loading indicator
+- **THEN** the empty state is visually and semantically distinct from the chart render-failure fallback and from a loading indicator (the empty state is a neutral `status` region; the render-failure fallback is an `alert` region)
 
 ### Requirement: Charts reflect mutations
 The system SHALL update each chart to reflect newly added, edited, or deleted events/measurements so the rendered points stay consistent with the current data (FR-CHART-04).
@@ -81,7 +81,7 @@ The system SHALL ensure the values shown in each chart are also available as a l
 - **THEN** the same measurement values are accessible as the measurements list/table (FR-GROWTH-02), independent of the chart rendering
 
 #### Scenario: Chart fails but data remains readable
-- **WHEN** a chart fails to render or shows its load-failure error state
+- **WHEN** a chart fails to render and its error boundary shows the inline render-failure fallback
 - **THEN** the underlying list/table still presents the values, so no data is made unreadable by a chart failure
 
 ### Requirement: Chart render performance

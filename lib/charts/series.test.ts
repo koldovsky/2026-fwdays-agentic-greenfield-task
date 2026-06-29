@@ -17,7 +17,11 @@
 // @trace SC-1
 import { describe, expect, it } from "vitest";
 
-import { toGrowthSeries, toWateringSeries } from "@/lib/charts/series";
+import {
+  toGrowthSeries,
+  toGrowthXAxis,
+  toWateringSeries,
+} from "@/lib/charts/series";
 import type { Measurement } from "@/db/schema/growth";
 import type { Watering } from "@/db/schema/watering";
 
@@ -128,6 +132,62 @@ describe("toGrowthSeries(measurements) (FR-CHART-02, SC-1)", () => {
     toGrowthSeries(input);
     expect(input.map((m) => m.measuredOn)).toEqual(snapshot);
   });
+
+  it("carries 365+ points through without capping/dropping (NFR-PERF-02 data-side guarantee)", () => {
+    // The 500ms render budget is measured in Phase 6 (vision-verify + perf check);
+    // the DATA-side guarantee is that the series never caps/drops/buckets/truncates
+    // above the supported maximum. 400 distinct dates -> 400 points, in order.
+    const base = new Date("2025-01-01T00:00:00Z").getTime();
+    const measurements = Array.from({ length: 400 }, (_, i) => {
+      const day = new Date(base + i * 86_400_000).toISOString().slice(0, 10);
+      return measurement({ id: i + 1, heightCm: i + 1, measuredOn: day });
+    });
+    const series = toGrowthSeries(measurements);
+    expect(series).toHaveLength(400);
+    // Every height carried through unchanged, ascending, none dropped/NaN.
+    expect(series.map((p) => p.heightCm)).toEqual(
+      Array.from({ length: 400 }, (_, i) => i + 1),
+    );
+  });
+});
+
+// =============================================================================
+// toGrowthXAxis(series) — numeric X-axis mapping so two same-date measurements
+// stay SEPARABLE (design D3 fix; a categorical label axis would merge them)
+// =============================================================================
+describe("toGrowthXAxis(series) same-date X separation (FR-CHART-02, D3)", () => {
+  it("assigns each point a distinct monotonic index even when two share a date", () => {
+    // Two same-date measurements: toGrowthSeries keeps both (tie-broken id ASC);
+    // they share the identical DD.MM.YYYY label, so a label-keyed category axis
+    // would collapse them onto ONE tick. The numeric index keeps them separable.
+    const series = toGrowthSeries([
+      measurement({ id: 8, heightCm: 22, measuredOn: "2026-06-10" }),
+      measurement({ id: 5, heightCm: 21, measuredOn: "2026-06-10" }),
+    ]);
+    const { data, labelOf } = toGrowthXAxis(series);
+
+    // N points -> N distinct X positions, in series order.
+    expect(data.map((p) => p.index)).toEqual([0, 1]);
+    expect(new Set(data.map((p) => p.index)).size).toBe(data.length);
+    // Each index still resolves to its DD.MM.YYYY label (here the same date)...
+    expect(labelOf(0)).toBe("10.06.2026");
+    expect(labelOf(1)).toBe("10.06.2026");
+    // ...while the two distinct heights are preserved at distinct X positions.
+    expect(data.map((p) => p.heightCm)).toEqual([21, 22]);
+  });
+
+  it("preserves height/label per point and resolves out-of-range index to empty", () => {
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 10, measuredOn: "2026-06-01" }),
+      measurement({ id: 2, heightCm: 12.5, measuredOn: "2026-06-05" }),
+    ]);
+    const { data, labelOf } = toGrowthXAxis(series);
+    expect(data).toEqual([
+      { index: 0, date: "2026-06-01", label: "01.06.2026", heightCm: 10 },
+      { index: 1, date: "2026-06-05", label: "05.06.2026", heightCm: 12.5 },
+    ]);
+    expect(labelOf(99)).toBe("");
+  });
 });
 
 // =============================================================================
@@ -216,5 +276,19 @@ describe("toWateringSeries(waterings) (FR-CHART-01, SC-1)", () => {
     const snapshot = input.map((w) => w.wateredOn);
     toWateringSeries(input);
     expect(input.map((w) => w.wateredOn)).toEqual(snapshot);
+  });
+
+  it("emits 365+ distinct-day points without capping/dropping (NFR-PERF-02 data-side guarantee)", () => {
+    // 400 distinct watering days -> 400 count-per-day points; never capped,
+    // bucketed, or truncated above the supported maximum (render-time budget is a
+    // Phase 6 perf concern, the data shape is guaranteed here).
+    const base = new Date("2025-01-01T00:00:00Z").getTime();
+    const waterings = Array.from({ length: 400 }, (_, i) => {
+      const day = new Date(base + i * 86_400_000).toISOString().slice(0, 10);
+      return watering({ id: i + 1, wateredOn: day });
+    });
+    const series = toWateringSeries(waterings);
+    expect(series).toHaveLength(400);
+    expect(series.every((p) => p.count === 1)).toBe(true);
   });
 });

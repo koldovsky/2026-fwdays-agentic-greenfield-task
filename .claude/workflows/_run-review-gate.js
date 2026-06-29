@@ -43,8 +43,8 @@ const VERDICT_SCHEMA = {
   },
 }
 
-const scope = 'add-watering'
-const baseRef = '50cfb66'
+const scope = 'add-charts'
+const baseRef = 'd12e47d'
 const headRef = args?.headRef ?? 'HEAD'
 const focus = args?.focus ?? ''
 const diffInstruction = baseRef
@@ -125,7 +125,7 @@ log(`confirmed: ${confirmed.length}, contested: ${contested.length}, rejected: $
 // before archive (workflows can't touch fs — a writer agent persists it, same
 // pattern as eval-suite). Only for a slice review (scope/args.change names a
 // change folder); skipped for global / working-tree reviews.
-const change = 'add-watering'
+const change = 'add-charts'
 if (change) {
   phase('Persist')
   const dims = {}

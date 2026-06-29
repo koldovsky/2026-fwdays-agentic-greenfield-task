@@ -56,6 +56,33 @@ export function toGrowthSeries(measurements: readonly Measurement[]): GrowthPoin
     }));
 }
 
+/** A growth point augmented with its numeric X position (see `toGrowthXAxis`). */
+export interface IndexedGrowthPoint extends GrowthPoint {
+  /** Zero-based position in the ascending series — the chart's numeric X value. */
+  index: number;
+}
+
+/**
+ * Map an ordered growth series onto a NUMERIC X axis (design D3 fix). Growth, unlike
+ * watering, keeps one point PER measurement, so two same-date measurements must stay
+ * SEPARABLE: keying the chart's X axis on the categorical DD.MM.YYYY `label` would map
+ * both same-date points onto a single tick and visually merge them. Instead each point
+ * gets a distinct monotonic `index` (its position in the already-ordered series) used as
+ * the numeric X value; `labelOf(index)` resolves that index back to its DD.MM.YYYY label
+ * for the axis `tickFormatter` (SC-1). This guarantees N points -> N distinct X positions
+ * even when two share a date. Pure, never throws.
+ */
+export function toGrowthXAxis(series: readonly GrowthPoint[]): {
+  data: IndexedGrowthPoint[];
+  labelOf: (index: number) => string;
+} {
+  const data = series.map((point, index) => ({ ...point, index }));
+  return {
+    data,
+    labelOf: (index: number) => data[index]?.label ?? "",
+  };
+}
+
 /**
  * Shape watering events into a count-per-day series (design D2, FR-CHART-01).
  * Events are grouped by `wateredOn` into one point per calendar day whose

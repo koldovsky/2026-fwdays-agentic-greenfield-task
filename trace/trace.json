@@ -335,6 +335,7 @@
       ],
       "planned": true,
       "tests": [
+        "components/charts/ChartErrorBoundary.test.tsx",
         "components/charts/GrowthChart.test.tsx",
         "components/charts/WateringChart.test.tsx",
         "evals/cases/charts.eval.ts"
@@ -348,7 +349,9 @@
         "openspec/changes/add-charts/specs/charts/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/charts/GrowthChart.update.test.tsx"
+      ],
       "recordings": []
     },
     {
@@ -401,10 +404,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-CHART-04 has no test annotated \"@trace FR-CHART-04\""
-    },
     {
       "check": "recording-evidence",
       "msg": "FR-PLANT-01 is not referenced by any recording manifest under docs/qa/"

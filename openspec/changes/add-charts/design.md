@@ -215,6 +215,16 @@ watering_events (existing, slice 4)        ->  toWateringSeries(waterings)
   through the page's normal error boundary (not a chart concern), and the lists —
   the canonical readable view — are on the same page (NFR-A11Y-03), so a chart
   problem never makes the values unreadable.
+- **Chart render failure**: the charts are prop-driven client islands (no
+  chart-level async load), but a Recharts render error would otherwise bubble to
+  Next's full-page error and present the "raw 500" the spec forbids. Each chart is
+  therefore wrapped in `ChartErrorBoundary` (a small `'use client'` class
+  boundary): on a render error it shows an inline non-blocking Ukrainian fallback
+  ("chart unavailable — see the list below") in a `role="alert"` region — distinct
+  from `ChartEmptyState`'s `role="status"` empty panel — so the blast radius is one
+  chart and the measurements/waterings LISTS on the same page stay readable
+  (FR-CHART-03, NFR-A11Y-03). The cause is logged server-side via
+  `componentDidCatch`, not swallowed silently.
 - **Malformed/edge values**: the series functions are defensive on shaping only —
   they preserve the exact stored numeric height (no rounding/dropping) and skip a
   row only if its date is structurally unusable, never throwing; value VALIDATION
@@ -302,3 +312,8 @@ watering_events (existing, slice 4)        ->  toWateringSeries(waterings)
   pure series shaping and the empty-state branch. Honestly tracked deferral, not a
   dropped NFR (SC-6 accessible-label association is asserted at the jsdom level
   here; the NFR-A11Y-* / NFR-PERF-02 rendered gates remain owned by Phase 6).
+  NOTE (NFR-PERF-02): the ≤500 ms render-time budget for ≤365 points is measured
+  in Phase 6 (vision-verify + a dedicated perf check); the slice's unit layer
+  proves only the data-side guarantee — `toGrowthSeries`/`toWateringSeries` carry
+  365+ points through with no cap/drop/bucket/truncate (asserted in
+  `lib/charts/series.test.ts`).
