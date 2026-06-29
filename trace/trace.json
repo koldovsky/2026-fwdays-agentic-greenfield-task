@@ -295,6 +295,7 @@
       "tests": [
         "lib/theme/no-flash-script.test.ts",
         "lib/theme/persistence.test.ts",
+        "app/layout.test.tsx",
         "components/shell/Shell.test.tsx"
       ],
       "recordings": []
@@ -310,6 +311,7 @@
       "planned": true,
       "tests": [
         "lib/forms/result.test.ts",
+        "components/forms/ExampleForm.test.tsx",
         "components/forms/FieldError.test.tsx",
         "evals/cases/app-shell.eval.ts"
       ],

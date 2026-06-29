@@ -6,9 +6,9 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 3,
+      "confirmed": 4,
       "contested": 0,
-      "rejected": 2
+      "rejected": 0
     },
     "security": {
       "confirmed": 1,
@@ -16,8 +16,8 @@
       "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 4,
-      "contested": 2,
+      "confirmed": 3,
+      "contested": 3,
       "rejected": 2
     },
     "visual": {
@@ -27,15 +27,15 @@
     }
   },
   "confirmedTitles": [
-    "No-flash theme script mutates <html> class without suppressHydrationWarning, causing a hydration mismatch when stored theme is dark",
-    "Global not-found uses plant-specific copy, mislabeling arbitrary 404s",
-    "getClientTheme can desync label from rendered theme if the no-flash script fails to set the class but localStorage holds 'dark'",
-    "Moderate-severity PostCSS advisory pulled in transitively via Next.js",
-    "No-flash 'applied before first paint' guarantee (FR-SHELL-02) is not covered by an executable test, contrary to design R1 and task 1.4",
-    "Not-found test (task 1.5) is unchecked and absent, yet the not-found boundaries are shipped",
-    "Accessibility task group (axe, AA contrast, keyboard, 360px) entirely unchecked — NFR-A11Y-01/02, NFR-COMPAT-01 unverified",
-    "Eval case references a slice-2 artifact (@/lib/plants/validation) that does not exist; tsconfig was broadened to exclude evals to keep typecheck green"
+    "React 19 form action resets uncontrolled inputs on completion — submitted value lost on validation failure, contradicting the frozen 'input intact' design",
+    "ThemeProvider has no cross-tab / storage-event sync, so the in-app toggle can desync from another tab's choice",
+    "Eval case imports a non-existent slice-2 module; typecheck was broadened to exclude the whole evals/ tree to stay green",
+    "no-flash script test uses eval() so it does not actually pin the script injected by layout.tsx",
+    "Transitive moderate PostCSS advisory (GHSA-qx2v-qp2m-jg93) via Next.js",
+    "Coverage summary",
+    "Destructive-action confirmation scenario (NFR-USA-02) has no enforcement point anywhere in the slice",
+    "Lint task claims 'zero errors' but the suite emits a warning on dead import"
   ],
   "clean": false,
-  "generatedAt": "2026-06-29T11:38:41Z"
+  "generatedAt": "2026-06-29T11:49:47Z"
 }

@@ -12,14 +12,19 @@ export async function submitExample(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
+  // Raw (untrimmed) submitted value echoed back on failure so the form can
+  // repopulate its uncontrolled input after React 19's form-action auto-reset
+  // (FR-SHELL-03 "input intact"). Read outside the try so it is available in
+  // the catch as well.
+  const rawName = String(formData.get("name") ?? "");
   try {
-    const name = String(formData.get("name") ?? "").trim();
+    const name = rawName.trim();
     if (!name) {
-      return fieldError({ name: uk.example.nameRequired });
+      return fieldError({ name: uk.example.nameRequired }, { name: rawName });
     }
     return ok();
   } catch {
     // Unexpected failure surfaces as a whole-form message, never a raw 500.
-    return { ok: false, formError: uk.errors.generic };
+    return { ok: false, formError: uk.errors.generic, values: { name: rawName } };
   }
 }

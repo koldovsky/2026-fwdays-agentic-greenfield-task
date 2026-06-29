@@ -22,6 +22,12 @@ export function ExampleForm() {
 
   const formError = state && !state.ok ? state.formError : undefined;
   const nameError = state && !state.ok ? state.fieldErrors?.name : undefined;
+  // React 19's <form action> auto-resets uncontrolled inputs once the action
+  // resolves, so on a {ok:false} validation failure the typed value would be
+  // wiped. The action echoes the submitted `values` back; repopulating the
+  // input via defaultValue keeps the Owner's input intact (FR-SHELL-03) WITHOUT
+  // making the field controlled. Slices 2–5 reuse this exact pattern.
+  const nameValue = state && !state.ok ? state.values?.name : undefined;
   const success = state?.ok === true;
 
   return (
@@ -36,6 +42,7 @@ export function ExampleForm() {
           id="name"
           name="name"
           type="text"
+          defaultValue={nameValue}
           aria-invalid={nameError ? true : undefined}
           aria-describedby={nameError ? "name-error" : undefined}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"

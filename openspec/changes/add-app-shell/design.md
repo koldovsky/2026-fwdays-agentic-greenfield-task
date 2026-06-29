@@ -73,16 +73,17 @@ backs a form returns:
 
 ```ts
 export type FieldErrors = Record<string, string>; // field name -> Ukrainian message
+export type SubmittedValues = Record<string, string>; // field name -> submitted string
 
 export type ActionResult<T = void> =
   | { ok: true; data?: T }
-  | { ok: false; fieldErrors?: FieldErrors; formError?: string };
+  | { ok: false; fieldErrors?: FieldErrors; formError?: string; values?: SubmittedValues };
 
 export const ok = <T>(data?: T): ActionResult<T> => ({ ok: true, data });
-export const fieldError = (fieldErrors: FieldErrors): ActionResult<never> =>
-  ({ ok: false, fieldErrors });
-export const formError = (message: string): ActionResult<never> =>
-  ({ ok: false, formError: message });
+export const fieldError = (fieldErrors: FieldErrors, values?: SubmittedValues): ActionResult<never> =>
+  ({ ok: false, fieldErrors, ...(values ? { values } : {}) });
+export const formError = (message: string, values?: SubmittedValues): ActionResult<never> =>
+  ({ ok: false, formError: message, ...(values ? { values } : {}) });
 ```
 
 Rules (also enforced by AGENTS.md correctness rules): a form-backing action
@@ -94,6 +95,17 @@ generic `data` carries success payloads later slices need. Trade-off vs.
 throwing + error boundary: returning a value keeps the failure on the same
 screen with the user's input intact and avoids a route-level error page —
 required by FR-SHELL-03 ("never a raw 500 or silent failure").
+
+**Input intact across the React 19 form-action reset.** React 19's
+`<form action>` automatically resets the form's uncontrolled fields once the
+action resolves — including on a `{ ok:false }` validation failure — which would
+wipe the Owner's typed values and violate the "input intact" promise above. So a
+failure result OPTIONALLY echoes the submitted strings under `values` (success
+results never carry it), and the form repopulates each uncontrolled input via
+`defaultValue={state.values?.<field>}` (NOT by making fields controlled). This
+keeps the typed data on the screen through a failed round-trip and is the exact
+pattern slices 2–5 (e.g. multi-field plant create) inherit, so one bad field
+never silently clears the other valid ones.
 
 ### D4 — `<FieldError>` + form-error banner components  (shared UI)
 `components/forms/FieldError.tsx` (client): given a field id and an optional
@@ -169,3 +181,40 @@ the same source and copy stays consistent (NFR-LOC-01).
   Tailwind/CSS at build time; no user-supplied stylesheet reaches PostCSS's
   stringifier. **Action:** accepted as a transitive advisory; revisit and bump
   when a Next.js patch release depends on PostCSS `>=8.5.10`.
+
+## Accepted limitations (MVP)
+
+Findings from the review gate that are real but deliberately NOT implemented for
+a single-user, local, short-lived MVP. Each is an explicit, honest accept (not a
+silent skip) and is revisitable.
+
+- **Cross-tab theme sync (no `storage`-event bridge).** The `ThemeProvider`
+  store only re-applies the theme on in-app `setTheme`; toggling dark in tab A
+  leaves tab B's class/label stale until reload. Accepted: this is a single-user
+  LOCAL app where two simultaneous tabs of the same screen is not a real
+  workflow, the desync is purely cosmetic (no data/integrity impact), and a
+  reload fixes it. Revisitable by attaching a `window 'storage'` listener in
+  `subscribe` if multi-tab use ever matters.
+- **PostCSS `<8.5.10` transitive advisory (GHSA-qx2v-qp2m-jg93).** Tracked under
+  "Known advisories" above. Accepted: build-time-only, first-party CSS only, no
+  attacker-controlled stylesheet path; no non-breaking fix exists. Revisitable
+  when a Next.js patch depends on PostCSS `>=8.5.10`.
+- **`FieldError` / `FormErrorBanner` ship without an explicit `'use client'`
+  directive though D4's boundary table lists them as client islands.** Accepted:
+  both are pure presentational components (props → JSX, no hooks/events) and are
+  imported by the `'use client'` `ExampleForm`, so they are compiled into the
+  client island regardless — zero behavioral or boundary difference. They are
+  intentionally boundary-agnostic; D4's table describes where they render, not a
+  required directive. Revisitable if either gains client-only behavior.
+- **`ExampleForm` / `example-form-action` render on the home route.** This is the
+  in-slice proof of the FR-SHELL-03 wiring required by the slice's Definition of
+  Done (`docs/mvp-capability-plan.md`). Accepted as intentional for slice 1;
+  slice 2 replaces the placeholder home content with the real plant list and
+  removes the demo form so it never ships to users.
+- **Rendered-result a11y / AA-contrast / 360px-responsive verification is
+  deferred to Phase 6.** Tasks 3.1–3.4 are explicitly `(Deferred → Phase 6)`;
+  the cross-cutting axe (light+dark) + vision-verify + responsive gate runs once
+  over the whole app rather than per-slice. Accepted: honestly tracked deferral,
+  not a dropped requirement — the NFRs remain owned by the app-shell spec and the
+  Phase-6 gate machinery (`scripts/check-a11y.mjs`, `@axe-core/playwright`)
+  already exists.

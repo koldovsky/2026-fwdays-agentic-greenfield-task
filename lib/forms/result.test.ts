@@ -68,6 +68,25 @@ describe("fieldError()", () => {
     if (result.ok) throw new Error("must be a failure arm");
     expect(Object.keys(result.fieldErrors ?? {})).toEqual(["name", "acquiredAt"]);
   });
+
+  it("omits values when none are echoed (no input-repopulation key)", () => {
+    // Deliberate contract extension (design.md D3): values is OPTIONAL — when
+    // not echoed the failure shape carries no `values` key.
+    const result = fieldError({ name: "Вкажіть назву рослини" });
+    expect("values" in result).toBe(false);
+  });
+
+  it("echoes submitted values so the form can repopulate inputs after the React 19 reset", () => {
+    // FR-SHELL-03 "input intact": React 19 <form action> auto-resets uncontrolled
+    // fields on completion, so a failure result echoes the submitted values for
+    // defaultValue repopulation.
+    const result = fieldError(
+      { name: "Вкажіть назву рослини" },
+      { name: "", notes: "трохи тексту" },
+    );
+    if (result.ok) throw new Error("must be a failure arm");
+    expect(result.values).toEqual({ name: "", notes: "трохи тексту" });
+  });
 });
 
 describe("formError()", () => {
@@ -83,6 +102,12 @@ describe("formError()", () => {
       expect(result.formError).toBe("Не вдалося зберегти запис");
       expect(result.fieldErrors).toBeUndefined();
     }
+  });
+
+  it("optionally echoes submitted values for input repopulation", () => {
+    const result = formError("Не вдалося зберегти запис", { name: "Фікус" });
+    if (result.ok) throw new Error("must be a failure arm");
+    expect(result.values).toEqual({ name: "Фікус" });
   });
 });
 

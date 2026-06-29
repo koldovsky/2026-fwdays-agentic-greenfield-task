@@ -5,7 +5,7 @@
 // scenario, Risk R4). Imports will fail until lib/theme/persistence.ts is built.
 //
 // @trace FR-SHELL-02
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_THEME,

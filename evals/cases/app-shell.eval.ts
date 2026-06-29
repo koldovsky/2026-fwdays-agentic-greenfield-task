@@ -38,6 +38,10 @@ export const cases: EvalCase[] = [
       // Imported lazily so authoring/collecting this file does not require the
       // implementation to exist yet (RED phase). The eval-suite collect step
       // resolves these once slice 1 is green.
+      // @ts-expect-error slice-2 module: lib/plants/validation does not exist
+      // yet (this eval is collected/graded in Phase 6 once slice 2 lands). The
+      // narrow ts-expect-error keeps every OTHER eval file under typecheck
+      // coverage instead of excluding the whole evals/ tree.
       const { validatePlantInput } = await import("@/lib/plants/validation");
       const form = new FormData();
       form.set("name", ""); // required name omitted

@@ -30,8 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  // `evals` is a separate runtime-graded quality layer (eval-suite, Phase 6),
-  // not app build input; its cases lazily import later-slice modules, so it is
-  // excluded from the app typecheck. See evals/README.md.
-  "exclude": ["node_modules", "evals"]
+  "exclude": ["node_modules"]
 }

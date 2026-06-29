@@ -47,7 +47,7 @@ The system SHALL let the Owner toggle between light and dark themes, and the cho
 - **THEN** the app falls back to a defined default theme without error, rather than failing to render
 
 ### Requirement: Shared inline form-error pattern
-The system SHALL surface invalid input inline next to the offending field, never as a raw server error (e.g. an unhandled 500) and never as a silent failure (FR-SHELL-03). Form-backing server actions SHALL return a discriminated result of the shape `{ ok: true }` on success or `{ ok: false, fieldErrors?, formError? }` on rejection — they SHALL NOT throw on user input — so the form can render field-level and form-level messages on the same screen with the Owner's input intact. All forms SHALL show clear validation messages and confirm destructive actions (NFR-USA-02). This pattern is DEFINED here and reused by the plants, growth, and watering capabilities. Validation messages SHALL be presented in Ukrainian (NFR-LOC-01) and SHALL be programmatically associated with their field for assistive technology (NFR-A11Y-04).
+The system SHALL surface invalid input inline next to the offending field, never as a raw server error (e.g. an unhandled 500) and never as a silent failure (FR-SHELL-03). Form-backing server actions SHALL return a discriminated result of the shape `{ ok: true }` on success or `{ ok: false, fieldErrors?, formError? }` on rejection — they SHALL NOT throw on user input — so the form can render field-level and form-level messages on the same screen with the Owner's input intact (a `{ ok: false }` result MAY echo the submitted `values` so the form repopulates its uncontrolled inputs after React 19's form-action reset). All forms SHALL show clear validation messages. This inline-error pattern is DEFINED here and reused by the plants, growth, and watering capabilities. Destructive-action confirmation (NFR-USA-02) is NOT defined here — this slice ships no destructive action; it is owned by the consuming capabilities (plants, growth, watering) that introduce delete. Validation messages SHALL be presented in Ukrainian (NFR-LOC-01) and SHALL be programmatically associated with their field for assistive technology (NFR-A11Y-04).
 
 #### Scenario: Invalid field shows inline message
 - **WHEN** the Owner submits a form whose field fails validation (for example a required plant name left empty)
@@ -73,6 +73,6 @@ The system SHALL surface invalid input inline next to the offending field, never
 - **WHEN** any inline validation error is shown
 - **THEN** the message text is Ukrainian copy (NFR-LOC-01)
 
-#### Scenario: Destructive action requires confirmation
-- **WHEN** the Owner triggers a destructive action such as delete
-- **THEN** the UI presents an explicit confirmation step before the action proceeds, and cancelling leaves data unchanged (NFR-USA-02)
+#### Scenario: Submitted values survive a validation-failure round-trip
+- **WHEN** the Owner submits a form whose validation fails and the action returns a `{ ok: false }` result echoing the submitted `values`
+- **THEN** the form repopulates its uncontrolled inputs from those `values` so the Owner's typed input remains on screen after React 19's form-action auto-reset (FR-SHELL-03)
