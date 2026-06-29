@@ -1,0 +1,36 @@
+{
+  "name": "tf-guard",
+  "version": "0.1.0",
+  "description": "Lint a `terraform plan -json` for policy violations and produce a risk-ranked report.",
+  "type": "module",
+  "bin": {
+    "tf-guard": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "tf-guard": "tsx src/cli.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:watch": "node --import tsx --test --watch tests/*.test.ts",
+    "eval": "tsx evals/run.ts",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run eval",
+    "demo": "bash scripts/demo.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}

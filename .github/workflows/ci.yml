@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Outer gate mirrors the inner loop: lint · typecheck · test · eval (with ratchet).
+      - run: npm run verify
+      - run: npm run build
+      # Prove the CLI works end-to-end and gates on high risk (BC-EXIT-01).
+      - name: smoke — high risk must exit non-zero
+        run: |
+          if npx tsx src/cli.ts tests/fixtures/plan-mixed.json; then
+            echo "expected non-zero exit on high-risk plan" && exit 1
+          else
+            echo "ok: exited non-zero on high-risk plan"
+          fi

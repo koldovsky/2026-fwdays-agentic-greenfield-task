@@ -1,0 +1,56 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.0",
+  "resource_changes": [
+    {
+      "address": "aws_db_instance.main",
+      "type": "aws_db_instance",
+      "name": "main",
+      "change": {
+        "actions": ["delete"],
+        "before": { "tags": { "owner": "team-data", "environment": "prod" } },
+        "after": null
+      }
+    },
+    {
+      "address": "aws_s3_bucket.assets",
+      "type": "aws_s3_bucket",
+      "name": "assets",
+      "change": {
+        "actions": ["delete", "create"],
+        "before": { "tags": { "owner": "team-web", "environment": "prod" } },
+        "after": { "tags": { "owner": "team-web", "environment": "prod" } }
+      }
+    },
+    {
+      "address": "aws_instance.worker",
+      "type": "aws_instance",
+      "name": "worker",
+      "change": {
+        "actions": ["create"],
+        "before": null,
+        "after": { "tags": { "environment": "staging" } }
+      }
+    },
+    {
+      "address": "aws_iam_role.ci",
+      "type": "aws_iam_role",
+      "name": "ci",
+      "change": {
+        "actions": ["update"],
+        "before": { "tags": { "owner": "team-platform", "environment": "prod" } },
+        "after": { "tags": { "owner": "team-platform", "environment": "prod" } }
+      }
+    },
+    {
+      "address": "aws_cloudwatch_log_group.app",
+      "type": "aws_cloudwatch_log_group",
+      "name": "app",
+      "change": {
+        "actions": ["no-op"],
+        "before": { "tags": { "owner": "team-app", "environment": "prod" } },
+        "after": { "tags": { "owner": "team-app", "environment": "prod" } }
+      }
+    }
+  ]
+}

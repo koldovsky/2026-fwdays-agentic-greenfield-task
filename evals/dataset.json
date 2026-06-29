@@ -1,0 +1,141 @@
+{
+  "about": "Eval cases for the summary surface. Each case is a synthetic terraform plan; the rubric (evals/rubric.ts) grades the generated summary, not exact equality.",
+  "cases": [
+    {
+      "name": "clean-plan",
+      "criterion": "anything dangerous?",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_iam_role.ci",
+            "type": "aws_iam_role",
+            "name": "ci",
+            "change": {
+              "actions": ["create"],
+              "before": null,
+              "after": { "tags": { "owner": "team-platform", "environment": "prod" } }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "tag-violation",
+      "criterion": "ownership / compliance",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_lambda_function.api",
+            "type": "aws_lambda_function",
+            "name": "api",
+            "change": {
+              "actions": ["create"],
+              "before": null,
+              "after": { "tags": { "environment": "prod" } }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "destructive-prod",
+      "criterion": "data loss",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_db_instance.primary",
+            "type": "aws_db_instance",
+            "name": "primary",
+            "change": {
+              "actions": ["delete"],
+              "before": { "tags": { "owner": "team-data", "environment": "prod" } },
+              "after": null
+            }
+          },
+          {
+            "address": "aws_s3_bucket.logs",
+            "type": "aws_s3_bucket",
+            "name": "logs",
+            "change": {
+              "actions": ["delete"],
+              "before": { "tags": { "owner": "team-ops", "environment": "prod" } },
+              "after": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "long-address-truncation",
+      "criterion": "data loss",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_db_instance.this_is_an_intentionally_long_resource_name_for_test",
+            "type": "aws_db_instance",
+            "name": "this_is_an_intentionally_long_resource_name_for_test",
+            "change": {
+              "actions": ["delete", "create"],
+              "before": { "tags": { "owner": "team-data", "environment": "prod" } },
+              "after": { "tags": { "owner": "team-data", "environment": "prod" } }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "address-contains-safe-word",
+      "criterion": "data loss",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_db_instance.safe",
+            "type": "aws_db_instance",
+            "name": "safe",
+            "change": {
+              "actions": ["delete"],
+              "before": { "tags": { "owner": "team-data", "environment": "prod" } },
+              "after": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "medium-stateless-replace-no-rule",
+      "criterion": "blast radius",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_iam_role.api",
+            "type": "aws_iam_role",
+            "name": "api",
+            "change": {
+              "actions": ["delete", "create"],
+              "before": { "tags": { "owner": "team-platform", "environment": "prod" } },
+              "after": { "tags": { "owner": "team-platform", "environment": "prod" } }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "unknown-action-fails-safe",
+      "criterion": "anything dangerous?",
+      "plan": {
+        "resource_changes": [
+          {
+            "address": "aws_db_instance.novel",
+            "type": "aws_db_instance",
+            "name": "novel",
+            "change": {
+              "actions": ["forget"],
+              "before": { "tags": { "owner": "team-data", "environment": "prod" } },
+              "after": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

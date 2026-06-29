@@ -1,47 +1,87 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# tf-guard
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+> Homework for **fwdays Academy · Agentic Engineering: Greenfield**.
+> A tiny, **keyless, offline** CLI that risk-ranks a `terraform plan -json` so the
+> dangerous changes can't slip through review or CI unnoticed.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+The product is deliberately small. The point is the **process**: one vertical
+capability (risk-scoring) carried end to end through the agentic-engineering loop —
+spec → failing tests → green → eval → independent review — with all context living in
+the repo, not the chat.
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+## Quick start
 
-## Що зробити
+```bash
+npm install
+npm run verify          # lint · typecheck · test · eval (the full gate)
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+# run it
+terraform show -json plan.bin | npx tsx src/cli.ts          # from a real plan
+npx tsx src/cli.ts tests/fixtures/plan-mixed.json           # from a fixture
+npx tsx src/cli.ts tests/fixtures/plan-mixed.json --json    # machine-readable
+```
 
-## Як здати
+Exit code is `1` when any finding is high risk (`BC-EXIT-01`), so CI can gate on it.
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+```
+tf-guard — 2 high, 0 medium, 3 low · 5 changes
+[HIGH] 90 aws_db_instance.main — delete of stateful resource
+[HIGH] 90 aws_s3_bucket.assets — replace of stateful resource
+[LOW ] 25 aws_instance.worker — missing tags: owner
+2 changes with no policy findings.
+```
 
-## Як оцінюється
+## How it works
 
-Дивимось на **докази процесу**, а не на стек:
+Functional core / imperative shell. Everything under `src/lib/` is pure (no I/O), so
+unit tests are exact gates; only the human-readable wording needs fuzzy *evals*.
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+```
+plan -json ─▶ src/cli.ts ─▶ parse.ts (zod) ─▶ rules/* ─▶ score.ts ─▶ summarize.ts
+                (shell)        (boundary)      (pure)     (pure)       (pure)
+```
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+See [DESIGN.md](DESIGN.md) and [docs/adr/0001-risk-score-model.md](docs/adr/0001-risk-score-model.md).
+
+## Agentic-engineering practices — and where to see them
+
+| Practice | Evidence in this repo |
+| --- | --- |
+| **Context engineering / rules** | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) (one-line pointer) |
+| **Static vs dynamic context** | static = AGENTS.md/DESIGN.md; dynamic = [`.agents/skills/tf-risk-rank/SKILL.md`](.agents/skills/tf-risk-rank/SKILL.md) |
+| **Spec-driven development** | [docs/requirements.md](docs/requirements.md) (FR/NFR/TC/BC) + [openspec/](openspec/) change & capability spec |
+| **Intent captured in repo** | [docs/adr/0001-risk-score-model.md](docs/adr/0001-risk-score-model.md) |
+| **Tests (deterministic)** | [tests/](tests/) — exact-equality on parse/rules/score/summary |
+| **Evals (non-deterministic surface)** | [evals/](evals/) — rubric over a dataset + baseline **ratchet** |
+| **Loop engineering / gates** | [`.githooks/pre-commit`](.githooks/pre-commit), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **maker ≠ checker** | independent reviewer pass → [docs/review-trace.md](docs/review-trace.md) |
+| **Secrets hygiene** | keyless by design; [.env.example](.env.example) only; hook scans staged diffs |
+| **Skill as a capability (Day 03)** | [`.agents/skills/tf-risk-rank/SKILL.md`](.agents/skills/tf-risk-rank/SKILL.md) — same capability, many surfaces |
+
+## Tests vs Evals (why both)
+
+- **Tests** check the deterministic core: `expect(score(...)).toBe(90)`. One input, one
+  right answer.
+- **Evals** check the *summary* the way the course teaches — many valid wordings, so we
+  grade properties (≤100 chars, never call a high-risk change "safe", header counts
+  match the data, no high finding dropped) on a dataset, with a threshold and a
+  ratchet that never silently drops. Update the bar deliberately with
+  `npx tsx evals/run.ts --update-baseline`.
+
+## Demo
+
+▶ **[asciinema.org/a/7uYgsQjnRiH50oYG](https://asciinema.org/a/7uYgsQjnRiH50oYG)**
+
+Also committed as `docs/demo.cast` — replay locally with `asciinema play docs/demo.cast`,
+or regenerate with `npm run demo`.
+
+## Stack
+
+TypeScript (strict, ESM), Node ≥ 20. Tests: Node's built-in `node:test` (no test
+framework). Lint: eslint (flat). Boundary validation: zod — the only runtime
+dependency. No network, no credentials. `npm ci` installs clean on any platform.
 
 ---
 
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+<sub>Assignment brief & submission rules: see the
+[course task repo](https://github.com/koldovsky/2026-fwdays-agentic-greenfield-task).</sub>

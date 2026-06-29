@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Inner loop gate: deterministic checks on every commit (loop engineering).
+# Enable once with:  git config core.hooksPath .githooks
+set -euo pipefail
+
+echo "▶ pre-commit: secret scan"
+# Block obvious secrets in staged files (defense-in-depth alongside .gitignore).
+staged=$(git diff --cached --name-only --diff-filter=ACM || true)
+if [ -n "$staged" ]; then
+  if echo "$staged" | grep -qE '(^|/)\.env$'; then
+    echo "✗ refusing to commit a .env file"; exit 1
+  fi
+  # Heuristic patterns: AWS keys, private keys, Anthropic keys.
+  if git diff --cached -U0 -- $staged \
+      | grep -nE 'AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-ant-[A-Za-z0-9-]{20,}' ; then
+    echo "✗ potential secret detected in staged changes"; exit 1
+  fi
+fi
+
+echo "▶ pre-commit: verify (lint · typecheck · test · eval)"
+npm run verify
+
+echo "✓ pre-commit passed"
