@@ -32,6 +32,16 @@
         "i18n"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-watering",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "watering",
+        "i18n"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -40,7 +50,8 @@
       "slices": [
         "2026-06-29-add-app-shell",
         "2026-06-29-add-growth",
-        "2026-06-29-add-plants"
+        "2026-06-29-add-plants",
+        "2026-06-29-add-watering"
       ]
     },
     {
@@ -55,7 +66,7 @@
   "warnings": [
     {
       "check": "in-scope",
-      "msg": "lib/i18n/ modified by 3 slices (2026-06-29-add-app-shell, 2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift"
+      "msg": "lib/i18n/ modified by 4 slices (2026-06-29-add-app-shell, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering) — review for scope drift"
     },
     {
       "check": "in-scope",

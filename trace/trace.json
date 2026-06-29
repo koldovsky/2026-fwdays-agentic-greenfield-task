@@ -142,8 +142,7 @@
       "specs": [
         "openspec/specs/growth/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -235,8 +234,7 @@
     {
       "id": "FR-WATER-01",
       "specs": [
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -250,8 +248,7 @@
     {
       "id": "FR-WATER-02",
       "specs": [
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -266,8 +263,7 @@
       "id": "FR-WATER-03",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -280,8 +276,7 @@
     {
       "id": "FR-WATER-04",
       "specs": [
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -293,8 +288,7 @@
     {
       "id": "FR-WATER-05",
       "specs": [
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -372,8 +366,7 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md",
-        "openspec/changes/add-watering/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -507,10 +500,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"add-watering\" is not archived"
     }
   ]
 }

@@ -45,7 +45,7 @@
 - [x] 4.3 Run `npm run build` — production build succeeds.
 - [x] 4.4 Run `npx openspec validate add-watering --strict` — no errors.
 - [x] 4.5 Run `npx openspec validate --all --strict` — no errors.
-- [ ] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file (or rely on `db/client.ts` auto-migrate), then `npm run dev` and:
+- [x] 4.6 Manual real-DB smoke test: apply the migration with `npm run db:migrate` against the real SQLite file (or rely on `db/client.ts` auto-migrate), then `npm run dev` and:
   1. open an existing plant's detail `/plants/<id>` — confirm the waterings section shows the helpful Ukrainian empty state (no waterings yet) and sits alongside the measurements section without layout/label collision;
   2. log a watering with NO date and NO note — confirm it is accepted, dated today, has no note, and appears in the list as `DD.MM.YYYY`;
   3. log a second watering on the SAME date WITH a note — confirm both appear, the more recently created one is listed first (SC-3 tie-break), and its note is shown;
@@ -56,5 +56,5 @@
   8. delete ONE watering via the explicit confirm step, first CANCEL (row intact), then CONFIRM — confirm only that row is gone and the plant + its other waterings + its measurements are untouched (single-row delete, no cascade);
   9. delete the PARENT plant via its confirm step — confirm its waterings (and measurements) are cascade-removed while another plant's data remains (FK cascade);
   10. open `/plants/<bad-id>` — confirm the friendly not-found state (no waterings section error).
-- [ ] 4.7 Update `docs/current-state.md` (date/time in Europe/Kiev, current phase, watering moved planned -> implemented, third DB slice + second plant child landed, two children now cascade from the plant). README is the course/homework README with no watering/DB section — N/A there; the DB/watering notes live in `docs/current-state.md`.
-- [ ] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-watering/` to `openspec/changes/archive/YYYY-MM-DD-add-watering/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.
+- [x] 4.7 Update `docs/current-state.md` (date/time in Europe/Kiev, current phase, watering moved planned -> implemented, third DB slice + second plant child landed, two children now cascade from the plant). README is the course/homework README with no watering/DB section — N/A there; the DB/watering notes live in `docs/current-state.md`.
+- [x] 4.8 Only after the smoke test (4.6) passes, archive MANUALLY (this project archives change folders by hand to avoid the CLI conflicting with the pre-authored baseline specs): move `openspec/changes/add-watering/` to `openspec/changes/archive/YYYY-MM-DD-add-watering/` (date in Europe/Kiev). Do NOT run `npx openspec archive`.
