@@ -17,8 +17,9 @@
 
 import { db } from "@/db/client";
 import { uk } from "@/lib/i18n/uk";
-import { formatAcquiredDate } from "@/lib/dates";
+import { formatAcquiredDate, todayInKiev } from "@/lib/dates";
 import { getHomeReminders } from "@/lib/reminders/service";
+import { dueGapDays } from "@/lib/reminders/status";
 import { AllDoneState } from "@/components/reminders/AllDoneState";
 import { ReminderRow } from "@/components/reminders/ReminderRow";
 import { SummaryCard } from "@/components/reminders/SummaryCard";
@@ -28,15 +29,26 @@ import { Button } from "@/components/ui/Button";
 // Reads mutable plant data per request — never prerendered at build time.
 export const dynamic = "force-dynamic";
 
-/** Due-line copy for a reminder row, keyed by the due status. */
-function dueLabelFor(status: "soon" | "overdue"): string {
-  return status === "overdue"
-    ? uk.reminders.dueLineOverdue
-    : uk.reminders.dueLineSoon;
+/**
+ * Per-plant due-line copy that conveys urgency from the day gap (FR-REM-04):
+ * overdue -> "Прострочено на N дн." (N days past due), due today -> "Полити
+ * сьогодні", due tomorrow -> "Полити завтра". `gap` is days from today to the
+ * plant's due date (negative = overdue); a never-watered plant has gap 0 and is
+ * shown as overdue today.
+ */
+function dueLabelFor(status: "soon" | "overdue", gap: number): string {
+  if (status === "overdue") {
+    // gap <= 0 for overdue; never-watered is gap 0 (due "today" but overdue).
+    const daysPast = Math.max(1, -gap);
+    return uk.reminders.dueLineOverdueDays(daysPast);
+  }
+  // soon: due today (gap 0) or tomorrow (gap 1).
+  return gap <= 0 ? uk.reminders.dueLineToday : uk.reminders.dueLineTomorrow;
 }
 
 export default async function Home() {
-  const { dueRows, dueCount, allDone, allRows } = await getHomeReminders(db);
+  const today = todayInKiev();
+  const { dueRows, dueCount, allDone, allRows } = await getHomeReminders(db, today);
 
   return (
     <section className="space-y-8">
@@ -62,13 +74,20 @@ export default async function Home() {
             {dueRows.map((row) => {
               // dueRows only ever hold soon/overdue (the due statuses).
               const status = row.status === "overdue" ? "overdue" : "soon";
+              const gap = dueGapDays(
+                {
+                  lastWateredAt: row.lastWateredAt,
+                  intervalDays: row.plant.intervalDays,
+                },
+                today,
+              );
               return (
                 <li key={row.plant.id}>
                   <ReminderRow
                     id={row.plant.id}
                     name={row.plant.name}
                     status={status}
-                    dueLabel={dueLabelFor(status)}
+                    dueLabel={dueLabelFor(status, gap)}
                     meta={row.plant.species}
                   />
                 </li>

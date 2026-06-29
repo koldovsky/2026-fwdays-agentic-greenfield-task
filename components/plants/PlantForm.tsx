@@ -20,7 +20,7 @@ import { fieldInputClass, fieldLabelClass, fieldHintClass } from "@/components/f
 import type { ActionResult } from "@/lib/forms/result";
 import { uk } from "@/lib/i18n/uk";
 import { createPlantAction, updatePlantAction } from "@/lib/plants/actions";
-import { INTERVAL_DEFAULT, SPECIES_DEFAULT } from "@/lib/plants/validation";
+import { INTERVAL_DEFAULT, INTERVAL_MAX, SPECIES_DEFAULT } from "@/lib/plants/validation";
 
 export interface PlantFormDefaults {
   name?: string;
@@ -180,6 +180,7 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           name="intervalDays"
           type="number"
           min={1}
+          max={INTERVAL_MAX}
           step={1}
           inputMode="numeric"
           defaultValue={intervalValue}

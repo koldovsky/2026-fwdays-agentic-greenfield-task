@@ -252,6 +252,41 @@ plant; `status` = `deriveStatus({ lastWateredAt, intervalDays }, today)`.
   source of truth for the last watering date). The rest are local implementation
   choices.
 
+## Review-gate security dispositions (clean-dimension / already-accepted)
+
+The slice's review gate confirmed the following security dimensions as
+non-defects by design (not omissions). Recorded here so they are not re-raised:
+
+- **Authorization / IDOR / tenant scoping — N/A by design.** Single local Owner,
+  no auth (NFR-SEC-01, TC-04). There is no second principal, role, or tenant
+  column to scope against, so no IDOR/cross-tenant path can exist. `waterNowAction`
+  and the `/plants/[id]` fetch still validate the id server-side and resolve a
+  missing/stale row to a friendly not-found, never a raw 500.
+- **Authentication & sessions — N/A by design.** The slice introduces no login,
+  password, reset/invite token, session cookie, or revocation surface
+  (NFR-SEC-01, TC-04; `.env.example` documents "No auth … in MVP"). Nothing to
+  harden.
+- **Injection (SQL/HTML/CSV/path) — clean.** All DB access is parameterized
+  Drizzle (`max()`/`groupBy()`/`eq()`, no raw `sql` interpolation). User strings
+  render through React/JSX auto-escaping (no `dangerouslySetInnerHTML`). No
+  email/PDF/CSV/file/path handlers are added, so those vectors do not apply.
+- **Secrets & config hygiene — clean.** `.env.example` holds only a local SQLite
+  path; `.gitignore` ignores `.env`/`.env.*` with an `!.env.example` allowlist; no
+  `NEXT_PUBLIC_*` vars. Action errors are `console.error`'d server-side and return
+  generic Ukrainian messages — no stack traces or internals reach the client.
+- **Mass assignment & write idempotency — clean.** `insertPlant`/`updatePlant`
+  enumerate the writable columns (no FormData spread); `validatePlantInput` reads
+  only the four known fields by name. `waterNowAction` inserts only a
+  server-computed today date + null note and short-circuits to `ok()` when the
+  latest watering is already today (no duplicate-event spam). The only residual
+  abuse-resistance gap — unbounded `intervalDays` — is fixed by the `INTERVAL_MAX`
+  bound (review fix #2).
+- **postcss transitive advisory (GHSA-qx2v-qp2m-jg93) — accepted/deferred.** A
+  build-time CSS-tooling moderate advisory pulled in transitively by Next, not
+  introduced or reachable by this slice (no runtime path feeds attacker-controlled
+  CSS to PostCSS stringify). The fix requires a Next major bump; tracked for a
+  dedicated dependency-maintenance PR, no action for add-reminders.
+
 ## Phase 6 follow-up
 
 Rendered home view (summary card on pine, urgency-colored due lines, status

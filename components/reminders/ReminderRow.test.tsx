@@ -86,6 +86,28 @@ describe("<ReminderRow> — water-now action + done swap (FR-REM-05, SC-6, NFR-A
     expect(await screen.findByText(uk.reminders.doneLabel)).toBeInTheDocument();
   });
 
+  it("surfaces the returned error inline and does NOT swap to done when the action fails (FR-REM-05, FR-SHELL-03)", async () => {
+    const user = userEvent.setup();
+    waterNowAction.mockResolvedValue({
+      ok: false,
+      formError: uk.reminders.notFound,
+    });
+    render(<ReminderRow id={7} name="Монстера" status="overdue" dueLabel="Прострочено" />);
+
+    await user.click(screen.getByRole("button", { name: uk.reminders.waterNow }));
+
+    // The returned formError is shown to the user (role=alert), not swallowed.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(uk.reminders.notFound);
+
+    // The row stays in the not-done state: the done confirmation is absent and
+    // the water-now control remains available.
+    expect(screen.queryByText(uk.reminders.doneLabel)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: uk.reminders.waterNow }),
+    ).toBeInTheDocument();
+  });
+
   it("is operable by keyboard (Enter activates the water-now control)", async () => {
     const user = userEvent.setup();
     waterNowAction.mockResolvedValue({ ok: true });

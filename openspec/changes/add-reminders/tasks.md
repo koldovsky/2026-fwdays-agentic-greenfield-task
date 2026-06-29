@@ -35,7 +35,7 @@ surfaces a friendly result (FR-SHELL-03).
       `fieldErrors.intervalDays` set to `uk.plants.fieldErrors.intervalInvalid`
       and the raw value echoed under `values`; a valid edit keeps the other
       fields intact (all-or-nothing). (FR-REM-01, FR-SHELL-03)
-- [x] 1.7 `lib/reminders/service.test.ts` — real in-memory SQLite via the test
+- [x] 1.7 `tests/integration/reminders.test.ts` — real in-memory SQLite via the test
       DB: seed plants with various latest-watering dates + intervals (one
       overdue, one soon, one healthy, one never-watered) and pin `today`; assert
       `getHomeReminders` returns the correct `dueRows` (only soon/overdue),
@@ -43,7 +43,7 @@ surfaces a friendly result (FR-SHELL-03).
       `dueRows` are urgency-ordered most-overdue first. Latest-watering-per-plant
       uses MAX(watered_on), so a plant with several events derives from its most
       recent. (FR-REM-02..04, FR-REM-06)
-- [x] 1.8 `lib/reminders/service.test.ts` — `allDone` true when every plant is
+- [x] 1.8 `tests/integration/reminders.test.ts` — `allDone` true when every plant is
       healthy AND when there are no plants (dueCount 0, no dueRows). (FR-REM-06)
 - [x] 1.9 `lib/reminders/actions.test.ts` — real-DB: `waterNowAction(plantId)`
       logs a watering dated today (Europe/Kiev) for the plant and the plant is no

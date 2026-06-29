@@ -21,6 +21,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveStatus,
+  dueGapDays,
   isDue,
   urgencyKey,
   type ReminderStatus,
@@ -109,6 +110,24 @@ describe("isDue(status) (FR-REM-02, FR-REM-03)", () => {
   });
   it("is false for healthy", () => {
     expect(isDue("healthy")).toBe(false);
+  });
+});
+
+describe("dueGapDays — days from today to due, signed by urgency (FR-REM-04)", () => {
+  it("is 0 when due is exactly today (lastWatered 2026-06-23, interval 7)", () => {
+    expect(dueGapDays({ lastWateredAt: "2026-06-23", intervalDays: 7 }, TODAY)).toBe(0);
+  });
+
+  it("is +1 when due is tomorrow (lastWatered 2026-06-24, interval 7)", () => {
+    expect(dueGapDays({ lastWateredAt: "2026-06-24", intervalDays: 7 }, TODAY)).toBe(1);
+  });
+
+  it("is negative by the days past due when overdue (due 2026-06-27 -> -3)", () => {
+    expect(dueGapDays({ lastWateredAt: "2026-06-20", intervalDays: 7 }, TODAY)).toBe(-3);
+  });
+
+  it("treats a never-watered plant as due today (gap 0)", () => {
+    expect(dueGapDays({ lastWateredAt: null, intervalDays: 7 }, TODAY)).toBe(0);
   });
 });
 

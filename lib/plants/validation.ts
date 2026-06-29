@@ -29,6 +29,15 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** The watering-interval default when the field is blank/omitted (FR-REM-01). */
 export const INTERVAL_DEFAULT = 7;
 
+/**
+ * Upper bound on a watering interval (~10 years). Beyond this the derived
+ * `due = lastWateredAt + intervalDays` math (addDays) and the float tie-break
+ * weights in `urgencyKey` stay well inside safe range — an unbounded interval
+ * could otherwise push `addDays` past the JS Date range and yield a NaN due
+ * date that corrupts status classification and sort order (review fix #2).
+ */
+export const INTERVAL_MAX = 3650;
+
 const POSITIVE_INTEGER = /^\d+$/;
 
 /** Validated, normalized plant input ready for the service/queries layer. */
@@ -118,6 +127,10 @@ export function validatePlantInput(
       const parsed = Number(trimmedInterval);
       if (parsed < 1) {
         fieldErrors.intervalDays = uk.plants.fieldErrors.intervalInvalid;
+      } else if (parsed > INTERVAL_MAX) {
+        // Bound the interval so the derived due date stays within JS Date range
+        // (no NaN due dates) and the urgencyKey tie-break weights stay precise.
+        fieldErrors.intervalDays = uk.plants.fieldErrors.intervalTooLarge;
       } else {
         intervalDays = parsed;
       }

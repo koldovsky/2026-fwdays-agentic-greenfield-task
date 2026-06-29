@@ -12,7 +12,7 @@
 // @trace SC-2
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SPECIES_DEFAULT, validatePlantInput } from "@/lib/plants/validation";
+import { INTERVAL_MAX, SPECIES_DEFAULT, validatePlantInput } from "@/lib/plants/validation";
 import { uk } from "@/lib/i18n/uk";
 
 // Build a FormData the way the add-plant form submits it. Fields are omitted
@@ -258,6 +258,35 @@ describe("validatePlantInput — interval (FR-REM-01)", () => {
     if (result.ok) throw new Error("expected failure");
     expect(result.fieldErrors?.intervalDays).toBe(
       uk.plants.fieldErrors.intervalInvalid,
+    );
+  });
+
+  it("accepts the maximum valid interval (INTERVAL_MAX = 3650)", () => {
+    const result = validatePlantInput(
+      form({ name: "Фікус", intervalDays: String(INTERVAL_MAX) }),
+    );
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(INTERVAL_MAX);
+  });
+
+  it("rejects an interval one past the maximum (3651) inline with the too-large message", () => {
+    const result = validatePlantInput(
+      form({ name: "Фікус", intervalDays: String(INTERVAL_MAX + 1) }),
+    );
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalTooLarge,
+    );
+    expect(result.formError).toBeUndefined();
+  });
+
+  it("rejects an astronomically large interval inline (no NaN due date escapes)", () => {
+    const result = validatePlantInput(
+      form({ name: "Фікус", intervalDays: "99999999999999999" }),
+    );
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalTooLarge,
     );
   });
 

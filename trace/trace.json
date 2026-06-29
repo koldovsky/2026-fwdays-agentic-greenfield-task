@@ -521,6 +521,7 @@
       ],
       "planned": true,
       "tests": [
+        "lib/i18n/plural.test.ts",
         "lib/reminders/status.test.ts",
         "tests/integration/reminders.test.ts",
         "components/reminders/SummaryCard.test.tsx"

@@ -41,7 +41,7 @@ Result: PASS, 39 warning(s)
 | FR-DS-06 | yes | yes | 1 | - |
 | FR-REM-01 | yes | yes | 1 | - |
 | FR-REM-02 | yes | yes | 3 | - |
-| FR-REM-03 | yes | yes | 3 | - |
+| FR-REM-03 | yes | yes | 4 | - |
 | FR-REM-04 | yes | yes | 4 | - |
 | FR-REM-05 | yes | yes | 3 | - |
 | FR-REM-06 | yes | yes | 3 | - |

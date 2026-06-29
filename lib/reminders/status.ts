@@ -99,6 +99,25 @@ function nameRank(name: string): number {
   return rank;
 }
 
+/**
+ * Whole calendar days from `today` to a plant's due date (`due = lastWateredAt +
+ * intervalDays`), pinned to the injected `today`. Negative when overdue (due in
+ * the past), 0 when due today, positive when due in the future. A never-watered
+ * plant is treated as overdue today (gap 0) — its due date is "now". Pure: reuses
+ * the same string-only calendar math as `deriveStatus` (no Date crosses a tz).
+ *
+ * The reminder due line uses the sign/magnitude to phrase urgency per plant
+ * (FR-REM-04): overdue -> "прострочено на N дн.", due today -> "сьогодні",
+ * due tomorrow -> "завтра".
+ */
+export function dueGapDays(
+  { lastWateredAt, intervalDays }: StatusInput,
+  today: string,
+): number {
+  if (lastWateredAt === null) return 0;
+  return daysBetween(today, addDays(lastWateredAt, intervalDays));
+}
+
 /** Whole calendar days from `from` to `to` (both `YYYY-MM-DD`); negative when to < from. */
 function daysBetween(from: string, to: string): number {
   const [fy, fm, fd] = from.split("-").map(Number);

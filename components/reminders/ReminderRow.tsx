@@ -40,12 +40,22 @@ const DUE_LINE_CLASS: Record<ReminderRowProps["status"], string> = {
 
 export function ReminderRow({ id, name, status, dueLabel, meta }: ReminderRowProps) {
   const [done, setDone] = useState(false);
+  // A failed water-now (e.g. the plant was deleted in another tab, or an
+  // unexpected DB error) returns a friendly Ukrainian formError. Surface it
+  // inline near the button instead of silently swallowing it (FR-REM-05,
+  // FR-SHELL-03) — and do NOT swap to the done state on failure.
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleWaterNow() {
+    setError(null);
     startTransition(async () => {
       const result = await waterNowAction(id);
-      if (result.ok) setDone(true);
+      if (result.ok) {
+        setDone(true);
+      } else {
+        setError(result.formError ?? uk.errors.generic);
+      }
     });
   }
 
@@ -79,6 +89,14 @@ export function ReminderRow({ id, name, status, dueLabel, meta }: ReminderRowPro
             {dueLabel}
           </p>
         )}
+        {error ? (
+          <p
+            role="alert"
+            className="mt-0.5 font-body text-[13px] font-semibold text-danger"
+          >
+            {error}
+          </p>
+        ) : null}
       </div>
 
       {done ? (

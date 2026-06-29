@@ -84,6 +84,8 @@ export const uk = {
         "Дата придбання не може бути в майбутньому. Оберіть сьогодні або раніше.",
       intervalInvalid:
         "Вкажіть інтервал поливу як ціле число днів, не менше 1 (наприклад 7).",
+      intervalTooLarge:
+        "Інтервал поливу задовгий. Вкажіть не більше 3650 днів (близько 10 років).",
     },
   },
   // Growth capability copy (slice 3) — section heading, the height + date field
@@ -205,8 +207,12 @@ export const uk = {
   reminders: {
     /** Summary-card label above the big due count (FR-REM-03). */
     summaryLabel: "Сьогодні полити",
-    /** Unit shown beside the count (kept simple — no pluralization, design D8). */
-    summaryUnit: "рослин",
+    /**
+     * Unit shown beside the due count in the accessible label — count-aware
+     * Ukrainian plural forms (1 -> "рослина", 2-4 -> "рослини", 0/5-20 ->
+     * "рослин"), selected via lib/i18n/plural (design D8 / review fix #5).
+     */
+    summaryUnit: { one: "рослина", few: "рослини", many: "рослин" },
     /** Uppercase section header above the urgency-ordered reminder rows. */
     sectionTitle: "Потребують поливу",
     /** Accessible label for the water-now droplet control (SC-6, NFR-A11Y-04). */
@@ -222,6 +228,12 @@ export const uk = {
     dueLineOverdue: "Прострочено — полийте зараз",
     /** Due-line copy for a soon (today/tomorrow) reminder row. */
     dueLineSoon: "Полити сьогодні або завтра",
+    /** Per-plant overdue due-line: "Прострочено на N дн." (N days past due). */
+    dueLineOverdueDays: (days: number) => `Прострочено на ${days} дн.`,
+    /** Per-plant soon due-line when due today. */
+    dueLineToday: "Полити сьогодні",
+    /** Per-plant soon due-line when due tomorrow. */
+    dueLineTomorrow: "Полити завтра",
     /** Friendly not-found result for water-now on a missing plant (FR-REM-05). */
     notFound: "Цю рослину не знайдено. Можливо, її вже видалено.",
   },

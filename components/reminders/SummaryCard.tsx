@@ -6,6 +6,7 @@
 // @trace FR-REM-03
 
 import { uk } from "@/lib/i18n/uk";
+import { ukPlural } from "@/lib/i18n/plural";
 
 export interface SummaryCardProps {
   /** Number of plants due today (soon + overdue). */
@@ -20,7 +21,7 @@ export function SummaryCard({ count }: SummaryCardProps) {
       </p>
       <p
         className="font-display text-[40px] font-bold leading-none tabular-nums"
-        aria-label={`${count} ${uk.reminders.summaryUnit}`}
+        aria-label={`${count} ${ukPlural(count, uk.reminders.summaryUnit)}`}
       >
         {count}
       </p>
