@@ -68,175 +68,234 @@
   "links": [
     {
       "id": "FR-PLANT-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-05",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-06",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-07",
-      "specs": [],
+      "specs": [
+        "openspec/specs/growth/spec.md",
+        "openspec/specs/plants/spec.md",
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-PLANT-08",
-      "specs": [],
+      "specs": [
+        "openspec/specs/plants/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/growth/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md",
+        "openspec/specs/growth/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/growth/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/growth/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-05",
-      "specs": [],
+      "specs": [
+        "openspec/specs/app-shell/spec.md",
+        "openspec/specs/charts/spec.md",
+        "openspec/specs/growth/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-WATER-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-WATER-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-WATER-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md",
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-WATER-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-WATER-05",
-      "specs": [],
+      "specs": [
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-CHART-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md",
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-CHART-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-CHART-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-CHART-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/charts/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SHELL-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/app-shell/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SHELL-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/app-shell/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SHELL-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/app-shell/spec.md",
+        "openspec/specs/plants/spec.md",
+        "openspec/specs/watering/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
@@ -244,106 +303,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-07 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-PLANT-08 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROWTH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROWTH-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROWTH-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROWTH-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROWTH-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-WATER-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-WATER-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-WATER-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-WATER-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-WATER-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-CHART-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-CHART-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-CHART-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-CHART-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SHELL-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SHELL-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SHELL-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
     {
       "check": "plan-ownership",
       "msg": "docs/mvp-capability-plan.md not found - ownership check skipped (expected before Phase 3; mandatory at --release)"

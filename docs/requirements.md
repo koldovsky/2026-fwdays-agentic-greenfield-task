@@ -159,6 +159,33 @@ release gate, not skipped).
 - **A7.** "коротку" (short) is read as a hard scope constraint: photos, auth, reminders, export, presets, and insights are all Future.
 - **A8.** Persistence is assumed **server/local datastore that survives restarts** (NFR-DATA-01), not ephemeral in-memory or browser-tab-only state. Confirm via Q5.
 
+## Shared conventions (cross-cutting — added at Phase 2 reconciliation, 2026-06-29)
+
+The Phase 2 spec cross-check found the shared "date" concept and list ordering
+specified inconsistently across capabilities. These conventions resolve that and
+bind ALL capabilities (plants, growth, watering, charts):
+
+- **SC-1 — Date entry & display.** Dates (plant acquired date, measurement date,
+  watering date) are entered with a native date picker (`<input type="date">`),
+  stored as an ISO `YYYY-MM-DD` string, and DISPLAYED to the Owner as
+  `DD.MM.YYYY` (Ukrainian locale). No free-text date parsing. Satisfies
+  NFR-USA-03 + NFR-LOC-01.
+- **SC-2 — Future dates rejected.** A date after *today* in Europe/Kiev is invalid
+  for acquired/measurement/watering dates (you cannot measure or water in the
+  future); surfaced inline (FR-SHELL-03). Applies uniformly.
+- **SC-3 — List ordering.** Measurement lists (FR-GROWTH-02) and watering lists
+  (FR-WATER-03) are ordered by date **descending (most recent first)**, with a
+  deterministic tie-break by row id **descending** for same-date entries.
+- **SC-4 — Persistence (NFR-DATA-01).** Plants, measurements, AND watering events
+  all persist across reloads and app restarts (SQLite). Each owning spec asserts
+  this for its own entity, not only plants.
+- **SC-5 — Delete safety (NFR-DATA-02).** Every delete is explicit and confirmed.
+  Only deleting a *plant* cascades (to that plant's own measurements + waterings,
+  FR-PLANT-07). Deleting a measurement or watering affects only that single row.
+- **SC-6 — Keyboard & labels (NFR-A11Y-04).** Every interactive control in every
+  capability (plant/growth/watering forms, chart controls) is keyboard-operable
+  and has an accessible label — not satisfied by the app-shell alone.
+
 ## Open questions (batched)
 
 Answer "go with defaults" to accept every recommended default below.
