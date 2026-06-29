@@ -1,7 +1,13 @@
-// Pure date helpers (design D3, R2). The acquired date is a plain calendar date
-// (`YYYY-MM-DD`), so every operation works on the string components — never a
-// `Date` object in some timezone — to dodge the UTC-vs-Kiev midnight off-by-one
-// footgun. "Today" is the LOCAL calendar date in Europe/Kiev (AGENTS.md).
+// Shared pure date helpers (design D3, R2). Promoted from lib/plants/date.ts so
+// growth, watering, AND plants reuse one source instead of importing across the
+// plants module (a wrong dependency direction) or triplicating. The acquired /
+// measurement date is a plain calendar date (`YYYY-MM-DD`), so every operation
+// works on the string components — never a `Date` object in some timezone — to
+// dodge the UTC-vs-Kiev midnight off-by-one footgun. "Today" is the LOCAL
+// calendar date in Europe/Kiev (AGENTS.md).
+//
+// @trace SC-1
+// @trace SC-2
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

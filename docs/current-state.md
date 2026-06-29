@@ -4,7 +4,7 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** Phase 4 autonomous build. **Slice 1 `add-app-shell` DONE** (archived). **Slice 2 `add-plants` GREEN** (Phase 4c implement): plants is the first DB slice — schema + first committed migration landed, full CRUD (add/list/detail/edit/delete-with-confirm) wired, all unit + integration tests pass, lint/build/openspec-validate green. Awaiting review-gate + archive. Remaining: growth → watering → charts.
+- **Phase:** Phase 4 autonomous build. **Slice 1 `add-app-shell` DONE** (archived). **Slice 2 `add-plants` GREEN** (Phase 4c implement). **Slice 3 `add-growth` GREEN** (Phase 4c implement): growth is the SECOND DB slice and the FIRST child of the plant aggregate — `growth_measurements` schema + committed migration `0001_dizzy_maggott.sql` landed (FK `plant_id → plants.id ON DELETE CASCADE`), `lib/growth/` (validation/queries/service/actions) on the shared `ActionResult` contract, a measurements SECTION on `/plants/[id]` (log form + list ordered date DESC, id DESC + per-row edit + delete-with-confirm + empty state), and the shared date helpers PROMOTED `lib/plants/date.ts → lib/dates.ts`. All unit + integration tests pass (177), lint/build/openspec-validate green. Awaiting review-gate + archive. Remaining: watering → charts.
 
 ### Deferred to Phase 6 (cross-cutting QA, tracked here so it isn't lost)
 - Rendered a11y for every capability: `npm run check:a11y` (axe light+dark), WCAG AA contrast, keyboard-only, 360px responsive (NFR-A11Y-01/02/04, NFR-COMPAT-01) — run once over the whole app in Phase 6 with vision-verify + recordings.
@@ -40,6 +40,19 @@ watering, with a watering chart and a growth chart. Scope is deliberately small
   island. Species default = `Грошове дерево (Crassula ovata)`; acquired date is
   ISO `YYYY-MM-DD` stored / `DD.MM.YYYY` displayed, future-date rejected against
   today in Europe/Kiev. Slice-1 `ExampleForm` demo removed.
+- **Slice 3 `add-growth` (Phase 4, implemented)** — second DB slice, first plant
+  child. `growth_measurements` table (`db/schema/growth.ts`, re-exported from
+  `db/schema/index.ts`); committed migration `db/migrations/0001_dizzy_maggott.sql`
+  with FK `plant_id → plants.id ON DELETE CASCADE` (deleting a plant cascades to
+  its measurements; a measurement delete removes only its own row). `lib/growth/`
+  (validation with the load-bearing `parseHeightCm` rule + height/date mappers,
+  queries with the SC-3 `ORDER BY measured_on DESC, id DESC` tie-break, service,
+  actions). Measurements section on `/plants/[id]`: add form, list, per-row inline
+  edit + delete-with-confirm, empty state. Height stored as `REAL` (> 0, ≤ 1000 cm,
+  ≤ 1 decimal place; decimal comma accepted, grouping rejected); `measured_on`
+  ISO `YYYY-MM-DD` (default today Kiev, future rejected). **Shared date helpers
+  promoted** `lib/plants/date.ts → lib/dates.ts` (`todayInKiev`/`isAfterToday`/
+  `formatAcquiredDate`); plant importers re-pointed; old module + its test removed.
 
 ## Next step
 

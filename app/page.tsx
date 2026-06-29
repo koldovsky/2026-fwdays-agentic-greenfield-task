@@ -9,7 +9,7 @@ import Link from "next/link";
 
 import { db } from "@/db/client";
 import { uk } from "@/lib/i18n/uk";
-import { formatAcquiredDate } from "@/lib/plants/date";
+import { formatAcquiredDate } from "@/lib/dates";
 import { listPlants } from "@/lib/plants/queries";
 
 // Reads mutable plant data per request — never prerendered at build time.

@@ -70,6 +70,50 @@ export const uk = {
         "Дата придбання не може бути в майбутньому. Оберіть сьогодні або раніше.",
     },
   },
+  // Growth capability copy (slice 3) — section heading, the height + date field
+  // labels/hints, add/save/cancel, list/row labels, empty state, delete-confirm
+  // prompt, not-found, and the field validation messages the FieldError shows
+  // inline and the error-clarity eval grades. Ukrainian text, English
+  // identifiers (NFR-LOC-01).
+  growth: {
+    /** Section heading on the plant detail page. */
+    sectionTitle: "Вимірювання росту",
+    /** Empty-state copy when the plant has no measurements yet (FR-GROWTH-02). */
+    empty:
+      "Поки що немає жодного вимірювання. Запишіть перше — і ви побачите, як ваша рослина росте.",
+    add: "Записати вимірювання",
+    addTitle: "Нове вимірювання",
+    editTitle: "Редагувати вимірювання",
+    edit: "Редагувати",
+    save: "Зберегти",
+    cancel: "Скасувати",
+    heightLabel: "Висота (см)",
+    heightHint:
+      "Додатне число в сантиметрах. Дозволено одну цифру після коми, наприклад 12,5.",
+    heightPlaceholder: "Наприклад: 12,5",
+    measuredOnLabel: "Дата вимірювання",
+    measuredOnHint: "За замовчуванням — сьогодні. Не може бути в майбутньому.",
+    /** Row label: height in cm shown next to the date. */
+    heightUnit: "см",
+    // Delete-with-confirm control for a single measurement (SC-5).
+    delete: "Видалити",
+    deleteConfirmPrompt:
+      "Видалити це вимірювання? Цю дію не можна скасувати.",
+    deleteConfirm: "Так, видалити",
+    deleteCancel: "Скасувати",
+    /** Friendly not-found result for an edit/delete of a missing measurement. */
+    notFound: "Це вимірювання не знайдено. Можливо, його вже видалено.",
+    fieldErrors: {
+      // Single, clear height message covering blank/non-numeric/negative/zero/
+      // over-precision/over-bound: names what is wrong and hints a valid value
+      // (a positive number in cm, decimals allowed) — blame-free, no codes.
+      heightInvalid:
+        "Вкажіть висоту як додатне число в сантиметрах (можна з однією цифрою після коми, наприклад 12,5).",
+      dateInvalid: "Вкажіть коректну дату у форматі ДД.ММ.РРРР.",
+      dateFuture:
+        "Дата вимірювання не може бути в майбутньому. Оберіть сьогодні або раніше.",
+    },
+  },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field
   // messages live with their domain in slices 2–5.

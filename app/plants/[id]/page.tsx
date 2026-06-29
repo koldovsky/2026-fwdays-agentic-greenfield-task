@@ -8,10 +8,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import { MeasurementsSection } from "@/components/growth/MeasurementsSection";
 import { DeletePlantButton } from "@/components/plants/DeletePlantButton";
 import { db } from "@/db/client";
+import { formatAcquiredDate, todayInKiev } from "@/lib/dates";
+import { listMeasurements } from "@/lib/growth/queries";
 import { uk } from "@/lib/i18n/uk";
-import { formatAcquiredDate } from "@/lib/plants/date";
 import { getPlant } from "@/lib/plants/queries";
 
 // Reads a mutable plant per request — never prerendered at build time.
@@ -32,6 +34,8 @@ export default async function PlantDetail({
   if (!plant) {
     notFound();
   }
+
+  const measurements = await listMeasurements(db, numericId);
 
   return (
     <section>
@@ -68,6 +72,12 @@ export default async function PlantDetail({
       </div>
 
       <DeletePlantButton id={plant.id} />
+
+      <MeasurementsSection
+        plantId={plant.id}
+        measurements={measurements}
+        today={todayInKiev()}
+      />
 
       <Link
         href="/"

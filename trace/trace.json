@@ -98,7 +98,6 @@
       ],
       "planned": true,
       "tests": [
-        "lib/plants/date.test.ts",
         "lib/plants/validation.test.ts",
         "evals/cases/plants.eval.ts"
       ],
@@ -143,7 +142,8 @@
       "specs": [
         "openspec/specs/growth/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -167,38 +167,55 @@
     {
       "id": "FR-GROWTH-01",
       "specs": [
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/growth/actions.test.ts",
+        "lib/growth/validation.test.ts",
+        "tests/integration/growth-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-02",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/growth-lifecycle.test.ts",
+        "evals/cases/growth.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-03",
       "specs": [
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/growth/actions.test.ts",
+        "tests/integration/growth-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-GROWTH-04",
       "specs": [
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/growth/actions.test.ts",
+        "tests/integration/growth-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -206,10 +223,14 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/charts/spec.md",
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/growth/validation.test.ts",
+        "evals/cases/growth.eval.ts"
+      ],
       "recordings": []
     },
     {
@@ -326,11 +347,13 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-growth/specs/growth/spec.md"
       ],
       "planned": true,
       "tests": [
         "lib/forms/result.test.ts",
+        "lib/growth/actions.test.ts",
         "lib/plants/actions.test.ts",
         "components/forms/FieldError.test.tsx",
         "components/plants/PlantForm.test.tsx",
@@ -341,26 +364,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-GROWTH-01 has no test annotated \"@trace FR-GROWTH-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GROWTH-02 has no test annotated \"@trace FR-GROWTH-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GROWTH-03 has no test annotated \"@trace FR-GROWTH-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GROWTH-04 has no test annotated \"@trace FR-GROWTH-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GROWTH-05 has no test annotated \"@trace FR-GROWTH-05\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-WATER-01 has no test annotated \"@trace FR-WATER-01\""
@@ -496,6 +499,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-growth\" is not archived"
     }
   ]
 }

@@ -11,7 +11,7 @@ Result: PASS, 1 warning(s)
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-29-add-app-shell | clean | 4 | yes | forms, theme, i18n |
-| 2026-06-29-add-plants | clean | 3 | yes | plants, i18n |
+| 2026-06-29-add-plants | clean | 4 | yes | plants, i18n |
 
 ## Cross-slice module overlap
 

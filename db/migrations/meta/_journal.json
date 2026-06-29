@@ -8,6 +8,13 @@
       "when": 1782744070182,
       "tag": "0000_flippant_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782746347443,
+      "tag": "0001_dizzy_maggott",
+      "breakpoints": true
     }
   ]
 }

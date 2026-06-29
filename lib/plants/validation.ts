@@ -11,7 +11,7 @@
 // @trace SC-2
 import { fieldError, ok, type ActionResult, type FieldErrors } from "@/lib/forms/result";
 import { uk } from "@/lib/i18n/uk";
-import { isAfterToday, todayInKiev } from "@/lib/plants/date";
+import { isAfterToday, todayInKiev } from "@/lib/dates";
 
 /**
  * Canonical species default (design D2). Stored as the Ukrainian display string
