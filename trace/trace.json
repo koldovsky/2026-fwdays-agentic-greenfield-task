@@ -142,7 +142,8 @@
       "specs": [
         "openspec/specs/growth/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -234,47 +235,73 @@
     {
       "id": "FR-WATER-01",
       "specs": [
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/watering/actions.test.ts",
+        "lib/watering/validation.test.ts",
+        "tests/integration/watering-lifecycle.test.ts",
+        "components/watering/WateringForm.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-WATER-02",
       "specs": [
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/watering/validation.test.ts",
+        "tests/integration/watering-lifecycle.test.ts",
+        "components/watering/WateringForm.test.tsx",
+        "evals/cases/watering.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-WATER-03",
       "specs": [
         "openspec/specs/charts/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/watering-lifecycle.test.ts",
+        "components/watering/WateringsSection.test.tsx",
+        "evals/cases/watering.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-WATER-04",
       "specs": [
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/watering/actions.test.ts",
+        "tests/integration/watering-lifecycle.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-WATER-05",
       "specs": [
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/watering/actions.test.ts",
+        "tests/integration/watering-lifecycle.test.ts",
+        "components/watering/DeleteWateringButton.test.tsx"
+      ],
       "recordings": []
     },
     {
@@ -345,16 +372,19 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-watering/specs/watering/spec.md"
       ],
       "planned": true,
       "tests": [
         "lib/forms/result.test.ts",
         "lib/growth/actions.test.ts",
         "lib/plants/actions.test.ts",
+        "lib/watering/actions.test.ts",
         "components/forms/FieldError.test.tsx",
         "components/growth/MeasurementForm.test.tsx",
         "components/plants/PlantForm.test.tsx",
+        "components/watering/WateringForm.test.tsx",
         "evals/cases/app-shell.eval.ts"
       ],
       "recordings": []
@@ -362,26 +392,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-WATER-01 has no test annotated \"@trace FR-WATER-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-WATER-02 has no test annotated \"@trace FR-WATER-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-WATER-03 has no test annotated \"@trace FR-WATER-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-WATER-04 has no test annotated \"@trace FR-WATER-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-WATER-05 has no test annotated \"@trace FR-WATER-05\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-CHART-01 has no test annotated \"@trace FR-CHART-01\""
@@ -497,6 +507,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-watering\" is not archived"
     }
   ]
 }

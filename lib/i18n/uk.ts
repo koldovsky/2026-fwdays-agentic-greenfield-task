@@ -113,6 +113,44 @@ export const uk = {
         "Дата вимірювання не може бути в майбутньому. Оберіть сьогодні або раніше.",
     },
   },
+  // Watering capability copy (slice 4) — section heading, the watering-date +
+  // note field labels/hints, add/save/cancel, list/row labels, no-note
+  // affordance, empty state, delete-confirm prompt, not-found, and the field
+  // validation messages the FieldError shows inline and the error-clarity eval
+  // grades. Ukrainian text, English identifiers (NFR-LOC-01).
+  watering: {
+    /** Section heading on the plant detail page. */
+    sectionTitle: "Поливи",
+    /** Empty-state copy when the plant has no waterings yet (FR-WATER-03). */
+    empty:
+      "Поки що немає жодного поливу. Запишіть перший — і ви бачитимете, коли поливали свою рослину.",
+    add: "Записати полив",
+    addTitle: "Новий полив",
+    edit: "Редагувати",
+    save: "Зберегти",
+    cancel: "Скасувати",
+    wateredOnLabel: "Дата поливу",
+    wateredOnHint: "За замовчуванням — сьогодні. Не може бути в майбутньому.",
+    noteLabel: "Нотатка",
+    noteHint:
+      "Необовʼязково. Наприклад: «полив дощовою водою». Не більше 500 символів.",
+    notePlaceholder: "Наприклад: полив дощовою водою",
+    /** Row affordance when a watering has no note. */
+    noNote: "Без нотатки",
+    // Delete-with-confirm control for a single watering (SC-5).
+    delete: "Видалити",
+    deleteConfirmPrompt: "Видалити цей запис про полив? Цю дію не можна скасувати.",
+    deleteConfirm: "Так, видалити",
+    deleteCancel: "Скасувати",
+    /** Friendly not-found result for an edit/delete of a missing watering. */
+    notFound: "Цей запис про полив не знайдено. Можливо, його вже видалено.",
+    fieldErrors: {
+      noteTooLong: "Нотатка задовга. Скоротіть її до 500 символів.",
+      dateInvalid: "Вкажіть коректну дату у форматі ДД.ММ.РРРР.",
+      dateFuture:
+        "Дата поливу не може бути в майбутньому. Оберіть сьогодні або раніше.",
+    },
+  },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field
   // messages live with their domain in slices 2–5.

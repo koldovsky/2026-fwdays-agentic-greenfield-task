@@ -10,11 +10,13 @@ import Link from "next/link";
 
 import { MeasurementsSection } from "@/components/growth/MeasurementsSection";
 import { DeletePlantButton } from "@/components/plants/DeletePlantButton";
+import { WateringsSection } from "@/components/watering/WateringsSection";
 import { db } from "@/db/client";
 import { formatAcquiredDate, todayInKiev } from "@/lib/dates";
 import { listMeasurements } from "@/lib/growth/queries";
 import { uk } from "@/lib/i18n/uk";
 import { getPlant } from "@/lib/plants/queries";
+import { listWaterings } from "@/lib/watering/queries";
 
 // Reads a mutable plant per request — never prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -36,6 +38,8 @@ export default async function PlantDetail({
   }
 
   const measurements = await listMeasurements(db, numericId);
+  const waterings = await listWaterings(db, numericId);
+  const today = todayInKiev();
 
   return (
     <section>
@@ -76,7 +80,13 @@ export default async function PlantDetail({
       <MeasurementsSection
         plantId={plant.id}
         measurements={measurements}
-        today={todayInKiev()}
+        today={today}
+      />
+
+      <WateringsSection
+        plantId={plant.id}
+        waterings={waterings}
+        today={today}
       />
 
       <Link

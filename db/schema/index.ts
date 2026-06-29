@@ -2,3 +2,4 @@
 // re-exported here (AGENTS.md). Slice 2 lands the first domain table: plants.
 export * from "./plants";
 export * from "./growth";
+export * from "./watering";

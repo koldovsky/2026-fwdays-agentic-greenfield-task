@@ -15,6 +15,13 @@
       "when": 1782746347443,
       "tag": "0001_dizzy_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782748093375,
+      "tag": "0002_purple_sleepwalker",
+      "breakpoints": true
     }
   ]
 }
