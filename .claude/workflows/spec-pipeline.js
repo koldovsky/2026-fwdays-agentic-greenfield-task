@@ -40,7 +40,7 @@ const authored = await pipeline(
   (cap) =>
     agent(
       `Author the baseline OpenSpec spec for capability "${cap.name}" at openspec/specs/${cap.name}/spec.md.\nRequirements source: ${requirementsPath}. This capability owns: ${JSON.stringify(cap.frIds)}${cap.nfrIds ? `; travelling NFRs: ${JSON.stringify(cap.nfrIds)}` : ''}. ${cap.notes ?? ''}\nUse strict OpenSpec format (### Requirement / #### Scenario with GIVEN/WHEN/THEN). Cover every owned FR, include error-path scenarios and explicit exclusions. Write the file, then return the list of requirement names you authored.`,
-      { label: `draft:${cap.name}`, phase: 'Author', agentType: 'spec-writer' },
+      { label: `draft:${cap.name}`, phase: 'Author', agentType: 'project-factory:spec-writer' },
     ),
   (draftResult, cap) =>
     agent(
@@ -51,7 +51,7 @@ const authored = await pipeline(
     if (critique && !critique.acceptable && critique.issues.length > 0) {
       await agent(
         `Revise openspec/specs/${cap.name}/spec.md to resolve these critique issues, then run \`npx openspec validate --all --strict\` and fix any validation errors:\n${critique.issues.map((i, n) => `${n + 1}. ${i}`).join('\n')}`,
-        { label: `revise:${cap.name}`, phase: 'Author', agentType: 'spec-writer' },
+        { label: `revise:${cap.name}`, phase: 'Author', agentType: 'project-factory:spec-writer' },
       )
       return { capability: cap.name, revised: true, issuesFixed: critique.issues.length }
     }

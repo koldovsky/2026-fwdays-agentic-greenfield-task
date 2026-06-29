@@ -182,7 +182,8 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/charts/spec.md",
-        "openspec/specs/growth/spec.md"
+        "openspec/specs/growth/spec.md",
+        "openspec/changes/add-app-shell/specs/app-shell/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -274,19 +275,26 @@
     {
       "id": "FR-SHELL-01",
       "specs": [
-        "openspec/specs/app-shell/spec.md"
+        "openspec/specs/app-shell/spec.md",
+        "openspec/changes/add-app-shell/specs/app-shell/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/shell/Shell.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-SHELL-02",
       "specs": [
-        "openspec/specs/app-shell/spec.md"
+        "openspec/specs/app-shell/spec.md",
+        "openspec/changes/add-app-shell/specs/app-shell/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/theme/persistence.test.ts",
+        "components/shell/Shell.test.tsx"
+      ],
       "recordings": []
     },
     {
@@ -294,10 +302,15 @@
       "specs": [
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-app-shell/specs/app-shell/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/forms/result.test.ts",
+        "components/forms/FieldError.test.tsx",
+        "evals/cases/app-shell.eval.ts"
+      ],
       "recordings": []
     }
   ],
@@ -390,18 +403,6 @@
     {
       "check": "test-trace",
       "msg": "FR-CHART-04 has no test annotated \"@trace FR-CHART-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SHELL-01 has no test annotated \"@trace FR-SHELL-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SHELL-02 has no test annotated \"@trace FR-SHELL-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SHELL-03 has no test annotated \"@trace FR-SHELL-03\""
     },
     {
       "check": "recording-evidence",
@@ -502,6 +503,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-app-shell\" is not archived"
     }
   ]
 }

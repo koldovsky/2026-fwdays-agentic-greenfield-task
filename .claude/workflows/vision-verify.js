@@ -49,7 +49,7 @@ const judged = await parallel(
   clips.map((c) => () =>
     agent(
       `Look at this rendered UI screenshot and judge whether it visibly proves the requirement and is legible.\n\nScreenshot file: ${c.screenshot}\nRequirement it must prove: ${c.requirement}${c.proof ? `\nFR ids: ${c.proof}` : ''}\n\nRead the image (actually look at the pixels) and return the verdict.`,
-      { label: `see:${c.id}`, phase: 'See', schema: VERDICT_SCHEMA, agentType: 'vision-judge' },
+      { label: `see:${c.id}`, phase: 'See', schema: VERDICT_SCHEMA, agentType: 'project-factory:vision-judge' },
     ).then((v) => ({ id: c.id, proof: c.proof ?? '', screenshot: c.screenshot, ...(v ?? { met: false, readable: false, notes: 'no verdict' }) })),
   ),
 )

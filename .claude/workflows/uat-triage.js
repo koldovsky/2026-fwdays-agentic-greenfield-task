@@ -56,14 +56,14 @@ const verdicts = await pipeline(
   (bug) =>
     agent(
       `Triage this reported UAT bug against docs/requirements.md, openspec/specs/, and the code.\n\nBug ${bug.id}${bug.area ? ` (area: ${bug.area})` : ''}: ${bug.text}\n${bug.steps ? `Steps to reproduce: ${bug.steps}` : ''}\n\nMap it to governing requirements (quote them), trace the exact code path, and return your structured verdict. Be mechanism-specific about root cause and list every other location sharing the same latent mechanism (the fix must cover the class).`,
-      { label: `triage:${bug.id}`, phase: 'Triage', schema: TRIAGE_SCHEMA, agentType: 'bug-triage-analyst' },
+      { label: `triage:${bug.id}`, phase: 'Triage', schema: TRIAGE_SCHEMA, agentType: 'project-factory:bug-triage-analyst' },
     ),
   async (verdict, bug) => {
     if (!verdict) return null
     if (verdict.confidence === 'high') return verdict
     const second = await agent(
       `Independently re-triage UAT bug ${bug.id}: ${bug.text}\n${bug.steps ? `Steps: ${bug.steps}` : ''}\nA first analyst concluded: ${JSON.stringify(verdict)}\nDo NOT trust that conclusion - re-derive from requirements and code yourself, then return your own structured verdict.`,
-      { label: `second:${bug.id}`, phase: 'Second opinion', schema: TRIAGE_SCHEMA, agentType: 'bug-triage-analyst' },
+      { label: `second:${bug.id}`, phase: 'Second opinion', schema: TRIAGE_SCHEMA, agentType: 'project-factory:bug-triage-analyst' },
     )
     if (second && second.verdict === verdict.verdict) {
       return { ...verdict, confidence: 'high', secondOpinion: 'agrees' }

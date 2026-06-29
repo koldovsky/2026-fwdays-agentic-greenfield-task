@@ -102,12 +102,12 @@ phase('Judge')
 const judged = await pipeline(
   units,
   (u) =>
-    agent(judgePrompt(u), { label: `judge:${u.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'eval-judge' }).then((v) => ({ u, votes: v ? [v] : [] })),
+    agent(judgePrompt(u), { label: `judge:${u.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'project-factory:eval-judge' }).then((v) => ({ u, votes: v ? [v] : [] })),
   async ({ u, votes }) => {
     if (votes.length === 0) return null
     const first = votes[0]
     if (!first.pass || Math.abs(first.score - THRESHOLD) <= DOUBLE_JUDGE_BAND) {
-      const second = await agent(judgePrompt(u, true), { label: `judge2:${u.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'eval-judge' })
+      const second = await agent(judgePrompt(u, true), { label: `judge2:${u.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'project-factory:eval-judge' })
       if (second) votes.push(second)
     }
     const score = Math.round(votes.reduce((s, v) => s + v.score, 0) / votes.length)

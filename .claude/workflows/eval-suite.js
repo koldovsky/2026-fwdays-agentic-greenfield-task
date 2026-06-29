@@ -83,7 +83,7 @@ const judged = await pipeline(
   cases,
   // Stage 1: first judge.
   (c) =>
-    agent(judgePrompt(c), { label: `judge:${c.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'eval-judge' }).then(
+    agent(judgePrompt(c), { label: `judge:${c.id}`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'project-factory:eval-judge' }).then(
       (v) => ({ c, votes: v ? [v] : [] }),
     ),
   // Stage 2: borderline cases (failed OR within the band of the pass mark) get
@@ -98,7 +98,7 @@ const judged = await pipeline(
         label: `judge2:${c.id}`,
         phase: 'Judge',
         schema: JUDGE_SCHEMA,
-        agentType: 'eval-judge',
+        agentType: 'project-factory:eval-judge',
       })
       if (second) votes.push(second)
     }

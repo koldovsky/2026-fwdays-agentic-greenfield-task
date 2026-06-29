@@ -54,17 +54,17 @@ const diffInstruction = baseRef
 const DIMENSIONS = [
   {
     key: 'correctness',
-    agentType: 'code-reviewer',
+    agentType: 'project-factory:code-reviewer',
     prompt: `${diffInstruction}\nScope: ${scope}. ${focus}\nReview for correctness, error handling (any user input path that can throw raw -> 500, silent external-call failures, stale uncontrolled form state), framework-version correctness, data integrity, and maintainability. Return structured findings only.`,
   },
   {
     key: 'security',
-    agentType: 'security-reviewer',
+    agentType: 'project-factory:security-reviewer',
     prompt: `${diffInstruction}\nScope: ${scope}. ${focus}\nFull security checklist: authz matrix (server-side enforcement, IDOR on id-fetched routes, tenant scoping), auth/session handling, injection (SQL/HTML/CSV/path), secrets hygiene, dependency audit, abuse resistance (mass assignment, rate limits). Return structured findings only.`,
   },
   {
     key: 'spec-compliance',
-    agentType: 'spec-compliance-auditor',
+    agentType: 'project-factory:spec-compliance-auditor',
     prompt: `${diffInstruction}\nScope: ${scope}. ${focus}\nAudit the implementation against its OpenSpec requirements and scenarios: missing/partial/contradicted scenarios, undocumented scope drift, ticked tasks without artifacts, FR/NFR coverage. Return structured findings only.`,
   },
   {

@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
+/* Tailwind 4 dark mode: class strategy. The `dark:` variant activates when the
+   `dark` class is present on (or above) the element — set on <html> by the
+   pre-hydration no-flash script and toggled by ThemeProvider (design.md D2). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  /* Light theme tokens — AA contrast: zinc-900 on white (NFR-A11Y-02). */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+}
+
+.dark {
+  /* Dark theme tokens — AA contrast: zinc-100 on near-black (NFR-A11Y-02). */
+  --background: #0a0a0a;
+  --foreground: #f4f4f5;
 }
 
 @theme inline {
@@ -12,15 +24,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
