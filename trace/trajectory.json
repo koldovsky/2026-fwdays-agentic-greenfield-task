@@ -56,7 +56,7 @@
     {
       "slice": "2026-06-30-add-design-system",
       "reviewEvidence": "clean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "i18n",
         "theme"

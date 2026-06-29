@@ -26,11 +26,17 @@ export const SPECIES_MAX = 200;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** The watering-interval default when the field is blank/omitted (FR-REM-01). */
+export const INTERVAL_DEFAULT = 7;
+
+const POSITIVE_INTEGER = /^\d+$/;
+
 /** Validated, normalized plant input ready for the service/queries layer. */
 export interface PlantInput {
   name: string;
   species: string;
   acquiredDate: string | null;
+  intervalDays: number;
 }
 
 /**
@@ -68,6 +74,7 @@ export function validatePlantInput(
   const rawName = String(formData.get("name") ?? "");
   const rawSpecies = String(formData.get("species") ?? "");
   const rawAcquiredDate = String(formData.get("acquiredDate") ?? "");
+  const rawIntervalDays = String(formData.get("intervalDays") ?? "");
 
   const fieldErrors: FieldErrors = {};
 
@@ -99,13 +106,32 @@ export function validatePlantInput(
     }
   }
 
+  // Interval (FR-REM-01, design D4): blank/omitted -> the default; otherwise the
+  // trimmed raw string must be a positive INTEGER (`/^\d+$/` AND `>= 1`), so 0,
+  // negative, a decimal (7.5 / 7,5), or non-numeric text are rejected inline.
+  let intervalDays = INTERVAL_DEFAULT;
+  const trimmedInterval = rawIntervalDays.trim();
+  if (trimmedInterval.length > 0) {
+    if (!POSITIVE_INTEGER.test(trimmedInterval)) {
+      fieldErrors.intervalDays = uk.plants.fieldErrors.intervalInvalid;
+    } else {
+      const parsed = Number(trimmedInterval);
+      if (parsed < 1) {
+        fieldErrors.intervalDays = uk.plants.fieldErrors.intervalInvalid;
+      } else {
+        intervalDays = parsed;
+      }
+    }
+  }
+
   if (Object.keys(fieldErrors).length > 0) {
     return fieldError(fieldErrors, {
       name: rawName,
       species: rawSpecies,
       acquiredDate: rawAcquiredDate,
+      intervalDays: rawIntervalDays,
     });
   }
 
-  return ok({ name, species, acquiredDate });
+  return ok({ name, species, acquiredDate, intervalDays });
 }

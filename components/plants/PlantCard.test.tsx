@@ -89,3 +89,26 @@ describe("<PlantCard> — status-keyed pill / line / action (FR-DS-03)", () => {
     expect(screen.getByText(uk.plants.card.actionSoon)).toBeInTheDocument();
   });
 });
+
+// RED (Phase 4b, slice 7 add-reminders, task 1.14) — slice 7 wires the REAL
+// derived status (FR-REM-07) into the placeholder status prop. The pill color +
+// label must match the supplied status, so the card reflects the SAME derived
+// status as the summary count and reminder list. These assertions strengthen the
+// status-prop contract for the wiring slice 7 performs.
+//
+// @trace FR-REM-07
+describe("<PlantCard> — derived status pill color + label (FR-REM-07)", () => {
+  it("renders the overdue chip color + label when status is overdue", () => {
+    render(<PlantCard id={1} name="Фікус" species="Ficus" status="overdue" />);
+    const pill = screen.getByText(uk.plants.card.statusOverdue);
+    // The pill carries the overdue chip color class (paint verified in Phase 6;
+    // the class WIRING is unit-checkable here).
+    expect(pill.className).toMatch(/overdue/);
+  });
+
+  it("renders the healthy chip color + label when status is healthy", () => {
+    render(<PlantCard id={1} name="Фікус" species="Ficus" status="healthy" />);
+    const pill = screen.getByText(uk.plants.card.statusHealthy);
+    expect(pill.className).toMatch(/healthy/);
+  });
+});

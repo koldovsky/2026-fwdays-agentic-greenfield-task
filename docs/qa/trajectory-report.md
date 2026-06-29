@@ -15,7 +15,7 @@ Result: PASS, 3 warning(s)
 | 2026-06-29-add-growth | clean | 3 | yes | growth, i18n, plants |
 | 2026-06-29-add-plants | clean | 4 | yes | plants, i18n |
 | 2026-06-29-add-watering | clean | 3 | yes | watering, i18n |
-| 2026-06-30-add-design-system | clean | 2 | yes | i18n, theme |
+| 2026-06-30-add-design-system | clean | 3 | yes | i18n, theme |
 
 ## Cross-slice module overlap
 

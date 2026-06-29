@@ -13,6 +13,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SPECIES_DEFAULT, validatePlantInput } from "@/lib/plants/validation";
+import { uk } from "@/lib/i18n/uk";
 
 // Build a FormData the way the add-plant form submits it. Fields are omitted
 // (never set) to simulate "left untouched"; passing null also omits.
@@ -168,6 +169,113 @@ describe("validatePlantInput — acquired date (D3, SC-1, SC-2)", () => {
     const result = validatePlantInput(form({ name: "x", acquiredDate: "2026-02-30" }));
     if (result.ok) throw new Error("expected failure");
     expect(result.fieldErrors?.acquiredDate).toBeTruthy();
+  });
+});
+
+// RED (Phase 4b, slice 7 add-reminders, task 1.6) — `intervalDays` is the one new
+// PLANT field this slice adds, validated by the SAME mapper (design D4). It
+// defaults to 7 when blank/omitted, and otherwise must be a positive INTEGER
+// (`/^\d+$/` after trim, `>= 1`): 0, negative, a decimal (7.5 / 7,5), or
+// non-numeric text are rejected INLINE next to the interval field with the raw
+// value echoed under `values` (FR-SHELL-03, all-or-nothing). These assertions
+// fail until `PlantInput.intervalDays`, the validation branch, and
+// `uk.plants.fieldErrors.intervalInvalid` exist.
+//
+// @trace FR-REM-01
+// @trace FR-SHELL-03
+describe("validatePlantInput — interval (FR-REM-01)", () => {
+  it("defaults intervalDays to 7 when the field is omitted", () => {
+    const result = validatePlantInput(form({ name: "Фікус" }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(7);
+  });
+
+  it("defaults intervalDays to 7 when the field is blank", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "" }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(7);
+  });
+
+  it("defaults intervalDays to 7 when the field is whitespace-only", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "   " }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(7);
+  });
+
+  it("accepts a valid positive integer (14)", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "14" }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(14);
+  });
+
+  it("accepts the minimum valid interval (1)", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "1" }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(1);
+  });
+
+  it("trims surrounding whitespace before parsing a valid integer", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "  21  " }));
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.intervalDays).toBe(21);
+  });
+
+  it("rejects 0 with an inline interval field error (not a raw error)", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "0" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalInvalid,
+    );
+    expect(result.formError).toBeUndefined();
+  });
+
+  it("rejects a negative interval inline", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "-3" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalInvalid,
+    );
+  });
+
+  it("rejects a decimal interval (7.5) inline", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "7.5" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalInvalid,
+    );
+  });
+
+  it("rejects a decimal-comma interval (7,5) inline", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "7,5" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalInvalid,
+    );
+  });
+
+  it("rejects non-numeric text inline", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "abc" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.fieldErrors?.intervalDays).toBe(
+      uk.plants.fieldErrors.intervalInvalid,
+    );
+  });
+
+  it("echoes the raw bad interval under values so the form repopulates (FR-SHELL-03)", () => {
+    const result = validatePlantInput(form({ name: "Фікус", intervalDays: "7.5" }));
+    if (result.ok) throw new Error("expected failure");
+    expect(result.values?.intervalDays).toBe("7.5");
+  });
+
+  it("a valid edit keeps the other fields intact alongside the interval (all-or-nothing)", () => {
+    const result = validatePlantInput(
+      form({ name: "  Фікус  ", species: "Ficus lyrata", acquiredDate: "2020-01-15", intervalDays: "10" }),
+    );
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.name).toBe("Фікус");
+    expect(result.data?.species).toBe("Ficus lyrata");
+    expect(result.data?.acquiredDate).toBe("2020-01-15");
+    expect(result.data?.intervalDays).toBe(10);
   });
 });
 

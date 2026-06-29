@@ -1,0 +1,1 @@
+ALTER TABLE `plants` ADD `interval_days` integer DEFAULT 7 NOT NULL;

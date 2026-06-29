@@ -83,7 +83,8 @@
     {
       "id": "FR-PLANT-01",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -97,7 +98,8 @@
     {
       "id": "FR-PLANT-02",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -108,7 +110,8 @@
     {
       "id": "FR-PLANT-03",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -143,7 +146,8 @@
     {
       "id": "FR-PLANT-06",
       "specs": [
-        "openspec/specs/plants/spec.md"
+        "openspec/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -250,7 +254,8 @@
       "id": "FR-WATER-01",
       "specs": [
         "openspec/specs/reminders/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -394,13 +399,16 @@
         "openspec/specs/app-shell/spec.md",
         "openspec/specs/plants/spec.md",
         "openspec/specs/reminders/spec.md",
-        "openspec/specs/watering/spec.md"
+        "openspec/specs/watering/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
       "tests": [
         "lib/forms/result.test.ts",
         "lib/growth/actions.test.ts",
         "lib/plants/actions.test.ts",
+        "lib/plants/validation.test.ts",
         "lib/watering/actions.test.ts",
         "components/forms/FieldError.test.tsx",
         "components/growth/MeasurementForm.test.tsx",
@@ -480,97 +488,103 @@
     {
       "id": "FR-REM-01",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/plants/validation.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-02",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/plants/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/dates.test.ts",
+        "lib/reminders/status.test.ts",
+        "tests/integration/reminders.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-03",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/reminders/status.test.ts",
+        "tests/integration/reminders.test.ts",
+        "components/reminders/SummaryCard.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-04",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/reminders/status.test.ts",
+        "tests/integration/reminders.test.ts",
+        "components/reminders/ReminderRow.test.tsx",
+        "evals/cases/reminders.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-05",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/reminders/actions.test.ts",
+        "lib/reminders/status.test.ts",
+        "components/reminders/ReminderRow.test.tsx"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-06",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/reminders.test.ts",
+        "components/reminders/AllDoneState.test.tsx",
+        "evals/cases/reminders.eval.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-REM-07",
       "specs": [
-        "openspec/specs/reminders/spec.md"
+        "openspec/specs/reminders/spec.md",
+        "openspec/changes/add-reminders/specs/reminders/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "components/plants/PlantCard.test.tsx"
+      ],
       "recordings": []
     }
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-01 has no test annotated \"@trace FR-REM-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-02 has no test annotated \"@trace FR-REM-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-03 has no test annotated \"@trace FR-REM-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-04 has no test annotated \"@trace FR-REM-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-05 has no test annotated \"@trace FR-REM-05\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-06 has no test annotated \"@trace FR-REM-06\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-REM-07 has no test annotated \"@trace FR-REM-07\""
-    },
     {
       "check": "recording-evidence",
       "msg": "FR-PLANT-01 is not referenced by any recording manifest under docs/qa/"
@@ -722,6 +736,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-REM-07 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"add-reminders\" is not archived"
     }
   ]
 }

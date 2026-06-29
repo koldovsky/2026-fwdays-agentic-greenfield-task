@@ -6,11 +6,18 @@ import { desc, eq } from "drizzle-orm";
 
 import type { DB } from "@/db/client";
 import { plants, type Plant } from "@/db/schema/plants";
-import type { PlantInput } from "@/lib/plants/validation";
+import { INTERVAL_DEFAULT, type PlantInput } from "@/lib/plants/validation";
 
 // Accept any Drizzle better-sqlite3 instance bound to the plants schema (the
 // app singleton or a test DB), so queries.ts stays decoupled from the client.
 type PlantsDb = Pick<DB, "select" | "insert" | "update" | "delete">;
+
+// The persistence boundary tolerates an omitted intervalDays (defaults to the
+// schema default), so seed/test helpers that build a plant directly don't have
+// to restate it; the validated path always supplies it.
+type PlantWriteValues = Omit<PlantInput, "intervalDays"> & {
+  intervalDays?: number;
+};
 
 /** All plants, newest first (createdAt then id descending) — design D6. */
 export async function listPlants(db: PlantsDb): Promise<Plant[]> {
@@ -32,7 +39,7 @@ export async function getPlant(
 /** Insert a validated plant; returns the created row (with its new id). */
 export async function insertPlant(
   db: PlantsDb,
-  values: PlantInput,
+  values: PlantWriteValues,
 ): Promise<Plant> {
   return db
     .insert(plants)
@@ -40,6 +47,7 @@ export async function insertPlant(
       name: values.name,
       species: values.species,
       acquiredDate: values.acquiredDate,
+      intervalDays: values.intervalDays ?? INTERVAL_DEFAULT,
     })
     .returning()
     .get();
@@ -52,7 +60,7 @@ export async function insertPlant(
 export async function updatePlant(
   db: PlantsDb,
   id: number,
-  values: PlantInput,
+  values: PlantWriteValues,
 ): Promise<Plant | undefined> {
   return db
     .update(plants)
@@ -60,6 +68,7 @@ export async function updatePlant(
       name: values.name,
       species: values.species,
       acquiredDate: values.acquiredDate,
+      intervalDays: values.intervalDays ?? INTERVAL_DEFAULT,
     })
     .where(eq(plants.id, id))
     .returning()

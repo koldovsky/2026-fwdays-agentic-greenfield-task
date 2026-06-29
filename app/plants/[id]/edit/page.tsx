@@ -43,6 +43,7 @@ export default async function EditPlantPage({
           name: plant.name,
           species: plant.species,
           acquiredDate: plant.acquiredDate,
+          intervalDays: plant.intervalDays,
         }}
       />
       <div className="mt-4">

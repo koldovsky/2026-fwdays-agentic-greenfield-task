@@ -36,6 +36,23 @@ export function isAfterToday(iso: string, today: string): boolean {
 }
 
 /**
+ * Add `n` calendar days to an ISO `YYYY-MM-DD` string, returning a `YYYY-MM-DD`
+ * string. Parses the components and does the arithmetic in `Date.UTC` purely (no
+ * timezone, no display use), then re-formats the components zero-padded — so the
+ * calendar day never drifts near a UTC/Kiev midnight (design R1). The single
+ * calendar-math home for the reminders `due = lastWateredAt + intervalDays`.
+ */
+export function addDays(iso: string, n: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  const ms = Date.UTC(year, month - 1, day + n);
+  const next = new Date(ms);
+  const y = String(next.getUTCFullYear()).padStart(4, "0");
+  const m = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(next.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Format an ISO `YYYY-MM-DD` calendar date as `DD.MM.YYYY` (Ukrainian display,
  * SC-1). `null`/empty/malformed input yields an empty string (placeholder is
  * the caller's concern). Pure string surgery — never shifts the calendar day.

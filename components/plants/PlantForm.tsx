@@ -20,12 +20,13 @@ import { fieldInputClass, fieldLabelClass, fieldHintClass } from "@/components/f
 import type { ActionResult } from "@/lib/forms/result";
 import { uk } from "@/lib/i18n/uk";
 import { createPlantAction, updatePlantAction } from "@/lib/plants/actions";
-import { SPECIES_DEFAULT } from "@/lib/plants/validation";
+import { INTERVAL_DEFAULT, SPECIES_DEFAULT } from "@/lib/plants/validation";
 
 export interface PlantFormDefaults {
   name?: string;
   species?: string;
   acquiredDate?: string | null;
+  intervalDays?: number;
 }
 
 export interface PlantFormProps {
@@ -48,6 +49,7 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
   const nameFieldId = `${scope}-name`;
   const speciesFieldId = `${scope}-species`;
   const dateFieldId = `${scope}-acquiredDate`;
+  const intervalFieldId = `${scope}-intervalDays`;
 
   async function action(
     _prev: ActionResult | undefined,
@@ -77,6 +79,7 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
   const nameError = failed?.fieldErrors?.name;
   const speciesError = failed?.fieldErrors?.species;
   const dateError = failed?.fieldErrors?.acquiredDate;
+  const intervalError = failed?.fieldErrors?.intervalDays;
 
   // On a failed submit echo the raw typed values (slice-1 D3 pattern); otherwise
   // fall back to the row being edited / the species default for a fresh add.
@@ -85,6 +88,11 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
     failed?.values?.species ?? defaults?.species ?? SPECIES_DEFAULT;
   const dateValue =
     failed?.values?.acquiredDate ?? defaults?.acquiredDate ?? "";
+  const intervalValue =
+    failed?.values?.intervalDays ??
+    (defaults?.intervalDays != null
+      ? String(defaults.intervalDays)
+      : String(INTERVAL_DEFAULT));
 
   // The name field has no hint, so its describedby is just the error (or nothing).
   // Species + acquired-date have hints: when an error shows, reference BOTH ids so
@@ -97,6 +105,9 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
   const dateDescribedBy = dateError
     ? `${dateFieldId}-error ${dateFieldId}-hint`
     : `${dateFieldId}-hint`;
+  const intervalDescribedBy = intervalError
+    ? `${intervalFieldId}-error ${intervalFieldId}-hint`
+    : `${intervalFieldId}-hint`;
 
   return (
     <form action={formAction} className="max-w-md" noValidate>
@@ -158,6 +169,28 @@ export function PlantForm({ id, defaults }: PlantFormProps) {
           {uk.plants.acquiredDateHint}
         </p>
         <FieldError id={dateFieldId} message={dateError} />
+      </div>
+
+      <div className="mt-4">
+        <label htmlFor={intervalFieldId} className={fieldLabelClass}>
+          {uk.plants.intervalLabel}
+        </label>
+        <input
+          id={intervalFieldId}
+          name="intervalDays"
+          type="number"
+          min={1}
+          step={1}
+          inputMode="numeric"
+          defaultValue={intervalValue}
+          aria-invalid={intervalError ? true : undefined}
+          aria-describedby={intervalDescribedBy}
+          className={fieldInputClass}
+        />
+        <p id={`${intervalFieldId}-hint`} className={fieldHintClass}>
+          {uk.plants.intervalHint}
+        </p>
+        <FieldError id={intervalFieldId} message={intervalError} />
       </div>
 
       <Button variant="primary" type="submit" disabled={pending} className="mt-5">

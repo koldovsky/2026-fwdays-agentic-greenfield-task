@@ -60,6 +60,10 @@ export const uk = {
     acquiredDateLabel: "Дата придбання",
     acquiredDateHint: "Необовʼязково. Не може бути в майбутньому.",
     noAcquiredDate: "Не вказано",
+    /** Watering-interval field (FR-REM-01). Default 7 days when left blank. */
+    intervalLabel: "Інтервал поливу (днів)",
+    intervalHint:
+      "Кожні скільки днів поливати цю рослину. За замовчуванням — 7.",
     // Detail field labels.
     detailSpecies: "Вид",
     detailAcquiredDate: "Дата придбання",
@@ -78,6 +82,8 @@ export const uk = {
       acquiredDateInvalid: "Вкажіть коректну дату у форматі ДД.ММ.РРРР.",
       acquiredDateFuture:
         "Дата придбання не може бути в майбутньому. Оберіть сьогодні або раніше.",
+      intervalInvalid:
+        "Вкажіть інтервал поливу як ціле число днів, не менше 1 (наприклад 7).",
     },
   },
   // Growth capability copy (slice 3) — section heading, the height + date field
@@ -191,6 +197,33 @@ export const uk = {
      */
     renderError:
       "Не вдалося показати графік — дані доступні у списку нижче.",
+  },
+  // Reminders capability copy (slice 7) — the home summary card, the reminder
+  // section + due lines, the water-now control's accessible label, the done
+  // confirmation, the all-done empty state, and the water-now not-found result.
+  // Ukrainian text, English identifiers (NFR-LOC-01).
+  reminders: {
+    /** Summary-card label above the big due count (FR-REM-03). */
+    summaryLabel: "Сьогодні полити",
+    /** Unit shown beside the count (kept simple — no pluralization, design D8). */
+    summaryUnit: "рослин",
+    /** Uppercase section header above the urgency-ordered reminder rows. */
+    sectionTitle: "Потребують поливу",
+    /** Accessible label for the water-now droplet control (SC-6, NFR-A11Y-04). */
+    waterNow: "Полити зараз",
+    /** Done confirmation shown after a successful water-now (FR-REM-05). */
+    doneLabel: "Полито щойно ✓",
+    /** All-done empty-state title (FR-REM-06). */
+    allDoneTitle: "Усі политі! 🌱",
+    /** All-done reassurance line under the title. */
+    allDoneReassurance:
+      "Сьогодні нічого поливати — ваші рослини доглянуті.",
+    /** Due-line copy for an overdue reminder row (past due — water now). */
+    dueLineOverdue: "Прострочено — полийте зараз",
+    /** Due-line copy for a soon (today/tomorrow) reminder row. */
+    dueLineSoon: "Полити сьогодні або завтра",
+    /** Friendly not-found result for water-now on a missing plant (FR-REM-05). */
+    notFound: "Цю рослину не знайдено. Можливо, її вже видалено.",
   },
   // Example validation messages — exercised by the home demo form so the shared
   // inline-error contract (FR-SHELL-03) is provably wired. Real per-field
