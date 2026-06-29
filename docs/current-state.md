@@ -4,7 +4,8 @@
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
 session end or after meaningful progress. This is the cross-cutting status — per-change specs and
-tasks live in `openspec/`; product/architecture intent lives in `docs/`.
+tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dependency-ordered
+**change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
 Greenfield. Design docs done (PRD, requirements, review templates, AGENTS.md). **No code

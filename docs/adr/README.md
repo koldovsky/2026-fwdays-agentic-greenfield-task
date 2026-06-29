@@ -19,5 +19,7 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0009](./0009-eslint-prettier-lint-format.md) | ESLint + Prettier lint/format tooling | Accepted |
 | [0010](./0010-vitest-test-runner.md) | Vitest as the test runner | Accepted |
 | [0011](./0011-fallow-static-analysis.md) | Fallow for static analysis (dead code, duplication, complexity) | Accepted (impl deferred to M0) |
+| [0012](./0012-implementation-loop-runner.md) | Implementation loop runner (backlog-driven orchestrator skill) | Accepted (runner hand-built next) |
+| [0013](./0013-eval-framework.md) | Eval framework (deterministic-first, local-run + CI ratchet) | Accepted (suites built per-capability) |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.
