@@ -43,7 +43,11 @@ AFK once the loop is trusted.
 
 **Selection — ready, lowest-wave, one at a time.**
 - *Ready* = `status: todo` **and** every `blocked-by` id is `status: done`.
-- Pick the lowest-wave ready change; ties broken arbitrarily.
+- Pick the lowest-wave ready change of `kind: agent`; ties broken arbitrarily.
+- **`kind: manual` items are human-executed** (one-time infra the loop can't/shouldn't do — Coolify,
+  secrets; e.g. `provision`). The runner never runs them: it surfaces the item's runbook and pauses
+  until the human completes it and flips it `done`. Deploy is **not** a final task — it is bootstrapped
+  in M0 (`provision` → `pipe`), so the tracer-bullet pipe is proven deployed before any feature lands.
 - **Sequential** — exactly one change in flight. Waves order *eligibility* only; we do **not** run
   wave-mates concurrently. Rationale: wave-mates touch shared files (e.g. `food-text` and `metrics`
   both edit the Prisma schema + router consumers) → parallel worktrees would generate merge

@@ -39,11 +39,15 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 ## In progress
 - M0 runtime skeleton — `src/` tree, grammY wiring, Dockerfile, CI→GHCR (not started yet).
 
+Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (14 changes + 1 manual `provision`),
+driven by `/run-backlog` (ADR-0012/0013).
+
 ## Next up
-1. M0: scaffold plain-TS + grammY repo (`src/` per requirements §4) on the existing tooling base,
-   multi-stage Dockerfile, runtime deps, zod env validation in `config/`. Also add the deferred
-   `typecheck` + Fallow static-analysis steps to `ci.yml` (ADR-0011) — both need `src/` to exist.
-2. Wire GitHub Actions → GHCR; create Coolify `nutrition-bot` project; prove a deployed round-trip.
+1. **`provision` (manual, M0):** Coolify project + capped Postgres + env/secrets + GHCR pull — see
+   [docs/runbooks/coolify-setup.md](./runbooks/coolify-setup.md). Gates everything; the loop can't do it.
+2. `pipe` (M0): scaffold plain-TS + grammY repo (`src/` per requirements §4), multi-stage Dockerfile,
+   zod env in `config/`, CI → GHCR, deploy on Coolify + register webhook, prove a round-trip. Also
+   wires the deferred `typecheck` + Fallow CI steps (ADR-0011) — both need `src/` to exist.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
@@ -52,7 +56,7 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 
 ## Open questions / blockers
 Tracked in [prd.md](./prd.md) §11 (Food DB sharing, onboarding length, template fidelity, registry).
-No hard blockers — ready to scaffold.
+No hard blockers — but `provision` (manual Coolify setup) must land before `pipe` can deploy.
 
 ---
 ### Update rule (keep this file honest)

@@ -15,7 +15,12 @@ here** — they live in the PRD (US-#) and the change's own `specs`; this file r
 ## How the loop uses this file
 
 **Ready item** = `status: todo` **and** every `blocked-by` id is `status: done`.
-The runner picks the lowest-wave ready item (ties: any; same wave = safe to run in **parallel**).
+The runner picks the lowest-wave ready item of `kind: agent` (ties: any; same wave = parallel-eligible).
+
+**`kind: manual` items are human-executed** — one-time infra the loop can't (and must not) do
+(Coolify clicks, secrets). The runner never runs them: when a `manual` item is the next thing
+gating progress, it surfaces the linked **runbook** and pauses; the human does it and flips it
+`done`. Everything downstream stays blocked until then.
 
 Per item, run the gates **in order** — each must pass before the next:
 
@@ -35,34 +40,35 @@ opsx:explore (optional, fuzzy items)
 Only after **archive** does the item become `status: done`. If any gate fails, status →
 `blocked` with a one-line reason; do not advance dependents.
 
-**Status enum:** `todo` · `doing` · `blocked` · `done`.
+**Status enum:** `todo` · `doing` · `blocked` · `done`. **Kind enum:** `agent` · `manual`.
 
 ---
 
 ## DAG (machine-readable — keep columns stable)
 
-| id | status | wave | blocked-by | US | milestone | title |
-|----|--------|------|-----------|-----|-----------|-------|
-| pipe | todo | 0 | — | — | M0 | Pipe: skeleton + webhook + `/start` echo + Dockerfile + CI→GHCR + Coolify |
-| data | todo | 1 | pipe | — | M1 | Data layer: Postgres capped/tuned + Prisma schema + migrations + multi-tenancy |
-| router | todo | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
-| onboarding | todo | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
-| food-text | todo | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
-| metrics | todo | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
-| query | todo | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
-| correction | todo | 4 | food-text | US-5 | M3 | Correct last entry |
-| clarify | todo | 4 | food-text | US-6 | M3 | Ephemeral open-question + inline keyboard (ask only on material ambiguity) |
-| food-photo | todo | 4 | food-text | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted |
-| progress-photo | todo | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
-| reviews | todo | 5 | food-text, metrics | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
-| notion-mirror | todo | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
-| hardening | todo | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
+| id | status | kind | wave | blocked-by | US | milestone | title |
+|----|--------|------|------|-----------|-----|-----------|-------|
+| provision | todo | manual | 0 | — | — | M0 | Coolify provisioning: project + capped Postgres + env/secrets + GHCR — [runbook](../docs/runbooks/coolify-setup.md) |
+| pipe | todo | agent | 0 | provision | — | M0 | Pipe: skeleton + webhook + `/start` echo + Dockerfile + CI→GHCR + Coolify deploy |
+| data | todo | agent | 1 | pipe | — | M1 | Data layer: Prisma schema + migrations + connection + multi-tenancy (against provisioned PG) |
+| router | todo | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
+| onboarding | todo | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
+| food-text | todo | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
+| metrics | todo | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
+| query | todo | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
+| correction | todo | agent | 4 | food-text | US-5 | M3 | Correct last entry |
+| clarify | todo | agent | 4 | food-text | US-6 | M3 | Ephemeral open-question + inline keyboard (ask only on material ambiguity) |
+| food-photo | todo | agent | 4 | food-text | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted |
+| progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
+| reviews | todo | agent | 5 | food-text, metrics | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
+| notion-mirror | todo | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
+| hardening | todo | agent | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
 
 **Waves** = parallel cohorts. After wave 2, the **food track** (food-text → query/correction/
 clarify/food-photo) and **body track** (metrics → progress-photo) run independently in parallel.
 
 ```
-pipe → data ─┬─ router ─┬─ food-text ─┬─ query
+provision (manual) → pipe → data ─┬─ router ─┬─ food-text ─┬─ query
              │          │             ├─ correction
              │          │             ├─ clarify
              │          │             └─ food-photo ─┐
@@ -79,16 +85,25 @@ pipe → data ─┬─ router ─┬─ food-text ─┬─ query
 > [docs/prd.md](../docs/prd.md) §6 + invariants in [config.yaml](./config.yaml). Detail is
 > generated into `openspec/changes/<id>/` at `opsx:propose` time — keep this brief.
 
-### pipe — M0 · blocked-by: none
+### provision — M0 · **kind: manual** · blocked-by: none
+One-time Coolify infra the loop can't do — see [docs/runbooks/coolify-setup.md](../docs/runbooks/coolify-setup.md).
+Create the `nutrition-bot` project; add a Postgres resource capped ≤256 MB + tuned (must never
+OOM-kill the co-resident crypto-bot mysqld); set env/secrets (env only, never repo/DB) per AGENTS.md
+§Environment; connect GHCR so Coolify can pull. Deploy + webhook registration happen in `pipe` once
+the first image exists. **Done when the project + capped Postgres + env + GHCR pull are in place** —
+the human flips this to `done`.
+
+### pipe — M0 · blocked-by: provision
 Thinnest end-to-end tracer bullet: plain-TS + grammY repo (`src/` per requirements §4), webhook
 handler, `/start` echo, multi-stage Dockerfile, zod env validation in `config/`, GitHub Actions →
-GHCR, Coolify `nutrition-bot` project. **Done when a message round-trips through the deployed bot.**
-Also wires the deferred `typecheck` + Fallow CI steps (need `src/` to exist).
+GHCR, deploy on the provisioned Coolify project + register the Telegram webhook (script/curl with the
+Coolify URL). **Done when a message round-trips through the deployed bot.** Also wires the deferred
+`typecheck` + Fallow CI steps (need `src/` to exist).
 
 ### data — M1 · blocked-by: pipe
-Postgres resource in Coolify (capped ≤256 MB + tuned), Prisma schema + migrations + connection.
-Tables per requirements §6: users (keyed on Telegram `chat_id`), food_db, food_log, body_metrics,
-reviews. Multi-tenancy base: every domain row carries `user_id`; service layer enforces the filter.
+Prisma schema + migrations + connection against the provisioned Postgres. Tables per requirements §6:
+users (keyed on Telegram `chat_id`), food_db, food_log, body_metrics, reviews. Multi-tenancy base:
+every domain row carries `user_id`; service layer enforces the filter.
 **Done when the app reads/writes the DB on the box.**
 
 ### router — M3 · blocked-by: data

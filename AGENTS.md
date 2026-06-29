@@ -40,6 +40,12 @@ The matt-pocock skills are the **thinking and triage front-end** that OpenSpec d
 Loop: **grill-with-docs → `opsx:propose → apply → verify` → review → commit → `opsx:archive`**, with
 `triage` / `improve-codebase-architecture` as alternate entry points.
 
+The loop is sliced into a dependency-ordered backlog of OpenSpec changes
+([openspec/backlog.md](./openspec/backlog.md)) and driven by the **run-backlog** skill (`/run-backlog`)
+— the orchestrator that picks the next *ready* change, runs every gate (incl. `openspec validate
+--strict` + the evals from [ADR-0013](./docs/adr/0013-eval-framework.md)), and stops/marks `blocked`
+on failure. See [ADR-0012](./docs/adr/0012-implementation-loop-runner.md) for its full shape.
+
 **Maker ≠ reviewer is a hard gate, enforced by convention (not a schema artifact).** After
 `opsx:apply` + `opsx:verify`, the agent that wrote the code does **not** self-approve: hand the diff
 to a **separate reviewer subagent** (the `review` skill runs Standards + Spec in parallel sub-agents)
