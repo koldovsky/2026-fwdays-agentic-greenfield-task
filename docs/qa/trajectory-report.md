@@ -5,7 +5,7 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 6 archived slice(s).
+Scope: 7 archived slice(s).
 Result: PASS, 3 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
@@ -16,12 +16,13 @@ Result: PASS, 3 warning(s)
 | 2026-06-29-add-plants | clean | 4 | yes | plants, i18n |
 | 2026-06-29-add-watering | clean | 3 | yes | watering, i18n |
 | 2026-06-30-add-design-system | clean | 3 | yes | i18n, theme |
+| 2026-06-30-add-reminders | clean | 2 | yes | i18n, plants, reminders |
 
 ## Cross-slice module overlap
 
 - `lib/theme/` touched by: 2026-06-29-add-app-shell, 2026-06-30-add-design-system
-- `lib/i18n/` touched by: 2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system
-- `lib/plants/` touched by: 2026-06-29-add-growth, 2026-06-29-add-plants
+- `lib/i18n/` touched by: 2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system, 2026-06-30-add-reminders
+- `lib/plants/` touched by: 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-30-add-reminders
 
 ## Failures
 
@@ -30,5 +31,5 @@ None.
 ## Warnings
 
 - **in-scope**: lib/theme/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-30-add-design-system) — review for scope drift
-- **in-scope**: lib/i18n/ modified by 6 slices (2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system) — review for scope drift
-- **in-scope**: lib/plants/ modified by 2 slices (2026-06-29-add-growth, 2026-06-29-add-plants) — review for scope drift
+- **in-scope**: lib/i18n/ modified by 7 slices (2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system, 2026-06-30-add-reminders) — review for scope drift
+- **in-scope**: lib/plants/ modified by 3 slices (2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-30-add-reminders) — review for scope drift

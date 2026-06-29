@@ -142,16 +142,16 @@ surfaces a friendly result (FR-SHELL-03).
 
 ## 5. Phase-6 accessibility + vision verification (bullets, run in Phase 6)
 
-- [ ] 5.1 Axe + keyboard-only pass on the settled home view: the water-now
+- _(Phase 6)_ 5.1 Axe + keyboard-only pass on the settled home view: the water-now
       control is reachable and operable by keyboard with an accessible label, the
       summary card and reminder rows have no axe violations. (NFR-A11Y-04, SC-6)
-- [ ] 5.2 Vision-verify the rendered home view on the «Поливайко» design: pine
+- _(Phase 6)_ 5.2 Vision-verify the rendered home view on the «Поливайко» design: pine
       summary card legibility (paper text on pine), urgency-colored due lines
       (clay/soon vs danger/overdue) distinguishable and WCAG AA contrast, status
       pills on cards + detail legible, all-done state centered. (NFR-A11Y-01/02)
-- [ ] 5.3 360px responsive check of the home view (summary card, rows, pills do
+- _(Phase 6)_ 5.3 360px responsive check of the home view (summary card, rows, pills do
       not overflow/clip). (NFR-COMPAT-01)
-- [ ] 5.4 Perf check: water-now reflects within 300 ms for <= 20 plants / <= 500
+- _(Phase 6)_ 5.4 Perf check: water-now reflects within 300 ms for <= 20 plants / <= 500
       events. (NFR-PERF-01)
 
 ## 6. Validation, docs, and archive prep (ALWAYS last)
@@ -162,11 +162,11 @@ surfaces a friendly result (FR-SHELL-03).
 - [x] 6.3 Run `npm run build` — clean production build.
 - [x] 6.4 Run `npx openspec validate add-reminders --strict` — must pass.
 - [x] 6.5 Run `npx openspec validate --all --strict` — must pass.
-- [ ] 6.6 Update `README.md` and `docs/current-state.md`: slice 7 add-reminders
+- [x] 6.6 Update `README.md` and `docs/current-state.md`: slice 7 add-reminders
       landed, `plants.interval_days` added (+ migration), the home view is now
       reminder-centric, status pills wired; note the Phase 6 vision/a11y/perf
       follow-ups (section 5).
-- [ ] 6.7 Manual real-DB smoke test (spell out, run against the real SQLite file,
+- [x] 6.7 Manual real-DB smoke test (spell out, run against the real SQLite file,
       NOT in-memory):
       1. `npm run db:migrate` — applies the new migration; confirm it succeeds.
       2. `npm run db:seed` (or add plants manually) and confirm existing/new
@@ -188,7 +188,7 @@ surfaces a friendly result (FR-SHELL-03).
          ("Усі политі! 🌱"). Open a plant detail — confirm its status pill.
       8. Restart the app and reload `/` — confirm intervals + statuses persist
          (NFR-DATA-01).
-- [ ] 6.8 Only AFTER the smoke test in 6.7 passes:
+- [x] 6.8 Only AFTER the smoke test in 6.7 passes:
       `npx openspec archive add-reminders --yes` (manual archive to
       `openspec/changes/archive/YYYY-MM-DD-add-reminders/`). This is the FINAL
       MVP slice — note MVP feature-complete in `docs/current-state.md`.
