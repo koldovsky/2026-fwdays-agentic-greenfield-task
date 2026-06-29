@@ -11,7 +11,7 @@ Result: PASS, 2 warning(s)
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-06-29-add-app-shell | clean | 4 | yes | forms, theme, i18n |
-| 2026-06-29-add-charts | clean | 2 | yes | charts, i18n |
+| 2026-06-29-add-charts | clean | 3 | yes | charts, i18n |
 | 2026-06-29-add-growth | clean | 3 | yes | growth, i18n, plants |
 | 2026-06-29-add-plants | clean | 4 | yes | plants, i18n |
 | 2026-06-29-add-watering | clean | 3 | yes | watering, i18n |

@@ -15,7 +15,7 @@
     {
       "slice": "2026-06-29-add-charts",
       "reviewEvidence": "clean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "charts",
         "i18n"
