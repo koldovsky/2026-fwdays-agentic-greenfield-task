@@ -37,6 +37,7 @@ export default async function EditPlantPage({
         {uk.plants.editTitle}
       </h1>
       <PlantForm
+        key={plant.id}
         id={plant.id}
         defaults={{
           name: plant.name,

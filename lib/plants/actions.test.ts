@@ -6,8 +6,12 @@
 // Imports fail until lib/plants/actions.ts is built.
 //
 // @trace FR-PLANT-01
+// @trace FR-PLANT-06
+// @trace FR-PLANT-07
 // @trace FR-SHELL-03
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { uk } from "@/lib/i18n/uk";
 import { existsSync } from "node:fs";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -79,5 +83,49 @@ describe("createPlantAction", () => {
     const { createPlantAction } = await import("@/lib/plants/actions");
     await createPlantAction(form({ name: "Ще одна" }));
     expect(revalidatePath).toHaveBeenCalledWith("/");
+  });
+});
+
+// A plant deleted in another tab is indistinguishable from a missing id by the
+// time the action runs (NFR-DATA-02): the edit/delete actions must resolve to a
+// not-found ActionResult — never a thrown 500 and never a resurrected row.
+describe("updatePlantAction / deletePlantAction — not-found (FR-PLANT-06, FR-PLANT-07)", () => {
+  beforeEach(async () => {
+    if (existsSync(join(process.cwd(), "db", "migrations"))) {
+      const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
+      const { db } = await import("@/db/client");
+      migrate(db, { migrationsFolder: join(process.cwd(), "db", "migrations") });
+    }
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const MISSING_ID = 987_654;
+
+  it("updatePlantAction(missingId, validForm) returns not-found, no resurrected row", async () => {
+    const { updatePlantAction } = await import("@/lib/plants/actions");
+    const { getPlant } = await import("@/lib/plants/queries");
+    const { db } = await import("@/db/client");
+
+    const result = await updatePlantAction(
+      MISSING_ID,
+      form({ name: "Привид", species: "Crassula ovata" }),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.formError).toBe(uk.plants.notFound);
+
+    // The row was NOT created by the failed update (no upsert/resurrection).
+    expect(await getPlant(db, MISSING_ID)).toBeFalsy();
+  });
+
+  it("deletePlantAction(missingId) returns a not-found result (not a throw)", async () => {
+    const { deletePlantAction } = await import("@/lib/plants/actions");
+
+    const result = await deletePlantAction(MISSING_ID);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.formError).toBe(uk.plants.notFound);
   });
 });

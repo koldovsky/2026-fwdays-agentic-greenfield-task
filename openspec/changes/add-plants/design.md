@@ -229,6 +229,21 @@ plants
   ISO value; display formatting is a one-way pure helper, never fed back into
   storage (D3).
 
+## Known advisories
+
+- **PostCSS `<8.5.10` — GHSA-qx2v-qp2m-jg93 (moderate, accepted/transitive).**
+  Same disposition as slice 1 (app-shell). `npm audit` flags PostCSS 8.4.31 with
+  an XSS-via-unescaped-`</style>`-in-CSS-stringify advisory. It is **transitive**:
+  pulled in only through the nested `node_modules/next/node_modules/postcss` of
+  the pinned `next@16.2.9`; our own top-level PostCSS (`@tailwindcss/postcss`)
+  already resolves to a patched 8.5.x. It is **not introduced by this slice** —
+  add-plants touches no CSS/PostCSS path — and is **not reachable here**: no
+  user-controlled CSS is stringified (only first-party Tailwind at build time).
+  No non-breaking fix exists (`npm audit fix` resolves nothing; the only
+  `--force` path is a major Next downgrade we do NOT apply). **Action:** accepted
+  as a transitive advisory; revisit and bump when a Next.js patch release depends
+  on PostCSS `>=8.5.10`.
+
 ## Accepted limitations (MVP)
 
 - **Plant list order is newest-first (`createdAt`, `id` desc), not user-sortable.**

@@ -76,7 +76,8 @@
       "tests": [
         "lib/plants/actions.test.ts",
         "lib/plants/validation.test.ts",
-        "tests/integration/plants-lifecycle.test.ts"
+        "tests/integration/plants-lifecycle.test.ts",
+        "components/plants/PlantForm.test.tsx"
       ],
       "recordings": []
     },
@@ -138,6 +139,7 @@
       ],
       "planned": true,
       "tests": [
+        "lib/plants/actions.test.ts",
         "tests/integration/plants-lifecycle.test.ts"
       ],
       "recordings": []
@@ -152,7 +154,9 @@
       ],
       "planned": true,
       "tests": [
-        "tests/integration/plants-lifecycle.test.ts"
+        "lib/plants/actions.test.ts",
+        "tests/integration/plants-lifecycle.test.ts",
+        "components/plants/DeletePlantButton.test.tsx"
       ],
       "recordings": []
     },
@@ -338,6 +342,7 @@
         "lib/forms/result.test.ts",
         "lib/plants/actions.test.ts",
         "components/forms/FieldError.test.tsx",
+        "components/plants/PlantForm.test.tsx",
         "evals/cases/app-shell.eval.ts"
       ],
       "recordings": []

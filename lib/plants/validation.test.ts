@@ -96,12 +96,23 @@ describe("validatePlantInput — species default & verbatim", () => {
     expect(result.data?.species).toBe(SPECIES_DEFAULT);
   });
 
-  it("keeps a custom species verbatim (editable free text, FR-PLANT-02)", () => {
+  it("keeps a custom species' free text (editable, FR-PLANT-02)", () => {
     const result = validatePlantInput(
       form({ name: "Фікус", species: "Ficus lyrata — фікус ліровидний!" }),
     );
     if (!result.ok) throw new Error("expected success");
     expect(result.data?.species).toBe("Ficus lyrata — фікус ліровидний!");
+  });
+
+  it("trims a custom species consistently with name (consistency fix)", () => {
+    // Deliberate consistency fix: species is trimmed like name, so surrounding
+    // whitespace is never persisted and the length bound measures the stored
+    // value (see lib/plants/validation.ts review fix #2).
+    const result = validatePlantInput(
+      form({ name: "Фікус", species: "  Monstera deliciosa  " }),
+    );
+    if (!result.ok) throw new Error("expected success");
+    expect(result.data?.species).toBe("Monstera deliciosa");
   });
 
   it("accepts species of exactly 200 chars (boundary)", () => {

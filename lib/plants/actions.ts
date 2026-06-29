@@ -55,6 +55,14 @@ export async function updatePlantAction(
   id: number,
   formData: FormData,
 ): Promise<ActionResult> {
+  // Defense-in-depth: the id is a client-supplied server-action argument (the
+  // route loader guards a separate path callers can bypass). Drizzle already
+  // parameterizes the query; this enforces the action's own contract so a
+  // float/0/negative/NaN id resolves to a friendly not-found, never a write.
+  if (!Number.isInteger(id) || id <= 0) {
+    return formError(uk.plants.notFound, echo(formData));
+  }
+
   const validated = validatePlantInput(formData);
   if (!validated.ok) return validated;
 
@@ -74,6 +82,12 @@ export async function updatePlantAction(
 
 /** Delete a plant (FR-PLANT-07). A missing id resolves to a not-found result. */
 export async function deletePlantAction(id: number): Promise<ActionResult> {
+  // Defense-in-depth (see updatePlantAction): validate the client-supplied id
+  // so a malformed id resolves to a not-found result rather than a no-op write.
+  if (!Number.isInteger(id) || id <= 0) {
+    return formError(uk.plants.notFound);
+  }
+
   try {
     const removed = await removePlant(id);
     if (!removed) {

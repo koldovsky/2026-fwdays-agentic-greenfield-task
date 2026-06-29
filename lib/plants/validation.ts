@@ -78,8 +78,11 @@ export function validatePlantInput(
     fieldErrors.name = uk.plants.fieldErrors.nameTooLong;
   }
 
+  // Trim species consistently with name: a blank-after-trim species falls back
+  // to SPECIES_DEFAULT, and a non-blank species is stored trimmed (the length
+  // bound therefore measures the actually-stored value, never spurious padding).
   const trimmedSpecies = rawSpecies.trim();
-  const species = trimmedSpecies.length === 0 ? SPECIES_DEFAULT : rawSpecies;
+  const species = trimmedSpecies.length === 0 ? SPECIES_DEFAULT : trimmedSpecies;
   if (species.length > SPECIES_MAX) {
     fieldErrors.species = uk.plants.fieldErrors.speciesTooLong;
   }
