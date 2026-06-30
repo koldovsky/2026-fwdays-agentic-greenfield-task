@@ -8,11 +8,13 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` + M1 `data` code-complete locally.** `pipe`: grammY long-poll skeleton, zod config,
-`/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core tables), init migration, pooled
-client (pinned pool), `user_id` tenancy helper, `migrate deploy` + `$connect` at startup. 16 tests
-green; all gates + maker≠checker review passed on both. Remaining: the **human deploy** (push →
-GHCR public → Coolify pull → migrate → round-trip).
+**M0 `pipe` + M1 `data` + M3 `router` (FR-1) code-complete locally.** `pipe`: grammY long-poll
+skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core tables),
+migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
+`router`: Anthropic client seam (Sonnet 4.6, single call, temp 0, cached prefix, **no agent loop**),
+6-intent classifier, date-resolved-in-code (TZ back-dating), eval framework (runner + key-less
+ratchet + 18-case dataset). 37 tests green; all gates + maker≠checker review passed. Remaining: the
+**human deploy** + the live LLM/eval run (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -20,7 +22,7 @@ GHCR public → Coolify pull → migrate → round-trip).
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | ⬜ not started |
-| M3 — Core logging (text + Food DB) | ⬜ not started |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework landed; food-text/query/correction/clarify/coach-persona next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | ⬜ not started |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -71,8 +73,12 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    (ADR-0011, not yet installed). Remaining: human deploy + first-push GHCR public toggle (path A).
 3. ✅ **`data` (M1): code-complete + archived** — schema (5 tables) + init migration + pooled client
    + tenancy helper + startup migrate/connect. On-box verify is deploy-time (human).
-4. **`router` (M3) / `onboarding` (M2): NEXT** — both unblocked by `data` (wave 2). `onboarding`
-   (`/start` Q&A → Mifflin targets, command-driven) or `router` (6-intent classifier + Anthropic).
+4. ✅ **`router` (M3, FR-1): code-complete + archived** — LLM-client seam (Sonnet 4.6, single call,
+   cached prefix), 6-intent classifier, date-in-code, eval framework bootstrap. Live LLM/eval run is
+   deploy-time (needs key).
+5. **`coach-persona` (M3, wave 3) / `onboarding` (M2) / `food-text` (M3): NEXT** — `coach-persona`
+   (honest voice into the cached prefix + precision-first policy) and `food-text` are unblocked by
+   `router`; `onboarding` was unblocked by `data`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

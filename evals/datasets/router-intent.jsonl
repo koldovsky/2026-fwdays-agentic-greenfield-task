@@ -1,0 +1,18 @@
+{"input":"200г куриного филе","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"съел овсянку с бананом утром","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"2 яйця і тост","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"chicken breast 150g grilled","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"вчера вечером пицца 3 куска","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"сколько белка сегодня?","expected":{"intent":"query"},"meta":{"trace":["FR-1"]}}
+{"input":"how many calories left today?","expected":{"intent":"query"},"meta":{"trace":["FR-1"]}}
+{"input":"скільки я з'їв вуглеводів?","expected":{"intent":"query"},"meta":{"trace":["FR-1"]}}
+{"input":"вес 89.2, талия 90","expected":{"intent":"metric"},"meta":{"trace":["FR-1"]}}
+{"input":"weight 88.5 kg this morning","expected":{"intent":"metric"},"meta":{"trace":["FR-1"]}}
+{"input":"вага 90, груди 105","expected":{"intent":"metric"},"meta":{"trace":["FR-1"]}}
+{"input":"готово на сегодня","expected":{"intent":"review_trigger"},"meta":{"trace":["FR-1"]}}
+{"input":"/done","expected":{"intent":"review_trigger"},"meta":{"trace":["FR-1"]}}
+{"input":"нет, 300г не 200","expected":{"intent":"correction"},"meta":{"trace":["FR-1"]}}
+{"input":"actually it was 2 eggs not 3","expected":{"intent":"correction"},"meta":{"trace":["FR-1"]}}
+{"input":"ні, то було вчора","expected":{"intent":"correction"},"meta":{"trace":["FR-1"]}}
+{"input":"твороg 250 грамм","expected":{"intent":"log"},"meta":{"trace":["FR-1"]}}
+{"input":"how much fat did I eat yesterday?","expected":{"intent":"query"},"meta":{"trace":["FR-1"]}}

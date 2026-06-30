@@ -43,6 +43,11 @@ jobs:
       - name: Test
         run: npm test
 
+      # Key-less eval ratchet (ADR-0013) — compares committed scores, makes no LLM call. Skips
+      # gracefully until the first local `npm run evals` produces results/latest.json.
+      - name: Eval ratchet
+        run: npm run check:evals
+
   # Off-box build → GHCR. Local gates are authoritative (ADR-0012); this is the one signal local
   # can't reproduce. The image is BUILT on every CI run (so a broken Dockerfile fails the PR, not
   # post-merge) but PUSHED to GHCR only on `main`. Coolify pulls the pushed image.

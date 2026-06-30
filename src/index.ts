@@ -4,6 +4,7 @@ import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
 import { createHealthServer } from './bot/health.js';
 import { prisma } from './db/client.js';
+import { createAnthropicClient } from './llm/client.js';
 
 /** Confirm the DB is reachable (migrations are applied by `migrate deploy` before this). */
 const connectDbOrExit = async (): Promise<void> => {
@@ -46,7 +47,8 @@ const main = async (): Promise<void> => {
   const health = createHealthServer();
   health.listen(env.PORT, () => console.log(`Health server listening on :${env.PORT}`));
 
-  const bot = createBot(env.TELEGRAM_BOT_TOKEN);
+  const anthropic = createAnthropicClient(env.ANTHROPIC_API_KEY);
+  const bot = createBot(env.TELEGRAM_BOT_TOKEN, { anthropic, userTz: env.TZ });
   registerShutdown(bot, health);
 
   // Long-poll (getUpdates) — no webhook, no public ingress, no TLS (ADR-0014).

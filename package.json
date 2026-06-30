@@ -21,14 +21,18 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
+    "evals": "tsx evals/run.ts",
+    "check:evals": "node scripts/check-eval-ratchet.mjs",
     "docs:check": "node scripts/check-docs-sync.mjs --check",
     "prepare": "husky || true"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.107.0",
     "@prisma/client": "^6.19.3",
     "grammy": "^1.30.0",
     "prisma": "^6.19.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.25.2"
   },
   "lint-staged": {
     "*.ts": [

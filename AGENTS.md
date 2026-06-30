@@ -133,8 +133,10 @@ npm run lint:fix       # eslint . --fix
 npm run format         # prettier --write .
 npm run format:check   # prettier --check . (CI/pre-merge gate)
 npm run typecheck      # tsc --noEmit (src/ exists — type-checks src incl. tests)
-npm test               # vitest run (env / bot / health suites)
+npm test               # vitest run (config / bot / health / db / router suites)
 npm run test:watch     # vitest (watch mode, local dev)
+npm run evals          # local-only: real LLM at temp 0 over evals/datasets → results/latest.json (ADR-0013; needs ANTHROPIC_API_KEY)
+npm run check:evals    # key-less ratchet: latest.json vs quality/eval-baseline.json (CI gate; no API key)
 npm run docs:check     # validate ADR index + scripts-documented (pre-push/CI gate)
 ```
 
