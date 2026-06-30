@@ -53,7 +53,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | pipe | done | agent | 0 | provision | — | M0 | Pipe: skeleton + long-poll + `/start` echo + Dockerfile + CI→GHCR + Coolify deploy |
 | data | done | agent | 1 | pipe | — | M1 | Data layer: Prisma schema + migrations + connection + multi-tenancy (against provisioned PG) |
 | router | done | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
-| coach-persona | doing | agent | 3 | router | — | M3 | Coach persona (honest voice) in stable system prefix + precision-first clarification policy ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)) |
+| coach-persona | done | agent | 3 | router | — | M3 | Coach persona (honest voice) in stable system prefix + precision-first clarification policy ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)) |
 | onboarding | done | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
 | food-text | todo | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
 | metrics | todo | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
