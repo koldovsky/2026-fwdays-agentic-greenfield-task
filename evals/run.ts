@@ -1,6 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type Anthropic from '@anthropic-ai/sdk';
+import type { FoodPer } from '@prisma/client';
 import { loadEnv } from '../src/config/env.js';
+import { scaleFactor, scaleMacros } from '../src/food/scale.js';
+import type { MacroBase, ScaledMacros } from '../src/food/types.js';
 import { createAnthropicClient } from '../src/llm/client.js';
 import { classifyMessage } from '../src/router/router.js';
 import { coachPersonaToneCases } from './cases/coach-persona-tone.eval.js';
@@ -32,6 +35,29 @@ const runRouterIntent = async (client: Anthropic, userTz: string): Promise<numbe
   return accuracy(hits);
 };
 
+interface FoodScaleCase {
+  base: MacroBase;
+  per: FoodPer;
+  qty: number;
+  expected: ScaledMacros;
+}
+
+const macrosMatch = (a: ScaledMacros, b: ScaledMacros): boolean =>
+  a.kcal === b.kcal && a.proteinG === b.proteinG && a.fatG === b.fatG && a.carbsG === b.carbsG;
+
+/** Deterministic suite: scaling is pure code (invariant #2), so it grades without any model call. */
+const runFoodScale = (): number => {
+  const lines = readFileSync('evals/datasets/food-scale.jsonl', 'utf8').trim().split('\n');
+
+  const hits = lines.map((line) => {
+    const testCase = JSON.parse(line) as FoodScaleCase;
+    const got = scaleMacros(testCase.base, scaleFactor(testCase.qty, testCase.per));
+    return macrosMatch(got, testCase.expected);
+  });
+
+  return accuracy(hits);
+};
+
 /** Mean judge score (0–100) over a judge suite; each case re-judged when borderline (judge.ts). */
 const runJudgeSuite = async (
   client: Anthropic,
@@ -53,6 +79,7 @@ const main = async (): Promise<void> => {
 
   const results = {
     'router-intent': { intent: await runRouterIntent(client, env.TZ) },
+    'food-scale': { accuracy: runFoodScale() },
     'coach-persona-tone': {
       score: await runJudgeSuite(client, coachPersonaToneCases, TONE_THRESHOLD),
     },

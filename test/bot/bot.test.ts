@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { handleCallback, handleStart, handleText } from '../../src/bot/bot.js';
 import type { BotDeps } from '../../src/bot/types.js';
+import type { FoodService } from '../../src/food/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
 
@@ -14,16 +15,23 @@ const makeOnboarding = (over: Partial<OnboardingService> = {}): OnboardingServic
   ...over,
 });
 
+const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
+  logFood: vi.fn().mockResolvedValue({ text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' }),
+  saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'тест' }),
+  ...over,
+});
+
 const makeDeps = (
   onboarding: OnboardingService,
   intent = 'query',
-): { deps: BotDeps; create: ReturnType<typeof vi.fn> } => {
+  food: FoodService = makeFood(),
+): { deps: BotDeps; create: ReturnType<typeof vi.fn>; food: FoodService } => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
     usage: {},
   });
   const anthropic = { messages: { create } } as unknown as Anthropic;
-  return { deps: { anthropic, userTz: 'Europe/Kyiv', onboarding }, create };
+  return { deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food }, create, food };
 };
 
 describe('handleStart', () => {
@@ -94,6 +102,48 @@ describe('handleText', () => {
     expect(onboarding.submitAnswer).not.toHaveBeenCalled();
     expect(create).toHaveBeenCalledTimes(1);
     expect(String(reply.mock.calls[0]?.[0])).toContain('query');
+  });
+
+  it('routes a `log` intent to the food service and replies with its confirmation', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const food = makeFood({
+      logFood: vi.fn().mockResolvedValue({
+        text: 'Записал: курица — 330 ккал',
+        addToCatalog: { id: 5, label: '➕ В базу продуктов' },
+      }),
+    });
+    const { deps } = makeDeps(onboarding, 'log', food);
+
+    await handleText({ message: { text: '200г куриного филе' }, chat: { id: 7 }, reply }, deps);
+
+    expect(food.logFood).toHaveBeenCalledWith(
+      7n,
+      '200г куриного филе',
+      expect.objectContaining({ intent: 'log' }),
+    );
+    expect(String(reply.mock.calls[0]?.[0])).toContain('330');
+    // Estimate path → the add-to-Food-DB button rides along.
+    expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup');
+  });
+
+  it('persists a logged estimate to the catalog on a `food:addfdb:` tap', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding();
+    const food = makeFood({
+      saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'борщ' }),
+    });
+    const { deps } = makeDeps(onboarding, 'log', food);
+
+    await handleCallback(
+      { callbackQuery: { data: 'food:addfdb:5' }, chat: { id: 9 }, reply, answerCallbackQuery },
+      deps,
+    );
+
+    expect(answerCallbackQuery).toHaveBeenCalledTimes(1);
+    expect(food.saveToCatalog).toHaveBeenCalledWith(9n, 5);
+    expect(onboarding.submitAnswer).not.toHaveBeenCalled();
   });
 
   it('skips commands (no onboarding lookup, no classifier call)', async () => {

@@ -4,6 +4,7 @@ import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
 import { createHealthServer } from './bot/health.js';
 import { prisma } from './db/client.js';
+import { createFoodService } from './food/service.js';
 import { createAnthropicClient } from './llm/client.js';
 import { createOnboardingService } from './onboarding/flow.js';
 
@@ -50,7 +51,8 @@ const main = async (): Promise<void> => {
 
   const anthropic = createAnthropicClient(env.ANTHROPIC_API_KEY);
   const onboarding = createOnboardingService(prisma);
-  const bot = createBot(env.TELEGRAM_BOT_TOKEN, { anthropic, userTz: env.TZ, onboarding });
+  const food = createFoodService(prisma, anthropic, env.TZ);
+  const bot = createBot(env.TELEGRAM_BOT_TOKEN, { anthropic, userTz: env.TZ, onboarding, food });
   registerShutdown(bot, health);
 
   // Long-poll (getUpdates) — no webhook, no public ingress, no TLS (ADR-0014).

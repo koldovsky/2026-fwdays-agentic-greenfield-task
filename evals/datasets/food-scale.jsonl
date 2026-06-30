@@ -1,0 +1,5 @@
+{"name":"200g chicken breast (per100g)","base":{"kcal":165,"proteinG":31,"fatG":3.6,"carbsG":0},"per":"per100g","qty":200,"expected":{"kcal":330,"proteinG":62,"fatG":7.2,"carbsG":0},"meta":{"trace":["US-2"]}}
+{"name":"2 eggs (per piece)","base":{"kcal":78,"proteinG":6.3,"fatG":5.3,"carbsG":0.6},"per":"piece","qty":2,"expected":{"kcal":156,"proteinG":12.6,"fatG":10.6,"carbsG":1.2},"meta":{"trace":["US-2"]}}
+{"name":"250ml milk (per100ml)","base":{"kcal":42,"proteinG":3.4,"fatG":1,"carbsG":4.8},"per":"per100ml","qty":250,"expected":{"kcal":105,"proteinG":8.5,"fatG":2.5,"carbsG":12},"meta":{"trace":["US-2"]}}
+{"name":"1 portion of borscht (dish)","base":{"kcal":160,"proteinG":6,"fatG":8,"carbsG":16},"per":"dish","qty":1,"expected":{"kcal":160,"proteinG":6,"fatG":8,"carbsG":16},"meta":{"trace":["US-2"]}}
+{"name":"150g oatmeal rounds to 1dp/Int","base":{"kcal":123,"proteinG":9.99,"fatG":0.07,"carbsG":33.33},"per":"per100g","qty":150,"expected":{"kcal":185,"proteinG":15,"fatG":0.1,"carbsG":50},"meta":{"trace":["US-2"]}}

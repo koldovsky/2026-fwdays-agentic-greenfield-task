@@ -8,7 +8,7 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) + M3 `coach-persona` code-complete locally.** `pipe`:
+**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) + M3 `coach-persona` + M3 `food-text` code-complete locally.** `pipe`:
 grammY long-poll skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core
 tables), migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
 `router`: Anthropic client seam (Sonnet 4.6, single call, temp 0, cached prefix, **no agent loop**),
@@ -18,9 +18,11 @@ ratchet + 18-case dataset). `onboarding`: `/start` Q&A → DB-backed state machi
 floor), inline-keyboard choices + validated numeric free text, weight → `body_metrics`. `coach-persona`:
 honest non-moralizing voice + precision-first clarification policy in the shared cached prefix
 (ADR-0015), plus the first **LLM judge-eval** path (rubric grader, CRITICAL gating, double-judge on
-borderline — ADR-0013) seeded with `coach-persona-tone`. 66 tests green; all gates + maker≠checker
-review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
-baseline (need `ANTHROPIC_API_KEY` + egress).
+borderline — ADR-0013) seeded with `coach-persona-tone`. `food-text`: act on the `log` intent — parse
+→ Food DB fact / one-call LLM estimate → `reconcileQty` (qty/basis reconciliation) → code-scaled
+`food_log` write → honest confirmation + add-to-catalog (US-2), with a deterministic `food-scale`
+eval. 92 tests green; all gates + maker≠checker review passed. Remaining: the **human deploy** + the
+live LLM/eval run incl. seeding the tone-eval baseline (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -28,7 +30,7 @@ baseline (need `ANTHROPIC_API_KEY` + egress).
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
-| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona (voice/policy + judge-eval) landed; food-text/query/correction/clarify next |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (log by text → Food DB fact / LLM estimate → code-scaled `food_log` write) landed; query/correction/clarify next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | ⬜ not started |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -71,6 +73,18 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   prefix), wired into `evals/run.ts`; judge scores ride the existing key-less ratchet unchanged.
   Shared `MODEL` const extracted to `src/llm/client.ts`. 12 new tests. Reviewer-resolved. Live tone
   run + baseline seed is **deploy-time** (no key in sandbox; baseline stays `{}` so the ratchet passes).
+- **M3 `food-text`** — first food-track slice (US-2): acts on the router's `log` intent. `src/food/`
+  resolves a terse RU/UA/EN item to a unified `ResolvedFood` — a Food DB hit (own + global catalog via
+  `catalogWhere`) is `source: fact` with **zero** LLM calls; a miss is **one** `parseStructured`
+  estimate (`source: estimate`, no agent loop). `reconcileQty` maps the router's raw qty+unit onto the
+  resolved `per` basis (missing qty → one serving, weight-vs-count mismatch clamped — no "200 dishes"),
+  then macros are **scaled in code** (`scaleFactor`/`scaleMacros`, kcal Int) and written to one
+  tenant-scoped `food_log` row (`tenantWhere`). Meal inferred from the user-TZ clock (no LLM).
+  Confirmation shows the row's OWN numbers + honest source tag (never a daily SUM), prose mirrors
+  language, enums stay English. Estimate path offers an inline `food:addfdb:<id>` button →
+  `saveLoggedFoodToCatalog` reconstructs the per-basis macros into a user-owned Food DB row; reply
+  localized off the row's entryName. 92 tests green (+ deterministic `food-scale` eval, key-less).
+  Reviewer-resolved (two MAJOR scaling fixes). Live estimate/parse eval cases are deploy-time (no key).
 - Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
@@ -102,8 +116,10 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
 6. ✅ **`coach-persona` (M3, wave 3): code-complete + archived** — honest voice + precision-first
    policy in the shared cached prefix + first judge-eval path (ADR-0015/0013). Live tone run + baseline
    seed is deploy-time (needs key).
-7. **`food-text` (M3): NEXT** — first food-track slice (parse → Food DB lookup → `food_log` write),
-   unblocked by `router`. `clarify`/`food-photo` (wave 4) now also build on `coach-persona`.
+7. ✅ **`food-text` (M3): code-complete + archived** — parse → Food DB lookup/estimate → code-scaled
+   `food_log` write + add-to-catalog. Live estimate/parse eval is deploy-time (needs key).
+8. **`query` / `correction` / `clarify` (M3, wave 4): NEXT** — all now unblocked by `food-text`
+   (`clarify`/`food-photo` also build on `coach-persona`). `metrics` (M5, wave 3) is independently ready.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

@@ -7,10 +7,14 @@ import {
   type Question,
   type Targets,
 } from '../onboarding/types.js';
+import { catalogReply } from '../food/confirm.js';
+import type { Confirmation } from '../food/types.js';
 import type { BotDeps, CallbackContext, ReplyFn, StartContext, TextContext } from './types.js';
 
-// Callback data is namespaced `onb:<field>:<value>` so the handler tells its own buttons apart.
+// Callback data is namespaced so each handler tells its own buttons apart: `onb:<field>:<value>` for
+// onboarding, `food:addfdb:<foodLogId>` for the add-to-Food-DB offer.
 const CALLBACK_PREFIX = 'onb:';
+const FOOD_ADD_PREFIX = 'food:addfdb:';
 const WELCOME = 'Привіт! Я твій тренер з харчування. Налаштуймо твій профіль — кілька запитань.';
 
 const buildKeyboard = (question: Question): InlineKeyboard => {
@@ -72,10 +76,23 @@ export const handleStart = async (ctx: StartContext, deps: BotDeps): Promise<voi
   await askQuestion(ctx.reply, question);
 };
 
+/** Reply with a food confirmation, attaching the add-to-Food-DB button on the estimate path. */
+const replyConfirmation = async (reply: ReplyFn, confirmation: Confirmation): Promise<void> => {
+  if (!confirmation.addToCatalog) {
+    await reply(confirmation.text);
+    return;
+  }
+  const kb = new InlineKeyboard().text(
+    confirmation.addToCatalog.label,
+    `${FOOD_ADD_PREFIX}${confirmation.addToCatalog.id}`,
+  );
+  await reply(confirmation.text, { reply_markup: kb });
+};
+
 /**
  * Non-command text. While onboarding is incomplete the message is the answer to the current question
  * — it never reaches the classifier (which must not see a bare "32" out of context). Otherwise it
- * falls through to FR-1 routing.
+ * falls through to FR-1 routing; a `log` intent is recorded, the rest still echo until their changes land.
  */
 export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void> => {
   const text = ctx.message.text;
@@ -90,13 +107,44 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
   }
 
   const routed = await classifyMessage(deps.anthropic, text, { userTz: deps.userTz });
-  await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
+  if (routed.intent !== 'log') {
+    await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
+    return;
+  }
+
+  const confirmation = await deps.food.logFood(chatId, text, routed);
+  if (!confirmation) {
+    return;
+  }
+  await replyConfirmation(ctx.reply, confirmation);
 };
 
-/** Inline-keyboard tap during onboarding. Ignores foreign callback data. */
+/** `food:addfdb:<id>` tap — persist the logged estimate to the user's Food DB. */
+const handleFoodCallback = async (
+  ctx: CallbackContext,
+  deps: BotDeps,
+  data: string,
+): Promise<void> => {
+  await ctx.answerCallbackQuery();
+  const foodLogId = Number(data.slice(FOOD_ADD_PREFIX.length));
+  if (!Number.isInteger(foodLogId) || !ctx.chat) {
+    return;
+  }
+  const result = await deps.food.saveToCatalog(BigInt(ctx.chat.id), foodLogId);
+  await ctx.reply(catalogReply(result));
+};
+
+/** Inline-keyboard tap. Dispatches by namespace; ignores foreign callback data. */
 export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promise<void> => {
   const data = ctx.callbackQuery?.data;
-  if (!data?.startsWith(CALLBACK_PREFIX) || !ctx.chat) {
+  if (!data || !ctx.chat) {
+    return;
+  }
+  if (data.startsWith(FOOD_ADD_PREFIX)) {
+    await handleFoodCallback(ctx, deps, data);
+    return;
+  }
+  if (!data.startsWith(CALLBACK_PREFIX)) {
     return;
   }
   await ctx.answerCallbackQuery();

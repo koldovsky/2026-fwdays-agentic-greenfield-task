@@ -1,12 +1,14 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { InlineKeyboard } from 'grammy';
+import type { FoodService } from '../food/types.js';
 import type { OnboardingService } from '../onboarding/types.js';
 
-/** Dependencies the message handlers need (the LLM client, the user's timezone, onboarding). */
+/** Dependencies the message handlers need (the LLM client, the user's timezone, onboarding, food). */
 export interface BotDeps {
   anthropic: Anthropic;
   userTz: string;
   onboarding: OnboardingService;
+  food: FoodService;
 }
 
 export type ReplyFn = (text: string, other?: { reply_markup?: InlineKeyboard }) => Promise<unknown>;
