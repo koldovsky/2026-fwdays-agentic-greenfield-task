@@ -8,43 +8,43 @@ Result: PASS, 38 warning(s)
 
 | FR | Spec | Plan | Test trace | Recording |
 |---|---|---|---|---|
-| FR-PLANT-01 | yes | yes | 4 | - |
+| FR-PLANT-01 | yes | yes | 6 | - |
 | FR-PLANT-02 | yes | yes | 1 | - |
 | FR-PLANT-03 | yes | yes | 2 | - |
 | FR-PLANT-04 | yes | yes | 2 | - |
-| FR-PLANT-05 | yes | yes | 1 | - |
-| FR-PLANT-06 | yes | yes | 2 | - |
-| FR-PLANT-07 | yes | yes | 3 | - |
+| FR-PLANT-05 | yes | yes | 2 | - |
+| FR-PLANT-06 | yes | yes | 3 | - |
+| FR-PLANT-07 | yes | yes | 4 | - |
 | FR-PLANT-08 | yes | yes | 1 | - |
-| FR-GROWTH-01 | yes | yes | 4 | - |
-| FR-GROWTH-02 | yes | yes | 3 | - |
+| FR-GROWTH-01 | yes | yes | 6 | - |
+| FR-GROWTH-02 | yes | yes | 4 | - |
 | FR-GROWTH-03 | yes | yes | 2 | - |
 | FR-GROWTH-04 | yes | yes | 3 | - |
 | FR-GROWTH-05 | yes | yes | 3 | - |
-| FR-WATER-01 | yes | yes | 4 | - |
+| FR-WATER-01 | yes | yes | 6 | - |
 | FR-WATER-02 | yes | yes | 4 | - |
-| FR-WATER-03 | yes | yes | 3 | - |
+| FR-WATER-03 | yes | yes | 4 | - |
 | FR-WATER-04 | yes | yes | 2 | - |
 | FR-WATER-05 | yes | yes | 3 | - |
-| FR-CHART-01 | yes | yes | 2 | - |
-| FR-CHART-02 | yes | yes | 1 | - |
+| FR-CHART-01 | yes | yes | 3 | - |
+| FR-CHART-02 | yes | yes | 2 | - |
 | FR-CHART-03 | yes | yes | 4 | - |
 | FR-CHART-04 | yes | yes | 1 | - |
 | FR-SHELL-01 | yes | yes | 2 | - |
 | FR-SHELL-02 | yes | yes | 3 | - |
-| FR-SHELL-03 | yes | yes | 10 | - |
+| FR-SHELL-03 | yes | yes | 14 | - |
 | FR-DS-01 | yes | yes | 1 | - |
 | FR-DS-02 | yes | yes | 1 | - |
 | FR-DS-03 | yes | yes | 1 | - |
 | FR-DS-04 | yes | yes | 1 | - |
 | FR-DS-05 | yes | yes | 1 | - |
 | FR-DS-06 | yes | yes | 1 | - |
-| FR-REM-01 | yes | yes | 1 | - |
+| FR-REM-01 | yes | yes | 2 | - |
 | FR-REM-02 | yes | yes | 3 | - |
-| FR-REM-03 | yes | yes | 4 | - |
-| FR-REM-04 | yes | yes | 4 | - |
-| FR-REM-05 | yes | yes | 3 | - |
-| FR-REM-06 | yes | yes | 3 | - |
+| FR-REM-03 | yes | yes | 6 | - |
+| FR-REM-04 | yes | yes | 6 | - |
+| FR-REM-05 | yes | yes | 4 | - |
+| FR-REM-06 | yes | yes | 5 | - |
 | FR-REM-07 | yes | yes | 1 | - |
 
 ## Failures

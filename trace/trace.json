@@ -89,6 +89,8 @@
       "tests": [
         "lib/plants/actions.test.ts",
         "lib/plants/validation.test.ts",
+        "tests/e2e/plants.e2e.ts",
+        "tests/e2e/plants.e2e.ts",
         "tests/integration/plants-lifecycle.test.ts",
         "components/plants/PlantForm.test.tsx"
       ],
@@ -136,6 +138,7 @@
       ],
       "planned": true,
       "tests": [
+        "tests/e2e/plants.e2e.ts",
         "tests/integration/plants-lifecycle.test.ts"
       ],
       "recordings": []
@@ -148,6 +151,7 @@
       "planned": true,
       "tests": [
         "lib/plants/actions.test.ts",
+        "tests/e2e/plants.e2e.ts",
         "tests/integration/plants-lifecycle.test.ts"
       ],
       "recordings": []
@@ -162,6 +166,7 @@
       "planned": true,
       "tests": [
         "lib/plants/actions.test.ts",
+        "tests/e2e/plants.e2e.ts",
         "tests/integration/plants-lifecycle.test.ts",
         "components/plants/DeletePlantButton.test.tsx"
       ],
@@ -187,6 +192,8 @@
       "tests": [
         "lib/growth/actions.test.ts",
         "lib/growth/validation.test.ts",
+        "tests/e2e/tracking.e2e.ts",
+        "tests/e2e/tracking.e2e.ts",
         "tests/integration/growth-lifecycle.test.ts",
         "components/growth/MeasurementForm.test.tsx"
       ],
@@ -200,6 +207,7 @@
       ],
       "planned": true,
       "tests": [
+        "tests/e2e/tracking.e2e.ts",
         "tests/integration/growth-lifecycle.test.ts",
         "components/growth/MeasurementsSection.test.tsx",
         "evals/cases/growth.eval.ts"
@@ -256,6 +264,8 @@
       "tests": [
         "lib/watering/actions.test.ts",
         "lib/watering/validation.test.ts",
+        "tests/e2e/tracking.e2e.ts",
+        "tests/e2e/tracking.e2e.ts",
         "tests/integration/watering-lifecycle.test.ts",
         "components/watering/WateringForm.test.tsx"
       ],
@@ -283,6 +293,7 @@
       ],
       "planned": true,
       "tests": [
+        "tests/e2e/tracking.e2e.ts",
         "tests/integration/watering-lifecycle.test.ts",
         "components/watering/WateringsSection.test.tsx",
         "evals/cases/watering.eval.ts"
@@ -323,6 +334,7 @@
       "planned": true,
       "tests": [
         "lib/charts/series.test.ts",
+        "tests/e2e/tracking.e2e.ts",
         "evals/cases/charts.eval.ts"
       ],
       "recordings": []
@@ -334,7 +346,8 @@
       ],
       "planned": true,
       "tests": [
-        "lib/charts/series.test.ts"
+        "lib/charts/series.test.ts",
+        "tests/e2e/tracking.e2e.ts"
       ],
       "recordings": []
     },
@@ -403,6 +416,10 @@
         "lib/plants/actions.test.ts",
         "lib/plants/validation.test.ts",
         "lib/watering/actions.test.ts",
+        "tests/e2e/plants.e2e.ts",
+        "tests/e2e/plants.e2e.ts",
+        "tests/e2e/plants.e2e.ts",
+        "tests/e2e/plants.e2e.ts",
         "components/forms/FieldError.test.tsx",
         "components/growth/MeasurementForm.test.tsx",
         "components/plants/PlantForm.test.tsx",
@@ -485,7 +502,8 @@
       ],
       "planned": true,
       "tests": [
-        "lib/plants/validation.test.ts"
+        "lib/plants/validation.test.ts",
+        "tests/e2e/plants.e2e.ts"
       ],
       "recordings": []
     },
@@ -511,6 +529,8 @@
       "tests": [
         "lib/i18n/plural.test.ts",
         "lib/reminders/status.test.ts",
+        "tests/e2e/reminders.e2e.ts",
+        "tests/e2e/reminders.e2e.ts",
         "tests/integration/reminders.test.ts",
         "components/reminders/SummaryCard.test.tsx"
       ],
@@ -524,6 +544,8 @@
       "planned": true,
       "tests": [
         "lib/reminders/status.test.ts",
+        "tests/e2e/reminders.e2e.ts",
+        "tests/e2e/reminders.e2e.ts",
         "tests/integration/reminders.test.ts",
         "components/reminders/ReminderRow.test.tsx",
         "evals/cases/reminders.eval.ts"
@@ -539,6 +561,7 @@
       "tests": [
         "lib/reminders/actions.test.ts",
         "lib/reminders/status.test.ts",
+        "tests/e2e/reminders.e2e.ts",
         "components/reminders/ReminderRow.test.tsx"
       ],
       "recordings": []
@@ -550,6 +573,8 @@
       ],
       "planned": true,
       "tests": [
+        "tests/e2e/reminders.e2e.ts",
+        "tests/e2e/reminders.e2e.ts",
         "tests/integration/reminders.test.ts",
         "components/reminders/AllDoneState.test.tsx",
         "evals/cases/reminders.eval.ts"
