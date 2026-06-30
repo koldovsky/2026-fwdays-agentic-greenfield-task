@@ -13,6 +13,7 @@
 // @trace SC-6
 // @trace NFR-A11Y-04
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { WaterDropIcon } from "@/components/icons";
@@ -39,6 +40,7 @@ const DUE_LINE_CLASS: Record<ReminderRowProps["status"], string> = {
 };
 
 export function ReminderRow({ id, name, status, dueLabel, meta }: ReminderRowProps) {
+  const router = useRouter();
   const [done, setDone] = useState(false);
   // A failed water-now (e.g. the plant was deleted in another tab, or an
   // unexpected DB error) returns a friendly Ukrainian formError. Surface it
@@ -53,6 +55,11 @@ export function ReminderRow({ id, name, status, dueLabel, meta }: ReminderRowPro
       const result = await waterNowAction(id);
       if (result.ok) {
         setDone(true);
+        // waterNowAction has revalidatePath("/")'d the server cache, but an
+        // imperative action call does not push a re-render to the client. Refresh
+        // so the home SummaryCard due count and the other plants' status pills
+        // reconcile, mirroring the watering/measurement forms (FR-REM-05).
+        router.refresh();
       } else {
         setError(result.formError ?? uk.errors.generic);
       }

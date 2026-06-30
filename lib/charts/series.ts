@@ -71,15 +71,23 @@ export interface IndexedGrowthPoint extends GrowthPoint {
  * the numeric X value; `labelOf(index)` resolves that index back to its DD.MM.YYYY label
  * for the axis `tickFormatter` (SC-1). This guarantees N points -> N distinct X positions
  * even when two share a date. Pure, never throws.
+ *
+ * The numeric X `domain` is `[0, n-1]` for n>1 points. For a SINGLE point the raw
+ * `[0, 0]` domain is degenerate (zero-width) and Recharts cannot place the lone
+ * point, so we pad it to `[-0.5, 0.5]` to render it centered/visible (FR-CHART-02).
  */
 export function toGrowthXAxis(series: readonly GrowthPoint[]): {
   data: IndexedGrowthPoint[];
   labelOf: (index: number) => string;
+  domain: [number, number];
 } {
   const data = series.map((point, index) => ({ ...point, index }));
+  const domain: [number, number] =
+    data.length <= 1 ? [-0.5, 0.5] : [0, data.length - 1];
   return {
     data,
     labelOf: (index: number) => data[index]?.label ?? "",
+    domain,
   };
 }
 

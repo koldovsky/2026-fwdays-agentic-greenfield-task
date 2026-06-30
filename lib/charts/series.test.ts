@@ -176,6 +176,36 @@ describe("toGrowthXAxis(series) same-date X separation (FR-CHART-02, D3)", () =>
     expect(data.map((p) => p.heightCm)).toEqual([21, 22]);
   });
 
+  it("pads a SINGLE-point domain so the lone point renders centered/visible (not degenerate [0,0]) (FR-CHART-02)", () => {
+    // With one measurement the raw index domain is [0,0] — a zero-width axis that
+    // Recharts cannot place a point on. The seam pads it to a finite, centered
+    // window so the single point is visible.
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 12.5, measuredOn: "2026-06-15" }),
+    ]);
+    const { data, domain } = toGrowthXAxis(series);
+    expect(data.map((p) => p.index)).toEqual([0]);
+    expect(domain).toEqual([-0.5, 0.5]);
+    // The window is non-degenerate (its two ends differ).
+    expect(domain[0]).toBeLessThan(domain[1]);
+  });
+
+  it("gives an empty series a non-degenerate domain too (defensive; the chart renders its empty state)", () => {
+    const { data, domain } = toGrowthXAxis(toGrowthSeries([]));
+    expect(data).toEqual([]);
+    expect(domain[0]).toBeLessThan(domain[1]);
+  });
+
+  it("uses the full [0, n-1] index domain for a multi-point series", () => {
+    const series = toGrowthSeries([
+      measurement({ id: 1, heightCm: 10, measuredOn: "2026-06-01" }),
+      measurement({ id: 2, heightCm: 20, measuredOn: "2026-06-05" }),
+      measurement({ id: 3, heightCm: 30, measuredOn: "2026-06-09" }),
+    ]);
+    const { domain } = toGrowthXAxis(series);
+    expect(domain).toEqual([0, 2]);
+  });
+
   it("preserves height/label per point and resolves out-of-range index to empty", () => {
     const series = toGrowthSeries([
       measurement({ id: 1, heightCm: 10, measuredOn: "2026-06-01" }),

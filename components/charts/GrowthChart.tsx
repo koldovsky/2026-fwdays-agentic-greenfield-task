@@ -47,7 +47,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
   // Map onto a numeric X axis (one tick per measurement) so two same-date
   // measurements stay distinct, separable points (design D3). `toGrowthXAxis` is
   // the pure, unit-tested seam; the chart only wires its output to Recharts.
-  const { data, labelOf } = toGrowthXAxis(series);
+  const { data, labelOf, domain } = toGrowthXAxis(series);
 
   return (
     <figure aria-label={uk.charts.growthTitle} className="m-0 w-full">
@@ -64,7 +64,7 @@ export function GrowthChart({ series }: GrowthChartProps) {
             <XAxis
               type="number"
               dataKey="index"
-              domain={[0, data.length - 1]}
+              domain={domain}
               ticks={data.map((point) => point.index)}
               tickFormatter={(value) => labelOf(Number(value))}
               tick={{ fontSize: 12 }}

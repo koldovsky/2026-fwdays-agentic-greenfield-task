@@ -12,9 +12,11 @@ This spec is an already-implemented baseline of the adopted design tokens and pa
 ### Requirement: «Поливайко» design tokens as single theme source
 The system SHALL adopt the «Поливайко» design tokens defined in `docs/design.md` as its single theme source (FR-DS-01). The theme SHALL expose the color palette — greens forest `#2F6B3F`, pine `#213D2A`, sage `#7E9B6E`, moss `#A7BE92`, mist `#DDE7CF`; earth bark `#5A4232`, clay `#A9744E`, sand `#E6D7BE`; neutrals paper `#F4F1E8`, cloud `#FBFAF5`, ink `#1B1E18`, stone `#6E7268`, border `#E2DDCF`; and status colors (healthy dot `#2F6B3F` on chip `#DDE7CF`, soon dot `#A9744E` on chip `#F6E7D6`, overdue dot `#B5462E` on chip `#F3DAD0`, danger `#B5462E`). The theme SHALL declare the typography families Quicksand (display/headings), Mulish (body/inputs), and Spline Sans Mono (meta labels/numbers), and the radii tokens inputs/segments 13px, soft buttons 14px, cards 18–22px, pills/toggles 999px, plus the spacing scale per `docs/design.md`. These tokens SHALL be the source consumed by all components and screens; no component SHALL hard-code an alternate palette.
 
+**AA-contrast token overrides (NFR-A11Y-02).** A small number of tokens are intentionally darkened from `docs/design.md`'s nominal prototype hex so that, when used as TEXT, they clear the WCAG-AA 4.5:1 contrast ratio against their light surfaces. The as-built theme values are: clay text `#94623C` (nominal `#A9744E`), stone text `#62655C` (nominal `#6E7268`), and the idle-segment / placeholder text `#6D6B54` (nominal `#9A9588`). These are deliberate accessibility overrides — the as-built values, not the nominal prototype hex, are authoritative for text tokens; the original «Поливайко» hex is retained for non-text decorative uses (e.g. the soon status dot, which need not meet text contrast and keeps `#A9744E`).
+
 #### Scenario: Palette tokens present in the theme
 - **WHEN** the application theme source is inspected
-- **THEN** it defines the named color tokens forest `#2F6B3F`, pine `#213D2A`, sage `#7E9B6E`, moss `#A7BE92`, mist `#DDE7CF`, bark `#5A4232`, clay `#A9744E`, sand `#E6D7BE`, paper `#F4F1E8`, cloud `#FBFAF5`, ink `#1B1E18`, stone `#6E7268`, and border `#E2DDCF` with exactly those hex values (FR-DS-01)
+- **THEN** it defines the named color tokens forest `#2F6B3F`, pine `#213D2A`, sage `#7E9B6E`, moss `#A7BE92`, mist `#DDE7CF`, bark `#5A4232`, clay `#94623C` (AA-darkened from the nominal `#A9744E`, NFR-A11Y-02), sand `#E6D7BE`, paper `#F4F1E8`, cloud `#FBFAF5`, ink `#1B1E18`, stone `#62655C` (AA-darkened from the nominal `#6E7268`, NFR-A11Y-02), and border `#E2DDCF` (FR-DS-01)
 
 #### Scenario: Status colors present in the theme
 - **WHEN** the application theme source is inspected
@@ -53,7 +55,7 @@ The system SHALL restyle the shared interactive components the app actually uses
 
 #### Scenario: Segmented control selected vs idle segments
 - **WHEN** a segmented control is rendered with one segment selected
-- **THEN** the selected segment shows forest bg with paper text and the idle segments show muted `#9A9588` text on the track (FR-DS-02)
+- **THEN** the selected segment shows forest bg with paper text and the idle segments show muted `#6D6B54` text on the track (AA-darkened from the nominal `#9A9588`, NFR-A11Y-02) (FR-DS-02)
 
 #### Scenario: Switch on and off states
 - **WHEN** the switch is rendered on and again off

@@ -33,6 +33,13 @@ vi.mock("@/lib/reminders/actions", () => ({
   waterNowAction: (plantId: number) => waterNowAction(plantId),
 }));
 
+// The row must refresh the server-revalidated home so the SummaryCard due count
+// and the other plants' status pills reconcile after water-now (FR-REM-05).
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh }),
+}));
+
 import { ReminderRow } from "@/components/reminders/ReminderRow";
 
 afterEach(() => {
@@ -84,6 +91,10 @@ describe("<ReminderRow> — water-now action + done swap (FR-REM-05, SC-6, NFR-A
 
     // The control swaps to the done/confirmation state ("Полито щойно ✓").
     expect(await screen.findByText(uk.reminders.doneLabel)).toBeInTheDocument();
+
+    // The server revalidated the home; the row refreshes the route so the
+    // SummaryCard due count and other plants' status pills reconcile (FR-REM-05).
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("surfaces the returned error inline and does NOT swap to done when the action fails (FR-REM-05, FR-SHELL-03)", async () => {
@@ -106,6 +117,10 @@ describe("<ReminderRow> — water-now action + done swap (FR-REM-05, SC-6, NFR-A
     expect(
       screen.getByRole("button", { name: uk.reminders.waterNow }),
     ).toBeInTheDocument();
+
+    // A failed water-now changed nothing server-side, so the route is NOT
+    // refreshed (no spurious reconciliation on failure).
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("is operable by keyboard (Enter activates the water-now control)", async () => {

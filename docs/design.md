@@ -42,6 +42,8 @@ Neutrals & status
 - Status — healthy: dot **#2F6B3F** on chip **#DDE7CF** (text #213D2A); soon: dot **#A9744E** on chip **#F6E7D6** (text #5A4232); overdue/needs-water: dot **#B5462E** on chip **#F3DAD0** (text #7A2E1C); danger button **#B5462E** (hover **#9D3B25**).
 - Selection highlight: bg **#C7D9B0**, text **#1B1E18**.
 
+> **AA-contrast token overrides (NFR-A11Y-02).** When used as text on light surfaces, three tokens were intentionally darkened from the nominal hex above to clear the WCAG-AA 4.5:1 ratio. The as-built (authoritative) text values are: `clay` text **#94623C** (nominal #A9744E), `stone` text **#62655C** (nominal #6E7268), and idle-segment / placeholder text **#6D6B54** (nominal #9A9588). The original hex is kept for non-text decorative uses (e.g. the soon status dot stays #A9744E).
+
 Striped photo placeholders use `repeating-linear-gradient(45deg, <tintA>, <tintA> 12px, <tintB> 12px, <tintB> 24px)` — green tints (#DDE7CF / #D2DEC0) or sand tints (#E6D7BE / #DCCBAF).
 
 ### Typography

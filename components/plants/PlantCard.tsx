@@ -5,9 +5,16 @@
 // (droplet + text), and a full-width action Button. The whole card links to
 // `/plants/[id]`, preserving the list→detail navigation.
 //
-// The `status` drives the pill colors + action variant. It ships as a STATIC
-// PLACEHOLDER (default "healthy") here — the real derived status is slice 7
-// (FR-REM-*), which only has to supply the value.
+// The `status` drives the pill colors + action variant. Slice 7 (FR-REM-*) wires
+// the REAL derived status: the home (`app/page.tsx`) passes `status={row.status}`
+// from `getHomeReminders`, so the pill matches the summary due count and reminder
+// list (FR-REM-07). The "healthy" default remains only for callers that have no
+// reminder data (e.g. an empty placeholder); production always supplies the value.
+//
+// The decorative filename chip is a STABLE, meaningful mono caption derived from
+// the plant's species (a slugged species filename) on a higher-contrast translucent
+// cloud backing per design (radius-7 chip). It carries no timestamp/slug leak and
+// is purely ornamental (aria-hidden), faithful to design.md's filename-chip intent.
 //
 // @trace FR-DS-03
 
@@ -25,7 +32,10 @@ export interface PlantCardProps {
   species: string;
   /** Optional acquired-date meta line shown under the species. */
   meta?: string;
-  /** Placeholder watering status (default healthy; real wiring is slice 7). */
+  /**
+   * Derived watering status (FR-REM-07). The home supplies the real value from
+   * `getHomeReminders`; defaults to "healthy" only when no reminder data is given.
+   */
   status?: PlantCardStatus;
 }
 
@@ -72,7 +82,10 @@ export function PlantCard({
   meta,
   status = "healthy",
 }: PlantCardProps) {
-  const filename = `${name.trim().toLowerCase().replace(/\s+/g, "-") || "plant"}.jpg`;
+  // Decorative mono filename chip: a stable slug of the SPECIES (not a timestamp),
+  // so the caption is meaningful and never leaks a slugified time. Falls back to a
+  // fixed label when no species is given.
+  const filename = `${species.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "plant"}.jpg`;
 
   return (
     <Link
@@ -87,7 +100,10 @@ export function PlantCard({
             "repeating-linear-gradient(45deg, var(--color-stripe-green-a), var(--color-stripe-green-a) 12px, var(--color-stripe-green-b) 12px, var(--color-stripe-green-b) 24px)",
         }}
       >
-        <span className="absolute bottom-2 left-2 rounded-[7px] bg-cloud/80 px-2 py-1 font-mono text-[11px] text-stone">
+        <span
+          aria-hidden="true"
+          className="absolute bottom-2 left-2 rounded-[7px] bg-cloud/90 px-2 py-1 font-mono text-[11px] text-bark"
+        >
           {filename}
         </span>
         <span

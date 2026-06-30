@@ -6,15 +6,19 @@ The charts capability renders the visual history of a single plant on its detail
 ## Requirements
 
 ### Requirement: Watering chart
-The system SHALL display a watering chart on the plant detail view that plots that plant's watering events over time, each event as an individual point on a daily timeline with no bucketing (FR-CHART-01).
+The system SHALL display a watering chart on the plant detail view that plots that plant's watering events over time as a count-per-day line on a daily timeline ordered by date ascending, with no weekly/monthly bucketing (FR-CHART-01, FR-CHART-05 bucketing is Future). Because a watering event has no numeric value, the plotted y-value is the number of watering events on each calendar day; multiple events on the same day collapse to a single point whose count equals the number of that day's events — the exact per-event rows remain readable in the waterings list (NFR-A11Y-03). This count-per-day representation is the deliberate «Поливайко» design decision (docs/design.md "count-per-day watering line"; slice-5 design D2), chosen because a value-less watering event is most meaningfully shown as daily watering frequency; it was vision-verified. Date labels are displayed `DD.MM.YYYY` (SC-1).
 
-#### Scenario: Plant has watering events
-- **WHEN** the Owner opens the detail view of a plant that has one or more watering events
-- **THEN** the watering chart renders one point per watering event positioned on a daily timeline ordered by date, with no aggregation/bucketing of events
+#### Scenario: Plant has watering events on distinct days
+- **WHEN** the Owner opens the detail view of a plant that has watering events on two or more distinct calendar days
+- **THEN** the watering chart plots one count-per-day point for each day, ordered by date ascending (oldest to newest, left to right), with dates labelled `DD.MM.YYYY` (FR-CHART-01, SC-1)
+
+#### Scenario: Multiple events on the same day collapse to one count point
+- **WHEN** a plant has two or more watering events sharing the same calendar date
+- **THEN** the watering chart shows a single point for that day with a count equal to the number of that day's events (not stacked individual markers), and the individual events remain readable in the waterings list (FR-CHART-01, NFR-A11Y-03)
 
 #### Scenario: Single watering event renders
 - **WHEN** the plant has exactly one watering event
-- **THEN** the watering chart renders that single point on the timeline without error and without an empty state
+- **THEN** the watering chart renders that single count-per-day point (count 1) on the timeline without error and without an empty state (FR-CHART-01)
 
 #### Scenario: Chart render failure is contained
 - **WHEN** the watering chart throws while rendering (a chart-island render error)
