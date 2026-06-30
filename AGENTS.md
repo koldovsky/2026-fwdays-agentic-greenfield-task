@@ -37,7 +37,8 @@ The matt-pocock skills are the **thinking and triage front-end** that OpenSpec d
 | Find refactor opportunities in existing code | **improve-codebase-architecture** (ends by grilling the one you pick) | → a new `opsx` change |
 | Pre-commit code review (maker ≠ reviewer) | **review** (adds the *coding-standards* axis `opsx:verify` doesn't — does the diff follow [backend-conventions](#code-conventions)?) | **mandatory**, post-`opsx:apply`, run as a **separate subagent** before commit |
 
-Loop: **grill-with-docs → `opsx:propose → apply → verify` → review → commit → `opsx:archive`**, with
+Loop: **grill-with-docs → `opsx:propose → apply → verify` → improve-codebase-architecture (refactor
+scan of the diff) → review → commit → `opsx:archive`**, with
 `triage` / `improve-codebase-architecture` as alternate entry points.
 
 The loop is sliced into a dependency-ordered backlog of OpenSpec changes

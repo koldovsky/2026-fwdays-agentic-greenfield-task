@@ -21,9 +21,10 @@ The gate sequence (from AGENTS.md + `config.yaml`) per change:
 
 ```
 opsx:explore (optional) → opsx:propose → openspec validate <id> --strict → opsx:apply → opsx:verify
-  → review (SEPARATE reviewer subagent: Standards + Spec) → npm test
-  → fallow + lint + format:check + typecheck → evals (capability suites, see ADR-0013) → sync docs
-  → commit → opsx:archive
+  → improve-codebase-architecture (refactor scan, scoped to the diff; small wins applied inline,
+    larger ones filed as new changes) → review (SEPARATE reviewer subagent: Standards + Spec)
+  → npm test → fallow + lint + format:check + typecheck → evals (capability suites, see ADR-0013)
+  → sync docs → commit → opsx:archive
 ```
 
 `openspec validate --strict` is a **structural** gate (artifacts well-formed per schema), distinct

@@ -50,7 +50,7 @@ planned-but-absent command.
 4. **Plan gate (autonomous).** Log a one-paragraph proposal/specs/design summary and **proceed** —
    do **not** wait for human sign-off. The loop is gate-driven, not approval-driven: validation
    (step 3) is the structural gate; coherence (`opsx:verify`, step 6) and the reviewer subagent
-   (step 7) catch a bad plan downstream. **Escalate to the human only on a *critical fork*** — an
+   (step 8) catch a bad plan downstream. **Escalate to the human only on a *critical fork*** — an
    ambiguity or irreversible/architectural decision the gates can't resolve (use `AskUserQuestion`,
    then continue). Otherwise pick the sensible default and keep moving.
    *Done when:* the plan summary is logged and no critical fork is open.
@@ -61,39 +61,46 @@ planned-but-absent command.
 6. **Verify.** Run `opsx:verify` (plan ⇄ implementation coherence).
    *Done when:* verify reports coherent.
 
-7. **Review (checker — maker ≠ checker).** Spawn a **fresh, separate** subagent running the `review`
+7. **Improve architecture (refactor scan).** Run the `improve-codebase-architecture` skill scoped to
+   the files this change touched. Apply small, in-scope wins it surfaces (extract types/interfaces,
+   dedupe, deepen a module, kill a leaky abstraction) right here — they re-enter the gates below.
+   File anything larger as a **new backlog change** rather than expanding this one's scope. This runs
+   before review so the reviewer sees the cleaned-up diff.
+   *Done when:* the scan is done and its in-scope picks are applied (or logged as follow-up changes).
+
+8. **Review (checker — maker ≠ checker).** Spawn a **fresh, separate** subagent running the `review`
    skill (Standards + Spec axes). The apply agent may **not** review its own work. Resolve every
    finding (maker fixes, checker re-reviews) — findings are not retried blindly and not waved past.
    *Done when:* the reviewer returns clean.
 
-8. **Test + static gates.** Run `npm test`, then `npm run lint`, `npm run format:check`,
+9. **Test + static gates.** Run `npm test`, then `npm run lint`, `npm run format:check`,
    `npm run typecheck`, and fallow (when wired). All green.
    *Done when:* every wired gate exits 0 (skip-with-note any not yet wired).
 
-9. **Evals.** For the capabilities this change touches, run the suites per ADR-0013
-   (`npm run evals` to refresh `evals/results/`, then `npm run check:evals` ratchet). Skip if the
-   change touches no capability suite, or the eval scripts are not wired yet.
-   *Done when:* the ratchet passes, or the gate is justifiably skipped (logged).
+10. **Evals.** For the capabilities this change touches, run the suites per ADR-0013
+    (`npm run evals` to refresh `evals/results/`, then `npm run check:evals` ratchet). Skip if the
+    change touches no capability suite, or the eval scripts are not wired yet.
+    *Done when:* the ratchet passes, or the gate is justifiably skipped (logged).
 
-10. **Sync docs.** Update `docs/current-state.md` (milestone/feature/decision lines + date), flip any
+11. **Sync docs.** Update `docs/current-state.md` (milestone/feature/decision lines + date), flip any
     AGENTS.md *planned → live* commands this change made real, then run `npm run docs:check`.
     *Done when:* `docs:check` exits 0.
 
-11. **Commit (local).** One Conventional Commit for the change, ending with the
+12. **Commit (local).** One Conventional Commit for the change, ending with the
     `Co-Authored-By: Claude …` trailer. Local only — no push per change (push per wave/milestone; one
     PR at the end, per ADR-0012).
     *Done when:* the commit lands on the work branch.
 
-12. **Pre-archive gate (autonomous).** Log the review outcome + diff summary and **proceed** to
-    archive — do **not** wait for human sign-off. All gates (verify, reviewer subagent, tests,
-    static, evals, docs) have already passed by here; archive's spec-sync is the recorded
+13. **Pre-archive gate (autonomous).** Log the review outcome + diff summary and **proceed** to
+    archive — do **not** wait for human sign-off. All gates (verify, refactor scan, reviewer subagent,
+    tests, static, evals, docs) have already passed by here; archive's spec-sync is the recorded
     consequence of that green state. **Escalate only on a critical concern** the gates didn't cover.
     *Done when:* the review outcome is logged and no critical concern is open.
 
-13. **Archive.** Run `opsx:archive`, then set the change's `status: done` in the backlog.
+14. **Archive.** Run `opsx:archive`, then set the change's `status: done` in the backlog.
     *Done when:* the change is archived and the backlog reflects `done`.
 
-14. **Next.** Return to step 2. A change that just reached `done` may now make dependents **ready**.
+15. **Next.** Return to step 2. A change that just reached `done` may now make dependents **ready**.
 
 ## On failure
 
