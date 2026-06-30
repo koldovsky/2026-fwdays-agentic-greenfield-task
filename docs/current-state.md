@@ -6,18 +6,38 @@
 
 ## Last updated
 
-`2026-06-30T23:15:00+03:00` (Europe/Kyiv)
+`2026-07-01T00:05:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 8 — Cross-cutting hardening: COMPLETE (CHECKLIST G5).** Stage 5 (all
-8 capability slices) finished previously. Next: Stage 9 (maker self-review
-note), Stage 10 (global two-checker review), Stage 11 (QA proof pack),
-Stage 12 (PR), Stage 13 (recorded demo).
+**Stage 9 — Maker self-review: COMPLETE.** Stage 8 (cross-cutting hardening,
+CHECKLIST G5) committed as `2a35934`. Next: Stage 10 (global two-checker
+review), Stage 11 (QA proof pack), Stage 12 (PR), Stage 13 (recorded demo).
 
 ## Last action
 
-**Stage 8 — cross-cutting hardening (G5), not yet committed:**
+**Stage 9 — global maker self-review, not yet committed:**
+
+Wrote `docs/qa/global-review.md` — a maker self-audit of the whole app (all
+8 slices + Stage 8 hardening) before handing off to Stage 10's independent
+two-checker review. Re-checked all eight per-slice `review-findings.md`
+"Suggestions (non-blocking)" sections against the current code (not just
+copied) and sorted them: already-resolved, accepted trade-off, or still
+genuinely open. Found two were stale (already fixed by earlier commits) and
+**fixed one more live**: the search `Input` in `RatesView.tsx` had no
+`aria-label` (placeholder-only accessible name) — same defect class Stage 8
+fixed for the converter's amount field. Added
+`aria-label={uk.picker.placeholder}`; re-ran the full suite after the change
+(117/117 unit, 14/14 e2e, lint clean, `npm run verify` green) — not assumed
+safe just because the change looked small. CHECKLIST G4's per-slice items
+(previously template-unticked even though satisfied 8 times over) and G1/G3's
+human checkpoints (ticked by the user directly) are now reflected as done.
+
+### Prior
+
+## Last action
+
+**Stage 8 — cross-cutting hardening (G5), now committed as `2a35934`:**
 
 1. **Integration test:** `lib/currency/convertFlow.integration.test.ts` — composes
    `mapNbuRates` + `parseAmount`/`convert`/`formatAmount` end-to-end without
@@ -270,21 +290,20 @@ OpenSpec change, folded into this slice's commit):**
 - **Done (slices):** all 8 — `app-shell`, `i18n`, `currency-list`, `converter`,
   `currency-picker`, `rate-history`, `trend-hint`, `footer-sayings` — all archived
   **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`,
-  bugfix `8b63d1f`, `395e992`, `1981e1e`).
-- **In progress:** Stage 8 work (integration test, e2e, axe fixes, CI wiring) is
-  complete and verified but **not yet committed**.
+  bugfix `8b63d1f`, `395e992`, `1981e1e`). Stage 8 hardening committed as `2a35934`.
+- **In progress:** Stage 9 (`docs/qa/global-review.md` + the search-input a11y fix)
+  is complete and verified but **not yet committed**.
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** the Stage 8 cross-cutting hardening work (integration test, e2e suite,
-   the three real a11y/contrast fixes, CI wiring, `docs/qa/automated-verification-latest.md`).
+1. **Commit** Stage 9 (the global self-review note + the search-input `aria-label` fix).
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
    real isolated Task-tool subagents (still pending across all work this session).
-3. **Stage 8 is complete. Move to Stage 9+:**
-   - Stage 9 — maker self-review note (`docs/qa/global-review.md`).
+3. **Stage 9 is complete. Move to Stage 10+:**
    - Stage 10 — global two-checker review (re-run `kurs-reviewer`/`kurs-eval-judge`
-     over the whole app, not just the last slice).
+     **independently** over the whole app — not by reading `global-review.md` and
+     rubber-stamping it; that note is the maker's self-audit, not a substitute review).
    - Stage 11 — QA proof pack: traceability matrix, manual test plan, demo script, risk
      register, acceptance report; `docs/technical/*`.
    - Stage 12 — PR preparation.

@@ -25,7 +25,7 @@ git config core.hooksPath          # prints .githooks
 
 ## G1 — Product framing
 - [x] `docs/product-brief.md` + `docs/requirements.md`; every requirement numbered + phase-tagged.
-- [ ] Scope signed off (Checkpoint 1).
+- [x] Scope signed off (Checkpoint 1).
 
 ## G2 — Baseline specs
 ```
@@ -37,22 +37,28 @@ npm run check:trace
 
 ## G3 — Capability plan
 - [x] `docs/mvp-capability-plan.md`: slice table, acyclic graph, per-slice DoD, FR-coverage (25/25).
-- [ ] Plan approved (Checkpoint 2).
+- [x] Plan approved (Checkpoint 2).
 
 ## G4 — Per slice (repeat for every slice)
 ```
 npm run verify                     # lint + check:trace + spec:validate + build
 npm run test:run                   # once tests exist
 ```
-- [ ] OpenSpec change folder created and validated `--strict` before coding.
-- [ ] Unit tests written **first** from the spec (`@trace FR-x`), observed **red**, then green; none weakened.
-- [ ] Pure `lib/` logic is **total** (never throws), framework-free, fully unit-tested.
-- [ ] No user input or NBU failure yields a 500 / blank / silent failure (`NFR-OBS-01`).
-- [ ] Locale parsing correct (comma decimals, trailing zeros); numbers mono tabular; stale-day labelled honestly.
-- [ ] Empty / loading / error states present and honest; inline, no toast.
-- [ ] Eval case authored for the slice's qualitative surface.
-- [ ] **Two-checker review** (`/review-slice`: `kurs-reviewer` + `kurs-eval-judge`, both ≠ maker) clean; findings fixed.
-- [ ] Change archived; `docs/current-state.md` updated; commit carries `Slice:` / `Refs:` trailers.
+- [x] OpenSpec change folder created and validated `--strict` before coding.
+- [x] Unit tests written **first** from the spec (`@trace FR-x`), observed **red**, then green; none weakened.
+- [x] Pure `lib/` logic is **total** (never throws), framework-free, fully unit-tested.
+- [x] No user input or NBU failure yields a 500 / blank / silent failure (`NFR-OBS-01`).
+- [x] Locale parsing correct (comma decimals, trailing zeros); numbers mono tabular; stale-day labelled honestly.
+- [x] Empty / loading / error states present and honest; inline, no toast.
+- [x] Eval case authored for the slice's qualitative surface.
+- [x] **Two-checker review** (`/review-slice`: `kurs-reviewer` + `kurs-eval-judge`, both ≠ maker) clean; findings fixed.
+- [x] Change archived; `docs/current-state.md` updated; commit carries `Slice:` / `Refs:` trailers.
+
+  Satisfied for all 8 slices: `app-shell`, `i18n`, `currency-list`, `converter`,
+  `currency-picker`, `rate-history`, `trend-hint`, `footer-sayings`. Evidence:
+  `docs/qa/review-findings.md` + `docs/qa/eval-report.md` (one section per slice),
+  `evals/cases/*.eval.ts`, archived changes under `openspec/changes/archive/`, and
+  the per-slice commits listed in `docs/current-state.md`.
 
 ## G5 — Cross-cutting hardening
 - [x] Integration test for the convert → display flow.

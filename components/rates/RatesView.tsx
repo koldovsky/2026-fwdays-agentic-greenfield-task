@@ -86,6 +86,7 @@ export function RatesView({
           <Input
             icon="search"
             placeholder={uk.picker.placeholder}
+            aria-label={uk.picker.placeholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{ marginBottom: "var(--space-3)" }}
