@@ -1,0 +1,11 @@
+#!/bin/sh
+# Wrapper around /usr/bin/codesign that strips extended attributes (FinderInfo,
+# fileprovider metadata, etc.) from targets before signing. Without this, codesign
+# fails with "resource fork, Finder information, or similar detritus not allowed"
+# when building in iCloud-backed directories.
+for arg in "$@"; do
+  if [ -e "$arg" ]; then
+    xattr -cr "$arg" 2>/dev/null || true
+  fi
+done
+exec /usr/bin/codesign "$@"

@@ -1,27 +1,63 @@
-# Стек у цьому завданні — будь-який. Додавай сюди ігнори свого стеку за потреби.
-
-# OS / редактори
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+# Miscellaneous
+*.class
 *.log
-
-# Секрети / змінні середовища
-.env
-.env.*
-!.env.example
-
-# Залежності та артефакти збірки (типові для різних стеків)
-node_modules/
-dist/
-build/
-out/
-.next/
-__pycache__/
 *.pyc
-.venv/
-venv/
-target/
-bin/
-obj/
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Claude Code per-session state (used by .claude/hooks/*.sh)
+.claude/.session/
+
+# Superpowers brainstorm sessions (local visual-companion artifacts)
+.superpowers/
+
+# Superpowers git worktrees (isolated implementation workspaces)
+.worktrees/
+
+# Serena MCP (per-developer local tooling — project config, cache, memories)
+.serena/
+
+# /interview → /deep-plan → /implement → /final-check → /archive workflow artifacts
+.flow-spec/
