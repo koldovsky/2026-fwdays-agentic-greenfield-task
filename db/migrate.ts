@@ -4,7 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-const raw = process.env.DATABASE_URL ?? "file:./data/app.db";
+const raw = process.env.DATABASE_URL || "file:./data/app.db";
 const path = raw.replace(/^file:/, "");
 const folder = "db/migrations";
 

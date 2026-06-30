@@ -9,7 +9,7 @@ import * as schema from "./schema";
 // bare path; ":memory:" is honored for tests. A dev singleton avoids opening a
 // new handle on every HMR reload.
 function resolveDbPath(): string {
-  const raw = process.env.DATABASE_URL ?? "file:./data/app.db";
+  const raw = process.env.DATABASE_URL || "file:./data/app.db";
   const path = raw.replace(/^file:/, "");
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   return path;
