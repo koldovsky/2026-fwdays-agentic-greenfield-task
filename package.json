@@ -11,10 +11,18 @@
   },
   "scripts": {
     "mobile": "npm run start -w @honeydo/mobile",
-    "api": "npm run start -w @honeydo/api", 
+    "api": "npm run start -w @honeydo/api",
     "migrate": "npm run prisma:migrate -w @honeydo/api",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
-    "db:reset": "docker compose down -v"
+    "db:reset": "docker compose down -v",
+    "build:shared": "npm run build -w @honeydo/shared",
+    "build:api": "npm run build -w @honeydo/api",
+    "build": "npm run build:shared && npm run build:api",
+    "lint": "npm run lint -w @honeydo/api",
+    "typecheck": "npm run typecheck -w @honeydo/shared && npm run typecheck -w @honeydo/api",
+    "test": "npm run test -w @honeydo/shared && npm run test -w @honeydo/api",
+    "lint:mobile": "npm run lint -w @honeydo/mobile",
+    "gate": "npm run build:shared && npm run lint && npm run typecheck && npm run test && npm run build:api"
   }
 }

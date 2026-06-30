@@ -33,3 +33,6 @@ obj/
 *.tsbuildinfo
 .expo/
 .metro-health-check*
+
+# Test coverage
+coverage/

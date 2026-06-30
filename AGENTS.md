@@ -34,7 +34,7 @@ Newest entry first. Keep it concise; it is a hand-off note, not a changelog of e
     @honeydo/shared`) since consumers resolve its types from `dist/`.
   - `@honeydo/api` (`apps/api`) — NestJS + Prisma. Local run: `npm run db:up`
     (Postgres via `docker-compose.yml`, host port **5434**) → `npm run migrate` →
-    `npm run api`. Server listens on `:3000` (`GET /health`). Needs `apps/api/.env`
+    `npm run api`. Server listens on `:3333` (`GET /health`). Needs `apps/api/.env`
     with `DATABASE_URL` (copy `.env.example`); `prisma generate` runs on install via
     `postinstall`. Note: `PrismaService` connects on boot, so the DB must be up.
   - `@honeydo/mobile` (`apps/mobile`) — Expo SDK 57 + TypeScript. Run with
