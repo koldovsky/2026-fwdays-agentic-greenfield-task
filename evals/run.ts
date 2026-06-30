@@ -4,9 +4,9 @@ import { createAnthropicClient } from '../src/llm/client.js';
 import { classifyMessage } from '../src/router/router.js';
 import { accuracy, gradeExact } from './grade.js';
 
-// Local-only eval runner (ADR-0013): issues the REAL classify at temperature 0 over each labeled
-// dataset and writes evals/results/latest.json (gitignored). Needs ANTHROPIC_API_KEY — it is never
-// run in CI (CI only ratchets the committed scores via check:evals).
+// Local-only eval runner (ADR-0013): issues the REAL classify (no temperature override — ADR-0017)
+// over each labeled dataset and writes evals/results/latest.json (gitignored). Needs
+// ANTHROPIC_API_KEY — it is never run in CI (CI only ratchets the committed scores via check:evals).
 
 interface IntentCase {
   input: string;

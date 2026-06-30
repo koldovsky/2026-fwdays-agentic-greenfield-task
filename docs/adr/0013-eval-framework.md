@@ -2,6 +2,12 @@
 
 *Status: Accepted (decision + design; suites built per-capability as changes land) · Date: 2026-06-29 · Source: PRD §4 (M2 macro accuracy) + §6 acceptance criteria, AGENTS.md non-negotiable rules, [ADR-0012](./0012-implementation-loop-runner.md) eval gate. Reference studied (not reused): `project-factory/.claude/workflows/{eval-suite,trajectory-eval}.js`.*
 
+> **Amended by [ADR-0017](./0017-drop-temperature-from-llm-seam.md) (2026-06-30):** the LLM seam no
+> longer sets `temperature: 0` (deprecated / 400 on Opus 4.7+/Fable). Wherever this ADR says dataset
+> evals run "at temperature 0," read "with the default sampler." Reproducibility for the
+> deterministic-grader kind rests on the constrained `json_schema` output + small enum schema and on
+> accuracy-over-a-labeled-set grading — unchanged by the removal.
+
 ## Context
 [ADR-0012](./0012-implementation-loop-runner.md)'s loop has an **evals** gate, but no framework
 behind it. The PRD's acceptance criteria (§6) and the non-negotiable rules (AGENTS.md) double as the
