@@ -23,5 +23,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0013](./0013-eval-framework.md) | Eval framework (deterministic-first, local-run + CI ratchet) | Accepted (suites built per-capability) |
 | [0014](./0014-long-polling-over-webhook.md) | Long-polling instead of Telegram webhook | Accepted (supersedes ADR-0002 delivery) |
 | [0015](./0015-coach-persona-precision-first-clarification.md) | Coach persona & precision-first clarification policy | Accepted (refines requirements §8.7) |
+| [0016](./0016-db-backed-onboarding-state-machine.md) | DB-backed onboarding state machine (no conversation plugin) | Accepted |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.

@@ -8,20 +8,23 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` + M1 `data` + M3 `router` (FR-1) code-complete locally.** `pipe`: grammY long-poll
-skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core tables),
-migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
+**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) code-complete locally.** `pipe`:
+grammY long-poll skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core
+tables), migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
 `router`: Anthropic client seam (Sonnet 4.6, single call, temp 0, cached prefix, **no agent loop**),
 6-intent classifier, date-resolved-in-code (TZ back-dating), eval framework (runner + key-less
-ratchet + 18-case dataset). 37 tests green; all gates + maker≠checker review passed. Remaining: the
-**human deploy** + the live LLM/eval run (need `ANTHROPIC_API_KEY` + egress).
+ratchet + 18-case dataset). `onboarding`: `/start` Q&A → DB-backed state machine (ADR-0016, the DB
+*is* the state — resumes after restart) → Mifflin–St Jeor targets in code (no LLM, no-extreme-deficit
+floor), inline-keyboard choices + validated numeric free text, weight → `body_metrics`. 54 tests green;
+all gates + maker≠checker review passed. Remaining: the **human deploy** + the live LLM/eval run (need
+`ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
 |---|---|
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
-| M2 — Onboarding (`/start` + targets) | ⬜ not started |
+| M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
 | M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework landed; food-text/query/correction/clarify/coach-persona next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | ⬜ not started |
@@ -33,8 +36,9 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 
 ## Done
 - Product/architecture docs: `docs/prd.md`, `docs/requirements.md`, `docs/review-templates.md`.
-- Decision records: `docs/adr/` (0001–0015). Latest: **ADR-0015** coach persona (honest voice) +
-  precision-first clarification policy (grilled 2026-06-30).
+- Decision records: `docs/adr/` (0001–0016). Latest: **ADR-0016** DB-backed onboarding state machine
+  (the DB is the source of progress — resume-after-restart, no chat state). **ADR-0015** coach persona
+  (honest voice) + precision-first clarification policy (grilled 2026-06-30).
 - Agent docs: `AGENTS.md` (canonical) + `CLAUDE.md` (pointer).
 - CodeRabbit config + PR template (from homework starter).
 - OpenSpec config: `openspec/config.yaml` context + per-artifact rules (incl. maker≠reviewer task).
@@ -50,6 +54,12 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   reviews; Int kcal, Decimal grams/cm, `@db.Date`, English enums), `prisma/migrations/*_init`,
   `src/db/client.ts` (pooled singleton, `connection_limit=5`), `src/db/tenancy.ts` (`user_id`
   choke-point), startup `migrate deploy` + `$connect`. `db:generate/migrate/deploy` scripts live.
+- **M2 `onboarding`** — `src/onboarding/{calculator,flow,questions,types}.ts` + `src/bot` wiring.
+  Pure Mifflin–St Jeor target calc (no LLM; protein 2 g/kg, fat ≥0.8 g/kg, no-extreme-deficit floor
+  `max(BMR,1200)`). DB-backed flow (ADR-0016): `nextQuestion` = first still-null field via one
+  `users` fetch + `body_metrics` existence check (no N+1); answers persist on arrival (`upsert`
+  find-or-create, weight → `body_metrics`); resumes after restart. `/start`, `callback_query`, and
+  onboarding-gated `message:text` handlers. 14 tests (calculator/flow/bot). Reviewer-resolved.
 - Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
@@ -76,9 +86,11 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
 4. ✅ **`router` (M3, FR-1): code-complete + archived** — LLM-client seam (Sonnet 4.6, single call,
    cached prefix), 6-intent classifier, date-in-code, eval framework bootstrap. Live LLM/eval run is
    deploy-time (needs key).
-5. **`coach-persona` (M3, wave 3) / `onboarding` (M2) / `food-text` (M3): NEXT** — `coach-persona`
-   (honest voice into the cached prefix + precision-first policy) and `food-text` are unblocked by
-   `router`; `onboarding` was unblocked by `data`.
+5. ✅ **`onboarding` (M2): code-complete + archived** — DB-backed `/start` Q&A → Mifflin targets
+   (ADR-0016). On-box verify is deploy-time (human).
+6. **`coach-persona` (M3, wave 3) / `food-text` (M3): NEXT** — both unblocked by `router`:
+   `coach-persona` lands the honest voice into the cached prefix + precision-first policy; `food-text`
+   is the first food-track slice.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
