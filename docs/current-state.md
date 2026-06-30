@@ -3,8 +3,42 @@
 > Persistent handoff aid (not the source of truth — if it conflicts with
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
-- **Last updated:** 2026-06-29, Europe/Kiev.
-- **Phase:** **Phase 4 COMPLETE + «Поливайко» design/reminders scope change COMPLETE.** All 7 changes archived: 5 MVP (app-shell, plants, growth, watering, charts) + slice 6 `add-design-system` (design tokens, fonts, components, single paper theme, rebrand) + slice 7 `add-reminders` (interval, status, home summary, water-now, status pills). 433 tests green; lint/build/`openspec validate --all --strict` (7/7) green; render-smokes green incl. the reminder home. App is «Поливайко»: a watering-reminder + growth/watering tracker with charts. **Next (pending user go-ahead): Phase 5** (Playwright E2E + seed helper), **Phase 6** (QA pack + headless recordings + vision-verify + eval-suite + axe — this is where the design's rendered fidelity + a11y get validated), **Phase 7** (global review + docs; deploy out of MVP scope per ADR-0001).
+- **Last updated:** 2026-06-30, Europe/Kiev.
+- **Phase:** **Phase 6 (QA proof) COMPLETE.** Phases 4 (build) + the «Поливайко»
+  design/reminders scope change + Phase 5 (E2E + seed) all landed earlier; this
+  update records the QA proof pack. All 7 changes archived. The committed QA pack
+  under `docs/qa/` is authored and evidence-linked: `README.md` (index + repro),
+  `requirements-traceability-matrix.md` (human-readable, derived from
+  `trace/trace.json` + code), `manual-test-plan.md` (MTC-01..08, Chrome-executable),
+  `demo-script.md` (maps the 6 clips), `risk-register.md` (R-01..R-10), and
+  `mvp-acceptance-report.md` (gate status G0–G6 + acceptance, ready for sign-off).
+  **Next: Phase 7** — global review + trajectory-eval + docs + release (deploy out
+  of MVP scope per ADR-0001).
+
+### Phase 6 evidence (what exists, re-verified 2026-06-30)
+- **Unit/component:** 433 passing (42 files) — `npm run test:run` rerun 11:00 Kiev.
+- **Integration:** 5 real-SQLite suites (`tests/integration/*`).
+- **E2E:** 11 Playwright tests, chromium (`tests/e2e/{plants,tracking,reminders,responsive}.e2e.ts`).
+- **Coverage:** lines 77.23 / stmts 78.16 / funcs 92.94 / branches 86.28 — ratchet PASS (`quality/coverage-baseline.json`).
+- **Eval:** 11/11 pass; error-clarity 89, usability-clarity 94 (`docs/qa/eval-report.md`, `evals/results/latest.json`).
+- **Recordings:** 6/6 asserted real artifacts (`docs/qa/recordings-report.md`, `demo-recordings/manifest.json`); one-clip-per-viewport (1280×800 content + 360×800 responsive).
+- **Vision:** 6/6 met + legible (`docs/qa/vision-report.md`).
+- **A11y:** axe 0 serious/critical, paper theme (`npm run check:a11y`).
+- **Traceability:** PASS, 0 failures, 22 by-design recording-coverage warnings (`docs/qa/traceability-report.md`).
+- **Trajectory:** PASS, 3 in-scope overlap warnings (`docs/qa/trajectory-report.md`).
+- **Gate status:** `npm run gate:status` → G0,G2,G4,G5,G6,G7,G8 PASS; G1/G3 = "needs sign-off" (judgment) and are signed off in Checkpoint 1/2.
+
+### Validation expectations for Phase 7
+- Re-run `npm run qa:verify` + `npm run gate:status`; expect the same PASS set.
+- Phase 7 release actions still open (from risk register): R-04 manual
+  cross-browser spot-check (Firefox/Safari/Edge); optional re-record of stills
+  predating AA token darkening (R-06); reconcile eval `inlineMessageFor*` keys to
+  the `fieldErrors.*` contract (R-08, cosmetic).
+
+### Exact next task (Phase 7)
+Run the global `review-gate` re-run + `trajectory-eval` workflow, finalize the
+technical docs (`docs/technical/`), and assemble the customer delivery report.
+No deploy (ADR-0001). Do NOT renumber requirements (BC-03).
 
 <details><summary>Slice 5 detail (add-charts)</summary>
 

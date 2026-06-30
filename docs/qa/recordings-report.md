@@ -9,12 +9,12 @@ Result: PASS
 
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
-| reminder-home | FR-REM-03, FR-REM-04, FR-REM-05 | 346015 | yes | yes | - |
-| plant-crud | FR-PLANT-01, FR-PLANT-05, FR-PLANT-06 | 590350 | yes | yes | - |
-| growth-and-watering | FR-GROWTH-01, FR-GROWTH-02, FR-WATER-01, FR-WATER-03 | 425375 | yes | yes | - |
-| charts | FR-CHART-01, FR-CHART-02 | 329384 | yes | yes | - |
-| design-system | FR-DS-01, FR-DS-03, FR-DS-05, FR-DS-06 | 279399 | yes | yes | - |
-| responsive-360 | NFR-COMPAT-01 | 110428 | yes | yes | - |
+| reminder-home | FR-REM-03, FR-REM-04, FR-REM-05 | 346015 | yes | yes | met |
+| plant-crud | FR-PLANT-01, FR-PLANT-05, FR-PLANT-06 | 590350 | yes | yes | met |
+| growth-and-watering | FR-GROWTH-01, FR-GROWTH-02, FR-WATER-01, FR-WATER-03 | 425375 | yes | yes | met |
+| charts | FR-CHART-01, FR-CHART-02 | 329384 | yes | yes | met |
+| design-system | FR-DS-01, FR-DS-03, FR-DS-05, FR-DS-06 | 279399 | yes | yes | met |
+| responsive-360 | NFR-COMPAT-01 | 110428 | yes | yes | met |
 
 ## Failures
 
