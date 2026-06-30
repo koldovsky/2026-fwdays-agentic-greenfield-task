@@ -18,7 +18,7 @@
 - [x] 3.2 Add Prisma (pinned 6.19.3) + first migration; `GET /health` returns shared `HealthStatus`
 - [x] 3.3 Add `docker-compose.yml` (Postgres 16, host port 5434) + `db:up`/`db:down`/`db:reset` scripts
 - [x] 3.4 Add class-validator global validation pipe and document the DTO validation pattern (TC-STACK-02)
-- [ ] 3.5 Verify boot-against-Postgres + health end-to-end on a clean checkout _(blocked: Docker unavailable in this environment; health is unit-tested and was verified end-to-end in a prior session per docs/current-state.md)_
+- [x] 3.5 Verify boot-against-Postgres + health end-to-end on a clean checkout _(verified 2026-06-30: `db:up` → `migrate` → `api` boots on :3333, `GET /health` returns ok)_
 
 ## 4. Mobile app + design tokens (`@honeydo/mobile`)
 
@@ -38,4 +38,4 @@
 
 - [x] 6.1 `openspec validate add-foundation --strict`
 - [x] 6.2 Update `docs/current-state.md` with the foundation capability status
-- [ ] 6.3 `openspec archive add-foundation` to promote the delta into `openspec/specs/foundation/` _(deferred until 3.5 is verified with Docker)_
+- [x] 6.3 `openspec archive add-foundation` to promote the delta into `openspec/specs/foundation/`

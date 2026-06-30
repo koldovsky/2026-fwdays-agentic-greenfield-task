@@ -6,6 +6,20 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T22:45Z — Archived `add-foundation`; `foundation` spec promoted
+
+**Done:** Completed the last two foundation tasks (3.5 boot verified this session; 6.3 archive)
+and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
+`openspec/specs/foundation/spec.md` (6 requirements, validates ✓); the change moved to
+`openspec/changes/archive/2026-06-30-add-foundation/`. No active OpenSpec changes remain.
+
+**State now:** `foundation` is now a living spec. On `dev`, committed. Phase 0 done.
+
+**Next steps:** Resolve the honey-vs-blackwork brand decision (gates Phase 1 UI), then
+`/opsx:propose add-auth` to start the next capability.
+
+---
+
 ## 2026-06-30T22:38Z — Fixed `npm run api` boot failure + committed foundation
 
 **Done:** Diagnosed the reported `Cannot find module .../dist/main` error: root cause was
