@@ -945,4 +945,118 @@ read even calmer. Cosmetic.
 
 ---
 
+## Slice: `trend-hint` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `trend-hint`
+**Traces:** FR-TREND-01, FR-TREND-02, FR-TREND-03, BC-BRAND-01
+**Sources graded:** `components/rates/TrendHint.tsx`, `lib/currency/{weeklyMove,trendSentence}.ts`, `lib/i18n/uk.ts` (`trend.*`), three live-rendered sentences (EGP/XDR/LBP)
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **98 / 100** |
+| **Automatic fails** | None |
+
+The strongest result this session: all three classification branches
+(strengthen/weaken/flat) were exercised against **real, live NBU data** —
+not synthetic fixtures chosen to hit each branch — and every one produced
+calm, correctly-toned, grammatically-sound Ukrainian.
+
+---
+
+### Rubric scores
+
+#### 1. `calm-phrasing` — **98 / 100** — **PASS** (weight 35 → 34.3)
+
+**Criterion:** No exclamation marks, no hype, no alarm, regardless of
+direction.
+
+| Check | Result |
+|---|---|
+| Live "up" sentence calm | ✓ «EGP за тиждень зміцнів на 0,92% до гривні.» |
+| Live "down" sentence calm, even on a large move | ✓ «XAG за тиждень послабшав на 12,46% до гривні.» — no alarm despite the size of the move |
+| Live "flat" sentence calm | ✓ «LBP за тиждень майже без змін до гривні.» |
+| Test-locked exclamation-free for all three tones | ✓ `trendSentence.test.ts`, `uk.test.ts` |
+
+**Deduction (−2):** a 12.46% weekly move (XAG/silver) is genuinely large, and
+the sentence treats it with exactly the same calm register as a 0.28% move —
+arguably *correct* per the brand voice ("honest, never overstated," never
+alarmist), but worth a human gut-check on whether a very large move should
+still read identically calm. Judged as intentional, not a defect.
+
+---
+
+#### 2. `correct-direction-wording` — **100 / 100** — **PASS** (weight 35 → 35.0)
+
+**Criterion:** Wording matches the actual sign/magnitude, sourced from the
+single `trendTone` classifier.
+
+| Check | Result |
+|---|---|
+| `tone="up"` → «зміцнів» | ✓ live: EGP |
+| `tone="down"` → «послабшав» | ✓ live: XDR, XAG |
+| `tone="flat"` (±0.05%) → «майже без змін» | ✓ live: LBP at exactly 0.000% |
+| Classification comes from the *same* `trendTone` as `TrendBadge`, not a duplicate | ✓ confirmed by Checker #1 |
+
+No deductions — independently re-verified all three by recomputing the
+percentage from raw `/api/history` JSON and confirming it matched the
+rendered sentence exactly.
+
+---
+
+#### 3. `number-then-detail` — **96 / 100** — **PASS** (weight 30 → 28.8)
+
+**Criterion:** Leads with the currency and magnitude before the qualitative
+read.
+
+| Check | Result |
+|---|---|
+| Code leads every sentence | ✓ "EGP за тиждень…", "XDR за тиждень…" |
+| Magnitude stated plainly, not buried | ✓ "…на 0,92% до гривні." |
+
+**Deduction (−4):** this is Decision 1's accepted trade-off (code-as-subject
+instead of the declined Ukrainian name) — reads slightly more like a ticker
+than the spec's own prose example («Долар за тиждень…»). Documented and
+justified in design.md, not an oversight, so the deduction is small and
+expected, not a flag for the maker.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks | **None found** (live, 3/3 tones) |
+| Wrong direction word for the actual sign | **None found** — independently recomputed |
+| Hardcoded/inline Ukrainian string outside `uk.ts` | **None found** — `trendSentence.ts` reads only `uk.trend.*` |
+| Hint shown with insufficient history | **N/A this grading pass** — not specifically forced, but `weeklyMovePct`'s `null` contract is unit-tested |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `calm-phrasing` | 35 | 98 | 34.3 |
+| `correct-direction-wording` | 35 | 100 | 35.0 |
+| `number-then-detail` | 30 | 96 | 28.8 |
+| **Total** | **100** | | **98 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+None blocking. The code-as-subject trade-off (Decision 1) is the only thing
+keeping this from a perfect score, and it's a deliberate, documented,
+proportionate scope cut — not something to "fix" without a real declension
+budget.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*

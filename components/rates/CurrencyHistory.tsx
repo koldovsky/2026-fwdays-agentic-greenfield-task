@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { uk } from "@/lib/i18n/uk";
 import type { HistoryPoint } from "@/lib/nbu/mapHistory";
 import { HistoryChart } from "./HistoryChart";
+import { TrendHint } from "./TrendHint";
 
 type HistoryState =
   | { status: "loading" }
@@ -19,6 +20,7 @@ type HistoryState =
  * so no cancellation/race guard is needed (design.md Decision 4).
  *
  * @trace FR-HISTORY-01 FR-HISTORY-02 FR-HISTORY-03 FR-HISTORY-04
+ * @trace FR-TREND-01 FR-TREND-02 FR-TREND-03
  */
 export function CurrencyHistory({ code }: { code: string }) {
   const [state, setState] = useState<HistoryState>({ status: "loading" });
@@ -58,7 +60,12 @@ export function CurrencyHistory({ code }: { code: string }) {
           {uk.history.empty}
         </p>
       )}
-      {state.status === "ready" && <HistoryChart data={state.points} />}
+      {state.status === "ready" && (
+        <>
+          <TrendHint code={code} points={state.points} />
+          <HistoryChart data={state.points} />
+        </>
+      )}
     </div>
   );
 }

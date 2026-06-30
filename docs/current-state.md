@@ -6,14 +6,53 @@
 
 ## Last updated
 
-`2026-06-30T20:35:00+03:00` (Europe/Kyiv)
+`2026-06-30T21:00:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 5 — Per-slice build:** **`app-shell`**, **`i18n`**, **`currency-list`**,
-**`converter`**, **`currency-picker`**, **`rate-history`** done, reviewed, archived.
-Two post-commit bugs found and fixed (live browser verified). Next:
-**`trend-hint`** → *(optional)* **`footer-sayings`**.
+**Stage 5 — Per-slice build: 7 of 8 slices done**, reviewed, archived
+(`app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
+`rate-history`, **`trend-hint`**). Only *(optional)* **`footer-sayings`** remains —
+all MVP requirements are now implemented.
+
+## Last action
+
+**`trend-hint` slice — full loop run, reusing already-fetched data, no new NBU call:**
+
+1. **Propose:** `openspec/changes/add-trend-hint/` — key design call: the spec's
+   example sentence uses the declined Ukrainian currency name («Долар…
+   зміцнів»), which would need a full gender/case declension table across ~45
+   currencies to do correctly. Used the **ISO code as the sentence subject**
+   instead («USD за тиждень зміцнів…») — sidesteps the grammar problem
+   entirely, consistent with the existing "codes stay Latin" rule, and the
+   spec only asks for a sentence "like" the example, not byte-exact.
+   Documented as design.md Decision 1, not silently simplified.
+2. **kurs-maker (tests-first):** `lib/currency/weeklyMove.ts` (8-point lookback,
+   `null` on insufficient history or a zero comparison rate — never divides by
+   zero) and `lib/currency/trendSentence.ts` (pure, reads `uk.trend.*`), both
+   red-before-green (11 new assertions). Reused the vendored `trendTone` —
+   genuinely imported from `@/components/ds` at the **component** layer
+   (`TrendHint.tsx`), not duplicated into `lib/`, since `lib/` must stay
+   import-clean of `react` even though `trendTone` itself is pure. Wired
+   `TrendHint` into `CurrencyHistory`'s existing `ready` branch — no parallel
+   fetch, no new loading/error states.
+3. **Live verification — most thorough this session:** exercised all
+   **three** tone branches against **real live NBU data** (not picked
+   fixtures): scanned ~30 currencies via curl + a small Node script to find
+   genuine up/down/flat examples, then drove a real Chrome browser to each.
+   `EGP` → up («…зміцнів на 0,92%…», colour `#236B46`/`--up-deep`); `XDR`/`XAG`
+   → down («…послабшав…», `#934531`/`--down-deep`); `LBP` (move = exactly
+   0.000%) → flat («…майже без змін…», `#605949`/`--flat-deep`). Confirmed via
+   direct DOM query (`data-tone` + computed colour), not just a screenshot.
+4. **kurs-reviewer (Checker #1):** **CLEAN** — review *confirmed* correctness
+   the maker's own live testing had already established, rather than finding
+   new defects (a first this session). 2 minor non-blocking suggestions.
+5. **kurs-eval-judge (Checker #2):** **PASS 98/100** — calm-phrasing 98,
+   correct-direction-wording 100, number-then-detail 96 (the one deduction is
+   the accepted code-as-subject trade-off, not a flaw).
+6. **Archived:** `openspec/changes/archive/2026-06-30-add-trend-hint/` (`--skip-specs`).
+
+### Prior
 
 ## Last action
 
@@ -150,27 +189,47 @@ OpenSpec change, folded into this slice's commit):**
 
 - **Working:** full app shell, theme toggle, centralised i18n, live NBU currency list
   with selection/stale labelling/error recovery, a bidirectional UAH ⇄ active-currency
-  converter, a code/name filter, and a real ~30-day rate-history chart (recharts, real
-  npm import) with honest loading/empty/error states.
-- **Done (slices):** `app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`
-  — all archived **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`).
-  **`rate-history`** archived, **not yet committed**.
-- **In progress:** — (await commit for `rate-history`)
+  converter, a code/name filter, a real ~30-day rate-history chart with honest
+  loading/empty/error states, and a calm 7-day trend sentence above it — **all 25 MVP
+  FRs are now implemented.**
+- **Done (slices):** `app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
+  `rate-history` — all archived **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`,
+  `2ccb87b`, `77210b8`, `b191b8b`, plus bugfix `8b63d1f`). **`trend-hint`** archived,
+  **not yet committed**.
+- **In progress:** — (await commit for `trend-hint`)
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** the `rate-history` slice with `Slice:` / `Refs:` trailers.
+1. **Commit** the `trend-hint` slice with `Slice:` / `Refs:` trailers.
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
-   real isolated Task-tool subagents (still pending across all 6 slices this session).
-3. **`/propose-slice trend-hint`** — depends on `rate-history`'s data (a 7-day move
-   computed from the same history points already fetched); reuse `mapHistory.ts`'s
-   `HistoryPoint[]`, no new NBU call needed. Use the design system's `trendTone`
-   (already used by `TrendBadge` in the vendored kit) as the single source of truth
-   for up/down/flat classification.
-4. Then *(optional)* `footer-sayings`.
+   real isolated Task-tool subagents (still pending across all 7 slices this session).
+3. **MVP requirement coverage is complete.** Remaining options: *(optional)*
+   `footer-sayings` (Future-phase, FR-SAYINGS-01), or move to Stage 8+ — cross-cutting
+   hardening (integration test, full Playwright e2e incl. axe a11y light/dark),
+   Stage 9–10 (maker self-review + global two-checker review), Stage 11 (QA proof pack:
+   traceability matrix, manual test plan, demo script, risk register, acceptance
+   report), Stage 12 (PR), Stage 13 (recorded demo).
+4. A vision check of the actually-rendered chart/UI (not just DOM measurement) is still
+   owed before calling Stage 8/13 done — flagged since `rate-history`.
 
 ## Notes / decisions
+
+- **`lib/currency/`** now covers the full domain: `parseAmount`, `convert`,
+  `formatAmount`, `filterRates`, **`weeklyMove`**, **`trendSentence`** — all pure,
+  total, colocated tests (104 total unit tests across the project).
+- **`trendTone` (vendored, pure) is reused at the component layer, never duplicated
+  or imported into `lib/`** — `lib/` must stay literally `react`-import-free
+  (`TC-PURE-01`) even though the specific function never touches React at runtime;
+  `TrendHint.tsx` is where the impure-file boundary is crossed, same pattern as
+  `CurrencyAvatar`/`AsOfBadge`/`Input`/`Converter`.
+- **Trend sentences use the ISO code as subject, not the declined Ukrainian currency
+  name** — a deliberate, documented scope cut (a full Ukrainian gender/case declension
+  table across ~45 currencies was judged disproportionate for one sentence). See
+  `openspec/changes/archive/2026-06-30-add-trend-hint/design.md` Decision 1.
+- **Live-verified all three trend tones against real NBU data** (not picked fixtures):
+  scanned ~30 currencies via script to find genuine up/down/flat examples, confirmed
+  exact `--trend-{up,down,flat}-deep` token colours via DOM query.
 
 - **`lib/currency/`** established: `parseAmount`, `convert`, `formatAmount`, `filterRates`
   — all pure, total, colocated tests.
@@ -214,4 +273,5 @@ OpenSpec change, folded into this slice's commit):**
 - Three manual fixes applied post-converter-review (sticky focus column, Input focus
   ring, `<body>` `suppressHydrationWarning`) — committed in `2ccb87b`.
 - Requirement IDs touched: **FR-CONVERT-01…05, NFR-LOCALE-01, NFR-OBS-01** (converter);
-  **FR-PICK-01…03** (currency-picker); **FR-HISTORY-01…04, TC-DATA-01** (rate-history).
+  **FR-PICK-01…03** (currency-picker); **FR-HISTORY-01…04, TC-DATA-01** (rate-history);
+  **FR-TREND-01…03, BC-BRAND-01** (trend-hint).

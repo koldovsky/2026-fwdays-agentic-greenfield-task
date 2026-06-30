@@ -38,6 +38,11 @@ export const uk = {
     loadError: "Не вдалося завантажити динаміку курсу.",
     empty: "Дані за цей період відсутні.",
   },
+  trend: {
+    up: (code: string, pct: string) => `${code} за тиждень зміцнів на ${pct}% до гривні.`,
+    down: (code: string, pct: string) => `${code} за тиждень послабшав на ${pct}% до гривні.`,
+    flat: (code: string) => `${code} за тиждень майже без змін до гривні.`,
+  },
   meta: {
     title: "Гривня — офіційний курс НБУ",
     description:

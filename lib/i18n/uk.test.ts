@@ -18,12 +18,13 @@ describe("uk i18n table — centralisation", () => {
     }
   });
 
-  it("exposes the shell, rates, picker, converter, history, and meta groups", () => {
+  it("exposes the shell, rates, picker, converter, history, trend, and meta groups", () => {
     expect(uk.shell).toBeDefined();
     expect(uk.rates).toBeDefined();
     expect(uk.picker).toBeDefined();
     expect(uk.converter).toBeDefined();
     expect(uk.history).toBeDefined();
+    expect(uk.trend).toBeDefined();
     expect(uk.meta).toBeDefined();
   });
 });
@@ -70,5 +71,23 @@ describe("uk i18n table — rates error/empty copy", () => {
 describe("uk i18n table — picker copy", () => {
   it("locks the exact spec wording for no match", () => {
     expect(uk.picker.noMatch).toBe("Нічого не знайдено");
+  });
+});
+
+/** @trace FR-TREND-02 FR-TREND-03 BC-BRAND-01 */
+describe("uk i18n table — trend sentence templates", () => {
+  it("produces calm, exclamation-free sentences for every tone", () => {
+    expect(uk.trend.up("USD", "1,20")).toBe(
+      "USD за тиждень зміцнів на 1,20% до гривні.",
+    );
+    expect(uk.trend.down("EUR", "0,80")).toBe(
+      "EUR за тиждень послабшав на 0,80% до гривні.",
+    );
+    expect(uk.trend.flat("PLN")).toBe(
+      "PLN за тиждень майже без змін до гривні.",
+    );
+    for (const s of [uk.trend.up("USD", "1,2"), uk.trend.down("USD", "1,2"), uk.trend.flat("USD")]) {
+      expect(s).not.toMatch(/!/);
+    }
   });
 });

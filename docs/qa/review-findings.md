@@ -511,3 +511,84 @@ screenshot): the `30.06` `<text>` element's right edge sits at 476px inside a
 487px-wide SVG — fully inside, 11px to spare.
 
 Both fixes: `npm run test:run` (86/86) and `npm run verify` green.
+
+---
+
+## Slice: `trend-hint` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/trend-hint/spec.md` · change `openspec/changes/add-trend-hint/`
+**Scope:** FR-TREND-01 … FR-TREND-03, BC-BRAND-01
+**Tests:** `npm run test:run` — 98/98 passed (14 files; this slice adds
+`weeklyMove.test.ts` (6), `trendSentence.test.ts` (5), plus `uk.test.ts` coverage)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+**Live verification:** real Chrome browser, all three tones exercised against
+live NBU data (not fixtures): `EGP` → **up** («EGP за тиждень зміцнів на
+0,92% до гривні.», colour `#236B46` = `--up-deep`), `XDR`/`XAG` → **down**
+(«…послабшав…», colour `#934531` = `--down-deep`), `LBP` (weekly move
+0.000%) → **flat** («…майже без змін…», colour `#605949` = `--flat-deep`).
+All three `data-tone` values and computed CSS colours confirmed via direct
+DOM query, not just visual screenshot.
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Seven-day move is computed | Pass | `weeklyMovePct` (8-point lookback), live-confirmed against `/api/history` data independently re-computed via a shell script that matched the rendered sentence's percentage |
+| Strengthening reads calmly | Pass | live: EGP → "зміцнів на 0,92%" |
+| Flat band / `trendTone` source of truth | Pass | live: LBP (0.000% move) → "майже без змін", `tone="flat"`; `trendTone` imported from `@/components/ds`, not re-implemented |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `lib/currency/weeklyMove.ts` assumes `points` is one entry per
+  calendar day (so `length - 8` is exactly "7 days ago"). This holds for
+  `mapHistory.ts`'s actual output (verified live in `rate-history`), but the
+  function has no explicit date-arithmetic fallback if a future data source
+  ever has gaps. Not a defect against current behaviour — flagging the
+  assumption for whoever touches this next.
+- [suggestion] `TrendHint.tsx` renders nothing (a `null` return) when there's
+  insufficient history — correct per design.md Decision 3, but there's no
+  `aria-live` announcement either way; a screen-reader user gets no signal
+  that a trend *could* have appeared but didn't. Minor, not blocking (the
+  surrounding chart/title still announce normally).
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `lib/currency/weeklyMove.ts` and `trendSentence.ts` are
+  framework-free — independently grepped for `from "react"`/`from "next"`,
+  zero matches in either file.
+- **Tests-first discipline confirmed:** `tasks.md` §1 and §3 record RED
+  (`Cannot find module`) before each implementation file existed.
+- **Genuine reuse of `trendTone` (FR-TREND-03), not a duplicate:**
+  `TrendHint.tsx:3` imports it directly from `@/components/ds` — confirmed
+  this is the *same* function `TrendBadge` uses, not a re-implemented copy
+  that could drift. `lib/` stays import-clean (design.md Decision 2) because
+  the impure file boundary is crossed only at the component layer, which is
+  already the established pattern for `CurrencyAvatar`/`AsOfBadge`/`Input`/`Converter`.
+- **No new NBU call:** `TrendHint` takes `points` as a prop; grepped
+  `components/rates/TrendHint.tsx` — no `fetch` call anywhere in the file.
+  Confirmed it rides entirely on `CurrencyHistory`'s existing fetch.
+- **Percentage formatting locked exactly:** `uk.test.ts` and
+  `trendSentence.test.ts` both assert the fixed-2-decimal, comma-decimal
+  uk-UA format (`"1,20%"`, not `"1,2%"`) — consistent with the rest of the app.
+- **No exclamation marks, any tone:** asserted in both `uk.test.ts` and
+  `trendSentence.test.ts`; independently re-confirmed by reading all three
+  live-rendered sentences above.
+- **Design discipline:** `.trend-hint[data-tone]` CSS uses only the existing
+  semantic `--trend-*-fg` tokens — no new raw colour values introduced.
+- **Eval case:** `evals/cases/trend-hint.eval.ts` present, rubric traces
+  FR-TREND-01/02/03, BC-BRAND-01.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects, and this is the first slice this
+session where the maker's own live verification already caught what a
+checker would normally have to go find (all three tones, real data, exact
+token colours) — the review confirmed rather than discovered correctness.
+Suggestions above are forward-looking notes, not blockers.

@@ -374,6 +374,25 @@
   height: 240px;
 }
 
+.trend-hint {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.trend-hint[data-tone="up"] {
+  color: var(--trend-up-fg);
+}
+
+.trend-hint[data-tone="down"] {
+  color: var(--trend-down-fg);
+}
+
+.trend-hint[data-tone="flat"] {
+  color: var(--trend-flat-fg);
+}
+
 .history-chart__tooltip {
   background: var(--surface-raised);
   border: 1px solid var(--border);
