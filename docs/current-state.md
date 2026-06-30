@@ -1,6 +1,6 @@
 # Current State — Sport & Nutrition Coach
 
-*Last updated: 2026-06-30 · by: Ihor + agent · Update rule: see bottom*
+*Last updated: 2026-07-01 · by: Ihor + agent · Update rule: see bottom*
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
 session end or after meaningful progress. This is the cross-cutting status — per-change specs and
@@ -22,9 +22,10 @@ borderline — ADR-0013) seeded with `coach-persona-tone`. `food-text`: act on t
 → Food DB fact / one-call LLM estimate → `reconcileQty` (qty/basis reconciliation) → code-scaled
 `food_log` write → honest confirmation + add-to-catalog (US-2), with a deterministic `food-scale`
 eval. `metrics`: deterministic body-metrics parse → upsert one row/day → like-with-like trend diffs,
-zero LLM calls (US-7). 121 tests green; all gates + maker≠checker review passed. Remaining: the
-**human deploy** + the live LLM/eval run incl. seeding the tone-eval baseline (need `ANTHROPIC_API_KEY`
-+ egress).
+zero LLM calls (US-7). `query`: DB-as-memory — answer a nutrition question from a tenant-scoped
+`food_log` SUM → totals vs goal, zero LLM calls (US-4). 149 tests green; all gates + maker≠checker
+review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
+baseline (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -32,7 +33,7 @@ zero LLM calls (US-7). 121 tests green; all gates + maker≠checker review passe
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
-| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (log by text → Food DB fact / LLM estimate → code-scaled `food_log` write) landed; query/correction/clarify next |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (Food DB fact / LLM estimate → code-scaled `food_log` write) + **query** (DB-as-memory: tenant-scoped SUM → totals vs goal) landed; correction/clarify next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -97,6 +98,16 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   date), prose mirrors language, columns stay English. `metricStaleness` exposed for the future
   `reviews`. 121 tests green (+28). Opus reviewer → CLEAN; resolved 3 MINOR parser false-positives
   (word-boundary fix). Deterministic — no eval suite (unit-tested).
+- **M3 `query`** — the read side of US-4 and the literal embodiment of **invariant #1 (the DB is the
+  memory)**: acts on the router's `query` intent. `src/query/` answers a nutrition question for the
+  resolved date (incl. `вчера`) from a **single tenant-scoped `food_log` SUM** (`aggregate({_sum})` —
+  never a row-fetch + JS reduce, invariant #2). The asked nutrient is resolved by a deterministic
+  RU/UA/EN keyword parser anchored at **both** ends (`(?<!\p{L})…(?!\p{L})` — "fat" matches but not
+  "fate"/"carbon"); no keyword → full breakdown. **Zero LLM calls** (#5). The answer is code-rendered —
+  `logged of goal (remaining)` when `users.target_*` is set (remaining floored at 0), bare total
+  otherwise; an empty day answers honestly ("nothing logged"), never a misleading `0`. Prose mirrors
+  language, fields stay English. 149 tests green (+28). Opus reviewer → CLEAN (no findings).
+  Deterministic — no eval suite (unit-tested).
 - Loop tooling: `run-backlog` now assigns a **model+effort tier per phase** (Opus for propose/improve/
   review; Sonnet 5 for apply/verify/docs/gates; Haiku for mechanical steps) — `metrics` was the first
   change run under it (apply delegated to a Sonnet maker subagent). `run-backlog` is also **autonomous/
@@ -135,9 +146,11 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    `food_log` write + add-to-catalog. Live estimate/parse eval is deploy-time (needs key).
 8. ✅ **`metrics` (M5, wave 3): code-complete + archived** — deterministic body-metrics parse → upsert
    → like-with-like trend diffs (US-7). Deterministic, no live-LLM gate.
-9. **`query` / `correction` / `clarify` / `food-photo` (wave 4): NEXT** — all unblocked by `food-text`
-   (`clarify`/`food-photo` also build on `coach-persona`). `progress-photo` (M5, wave 5) waits on
-   `metrics` + `food-photo`.
+9. ✅ **`query` (M3, wave 4): code-complete + archived** — DB-as-memory SUM → totals vs goal (US-4).
+   Deterministic, no live-LLM gate.
+10. **`correction` / `clarify` / `food-photo` (wave 4): NEXT** — all unblocked by `food-text`
+    (`clarify`/`food-photo` also build on `coach-persona`). `reviews` (wave 5) is also unblocked now
+    (`food-text` + `metrics` + `coach-persona` all done); `progress-photo` waits on `food-photo`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

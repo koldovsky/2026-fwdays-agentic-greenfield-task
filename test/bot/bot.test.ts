@@ -6,6 +6,7 @@ import type { FoodService } from '../../src/food/types.js';
 import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
+import type { QueryService } from '../../src/query/types.js';
 
 const makeOnboarding = (over: Partial<OnboardingService> = {}): OnboardingService => ({
   startSession: vi.fn().mockResolvedValue({ question: QUESTIONS[Field.AGE] }),
@@ -27,16 +28,23 @@ const makeMetrics = (over: Partial<MetricsService> = {}): MetricsService => ({
   ...over,
 });
 
+const makeQuery = (over: Partial<QueryService> = {}): QueryService => ({
+  answerQuery: vi.fn().mockResolvedValue({ text: 'Калории: 1200 ккал' }),
+  ...over,
+});
+
 const makeDeps = (
   onboarding: OnboardingService,
   intent = 'query',
   food: FoodService = makeFood(),
   metrics: MetricsService = makeMetrics(),
+  query: QueryService = makeQuery(),
 ): {
   deps: BotDeps;
   create: ReturnType<typeof vi.fn>;
   food: FoodService;
   metrics: MetricsService;
+  query: QueryService;
 } => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
@@ -44,10 +52,11 @@ const makeDeps = (
   });
   const anthropic = { messages: { create } } as unknown as Anthropic;
   return {
-    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics },
+    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics, query },
     create,
     food,
     metrics,
+    query,
   };
 };
 
@@ -112,13 +121,42 @@ describe('handleText', () => {
   it('falls through to the classifier when onboarding is complete', async () => {
     const reply = vi.fn().mockResolvedValue(undefined);
     const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
-    const { deps, create } = makeDeps(onboarding, 'query');
+    const { deps, create } = makeDeps(onboarding, 'review_trigger');
 
-    await handleText({ message: { text: 'сколько белка?' }, chat: { id: 7 }, reply }, deps);
+    await handleText({ message: { text: 'как там моя неделя?' }, chat: { id: 7 }, reply }, deps);
 
     expect(onboarding.submitAnswer).not.toHaveBeenCalled();
     expect(create).toHaveBeenCalledTimes(1);
-    expect(String(reply.mock.calls[0]?.[0])).toContain('query');
+    expect(String(reply.mock.calls[0]?.[0])).toContain('review_trigger');
+  });
+
+  it('routes a `query` intent to the query service and replies with its answer', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const query = makeQuery({
+      answerQuery: vi.fn().mockResolvedValue({ text: 'Белки: 120 из 160 г (осталось 40 г)' }),
+    });
+    const { deps } = makeDeps(onboarding, 'query', makeFood(), makeMetrics(), query);
+
+    await handleText({ message: { text: 'сколько белка сегодня?' }, chat: { id: 7 }, reply }, deps);
+
+    expect(query.answerQuery).toHaveBeenCalledWith(
+      7n,
+      'сколько белка сегодня?',
+      expect.objectContaining({ intent: 'query' }),
+    );
+    expect(String(reply.mock.calls[0]?.[0])).toContain('120');
+  });
+
+  it('does not reply when the query service returns null (unknown chat_id)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const query = makeQuery({ answerQuery: vi.fn().mockResolvedValue(null) });
+    const { deps } = makeDeps(onboarding, 'query', makeFood(), makeMetrics(), query);
+
+    await handleText({ message: { text: 'сколько белка?' }, chat: { id: 7 }, reply }, deps);
+
+    expect(reply).not.toHaveBeenCalled();
   });
 
   it('routes a `log` intent to the food service and replies with its confirmation', async () => {

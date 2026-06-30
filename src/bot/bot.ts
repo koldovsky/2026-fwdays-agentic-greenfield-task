@@ -115,6 +115,13 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
     }
     return;
   }
+  if (routed.intent === 'query') {
+    const answer = await deps.query.answerQuery(chatId, text, routed);
+    if (answer) {
+      await ctx.reply(answer.text);
+    }
+    return;
+  }
   if (routed.intent !== 'log') {
     await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
     return;

@@ -8,6 +8,7 @@ import { createFoodService } from './food/service.js';
 import { createAnthropicClient } from './llm/client.js';
 import { createMetricsService } from './metrics/service.js';
 import { createOnboardingService } from './onboarding/flow.js';
+import { createQueryService } from './query/service.js';
 
 /** Confirm the DB is reachable (migrations are applied by `migrate deploy` before this). */
 const connectDbOrExit = async (): Promise<void> => {
@@ -54,12 +55,14 @@ const main = async (): Promise<void> => {
   const onboarding = createOnboardingService(prisma);
   const food = createFoodService(prisma, anthropic, env.TZ);
   const metrics = createMetricsService(prisma);
+  const query = createQueryService(prisma);
   const bot = createBot(env.TELEGRAM_BOT_TOKEN, {
     anthropic,
     userTz: env.TZ,
     onboarding,
     food,
     metrics,
+    query,
   });
   registerShutdown(bot, health);
 

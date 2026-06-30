@@ -3,6 +3,7 @@ import type { InlineKeyboard } from 'grammy';
 import type { FoodService } from '../food/types.js';
 import type { MetricsService } from '../metrics/types.js';
 import type { OnboardingService } from '../onboarding/types.js';
+import type { QueryService } from '../query/types.js';
 
 /** Dependencies the message handlers need (the LLM client, the user's timezone, onboarding, food). */
 export interface BotDeps {
@@ -11,6 +12,7 @@ export interface BotDeps {
   onboarding: OnboardingService;
   food: FoodService;
   metrics: MetricsService;
+  query: QueryService;
 }
 
 export type ReplyFn = (text: string, other?: { reply_markup?: InlineKeyboard }) => Promise<unknown>;
