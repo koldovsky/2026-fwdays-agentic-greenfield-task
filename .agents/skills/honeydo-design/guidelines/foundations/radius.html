@@ -1,0 +1,25 @@
+<!-- @dsCard group="Spacing" viewport="700x170" name="Corner radii" subtitle="Soft, tactile, honey-rounded — pills for actions, squircle for icons" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; color: #F4ECDD; font-family: var(--font-text); }
+  .wrap { display: flex; align-items: center; gap: 18px; padding: 22px 24px; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .box { width: 72px; height: 56px; background: var(--surface-alt); border: 1px solid var(--border); }
+  .lbl { font-size: 11px; color: #B8A88E; }
+  .lbl b { color: #F4ECDD; display: block; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="item"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="lbl"><b>sm</b>12px</span></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-md)"></div><span class="lbl"><b>md · card</b>16px</span></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="lbl"><b>lg · sheet</b>22px</span></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-pill)"></div><span class="lbl"><b>pill</b>action</span></div>
+    <div class="item"><div class="box" style="width:56px;border-radius:var(--radius-icon);background:var(--accent)"></div><span class="lbl"><b>squircle</b>app icon</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!-- @dsCard group="Honeydo App" viewport="700x420" name="Dynamic Island & Live Activity" subtitle="Compact, minimal, expanded + Lock Screen live activity" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #050505; font-family: var(--font-text); color: #fff; }
+  .stage { padding: 30px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px 28px; align-items: start; }
+  .cap { font-size: 12px; color: #8a7e6c; font-weight: 600; margin-top: 10px; }
+  .phonebar { background: linear-gradient(#1a1714,#0e0c0a); border-radius: 22px; padding: 14px 16px; position: relative; min-height: 64px; display: flex; align-items: center; }
+
+  /* Pill / island */
+  .island { background: #000; border-radius: 22px; display: inline-flex; align-items: center; }
+  .compact { height: 37px; padding: 0 6px 0 6px; gap: 10px; justify-content: space-between; min-width: 240px; }
+  .ico { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(160deg,var(--highlight-gold),var(--accent)); display: flex; align-items: center; justify-content: center; color: #2A1B05; flex: none; }
+  .amber { color: var(--accent); font-family: var(--font-numeric); font-variant-numeric: tabular-nums; font-weight: 800; }
+  .minimal { width: 37px; height: 37px; justify-content: center; }
+  .bardot { display: flex; align-items: center; gap: 6px; }
+
+  /* Expanded island */
+  .expanded { background: #000; border-radius: 30px; padding: 18px 18px 16px; width: 100%; }
+  .exp-top { display: flex; align-items: center; gap: 12px; }
+  .exp-desc { font-weight: 700; font-size: 16px; color: #fff; }
+  .exp-tag { font-size: 12px; color: #b8a88e; display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+  .exp-time { margin-left: auto; font-family: var(--font-numeric); font-variant-numeric: tabular-nums; font-weight: 800; font-size: 26px; color: var(--accent); }
+  .exp-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .stop { flex: 1; height: 42px; border-radius: 999px; background: var(--accent); color: var(--on-accent); border: none; font-weight: 800; font-family: var(--font-rounded); font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+  .ghost { flex: none; width: 42px; height: 42px; border-radius: 50%; background: #1c1916; color: #fff; border: none; display: inline-flex; align-items: center; justify-content: center; }
+  .sq { width: 13px; height: 13px; border-radius: 4px; background: currentColor; }
+  .qdot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Lock screen live activity */
+  .lock { background: linear-gradient(160deg,#241e16,#15110d); border-radius: 22px; padding: 16px 18px; width: 100%; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+  .lock-row { display: flex; align-items: center; gap: 12px; }
+  .progress { height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); margin-top: 14px; overflow: hidden; }
+  .progress > span { display: block; height: 100%; width: 64%; background: linear-gradient(90deg,var(--highlight-gold),var(--accent)); border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <!-- Compact -->
+    <div>
+      <div class="phonebar" style="justify-content:center">
+        <div class="island compact">
+          <div class="bardot"><span class="ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2l9 4-9 4-9-4z"/></svg></span></div>
+          <span class="amber" style="font-size:15px;padding-right:8px">1:24:08</span>
+        </div>
+      </div>
+      <div class="cap">Compact — icon left, live time right</div>
+    </div>
+
+    <!-- Minimal -->
+    <div>
+      <div class="phonebar" style="justify-content:flex-end;gap:8px">
+        <span style="font-size:12px;color:#7a6f5e">other app</span>
+        <div class="island minimal"><span class="ico" style="width:24px;height:24px"><span class="sq" style="width:9px;height:9px;background:var(--on-accent)"></span></span></div>
+      </div>
+      <div class="cap">Minimal — leading pill, running glyph</div>
+    </div>
+
+    <!-- Expanded -->
+    <div style="grid-column:1 / -1">
+      <div class="phonebar" style="padding:14px">
+        <div class="expanded">
+          <div class="exp-top">
+            <span class="ico" style="width:36px;height:36px"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M12 2l9 4-9 4-9-4z"/></svg></span>
+            <div>
+              <div class="exp-desc">Design review — Honeydo</div>
+              <div class="exp-tag"><span class="qdot" style="background:#F5A300"></span> Design · started 9:41</div>
+            </div>
+            <span class="exp-time">1:24:08</span>
+          </div>
+          <div class="exp-actions">
+            <button class="stop"><span class="sq" style="background:var(--on-accent)"></span> Stop</button>
+            <button class="ghost"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M5 6h14M5 18h14"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="cap">Expanded — long-press: description, tag, live time, Stop</div>
+    </div>
+
+    <!-- Lock screen live activity -->
+    <div style="grid-column:1 / -1">
+      <div class="lock">
+        <div class="lock-row">
+          <span class="ico" style="width:38px;height:38px"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l9 4-9 4-9-4z"/></svg></span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:16px;color:#F4ECDD">Design review — Honeydo</div>
+            <div style="font-size:12px;color:#b8a88e;display:flex;align-items:center;gap:5px;margin-top:2px"><span class="qdot" style="background:#F5A300"></span> Design</div>
+          </div>
+          <span class="amber" style="font-size:24px">1:24:08</span>
+        </div>
+        <div class="progress"><span></span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#8a7e6c">
+          <span>4.1h of 6h goal today</span><span>HONEYDO</span>
+        </div>
+      </div>
+      <div class="cap">Lock Screen Live Activity — description, live time, goal progress</div>
+    </div>
+  </div>
+</body>
+</html>

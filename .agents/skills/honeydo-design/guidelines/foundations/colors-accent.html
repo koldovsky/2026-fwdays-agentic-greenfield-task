@@ -1,0 +1,39 @@
+<!-- @dsCard group="Colors" viewport="700x200" name="Accent, states & semantic" subtitle="Honey amber across themes + honeyed green for goals met" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-text); background: #211E1A; color: #F4ECDD; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; padding: 18px 22px; }
+  .col h4 { font-family: var(--font-rounded); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #B8A88E; margin: 0 0 9px; }
+  .row { display: flex; gap: 8px; }
+  .sw { flex: 1; border-radius: 10px; padding: 8px 9px; min-height: 52px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .lbl { font-size: 11px; font-weight: 700; }
+  .hex { font-size: 10px; opacity: .85; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h4>Accent — Light / Dark</h4>
+      <div class="row">
+        <div class="sw" style="background:#F5A300;color:#2A1B05"><div class="lbl">accent</div><div class="hex">#F5A300</div></div>
+        <div class="sw" style="background:#C97A04;color:#fff"><div class="lbl">pressed</div><div class="hex">#C97A04</div></div>
+        <div class="sw" style="background:#FFB23E;color:#2A1B05"><div class="lbl">accent ◖dk</div><div class="hex">#FFB23E</div></div>
+        <div class="sw" style="background:#FFC75A;color:#2A1B05"><div class="lbl">gold</div><div class="hex">#FFC75A</div></div>
+      </div>
+    </div>
+    <div class="col">
+      <h4>Semantic — success / borders</h4>
+      <div class="row">
+        <div class="sw" style="background:#3E8E4F;color:#fff"><div class="lbl">success ◖lt</div><div class="hex">#3E8E4F</div></div>
+        <div class="sw" style="background:#7BC57F;color:#1C1A17"><div class="lbl">success ◖dk</div><div class="hex">#7BC57F</div></div>
+        <div class="sw" style="background:#F0E2C8;color:#2A1B05"><div class="lbl">border ◖lt</div><div class="hex">#F0E2C8</div></div>
+        <div class="sw" style="background:#3A332B;color:#F4ECDD"><div class="lbl">border ◖dk</div><div class="hex">#3A332B</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

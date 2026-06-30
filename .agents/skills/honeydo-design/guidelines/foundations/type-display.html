@@ -1,0 +1,26 @@
+<!-- @dsCard group="Type" viewport="700x210" name="Rounded display" subtitle="SF Pro Rounded — titles & friendly headings (Nunito fallback)" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; color: #F4ECDD; font-family: var(--font-rounded); }
+  .wrap { padding: 16px 24px; display: flex; flex-direction: column; gap: 6px; }
+  .row { display: flex; align-items: baseline; gap: 14px; }
+  .tag { font-family: var(--font-text); font-size: 11px; color: #B8A88E; width: 130px; flex: none; }
+  .lt { font-size: var(--text-large-title); font-weight: 800; letter-spacing: -.01em; }
+  .ti { font-size: var(--text-title); font-weight: 700; }
+  .t2 { font-size: var(--text-title2); font-weight: 700; }
+  .hd { font-size: var(--text-headline); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row"><span class="tag">Large title · 34/800</span><span class="lt">Good evening</span></div>
+    <div class="row"><span class="tag">Title · 28/700</span><span class="ti">Today's honey</span></div>
+    <div class="row"><span class="tag">Title 2 · 22/700</span><span class="t2">This week</span></div>
+    <div class="row"><span class="tag">Headline · 17/600</span><span class="hd">Deep work — design review</span></div>
+  </div>
+</body>
+</html>

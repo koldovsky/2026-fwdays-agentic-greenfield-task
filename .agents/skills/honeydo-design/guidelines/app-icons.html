@@ -1,0 +1,80 @@
+<!-- @dsCard group="Brand" viewport="700x280" name="App icon concepts" subtitle="4 directions — amber on warm dark, iOS squircle, legible small" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #161310; font-family: var(--font-text); }
+  .wrap { display: flex; gap: 26px; padding: 30px 28px; justify-content: center; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon { width: 116px; height: 116px; border-radius: 26.09%; position: relative; overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18); }
+  .amberground { background: radial-gradient(circle at 50% 32%, #FFC75A, #F5A300 55%, #C97A04); }
+  .darkground { background: radial-gradient(circle at 50% 30%, #34302a, #1c1a17); }
+  .label { font-size: 13px; font-weight: 700; color: #F4ECDD; }
+  .sub { font-size: 11px; color: #B8A88E; margin-top: -8px; }
+  /* mini app icons row, to test small legibility */
+  .mini { width: 34px; height: 34px; border-radius: 9px; }
+  .small-row { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- 1. Honey jar -->
+    <div class="item">
+      <div class="icon amberground">
+        <svg viewBox="0 0 116 116" width="116" height="116">
+          <g fill="#2A1B05">
+            <rect x="40" y="30" width="36" height="9" rx="4"/>
+            <path d="M42 41h32a4 4 0 0 1 4 4v33a14 14 0 0 1-14 14H52a14 14 0 0 1-14-14V45a4 4 0 0 1 4-4z"/>
+          </g>
+          <path d="M42 64c6 4 10 4 16 0s10-4 16 0v14a14 14 0 0 1-14 14H52a14 14 0 0 1-14-14z" fill="#FFC75A" opacity=".9"/>
+        </svg>
+      </div>
+      <div class="label">Honey jar</div>
+      <div class="sub">the cozy classic</div>
+    </div>
+
+    <!-- 2. Crescent moon -->
+    <div class="item">
+      <div class="icon darkground">
+        <svg viewBox="0 0 116 116" width="116" height="116">
+          <path d="M76 30a30 30 0 1 0 0 56 24 24 0 1 1 0-56z" fill="#FFB23E"/>
+        </svg>
+      </div>
+      <div class="label">Crescent moon</div>
+      <div class="sub">night-tracking</div>
+    </div>
+
+    <!-- 3. Jar-as-moon hybrid -->
+    <div class="item">
+      <div class="icon amberground">
+        <svg viewBox="0 0 116 116" width="116" height="116">
+          <path d="M70 28a32 32 0 1 0 0 60 26 26 0 1 1 0-60z" fill="#2A1B05"/>
+          <rect x="52" y="24" width="22" height="7" rx="3.5" fill="#2A1B05"/>
+        </svg>
+      </div>
+      <div class="label">Jar = moon</div>
+      <div class="sub">the pun, visualized</div>
+    </div>
+
+    <!-- 4. Honey drop on comb -->
+    <div class="item">
+      <div class="icon darkground">
+        <svg viewBox="0 0 116 116" width="116" height="116">
+          <g fill="none" stroke="#FFB23E" stroke-opacity=".28" stroke-width="2">
+            <path d="M58 14l16 9v18l-16 9-16-9V23z"/>
+            <path d="M40 48l16 9v18l-16 9-16-9V57z" transform="translate(2,0)"/>
+            <path d="M76 48l16 9v18l-16 9-16-9V57z" transform="translate(-2,0)"/>
+          </g>
+          <path d="M58 40c9 12 15 19 15 27a15 15 0 0 1-30 0c0-8 6-15 15-27z" fill="#FFB23E"/>
+          <circle cx="53" cy="63" r="4" fill="#FFE3A8" opacity=".8"/>
+        </svg>
+      </div>
+      <div class="label">Honey drop</div>
+      <div class="sub">single, iconic</div>
+    </div>
+  </div>
+</body>
+</html>

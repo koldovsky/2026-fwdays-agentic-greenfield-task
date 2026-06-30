@@ -1,0 +1,70 @@
+<!-- @dsCard group="Components" viewport="700x520" name="App" subtitle="Time-entry row, week chart, streak hive, insight card, tab bar" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--bg); font-family: var(--font-text); }
+  #root { padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; align-items: start; }
+  .h { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .span2 { grid-column: 1 / -1; }
+  svg { width: 22px; height: 22px; }
+</style>
+</head>
+<body data-theme="dark">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { TimerEntry, WeekChart, StreakHive, InsightCard, TabBar, Card } = window.HoneydoDesignSystem_cfe9be;
+
+    function Demo() {
+      const [tab, setTab] = React.useState("timer");
+      return (
+        <>
+          <div className="col">
+            <div className="h">Time entries</div>
+            <TimerEntry description="Design review — Honeydo" tag="Design" tagColor="#F5A300" duration="1:24:08" running />
+            <TimerEntry description="Inbox & standup" tag="Admin" tagColor="#7BC57F" duration="32m" />
+            <TimerEntry description="Reading" tag="Personal" tagColor="#5B8DEF" duration="18m" />
+          </div>
+          <div className="col">
+            <div className="h">Week chart</div>
+            <Card padding={16}>
+              <WeekChart goal={6} data={[
+                {label:"M",hours:4},{label:"T",hours:7},{label:"W",hours:5.5},
+                {label:"T",hours:6},{label:"F",hours:3},{label:"S",hours:1},{label:"S",hours:5,today:true}
+              ]} />
+            </Card>
+          </div>
+          <div className="col">
+            <div className="h">Streak hive</div>
+            <Card padding={16}><StreakHive filled={5} total={7} current label="5-day streak · keep it warm" /></Card>
+          </div>
+          <div className="col">
+            <div className="h">Insight card</div>
+            <InsightCard>You're 1h ahead of your usual Tuesday pace — nice and steady.</InsightCard>
+          </div>
+          <div className="col span2">
+            <div className="h">Tab bar</div>
+            <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)" }}>
+              <TabBar value={tab} onChange={setTab} items={[
+                { value:"timer",   label:"Timer",   icon:<i data-lucide="timer"></i> },
+                { value:"stats",   label:"Stats",   icon:<i data-lucide="bar-chart-2"></i> },
+                { value:"profile", label:"Profile", icon:<i data-lucide="user"></i> },
+              ]} />
+            </div>
+          </div>
+        </>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+    requestAnimationFrame(() => window.lucide && window.lucide.createIcons());
+  </script>
+</body>
+</html>

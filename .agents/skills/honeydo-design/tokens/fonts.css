@@ -1,0 +1,42 @@
+/* ============================================================
+   Honeydo — Webfonts
+   ------------------------------------------------------------
+   The brand calls for Apple's SF Pro Rounded (headings/numbers)
+   and SF Pro Text (body). Those are proprietary Apple system
+   fonts and cannot be redistributed, so:
+
+   • On Apple devices the CSS families resolve to the REAL system
+     fonts via the `ui-rounded` / `-apple-system` keywords
+     (see tokens/typography.css).
+   • Everywhere else we fall back to the closest Google Fonts
+     substitutes loaded below:
+        SF Pro Rounded  ->  Nunito       (warm, rounded, friendly)
+        SF Pro Text     ->  Nunito Sans  (humanist, neutral body)
+
+   >>> SUBSTITUTION FLAGGED: if you have licensed SF Pro webfont
+   files, drop the .woff2 here and replace the @import with
+   @font-face rules pointing at them. <<<
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;1,6..12,400&display=swap');
+
+/* Bind the brand family names to the LOCALLY-INSTALLED Apple system fonts.
+   These declare no redistributed binaries (local() only): on an Apple device
+   they resolve to the real SF Pro; everywhere else they fail silently and the
+   token's fallback stack (Nunito / Nunito Sans) renders instead.
+   >>> When licensed SF Pro webfonts are available, add their url() sources
+   here alongside the local() entries. <<< */
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SF Pro Rounded"), local("SFProRounded-Regular"), local(".SF NS Rounded"), local(".SFNSRounded");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SF Pro Text";
+  src: local("SF Pro Text"), local("SFProText-Regular"), local(".SF NS Text"), local(".SFNSText");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

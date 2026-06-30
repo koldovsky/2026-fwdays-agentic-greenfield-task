@@ -1,0 +1,36 @@
+<!-- @dsCard group="Brand" viewport="700x200" name="Honeycomb motif" subtitle="A faint hex texture runs through heroes, streaks & progress" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; font-family: var(--font-rounded); }
+  .stage { padding: 18px 22px; display: flex; gap: 18px; align-items: center; }
+  .panel { flex: 1; height: 150px; border-radius: 18px; border: 1px solid var(--border); position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: #F4ECDD; }
+  .comb { background:
+      radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 20%, transparent), transparent 65%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 0L56 16v33L28 65 0 49V16z' fill='none' stroke='%23FFB23E' stroke-opacity='0.18' stroke-width='1.5'/%3E%3Cpath d='M28 65l28 16v33L28 130 0 114V81z' fill='none' stroke='%23FFB23E' stroke-opacity='0.18' stroke-width='1.5'/%3E%3C/svg%3E"),
+      #211E1A;
+    background-size: 100% 100%, 48px 86px, 100% 100%; }
+  .cells { display: flex; gap: 6px; }
+  .hex { width: 34px; height: 38px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  .on { background: var(--accent); }
+  .off { background: var(--surface-alt); border: 1px dashed var(--border); }
+  .label { position: absolute; bottom: 10px; left: 14px; font-size: 12px; color: #B8A88E; font-family: var(--font-text); }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="panel comb"><span style="font-size:20px;font-weight:800">Cozy hex texture</span><span class="label">heroes & empty states</span></div>
+    <div class="panel" style="background:#211E1A">
+      <div class="cells">
+        <div class="hex on"></div><div class="hex on"></div><div class="hex on"></div>
+        <div class="hex on"></div><div class="hex off"></div><div class="hex off"></div>
+      </div>
+      <span class="label">streak — cells fill in</span>
+    </div>
+  </div>
+</body>
+</html>
