@@ -6,15 +6,57 @@
 
 ## Last updated
 
-`2026-06-30T21:25:00+03:00` (Europe/Kyiv)
+`2026-06-30T23:15:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 5 — Per-slice build: COMPLETE. All 8 capability slices done**, reviewed,
-archived (`app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
-`rate-history`, `trend-hint`, **`footer-sayings`**). All 25 MVP FRs + the one
-Future FR are implemented. Next: **Stage 8** — cross-cutting hardening
-(integration test, full Playwright e2e + axe a11y light/dark).
+**Stage 8 — Cross-cutting hardening: COMPLETE (CHECKLIST G5).** Stage 5 (all
+8 capability slices) finished previously. Next: Stage 9 (maker self-review
+note), Stage 10 (global two-checker review), Stage 11 (QA proof pack),
+Stage 12 (PR), Stage 13 (recorded demo).
+
+## Last action
+
+**Stage 8 — cross-cutting hardening (G5), not yet committed:**
+
+1. **Integration test:** `lib/currency/convertFlow.integration.test.ts` — composes
+   `mapNbuRates` + `parseAmount`/`convert`/`formatAmount` end-to-end without
+   mocking any step (6 cases: locale-aware conversion both directions,
+   malformed-NBU-entries-never-reach-the-converter, garbage-input degrades to
+   `0,00`, floating-point round-trip). 6/6 green first run.
+2. **Playwright + axe installed:** `@playwright/test`, `@axe-core/playwright`;
+   `playwright.config.ts` runs headless Chromium against a real `next dev`
+   server on port 3100, hitting **live NBU** (no mocking, consistent with
+   every other slice's verification). `npm run test:e2e` added.
+3. **`e2e/core-flow.spec.ts`** (5 tests), **`e2e/responsive.spec.ts`** (4 tests,
+   measures actual `grid-template-columns` track counts — not a screenshot
+   eyeball), **`e2e/a11y.spec.ts`** (5 tests, `@axe-core/playwright` WCAG 2 A+AA
+   in both themes, plus a differential focus-ring check).
+4. **The a11y pass found and fixed three real, pre-existing defects** (not test
+   artifacts — axe ran against the actual app and failed on first try):
+   - Light-theme `--text-muted`/`--text-faint` contrast (down to 2.63:1 on
+     the `footer-sayings` saying text) — retuned both tokens in
+     `app/styles/tokens/colors.css` to the minimum darkening that clears
+     4.5:1, computed via the real WCAG relative-luminance formula.
+   - Dark-theme `--text-faint` (4.22:1) and `AsOfBadge`'s stale-badge text
+     hardcoding the light-tuned `--brass-600` with no dark variant
+     (2.5:1) — added a new theme-aware `--accent-strong` semantic alias and
+     fixed both `AsOfBadge.jsx` and the unused `Badge.jsx` `accent` tone.
+   - **Critical:** the converter's amount `<input>` had no accessible name
+     (its visual `<label>` wasn't linked via `htmlFor`/`id`) — added a
+     dynamic `aria-label` to the `Input` call in `Converter.jsx`.
+   None of these were caught during Stage 5's per-slice reviews — no
+   automated a11y scan existed before this stage; exactly the gap closed here.
+5. **14/14 e2e green, 117/117 unit tests green** (Vitest config now excludes
+   `e2e/**` so it doesn't try to run Playwright specs), lint clean,
+   `npm run verify` green.
+6. **CI wired:** `.github/workflows/ci.yml` installs Chromium and runs
+   `npm run test:e2e` after the build step; uploads the HTML report as an
+   artifact on failure.
+7. **`docs/qa/automated-verification-latest.md`** written — full command/result
+   table + the three defects found and fixed.
+
+### Prior
 
 ## Last action
 
@@ -223,22 +265,23 @@ OpenSpec change, folded into this slice's commit):**
   currency list with selection/stale labelling/error recovery, a bidirectional UAH ⇄
   active-currency converter, a code/name filter, a real ~30-day rate-history chart with
   honest loading/empty/error states, a calm 7-day trend sentence, and a deterministic
-  daily footer saying. **All 25 MVP FRs + the 1 Future FR are now implemented.**
+  daily footer saying. **All 25 MVP FRs + the 1 Future FR are implemented and
+  cross-cutting-hardened (Stage 8 / CHECKLIST G5 complete).**
 - **Done (slices):** all 8 — `app-shell`, `i18n`, `currency-list`, `converter`,
-  `currency-picker`, `rate-history`, `trend-hint` — all archived **and committed**
-  (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`, bugfix `8b63d1f`,
-  `395e992`). **`footer-sayings`** archived, **not yet committed**.
-- **In progress:** — (await commit for `footer-sayings`)
+  `currency-picker`, `rate-history`, `trend-hint`, `footer-sayings` — all archived
+  **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`,
+  bugfix `8b63d1f`, `395e992`, `1981e1e`).
+- **In progress:** Stage 8 work (integration test, e2e, axe fixes, CI wiring) is
+  complete and verified but **not yet committed**.
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** the `footer-sayings` slice with `Slice:` / `Refs:` trailers.
+1. **Commit** the Stage 8 cross-cutting hardening work (integration test, e2e suite,
+   the three real a11y/contrast fixes, CI wiring, `docs/qa/automated-verification-latest.md`).
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
-   real isolated Task-tool subagents (still pending across all 8 slices this session).
-3. **Stage 5 is complete. Move to Stage 8+:**
-   - Stage 8 — cross-cutting hardening: integration test for the convert→display flow;
-     full Playwright e2e (core flow + responsive breakpoints + axe a11y light/dark).
+   real isolated Task-tool subagents (still pending across all work this session).
+3. **Stage 8 is complete. Move to Stage 9+:**
    - Stage 9 — maker self-review note (`docs/qa/global-review.md`).
    - Stage 10 — global two-checker review (re-run `kurs-reviewer`/`kurs-eval-judge`
      over the whole app, not just the last slice).
@@ -246,10 +289,9 @@ OpenSpec change, folded into this slice's commit):**
      register, acceptance report; `docs/technical/*`.
    - Stage 12 — PR preparation.
    - Stage 13 — automated headless demo recordings (one per capability + empty/error
-     states) + a 1–2 min screen-capture walkthrough for the course submission.
-4. A genuine **vision check** of the rendered UI (not just DOM measurement/screenshots
-   read by a human in the loop) is still owed before calling Stage 8/13 done — flagged
-   since `rate-history`; the `vision-verify`-style pass belongs in Stage 13.
+     states) + a 1–2 min screen-capture walkthrough for the course submission. A genuine
+     **vision check** of the rendered UI (axe catches WCAG-detectable issues only, not
+     visual/layout defects) belongs here — flagged since `rate-history`, still owed.
 
 ## Notes / decisions
 
@@ -339,3 +381,16 @@ OpenSpec change, folded into this slice's commit):**
   **FR-PICK-01…03** (currency-picker); **FR-HISTORY-01…04, TC-DATA-01** (rate-history);
   **FR-TREND-01…03, BC-BRAND-01** (trend-hint); **FR-SAYINGS-01** (footer-sayings).
 - **All 25 MVP FRs + FR-SAYINGS-01 (Future) now implemented — Stage 5 complete.**
+- **Stage 8 (cross-cutting hardening) added a new theme-aware token,
+  `--accent-strong`** (`app/styles/tokens/colors.css`) — text/icon color paired with
+  `--accent-soft`, distinct from `--accent` (tuned for icons/borders on neutral
+  surfaces, not for small text on the soft-accent background; only reaches 2.5:1
+  there). Retuned `--text-muted`/`--text-faint` in both themes — all four were found
+  failing WCAG AA 4.5:1 live via axe, not by inspection. `app/styles/tokens/colors.css`
+  is **not** part of the read-only vendored DS boundary (that's `docs/design-system/**`
+  and `components/ds/**` per `eslint.config.mjs`'s comment) — it's live app code under
+  `app/`, so editing it to fix a real defect was in scope without forking the vendor copy.
+- **`e2e/**` is excluded from Vitest's test discovery** (`vitest.config.ts`) — Playwright
+  spec files also match Vitest's default `*.spec.ts` glob and were being picked up and
+  failing under the wrong test runner before this was added.
+- Requirement IDs touched (Stage 8): **NFR-A11Y-01, NFR-A11Y-02, TC-TEST-01**.

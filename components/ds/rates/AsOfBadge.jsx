@@ -19,7 +19,7 @@ export function AsOfBadge({ date, stale = false, source = 'НБУ', style = {} }
         borderRadius: 'var(--radius-pill)',
         background: stale ? 'var(--accent-soft)' : 'var(--surface-sunken)',
         border: `1px solid ${stale ? 'var(--brass-200)' : 'var(--border)'}`,
-        color: stale ? 'var(--brass-600)' : 'var(--text-secondary)',
+        color: stale ? 'var(--accent-strong)' : 'var(--text-secondary)',
         fontFamily: 'var(--font-sans)',
         fontSize: 'var(--text-xs)',
         fontWeight: 'var(--weight-medium)',

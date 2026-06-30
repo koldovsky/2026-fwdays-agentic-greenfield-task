@@ -12,7 +12,7 @@ const TONES = {
   up:      { bg: 'var(--trend-up-bg)', fg: 'var(--trend-up-fg)', solidBg: 'var(--trend-up-solid)', solidFg: '#fff' },
   down:    { bg: 'var(--trend-down-bg)', fg: 'var(--trend-down-fg)', solidBg: 'var(--trend-down-solid)', solidFg: '#fff' },
   flat:    { bg: 'var(--trend-flat-bg)', fg: 'var(--trend-flat-fg)', solidBg: 'var(--trend-flat-solid)', solidFg: '#fff' },
-  accent:  { bg: 'var(--accent-soft)', fg: 'var(--brass-600)', solidBg: 'var(--accent)', solidFg: 'var(--accent-on)' },
+  accent:  { bg: 'var(--accent-soft)', fg: 'var(--accent-strong)', solidBg: 'var(--accent)', solidFg: 'var(--accent-on)' },
   neutral: { bg: 'var(--surface-sunken)', fg: 'var(--text-secondary)', solidBg: 'var(--text-secondary)', solidFg: 'var(--surface)' },
 };
 

@@ -48,6 +48,7 @@ export function Converter({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
+          aria-label={fromForeign ? labels.amountInForeign(code) : labels.amountInUah}
         />
       </div>
 

@@ -55,9 +55,9 @@ npm run test:run                   # once tests exist
 - [ ] Change archived; `docs/current-state.md` updated; commit carries `Slice:` / `Refs:` trailers.
 
 ## G5 — Cross-cutting hardening
-- [ ] Integration test for the convert → display flow.
-- [ ] Playwright e2e: core flow + responsive breakpoints + axe a11y (light + dark).
-- [ ] `npm run verify` green; `docs/qa/automated-verification-latest.md` written.
+- [x] Integration test for the convert → display flow.
+- [x] Playwright e2e: core flow + responsive breakpoints + axe a11y (light + dark).
+- [x] `npm run verify` green; `docs/qa/automated-verification-latest.md` written.
 
 ## G6 — QA proof pack
 - [ ] Traceability matrix, manual test plan (non-dev executable), demo script, risk register, acceptance report.
