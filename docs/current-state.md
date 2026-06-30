@@ -6,17 +6,62 @@
 
 ## Last updated
 
-`2026-07-01T01:10:00+03:00` (Europe/Kyiv)
+`2026-07-01T02:20:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 10 — Global two-checker review: COMPLETE (CHECKLIST G7 review item).**
-Stage 9 (maker self-review) committed as `f8b4610`. Next: Stage 11 (QA proof
-pack), Stage 12 (PR), Stage 13 (recorded demo).
+**Stage 11 — QA proof pack: COMPLETE (CHECKLIST G6, items 1-2).** Stage 10
+(global two-checker review) committed as `c7766d7`. Next: Stage 12 (PR
+preparation), Stage 13 (recorded demo — G6 item 3, the automated headless
+recordings, lives here too; shot list already written this stage).
 
 ## Last action
 
-**Stage 10 — global two-checker review, not yet committed:**
+**Stage 11 — QA proof pack, not yet committed:**
+
+Wrote all five CHECKLIST G6 deliverables, each built from re-verified
+evidence (re-grepped/re-read the actual code while writing, not copied from
+memory of earlier stages):
+
+1. **[`docs/qa/traceability-matrix.md`](qa/traceability-matrix.md)** — every
+   FR/NFR/TC/BC mapped to spec → implementation → unit test → e2e/eval
+   evidence. Three cross-cutting claims (`TC-PURE-01`, `TC-DATA-01`,
+   `BC-PRIVACY-01`) were independently re-grepped while writing this rather
+   than carried forward — confirmed still accurate (one near-miss: `RatesView.tsx`
+   imports a *type* from `lib/nbu/fetchTodayRates`, not the function itself,
+   so `TC-DATA-01` still holds).
+2. **[`docs/qa/manual-test-plan.md`](qa/manual-test-plan.md)** — 10
+   non-developer-executable browser tests covering every FR, including a
+   DevTools-offline procedure to manually trigger and verify both failure
+   states (rates list and history chart) and their retry buttons.
+3. **[`docs/qa/demo-script.md`](qa/demo-script.md)** — a ~90s narrated
+   walkthrough script for the course-submission recording, plus a 12-clip
+   shot list (incl. 2 explicit empty/error clips) for Stage 13's automated
+   headless recordings, each clip naming exactly which FRs it must assert
+   before the recording is considered valid.
+4. **[`docs/qa/risk-register.md`](qa/risk-register.md)** — consolidated
+   every risk/trade-off logged across all 8 per-slice reviews + both global
+   checker passes. Re-checked each one against current code: 8 were already
+   Resolved (mostly by Stage 8/9/10 fixes) and are recorded as such rather
+   than left stale as "open"; the rest sorted into accepted trade-offs vs.
+   process risks, each with a severity and mitigation. **No High-severity
+   risk is currently open.**
+5. **[`docs/qa/acceptance-report.md`](qa/acceptance-report.md)** — formal
+   gate-by-gate status against `CHECKLIST.md`, current test results
+   (122/122 unit, 14/14 e2e), and the eval-report review CHECKLIST G6 itself
+   calls for: read `docs/qa/eval-report.md` in full and confirmed **9/9
+   scopes (8 slices + the global pass) are PASS, zero FAILs anywhere**,
+   lowest individual dimension 80/100 (the exact finding Stage 10 already
+   fixed). Signs off the project as ready for Stage 12.
+
+CHECKLIST G6 items 1-2 ticked; item 3 (recordings) explicitly left for
+Stage 13, now that its shot list exists.
+
+### Prior
+
+## Last action
+
+**Stage 10 — global two-checker review, committed as `c7766d7`:**
 
 Dispatched both checkers as genuinely independent fresh subagents (no memory
 of building this app — Claude Code's project-local `kurs-reviewer`/
@@ -353,29 +398,28 @@ OpenSpec change, folded into this slice's commit):**
   `currency-picker`, `rate-history`, `trend-hint`, `footer-sayings` — all archived
   **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`,
   bugfix `8b63d1f`, `395e992`, `1981e1e`). Stage 8 hardening committed as `2a35934`;
-  Stage 9 self-review committed as `f8b4610`.
-- **In progress:** Stage 10 (global two-checker review + the two confirmed fixes:
-  `formatRate.ts` precision consistency, history-error retry button) is complete and
+  Stage 9 self-review committed as `f8b4610`; Stage 10 global review + fixes committed
+  as `c7766d7`.
+- **In progress:** Stage 11 (5 QA proof-pack docs under `docs/qa/`) is complete and
   verified but **not yet committed**.
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** Stage 10 (the global review findings + `formatRate.ts` + the history
-   retry button + the `@trace` fix).
+1. **Commit** Stage 11 (the 5 QA proof-pack documents + the two CHECKLIST G6 ticks).
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
-   real isolated Task-tool subagents (the global review used embedded-prompt
+   real isolated Task-tool subagents (the Stage 10 global review used embedded-prompt
    `general-purpose` subagents instead, since the project-local agent types aren't
    dispatchable as named subagent types in this environment — same independence,
    different plumbing; worth re-checking after a session reload).
-3. **Stage 10 is complete (CHECKLIST G7's review item ticked). Move to Stage 11+:**
-   - Stage 11 — QA proof pack: traceability matrix, manual test plan, demo script, risk
-     register, acceptance report; `docs/technical/*`.
-   - Stage 12 — PR preparation.
-   - Stage 13 — automated headless demo recordings (one per capability + empty/error
-     states) + a 1–2 min screen-capture walkthrough for the course submission. A genuine
+3. **Stage 11 is complete (CHECKLIST G6 items 1-2 ticked). Move to Stage 12+:**
+   - Stage 12 — PR preparation. `docs/technical/*` and a README usage section are
+     still outstanding (CHECKLIST G7's remaining items) — fold into this stage.
+   - Stage 13 — the automated headless demo recordings (CHECKLIST G6 item 3 — shot
+     list is ready in `docs/qa/demo-script.md`, not yet implemented) + the 1-2 min
+     narrated walkthrough for the course submission (script also ready). A genuine
      **vision check** of the rendered UI (axe catches WCAG-detectable issues only, not
-     visual/layout defects) belongs here — flagged since `rate-history`, still owed.
+     visual/layout defects) belongs here too — flagged since `rate-history`, still owed.
 
 ## Notes / decisions
 
@@ -491,3 +535,9 @@ OpenSpec change, folded into this slice's commit):**
   anything spanning more than one capability.
 - Requirement IDs touched (Stage 10 fixes): **NFR-LOCALE-01** (`formatRate`),
   **NFR-OBS-01** (history retry button).
+- **`docs/qa/` is now the full QA proof pack**: `review-findings.md`,
+  `eval-report.md` (per-slice + global), `automated-verification-latest.md`,
+  `global-review.md`, `traceability-matrix.md`, `manual-test-plan.md`,
+  `demo-script.md`, `risk-register.md`, `acceptance-report.md`. Anyone
+  picking this project up cold should start at `acceptance-report.md` (the
+  summary) and follow its links outward, not read all nine files in order.

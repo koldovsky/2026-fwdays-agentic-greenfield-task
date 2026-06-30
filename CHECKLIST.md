@@ -66,9 +66,9 @@ npm run test:run                   # once tests exist
 - [x] `npm run verify` green; `docs/qa/automated-verification-latest.md` written.
 
 ## G6 — QA proof pack
-- [ ] Traceability matrix, manual test plan (non-dev executable), demo script, risk register, acceptance report.
-- [ ] Eval report reviewed; every case passes its rubric.
-- [ ] Recordings automated + headless; each clip asserts its FRs.
+- [x] Traceability matrix, manual test plan (non-dev executable), demo script, risk register, acceptance report.
+- [x] Eval report reviewed; every case passes its rubric.
+- [ ] Recordings automated + headless; each clip asserts its FRs. (Stage 13 — shot list ready in `docs/qa/demo-script.md`)
 
 ## G7 — Global review & release
 - [x] Global two-checker review clean; all confirmed findings fixed.
