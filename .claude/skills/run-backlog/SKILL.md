@@ -37,7 +37,7 @@ light step hits a non-obvious problem (e.g. a red test that needs real diagnosis
 | plan gate (step 4) | **Sonnet · medium** | summarize + judge "critical fork?" |
 | apply — maker (step 5) | **Sonnet 5 · max** | high-volume mechanical implementation |
 | verify (step 6) | **Sonnet · high** | plan ⇄ impl coherence (careful, not adversarial) |
-| improve-arch (step 7) | **Opus · high** | architectural judgement |
+| dup-gate + improve-arch (step 7) | **Opus · high** | codebase-wide duplication scan + architectural judgement |
 | review — checker (step 8) | **Opus · high** | adversarial correctness + standards |
 | test + static (step 9) | **Haiku · low** | run npm, report green (→ Sonnet to diagnose a red) |
 | evals (step 10) | **Haiku · low** | run scripts + ratchet check |
@@ -96,11 +96,29 @@ planned-but-absent command.
 6. **Verify** *(Sonnet · high)*. Run `opsx:verify` (plan ⇄ implementation coherence).
    *Done when:* verify reports coherent.
 
-7. **Improve architecture (refactor scan)** *(Opus · high)*. Run the `improve-codebase-architecture` skill
-   scoped to the files this change touched. Apply small, in-scope wins it surfaces (extract types/interfaces,
-   dedupe, deepen a module, kill a leaky abstraction) right here — they re-enter the gates below.
-   File anything larger as a **new backlog change** rather than expanding this one's scope. This runs
-   before review so the reviewer sees the cleaned-up diff.
+7. **Duplication gate + improve architecture (refactor scan)** *(Opus · high)*.
+
+   **7a — Duplication gate (blocking).** Before the broader scan, cross-reference this change's diff
+   against the **entire existing `src/` tree** (not just touched files — that scope is what let a copied
+   `detectLang`/`Lang`/regex reach three modules). For every new or changed top-level symbol — `const`,
+   regex/literal, `type`/`interface`, `function`/helper, class, enum, prompt/schema — and every notable
+   block of logic, ask: *does an equal-or-equivalent one already exist elsewhere under `src/`?* Use both
+   a mechanical pass (e.g. `git diff` the change, then grep each new symbol name / distinctive literal
+   across `src/`) and a semantic pass (same logic written differently). **A change may never add copy
+   N+1 of anything** — at the second occurrence you extract to one home (backend-conventions rule #12):
+   the owning `src/<area>/` module if single-domain, a shared `src/util/…` if cross-cutting, then import
+   it from both sites. Extraction of a *just-introduced* duplicate is small and in-scope — do it here.
+   Only when deduping **pre-existing** copies in already-archived files is genuinely too large to fold
+   in may it be deferred — and even then this change must **reuse the existing copy, never add a new
+   one**, and you file the extraction as a blocking follow-up backlog change.
+   *Done when:* the diff introduces zero new duplicates — every shared thing has exactly one home (or a
+   deferred-extraction follow-up is filed *and* this change imports the existing copy).
+
+   **7b — Refactor scan.** Run the `improve-codebase-architecture` skill scoped to the files this change
+   touched. Apply small, in-scope wins it surfaces (extract types/interfaces, deepen a module, kill a
+   leaky abstraction) right here — they re-enter the gates below. File anything larger as a **new backlog
+   change** rather than expanding this one's scope. This runs before review so the reviewer sees the
+   cleaned-up diff.
    *Done when:* the scan is done and its in-scope picks are applied (or logged as follow-up changes).
 
 8. **Review (checker — maker ≠ checker)** *(Opus · high)*. Spawn a **fresh, separate** subagent running the

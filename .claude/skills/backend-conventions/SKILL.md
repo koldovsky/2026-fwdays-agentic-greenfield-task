@@ -226,3 +226,38 @@ logic gets a **mirrored** test at `test/<area>/x.test.ts` (the `test/` tree mirr
 - catalog match → `source=fact`; miss → `source=estimate`;
 - "вчера"/"yesterday" back-dates to the correct user-TZ date;
 - food/progress images are **never** written to disk.
+
+## 12. One home for each fact, helper, and shape — never copy-paste
+
+Every constant, regex, type alias, helper, and piece of logic lives in **exactly one place**. If a
+second module needs it, **extract and import** — never duplicate. Two copies is one too many: they
+drift, fixes land in one and not the other, and the reader can't tell which is canonical. This holds
+both ways — writing a new module, *and* adding a feature next to code that already has what you need
+(check before you write: does this helper/const/type already exist somewhere under `src/`?).
+
+Where the shared home goes: if it belongs to one domain, the owning module (`src/<area>/…`); if it's
+cross-cutting (used by ≥2 areas), a shared `src/util/…` module.
+
+```typescript
+// ❌ the same language detection copy-pasted into food/confirm.ts, metrics/confirm.ts, query/answer.ts
+type Lang = 'uk' | 'ru' | 'en';
+const UK_CHARS = /[іїєґ]/i;
+const CYRILLIC = /[а-яё]/i;
+const detectLang = (text: string): Lang => {
+  if (UK_CHARS.test(text)) {
+    return 'uk';
+  }
+  if (CYRILLIC.test(text)) {
+    return 'ru';
+  }
+  return 'en';
+};
+
+// ✅ src/util/lang.ts — one home, three importers
+export type Lang = 'uk' | 'ru' | 'en';
+export const detectLang = (text: string): Lang => { … };
+// food/confirm.ts, metrics/confirm.ts, query/answer.ts:  import { detectLang, type Lang } from '../util/lang';
+```
+
+This is enforced by the **duplication gate** in `/run-backlog` step 7 (maker extracts) and
+re-checked by the **Standards** review axis (checker verifies) — see AGENTS.md "How we work".
