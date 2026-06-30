@@ -3,7 +3,7 @@
   "results": [
     {
       "id": "reminder-home",
-      "title": "Reminder home: due summary count + due section, water-now decrements",
+      "title": "Reminder home: due summary count + due section; two water-now taps decrement 3 -> 1 (still shows the AFTER state)",
       "proof": "FR-REM-03, FR-REM-04, FR-REM-05",
       "video": "docs/qa/demo-recordings/reminder-home.webm",
       "screenshot": "docs/qa/demo-recordings/reminder-home.png",
@@ -12,7 +12,7 @@
     },
     {
       "id": "plant-crud",
-      "title": "Plant CRUD: add -> appears -> open detail -> edit",
+      "title": "Plant CRUD: add -> open detail -> edit -> back to list (still shows the new plant card present)",
       "proof": "FR-PLANT-01, FR-PLANT-05, FR-PLANT-06",
       "video": "docs/qa/demo-recordings/plant-crud.webm",
       "screenshot": "docs/qa/demo-recordings/plant-crud.png",

@@ -1,4 +1,4 @@
-# Reminder home: due summary count + due section, water-now decrements
+# Reminder home: due summary count + due section; two water-now taps decrement 3 -> 1 (still shows the AFTER state)
 
 **Proves:** FR-REM-03, FR-REM-04, FR-REM-05
 

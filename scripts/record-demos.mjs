@@ -90,7 +90,8 @@ const UK = {
 const CLIPS = [
   {
     id: "reminder-home",
-    title: "Reminder home: due summary count + due section, water-now decrements",
+    title:
+      "Reminder home: due summary count + due section; two water-now taps decrement 3 -> 1 (still shows the AFTER state)",
     proof: "FR-REM-03, FR-REM-04, FR-REM-05",
     viewport: DESKTOP,
     run: async (page) => {
@@ -156,11 +157,51 @@ const CLIPS = [
           .isVisible(),
         `summary count decremented to ${expected} (FR-REM-05)`,
       );
+
+      // FR-REM-05 (continued): water a SECOND due plant so the SETTLED still
+      // ends in an unambiguous AFTER state — the seed guarantees 3 due, so this
+      // drives the count down to 1 with a single due row remaining. A lone "1"
+      // banner + a single «Полити зараз» row makes the decrement visible in one
+      // frame (vision-verify reads the still, not the whole flow).
+      const expectedFinal = expected - 1;
+      await page.getByRole("button", { name: UK.waterNow }).first().click();
+      await page
+        .locator("div", { hasText: UK.summaryLabel })
+        .last()
+        .getByText(String(expectedFinal), { exact: true })
+        .waitFor({ state: "visible" });
+      const dueFinal = await page
+        .getByRole("button", { name: UK.waterNow })
+        .count();
+      assert(
+        dueFinal === expectedFinal,
+        `after a second water-now exactly one more row left (${expected} -> ${dueFinal}, expected ${expectedFinal}) (FR-REM-05)`,
+      );
+      assert(
+        await page
+          .locator("div", { hasText: UK.summaryLabel })
+          .last()
+          .getByText(String(expectedFinal), { exact: true })
+          .isVisible(),
+        `summary count decremented to ${expectedFinal} after two waterings (FR-REM-05)`,
+      );
+    },
+    // The settled still is captured here, on the home in the AFTER state: count
+    // decremented to 1 and one due row left. Pin the moment so the screenshot
+    // can't catch a mid-revalidate flash of the pre-tap count.
+    still: async (page) => {
+      await page
+        .locator("div", { hasText: UK.summaryLabel })
+        .last()
+        .getByText("1", { exact: true })
+        .waitFor({ state: "visible" });
+      await settle(page);
     },
   },
   {
     id: "plant-crud",
-    title: "Plant CRUD: add -> appears -> open detail -> edit",
+    title:
+      "Plant CRUD: add -> open detail -> edit -> back to list (still shows the new plant card present)",
     proof: "FR-PLANT-01, FR-PLANT-05, FR-PLANT-06",
     viewport: DESKTOP,
     run: async (page) => {
@@ -210,6 +251,36 @@ const CLIPS = [
           .isVisible(),
         "edited name persists on the detail view (FR-PLANT-06)",
       );
+
+      // FR-PLANT-05: navigate back to the list and assert the plant is PRESENT
+      // there as a card heading (now under its edited name). This both proves
+      // add->list and positions the settled still on the list so the new plant
+      // card is visible in one frame. Stash the edited name on the page for the
+      // still hook (the hook gets no flow-local closure otherwise).
+      await page.goto(BASE_URL);
+      await page
+        .getByRole("heading", { name: editedName, level: 2 })
+        .waitFor({ state: "visible" });
+      assert(
+        await page.getByRole("heading", { name: editedName, level: 2 }).isVisible(),
+        "the added (edited) plant is present on the list (FR-PLANT-05)",
+      );
+      await page.evaluate((n) => {
+        window.__demoEditedName = n;
+      }, editedName);
+      await settle(page);
+    },
+    // The settled still is captured here, on the plant LIST, with the newly
+    // added plant card visible — so add->list (FR-PLANT-05) is provable from the
+    // single frame. The edit (FR-PLANT-06) remains in the video, and the card
+    // carries the «(оновлено)» suffix so the still also reflects it.
+    still: async (page) => {
+      const editedName = await page.evaluate(() => window.__demoEditedName);
+      if (editedName) {
+        await page
+          .getByRole("heading", { name: editedName, level: 2 })
+          .waitFor({ state: "visible" });
+      }
       await settle(page);
     },
   },
@@ -480,6 +551,11 @@ async function main() {
       let error = null;
       try {
         await clip.run(page);
+        // Optional per-clip hook to PIN the exact settled moment to screenshot
+        // (e.g. end reminder-home in the decremented AFTER state, end plant-crud
+        // back on the list with the new card). Only runs when the flow asserted,
+        // so a failing clip still screenshots wherever it broke for debugging.
+        if (clip.still) await clip.still(page);
         await settle(page); // settle again before the proof still
       } catch (e) {
         asserted = false;

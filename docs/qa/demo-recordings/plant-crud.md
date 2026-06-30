@@ -1,4 +1,4 @@
-# Plant CRUD: add -> appears -> open detail -> edit
+# Plant CRUD: add -> open detail -> edit -> back to list (still shows the new plant card present)
 
 **Proves:** FR-PLANT-01, FR-PLANT-05, FR-PLANT-06
 
