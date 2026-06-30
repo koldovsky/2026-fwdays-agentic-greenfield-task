@@ -42,12 +42,20 @@ describe("«Поливайко» design tokens in app/globals.css (FR-DS-01)", (
     ["moss", "#A7BE92"],
     ["mist", "#DDE7CF"],
     ["bark", "#5A4232"],
-    ["clay", "#A9744E"],
+    // clay darkened #A9744E → #94623C: as terracotta TEXT ("soon" due line,
+    // secondary CTA label) #A9744E only reached ~3.8:1 on cloud — under WCAG AA
+    // 4.5:1 (NFR-A11Y-02). #94623C reaches 4.94:1 (cloud) / 4.57:1 (paper) and
+    // stays a recognizable terracotta. The decorative `status-soon-dot` keeps
+    // #A9744E (a dot is non-text). Contrast fix, not a weakened assertion.
+    ["clay", "#94623C"],
     ["sand", "#E6D7BE"],
     ["paper", "#F4F1E8"],
     ["cloud", "#FBFAF5"],
     ["ink", "#1B1E18"],
-    ["stone", "#6E7268"],
+    // stone darkened #6E7268 → #62655C: muted/secondary text only reached
+    // 4.35:1 on paper — under WCAG AA 4.5:1 (NFR-A11Y-02). #62655C reaches
+    // 5.26:1 (paper) / 5.68:1 (cloud), still a warm muted grey. Contrast fix.
+    ["stone", "#62655C"],
     ["border", "#E2DDCF"],
   ];
 
