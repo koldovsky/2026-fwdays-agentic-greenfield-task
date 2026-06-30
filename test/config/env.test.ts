@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EnvValidationError, loadEnv } from './env.js';
+import { EnvValidationError, loadEnv } from '../../src/config/env.js';
 
 const validEnv = {
   TELEGRAM_BOT_TOKEN: 'token',

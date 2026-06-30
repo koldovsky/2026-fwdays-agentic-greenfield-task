@@ -79,6 +79,10 @@ src/
 Structure is enforced by **folder discipline, not a framework**. Keep modules small and
 single-purpose. If the project outgrows this, porting into NestJS is a deliberate later decision.
 
+Tests live in a **`test/` tree that mirrors `src/`** (e.g. `src/db/tenancy.ts` →
+`test/db/tenancy.test.ts`) — not co-located. Vitest runs `test/**/*.test.ts`; the prod build
+(`tsconfig.build.json`) excludes `test/`.
+
 When writing/reviewing TS under `src/`, follow the code-craft conventions in
 [.claude/skills/backend-conventions/SKILL.md](./.claude/skills/backend-conventions/SKILL.md)
 (guard clauses, explicit return types, no N+1, Prisma migrations). The skill is model-invoked —

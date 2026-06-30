@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogWhere, tenantWhere } from './tenancy.js';
+import { catalogWhere, tenantWhere } from '../../src/db/tenancy.js';
 
 describe('tenantWhere', () => {
   it('injects userId into an empty where', () => {

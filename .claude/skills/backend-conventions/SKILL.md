@@ -218,7 +218,9 @@ Every domain table carries `user_id` (multi-tenancy, AGENTS.md). Money/macro col
 ## 11. Test the rules that can drift
 
 The behavioral laws are testable — cover them, don't trust them. Each `src/<area>/x.ts` with real
-logic gets a sibling test. Minimum targets (from PRD acceptance criteria):
+logic gets a **mirrored** test at `test/<area>/x.test.ts` (the `test/` tree mirrors `src/`; tests are
+**not** co-located). Vitest picks up `test/**/*.test.ts`; the build (`tsconfig.build.json`) excludes
+`test/`. Minimum targets (from PRD acceptance criteria):
 
 - daily/period total **always equals** the `SUM` of `food_log` rows (never hand-summed);
 - catalog match → `source=fact`; miss → `source=estimate`;

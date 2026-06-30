@@ -2,7 +2,9 @@ import { Bot, type Context } from 'grammy';
 
 // The tracer-bullet greeting. grammY's ctx.reply targets the same chat the update came from, so
 // this proves the full round-trip (Telegram -> bot -> Telegram) without any chat-history state.
-const START_MESSAGE = 'Привет! Я на связи. / Bot is live. Send /start to check the round-trip.';
+// Prose is Ukrainian (the bot mirrors the user's language in prose; structural fields stay English).
+const START_MESSAGE =
+  "Привіт! Я твій тренер з харчування — і я на зв'язку. Напиши /start, щоб перевірити з'єднання.";
 
 /**
  * Handle `/start` by replying into the same chat. Typed on the minimal `reply` surface so it can

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Context } from 'grammy';
-import { handleStart } from './bot.js';
+import { handleStart } from '../../src/bot/bot.js';
 
 describe('handleStart', () => {
   it('replies into the same chat (round-trip ack)', async () => {
