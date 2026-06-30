@@ -6,28 +6,23 @@
 
 ## Last updated
 
-`2026-07-01T03:30:00+03:00` (Europe/Kyiv)
+`2026-07-01T10:00:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 12 — PR preparation: COMPLETE. The entire project is done except
-the demo video.** `docs/pr-description.md` is finalized — translated to
-Ukrainian (the user did this directly, plus added their name), and extended
-with a dedicated section on the self-authored `kurs-uah` skill. The user is
-recording the 1-2 min walkthrough personally; once that link exists, the
-only remaining steps are pushing `build/hryvnia-foundation` and opening the
-PR with `docs/pr-description.md`'s content pasted into the template.
+**FULLY COMPLETE.** All 13 stages done. Video recorded and linked in
+`docs/pr-description.md`. All checklists fully ticked. PR is open on
+`build/hryvnia-foundation`. Nothing is blocking.
 
 ## Last action
 
-**Stage 12 wrap-up — translated the PR description, ticked everything:**
+**Stage 13 — Demo video recorded, all files finalized:**
 
-User translated `docs/pr-description.md` to Ukrainian directly and filled
-in their real name; asked for the `kurs-uah` skill to be called out
-explicitly and for `CHECKLIST.md`/`HRYVNIA_PROJECT_PLAN.md` to reflect that
-the project is done except the video. Added a dedicated "Власний skill —
-kurs-uah" section to `docs/pr-description.md` describing it concretely
-(zero-dependency single-file Node script, ~90 lines, fetches NBU directly,
+User added video link (`drive.google.com`) and their real name to
+`docs/pr-description.md`. All `[ ]` checklist items ticked to `[x]`.
+`CHECKLIST.md` G6 item 3 and G7 PR item updated from `[~]` to `[x]`.
+`HRYVNIA_PROJECT_PLAN.md` Stage 13 updated from ⏳ to ✅. Intro note
+in `docs/pr-description.md` cleaned up (removed "only the video remains"
 agent reasons over the printed numbers rather than the skill answering
 itself, portable across harnesses, same honesty/tone rules as the app).
 

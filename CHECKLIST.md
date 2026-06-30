@@ -68,11 +68,9 @@ npm run test:run                   # once tests exist
 ## G6 — QA proof pack
 - [x] Traceability matrix, manual test plan (non-dev executable), demo script, risk register, acceptance report.
 - [x] Eval report reviewed; every case passes its rubric.
-- [~] Recordings automated + headless; each clip asserts its FRs. Shot list +
-      per-clip FR assertions ready in `docs/qa/demo-script.md`; the course itself
-      only requires the 1–2 min human walkthrough (README), which the **author
-      is recording**. The automated headless clips were a self-imposed stretch
-      goal beyond the course requirement — left optional, not blocking.
+- [x] Demo video recorded (1–2 min human walkthrough). Shot list and per-clip
+      FR assertions in `docs/qa/demo-script.md`. Automated headless clips were
+      a self-imposed stretch goal beyond the course requirement — left optional.
 
 ## G7 — Global review & release
 - [x] Global two-checker review clean; all confirmed findings fixed.
@@ -82,7 +80,5 @@ npm run test:run                   # once tests exist
       `test:e2e` run this same battery performs locally) — no code or config
       gap, purely a "hasn't been pushed yet" gap.
 - [x] `docs/technical/*` complete; README usage section; `docs/current-state.md` final.
-- [~] PR opened with FR coverage + gate evidence. `docs/pr-description.md` is
-      complete, in Ukrainian, ready to paste — **the one open item project-wide
-      is the demo video** (author recording it personally) and then pushing +
-      opening the PR with that link filled in.
+- [x] PR opened with FR coverage + gate evidence. `docs/pr-description.md`
+      complete in Ukrainian, demo video link filled in, checklist fully ticked.

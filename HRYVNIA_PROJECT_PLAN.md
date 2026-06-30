@@ -22,13 +22,11 @@
 | 9 — Maker self-review | ✅ **done** |
 | 10 — Checker review (two checker agents) | ✅ **done** |
 | 11 — Documentation (QA pack + README + technical docs) | ✅ **done** |
-| 12 — PR preparation | ✅ **done** — `docs/pr-description.md` complete (Ukrainian, evidence-linked, mentions the `kurs-uah` skill); only the video link is pending, then push + open |
-| 13 — Demo recording | ⏳ **author is recording it personally** — script + 12-clip shot list ready in `docs/qa/demo-script.md` |
+| 12 — PR preparation | ✅ **done** — `docs/pr-description.md` complete (Ukrainian, evidence-linked, mentions the `kurs-uah` skill) |
+| 13 — Demo recording | ✅ **done** — video recorded, link added to `docs/pr-description.md` |
 
-**Everything in this project is complete except the demo video itself** —
-the one item left, and the author is recording it. Once it exists: drop the
-link into `docs/pr-description.md` (and the PR template), push
-`build/hryvnia-foundation`, open the PR. Nothing else is blocking.
+**The project is fully complete.** All stages done, all checklists green,
+PR opened on `build/hryvnia-foundation`. Nothing is blocking.
 
 Live handoff: **[docs/current-state.md](docs/current-state.md)** (the source of truth for "where are we now").
 
