@@ -1,0 +1,273 @@
+{
+  "generatedAt": "2026-06-30T08:35:36Z",
+  "threshold": 70,
+  "dimensions": {
+    "process-order": 93,
+    "test-integrity": 93.3,
+    "in-scope": 93,
+    "craft": 93
+  },
+  "sliceRollup": {
+    "add-app-shell": 80,
+    "add-plants": 88,
+    "add-growth": 93,
+    "add-watering": 88,
+    "add-charts": 93,
+    "add-design-system": 94,
+    "add-reminders": 93
+  },
+  "units": [
+    {
+      "id": "add-app-shell:process-order",
+      "slice": "add-app-shell",
+      "dimension": "process-order",
+      "score": 94,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are satisfied with directly quotable evidence: test files carry explicit RED-first provenance and @trace-to-spec annotations, and their assertions exercise spec scenarios (no-500 not-found, Ukrainian copy, the values-echo round-trip pinned in both presence and absence) rather than the final code shape. The spec->red->green->review->archive flow is evidenced by tasks.md structure, a present review-findings.json with clean:true, and a triage doc resolving all 14 confirmed items to zero defects with two real bugs fixed and tested. Minor, non-gating imperfections (review-findings headRef left as HEAD rather than a pinned SHA, and Shell.test.tsx since edited by a later slice) keep this just short of a flawless ship-unchanged score."
+    },
+    {
+      "id": "add-app-shell:test-integrity",
+      "slice": "add-app-shell",
+      "dimension": "test-integrity",
+      "score": 80,
+      "pass": true,
+      "judges": 2,
+      "notes": "The critical no-weakening criterion is met with strong evidence: the load-bearing result.test.ts pins both presence and absence of the values key (genuine behavioral coverage, not tautological), FieldError/not-found tests use positive+negative assertions, and the only test removal in the tree is an explicit later-slice feature deletion rather than green-chasing within add-app-shell. Criterion 2 is only partially met: the form-contract and not-found edges are asserted, but the spec's numeric-boundary, over-length, and locale-number scenarios under FR-SHELL-03 are deferred to consuming slices and the theme missing/corrupt fallback is not independently verifiable in the current tree. Critical passes, so pass=true, but the boundary-coverage gap holds the score below the 90+ ship-unchanged band. | The CRITICAL test-integrity criterion is solidly met: the load-bearing result contract test is genuinely behavioral (pins both presence and absence of the values echo, not a tautology), no tests are skipped/deleted/weakened to go green, and the slice's commit trajectory shows tests being added to close gaps rather than relaxed. The later removal of theme-toggle assertions belongs to a separate slice that legitimately superseded FR-SHELL-02. Criterion 2 is only partially met: data/contract/component edge cases are well asserted and numeric/locale boundaries are properly delegated, but several SHALL boundary scenarios this slice owns (360px responsive, both-theme contrast/axe, two-clicks, evergreen browsers) have no automated in-slice assertion — they are honestly deferred but remain unasserted. Strong pass with a real, disclosed coverage gap keeping it below the 90 ship-unchanged band."
+    },
+    {
+      "id": "add-app-shell:in-scope",
+      "slice": "add-app-shell",
+      "dimension": "in-scope",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "All headline changed files map cleanly to the app-shell domain enumerated in the proposal's Impact section, and the only two edits outside the slice's own modules (the traceability regex and the vitest localStorage shim) are both directly and demonstrably necessitated by this slice — the regex by the categorized FR-SHELL-*/NFR-A11Y-* IDs it introduced, the shim by its first-in-repo localStorage tests, each carrying an in-file comment tying it to the cause. No unrelated refactor or opportunistic rewrite is visible in the commit log or changed-files list; the multi-round fixes are corrections to the slice's own seam, not scope creep. I withhold a few points only because I am grading from the process record rather than an isolated per-slice diff (the live tree now contains later-slice files), so I cannot independently confirm zero incidental edits to untracked-by-evidence files."
+    },
+    {
+      "id": "add-app-shell:craft",
+      "slice": "add-app-shell",
+      "dimension": "craft",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both (non-critical) rubric criteria are satisfied with verifiable evidence: a repo-wide grep finds zero TODO/FIXME/HACK markers, and the slice-owned files contain only header documentation plus live code with no commented-out blocks or dead branches. The three-round commit sequence is monotonic forward progress (feat then two review-fix rounds then archive), with the load-bearing form-preservation seam fully landed and tested on both arms, and review-findings.json reporting clean=true with no abandoned work. I withhold a perfect score because the theme subsystem built in this slice was later fully removed (current Shell.tsx: 'NO theme toggle, NO ThemeProvider'), which is adjacent thrash at the program level even though it falls outside this slice's own diff and process."
+    },
+    {
+      "id": "add-plants:process-order",
+      "slice": "add-plants",
+      "dimension": "process-order",
+      "score": 88,
+      "pass": true,
+      "judges": 1,
+      "notes": "The gating criterion is clearly met: I read all three primary test files (validation, actions, integration) and each is explicitly RED-first, @trace-tagged to spec ids, and asserts spec scenarios (trim, species default, Kiev future-date boundary, oversize bounds, malformed/impossible dates, no-resurrection postcondition, cascade intent) rather than the final code shape. The full spec->red->green->review->archive cycle is evidenced with a present review-findings.json clean:true and a dedicated archive commit. I deduct for a real artifact drift — tasks 1.2/2.4 name a date.ts module and test that do not exist (logic folded into validation), and the tasks ledger shows 27/27 ticked despite the review itself confirming task 1.6 and 4.6/4.8 were not honestly checked at the time, so the process ledger is slightly less trustworthy than 90+ would require."
+    },
+    {
+      "id": "add-plants:test-integrity",
+      "slice": "add-plants",
+      "dimension": "test-integrity",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are clearly met on the visible test sources. A repo-wide grep confirms zero skipped/only/tautological tests, and the key not-found and id-validation tests assert no-write postconditions rather than mere return shapes, so the critical gate holds. Boundary, locale and date-edge coverage is unusually thorough (length +1 boundaries, Kiev today-vs-tomorrow, impossible calendar dates, decimal-comma, cascade via a real FK probe), well beyond the happy path. Held just under perfect because the cascade test proves intent against a synthetic probe table rather than the real future child schema — appropriately documented and non-gating."
+    },
+    {
+      "id": "add-plants:in-scope",
+      "slice": "add-plants",
+      "dimension": "in-scope",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Every changed file traces to the plants domain or to spec/task-justified DB plumbing a first-DB slice legitimately requires: db/client.ts migration-apply was a fix for a confirmed runtime 500 (Refs NFR-DATA-01), schema re-export follows the documented per-slice convention, and i18n is the additive task 2.7. The slice-1 ExampleForm deletion is explicit supersession (tasks 2.10/2.12, FR-PLANT-04), not an opportunistic rewrite, and the id-validation guard was an adjudicated security finding rather than drive-by refactoring. I withhold a few points because db/client.ts's auto-migration-on-init is a behavioral infrastructure change that is broader than plants alone and was reactive (post-smoke) rather than planned in tasks, leaving a small residue of scope expansion even though it is well-justified and documented."
+    },
+    {
+      "id": "add-plants:craft",
+      "slice": "add-plants",
+      "dimension": "craft",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both non-critical rubric criteria are clearly met against direct file evidence. A TODO/FIXME/HACK grep over all source dirs returned no matches, the inspected slice files carry only intentional documentation comments with no commented-out or dead code, and an ExampleForm grep over *.ts/*.tsx returned no orphaned references confirming the slice-1 demo deletion was complete. The git log shows a clean forward progression (feat then two forward fixes then archive) with no revert churn or abandoned half-implementation, and the id-validation change is a deliberate security hardening rather than thrash. Held just below a perfect score because grading is bounded to the sampled files rather than the full diff, but no defect was found."
+    },
+    {
+      "id": "add-growth:process-order",
+      "slice": "add-growth",
+      "dimension": "process-order",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both criteria, including the critical one, are met with strong, verifiable evidence: the test files exist on disk, are headed as RED-first and spec-derived, carry @trace tags to spec IDs, and assert exact parsed values and exact ordering (SC-3) rather than truthiness, with the integration test even reaching into raw SQL to prove the FK cascade. The full spec->red->green->review->archive arc is present, review-findings.json is clean:true, and the review gate demonstrably caught and corrected a self-grading inflation (task 1.7 ticked before its component tests existed) before archive. I withhold a few points only because that initial 1.7 tick was inflated in the first commit — the process self-corrected, but it shows the green claim briefly ran ahead of reality."
+    },
+    {
+      "id": "add-growth:test-integrity",
+      "slice": "add-growth",
+      "dimension": "test-integrity",
+      "score": 95,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are met with direct evidence in the repository. A codebase-wide search found zero skipped/only/todo/tautological tests, and the load-bearing height parser plus integration suite assert real return values and exact orderings across the spec's locale, precision, bound, and calendar-date boundaries rather than happy-path truthiness. The three correctness/spec gaps flagged by the CodeRabbit review (claimed-but-missing component tests, uncovered cancel-deletion, stale-row-on-not-found) were verifiably remediated in commit 6387ecb with meaningful assertions. Held just below ship-perfect because the lone visible weak spot is the inline-field-error tests asserting only `.toBeTruthy()` on the message rather than the exact Ukrainian string, a minor strictness gap that does not undermine integrity."
+    },
+    {
+      "id": "add-growth:in-scope",
+      "slice": "add-growth",
+      "dimension": "in-scope",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Verified against the live repo: lib/growth/* and components/growth/* (including the three component test files the review claimed were added in 6387ecb) exist, lib/plants/date.ts is gone, and lib/dates.ts holds the promoted helpers. The only cross-module change is the date-helper promotion, which is triple-documented in proposal/design/tasks with a sound dependency-direction rationale and is a verbatim move rather than a rewrite. Both criteria are met; held just under 'ship unchanged' (95+) because the promotion does touch several consumers (plants/watering/reminders/charts) and the slice could not fully be confined to its own tree, though that is the spec-sanctioned cost of the shared-helper pattern."
+    },
+    {
+      "id": "add-growth:craft",
+      "slice": "add-growth",
+      "dimension": "craft",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Direct inspection of the actual files confirms both craft criteria. No TODO/FIXME/dead-code/commented-out blocks exist in the slice: grep across lib/growth and components/growth returned no matches, and the comments present are intentional design-trace documentation. The one dead-code candidate (getMeasurement) is documented and test-exercised rather than orphaned. The commit history is a clean three-step progression (implement, remediate review findings, archive) with no reverts, the date.ts->dates.ts rename left no orphan, and every module is fully implemented with no half-stubs. I withhold the top band only because getMeasurement being kept for a future slice is a mild (well-justified) deviation from strict YAGNI rather than a strictly shippable-as-is minimum."
+    },
+    {
+      "id": "add-watering:process-order",
+      "slice": "add-watering",
+      "dimension": "process-order",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are satisfied with directly quotable evidence. The test files carry explicit RED-phase, written-from-spec-before-implementation headers with @trace tags to spec requirements/scenarios, and their assertions verify the spec's exact behavioral contracts (note null-vs-empty, 500/501 boundary, future-date-in-Kiev rejection, same-date tie-break, confirm/cancel deletion) rather than incidental code shape. The lifecycle (red tests -> green impl -> review -> archive) is evidenced by tasks.md structure, a present and clean review-findings.json (clean=true, 0 unresolved defects, all confirmed findings FIXED/ACCEPTED), and the archive commit. Minor deduction only because queries.ts has no dedicated standalone *.test.ts (its behavior is covered via service/integration tests), an immaterial gap."
+    },
+    {
+      "id": "add-watering:test-integrity",
+      "slice": "add-watering",
+      "dimension": "test-integrity",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "notes": "Direct inspection of all five watering test files plus the integration suite shows substantial, meaningful, behavior-anchored assertions with no skips, todos, only-focus, or tautologies (grep confirmed zero matches). Both rubric criteria are decisively met: the critical no-weakening criterion holds (tests landed with impl, the gate-caught a11y regression tightened rather than loosened assertions), and the edge/locale/boundary criterion is exceeded — 500/501 boundary with verbatim echo, Kiev timezone today/tomorrow boundary, impossible calendar dates, strict null-not-empty-string contract, exact deterministic tie-break ordering, and adversarial input are all explicitly asserted. Held just below a perfect score only because one confirmed finding (over-length note missing maxLength) reached review before being caught, indicating the form-level test coverage trailed the validation-layer coverage slightly."
+    },
+    {
+      "id": "add-watering:in-scope",
+      "slice": "add-watering",
+      "dimension": "in-scope",
+      "score": 90,
+      "pass": true,
+      "judges": 1,
+      "notes": "The headline commit stays within the watering domain (db/schema/watering, lib/watering, components/watering) plus the one detail-page section that design D6 / task 2.10 explicitly authorize. The single cross-module edit (485a4ff touching plant+growth forms) is the namespaced-id and aria-describedby fix, which design R7 pre-declared as a collision risk and the review gate flagged as a spec-compliance defect against NFR-A11Y-04/FR-SHELL-03; review-triage.md lines 9-10/17-19 document it as a deliberate cross-cutting fix, so it is justified by spec, not silent drift. The fix is a narrow targeted defect repair (namespace ids, append-not-replace aria-describedby, add maxLength), with no unrelated refactor or rewrite evident. Held just below the 90s ceiling because the edit still reaches into two sibling slices' form code rather than being fully confined to watering, which is a defensible but non-zero in-scope footprint."
+    },
+    {
+      "id": "add-watering:craft",
+      "slice": "add-watering",
+      "dimension": "craft",
+      "score": 88,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both criteria are met against the shipped source. Grep confirms zero TODO/FIXME and no commented-out code blocks; the one review-confirmed 'dead code' item (exported getWatering) is genuinely exercised by 11 test call sites and explicitly documented as an intentional retained helper, so it is not orphaned. The fix round is a single coherent cross-cutting correction rather than revert churn, with all three a11y fixes verifiably present in WateringForm.tsx, 28/28 tasks closed, and a clean archive. I withhold the top band only for the minor craft compromise of resolving the getWatering finding by documenting rather than removing an export with no production caller."
+    },
+    {
+      "id": "add-charts:process-order",
+      "slice": "add-charts",
+      "dimension": "process-order",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are met on quoted evidence: series.test.ts is explicitly labelled red-first ('written FROM the spec/design BEFORE the implementation'), tasks.md orders red->green->validate->archive, and the assertions track spec scenarios (same-date tie-break, decimal preservation, same-day count collapse, no zero-fill, 400-point no-cap) rather than the implementation's shape. The review loop closed cleanly (review-findings.json clean:true, triage present, G4 archive commit) with the two gate findings actually fixed via ChartErrorBoundary/spec reconciliation and a new FR-CHART-04 chart-level test. Minor deduction because toGrowthXAxis, the FR-CHART-04 chart test, and ChartErrorBoundary tests were added in the post-review fix commit 2a416f5 after their implementation existed — still spec-driven and behavior-asserting, but not strictly red-before-green for those specific units."
+    },
+    {
+      "id": "add-charts:test-integrity",
+      "slice": "add-charts",
+      "dimension": "test-integrity",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "notes": "Direct inspection of all chart test files confirms the critical criterion: a clean grep for skip/todo/only/tautological patterns, a monotonically growing test count (no deletions), and assertions that pin exact data shapes and behavior rather than expect(true). The two gate findings (missing inline render-failure state, no chart-level FR-CHART-04 test) were closed with a real error-boundary class and a genuinely throwing-child test plus a re-render point-count test — strengthening, not weakening, the suite. Every spec edge/locale/boundary scenario provable in jsdom has a corresponding meaningful assertion; the only uncovered scenario is the 500ms paint budget, which is correctly and explicitly deferred to Phase 6 (jsdom cannot paint Recharts) with the data-side no-cap guarantee asserted instead — honest scoping, not an integrity gap. Held just under perfect because perf verification remains deferred rather than evidenced."
+    },
+    {
+      "id": "add-charts:in-scope",
+      "slice": "add-charts",
+      "dimension": "in-scope",
+      "score": 95,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both criteria are met on verified evidence. The slice's net-new code is fully contained in its own domain (lib/charts, components/charts); the cross-module edits are minimal and load-bearing for the feature — page.tsx only mounts the chart islands over already-loaded data, uk.ts adds an additive copy block, and the global-spec reconcile is explicitly driven by a confirmed review-gate finding (the omitted load-failure error state), not silent drift. The fix commit added only new functions/components and left the existing pure series functions untouched, so no opportunistic rewrite was smuggled in. Held just under 'ship unchanged' because the global spec.md is a shared cross-module artifact whose justification, while sound and documented, relies on the review trail rather than being self-evident in the slice itself."
+    },
+    {
+      "id": "add-charts:craft",
+      "slice": "add-charts",
+      "dimension": "craft",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Direct inspection of all slice files confirms both criteria. A targeted grep for TODO/FIXME/HACK/@ts-ignore/eslint-disable across the chart source dirs returned no matches, and the only comments present are JSDoc and @trace header docs, not commented-out code or dead scaffolding (series.ts, GrowthChart.tsx, WateringChart.tsx, ChartErrorBoundary.tsx, ChartEmptyState.tsx all read clean). The follow-up fix commit is purely additive (new toGrowthXAxis seam, error boundary, tests, dual spec reconcile) with the charts cleanly mounted in app/plants/[id]/page.tsx alongside the still-present lists — no revert churn or abandoned half-implementation is visible. Not a perfect 100 only because grading is bounded to the static end-state I can see; I cannot replay the full intermediate diff history to rule out transient churn that the final archived tree no longer shows."
+    },
+    {
+      "id": "add-design-system:process-order",
+      "slice": "add-design-system",
+      "dimension": "process-order",
+      "score": 94,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both criteria are met with quotable evidence. Test files are explicitly red-first ('written from the spec BEFORE the implementation exists') with @trace tags, and assertions track spec scenarios (exact token hexes, icon stroke/a11y contract, status-keyed pill/line) rather than the final code shape — the danger-ghost test even asserts the specific 'not text-stone' absence behind the confirmed source-order bug, and PlantCard.test.tsx exists, refuting the once-open phantom-test finding. The full spec→red→green→review→archive loop is evidenced by a clean review-findings.json (clean:true, 8 findings resolved), 28/28 tasks, and the G4 archive commit. Held just below 95 because tokens.test.ts substitutes darkened clay/stone hexes for the spec's literal values — a documented and defensible AA-contrast fix, but a deviation from the spec's stated token values nonetheless."
+    },
+    {
+      "id": "add-design-system:test-integrity",
+      "slice": "add-design-system",
+      "dimension": "test-integrity",
+      "score": 95,
+      "pass": true,
+      "judges": 1,
+      "notes": "Direct inspection of the three test files plus a suite-wide grep confirm the test-integrity claims: no skip/todo/tautological assertions exist, and the danger-ghost fix is covered by an assertion that targets the exact defect (presence of text-danger AND absence of text-stone). The deleted dark-mode tests are verifiable supersession — the surviving tokens.test.ts actively asserts the absence of the dark CSS, so the removal is enforced rather than hidden to go green. Edge cases (Cyrillic, keyboard, type-default, icon a11y, status negative-paths, contrast-corrected hexes, substring-safe hex matching) are all asserted, well beyond happy path; held at 95 rather than 100 because some scenarios (FR-DS-06 rendered legibility, pixel radii/stripe) are explicitly deferred to Phase 6 vision and thus not unit-asserted — a defensible boundary, but it leaves a slice of the design spec un-asserted at this layer."
+    },
+    {
+      "id": "add-design-system:in-scope",
+      "slice": "add-design-system",
+      "dimension": "in-scope",
+      "score": 94,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both in-scope criteria are met with strong traceability: every cross-module edit and every deletion (the slice-1 dark-mode machinery) is explicitly justified by the app-shell MODIFIED spec (FR-SHELL-02a supersedes FR-SHELL-02) and enumerated in the proposal's Impact section, which I verified against the working tree (components/theme/ deleted, lib/theme/ holds only the new token test, no `dark:` in app/, brand key present, appTitle removed). No unrelated refactor was smuggled in — the lone added danger-ghost variant was a review-confirmed correctness fix with a tight test, and reminder wiring was deliberately deferred. Minor deduction only for the slice's broad blast radius (+1789/-753, two capabilities, deletion of a prior slice's modules), which raises in-scope risk even though each edit here is individually justified."
+    },
+    {
+      "id": "add-design-system:craft",
+      "slice": "add-design-system",
+      "dimension": "craft",
+      "score": 94,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both non-critical criteria are met with strong on-disk evidence. A repo-wide grep found zero TODO/FIXME/HACK markers, and every comment in the key files (Button.tsx, PlantCard.tsx, globals.css) is load-bearing design/rationale documentation rather than commented-out code or dead exports. The deletions are documented supersession of slice-1 dark-mode machinery (files confirmed absent via Glob), the fix commit cleanly resolves the confirmed review findings (danger-ghost source-order bug, status-keyed pill, previously-missing PlantCard test now present), and tasks are fully closed with no half-implementation in the diff. Held just under shippable-perfect because PlantCard's filename slug and 'healthy' default add minor incidental surface, but neither constitutes thrash or dead code under this rubric."
+    },
+    {
+      "id": "add-reminders:process-order",
+      "slice": "add-reminders",
+      "dimension": "process-order",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are met with first-hand evidence from the repo, not just the summary: the four test files (status/dates/reminders-integration/actions) are spec-traced, pin a fixed Europe/Kiev today, and assert the spec's exact boundary scenarios and ordering/tie-break rules, with imports designed to fail pre-implementation (red-before-green). The full openspec lifecycle is present — TDD-ordered tasks (37/37), review-findings.json clean:true, a triage adjudicating 10 findings to zero unresolved defects with both majors fixed, and a smoke-gated archive. The only blemish is the stale-ref process nuance: a ticked task once named a service.test.ts that never existed and was resolved by editing the claim (verified: no such file exists, behavior genuinely covered at the integration layer) — a small hygiene dent, so 93 rather than higher."
+    },
+    {
+      "id": "add-reminders:test-integrity",
+      "slice": "add-reminders",
+      "dimension": "test-integrity",
+      "score": 95,
+      "pass": true,
+      "judges": 1,
+      "notes": "I verified every load-bearing claim directly against the repo: the reminders dir ships only status.test.ts + actions.test.ts (no service.test.ts), and the process-nuance resolution is honest — tasks.md 1.7/1.8 were repointed to the real integration test that genuinely covers dueCount/allDone/allRows, rather than weakening or fabricating coverage. A grep across all test files found no skipped, only, todo, or tautological assertions, satisfying the critical criterion. The boundary/locale coverage is unusually thorough (exact soon/healthy edge, decimal-comma locale input, Cyrillic name tie-breaks, impossible calendar dates, INTERVAL_MAX bound), and both confirmed majors carry regression assertions; I withhold a few points only because criterion 2 is non-critical and I did not inspect the source impl to confirm assertions aren't trivially green, but the assertions themselves are concrete and meaningful."
+    },
+    {
+      "id": "add-reminders:in-scope",
+      "slice": "add-reminders",
+      "dimension": "in-scope",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "notes": "Every cross-module edit in the verified files maps directly to a line item in proposal.md's enumerated 'Impact > Code' scope and traces to an FR-REM-* requirement: plants validation/queries gain only intervalDays plumbing, PlantCard and the detail page only wire the derived status pill (surrounding chart/measurement/delete code is visibly untouched in app/plants/[id]/page.tsx), and the plants delta is formally owned via specs/plants/spec.md MODIFIED Requirements rather than being silent drift. The only additions to shared code are purely additive (lib/dates.ts addDays for the due-math) and the INTERVAL_MAX bound, which is an explicitly documented review-fix, not an opportunistic rewrite; review-findings.json is clean with no refactor-drift finding. I withhold a 90+ ceiling fraction only because the one process nuance (tasks 1.7/1.8 originally cited a non-existent test file, resolved by editing tasks.md rather than the discrepancy never occurring) shows minor in-flight bookkeeping slack, though it is adjacent to scope rather than a scope violation."
+    },
+    {
+      "id": "add-reminders:craft",
+      "slice": "add-reminders",
+      "dimension": "craft",
+      "score": 94,
+      "pass": true,
+      "judges": 1,
+      "notes": "Both rubric criteria are met against directly inspected files. Static scans for TODO/FIXME/HACK/ts-ignore/console.log across all changed reminders/plants/db code returned no matches, and the comment lines present are genuine documentation rather than commented-out code. The git trajectory shows no revert churn; the two confirmed review majors were fixed in place (INTERVAL_MAX bound and inline water-now feedback, both verified in source and tests), and the tasks.md test-artifact discrepancy was resolved honestly by repointing to a real integration test whose allDone/getHomeReminders coverage I confirmed at lines 138-157. Score held at 94 (not higher) only because verification rests on the produced source; nothing in the evidence indicates thrash or leftover artifacts."
+    }
+  ]
+}
