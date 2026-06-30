@@ -6,6 +6,23 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T21:55Z — Per-capability docs + git workflow on `dev`
+
+**Done:** Added `docs/capabilities/` (one file per capability, numbered by build order, with
+FR/NFR/TC mapping, scope, non-goals, risks) + an index. Added an AGENTS.md rule: **commit after
+every change to the `dev` branch** (branch from `main`, focused commits, reference IDs, never
+commit to `main` directly). Created the `dev` branch and committed all prior uncommitted work in
+4 focused commits (scaffold, design system, openspec init, docs). Gitignored
+`.claude/settings.local.json`.
+
+**State now:** On `dev`, working tree clean. `main` unchanged (advances via reviewed merge).
+Capabilities documented; OpenSpec specs/changes still not scaffolded.
+
+**Next steps:** Resolve the brand decision, then `openspec new change add-auth` and implement
+test-first — committing each step to `dev`.
+
+---
+
 ## 2026-06-30T21:45Z — Capability split + implementation order (OpenSpec)
 
 **Done:** Wrote `docs/implementation-plan.md` — splits `requirements.md` into 10 OpenSpec
