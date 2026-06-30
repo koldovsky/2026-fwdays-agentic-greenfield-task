@@ -6,6 +6,18 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T22:00Z — Added review-before-commit rule
+
+**Done:** Added an AGENTS.md Workflow rule: review the full diff and run a review pass
+(`/code-review`) plus `lint`/`typecheck`/`test` before every commit; never commit unreviewed
+or red changes.
+
+**State now:** On `dev`, tree clean after this commit. Docs-only change.
+
+**Next steps:** Unchanged — resolve the brand decision, then `openspec new change add-auth`.
+
+---
+
 ## 2026-06-30T21:55Z — Per-capability docs + git workflow on `dev`
 
 **Done:** Added `docs/capabilities/` (one file per capability, numbered by build order, with

@@ -77,6 +77,10 @@ Newest entry first. Keep it concise; it is a hand-off note, not a changelog of e
   Implement with OpenSpec (one change per capability, in order).
 - Test-first on shared logic. Separate review pass before merge (maker ≠ checker).
 - End each work session by updating `docs/current-state.md`.
+- **Review changes before committing.** Read the full diff (`git diff` / staged diff)
+  and run a review pass — use `/code-review` (or the `requesting-code-review` skill) —
+  before every commit. Confirm `lint`, `typecheck`, and `test` pass on what you're about
+  to commit; fix or explicitly note findings. Never commit unreviewed or red changes.
 - **Commit after every change to the `dev` branch.** Work on `dev` (branch from `main`
   if it doesn't exist); make a focused commit per logical change — never leave the tree
   uncommitted at the end of a task. Reference the relevant FR/NFR/TC ID in the message.
