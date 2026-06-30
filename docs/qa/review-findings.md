@@ -294,3 +294,84 @@ None.
 ### Verdict
 
 **CLEAN** — no confirmed blocking defects. All five baseline spec scenarios are implemented and covered by honest unit tests; `npm run test:run` and `npm run verify` are green. Suggestions above are edge-case hardening and documentation nits, not merge blockers for this slice.
+
+---
+
+## Slice: `currency-picker` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/currency-picker/spec.md` · change `openspec/changes/add-currency-picker/`
+**Scope:** FR-PICK-01 … FR-PICK-03
+**Tests:** `npm run test:run` — 60/60 passed (9 files; this slice adds `lib/currency/filterRates.test.ts`, 7 tests)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Filtering by code | Pass | `filterRates.test.ts:13-16` (`"usd"`/`"UsD"` → `["USD"]`); wired in `RatesView.tsx:68,94` |
+| Filtering by name | Pass | `filterRates.test.ts:18-21` (`"дол"` → `["USD"]`, `"ЄВРО"` → `["EUR"]`) |
+| No match → inline «Нічого не знайдено» | Pass | `RatesView.tsx:69,88-91`; exact wording locked in `uk.test.ts` (`uk.picker.noMatch`); `role="status"`, not a toast |
+| Selecting a filtered currency | Pass | Filtered rows render the same `CurrencyRow` with the same `onSelect={setActiveCode}` wiring as the unfiltered list (`RatesView.tsx:94-100`) — no parallel selection logic introduced |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Verified behaviour (not in the spec's explicit text, confirmed correct)
+
+- **Selection persists across filtering.** `activeRate` is derived from
+  `result.rates` (the full list), not `filteredRates` (`RatesView.tsx:67-68`)
+  — so narrowing the visible rows does not clear a prior selection, even if
+  the selected currency's row scrolls out of the filtered view. The spec only
+  says filtering narrows the list and selecting from it sets the active
+  currency; it says nothing about clearing selection on re-filter. This
+  reading (persist, don't clear) is the less surprising one and matches how
+  the converter/focus panel would otherwise flicker empty on every keystroke
+  if selection were filter-scoped. Confirmed deliberate, not an oversight.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `components/ds/core/Input.jsx` has no `<label>`/`aria-label`
+  association — the search input's accessible name comes from `placeholder`
+  alone, which is a known weaker pattern (lost once typed). This is the
+  **pre-existing** behaviour of the vendored `Input` component (also true of
+  the converter's amount field), not a regression introduced by this slice —
+  flagging for awareness, not as a new defect to fix here.
+- [suggestion] `lib/currency/filterRates.ts` does no Unicode normalisation
+  (e.g. composed vs. decomposed Cyrillic). Unlikely to matter for the fixed
+  NBU currency-name set in practice; flagging only if names are ever sourced
+  from a less controlled input.
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `filterRates.ts` is framework-free (only a type-only import
+  of `Rate`), total, never throws — plain string operations only.
+- **Tests-first discipline confirmed:** `tasks.md` §1.1 records RED
+  (`Cannot find module './filterRates'`) before the implementation existed.
+- **Empty-query vs. empty-result distinction (design.md Decision 2):**
+  `filterRates.test.ts:23-29` separately asserts empty query → full list and
+  whitespace-only query → full list, distinct from the no-match case;
+  `RatesView.tsx:69`'s `showEmpty` guard matches (`query.trim().length > 0`).
+- **`AsOfBadge` stays visible during a no-match filter** — it sits outside
+  the `showEmpty` conditional (`RatesView.tsx:76-80` vs. `88-103`), so the
+  effective-date/stale labelling from `currency-list` is never hidden by an
+  unrelated filter state.
+- **Vendored `CurrencyPicker` correctly not reused** (design.md Decision 4) —
+  confirmed `RatesView.tsx` imports only `Input` from `@/components/ds`, not
+  `CurrencyPicker`; rows still go through `CurrencyRow` (no fabricated trend).
+- **i18n:** `uk.picker.placeholder`/`noMatch` added, no inline literals;
+  `uk.test.ts` locks the exact spec wording for `noMatch`.
+- **No new CSS:** the slice reuses the existing `.shell-slot-empty` class for
+  the empty message — no new tokens or raw values introduced.
+- **Eval case:** `evals/cases/currency-picker.eval.ts` present, rubric traces
+  FR-PICK-01/02/03.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects. FR-PICK-01 … FR-PICK-03 are fully
+implemented; the empty-query/no-match distinction is correctly handled and
+tested; selection-persists-across-filter behaviour was checked and confirmed
+deliberate. Suggestions above are pre-existing a11y notes, not regressions.

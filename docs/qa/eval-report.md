@@ -693,4 +693,118 @@ Clearing the field yields `formatAmount(0)` → «0,00» with no auxiliary error
 
 ---
 
+## Slice: `currency-picker` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `currency-picker`
+**Traces:** FR-PICK-01, FR-PICK-02, FR-PICK-03
+**Sources graded:** `components/rates/RatesView.tsx`, `lib/currency/filterRates.ts`, `lib/i18n/uk.ts` (`picker.*`)
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **97 / 100** |
+| **Automatic fails** | None |
+
+A small, focused slice that does exactly what its spec asks, reuses the
+already-established `CurrencyRow` (no fabricated trend reintroduced), and
+gets the empty-query-vs-no-match distinction right — the easiest place for
+this kind of filter to get subtly wrong.
+
+---
+
+### Rubric scores
+
+#### 1. `filter-correctness` — **97 / 100** — **PASS** (weight 35 → 34.0)
+
+**Criterion:** Typing an ISO code or a Ukrainian-name substring narrows the
+rendered rows to exactly the matching currencies, case-insensitive; clearing
+the field restores the full list.
+
+| Check | Result |
+|---|---|
+| Code match, case-insensitive | ✓ `filterRates.test.ts` (`"usd"`, `"UsD"`) |
+| Name match, case-insensitive substring | ✓ (`"дол"` → USD, `"ЄВРО"` → EUR) |
+| Clearing the field restores the full list | ✓ empty query short-circuits to `rates` unchanged |
+| Live build renders the search input with the locked placeholder | ✓ confirmed in `.next/server/app/index.html` |
+
+**Deduction (−3):** no debounce — fine at ~45 rows (explicitly a documented
+non-goal), but the rubric can't fully verify perceived snappiness without
+a live interaction, only the absence of any artificial delay in the code.
+
+---
+
+#### 2. `empty-result-calm` — **98 / 100** — **PASS** (weight 35 → 34.3)
+
+**Criterion:** A non-matching query shows the exact «Нічого не знайдено»
+wording inline, in place of the rows — never a toast, never an alarming tone,
+never the `AsOfBadge` disappearing too.
+
+| Check | Result |
+|---|---|
+| Exact wording, locked by test | ✓ `uk.picker.noMatch === "Нічого не знайдено"` |
+| `role="status"`, inline (reuses `.shell-slot-empty`) | ✓ |
+| No exclamation marks | ✓ |
+| `AsOfBadge` stays visible during a no-match filter | ✓ confirmed by reading render order, outside the conditional |
+
+**Deduction (−2):** the empty message and the `AsOfBadge` are visually
+adjacent with the same body text size — a slightly stronger visual
+separation (e.g. more vertical space) would make the "list is filtered, not
+broken" read even faster at a glance. Cosmetic.
+
+---
+
+#### 3. `selection-still-works` — **96 / 100** — **PASS** (weight 30 → 28.8)
+
+**Criterion:** Selecting a currency from a filtered (narrowed) result list
+correctly sets the active currency and updates the focus/converter panel,
+identically to selecting from the unfiltered list.
+
+| Check | Result |
+|---|---|
+| Filtered rows use the same `onSelect={setActiveCode}` | ✓ no parallel selection path |
+| Active selection persists if its row is later filtered out of view | ✓ verified deliberate (Checker #1) — `activeRate` reads from the full list |
+| Focus panel / converter unaffected by filter state | ✓ `right={<CurrencyFocusPanel rate={activeRate} />}` doesn't depend on `query` |
+
+**Deduction (−4):** the "selection persists while filtered out of view" choice
+is correct and intentional, but there's no visible affordance (like a chip or
+a "clear filter" link) telling the user their selection is still active when
+its row isn't shown — a minor discoverability gap, not a correctness issue.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks in user copy | **None found** |
+| Wrong/paraphrased empty-result wording | **None found** — exact match, test-locked |
+| Toast used for the empty state | **None found** — inline, `role="status"` |
+| Selection broken after filtering | **None found** |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `filter-correctness` | 35 | 97 | 34.0 |
+| `empty-result-calm` | 35 | 98 | 34.3 |
+| `selection-still-works` | 30 | 96 | 28.8 |
+| **Total** | **100** | | **97 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+1. None blocking. Optional: a small "selected currency" indicator near the
+   filter input when the active selection is filtered out of the visible rows.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*

@@ -18,11 +18,12 @@ describe("uk i18n table — centralisation", () => {
     }
   });
 
-  it("exposes the shell, rates, meta, and converter groups", () => {
+  it("exposes the shell, rates, picker, converter, and meta groups", () => {
     expect(uk.shell).toBeDefined();
     expect(uk.rates).toBeDefined();
-    expect(uk.meta).toBeDefined();
+    expect(uk.picker).toBeDefined();
     expect(uk.converter).toBeDefined();
+    expect(uk.meta).toBeDefined();
   });
 });
 
@@ -61,5 +62,12 @@ describe("uk i18n table — rates error/empty copy", () => {
       "Не вдалося завантажити курс. Спробуйте ще раз.",
     );
     expect(uk.rates.retry).toBe("Спробувати ще раз");
+  });
+});
+
+/** @trace FR-PICK-02 */
+describe("uk i18n table — picker copy", () => {
+  it("locks the exact spec wording for no match", () => {
+    expect(uk.picker.noMatch).toBe("Нічого не знайдено");
   });
 });

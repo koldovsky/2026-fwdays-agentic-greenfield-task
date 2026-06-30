@@ -22,6 +22,10 @@ export const uk = {
     retry: "Спробувати ще раз",
     selectPrompt: "Оберіть валюту зі списку зліва.",
   },
+  picker: {
+    placeholder: "Пошук за кодом або назвою",
+    noMatch: "Нічого не знайдено",
+  },
   converter: {
     amountInForeign: (code: string) => `Сума у ${code}`,
     amountInUah: "Сума у гривнях",

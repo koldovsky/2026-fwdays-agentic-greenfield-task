@@ -2,20 +2,23 @@
 
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell/AppShell";
-import { AsOfBadge, Button } from "@/components/ds";
+import { AsOfBadge, Button, Input } from "@/components/ds";
 import { uk } from "@/lib/i18n/uk";
+import { filterRates } from "@/lib/currency/filterRates";
 import { isStaleRate } from "@/lib/nbu/kyivDate";
 import type { FetchRatesResult } from "@/lib/nbu/fetchTodayRates";
 import { CurrencyFocusPanel } from "./CurrencyFocusPanel";
 import { CurrencyRow } from "./CurrencyRow";
 
 /**
- * Client orchestrator for the currency-list slice: owns selection + the
- * fetch-failure retry. First load is server-rendered (no client loading
- * flash); retry re-enters the shell's loading skeleton while it re-fetches
- * via the Route Handler (never calling NBU from the browser — TC-DATA-01).
+ * Client orchestrator for the currency-list + currency-picker slices: owns
+ * selection, the filter query, and the fetch-failure retry. First load is
+ * server-rendered (no client loading flash); retry re-enters the shell's
+ * loading skeleton while it re-fetches via the Route Handler (never calling
+ * NBU from the browser — TC-DATA-01).
  *
  * @trace FR-RATES-01 FR-RATES-02 FR-RATES-03 FR-RATES-04 FR-RATES-05
+ * @trace FR-PICK-01 FR-PICK-02 FR-PICK-03
  */
 export function RatesView({
   initial,
@@ -28,6 +31,7 @@ export function RatesView({
   const [stale, setStale] = useState(initialStale);
   const [loading, setLoading] = useState(false);
   const [activeCode, setActiveCode] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   async function retry() {
     setLoading(true);
@@ -61,6 +65,8 @@ export function RatesView({
   }
 
   const activeRate = result.rates.find((r) => r.code === activeCode) ?? null;
+  const filteredRates = filterRates(result.rates, query);
+  const showEmpty = query.trim().length > 0 && filteredRates.length === 0;
 
   return (
     <AppShell
@@ -72,16 +78,29 @@ export function RatesView({
             stale={stale}
             style={{ marginBottom: "var(--space-3)" }}
           />
-          <div className="currency-list__rows">
-            {result.rates.map((rate) => (
-              <CurrencyRow
-                key={rate.code}
-                rate={rate}
-                selected={rate.code === activeCode}
-                onSelect={setActiveCode}
-              />
-            ))}
-          </div>
+          <Input
+            icon="search"
+            placeholder={uk.picker.placeholder}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ marginBottom: "var(--space-3)" }}
+          />
+          {showEmpty ? (
+            <p className="shell-slot-empty" role="status">
+              {uk.picker.noMatch}
+            </p>
+          ) : (
+            <div className="currency-list__rows">
+              {filteredRates.map((rate) => (
+                <CurrencyRow
+                  key={rate.code}
+                  rate={rate}
+                  selected={rate.code === activeCode}
+                  onSelect={setActiveCode}
+                />
+              ))}
+            </div>
+          )}
         </div>
       }
       right={<CurrencyFocusPanel rate={activeRate} />}
