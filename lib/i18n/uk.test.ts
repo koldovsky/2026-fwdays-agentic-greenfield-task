@@ -18,9 +18,9 @@ describe("uk i18n table — centralisation", () => {
     }
   });
 
-  it("exposes the shell, home, and meta groups", () => {
+  it("exposes the shell, rates, and meta groups", () => {
     expect(uk.shell).toBeDefined();
-    expect(uk.home).toBeDefined();
+    expect(uk.rates).toBeDefined();
     expect(uk.meta).toBeDefined();
   });
 });
@@ -50,5 +50,15 @@ describe("uk i18n table — shared column labels", () => {
   it("defines each column label once, reused by shell and page", () => {
     expect(uk.shell.ratesColumnLabel).toBe("Список курсів");
     expect(uk.shell.focusColumnLabel).toBe("Обрана валюта");
+  });
+});
+
+/** @trace FR-RATES-05 BC-HONESTY-01 */
+describe("uk i18n table — rates error/empty copy", () => {
+  it("locks the load-error and retry strings exactly", () => {
+    expect(uk.rates.loadError).toBe(
+      "Не вдалося завантажити курс. Спробуйте ще раз.",
+    );
+    expect(uk.rates.retry).toBe("Спробувати ще раз");
   });
 });

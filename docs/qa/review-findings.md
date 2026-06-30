@@ -127,3 +127,115 @@ None.
 implemented; the pre-existing column-label duplication is fixed, not just
 relocated; the migration is verified byte-identical. Suggestions above are
 forward-looking notes for later slices, not merge blockers.
+
+---
+
+## Slice: `currency-list` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/currency-list/spec.md` · change `openspec/changes/add-currency-list/`
+**Scope:** FR-RATES-01 … FR-RATES-05, BC-HONESTY-01, NFR-OBS-01, NFR-PERF-01, TC-DATA-01
+**Tests:** `npm run test:run` — 34/34 passed (5 files; this slice adds `lib/nbu/{mapRates,kyivDate,fetchTodayRates}.test.ts`, 20 tests)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+**Live verification:** `npm run build` statically prerendered `/`, which means
+`fetchTodayRates()` actually ran against the live NBU API during the build.
+The rendered HTML (`.next/server/app/index.html`) contains real `USD`/`EUR`
+rows, Ukrainian names, and **"Станом на"** (the non-stale `AsOfBadge` label) —
+confirming the full fetch → map → render → honesty-logic pipeline works
+end-to-end against production data, not just mocks.
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Rates load on first view | Pass | `app/page.tsx:6-10` (Server Component) calls `fetchTodayRates()` at request time; static build output confirms real data rendered |
+| A currency row shows code/name/rate | Pass | `CurrencyRow.tsx:30-39` — `rate.code`, `rate.name`, `fmtRate` (uk-UA, tabular mono via `.currency-row__rate`) |
+| Weekend rate labelled with its real date | Pass | `lib/nbu/kyivDate.ts` (`kyivDateString`/`isStaleRate`, both pure, `now` injected) + `AsOfBadge` in `RatesView.tsx:70-74`; stale computed server-side in `page.tsx:8` to avoid any hydration mismatch |
+| Selecting a row focuses the currency | Pass | `RatesView.tsx:63,76-83` — `activeCode` state, `CurrencyFocusPanel` receives `activeRate` |
+| NBU unreachable → visible degraded state | Pass | `RatesView.tsx:46-60` — inline `role="status"` error box + retry button, never a blank/crash; `fetchTodayRates.ts` never throws (try/catch wraps every failure mode) |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Investigated and resolved (not a finding)
+
+- **FR-RATES-02 "and unit"** — `mapRates.ts`/`CurrencyRow.tsx` display no
+  explicit unit multiplier. Verified this is correct, not a gap: live-probed
+  NBU's `statdirectory/exchange` endpoint for the two currencies historically
+  quoted per-100 elsewhere (JPY, KRW) — both return `rate` already normalized
+  to **per 1 unit** (`JPY rate:0.27749`, `KRW rate:0.02909`). The vendored
+  reference (`docs/design-system/ui_kits/hryvnia/FocusHero.jsx:20`,
+  `RateRow.jsx`) itself only prefixes a unit when `unit > 1` and shows nothing
+  otherwise — so "no unit text" is the established encoding for "unit = 1",
+  which is always true for this endpoint. No fabricated/hardcoded `unit: 1`
+  field was added to the `Rate` type, avoiding a constant field with no real
+  source data.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `lib/nbu/fetchTodayRates.ts:39` — uses Next's `next: {
+  revalidate }` fetch extension. This is a plain object property, not an
+  `import` from `next`, so it satisfies `TC-PURE-01`'s literal "no `next/*`
+  import" rule — but the *behaviour* is Next-aware (the option is meaningless
+  outside Next's patched `fetch`). Flagging the nuance for transparency, not
+  as a defect; consistent with the project's own precedent (`AGENTS.md`:
+  "fetch wrappers may use `fetch` but no React/Next imports").
+- [suggestion] `app/api/rates/route.ts:10` — returns HTTP 200 with
+  `{ ok: false }` in the body on upstream failure, rather than propagating a
+  non-2xx status. This is a deliberate envelope pattern (the client already
+  branches on `result.ok`, not on HTTP status) — reasonable, but worth a
+  one-line code comment if a future slice adds other consumers of this route
+  who might assume 200 means success.
+- [suggestion] `components/rates/RatesView.tsx:38` — the retry path computes
+  `isStaleRate` using the **client's** `Date`, while the first-load path
+  computes it **server-side** (`page.tsx:8`) specifically to avoid a
+  hydration mismatch. This asymmetry is intentional and documented in the
+  component's docstring, but a clock-skewed client could show a wrong stale
+  flag after a retry (cosmetic only — `AsOfBadge` still shows the real
+  `exchangeDate` regardless, so it never lies, only mislabels "stale or not").
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `lib/nbu/mapRates.ts` and `lib/nbu/kyivDate.ts` are
+  framework-free, total, never throw; `mapRates` defensively drops malformed
+  entries (tested with `null`/`42`/non-array/missing-field fixtures).
+  `kyivDate.ts` never calls `Date.now()` internally — `now` is always an
+  explicit parameter (project rule against implicit-clock /
+  `toISOString().slice(0,10)` logic).
+- **Tests-first discipline confirmed:** all three `lib/nbu/*.test.ts` files
+  were written and run to a confirmed `Cannot find module` RED before their
+  implementation files existed (`tasks.md` §1–2 — each "Add `lib/nbu/...`"
+  task follows its "write test, observe RED" task).
+- **TC-DATA-01:** the only two call sites of `fetchTodayRates` are
+  `app/page.tsx` (Server Component) and `app/api/rates/route.ts` (Route
+  Handler) — grepped the whole `components/`/`app/` tree, no client-side
+  import of `lib/nbu/fetchTodayRates` exists. The NBU URL is never sent to
+  the browser.
+- **No fabricated trend data (design.md Decision 2):** `CurrencyRow` does not
+  import or render `TrendBadge`; the vendored `RateRow` (which would force a
+  `delta` prop) is correctly avoided for this slice.
+- **No hydration risk on first load:** `stale` is computed once server-side
+  and passed as a prop, not recomputed client-side during initial render.
+- **Design discipline:** new CSS (`.currency-row*`, `.currency-focus*`,
+  `.rates-error*`) uses only semantic `var(--*)` tokens — independently
+  grepped for raw hex and ramp tokens (`--green-`, `--paper-`, etc.) across
+  the new CSS block; zero matches. `CurrencyAvatar`, `AsOfBadge`, `Button`
+  reused from `@/components/ds`; native `<button>` for `CurrencyRow` (built-in
+  keyboard support, `aria-pressed` reflects selection).
+- **Caching (NFR-PERF-01):** independently confirmed via the build's own
+  route summary — `/` is `○ Static` with `Revalidate 1h`, `/api/rates` is
+  `ƒ Dynamic` — exactly matching the documented design (default path cached
+  hourly, forced-fresh only on explicit retry).
+- **Eval case:** `evals/cases/currency-list.eval.ts` present, rubric traces
+  `FR-RATES-03/05`, `BC-HONESTY-01`, `NFR-OBS-01`.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects. FR-RATES-01 … FR-RATES-05 are
+implemented and verified against live NBU data, not just fixtures. The one
+candidate gap (unit display) was investigated against the live API and the
+vendored design reference and found to be correctly handled, not missing.
+Suggestions above are transparency notes and minor hardening, not blockers.

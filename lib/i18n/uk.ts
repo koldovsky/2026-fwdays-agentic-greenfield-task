@@ -17,9 +17,10 @@ export const uk = {
     focusColumnLabel: "Обрана валюта",
     footerProvenance: "Дані: відкритий API НБУ · без кук і трекерів",
   },
-  home: {
-    ratesPlaceholderHint: "Тут з’явиться офіційний перелік валют НБУ.",
-    focusPlaceholderHint: "Тут буде курс, конвертер і динаміка обраної валюти.",
+  rates: {
+    loadError: "Не вдалося завантажити курс. Спробуйте ще раз.",
+    retry: "Спробувати ще раз",
+    selectPrompt: "Оберіть валюту зі списку зліва.",
   },
   meta: {
     title: "Гривня — офіційний курс НБУ",

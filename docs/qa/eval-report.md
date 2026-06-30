@@ -356,4 +356,162 @@ confirmed the same two non-ASCII cases.
 
 ---
 
+## Slice: `currency-list` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `currency-list`
+**Traces:** FR-RATES-03, FR-RATES-05, BC-HONESTY-01, NFR-OBS-01
+**Sources graded:** `RatesView.tsx`, `CurrencyRow.tsx`, `CurrencyFocusPanel.tsx`, `app/page.tsx`, `app/api/rates/route.ts`, `lib/i18n/uk.ts` (`rates.*`), the live-rendered `.next/server/app/index.html`
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **95 / 100** |
+| **Automatic fails** | None |
+
+Graded against the live-rendered output, not just source: the build actually
+hit NBU and rendered real rates, so this is the first slice judged partly on
+genuine production data rather than a description of intended behaviour.
+
+---
+
+### Rubric scores
+
+#### 1. `stale-date-honest` — **94 / 100** — **PASS** (weight 30 → 28.2)
+
+**Criterion:** When the official rate is from a previous business day, the
+`AsOfBadge` shows that real date plainly («Курс за DD.MM.YYYY») — never
+relabelled as today, never alarming.
+
+| Check | Result |
+|---|---|
+| Stale flag computed from real NBU `exchangedate`, not a guess | ✓ `lib/nbu/kyivDate.ts` — pure, tested |
+| Computed server-side for first load (no hydration mismatch) | ✓ `app/page.tsx:8` |
+| `AsOfBadge` receives both `date` and `stale` | ✓ `RatesView.tsx:70-74` |
+| Live build rendered the **non-stale** "Станом на" label | ✓ confirmed in `.next/server/app/index.html` — today's Kyiv date matched NBU's published date at build time |
+
+**Deduction (−6):** the weekend/holiday-stale branch ("Курс за …") was
+verified by unit test and code inspection, but not observed live in this
+session's build (the build happened to run on a day NBU's rate was current).
+Genuinely untestable on demand without mocking the system clock or waiting
+for a weekend build — not a defect, just an evidence gap for *this specific
+grading session*.
+
+---
+
+#### 2. `error-calm-inline` — **96 / 100** — **PASS** (weight 30 → 28.8)
+
+**Criterion:** On fetch failure, the error message is calm, specific, inline
+(not a toast), and offers a clear retry action; no exclamation marks, no
+stack trace, no raw error text.
+
+| Check | Result |
+|---|---|
+| Inline placement (replaces the list, not an overlay/toast) | ✓ `RatesView.tsx:46-60` |
+| `role="status"` (accessible, non-intrusive) | ✓ |
+| Calm wording, no exclamation marks | ✓ `uk.rates.loadError`: "Не вдалося завантажити курс. Спробуйте ще раз." |
+| Retry action present and labelled | ✓ `uk.rates.retry`: "Спробувати ще раз" |
+| No raw error / stack trace ever reaches the UI | ✓ every catch path in `fetchTodayRates.ts` swallows the underlying error and returns `{ ok: false }` |
+
+**Deduction (−4):** the retry button reuses the DS `Button`'s `outline`
+variant — calm, but visually similar to a generic secondary action; a future
+slice could give retry a slightly more distinct affordance once more error
+states exist to compare against. Polish, not a defect.
+
+---
+
+#### 3. `rate-readability` — **96 / 100** — **PASS** (weight 25 → 24.0)
+
+**Criterion:** Every rate is rendered in mono tabular figures, uk-UA
+formatted (comma decimal), with the ₴ unit clearly attached.
+
+| Check | Result |
+|---|---|
+| `toLocaleString('uk-UA', …)` used for every displayed rate | ✓ `CurrencyRow.tsx:24-27`, `CurrencyFocusPanel.tsx:21-24` |
+| Mono + tabular-nums styling | ✓ `.currency-row__rate`, `.currency-focus__rate` (`font-family: var(--font-mono); font-variant-numeric: tabular-nums`) |
+| ₴ attached, visually de-emphasised vs. the number | ✓ `.currency-row__unit`/`.currency-focus__unit` (smaller, `--text-faint`/`--accent`) |
+| Live-rendered output confirms real formatted numbers | ✓ build HTML contains live USD/EUR rates in this format |
+
+**Deduction (−4):** `maximumFractionDigits: 4` on the list row vs. the focus
+panel's same setting is consistent, but neither pads to a fixed decimal
+width — columns with mixed 2-vs-4-decimal rates (e.g. `44,92` next to
+`0,2775`) won't align as a perfectly ruled ledger. Acceptable for a first
+data slice; a fixed-width formatting pass could tighten this later.
+
+---
+
+#### 4. `no-fabricated-trend` — **100 / 100** — **PASS** (weight 15 → 15.0)
+
+**Criterion:** Currency rows show no trend/delta indicator — this slice has
+no real day-over-day data, and a fabricated flat pill would be dishonest.
+
+| Check | Result |
+|---|---|
+| `CurrencyRow` renders no `TrendBadge` | ✓ |
+| Vendored `RateRow` (which forces a `delta`) is not used | ✓ confirmed by reviewer (Checker #1) and independently by reading `CurrencyRow.tsx` |
+
+**Evidence:**
+
+```12:39:components/rates/CurrencyRow.tsx
+export function CurrencyRow({
+  rate,
+  selected,
+  onSelect,
+}: {
+  rate: Rate;
+  selected: boolean;
+  onSelect: (code: string) => void;
+}) {
+  …
+  return (
+    <button …>
+      <CurrencyAvatar code={rate.code} size="md" />
+      <span className="currency-row__identity">…</span>
+      <span className="currency-row__rate">…</span>
+    </button>
+  );
+}
+```
+
+No trend element anywhere in the row.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks in user copy | **None found** |
+| Fake «станом на» / today dates on a stale rate | **None found** — `AsOfBadge` always receives the real `exchangedate` |
+| Alarming empty states / toasts | **None found** — error is inline, `role="status"`, calm wording |
+| `NaN` / raw error in user-facing copy | **None found** — every NBU failure path resolves to the fixed `uk.rates.loadError` string, never the underlying error |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `stale-date-honest` | 30 | 94 | 28.2 |
+| `error-calm-inline` | 30 | 96 | 28.8 |
+| `rate-readability` | 25 | 96 | 24.0 |
+| `no-fabricated-trend` | 15 | 100 | 15.0 |
+| **Total** | **100** | | **95 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+1. None blocking. Optional: fixed-width / padded decimal formatting so mixed
+   2-and-4-decimal rates align as a stricter ledger column.
+2. Optional: a visually distinct retry affordance (vs. generic `outline`
+   button) once more error states exist across the app to compare against.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*
