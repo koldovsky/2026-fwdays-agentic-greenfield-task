@@ -1,0 +1,149 @@
+// Core data layer (M1). Source of truth = Postgres (invariant #1). Every domain row carries
+// user_id (invariant #8). Stored numbers: Int for kcal, Decimal for grams/cm/kg — never Float
+// (backend-conventions rule 10). DB column/table names are snake_case via @map; enum values stay
+// English. Deferred tables (open_questions, notion_*, progress_notes) land with their features.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FoodPer {
+  per100g  @map("100g")
+  per100ml @map("100ml")
+  portion
+  piece
+  dish
+
+  @@map("food_per")
+}
+
+enum Meal {
+  breakfast
+  lunch
+  dinner
+  snack
+
+  @@map("meal")
+}
+
+enum FoodSource {
+  fact
+  estimate
+
+  @@map("food_source")
+}
+
+enum ReviewPeriod {
+  daily
+  weekly
+  monthly
+
+  @@map("review_period")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  chatId         BigInt   @unique @map("chat_id")
+  name           String?
+  age            Int?
+  sex            String?
+  heightCm       Int?     @map("height_cm")
+  activity       String?
+  goal           String?
+  tz             String   @default("Europe/Kyiv")
+  targetKcal     Int?     @map("target_kcal")
+  targetProteinG Decimal? @map("target_protein_g") @db.Decimal(7, 2)
+  targetFatG     Decimal? @map("target_fat_g") @db.Decimal(7, 2)
+  targetCarbsG   Decimal? @map("target_carbs_g") @db.Decimal(7, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  foodLog        FoodLog[]
+  bodyMetrics    BodyMetric[]
+  reviews        Review[]
+  foodDatabase   FoodDatabase[]
+
+  @@map("users")
+}
+
+model FoodDatabase {
+  id        Int      @id @default(autoincrement())
+  name      String
+  per       FoodPer
+  kcal      Int
+  proteinG  Decimal  @map("protein_g") @db.Decimal(7, 2)
+  fatG      Decimal  @map("fat_g") @db.Decimal(7, 2)
+  carbsG    Decimal  @map("carbs_g") @db.Decimal(7, 2)
+  userId    Int?     @map("user_id") // null = global catalog entry; else the owning user
+  createdBy Int?     @map("created_by") // author user id (kept FK-loose: a global entry's author need not be a live user row)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodLog   FoodLog[]
+
+  @@index([userId])
+  @@map("food_database")
+}
+
+model FoodLog {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @map("user_id")
+  date      DateTime   @db.Date
+  meal      Meal
+  entryName String     @map("entry_name")
+  qty       Decimal    @db.Decimal(8, 2)
+  unit      String
+  kcal      Int
+  proteinG  Decimal    @map("protein_g") @db.Decimal(7, 2)
+  fatG      Decimal    @map("fat_g") @db.Decimal(7, 2)
+  carbsG    Decimal    @map("carbs_g") @db.Decimal(7, 2)
+  source    FoodSource
+  foodDbId  Int?       @map("food_db_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodDb    FoodDatabase? @relation(fields: [foodDbId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+  @@map("food_log")
+}
+
+model BodyMetric {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  date       DateTime @db.Date
+  weightKg   Decimal? @map("weight_kg") @db.Decimal(6, 2)
+  waistCm    Decimal? @map("waist_cm") @db.Decimal(6, 2)
+  chestCm    Decimal? @map("chest_cm") @db.Decimal(6, 2)
+  hipsCm     Decimal? @map("hips_cm") @db.Decimal(6, 2)
+  bicepCm    Decimal? @map("bicep_cm") @db.Decimal(6, 2)
+  thighCm    Decimal? @map("thigh_cm") @db.Decimal(6, 2)
+  conditions String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("body_metrics")
+}
+
+model Review {
+  id           Int          @id @default(autoincrement())
+  userId       Int          @map("user_id")
+  period       ReviewPeriod
+  periodStart  DateTime     @map("period_start") @db.Date
+  periodEnd    DateTime     @map("period_end") @db.Date
+  body         String
+  reviewedFlag Boolean      @default(false) @map("reviewed_flag")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period, periodStart])
+  @@index([userId, period])
+  @@map("reviews")
+}

@@ -8,15 +8,17 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` code-complete locally** — `src/` skeleton (grammY long-poll, zod config, `/health`),
-Dockerfile, CI→GHCR, tests (9 green), all gates passed + maker≠checker review resolved. Remaining
-for M0: the **human deploy** (push → GHCR public toggle → Coolify pull → real round-trip).
+**M0 `pipe` + M1 `data` code-complete locally.** `pipe`: grammY long-poll skeleton, zod config,
+`/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core tables), init migration, pooled
+client (pinned pool), `user_id` tenancy helper, `migrate deploy` + `$connect` at startup. 16 tests
+green; all gates + maker≠checker review passed on both. Remaining: the **human deploy** (push →
+GHCR public → Coolify pull → migrate → round-trip).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
 |---|---|
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
-| M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | ⬜ not started |
+| M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | ⬜ not started |
 | M3 — Core logging (text + Food DB) | ⬜ not started |
 | M4 — Vision (photo plate) | ⬜ not started |
@@ -42,13 +44,18 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   `Dockerfile` (non-root, heap-capped) + `.dockerignore`, CI `image` job (build on PRs, push GHCR on
   `main`) + `typecheck` wired. `npm run dev/build/start` now live. Reviewer-resolved (rule-6 arrows,
   PR image build). **Fallow still deferred** (ADR-0011 — not wired; tracer-bullet scope).
+- **M1 `data` layer** — `prisma/schema.prisma` (users, food_database, food_log, body_metrics,
+  reviews; Int kcal, Decimal grams/cm, `@db.Date`, English enums), `prisma/migrations/*_init`,
+  `src/db/client.ts` (pooled singleton, `connection_limit=5`), `src/db/tenancy.ts` (`user_id`
+  choke-point), startup `migrate deploy` + `$connect`. `db:generate/migrate/deploy` scripts live.
 - Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
 
 ## In progress
-- M0 deploy (human): push branch → CI builds + pushes image → flip GHCR package public (path A) →
-  Coolify pulls + runs → confirm `/start` round-trip + `/health` green + idle RSS < 512 MB.
+- M0/M1 deploy (human): push branch → CI builds + pushes image → flip GHCR package public (path A) →
+  Coolify pulls + runs → container `migrate deploy` creates tables → confirm `/start` round-trip +
+  `/health` + a DB read/write, idle RSS < 512 MB.
 
 Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (15 changes + 1 manual `provision`;
 added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/0013).
@@ -62,8 +69,10 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
 2. ✅ **`pipe` (M0): code-complete + archived** — `src/` skeleton, long-poll + `/health`, multi-stage
    Dockerfile, zod env, CI→GHCR, 9 tests, review resolved. `typecheck` wired; **Fallow deferred**
    (ADR-0011, not yet installed). Remaining: human deploy + first-push GHCR public toggle (path A).
-3. **`data` (M1): NEXT** — Prisma schema + migrations + connection + multi-tenancy, against the
-   provisioned Postgres (blocked-by `pipe`, now unblocked).
+3. ✅ **`data` (M1): code-complete + archived** — schema (5 tables) + init migration + pooled client
+   + tenancy helper + startup migrate/connect. On-box verify is deploy-time (human).
+4. **`router` (M3) / `onboarding` (M2): NEXT** — both unblocked by `data` (wave 2). `onboarding`
+   (`/start` Q&A → Mifflin targets, command-driven) or `router` (6-intent classifier + Anthropic).
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

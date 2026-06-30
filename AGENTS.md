@@ -120,7 +120,10 @@ lint/format, [ADR-0010](./docs/adr/0010-vitest-test-runner.md) tests):
 npm install            # deps (runtime: grammy, zod; plus dev tooling)
 npm run dev            # local bot, long-poll (tsx watch src/index.ts — ADR-0014)
 npm run build          # tsc -p tsconfig.build.json → dist/ (excludes *.test.ts)
-npm start              # node dist/index.js (prod entry; the Docker CMD)
+npm start              # node dist/index.js (prod entry; the Docker CMD = migrate deploy + start)
+npm run db:generate    # prisma generate (regenerate client)
+npm run db:migrate     # prisma migrate dev (author/apply a migration locally, needs a DB)
+npm run db:deploy      # prisma migrate deploy (apply committed migrations; runs in-container at start)
 npm run lint           # eslint . (flat config, type-aware)
 npm run lint:fix       # eslint . --fix
 npm run format         # prettier --write .
@@ -134,13 +137,6 @@ npm run docs:check     # validate ADR index + scripts-documented (pre-push/CI ga
 Git hooks (husky): **pre-commit** runs lint-staged (eslint --fix + prettier on staged files);
 **pre-push** runs `docs:check` then `npm test` — both block the push if red. CI (`.github/
 workflows/ci.yml`) runs the same gates on PRs + pushes to `main`.
-
-*(planned — land with the data layer / M1)*
-
-```bash
-npx prisma migrate dev # apply schema migrations locally
-npx prisma generate    # regenerate client
-```
 
 Confirm exact scripts against `package.json` — update this section when planned ones land.
 

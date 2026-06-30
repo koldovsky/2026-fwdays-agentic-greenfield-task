@@ -11,6 +11,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -22,7 +25,9 @@
     "prepare": "husky || true"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "grammy": "^1.30.0",
+    "prisma": "^6.19.3",
     "zod": "^3.23.8"
   },
   "lint-staged": {

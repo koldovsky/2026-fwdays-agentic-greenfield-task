@@ -3,6 +3,17 @@ import type { Bot } from 'grammy';
 import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
 import { createHealthServer } from './bot/health.js';
+import { prisma } from './db/client.js';
+
+/** Confirm the DB is reachable (migrations are applied by `migrate deploy` before this). */
+const connectDbOrExit = async (): Promise<void> => {
+  try {
+    await prisma.$connect();
+  } catch (error) {
+    console.error('Database connection failed:', error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+};
 
 /** Validate the environment; on failure, print the offending keys and exit non-zero (no boot). */
 const loadEnvOrExit = (): Env => {
@@ -20,6 +31,7 @@ const registerShutdown = (bot: Bot, health: Server): void => {
     console.log(`Received ${signal}, shutting down...`);
     await bot.stop();
     health.close();
+    await prisma.$disconnect();
   };
   process.once('SIGINT', () => void shutdown('SIGINT'));
   process.once('SIGTERM', () => void shutdown('SIGTERM'));
@@ -27,6 +39,9 @@ const registerShutdown = (bot: Bot, health: Server): void => {
 
 const main = async (): Promise<void> => {
   const env = loadEnvOrExit();
+
+  // DB must be reachable before we serve traffic — the DB is the memory (invariant #1).
+  await connectDbOrExit();
 
   const health = createHealthServer();
   health.listen(env.PORT, () => console.log(`Health server listening on :${env.PORT}`));
