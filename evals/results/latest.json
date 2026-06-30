@@ -1,0 +1,164 @@
+{
+  "generatedAt": "2026-06-30T07:34:01Z",
+  "threshold": 70,
+  "dimensions": {
+    "error-clarity": 89,
+    "usability-clarity": 94
+  },
+  "cases": [
+    {
+      "id": "eval-error-clarity-empty-plant-name",
+      "dimension": "error-clarity",
+      "trace": [
+        "FR-SHELL-03",
+        "NFR-LOC-01"
+      ],
+      "capability": "app-shell",
+      "score": 88,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "Both critical criteria are met: the output is an inline, name-scoped, non-500 result (ok:false) and the message is correct Ukrainian. The message is specific (\\\"назву рослини\\\"), blame-free, and actionable (\\\"Вкажіть\\\" = specify/enter a name). The only deduction is that the result key is \\\"inlineMessageForName\\\" instead of the contractually specified fieldErrors.name shape, a divergence from the stated shared-result contract even though the surfaced message satisfies the user-facing intent."
+    },
+    {
+      "id": "eval-usability-empty-chart-states",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-CHART-03",
+        "NFR-LOC-01"
+      ],
+      "capability": "charts",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "Both critical criteria pass: the copy is fluent Ukrainian and unmistakably reads as a no-data empty state rather than a loading or error message. Each message correctly names its own chart (growth/height curve vs. watering frequency) so they are not interchangeable, and both use a friendly, Owner-facing call to action that hints adding data will populate the chart. Minor polish stops it short of a perfect score — the watering message's 'частота поливів' is slightly more technical phrasing than the growth side, and the two sentences are nearly templated — but nothing here would block shipping."
+    },
+    {
+      "id": "eval-usability-watering-frequency-representation",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-CHART-01",
+        "NFR-LOC-01"
+      ],
+      "capability": "charts",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "All four criteria are satisfied: the copy is grammatical Ukrainian, the value-axis label \\\"Поливів за день\\\" (waterings per day) unambiguously reads as a per-day frequency count rather than a cumulative or measured value, and the title \\\"Графік поливів рослини\\\" clearly marks it as the plant's watering chart distinct from growth. Minor nit: \\\"за день\\\" leans slightly toward a rate phrasing and \\\"Кількість поливів\\\" could be marginally more explicit as a count, but the genitive plural \\\"поливів за день\\\" still clearly signals a per-day tally, so the deduction is small."
+    },
+    {
+      "id": "eval-error-clarity-invalid-height",
+      "dimension": "error-clarity",
+      "trace": [
+        "FR-GROWTH-05",
+        "NFR-LOC-01"
+      ],
+      "capability": "growth",
+      "score": 90,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "Both the negative and non-numeric cases return ok:false with an inline height-specific message and no raw 500 or silent no-op, satisfying both critical criteria. The Ukrainian text 'Вкажіть висоту як додатне число в сантиметрах' clearly names what is wrong (positive number in cm) and is blame-free, with an actionable example '12,5' and no codes or driver internals. The output is shippable; I withhold a few points only because the rubric asks me to grade the message a user reads while the field key surfaced here is 'inlineMessageForHeight' rather than the spec's fieldErrors.heightCm, a minor naming deviation that is not load-bearing for what the Owner actually reads."
+    },
+    {
+      "id": "eval-usability-empty-measurements-state",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-GROWTH-02",
+        "NFR-LOC-01"
+      ],
+      "capability": "growth",
+      "score": 95,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "All four criteria, including both critical ones, are satisfied by the single quoted string: it is fluent Ukrainian, a genuine inviting empty state rather than an error/blank, it both states no measurements exist and prompts logging the first, and the polite second-person phrasing with the motivating outcome reads friendly and Owner-directed. The copy is shippable as-is; reserving a small margin only because there is nothing beyond a single short line to evaluate."
+    },
+    {
+      "id": "eval-usability-plant-list-empty-state",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-PLANT-08",
+        "NFR-LOC-01"
+      ],
+      "capability": "plants",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "All four criteria, including both critical ones, are satisfied by the single produced string. The copy is fluent, idiomatic Ukrainian that both states the empty condition ('ще немає жодної рослини') and invites the first action ('Додайте першу'), in a warm, owner-addressed tone with the reassuring 'і вона зʼявиться тут'. It even uses the correct Ukrainian apostrophe (zʼjavytʹsja), a detail localization often gets wrong; I withhold a few points only because there is no way to confirm rendering/context beyond the raw string, but nothing in the output is deficient."
+    },
+    {
+      "id": "eval-error-clarity-future-acquired-date",
+      "dimension": "error-clarity",
+      "trace": [
+        "FR-PLANT-03",
+        "NFR-LOC-01"
+      ],
+      "capability": "plants",
+      "score": 85,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "The output delivers an inline, field-scoped Ukrainian error with `ok:false`, satisfying both critical criteria, and the message text precisely names the fault (future acquired date) and gives a blame-free, actionable fix (\\\"pick today or earlier\\\") with no codes or driver internals. The one weakness is the field key: the scenario specified the shared `{ ok:false, fieldErrors }` shape with the message on `fieldErrors.acquiredDate`, but the output uses a non-contracted `inlineMessageForDate` key — a real deviation from the stated contract that costs points, though the gating concern (inline, not a 500/no-op) and the message itself are sound. Since the rubric directs grading the Ukrainian message and both criticals hold in substance, it passes but not at ship-unchanged level."
+    },
+    {
+      "id": "eval-usability-reminder-due-line-clarity",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-REM-04",
+        "NFR-LOC-01"
+      ],
+      "capability": "reminders",
+      "score": 96,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "All four criteria, including both critical ones, are satisfied by the visible JSON output. The overdue line ('Прострочено — полийте зараз') and soon line ('Полити сьогодні або завтра') are clearly distinct and correctly map to past-due vs due-imminent urgency, and the action/confirmation labels are friendly user-facing Ukrainian. A very minor stylistic inconsistency exists — the overdue line uses the imperative 'полийте' (formal/plural) while the action label uses the infinitive 'полити' — but this does not break clarity or any rubric criterion, so the output is essentially ship-ready."
+    },
+    {
+      "id": "eval-usability-all-done-empty-state",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-REM-06",
+        "NFR-LOC-01"
+      ],
+      "capability": "reminders",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "All four criteria, including both CRITICAL ones, are satisfied by the produced JSON. The title 'Усі политі! 🌱' is correct Ukrainian and reads as a warm celebration with the plant emoji, and the reassurance line 'Сьогодні нічого поливати — ваші рослини доглянуті.' clearly tells the Owner there is nothing to do and frames it positively ('your plants are cared for'). Scored slightly below the 95+ ceiling rather than perfect because the reassurance is competent but not especially distinctive/effusive celebration — solid and shippable but not standout copy."
+    },
+    {
+      "id": "eval-error-clarity-invalid-watering",
+      "dimension": "error-clarity",
+      "trace": [
+        "FR-WATER-02",
+        "NFR-LOC-01"
+      ],
+      "capability": "watering",
+      "score": 93,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "Both critical criteria are met: the output returns inline field-scoped errors with {ok:false} rather than a raw 500 or silent no-op, and both messages are fluent Ukrainian. The note message correctly names the problem (too long) and gives the actionable 500-character limit; the date message is blame-free and hints an acceptable value (today or earlier). Minor deduction only because the field keys are rendered as \\\"inlineMessageForNote\\\"/\\\"inlineMessageForDate\\\" rather than the rubric's literal fieldErrors.note / fieldErrors.wateredOn shape, leaving a small gap between the shown payload and the stated contract — but the field-level intent and message quality are fully satisfied."
+    },
+    {
+      "id": "eval-usability-empty-waterings-state",
+      "dimension": "usability-clarity",
+      "trace": [
+        "FR-WATER-03",
+        "NFR-LOC-01"
+      ],
+      "capability": "watering",
+      "score": 92,
+      "pass": true,
+      "judges": 1,
+      "disagreement": false,
+      "notes": "The copy is fluent, correct Ukrainian addressed politely to the Owner with the formal/respectful second-person form (\\\"Запишіть\\\", \\\"ви бачитимете\\\"). It clearly states there are no waterings yet (\\\"Поки що немає жодного поливу\\\") and invites logging the first (\\\"Запишіть перший\\\"), while also explaining the benefit (\\\"ви бачитимете, коли поливали свою рослину\\\"). Both critical criteria are satisfied and all non-critical criteria are met; it falls just short of 100 only because the benefit clause is a minor enhancement rather than a flaw, but no shippable defect is present."
+    }
+  ]
+}
