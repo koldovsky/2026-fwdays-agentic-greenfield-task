@@ -363,6 +363,108 @@ const CLIPS = [
       );
       await settle(page);
     },
+    // The settled still must FOCUS the chart figures so charts.png is visually
+    // DISTINCT from growth-and-watering.png (which frames the LISTS). A fullPage
+    // screenshot of the detail page would capture the same list-dominated frame
+    // as growth-and-watering regardless of scroll position; so instead of the
+    // generic still we define a `shot` hook that scrolls the growth figure to
+    // the top and captures an ELEMENT-CLIPPED frame spanning both Recharts
+    // figures (forest growth line + clay watering count-per-day) — a frame
+    // dominated by the two rendered charts, not the measurement/watering lists.
+    shot: async (page, path) => {
+      const growth = page.getByRole("figure", { name: UK.growthChartTitle });
+      const watering = page.getByRole("figure", { name: UK.wateringChartTitle });
+      // Both figures' SVGs must have painted before we measure/clip them.
+      await growth.locator("svg").first().waitFor({ state: "visible" });
+      await watering.locator("svg").first().waitFor({ state: "visible" });
+      // The two figures are separated on the detail page by the long
+      // measurement/watering lists + forms, so they never fit one frame together
+      // and a list-spanning clip would just reproduce the growth-and-watering
+      // list still. To make a frame DOMINATED BY BOTH CHARTS, collapse the
+      // intervening non-chart content: hide everything in <main> except the two
+      // chart figures (and their section dividers), so the growth line and the
+      // watering count-per-day chart stack adjacently. This is screenshot-only
+      // (the asserted flow already proved both SVGs render); it just reframes the
+      // settled still. Recharts ResponsiveContainer re-measures on layout change.
+      await page.evaluate(
+        ({ growthName, wateringName }) => {
+          const figs = Array.from(document.querySelectorAll("figure"));
+          const g = figs.find((f) => f.getAttribute("aria-label") === growthName);
+          const w = figs.find((f) => f.getAttribute("aria-label") === wateringName);
+          if (!g || !w) return;
+          // The two chart <figure>s live in sibling wrapper <section>s inside one
+          // outer <section> that also holds the header, the measurement list/form,
+          // and the watering list/form. Find their lowest common ancestor (the
+          // outer section), then hide every child of it that does NOT contain a
+          // kept figure — so the two chart sections collapse adjacently and the
+          // frame is dominated by the two charts.
+          const ancestors = (el) => {
+            const chain = [];
+            for (let c = el; c; c = c.parentElement) chain.push(c);
+            return chain;
+          };
+          const gChain = ancestors(g);
+          const wSet = new Set(ancestors(w));
+          const parent = gChain.find((a) => wSet.has(a)); // lowest common ancestor
+          if (!parent) return;
+          const keepSections = new Set(
+            [g, w].map((fig) => {
+              let cur = fig;
+              while (cur && cur.parentElement !== parent) cur = cur.parentElement;
+              return cur;
+            }),
+          );
+          for (const child of Array.from(parent.children)) {
+            if (!keepSections.has(child)) child.style.display = "none";
+          }
+          // Drop the top margin/border on the kept chart sections so they sit
+          // tight together (purely cosmetic reframing of the still).
+          for (const s of keepSections) {
+            if (s instanceof HTMLElement) {
+              s.style.marginTop = "0";
+              s.style.borderTop = "none";
+              s.style.paddingTop = "12px";
+            }
+          }
+          window.scrollTo({ top: 0, behavior: "instant" });
+        },
+        { growthName: UK.growthChartTitle, wateringName: UK.wateringChartTitle },
+      );
+      // Let ResponsiveContainer re-measure + repaint both SVGs at the new layout.
+      await settle(page);
+      await growth.locator("svg").first().waitFor({ state: "visible" });
+      await watering.locator("svg").first().waitFor({ state: "visible" });
+      // Clip to the union of the two (now-adjacent) figures' boxes — a still
+      // dominated by the forest growth line + clay watering count-per-day chart,
+      // visibly different from the list-dominated growth-and-watering still.
+      const region = await page.evaluate(
+        ({ growthName, wateringName }) => {
+          const figs = Array.from(document.querySelectorAll("figure"));
+          const g = figs.find((f) => f.getAttribute("aria-label") === growthName);
+          const w = figs.find((f) => f.getAttribute("aria-label") === wateringName);
+          if (!g || !w) return null;
+          const gb = g.getBoundingClientRect();
+          const wb = w.getBoundingClientRect();
+          const pad = 12;
+          const top = Math.max(0, Math.min(gb.top, wb.top) - pad);
+          const bottom = Math.max(gb.bottom, wb.bottom) + pad;
+          const left = Math.max(0, Math.min(gb.left, wb.left) - pad);
+          const right = Math.max(gb.right, wb.right) + pad;
+          return {
+            x: Math.floor(left),
+            y: Math.floor(top),
+            width: Math.ceil(right - left),
+            height: Math.ceil(bottom - top),
+          };
+        },
+        { growthName: UK.growthChartTitle, wateringName: UK.wateringChartTitle },
+      );
+      if (region && region.width > 0 && region.height > 0) {
+        await page.screenshot({ path, clip: region });
+      } else {
+        await page.screenshot({ path, fullPage: false });
+      }
+    },
   },
   {
     id: "design-system",
@@ -401,6 +503,60 @@ const CLIPS = [
         "themed home heading «Мої рослини» renders (FR-DS-01)",
       );
       await settle(page);
+    },
+    // The settled still must be a DESIGN close-up that is visually DISTINCT from
+    // plant-crud.png (the full list-grid frame). A fullPage home screenshot would
+    // reproduce the same list frame. So we define a `shot` hook that frames a
+    // SINGLE plant CARD close-up: a tall, one-column-wide region from the top of
+    // the page (so the «Поливайко» wordmark header is in frame) down through the
+    // bottom of the first card — showing that card's status pill + mono filename
+    // chip + forest/clay palette per design D6. This is a tokens/design close-up,
+    // not the list grid plant-crud captures.
+    shot: async (page, path) => {
+      // Pick the first NUMERIC plant card link (the «Додати рослину» control also
+      // links to /plants/new, which is non-numeric and not a card).
+      const cards = page.locator('a[href^="/plants/"]');
+      const count = await cards.count();
+      let cardBox = null;
+      for (let i = 0; i < count; i++) {
+        const href = await cards.nth(i).getAttribute("href");
+        if (href && /^\/plants\/\d+(?:[/?#]|$)/.test(href)) {
+          await cards.nth(i).scrollIntoViewIfNeeded();
+          cardBox = await cards.nth(i).boundingBox();
+          break;
+        }
+      }
+      // Scroll back to the top so the brand wordmark header is in the frame, then
+      // re-measure the card's on-screen box from the top scroll position.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await settle(page, 400);
+      const region = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('a[href^="/plants/"]'),
+        );
+        const card = links.find((el) =>
+          /^\/plants\/\d+(?:[/?#]|$)/.test(el.getAttribute("href") ?? ""),
+        );
+        if (!card) return null;
+        const b = card.getBoundingClientRect();
+        // Pad the card box slightly so the close-up has breathing room, but keep
+        // it one column wide so it reads as a single-card design close-up.
+        const pad = 16;
+        const left = Math.max(0, Math.floor(b.left - pad));
+        const right = Math.min(window.innerWidth, Math.ceil(b.right + pad));
+        const bottom = Math.min(window.innerHeight, Math.ceil(b.bottom + pad));
+        return {
+          x: left,
+          y: 0, // from the very top so the «Поливайко» header wordmark is in frame
+          width: right - left,
+          height: bottom,
+        };
+      });
+      if (region && region.width > 0 && region.height > 0 && cardBox) {
+        await page.screenshot({ path, clip: region });
+      } else {
+        await page.screenshot({ path, fullPage: false });
+      }
     },
   },
   {
@@ -563,7 +719,21 @@ async function main() {
         error = e.message;
       }
       const shot = join(OUT_DIR, `${clip.id}.png`);
-      await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
+      // Capture the settled still. By default we take the WHOLE page (fullPage),
+      // which is the right frame for the list/home clips. A clip may instead
+      // define a `shot(page, path)` hook to capture a FOCUSED region (an
+      // element-clipped frame) so its still is visually DISTINCT from another
+      // clip that shares the same screen — e.g. charts foregrounds the two
+      // chart figures, design-system foregrounds a single plant card. The hook
+      // only runs when the flow asserted; a failed clip still gets the
+      // fullPage debug frame wherever it broke.
+      if (asserted && typeof clip.shot === "function") {
+        await clip.shot(page, shot).catch(async () => {
+          await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
+        });
+      } else {
+        await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
+      }
       const video = page.video();
       await page.close();
       await context.close();
