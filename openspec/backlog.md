@@ -56,7 +56,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | coach-persona | done | agent | 3 | router | — | M3 | Coach persona (honest voice) in stable system prefix + precision-first clarification policy ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)) |
 | onboarding | done | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
 | food-text | done | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
-| metrics | todo | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
+| metrics | done | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
 | query | todo | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
 | correction | todo | agent | 4 | food-text | US-5 | M3 | Correct last entry |
 | clarify | todo | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
