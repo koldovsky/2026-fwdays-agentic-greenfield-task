@@ -22,8 +22,13 @@
 | 9 — Maker self-review | ✅ **done** |
 | 10 — Checker review (two checker agents) | ✅ **done** |
 | 11 — Documentation (QA pack + README + technical docs) | ✅ **done** |
-| 12 — PR preparation | ⏳ in progress — `docs/pr-description.md` drafted; PR not yet opened (blocked on Stage 13's video link + an explicit push) |
-| 13 — Demo recording | ⬜ — shot list + narration script ready in `docs/qa/demo-script.md` |
+| 12 — PR preparation | ✅ **done** — `docs/pr-description.md` complete (Ukrainian, evidence-linked, mentions the `kurs-uah` skill); only the video link is pending, then push + open |
+| 13 — Demo recording | ⏳ **author is recording it personally** — script + 12-clip shot list ready in `docs/qa/demo-script.md` |
+
+**Everything in this project is complete except the demo video itself** —
+the one item left, and the author is recording it. Once it exists: drop the
+link into `docs/pr-description.md` (and the PR template), push
+`build/hryvnia-foundation`, open the PR. Nothing else is blocking.
 
 Live handoff: **[docs/current-state.md](docs/current-state.md)** (the source of truth for "where are we now").
 
@@ -311,8 +316,14 @@ loading (skeleton of equal footprint); empty (no rate for date → honest messag
 - [x] Evals: `evals/cases/*.eval.ts` + `docs/qa/eval-report.md`.
 - [x] Docs: README · `docs/qa/*` (traceability, manual plan, demo script, risk register, acceptance) · `docs/technical/*` · `docs/current-state.md`.
 - [x] `DESIGN.md` + `docs/design-system/` + frontend design skill.
-- [ ] Demo: automated headless clips + manifest + 1–2 min walkthrough. (Stage 13 — shot list ready)
-- [ ] PR description + open PR; CI green. (`docs/pr-description.md` drafted; PR not yet opened)
+- [x] Demo script ready: 1–2 min walkthrough narration + 12-clip automated
+      shot list, both in `docs/qa/demo-script.md`. The 1–2 min walkthrough
+      itself (the only video the course requires) is being **recorded by the
+      author personally** — the one item in this whole checklist not done by
+      an agent.
+- [x] PR description ready: `docs/pr-description.md`, in Ukrainian, complete
+      and evidence-linked (mentions the `kurs-uah` skill explicitly). Opening
+      the PR is the very last step, once the video link exists.
 
 ---
 

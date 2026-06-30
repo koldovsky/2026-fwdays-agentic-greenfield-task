@@ -6,19 +6,46 @@
 
 ## Last updated
 
-`2026-07-01T03:05:00+03:00` (Europe/Kyiv)
+`2026-07-01T03:30:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 12 — PR preparation: IN PROGRESS.** Stage 11 (QA proof pack)
-committed as `0619f5b`. `docs/pr-description.md` is drafted and ready;
-the actual PR is **not opened** — blocked on the Stage 13 video link and
-on an explicit push (an agent does not push/open a PR without the user's
-go-ahead). Next: Stage 13 (record the demo), then push + open the PR.
+**Stage 12 — PR preparation: COMPLETE. The entire project is done except
+the demo video.** `docs/pr-description.md` is finalized — translated to
+Ukrainian (the user did this directly, plus added their name), and extended
+with a dedicated section on the self-authored `kurs-uah` skill. The user is
+recording the 1-2 min walkthrough personally; once that link exists, the
+only remaining steps are pushing `build/hryvnia-foundation` and opening the
+PR with `docs/pr-description.md`'s content pasted into the template.
 
 ## Last action
 
-**Stage 12 — PR preparation, not yet committed:**
+**Stage 12 wrap-up — translated the PR description, ticked everything:**
+
+User translated `docs/pr-description.md` to Ukrainian directly and filled
+in their real name; asked for the `kurs-uah` skill to be called out
+explicitly and for `CHECKLIST.md`/`HRYVNIA_PROJECT_PLAN.md` to reflect that
+the project is done except the video. Added a dedicated "Власний skill —
+kurs-uah" section to `docs/pr-description.md` describing it concretely
+(zero-dependency single-file Node script, ~90 lines, fetches NBU directly,
+agent reasons over the printed numbers rather than the skill answering
+itself, portable across harnesses, same honesty/tone rules as the app).
+
+Re-framed `CHECKLIST.md` G6/G7 and the project plan's progress table
+honestly rather than just ticking boxes: the automated-headless-clips item
+was always a self-imposed stretch goal beyond what the course actually
+requires (re-read `README.md`'s own grading criteria — only the 1-2 min
+human walkthrough is required), so it's marked `[~]` (optional/deferred,
+not blocking) instead of pretended-done. Likewise CI-green and PR-opened
+stay honest about being one push away rather than claimed prematurely —
+the distinction drawn is "no code or config gap remains" vs. "hasn't
+physically happened yet," not "this is secretly done already."
+
+### Prior
+
+## Last action
+
+**Stage 12 — PR preparation, originally not yet committed:**
 
 Closed out the remaining Stage 11 deliverable from `HRYVNIA_PROJECT_PLAN.md`
 (it scopes `docs/technical/*` + README usage section under Stage 11, not 12 —
