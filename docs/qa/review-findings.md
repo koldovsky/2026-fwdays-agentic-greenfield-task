@@ -592,3 +592,83 @@ session where the maker's own live verification already caught what a
 checker would normally have to go find (all three tones, real data, exact
 token colours) — the review confirmed rather than discovered correctness.
 Suggestions above are forward-looking notes, not blockers.
+
+---
+
+## Slice: `footer-sayings` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/footer-sayings/spec.md` · change `openspec/changes/add-footer-sayings/`
+**Scope:** FR-SAYINGS-01, BC-BRAND-01
+**Tests:** `npm run test:run` — 111/111 passed (16 files; this slice adds
+`kyivDayOfYear` coverage in `kyivDate.test.ts` (4), `selectSaying.test.ts` (4),
+`sayings.test.ts` (5))
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+**Live verification:** real Chrome browser — footer renders both the
+provenance line and the saying; reloaded and confirmed byte-identical text
+(determinism); read the console and confirmed the one hydration warning
+present is the **same pre-existing browser-extension noise** (`fdprocessedid`
+on unrelated `CurrencyRow` buttons) already documented for prior slices — not
+caused by this slice's `saying`/`footerSaying` prop threading, which is
+visible passing correctly in the warning's own component stack
+(`RatesView … saying="Гривня люб…" → AppShell … footerSaying="Гривня люб…"`).
+Independently cross-checked the selected saying against a from-scratch
+day-of-year calculation in Node — exact match.
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Same day shows the same saying | Pass | `selectSaying` is pure/total over `(sayings, date)`; live-confirmed identical text across a page reload |
+| Saying follows the brand voice | Pass | `sayings.test.ts` asserts Cyrillic, non-empty, no `!`; live-rendered text manually read, calm and dry |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `app/page.tsx` calls `new Date()` twice (once for `stale`, once
+  for `saying`) rather than once and reusing the value. In practice these
+  execute microseconds apart with no observable risk (a day-boundary
+  mismatch between the two calls is astronomically unlikely and, even if it
+  occurred, would only affect which footer saying shows — cosmetic, not a
+  correctness issue for the rate data). Flagging for tidiness, not a defect.
+- [suggestion] `lib/sayings/sayings.ts`'s 12-entry corpus repeats roughly
+  monthly (365/12 ≈ 30-day cycle) — acceptable for flavour text per design.md,
+  but noting for whoever next touches this that a longer corpus would extend
+  the repeat cycle if it's ever raised as feedback.
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `lib/sayings/{sayings,selectSaying}.ts` and the
+  `kyivDayOfYear` extension are framework-free — grepped for `react`/`next`
+  imports, zero matches.
+- **Tests-first discipline confirmed:** `tasks.md` §1–2 record RED before
+  each implementation file existed; existing `kyivDate.test.ts` assertions
+  (14 of them, predating this slice) re-ran unmodified and still pass.
+- **No hydration risk (design.md Decision 1), confirmed live, not just
+  reasoned about:** the saying is computed once in `app/page.tsx` (true
+  Server Component boundary) and threaded as a plain prop — `AppFooter`
+  itself never calls `new Date()` or any other non-deterministic input.
+- **`kyivDayOfYear` correctness independently re-derived:** cross-checked
+  Jan 1 → 1, Dec 31 (non-leap year) → 365, and a Kyiv-midnight-rollover case,
+  against a from-scratch Node calculation — exact match, not just trusting
+  the test assertions.
+- **Determinism end-to-end:** confirmed both at the pure-function level
+  (`selectSaying.test.ts`) and live in the browser (reload → same text).
+- **Design discipline:** `.app-footer__saying` CSS uses only existing
+  semantic tokens (`--text-faint`, `--font-sans`); no new raw values.
+- **Eval case:** `evals/cases/footer-sayings.eval.ts` present, rubric traces
+  FR-SAYINGS-01, BC-BRAND-01.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects. FR-SAYINGS-01 is fully
+implemented; the one real architectural risk this slice carried (a
+hydration mismatch from calling `new Date()` in a client-reached component)
+was designed around correctly and confirmed clean live, not just by
+inspection. This closes Stage 5 — all 8 capability slices (7 MVP + this
+optional one) are now built, reviewed, and archived.

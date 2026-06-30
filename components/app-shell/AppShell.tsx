@@ -10,6 +10,7 @@ export type AppShellProps = {
   leftEmptyMessage?: string;
   rightEmptyMessage?: string;
   loading?: boolean;
+  footerSaying?: string;
 };
 
 function ShellSlot({
@@ -40,13 +41,14 @@ function ShellSlot({
   return null;
 }
 
-/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-04 @trace FR-I18N-01 */
+/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-04 @trace FR-I18N-01 @trace FR-SAYINGS-01 */
 export function AppShell({
   left,
   right,
   leftEmptyMessage,
   rightEmptyMessage,
   loading = false,
+  footerSaying,
 }: AppShellProps) {
   return (
     <div className="app-shell">
@@ -75,7 +77,7 @@ export function AppShell({
           </ShellSlot>
         </section>
       </main>
-      <AppFooter />
+      <AppFooter saying={footerSaying} />
     </div>
   );
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { addKyivDays, isStaleRate, kyivDateString, kyivYmd } from "./kyivDate";
+import {
+  addKyivDays,
+  isStaleRate,
+  kyivDateString,
+  kyivDayOfYear,
+  kyivYmd,
+} from "./kyivDate";
 
 /** @trace FR-RATES-03 */
 describe("kyivDateString", () => {
@@ -79,5 +85,27 @@ describe("addKyivDays", () => {
     // already-extracted Y/M/D — no time-of-day component survives.
     const d = addKyivDays(new Date("2026-10-30T22:00:00Z"), -1);
     expect(kyivYmd(d)).toBe("20261030");
+  });
+});
+
+/** @trace FR-SAYINGS-01 */
+describe("kyivDayOfYear", () => {
+  it("returns 1 for January 1st", () => {
+    expect(kyivDayOfYear(new Date("2026-01-01T10:00:00Z"))).toBe(1);
+  });
+
+  it("returns 365 for December 31st in a non-leap year", () => {
+    // 2026 is not a leap year.
+    expect(kyivDayOfYear(new Date("2026-12-31T10:00:00Z"))).toBe(365);
+  });
+
+  it("matches the Kyiv calendar date, not the UTC date, near midnight", () => {
+    // 2026-06-30T22:00:00Z is 2026-07-01 in Kyiv (summer, UTC+3) — day 182.
+    expect(kyivDayOfYear(new Date("2026-06-30T22:00:00Z"))).toBe(182);
+  });
+
+  it("accounts for the leap day in a leap year", () => {
+    // 2028 is a leap year; March 1st is day 61 (31 + 29 + 1).
+    expect(kyivDayOfYear(new Date("2028-03-01T10:00:00Z"))).toBe(61);
   });
 });

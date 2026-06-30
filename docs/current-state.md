@@ -6,14 +6,46 @@
 
 ## Last updated
 
-`2026-06-30T21:00:00+03:00` (Europe/Kyiv)
+`2026-06-30T21:25:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 5 — Per-slice build: 7 of 8 slices done**, reviewed, archived
-(`app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
-`rate-history`, **`trend-hint`**). Only *(optional)* **`footer-sayings`** remains —
-all MVP requirements are now implemented.
+**Stage 5 — Per-slice build: COMPLETE. All 8 capability slices done**, reviewed,
+archived (`app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
+`rate-history`, `trend-hint`, **`footer-sayings`**). All 25 MVP FRs + the one
+Future FR are implemented. Next: **Stage 8** — cross-cutting hardening
+(integration test, full Playwright e2e + axe a11y light/dark).
+
+## Last action
+
+**`footer-sayings` slice — closes Stage 5:**
+
+1. **Propose:** `openspec/changes/add-footer-sayings/` — the one real design
+   call: `AppFooter` is reached through `RatesView`'s (`"use client"`) render
+   tree, so it is **not** a safe place to call `new Date()` directly (same
+   hydration-mismatch class `isStaleRate` already had to avoid in
+   `currency-list`). Resolved by computing the saying once in `app/page.tsx`
+   (the true Server Component boundary) and threading it as a plain prop
+   through `RatesView` → `AppShell` → `AppFooter` — exactly the established
+   `initialStale` pattern. `openspec validate --strict` green.
+2. **kurs-maker (tests-first):** extended `kyivDate.ts` with `kyivDayOfYear`
+   (shares the existing `kyivParts` helper; all 14 pre-existing kyivDate tests
+   re-ran unmodified). Wrote a 12-entry Ukrainian money-saying corpus
+   (`lib/sayings/sayings.ts`) and a pure `selectSaying` (day-of-year modulo
+   corpus length). 13 new assertions, all red-before-green.
+3. **Live verification:** independently cross-checked the live-rendered
+   saying against a from-scratch Node day-of-year calculation (exact match);
+   reloaded the page and confirmed byte-identical text (determinism); read
+   the console and confirmed the one hydration warning present is the
+   *same pre-existing browser-extension noise* already documented for prior
+   slices — not caused by this slice's new prop threading (visible passing
+   correctly in the warning's own component stack).
+4. **kurs-reviewer (Checker #1):** **CLEAN.**
+5. **kurs-eval-judge (Checker #2):** **PASS 95/100** — calm-dry-tone 96,
+   money-relevance 94, determinism 96.
+6. **Archived:** `openspec/changes/archive/2026-06-30-add-footer-sayings/` (`--skip-specs`).
+
+### Prior
 
 ## Last action
 
@@ -187,31 +219,37 @@ OpenSpec change, folded into this slice's commit):**
 
 ## Status
 
-- **Working:** full app shell, theme toggle, centralised i18n, live NBU currency list
-  with selection/stale labelling/error recovery, a bidirectional UAH ⇄ active-currency
-  converter, a code/name filter, a real ~30-day rate-history chart with honest
-  loading/empty/error states, and a calm 7-day trend sentence above it — **all 25 MVP
-  FRs are now implemented.**
-- **Done (slices):** `app-shell`, `i18n`, `currency-list`, `converter`, `currency-picker`,
-  `rate-history` — all archived **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`,
-  `2ccb87b`, `77210b8`, `b191b8b`, plus bugfix `8b63d1f`). **`trend-hint`** archived,
-  **not yet committed**.
-- **In progress:** — (await commit for `trend-hint`)
+- **Working:** the full product — app shell, theme toggle, centralised i18n, live NBU
+  currency list with selection/stale labelling/error recovery, a bidirectional UAH ⇄
+  active-currency converter, a code/name filter, a real ~30-day rate-history chart with
+  honest loading/empty/error states, a calm 7-day trend sentence, and a deterministic
+  daily footer saying. **All 25 MVP FRs + the 1 Future FR are now implemented.**
+- **Done (slices):** all 8 — `app-shell`, `i18n`, `currency-list`, `converter`,
+  `currency-picker`, `rate-history`, `trend-hint` — all archived **and committed**
+  (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`, bugfix `8b63d1f`,
+  `395e992`). **`footer-sayings`** archived, **not yet committed**.
+- **In progress:** — (await commit for `footer-sayings`)
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** the `trend-hint` slice with `Slice:` / `Refs:` trailers.
+1. **Commit** the `footer-sayings` slice with `Slice:` / `Refs:` trailers.
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
-   real isolated Task-tool subagents (still pending across all 7 slices this session).
-3. **MVP requirement coverage is complete.** Remaining options: *(optional)*
-   `footer-sayings` (Future-phase, FR-SAYINGS-01), or move to Stage 8+ — cross-cutting
-   hardening (integration test, full Playwright e2e incl. axe a11y light/dark),
-   Stage 9–10 (maker self-review + global two-checker review), Stage 11 (QA proof pack:
-   traceability matrix, manual test plan, demo script, risk register, acceptance
-   report), Stage 12 (PR), Stage 13 (recorded demo).
-4. A vision check of the actually-rendered chart/UI (not just DOM measurement) is still
-   owed before calling Stage 8/13 done — flagged since `rate-history`.
+   real isolated Task-tool subagents (still pending across all 8 slices this session).
+3. **Stage 5 is complete. Move to Stage 8+:**
+   - Stage 8 — cross-cutting hardening: integration test for the convert→display flow;
+     full Playwright e2e (core flow + responsive breakpoints + axe a11y light/dark).
+   - Stage 9 — maker self-review note (`docs/qa/global-review.md`).
+   - Stage 10 — global two-checker review (re-run `kurs-reviewer`/`kurs-eval-judge`
+     over the whole app, not just the last slice).
+   - Stage 11 — QA proof pack: traceability matrix, manual test plan, demo script, risk
+     register, acceptance report; `docs/technical/*`.
+   - Stage 12 — PR preparation.
+   - Stage 13 — automated headless demo recordings (one per capability + empty/error
+     states) + a 1–2 min screen-capture walkthrough for the course submission.
+4. A genuine **vision check** of the rendered UI (not just DOM measurement/screenshots
+   read by a human in the loop) is still owed before calling Stage 8/13 done — flagged
+   since `rate-history`; the `vision-verify`-style pass belongs in Stage 13.
 
 ## Notes / decisions
 
@@ -272,6 +310,32 @@ OpenSpec change, folded into this slice's commit):**
   a nice-to-have; a vision check of the actual rendered chart is still owed (Stage 8/13).
 - Three manual fixes applied post-converter-review (sticky focus column, Input focus
   ring, `<body>` `suppressHydrationWarning`) — committed in `2ccb87b`.
+- **`trendTone` (vendored, pure) is reused at the component layer, never duplicated or
+  imported into `lib/`** — `lib/` must stay literally `react`-import-free (`TC-PURE-01`)
+  even though the specific function never touches React at runtime; `TrendHint.tsx` is
+  where the impure-file boundary is crossed, same pattern as
+  `CurrencyAvatar`/`AsOfBadge`/`Input`/`Converter`.
+- **Trend sentences use the ISO code as subject, not the declined Ukrainian currency
+  name** — a deliberate, documented scope cut (a full Ukrainian gender/case declension
+  table across ~45 currencies was judged disproportionate for one sentence).
+- **Footer saying computed once server-side in `page.tsx`, threaded as a prop through
+  `RatesView` → `AppShell` → `AppFooter`** — `AppFooter` is reached through `RatesView`'s
+  client boundary, so calling `new Date()` inside it directly would risk a hydration
+  mismatch (same class as `isStaleRate`). Confirmed clean live, not just reasoned about.
+- **`lib/currency/`** now covers the full domain: `parseAmount`, `convert`,
+  `formatAmount`, `filterRates`, `weeklyMove`, `trendSentence` — all pure, total,
+  colocated tests. **`lib/sayings/`** (new): `sayings.ts` (12-entry corpus) +
+  `selectSaying.ts` (pure day-of-year modulo selection). 124 total unit tests across
+  the project.
+- Review suggestions (non-blocking, rate-history): empty/error states share one CSS
+  class (wording is already correctly distinct); chart-shaped loading skeleton would be
+  a nice-to-have; a vision check of the actual rendered chart is still owed (Stage 8/13).
+- Review suggestions (non-blocking, trend-hint): no explicit gap-tolerance fallback in
+  `weeklyMove` if a future data source has missing days (current `mapHistory.ts` output
+  has none, verified live).
+- Review suggestions (non-blocking, footer-sayings): two `new Date()` calls in
+  `page.tsx` could be consolidated into one; the 12-entry corpus repeats ~monthly.
 - Requirement IDs touched: **FR-CONVERT-01…05, NFR-LOCALE-01, NFR-OBS-01** (converter);
   **FR-PICK-01…03** (currency-picker); **FR-HISTORY-01…04, TC-DATA-01** (rate-history);
-  **FR-TREND-01…03, BC-BRAND-01** (trend-hint).
+  **FR-TREND-01…03, BC-BRAND-01** (trend-hint); **FR-SAYINGS-01** (footer-sayings).
+- **All 25 MVP FRs + FR-SAYINGS-01 (Future) now implemented — Stage 5 complete.**

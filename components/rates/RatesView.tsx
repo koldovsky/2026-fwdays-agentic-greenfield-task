@@ -19,13 +19,16 @@ import { CurrencyRow } from "./CurrencyRow";
  *
  * @trace FR-RATES-01 FR-RATES-02 FR-RATES-03 FR-RATES-04 FR-RATES-05
  * @trace FR-PICK-01 FR-PICK-02 FR-PICK-03
+ * @trace FR-SAYINGS-01
  */
 export function RatesView({
   initial,
   initialStale,
+  saying,
 }: {
   initial: FetchRatesResult;
   initialStale: boolean;
+  saying: string;
 }) {
   const [result, setResult] = useState(initial);
   const [stale, setStale] = useState(initialStale);
@@ -51,6 +54,7 @@ export function RatesView({
     return (
       <AppShell
         loading={loading}
+        footerSaying={saying}
         left={
           <div className="rates-error" role="status">
             <p className="rates-error__message">{uk.rates.loadError}</p>
@@ -71,6 +75,7 @@ export function RatesView({
   return (
     <AppShell
       loading={loading}
+      footerSaying={saying}
       left={
         <div className="currency-list">
           <AsOfBadge

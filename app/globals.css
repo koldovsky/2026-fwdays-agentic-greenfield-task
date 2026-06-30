@@ -170,6 +170,13 @@
   letter-spacing: 0.02em;
 }
 
+.app-footer__saying {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
 .shell-skeleton {
   display: flex;
   flex-direction: column;

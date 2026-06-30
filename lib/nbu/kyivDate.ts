@@ -55,3 +55,15 @@ export function addKyivDays(date: Date, delta: number): Date {
 export function isStaleRate(exchangeDate: string, now: Date): boolean {
   return exchangeDate !== kyivDateString(now);
 }
+
+/**
+ * The 1-based day-of-year (1–365/366) of `date`'s Europe/Kyiv calendar date
+ * (FR-SAYINGS-01). Pure, total — UTC-anchored calendar arithmetic on the
+ * extracted Y/M/D, same approach as `addKyivDays`.
+ */
+export function kyivDayOfYear(date: Date): number {
+  const { year, month, day } = kyivParts(date);
+  const yearStart = Date.UTC(Number(year), 0, 1);
+  const current = Date.UTC(Number(year), Number(month) - 1, Number(day));
+  return Math.floor((current - yearStart) / 86_400_000) + 1;
+}

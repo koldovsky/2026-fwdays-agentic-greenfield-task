@@ -1059,4 +1059,113 @@ budget.
 
 ---
 
+## Slice: `footer-sayings` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `footer-sayings`
+**Traces:** FR-SAYINGS-01, BC-BRAND-01
+**Sources graded:** `components/app-shell/AppFooter.tsx`, `lib/sayings/{sayings,selectSaying}.ts`, the live-rendered footer
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **95 / 100** |
+| **Automatic fails** | None |
+
+A small, well-scoped closing slice. The corpus itself is the main thing under
+qualitative judgement here (unlike prior slices, there's no live NBU data to
+react to) — graded by reading all 12 entries directly.
+
+---
+
+### Rubric scores
+
+#### 1. `calm-dry-tone` — **96 / 100** — **PASS** (weight 40 → 38.4)
+
+**Criterion:** Calm, dry, level-headed; no exclamation marks, hype, or
+first-person voice.
+
+| Check | Result |
+|---|---|
+| No exclamation marks in any entry | ✓ (12/12, test-locked) |
+| No first-person voice | ✓ — all observational/imperative-calm ("Перевірте курс. Потім — каву.") |
+| Dry register matches the rest of the app | ✓ — reads consistently with `uk.history`/`uk.rates` copy |
+
+**Deduction (−4):** "Перевірте курс. Потім — каву." (check the rate, then
+coffee) is the wittiest entry in the set — charming, but worth a sanity check
+that it doesn't read as flippant next to an official NBU data product. Judged
+acceptable (still calm, no hype), not a defect.
+
+---
+
+#### 2. `money-relevance` — **94 / 100** — **PASS** (weight 30 → 28.2)
+
+**Criterion:** Thematically about money/currency/calm financial behaviour.
+
+| Check | Result |
+|---|---|
+| Direct currency references | ✓ "гривня", "долар", "банкноти", "сто гривень" appear across entries |
+| Indirect financial-calm theme | ✓ "Стабільність — це теж валюта.", "Гроші люблять рахунок, а не емоції." |
+
+**Deduction (−6):** 2 of 12 entries ("Курс — це число. Спокій — це вибір.",
+"Перевірте курс. Потім — каву.") lean more on the *calm* theme than explicit
+*money* content — still on-topic given the surrounding context (a currency
+app's footer), but slightly thinner on the money-specific angle than the
+strongest entries.
+
+---
+
+#### 3. `determinism` — **96 / 100** — **PASS** (weight 30 → 28.8)
+
+**Criterion:** Identical across reloads on the same day; changes only when
+the day changes.
+
+| Check | Result |
+|---|---|
+| Same text across a live reload | ✓ confirmed by Checker #1 |
+| Pure function, no hidden state | ✓ `selectSaying(sayings, date)` — no module-level mutable state |
+| No hydration-mismatch risk that could *appear* nondeterministic | ✓ computed server-side once, threaded as a prop |
+
+**Deduction (−4):** determinism is provably correct in code, but this
+grading pass didn't independently re-verify it *across an actual day
+boundary* (only within a single session) — inherently hard to test without
+manipulating the system clock; the unit tests' fixed-date assertions are the
+practical substitute and are sound.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks | **None found** (12/12 entries) |
+| First-person/hype voice | **None found** |
+| Hardcoded literal outside a `lib/` data module | **None found** — `AppFooter.tsx` reads only the `saying` prop |
+| Hydration-risk-induced flicker/mismatch | **None found** — confirmed live |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `calm-dry-tone` | 40 | 96 | 38.4 |
+| `money-relevance` | 30 | 94 | 28.2 |
+| `determinism` | 30 | 96 | 28.8 |
+| **Total** | **100** | | **95 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+None blocking. Optional: if the corpus ever grows, lean slightly more
+money-specific for the 2 entries flagged above.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*
