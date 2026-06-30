@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { IBM_Plex_Serif, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { ThemeScript } from "@/components/app-shell/ThemeScript";
 import "./globals.css";
 
 // Self-hosted IBM Plex trio (full Cyrillic) — Serif = display, Sans = UI/body,
@@ -37,9 +38,11 @@ export default function RootLayout({
   return (
     <html
       lang="uk"
+      suppressHydrationWarning
       className={`${plexSerif.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ThemeScript />
         {/* Lucide line icons — the design system's Icon component reads
             window.lucide. Flagged substitution (no house icon set yet). */}
         <Script

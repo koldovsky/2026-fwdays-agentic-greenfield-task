@@ -1,116 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  AsOfBadge,
-  Button,
-  Card,
-  Converter,
-  CurrencyAvatar,
-  Switch,
-  TrendBadge,
-} from "@/components/ds";
+import { AppShell } from "@/components/app-shell/AppShell";
 
-// Temporary in-brand preview to verify the design system is wired.
-// The real app shell is built as its own capability slice later.
+function PlaceholderPanel({
+  title,
+  hint,
+}: {
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="shell-placeholder">
+      <p className="shell-placeholder__title">{title}</p>
+      <p className="shell-placeholder__hint">{hint}</p>
+    </div>
+  );
+}
+
+/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-03 @trace FR-SHELL-04 */
 export default function Home() {
-  const [dark, setDark] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = dark ? "dark" : "";
-  }, [dark]);
+    const timer = window.setTimeout(() => setLoading(false), 600);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
-    <main
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "var(--space-6)",
-        padding: "var(--space-8) var(--space-5)",
-      }}
-    >
-      <header
-        style={{
-          width: "100%",
-          maxWidth: 560,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-mark.svg" alt="" width={36} height={36} />
-          <div style={{ lineHeight: 1.1 }}>
-            <div style={{ fontFamily: "var(--font-serif)", fontSize: "var(--text-lg)", fontWeight: 600 }}>
-              Гривня
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--text-2xs)",
-                letterSpacing: "var(--tracking-label)",
-                textTransform: "uppercase",
-                color: "var(--text-muted)",
-              }}
-            >
-              Офіційний курс НБУ
-            </div>
-          </div>
-        </div>
-        <Switch checked={dark} onChange={setDark} label="Темна тема" />
-      </header>
-
-      <Card style={{ width: "100%", maxWidth: 560 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-3)" }}>
-          <CurrencyAvatar code="USD" flag="🇺🇸" />
-          <span style={{ fontFamily: "var(--font-sans)", color: "var(--text-secondary)" }}>
-            Долар США
-          </span>
-          <span style={{ marginLeft: "auto" }}>
-            <TrendBadge delta={-0.42} />
-          </span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "baseline", gap: "var(--space-2)" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontVariantNumeric: "tabular-nums",
-              fontSize: "var(--text-4xl)",
-              fontWeight: 600,
-              letterSpacing: "var(--tracking-tight)",
-            }}
-          >
-            41,85
-          </span>
-          <span style={{ fontFamily: "var(--font-serif)", fontSize: "var(--text-2xl)", color: "var(--accent)" }}>
-            ₴
-          </span>
-        </div>
-        <p style={{ fontFamily: "var(--font-sans)", color: "var(--text-secondary)", margin: "var(--space-2) 0 var(--space-4)" }}>
-          Долар за тиждень майже без змін до гривні.
-        </p>
-
-        <AsOfBadge date="27.06.2026" stale />
-
-        <div style={{ marginTop: "var(--space-5)" }}>
-          <Converter code="USD" rate={41.85} defaultAmount="100" />
-        </div>
-
-        <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-5)" }}>
-          <Button iconLeft="trending-up">Динаміка за місяць</Button>
-          <Button variant="outline" iconLeft="search">
-            Інша валюта
-          </Button>
-        </div>
-      </Card>
-
-      <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-        Офіційний курс не поспішає. І ви не поспішайте.
-      </p>
-    </main>
+    <AppShell
+      loading={loading}
+      left={
+        <PlaceholderPanel
+          title="Список курсів"
+          hint="Тут з’явиться офіційний перелік валют НБУ."
+        />
+      }
+      right={
+        <PlaceholderPanel
+          title="Обрана валюта"
+          hint="Тут буде курс, конвертер і динаміка обраної валюти."
+        />
+      }
+    />
   );
 }

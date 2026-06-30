@@ -9,6 +9,8 @@
     "lint": "eslint",
     "check:trace": "node scripts/check-traceability.mjs",
     "spec:validate": "openspec validate --all --strict --no-interactive",
+    "test": "vitest",
+    "test:run": "vitest run",
     "verify": "npm run lint && npm run check:trace && npm run spec:validate && npm run build"
   },
   "dependencies": {
@@ -25,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   }
 }
