@@ -32,6 +32,12 @@ An honest coaching verdict for a period — Daily, Weekly, or Monthly — with a
 Its numbers are computed from the logged data; only its prose is written by the model.
 _Avoid_: summary, report, recap, digest.
 
+**Coaching Voice**:
+The bot's single honest persona across every reply — blunt-factual about energy balance and
+trade-offs ("pizza won't make you thinner"), never moralizing about food (no good/bad foods, guilt,
+or shame) and always mirroring the user's language. The same voice in logging and in a Review.
+_Avoid_: tone, personality, cheerleader.
+
 ## Food logging
 
 **Food Database**:

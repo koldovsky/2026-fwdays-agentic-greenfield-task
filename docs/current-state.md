@@ -28,7 +28,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 
 ## Done
 - Product/architecture docs: `docs/prd.md`, `docs/requirements.md`, `docs/review-templates.md`.
-- Decision records: `docs/adr/` (0001–0011).
+- Decision records: `docs/adr/` (0001–0015). Latest: **ADR-0015** coach persona (honest voice) +
+  precision-first clarification policy (grilled 2026-06-30).
 - Agent docs: `AGENTS.md` (canonical) + `CLAUDE.md` (pointer).
 - CodeRabbit config + PR template (from homework starter).
 - OpenSpec config: `openspec/config.yaml` context + per-artifact rules (incl. maker≠reviewer task).
@@ -39,8 +40,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 ## In progress
 - M0 runtime skeleton — `src/` tree, grammY wiring, Dockerfile, CI→GHCR (not started yet).
 
-Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (14 changes + 1 manual `provision`),
-driven by `/run-backlog` (ADR-0012/0013).
+Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (15 changes + 1 manual `provision`;
+added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/0013).
 
 ## Next up
 1. ✅ **`provision` (manual, M0): DONE** — Coolify `nutrition-bot` project; Postgres capped 256 MB +
@@ -57,6 +58,9 @@ driven by `/run-backlog` (ADR-0012/0013).
 - Postgres = source of truth; Notion = async best-effort mirror.
 - Images never persisted. Totals always from SQL SUM. (Full rules: `AGENTS.md`.)
 - Telegram delivery = **long-polling**, not webhook (ADR-0014) — free `sslip.io` URL can't get valid TLS.
+- Coach persona = one honest, blunt-factual, **non-moralizing** voice in the shared cached system
+  prefix; clarification is **precision-first** (ask one round only on hidden high-leverage
+  calorie-movers; estimate is the fallback) — ADR-0015.
 
 ## Open questions / blockers
 Tracked in [prd.md](./prd.md) §11 (Food DB sharing, onboarding length, template fidelity, registry).
