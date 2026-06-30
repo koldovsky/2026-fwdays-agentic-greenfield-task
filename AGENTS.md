@@ -117,13 +117,16 @@ Live today (tooling scaffolded — see [ADR-0009](./docs/adr/0009-eslint-prettie
 lint/format, [ADR-0010](./docs/adr/0010-vitest-test-runner.md) tests):
 
 ```bash
-npm install            # deps (dev tooling only so far)
+npm install            # deps (runtime: grammy, zod; plus dev tooling)
+npm run dev            # local bot, long-poll (tsx watch src/index.ts — ADR-0014)
+npm run build          # tsc -p tsconfig.build.json → dist/ (excludes *.test.ts)
+npm start              # node dist/index.js (prod entry; the Docker CMD)
 npm run lint           # eslint . (flat config, type-aware)
 npm run lint:fix       # eslint . --fix
 npm run format         # prettier --write .
 npm run format:check   # prettier --check . (CI/pre-merge gate)
-npm run typecheck      # tsc --noEmit (no inputs until src/ lands — expected)
-npm test               # vitest run (passes with no tests until they land)
+npm run typecheck      # tsc --noEmit (src/ exists — type-checks src incl. tests)
+npm test               # vitest run (env / bot / health suites)
 npm run test:watch     # vitest (watch mode, local dev)
 npm run docs:check     # validate ADR index + scripts-documented (pre-push/CI gate)
 ```
@@ -132,11 +135,9 @@ Git hooks (husky): **pre-commit** runs lint-staged (eslint --fix + prettier on s
 **pre-push** runs `docs:check` then `npm test` — both block the push if red. CI (`.github/
 workflows/ci.yml`) runs the same gates on PRs + pushes to `main`.
 
-*(planned — land with the runtime scaffold / M0)*
+*(planned — land with the data layer / M1)*
 
 ```bash
-npm run dev            # local bot (long-poll — ADR-0014)
-npm run build          # tsc → dist/ (multi-stage Dockerfile for prod)
 npx prisma migrate dev # apply schema migrations locally
 npx prisma generate    # regenerate client
 ```

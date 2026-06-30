@@ -8,6 +8,9 @@
     "node": ">=20"
   },
   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -17,6 +20,10 @@
     "test:watch": "vitest",
     "docs:check": "node scripts/check-docs-sync.mjs --check",
     "prepare": "husky || true"
+  },
+  "dependencies": {
+    "grammy": "^1.30.0",
+    "zod": "^3.23.8"
   },
   "lint-staged": {
     "*.ts": [
@@ -34,6 +41,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.11.0",
     "vitest": "^4.1.9"

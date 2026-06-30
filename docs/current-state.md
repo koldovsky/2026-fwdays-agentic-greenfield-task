@@ -8,13 +8,14 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-Greenfield. Design docs done (PRD, requirements, review templates, AGENTS.md). **No code
-scaffolded yet.** Next milestone: **M0 — Pipe** (repo skeleton → deployed message round-trip).
+**M0 `pipe` code-complete locally** — `src/` skeleton (grammY long-poll, zod config, `/health`),
+Dockerfile, CI→GHCR, tests (9 green), all gates passed + maker≠checker review resolved. Remaining
+for M0: the **human deploy** (push → GHCR public toggle → Coolify pull → real round-trip).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
 |---|---|
-| M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (Coolify provisioned: capped+tuned PG + app shell + env; runtime skeleton next) |
+| M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | ⬜ not started |
 | M2 — Onboarding (`/start` + targets) | ⬜ not started |
 | M3 — Core logging (text + Food DB) | ⬜ not started |
@@ -36,9 +37,18 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 - Lint/format tooling: ESLint flat (type-aware) + Prettier + husky pre-commit. ADR-0009.
 - Test runner: Vitest (ADR-0010). CI quality gate (`.github/workflows/ci.yml`) + husky pre-push
   (docs-sync + tests). Docs-drift guard: `scripts/check-docs-sync.mjs`.
+- **M0 `pipe` runtime skeleton** — `src/{index,bot/bot,bot/health,config/env}.ts` (grammY long-poll
+  ADR-0014, zod env, internal `/health`), Vitest suites (env/bot/health, 9 tests), multi-stage
+  `Dockerfile` (non-root, heap-capped) + `.dockerignore`, CI `image` job (build on PRs, push GHCR on
+  `main`) + `typecheck` wired. `npm run dev/build/start` now live. Reviewer-resolved (rule-6 arrows,
+  PR image build). **Fallow still deferred** (ADR-0011 — not wired; tracer-bullet scope).
+- Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
+  escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
+  YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
 
 ## In progress
-- M0 runtime skeleton — `src/` tree, grammY wiring, Dockerfile, CI→GHCR (not started yet).
+- M0 deploy (human): push branch → CI builds + pushes image → flip GHCR package public (path A) →
+  Coolify pulls + runs → confirm `/start` round-trip + `/health` green + idle RSS < 512 MB.
 
 Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (15 changes + 1 manual `provision`;
 added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/0013).
@@ -49,9 +59,11 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    GHCR, 512 MB cap, long-poll so no domain/TLS, `PORT=3000` for `/health`); env set
    (`TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `DATABASE_URL`, `TZ`, `PORT`; `NOTION_*` deferred to M7).
    GHCR package goes **public after `pipe`'s first CI push** (path A — one click, mid-`pipe`).
-2. **`pipe` (M0): NEXT** — scaffold plain-TS + grammY repo (`src/` per requirements §4), long-poll +
-   `/health`, multi-stage Dockerfile, zod env in `config/` (`NOTION_*` optional), CI → GHCR, deploy on
-   Coolify, prove a round-trip. Also wires the deferred `typecheck` + Fallow CI steps (ADR-0011).
+2. ✅ **`pipe` (M0): code-complete + archived** — `src/` skeleton, long-poll + `/health`, multi-stage
+   Dockerfile, zod env, CI→GHCR, 9 tests, review resolved. `typecheck` wired; **Fallow deferred**
+   (ADR-0011, not yet installed). Remaining: human deploy + first-push GHCR public toggle (path A).
+3. **`data` (M1): NEXT** — Prisma schema + migrations + connection + multi-tenancy, against the
+   provisioned Postgres (blocked-by `pipe`, now unblocked).
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
