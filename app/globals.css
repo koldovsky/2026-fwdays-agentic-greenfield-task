@@ -356,6 +356,46 @@
   color: var(--accent);
 }
 
+.currency-history {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.currency-history__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.currency-history__skeleton {
+  height: 240px;
+}
+
+.history-chart__tooltip {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 6px 10px;
+}
+
+.history-chart__tooltip-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.history-chart__tooltip-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
 .rates-error {
   display: flex;
   flex-direction: column;

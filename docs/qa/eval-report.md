@@ -807,4 +807,142 @@ its row isn't shown — a minor discoverability gap, not a correctness issue.
 
 ---
 
+## Slice: `rate-history` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `rate-history`
+**Traces:** FR-HISTORY-01, FR-HISTORY-03, FR-HISTORY-04, NFR-OBS-01
+**Sources graded:** `components/rates/HistoryChart.tsx`, `components/rates/CurrencyHistory.tsx`, `lib/i18n/uk.ts` (`history.*`), live `/api/history` responses
+
+**Note:** graded after Checker #1's fix (empty vs. error distinction in
+`fetchHistory.ts`) was already applied — this grading reflects the corrected
+behaviour, not the original defect.
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **94 / 100** |
+| **Automatic fails** | None |
+
+A real, reliably-rendering chart (verified against live data, not just a
+description of intent) with calm empty/error states that are now genuinely
+distinct, not just textually different on paper.
+
+---
+
+### Rubric scores
+
+#### 1. `chart-readability` — **93 / 100** — **PASS** (weight 30 → 27.9)
+
+**Criterion:** The chart reads calmly: brand-coloured area with a soft
+gradient, mono tabular axis ticks and tooltip values, no theatrical
+animation.
+
+| Check | Result |
+|---|---|
+| Gradient area, brand colour | ✓ `HistoryChart.tsx:67-70` (`hryv-history-fill`, matches vendored design) |
+| Mono tabular axis ticks | ✓ `axisTick` uses `var(--font-mono)` |
+| Mono tabular tooltip value | ✓ `HistoryTooltip` formats via `toLocaleString('uk-UA', …)` |
+| No animation | ✓ `isAnimationActive={false}` on `<Area>` |
+| Real recharts import, not UMD (ADR-0004) | ✓ confirmed no `window.Recharts` reference anywhere in this slice |
+
+**Deduction (−7):** the chart was visually verified only via the live JSON
+API response and code reading, not an actual rendered-pixel screenshot in
+this grading pass — a genuine vision check (Stage 8/13 demo recordings) is
+the appropriate place to confirm the rendered gradient/grid/tooltip actually
+look calm, not just that the code requests them to.
+
+---
+
+#### 2. `honest-y-domain` — **95 / 100** — **PASS** (weight 25 → 23.8)
+
+**Criterion:** Small day-to-day moves render as a roughly flat line, not an
+exaggerated swing — the y-domain is padded around the actual data range.
+
+| Check | Result |
+|---|---|
+| Same padding formula as the vendored, brand-approved design | ✓ `pad = max((max-min)*0.35, max*0.004)` |
+| Live USD data (44.27–44.98 over 30 days, ~1.6% range) confirms a genuinely small move | ✓ — exactly the case this requirement exists for |
+
+**Deduction (−5):** the 0.35/0.004 constants are carried over verbatim from
+the vendored `RateChart.jsx` without independent justification recorded
+anywhere — reasonable (it's the brand-approved formula), but if a future
+currency has much larger swings (e.g. a volatile period), no test currently
+locks the padding behaviour at the extremes.
+
+---
+
+#### 3. `calm-empty-error` — **96 / 100** — **PASS** (weight 25 → 24.0)
+
+**Criterion:** Empty and error states are calm, inline, and distinct from
+each other — the user can tell "no data published" apart from "fetch
+failed."
+
+| Check | Result |
+|---|---|
+| Distinct copy: `uk.history.empty` vs. `uk.history.loadError` | ✓ genuinely different wording |
+| Both reachable in practice | ✓ **only after Checker #1's fix** — verified live (`?code=ZZZ` → empty path) |
+| `role="status"`, inline, no toast | ✓ |
+| No raw error text ever surfaces | ✓ |
+
+**Deduction (−4):** both states reuse the identical `shell-slot-empty` CSS
+class (Checker #1 already flagged this) — correct wording, generic styling.
+
+---
+
+#### 4. `loading-never-blank` — **94 / 100** — **PASS** (weight 20 → 18.8)
+
+**Criterion:** While history is loading, a skeleton of comparable footprint
+to the eventual chart is shown.
+
+| Check | Result |
+|---|---|
+| Skeleton block sized to match the chart (240px) | ✓ `.currency-history__skeleton { height: 240px }` matches `HistoryChart`'s default `height` prop exactly |
+| `aria-hidden` on the skeleton wrapper | ✓ |
+
+**Deduction (−6):** the loading skeleton is a single static block (reuses
+`ShellSkeleton`'s pulse styling), not shaped like a chart silhouette — honest
+and adequate, but a more chart-like skeleton (e.g. a faint flat line) would
+read even calmer. Cosmetic.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks in user copy | **None found** |
+| Empty state indistinguishable from error (would be a fail) | **Was true before the fix — now correctly distinct** |
+| Toast for empty/error | **None found** — both inline, `role="status"` |
+| Raw error text in user-facing copy | **None found** |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `chart-readability` | 30 | 93 | 27.9 |
+| `honest-y-domain` | 25 | 95 | 23.8 |
+| `calm-empty-error` | 25 | 96 | 24.0 |
+| `loading-never-blank` | 20 | 94 | 18.8 |
+| **Total** | **100** | | **94 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+1. None blocking — the one defect this rubric would have automatically
+   failed on (`calm-empty-error`'s reachability) was already caught and
+   fixed by Checker #1 before this grading pass.
+2. Optional: a chart-shaped loading skeleton instead of a flat block.
+3. Optional: visually differentiate the empty vs. error inline states.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*

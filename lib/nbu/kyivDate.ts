@@ -14,11 +14,36 @@ const KYIV_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
+/** Extracts the Europe/Kyiv calendar year/month/day for `date`. */
+function kyivParts(date: Date): { year: string; month: string; day: string } {
+  // en-CA renders YYYY-MM-DD.
+  const [year, month, day] = KYIV_FORMATTER.format(date).split("-");
+  return { year, month, day };
+}
+
 /** Formats `date` as `DD.MM.YYYY` in the Europe/Kyiv calendar. */
 export function kyivDateString(date: Date): string {
-  // en-CA renders YYYY-MM-DD; NBU's own format is DD.MM.YYYY.
-  const [year, month, day] = KYIV_FORMATTER.format(date).split("-");
+  const { year, month, day } = kyivParts(date);
   return `${day}.${month}.${year}`;
+}
+
+/** Formats `date` as `YYYYMMDD` in the Europe/Kyiv calendar (NBU query param shape). */
+export function kyivYmd(date: Date): string {
+  const { year, month, day } = kyivParts(date);
+  return `${year}${month}${day}`;
+}
+
+/**
+ * Adds `delta` whole calendar days to `date`'s Europe/Kyiv calendar date.
+ * Anchored at UTC midnight of the extracted Y/M/D — operates on the calendar
+ * date alone (no time-of-day), so it is immune to DST shifts and never
+ * depends on the host's local timezone.
+ */
+export function addKyivDays(date: Date, delta: number): Date {
+  const { year, month, day } = kyivParts(date);
+  const base = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  base.setUTCDate(base.getUTCDate() + delta);
+  return base;
 }
 
 /**

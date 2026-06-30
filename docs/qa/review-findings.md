@@ -375,3 +375,97 @@ None.
 implemented; the empty-query/no-match distinction is correctly handled and
 tested; selection-persists-across-filter behaviour was checked and confirmed
 deliberate. Suggestions above are pre-existing a11y notes, not regressions.
+
+---
+
+## Slice: `rate-history` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/rate-history/spec.md` · change `openspec/changes/add-rate-history/`
+**Scope:** FR-HISTORY-01 … FR-HISTORY-04, NFR-OBS-01, TC-DATA-01
+**Tests:** `npm run test:run` — 86/86 passed (12 files; this slice adds
+`kyivYmd`/`addKyivDays` to `kyivDate.test.ts`, `historyWindow.test.ts` (3),
+`mapHistory.test.ts` (8), `fetchHistory.test.ts` (7) — 26 new assertions)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+**Live verification:** ran `next dev` and hit `/api/history` directly —
+`?code=USD` returned exactly the expected 30-point ascending series
+(`01.06` … `30.06`), correctly preserving consecutive carry-over duplicate
+rates on weekend/holiday days exactly per design.md Decision 1; `?code=ZZZ`
+(unsupported currency) and a missing `?code` both degrade honestly.
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| History line for the active currency | Pass | live-confirmed 30-point series rendered via `HistoryChart` |
+| History window is requested server-side | Pass | `fetchHistory.test.ts` asserts the exact `start=20260601&end=20260630&valcode=USD` URL; only call sites are `app/page.tsx`-adjacent server code and `app/api/history/route.ts` |
+| History fails to load → calm inline error | Pass | `CurrencyHistory.tsx:51-55`, distinct from empty |
+| No history data → honest empty state | Pass (after fix below) | `CurrencyHistory.tsx:56-60`, distinct from error |
+| Small move is not exaggerated | Pass | `HistoryChart.tsx:51-54`, same padded-domain formula as the vendored design |
+
+### Findings
+
+#### Blocking — found and fixed during this review
+
+- [**fixed**] `lib/nbu/fetchHistory.ts` originally collapsed a genuinely-empty
+  result (`points.length === 0`) into `{ ok: false }` — identical to a real
+  fetch failure. This made `CurrencyHistory`'s separate "empty" UI branch
+  **unreachable dead code**, directly contradicting `FR-HISTORY-03`'s explicit
+  requirement for two *distinct* scenarios ("History fails to load" vs.
+  "No history data"). Verified live that NBU returns HTTP 200 + `[]` both for
+  an unsupported currency code and for a window with no published data — so
+  collapsing empty into failure would also have meant a user typing a typo'd
+  currency would see "fetch failed" rather than an honest "no data" message.
+  **Fix applied:** `fetchHistory` now always returns `{ ok: true, points }`
+  (possibly `[]`) when the HTTP request and JSON parse succeed; `{ ok: false
+  }` is reserved for genuine I/O failure (non-200, network reject, malformed
+  JSON, thrown exception). Test `fetchHistory.test.ts` updated to assert the
+  corrected contract and re-verified live (`?code=ZZZ` → `{"ok":true,"points":[]}`).
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `components/rates/HistoryChart.tsx` — `min`/`max`/`pad` use
+  `Math.min(...vals)`/`Math.max(...vals)` via spread; fine at ~30 points, but
+  would need a loop instead of spread if the window ever grew into the
+  thousands (not a concern at this scope).
+- [suggestion] `CurrencyHistory.tsx` shows the same `shell-slot-empty` class
+  for both the empty and error states — visually identical except for the
+  copy. A future pass could differentiate them visually (e.g. a subtle icon),
+  though the *wording* is already correctly distinct, which is what
+  `FR-HISTORY-03` actually requires.
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `mapHistory.ts`/`historyWindow.ts`/the `kyivDate.ts`
+  extension are framework-free, total, never throw. `kyivDateString`/
+  `isStaleRate`'s existing tests and behaviour are byte-identical after the
+  extension (re-ran the original 6 assertions — all still pass).
+- **Tests-first discipline confirmed:** `tasks.md` §1–4 record RED-before-
+  implementation for every new pure module and the fetch wrapper.
+- **No de-duplication of carry-over rates (design.md Decision 1):**
+  `mapHistory.test.ts` explicitly asserts 3 consecutive equal values are
+  *kept*, not collapsed — confirmed live in the same live USD response
+  (12–14.06, 19–21.06, 26–28.06 all repeat).
+- **`react-hooks/static-components` correctly caught by lint** (not excluded —
+  `HistoryChart.tsx` is authored code, not vendored): the original inline
+  `<Tip />` JSX-element-per-render was flagged and fixed by hoisting
+  `HistoryTooltip` to module scope, passed as a function reference.
+- **ADR-0004 followed faithfully:** `HistoryChart.tsx` imports `recharts`
+  directly (`import { AreaChart, … } from "recharts"`), no `window.Recharts`
+  lookup, no UMD script for charting added to `layout.tsx`.
+- **TC-DATA-01:** grepped the whole `components/`/`app/` tree — the only
+  callers of `fetchHistory` are `app/api/history/route.ts` (and, indirectly,
+  nothing client-side imports `lib/nbu/fetchHistory` directly).
+- **Per-currency remount, no manual cache (design.md Decision 4):**
+  `CurrencyFocusPanel.tsx:48` keys `CurrencyHistory` by `rate.code`, matching
+  the existing `Converter` pattern; confirmed no cancellation-flag complexity
+  was added to the effect (correctly judged unreachable given the key-forced remount).
+- **Eval case:** `evals/cases/rate-history.eval.ts` present, rubric traces
+  FR-HISTORY-01/03/04, NFR-OBS-01.
+
+### Verdict
+
+**CLEAN** (after the one blocking defect found during review was fixed and
+re-verified). FR-HISTORY-01 … FR-HISTORY-04 are implemented and verified
+against live NBU range-endpoint data, including the previously-broken empty
+path. Suggestions above are minor, non-blocking polish.

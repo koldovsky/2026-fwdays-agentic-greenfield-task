@@ -33,6 +33,11 @@ export const uk = {
     resultInForeign: (code: string) => `Це у ${code}`,
     swap: "Поміняти напрям",
   },
+  history: {
+    title: "Динаміка за останній місяць",
+    loadError: "Не вдалося завантажити динаміку курсу.",
+    empty: "Дані за цей період відсутні.",
+  },
   meta: {
     title: "Гривня — офіційний курс НБУ",
     description:

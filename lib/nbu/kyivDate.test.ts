@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isStaleRate, kyivDateString } from "./kyivDate";
+import { addKyivDays, isStaleRate, kyivDateString, kyivYmd } from "./kyivDate";
 
 /** @trace FR-RATES-03 */
 describe("kyivDateString", () => {
@@ -34,5 +34,50 @@ describe("isStaleRate", () => {
     const now = new Date("2026-06-30T10:00:00Z");
     expect(() => isStaleRate("not-a-date", now)).not.toThrow();
     expect(isStaleRate("not-a-date", now)).toBe(true);
+  });
+});
+
+/** @trace FR-HISTORY-02 */
+describe("kyivYmd", () => {
+  it("formats a UTC date as YYYYMMDD in Europe/Kyiv", () => {
+    expect(kyivYmd(new Date("2026-06-30T10:00:00Z"))).toBe("20260630");
+  });
+
+  it("rolls over to the next Kyiv calendar day near UTC midnight", () => {
+    expect(kyivYmd(new Date("2026-06-30T22:00:00Z"))).toBe("20260701");
+  });
+
+  it("pads single-digit month and day", () => {
+    expect(kyivYmd(new Date("2026-01-05T10:00:00Z"))).toBe("20260105");
+  });
+});
+
+/** @trace FR-HISTORY-02 */
+describe("addKyivDays", () => {
+  it("subtracts whole calendar days within a month", () => {
+    const d = addKyivDays(new Date("2026-06-30T10:00:00Z"), -5);
+    expect(kyivYmd(d)).toBe("20260625");
+  });
+
+  it("crosses a month boundary", () => {
+    const d = addKyivDays(new Date("2026-06-05T10:00:00Z"), -10);
+    expect(kyivYmd(d)).toBe("20260526");
+  });
+
+  it("crosses a year boundary", () => {
+    const d = addKyivDays(new Date("2026-01-05T10:00:00Z"), -10);
+    expect(kyivYmd(d)).toBe("20251226");
+  });
+
+  it("adds positive deltas forward", () => {
+    const d = addKyivDays(new Date("2026-06-25T10:00:00Z"), 5);
+    expect(kyivYmd(d)).toBe("20260630");
+  });
+
+  it("is immune to DST shifts (UTC-anchored calendar date)", () => {
+    // Kyiv DST transitions don't affect whole-day arithmetic on the
+    // already-extracted Y/M/D — no time-of-day component survives.
+    const d = addKyivDays(new Date("2026-10-30T22:00:00Z"), -1);
+    expect(kyivYmd(d)).toBe("20261030");
   });
 });
