@@ -6,6 +6,50 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T22:38Z — Fixed `npm run api` boot failure + committed foundation
+
+**Done:** Diagnosed the reported `Cannot find module .../dist/main` error: root cause was
+`incremental: true` (tsconfig) + `deleteOutDir: true` (nest-cli) desyncing — nest wipes `dist/`
+but the `.tsbuildinfo` (outside dist) survives, so tsc skips emit and `dist/main` never exists.
+Fixed by setting `incremental: false` in `apps/api/tsconfig.build.json`; verified with a hard
+repro (stale tsbuildinfo + deleted dist now re-emits). Also found **port :3000 is occupied by
+another local app ("Qnous")** — moved the API default to **:3333** (`main.ts`, `.env(.example)`,
+AGENTS.md). Then committed the previously-uncommitted `foundation` work (it had never been
+committed — the AGENTS rule is agent guidance, not automation) in focused commits on `dev`.
+
+**State now:** `npm run gate` green (~21 s); `npm run db:up && npm run migrate && npm run api`
+boots on :3333 and `/health` returns ok. Working tree committed on `dev`.
+
+**Next steps:** `openspec archive add-foundation` (task 6.3) once satisfied, then resolve the
+brand decision and `openspec new change add-auth`.
+
+---
+
+## 2026-07-01T01:25Z — `foundation` capability: OpenSpec proposal + gaps closed
+
+**Done:** Proposed and implemented the `add-foundation` OpenSpec change (proposal/design/
+specs/tasks, validated `--strict`). Formalized the monorepo skeleton as the `foundation`
+spec and closed the two known gaps. Added the NFR-DX-01 backend quality gate (root `npm
+run gate` = `build:shared && lint && typecheck && test && build:api`), enabled full
+TypeScript `strict` in `apps/api` (was partial), added a global `ValidationPipe` +
+`class-validator`/`class-transformer` (TC-STACK-02), enforced 100% coverage on shared
+pure modules via `vitest.config.ts` (TC-PURE-01), added a mobile ESLint no-raw-hex guard
+(FR-THEME-03, theme dir exempt), and added the Expo Dev Client path (`expo-dev-client`
++ `prebuild` script + `apps/mobile/README.md`, TC-STACK-01). Touches TC-STACK-01/02,
+TC-PURE-01, TC-TEST-01, NFR-DX-01.
+
+**State now:** `npm run gate` green on a clean checkout in ~21 s (< 60 s budget). Mobile
+lint/typecheck green; hex guard verified to fire in app code and pass in `src/theme`.
+Shared coverage 100% on `duration.ts`. 23/24 change tasks done.
+
+**Next steps:** Task 3.5 (boot-against-Postgres + `/health` e2e) is unverified this
+session — **Docker was unavailable** here (it was verified end-to-end in the 2026-06-30
+session). Re-run `npm run db:up → migrate → api` with Docker, then
+`openspec archive add-foundation` (task 6.3). After that, resolve the brand decision and
+`openspec new change add-auth`.
+
+---
+
 ## 2026-06-30T22:00Z — Added review-before-commit rule
 
 **Done:** Added an AGENTS.md Workflow rule: review the full diff and run a review pass
