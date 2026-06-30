@@ -1169,3 +1169,142 @@ money-specific for the 2 entries flagged above.
 ---
 
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*
+
+---
+
+## Global Review — 2026-07-01
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-07-01 (Europe/Kyiv)
+**Scope:** the entire app, all 8 capability slices together — read cold, independent of the per-slice sections above and of the maker's `docs/qa/global-review.md` self-review note.
+**Sources graded:** `docs/requirements.md`, `AGENTS.md`, `DESIGN.md`, `lib/i18n/uk.ts` (all 13 leaves), `lib/sayings/sayings.ts` (all 12 entries), all 8 `evals/cases/*.eval.ts`, `components/rates/{RatesView,CurrencyRow,CurrencyFocusPanel,CurrencyHistory,HistoryChart,TrendHint}.tsx`, `components/ds/rates/Converter.jsx`, `components/app-shell/{AppHeader,AppFooter,AppShell}.tsx`, `lib/currency/{formatAmount,parseAmount,convert,trendSentence}.ts`
+
+This is a whole-app pass looking specifically for things invisible from any single slice's eval case — cross-slice tone drift, formatting inconsistency, and end-to-end failure-mode coverage.
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **91 / 100** |
+| **Automatic fails** | None |
+
+No exclamation marks, fake dates, stack traces, or `NaN` surface anywhere in the 13 `uk.ts` leaves or the 12 sayings. The app holds its calm, Ukrainian-first, one-number-then-detail voice consistently end to end. The one real whole-app-only finding is a genuine **number-formatting inconsistency (NFR-LOCALE-01)** between the converter and the rest of the app, which no single slice's eval case could see because each slice only graded its own component in isolation.
+
+---
+
+### 1. Error-message clarity across all failure modes — **94 / 100** — **PASS**
+
+| Failure mode | String | Calm / specific / actionable | Notes |
+|---|---|---|---|
+| NBU rates fetch failure | `uk.rates.loadError`: *"Не вдалося завантажити курс. Спробуйте ще раз."* + `uk.rates.retry`: *"Спробувати ще раз"* | ✓ | Inline (`role="status"`), retry button present, no raw error ever reaches `RatesView.tsx:60` — every catch path resolves to the fixed string. |
+| NBU history fetch failure | `uk.history.loadError`: *"Не вдалося завантажити динаміку курсу."* | ✓ | Inline, `role="status"`, distinct copy from the empty case. **No retry action**, unlike the rates failure — see deduction. |
+| Bad/garbage converter input | No error string shown at all — input is silently parsed to `0`/ignored chars | ✓ (by design) | Correct per `FR-CONVERT-05`/`NFR-OBS-01` ("never NaN, never a crash") — a calm *absence* of error is the spec'd behaviour, not a gap. |
+| No currency selected | `uk.rates.selectPrompt`: *"Оберіть валюту зі списку зліва."* | ✓ | Calm, instructive, no alarm. |
+| Empty filter results | `uk.picker.noMatch`: *"Нічого не знайдено"* | ✓ | Exact rubric wording, inline, `AsOfBadge` stays visible. |
+
+**Deduction (−6):** the rates-fetch failure gets a retry button; the history-fetch failure does not (`CurrencyHistory.tsx:53-57` renders `uk.history.loadError` with no equivalent of `uk.rates.retry`). A user whose history fetch failed has no in-UI way to retry short of reselecting the currency — this is exactly the kind of inconsistency that's invisible from the `rate-history` eval case alone (which only checks that the history failure is calm and distinct from empty, not that it offers the same recovery affordance the sibling `currency-list` failure does). Not an automatic fail — the message itself is calm and honest — but a real whole-app UX gap.
+
+---
+
+### 2. Empty-state usability across all surfaces — **95 / 100** — **PASS**
+
+| Surface | Copy | Verdict |
+|---|---|---|
+| Currency list (no currency selected) | *"Оберіть валюту зі списку зліва."* | ✓ calm, non-alarming |
+| Filter no-match | *"Нічого не знайдено"* | ✓ exact, inline |
+| History no-data | *"Дані за цей період відсутні."* | ✓ calm, honest, distinct from the fetch-failure wording above |
+
+All three empty states reuse the same `.shell-slot-empty` CSS treatment and `role="status"`, which gives the whole app one consistent *visual grammar* for "calm inline message" — a genuine cross-slice strength, since each slice independently arrived at the same pattern (`AppShell.tsx`, `RatesView.tsx`, `CurrencyHistory.tsx`) without a shared component forcing it.
+
+**Deduction (−5):** `CurrencyHistory`'s empty state and error state are wording-distinct but visually identical (same class, same `role="status"`, no icon/tone difference) — already flagged by the maker's own note and by the per-slice `rate-history` review; confirmed still true at whole-app read. A user skimming rather than reading carefully could conflate "no data published" with "fetch failed." Cosmetic, not a fail.
+
+---
+
+### 3. Ukrainian tone consistency (BC-BRAND-01) — **97 / 100** — **PASS**
+
+Read all 13 `uk.ts` leaves and all 12 sayings end to end, specifically hunting for tonal drift between slices (one reading more casual/formal than another).
+
+- **Zero exclamation marks** across both files — confirmed by direct read, not just trusting the per-slice tests.
+- **Register is consistent**: `lib/i18n/uk.ts` strings read as plain, instructional, level-headed UI copy (*"Спробуйте ще раз."*, *"Оберіть валюту зі списку зліва."*); the 12 `sayings.ts` entries read as dry, aphoristic asides (*"Курс — це число. Спокій — це вибір."*). These are two different *registers* (functional UI copy vs. footer flavour text) but both land calm — no slice reads markedly more casual or more formal than its neighbours.
+- **Currency codes stay Latin**: confirmed — `uk.converter.amountInForeign`/`resultInForeign` interpolate `${code}` (e.g. `USD`) directly into otherwise-Cyrillic sentences (*"Сума у USD"*), exactly per the brand rule. No instance found anywhere of a currency code being transliterated into Cyrillic.
+- **One soft tonal outlier**: *"Перевірте курс. Потім — каву."* (saying #12) is an imperative ("check... then coffee") — the only saying that addresses the reader directly with a command, versus the other 11 which are observational/declarative (*"Гривня любить точність, а не метушню."*). It was already flagged in the per-slice `footer-sayings` review as "wittiest, worth a sanity check" and judged acceptable there in isolation. At the whole-app level, reading it immediately after the strictly declarative `uk.ts` register, it is the single most personality-forward string in the entire app — still calm, still no hype, but it is the one place where the "level-headed clerk" voice (DESIGN.md) tips slightly toward "dry wit." Acceptable, not a fail, but worth the maker's attention if the corpus is ever revised.
+
+**Deduction (−3):** the imperative-mood saying above, purely for being the one outlier against an otherwise uniformly declarative/observational corpus + UI copy.
+
+---
+
+### 4. Trend-hint wording (FR-TREND-02) — **98 / 100** — **PASS**
+
+- Leads with direction + magnitude: `${code} за тиждень зміцнів/послабшав на ${pct}% до гривні.` / `${code} за тиждень майже без змін до гривні.` — confirmed against `lib/i18n/uk.ts:42-44`.
+- ≤1 sentence: ✓ every branch is a single sentence terminating in one period.
+- No hype, no emoji: ✓ confirmed by direct read; "зміцнів"/"послабшав" are plain financial-register verbs, not hyperbole ("зміцнів" ≠ "злетів", "послабшав" ≠ "обвалився").
+- Honest at the extremes: the per-slice review already verified a live 12.46% move (XAG) rendered with the identical calm phrasing as a 0.92% move — re-confirmed by reading `trendSentence.ts` and `uk.ts` together: there is no magnitude-conditional branching in the copy at all, so a 50% move would read exactly as calmly as a 0.1% move. This is correct per BC-BRAND-01 ("honest, never overstated") and is a genuine strength: the app cannot accidentally get more excitable as moves get larger, because there is no code path for it to do so.
+
+**Deduction (−2):** matches the per-slice finding — the sentence leads with the bare ISO code as grammatical subject ("EGP за тиждень...") rather than a declined Ukrainian currency name, reading slightly more like a ticker than the spec's own prose exemplar ("Долар за тиждень зміцнів..."). Documented, deliberate (design.md Decision 1), not a regression.
+
+---
+
+### 5. Number formatting consistency (NFR-LOCALE-01) — **80 / 100** — **PASS (weakest dimension)**
+
+This is the dimension where reading the *whole* app surfaces something no per-slice eval case could catch, because each slice's eval case only ever graded its own component's formatting in isolation.
+
+| Surface | Formatter | Decimals | Source |
+|---|---|---|---|
+| Currency list row | inline `toLocaleString('uk-UA', …)` | min 2 / **max 4** | `CurrencyRow.tsx:23-26` |
+| Currency focus panel (hero rate) | inline `toLocaleString('uk-UA', …)` | min 2 / **max 4** | `CurrencyFocusPanel.tsx:25-28` |
+| Converter result + rate line | `formatAmount()` | **fixed 2** | `lib/currency/formatAmount.ts:11`, used in `Converter.jsx:63,81` |
+| History tooltip | inline `toLocaleString('uk-UA', …)` | min 2 / **max 4** | `HistoryChart.tsx:24-27` |
+| History y-axis ticks | inline `toLocaleString('uk-UA', …)` | min 1 / **max 2** | `HistoryChart.tsx:89-92` |
+| Trend-hint percentage | `trendSentence.ts` | **fixed 2** | `lib/currency/trendSentence.ts:14-16` |
+
+Three different maximum-fraction-digit policies (4, 2, and 2-via-axis-tick-rounding) coexist for what is, to the user, "the same kind of number" — an official NBU rate or a derived amount. Concretely: the currency-list row for JPY-like low-value or XAU-like high-precision currencies shows up to 4 decimals (*e.g. "0,2775"*), but the converter's official-rate quote line for the **exact same currency** (`Converter.jsx:63`, `1 {code} = {formatAmount(rate)} ₴`) is hard-capped to 2 (*"0,28"*) — a real, user-visible number changing precision when read in the focus panel above versus the converter row directly below it on the same screen, for the same currency, at the same moment.
+
+The maker's own `docs/qa/global-review.md` notes this exact pair ("`CurrencyFocusPanel`'s rate-identity display (4 decimals) and the converter's rate line (2 decimals)") as **"intentional, design.md Decision 5"** — but read independently at the whole-app level rather than taking that note at face value: a 2-decimal rounding of a 4-decimal-precision currency rate is not just a stylistic choice, it is a different *number* (e.g. `0,2775` rounds to `0,28`, a ~0.9% display-level discrepancy). For most currencies (USD, EUR — 2 significant decimals) this is invisible; for any currency where the official rate needs 3-4 decimals to be precise, a user who glances between the rate hero number and the converter's rate-quote line directly below it will see two different numbers for what they'll reasonably assume is one fact. This is the one place in the whole app where NFR-LOCALE-01 ("numbers formatted with uk-UA conventions... in mono tabular figures" — a *consistency* requirement, not just a *locale* requirement) is not fully honored end to end, and it is structurally invisible to any single slice's own eval case because `converter.eval.ts` only grades the converter's own formatting in isolation, and `currency-list.eval.ts` only grades the list row's.
+
+**Deduction (−20):** real, user-visible, currency-dependent precision loss between two adjacent on-screen numbers that should agree. Not an automatic fail (uk-UA comma-decimal/thin-space/mono-tabular conventions are all still individually correct in every single instance — this is a *cross-component* consistency defect, not a locale-formatting defect within any one component) but the most concrete, fixable finding of this whole-app pass.
+
+**One-line fix:** have `Converter.jsx`'s rate-quote line call `formatAmount(rate, { decimals: rate < 1 ? 4 : 2 })` (or simply reuse the same `minimumFractionDigits: 2, maximumFractionDigits: 4` policy already used by `CurrencyRow`/`CurrencyFocusPanel`/`HistoryChart`'s tooltip) so the rate quoted in the converter always matches the rate shown in the hero number above it, currency-for-currency.
+
+---
+
+### 6. Other whole-app-only observations
+
+- **`AsOfBadge` source line** — separately from formatting, confirmed the honesty rule (`BC-HONESTY-01`) holds end to end: `RatesView.tsx:81-85` threads the real `result.exchangeDate` and computed `stale` flag into `AsOfBadge` on both the initial server render and every client retry path — there is no code path anywhere in the app that could show a "today" label on a stale weekend/holiday rate. Re-confirmed independently of the per-slice `currency-list` review (which had only observed the non-stale branch live).
+- **Selection-persists-while-filtered** (from `currency-picker`) interacts cleanly with the **converter precision** finding above: filtering doesn't touch `activeRate`, so the same active currency's numbers stay consistent (or inconsistently precise, per finding #5) regardless of filter state — no additional defect introduced by their interaction.
+- **Footer saying + provenance line never collide**: `AppFooter.tsx` renders the honest provenance line (*"Дані: відкритий API НБУ · без кук і трекерів"*) and the day's saying as two visually distinct lines — re-confirmed they don't run together into one sentence that could misattribute the saying as an official NBU statement. Good separation of "fact" from "flavour text," a subtle BC-HONESTY-01-adjacent win only visible when reading the footer as a whole rather than each string in isolation.
+- **No tonal seam between the last-built slice (`footer-sayings`) and the first (`app-shell`)**: read `AppHeader`'s subtitle (*"Офіційний курс НБУ"*) immediately against the footer's saying — confirmed the institutional header register and the dry-aphorism footer register don't clash; the app reads as one coherent voice from top to bottom, not eight independently-toned slices stitched together.
+
+---
+
+### Weighted total
+
+| Dimension | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| Error-message clarity (all failure modes) | 25 | 94 | 23.5 |
+| Empty-state usability (all surfaces) | 15 | 95 | 14.25 |
+| Ukrainian tone consistency (BC-BRAND-01) | 20 | 97 | 19.4 |
+| Trend-hint wording (FR-TREND-02) | 15 | 98 | 14.7 |
+| Number formatting consistency (NFR-LOCALE-01) | 25 | 80 | 20.0 |
+| **Total** | **100** | | **91.85 → 91 / 100** |
+
+---
+
+### Automatic-fail audit (whole app)
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks anywhere in `uk.ts` or `sayings.ts` | **None found** (13/13 leaves, 12/12 sayings, independently re-read) |
+| Fake "today" on a stale rate | **None found** — `AsOfBadge` always receives the real `exchangedate` on every code path, including client retry |
+| `NaN` or raw error text in any user-facing string | **None found** — `formatAmount` guards non-finite input everywhere it's used; every NBU catch path resolves to a fixed `uk.*` string |
+| Toast used for any error/empty state | **None found** — every instance is inline with `role="status"` |
+
+---
+
+### Overall verdict
+
+**PASS — 91 / 100.** The app is calm, honest, and tonally coherent end to end; no automatic-fail condition exists anywhere in the user-facing surface. The one substantive finding only visible at the whole-app level is a real **NFR-LOCALE-01 consistency gap**: the converter's rate-quote line is hard-capped to 2 decimals while the currency-list row, focus-panel hero number, and history tooltip all show up to 4 — for any currency that needs 3-4 decimals of precision, two adjacent numbers on the same screen for the same currency can visibly disagree. This was previously logged by the maker as an accepted trade-off ("Decision 5"); independent re-judgment here, with the rounding math worked through, is that it is a real precision-loss defect, not just a stylistic difference, and worth the maker fixing rather than carrying forward. Secondary, lower-severity finding: the history-fetch failure lacks the retry affordance the rates-fetch failure has. Neither finding blocks release; both are concrete and actionable.
+
+*Checker #2 (global pass) — no source edits made. Findings return to kurs-maker for a fix-and-re-review cycle if the team chooses to act on them before release.*

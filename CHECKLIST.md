@@ -71,7 +71,7 @@ npm run test:run                   # once tests exist
 - [ ] Recordings automated + headless; each clip asserts its FRs.
 
 ## G7 — Global review & release
-- [ ] Global two-checker review clean; all confirmed findings fixed.
+- [x] Global two-checker review clean; all confirmed findings fixed.
 - [ ] `npm run verify` green; CI green on the release commit.
 - [ ] `docs/technical/*` complete; README usage section; `docs/current-state.md` final.
 - [ ] PR opened with FR coverage + gate evidence.

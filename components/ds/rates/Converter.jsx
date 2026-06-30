@@ -5,6 +5,7 @@ import { IconButton } from '../core/IconButton.jsx';
 import { parseAmount } from '@/lib/currency/parseAmount';
 import { convert } from '@/lib/currency/convert';
 import { formatAmount } from '@/lib/currency/formatAmount';
+import { formatRate } from '@/lib/currency/formatRate';
 
 const DEFAULT_LABELS = {
   amountInForeign: (code) => `Сума у ${code}`,
@@ -60,7 +61,7 @@ export function Converter({
           onClick={() => setDirection((d) => d === 'foreign-to-uah' ? 'uah-to-foreign' : 'foreign-to-uah')}
         />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-          1 {code} = <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatAmount(rate)} ₴</span>
+          1 {code} = <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatRate(rate)} ₴</span>
         </span>
       </div>
 

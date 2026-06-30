@@ -13,6 +13,8 @@ import { parseAmount } from "./parseAmount";
  * / `CurrencyFocusPanel.tsx`, without mocking any individual step. Each
  * module already has its own unit tests; this proves they compose correctly
  * end-to-end, including the error/degradation paths a user could actually hit.
+ *
+ * @trace FR-CONVERT-01 FR-CONVERT-02 FR-CONVERT-03 FR-CONVERT-04 FR-CONVERT-05 NFR-OBS-01
  */
 
 // A realistic raw NBU "today" response: valid entries plus deliberately

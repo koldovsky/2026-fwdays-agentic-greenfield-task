@@ -6,17 +6,79 @@
 
 ## Last updated
 
-`2026-07-01T00:05:00+03:00` (Europe/Kyiv)
+`2026-07-01T01:10:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 9 — Maker self-review: COMPLETE.** Stage 8 (cross-cutting hardening,
-CHECKLIST G5) committed as `2a35934`. Next: Stage 10 (global two-checker
-review), Stage 11 (QA proof pack), Stage 12 (PR), Stage 13 (recorded demo).
+**Stage 10 — Global two-checker review: COMPLETE (CHECKLIST G7 review item).**
+Stage 9 (maker self-review) committed as `f8b4610`. Next: Stage 11 (QA proof
+pack), Stage 12 (PR), Stage 13 (recorded demo).
 
 ## Last action
 
-**Stage 9 — global maker self-review, not yet committed:**
+**Stage 10 — global two-checker review, not yet committed:**
+
+Dispatched both checkers as genuinely independent fresh subagents (no memory
+of building this app — Claude Code's project-local `kurs-reviewer`/
+`kurs-eval-judge` agent types aren't registered as dispatchable subagent
+types in this environment, so their role definitions from
+`.claude/agents/*.md` were embedded directly into two `general-purpose`
+subagent prompts instead; same independence, different plumbing). Both were
+told explicitly to read `docs/qa/global-review.md` (the maker's own
+self-review) for context but **not** to trust or rubber-stamp it.
+
+1. **Checker #1 (spec/correctness) — CLEAN.** Independently confirmed all 25
+   MVP FRs + FR-SAYINGS-01 actually implemented (not just traced), `lib/`
+   framework-free and total, no 500/blank/silent-failure path, `BC-HONESTY-01`
+   honoured, ran `npm run verify`/`test:run`/`test:e2e` itself rather than
+   trusting docs. 3 non-blocking suggestions, one of which —
+   `CurrencyRow.tsx`/`CurrencyFocusPanel.tsx` duplicating the same
+   `toLocaleString` options inline — pointed at the same code Checker #2
+   found a real bug in.
+2. **Checker #2 (quality) — PASS 91/100.** No automatic-fail conditions
+   anywhere (zero exclamation marks across all `uk.ts` strings + 12 sayings,
+   no fake "today", no `NaN`/raw errors, no toasts). Weakest dimension:
+   **number-formatting consistency, 80/100** — found a genuine cross-slice
+   defect invisible to any single slice's eval case: the converter's
+   "1 USD = X" line was hard-capped to 2 decimals via `formatAmount()`,
+   while the currency list / focus panel / history tooltip all showed up to
+   4 — for small-rate currencies (JPY, 0.27749) this wasn't cosmetic, it
+   silently showed a **different rounded number** for the same currency on
+   the same screen. The maker's self-review had logged this as an accepted
+   "Decision 5" trade-off; the checker re-derived it as a real defect by
+   working through the actual rounding math, not by accepting the prior
+   label. Secondary finding: the history-fetch error state had no retry
+   button, unlike the sibling rates-fetch error.
+3. **Both confirmed findings fixed:**
+   - Added `lib/currency/formatRate.ts` (tests-first, RED→GREEN, 5
+     assertions) — the single source of truth for displaying an official
+     rate (2-4 decimals), distinct from `formatAmount` (fixed 2 decimals,
+     correct as-is for *converted* money amounts). Wired into
+     `CurrencyRow.tsx`, `CurrencyFocusPanel.tsx`, `HistoryChart.tsx`'s
+     tooltip, and — the actual bug — `Converter.jsx`'s rate-quote line.
+     Live-verified: JPY now shows `0,2758` identically in the list, the
+     focus-panel hero number, and the converter's `1 JPY = 0,2758 ₴` line
+     (previously the last one alone showed `0,28`).
+   - Added a retry button to `CurrencyHistory.tsx`'s error state
+     (`uk.history.retry`, mirroring `RatesView`'s existing rates-retry
+     pattern exactly). Required restructuring the fetch into a
+     `useCallback` so the initial-load effect and the retry handler share
+     one fetch function without the effect synchronously calling `setState`
+     (`react-hooks/set-state-in-effect`). Live-verified by patching
+     `window.fetch` to force a history failure, confirming the button
+     renders, then restoring `fetch` and confirming the click recovers to
+     the chart/trend-hint state correctly.
+   - Also fixed Checker #1's trivial suggestion: added a missing `@trace`
+     line to `convertFlow.integration.test.ts`.
+4. **122/122 unit tests** (up from 117 — 5 new `formatRate` tests), **14/14
+   e2e**, lint clean, `npm run verify` green — re-confirmed after all fixes,
+   not assumed safe.
+
+### Prior
+
+## Last action
+
+**Stage 9 — global maker self-review, committed as `f8b4610`:**
 
 Wrote `docs/qa/global-review.md` — a maker self-audit of the whole app (all
 8 slices + Stage 8 hardening) before handing off to Stage 10's independent
@@ -290,20 +352,23 @@ OpenSpec change, folded into this slice's commit):**
 - **Done (slices):** all 8 — `app-shell`, `i18n`, `currency-list`, `converter`,
   `currency-picker`, `rate-history`, `trend-hint`, `footer-sayings` — all archived
   **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`,
-  bugfix `8b63d1f`, `395e992`, `1981e1e`). Stage 8 hardening committed as `2a35934`.
-- **In progress:** Stage 9 (`docs/qa/global-review.md` + the search-input a11y fix)
-  is complete and verified but **not yet committed**.
+  bugfix `8b63d1f`, `395e992`, `1981e1e`). Stage 8 hardening committed as `2a35934`;
+  Stage 9 self-review committed as `f8b4610`.
+- **In progress:** Stage 10 (global two-checker review + the two confirmed fixes:
+  `formatRate.ts` precision consistency, history-error retry button) is complete and
+  verified but **not yet committed**.
 - **Blocked:** —
 
 ## Next steps
 
-1. **Commit** Stage 9 (the global self-review note + the search-input `aria-label` fix).
+1. **Commit** Stage 10 (the global review findings + `formatRate.ts` + the history
+   retry button + the `@trace` fix).
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
-   real isolated Task-tool subagents (still pending across all work this session).
-3. **Stage 9 is complete. Move to Stage 10+:**
-   - Stage 10 — global two-checker review (re-run `kurs-reviewer`/`kurs-eval-judge`
-     **independently** over the whole app — not by reading `global-review.md` and
-     rubber-stamping it; that note is the maker's self-audit, not a substitute review).
+   real isolated Task-tool subagents (the global review used embedded-prompt
+   `general-purpose` subagents instead, since the project-local agent types aren't
+   dispatchable as named subagent types in this environment — same independence,
+   different plumbing; worth re-checking after a session reload).
+3. **Stage 10 is complete (CHECKLIST G7's review item ticked). Move to Stage 11+:**
    - Stage 11 — QA proof pack: traceability matrix, manual test plan, demo script, risk
      register, acceptance report; `docs/technical/*`.
    - Stage 12 — PR preparation.
@@ -413,3 +478,16 @@ OpenSpec change, folded into this slice's commit):**
   spec files also match Vitest's default `*.spec.ts` glob and were being picked up and
   failing under the wrong test runner before this was added.
 - Requirement IDs touched (Stage 8): **NFR-A11Y-01, NFR-A11Y-02, TC-TEST-01**.
+- **`lib/currency/formatRate.ts` is now the single source of truth for displaying an
+  official NBU rate** (2-4 decimals); `formatAmount` stays fixed-2-decimal and is now
+  used *only* for converted money amounts (the converter's input/result fields). Before
+  Stage 10, `Converter.jsx`'s rate-quote line used `formatAmount` (wrong — it's a rate,
+  not a converted amount), which silently rounded small-rate currencies to a visibly
+  different number than the rest of the app showed for the same currency.
+- **`docs/qa/global-review.md`** (maker self-review, Stage 9) and the **`## Global
+  Review — 2026-07-01`** sections appended to `docs/qa/review-findings.md` /
+  `docs/qa/eval-report.md` (Stage 10, two independent checker passes) are the
+  whole-app counterparts to the per-slice review docs — read those first for
+  anything spanning more than one capability.
+- Requirement IDs touched (Stage 10 fixes): **NFR-LOCALE-01** (`formatRate`),
+  **NFR-OBS-01** (history retry button).

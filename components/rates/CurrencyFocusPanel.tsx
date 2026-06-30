@@ -1,6 +1,7 @@
 "use client";
 
 import { Converter, CurrencyAvatar } from "@/components/ds";
+import { formatRate } from "@/lib/currency/formatRate";
 import { uk } from "@/lib/i18n/uk";
 import type { Rate } from "@/lib/nbu/mapRates";
 import { CurrencyHistory } from "./CurrencyHistory";
@@ -22,10 +23,7 @@ export function CurrencyFocusPanel({ rate }: { rate: Rate | null }) {
     );
   }
 
-  const fmtRate = rate.rate.toLocaleString("uk-UA", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
+  const fmtRate = formatRate(rate.rate);
 
   return (
     <div className="currency-focus">

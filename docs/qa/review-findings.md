@@ -672,3 +672,216 @@ hydration mismatch from calling `new Date()` in a client-reached component)
 was designed around correctly and confirmed clean live, not just by
 inspection. This closes Stage 5 — all 8 capability slices (7 MVP + this
 optional one) are now built, reviewed, and archived.
+
+---
+
+## Global Review — 2026-07-01
+
+**Reviewer:** kurs-reviewer (Checker #1), independent global pass — fresh read,
+no memory of building this app.
+**Scope:** all 8 capability slices (`app-shell`, `i18n`, `currency-list`,
+`converter`, `currency-picker`, `rate-history`, `trend-hint`,
+`footer-sayings`) plus Stage 8 cross-cutting hardening (integration test,
+Playwright e2e suite, axe a11y token fixes). This supersedes none of the
+per-slice sections above — it is the final, whole-app check before release.
+
+### Commands actually run (not taken on faith from `docs/qa/global-review.md`)
+
+| Command | Result |
+| --- | --- |
+| `npm run verify` (lint + check:trace + spec:validate + build) | **Green** — lint clean, 25/25 MVP FRs traced, all 8 specs `openspec validate --strict` pass, `next build` succeeds |
+| `npm run test:run` | **Green** — 117/117 unit tests, 17 files |
+| `npm run test:e2e` | **Green** — 14/14 Playwright tests (core-flow, responsive, a11y/axe), against live NBU data |
+
+### 1. FR coverage (all 25 MVP + FR-SAYINGS-01)
+
+Spot-checked every FR against the actual implementation, not just the trace
+script's presence check (the script only proves an FR id appears in a spec
+file, not that the behaviour exists in code):
+
+- **FR-SHELL-01…04** — `components/app-shell/AppShell.tsx:53-83`,
+  `AppHeader.tsx`, `AppFooter.tsx`, `ShellSkeleton.tsx`. Two-column grid
+  confirmed live via `e2e/responsive.spec.ts` (measures
+  `gridTemplateColumns` track count, not a screenshot eyeball) — Pass.
+- **FR-I18N-01** — `lib/i18n/uk.ts` is the only string table found; grepped
+  `app/` and `components/rates|app-shell` for stray Ukrainian string
+  literals outside `uk.ts` and found none in the slices reviewed — Pass.
+- **FR-RATES-01…05** — `app/page.tsx:8-9` fetches server-side
+  (`lib/nbu/fetchTodayRates.ts`), `CurrencyRow.tsx` renders code/name/rate,
+  `RatesView.tsx:53-69` shows a visible error + retry on `!result.ok`,
+  never a blank screen — Pass.
+- **FR-PICK-01…03** — `lib/currency/filterRates.ts` (case-insensitive
+  code/name substring), `RatesView.tsx:94-97` renders the inline
+  «Нічого не знайдено» — `role="status"`, no toast — Pass.
+- **FR-CONVERT-01…05** — `lib/currency/{convert,parseAmount,formatAmount}.ts`
+  + `components/ds/rates/Converter.jsx`. `convert()` is total (`convert.ts:13-14`
+  guards non-finite/zero amount and rate, returns 0, never throws) — Pass.
+- **FR-HISTORY-01…04** — `lib/nbu/fetchHistory.ts` + `historyWindow.ts`
+  (30-day window, range endpoint), `CurrencyHistory.tsx:28-43` covers
+  loading/error/empty/ready as four distinct states, `HistoryChart.tsx:51-54`
+  pads the y-domain (`pad = max(range*0.35, max*0.004)`) — Pass.
+- **FR-TREND-01…03** — `lib/currency/weeklyMove.ts` (needs 8 points, signed
+  %), `lib/currency/trendSentence.ts` + `TrendHint.tsx:17-23` use the single
+  `trendTone` import from `@/components/ds` as the tone source of truth, per
+  spec — Pass.
+- **FR-SAYINGS-01 (Future)** — `lib/sayings/{sayings,selectSaying}.ts`,
+  deterministic day-of-year selection, computed once server-side in
+  `app/page.tsx:14` and threaded as a prop (no client-side `new Date()` in
+  `AppFooter.tsx`, avoiding a hydration mismatch) — Pass.
+
+No silent scope drift found. One scope note worth recording explicitly
+(already called out in `current-state.md`, re-verified live here): the
+vendored `@/components/ds` composites `RateRow` and `CurrencyPicker` are
+deliberately **not** used because they bake in behaviour (a trend pill, extra
+copy) this app has no honest data for at the currency-list/picker layer —
+`CurrencyRow.tsx` and the inline filter UI in `RatesView.tsx` are used
+instead. This is a defensible interpretation, not a contradiction of FR-PICK
+or FR-RATES.
+
+### 2. Test honesty
+
+- All `lib/*.test.ts` files carry `@trace FR-x` on their top-level `describe`
+  block (verified by grep — 27 `@trace` occurrences across the test suite).
+  The one exception is `lib/currency/convertFlow.integration.test.ts`, which
+  has no `@trace` annotation despite testing FR-CONVERT-01/02/04/05 end to
+  end — every behaviour it covers is already traced by the unit tests it
+  composes, so this is a **minor** documentation gap, not a coverage gap.
+- Spot-read several test files (`parseAmount.test.ts`, `kyivDate.test.ts`,
+  `formatAmount.test.ts`, `convertFlow.integration.test.ts`) — all assert
+  real, specific outputs (e.g. `kyivDateString` DST-rollover and
+  year-boundary cases independently re-derivable by hand), not vacuous
+  `toBeTruthy()` placeholders. No evidence of a test being weakened to pass.
+- `lib/` is framework-free (TC-PURE-01): grepped every `lib/**/*.ts` (excl.
+  `*.test.ts`) for `next/`, `from "react"`, `document.`, `window.` — the only
+  hit is `lib/theme/theme.ts:25`, and that is a `document.`/`localStorage`
+  reference **inside a string literal** (the inline bootstrap script body
+  injected into `<head>` by `ThemeScript.tsx`), not a real DOM access from
+  the module itself. `lib/` stays import-free of `next`/`react` — Pass.
+- `convert`, `parseAmount`, `formatAmount`, `filterRates`, `weeklyMovePct`,
+  `kyivDate.ts`'s helpers, and `selectSaying` are all total: every one
+  returns a safe default (`0`, `[]`, `""`, `null`, `"0,00"`) on bad input
+  rather than throwing, confirmed by reading the guard clauses, not just the
+  doc comments claiming it.
+
+### 3. Error surface (NFR-OBS-01)
+
+- `app/api/rates/route.ts` and `app/api/history/route.ts` never throw to the
+  client: both wrap `fetchTodayRates`/`fetchHistory`, which themselves
+  swallow every failure into `{ ok: false }` (`fetchTodayRates.ts:31-58`,
+  `fetchHistory.ts:28-56`) and return a 200 JSON envelope either way.
+  `RatesView.tsx:53-69` and `CurrencyHistory.tsx:31-43` both branch on
+  `ok`/`points.length` into a visible, calm message — never a blank panel.
+- Converter: empty/invalid amount input flows through `parseAmount` → `0`
+  → `convert` → `0` → `formatAmount` → `"0,00"`, confirmed end-to-end by
+  `convertFlow.integration.test.ts:66-77` ("garbage user input flows through
+  to an honest 0,00 display, never NaN or a throw") and live by the e2e
+  converter test.
+- Manual retry path (`RatesView.tsx:39-51`) also wraps its `fetch` in
+  try/catch and degrades to `{ ok: false }` on a thrown network error, not
+  just a non-200 — Pass.
+
+### 4. Locale & honesty
+
+- `parseAmount` (`lib/currency/parseAmount.ts:8-11`) replaces `,`→`.` and
+  strips whitespace/non-digit characters before `parseFloat` — accepts
+  «100,50», trailing zeros, and stray spaces per FR-CONVERT-02 — Pass.
+- `formatAmount` uses `toLocaleString("uk-UA", …)`, confirmed by
+  `formatAmount.test.ts:13` to actually render `"1 308,40"` runtime-side
+  (not just assumed) — comma decimal, grouped thousands — Pass. The ₴ sign
+  is appended by callers (`Converter.jsx:84`, `CurrencyRow.tsx:43`), not by
+  `formatAmount` itself, which matches the spec's "results are formatted in
+  uk-UA … ₴ after" being a presentational concern composed at the call site.
+- Stale-rate labelling: `lib/nbu/kyivDate.ts`'s `isStaleRate`/`kyivDateString`
+  use `Intl.DateTimeFormat` anchored to `Europe/Kyiv`, never
+  `toISOString().slice(0,10)` — grepped the whole repo for that exact
+  pattern and found zero real occurrences (the only hit is a comment
+  *describing* the rule to avoid, in `kyivDate.ts:7`) — Pass, BC-HONESTY-01
+  honoured.
+- One **minor, non-blocking inconsistency**: `CurrencyRow.tsx:23-26` and
+  `CurrencyFocusPanel.tsx:25-28` each independently call
+  `rate.toLocaleString("uk-UA", { minimumFractionDigits: 2,
+  maximumFractionDigits: 4 })` inline rather than going through
+  `lib/currency/formatAmount` (which only supports a fixed
+  `minimumFractionDigits === maximumFractionDigits`, so it cannot directly
+  express the 2–4 variable-precision display rate format used here — this
+  looks like a deliberate, reasoned divergence per `design.md` Decision 5,
+  cited in the maker's self-review, not an oversight). Still, the same
+  `toLocaleString(...)` call is now duplicated verbatim in two components
+  instead of one shared helper. Cosmetic; does not violate NFR-LOCALE-01
+  (the output is correct uk-UA formatting in both places) but is exactly the
+  kind of cross-slice duplication a global review is positioned to catch
+  that a per-slice review wouldn't.
+
+### 5. Design discipline
+
+- Grepped `app/` and `components/rates|app-shell` (excluding the vendored,
+  ESLint-excluded `components/ds/**` and `docs/design-system/**`) for raw
+  hex/`#`-colour literals — zero hits. The only raw hex in the repo lives in
+  `app/styles/tokens/colors.css`, which is the legitimate token-definition
+  file itself (the single source of truth DESIGN.md describes), not
+  application code consuming raw ramps — Pass.
+  - Note `colors.css:102-115,167-171` documents three WCAG-AA contrast fixes
+    (`--text-muted`, `--text-faint`) found live via axe at Stage 8, not by
+    inspection — consistent with the axe run reproduced in this review
+    finding zero violations across all four `a11y.spec.ts` cases (light/dark
+    × empty/selected).
+- All reviewed components import from `@/components/ds` (`Button`, `Input`,
+  `Switch`, `CurrencyAvatar`, `AsOfBadge`, `Converter`) or compose plain
+  semantic-token CSS classes (`currency-row`, `currency-focus`,
+  `shell-slot-empty`) — no ad hoc component reinvention found.
+- Focus ring: `e2e/a11y.spec.ts:65-85` asserts the box-shadow actually
+  *changes* on focus (not just present at rest), reproduced green in this
+  review's own e2e run — Pass, NFR-A11Y-01 honoured.
+- Reduced motion: `app/styles/tokens/motion.css:26-33` collapses all
+  `--dur-*` tokens to `0ms` under `prefers-reduced-motion: reduce`;
+  `HistoryChart.tsx:107` additionally hardcodes `isAnimationActive={false}`
+  on the Recharts `<Area>` regardless of the media query, so the chart never
+  animates by default at all (stricter than required, not a defect) — Pass.
+
+### 6. Cross-slice consistency
+
+- The `formatAmount` vs. inline `toLocaleString` duplication noted in §4 is
+  the one real cross-slice inconsistency found — same formatting logic
+  expressed two different ways in two components that should likely share
+  a second helper (e.g. `formatRate(n)` in `lib/currency/`) if a third
+  call site is ever added. Not blocking today.
+- `CurrencyHistory.tsx`'s loading/error/empty states share the
+  `shell-slot-empty` / `shell-skeleton` CSS classes consistently with
+  `RatesView.tsx`'s own error state and `ShellSkeleton.tsx` — good reuse,
+  no divergent ad hoc class names found across the two slices that both
+  need a "degraded state" treatment.
+- `trendTone` is imported directly from `@/components/ds` in `TrendHint.tsx`
+  and nowhere re-implemented in `lib/` — consistent with the single
+  source-of-truth requirement in FR-TREND-03 and the architectural note in
+  `current-state.md` explaining why this specific impurity boundary is
+  acceptable.
+- Both Server-Component date computations (`isStaleRate` in `page.tsx:10`
+  and `selectSaying` in `page.tsx:14`) call `new Date()` independently
+  rather than sharing one value — confirmed still present, exactly as the
+  maker's self-review already flagged it as a known, accepted, non-blocking
+  cosmetic risk (two clock reads instead of one, both still within the same
+  request so practically simultaneous). Re-flagging here only to confirm it
+  is real and still open, not to escalate its severity.
+
+### Findings summary
+
+| Severity | Finding | File:line | FR/NFR |
+| --- | --- | --- | --- |
+| Suggestion | `convertFlow.integration.test.ts` has no `@trace` annotation on its `describe` block, unlike every other test file in the suite | `lib/currency/convertFlow.integration.test.ts:31` | (test hygiene, not an FR) |
+| Suggestion | Rate display formatting (`toLocaleString("uk-UA", {min:2,max:4})`) is duplicated verbatim in two components instead of a shared `lib/currency/` helper | `components/rates/CurrencyRow.tsx:23-26`, `components/rates/CurrencyFocusPanel.tsx:25-28` | NFR-LOCALE-01 (output correct either way; duplication is the only issue) |
+| Suggestion | `app/page.tsx` calls `new Date()` twice (once for staleness, once for the saying) instead of once and reusing the value | `app/page.tsx:10,14` | (cosmetic; already logged by the maker's own self-review) |
+
+No confirmed blocking defects. No silent scope drift. No FR implemented in
+contradiction of its spec. No 500/blank/silent-failure path found on any
+user input or NBU call exercised. `npm run verify`, `npm run test:run`
+(117/117), and `npm run test:e2e` (14/14, including axe a11y in both
+themes) are all green, reproduced live in this review, not taken on the
+maker's word.
+
+### Verdict
+
+**CLEAN** — no blocking findings. The three items above are suggestions only
+(test-hygiene polish and minor duplication), safe to leave for a future pass
+or fold into the next slice that touches these files. The app is ready to
+proceed to the next stage (QA proof pack / vision-judge) from this
+checker's spec-compliance + correctness lens.

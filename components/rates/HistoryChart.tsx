@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
+import { formatRate } from "@/lib/currency/formatRate";
 import type { HistoryPoint } from "@/lib/nbu/mapHistory";
 
 /** Module-scoped (not created during render — react-hooks/static-components). */
@@ -20,13 +21,7 @@ function HistoryTooltip({ active, payload, label }: TooltipContentProps) {
     <div className="history-chart__tooltip">
       <div className="history-chart__tooltip-label">{label}</div>
       <div className="history-chart__tooltip-value">
-        {typeof value === "number"
-          ? value.toLocaleString("uk-UA", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 4,
-            })
-          : ""}{" "}
-        ₴
+        {typeof value === "number" ? formatRate(value) : ""} ₴
       </div>
     </div>
   );

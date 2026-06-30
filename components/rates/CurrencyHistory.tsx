@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ds";
 import { uk } from "@/lib/i18n/uk";
 import type { HistoryPoint } from "@/lib/nbu/mapHistory";
 import { HistoryChart } from "./HistoryChart";
@@ -25,7 +26,7 @@ type HistoryState =
 export function CurrencyHistory({ code }: { code: string }) {
   const [state, setState] = useState<HistoryState>({ status: "loading" });
 
-  useEffect(() => {
+  const fetchHistory = useCallback(() => {
     fetch(`/api/history?code=${encodeURIComponent(code)}`)
       .then((res) => res.json())
       .then((data: { ok: boolean; points?: HistoryPoint[] }) => {
@@ -42,6 +43,19 @@ export function CurrencyHistory({ code }: { code: string }) {
       .catch(() => setState({ status: "error" }));
   }, [code]);
 
+  // Initial load: the effect's first action is the fetch itself, no
+  // synchronous setState before it (react-hooks/set-state-in-effect).
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  // Retry (user-triggered, not an effect): resetting to "loading" here is a
+  // normal event-handler setState, same pattern as RatesView's retry().
+  function retry() {
+    setState({ status: "loading" });
+    fetchHistory();
+  }
+
   return (
     <div className="currency-history">
       <p className="currency-history__title">{uk.history.title}</p>
@@ -51,9 +65,12 @@ export function CurrencyHistory({ code }: { code: string }) {
         </div>
       )}
       {state.status === "error" && (
-        <p className="shell-slot-empty" role="status">
-          {uk.history.loadError}
-        </p>
+        <div className="shell-slot-empty" role="status">
+          <p style={{ margin: "0 0 var(--space-3)" }}>{uk.history.loadError}</p>
+          <Button variant="outline" onClick={retry}>
+            {uk.history.retry}
+          </Button>
+        </div>
       )}
       {state.status === "empty" && (
         <p className="shell-slot-empty" role="status">

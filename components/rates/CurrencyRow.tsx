@@ -1,6 +1,7 @@
 "use client";
 
 import { CurrencyAvatar } from "@/components/ds";
+import { formatRate } from "@/lib/currency/formatRate";
 import type { Rate } from "@/lib/nbu/mapRates";
 
 /**
@@ -20,10 +21,7 @@ export function CurrencyRow({
   selected: boolean;
   onSelect: (code: string) => void;
 }) {
-  const fmtRate = rate.rate.toLocaleString("uk-UA", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
+  const fmtRate = formatRate(rate.rate);
 
   return (
     <button
