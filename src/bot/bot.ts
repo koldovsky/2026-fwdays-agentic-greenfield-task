@@ -92,7 +92,8 @@ const replyConfirmation = async (reply: ReplyFn, confirmation: Confirmation): Pr
 /**
  * Non-command text. While onboarding is incomplete the message is the answer to the current question
  * — it never reaches the classifier (which must not see a bare "32" out of context). Otherwise it
- * falls through to FR-1 routing; a `log` intent is recorded, the rest still echo until their changes land.
+ * falls through to FR-1 routing; `log` and `metric` intents are acted on, the rest still echo until
+ * their changes land.
  */
 export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void> => {
   const text = ctx.message.text;
@@ -107,6 +108,13 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
   }
 
   const routed = await classifyMessage(deps.anthropic, text, { userTz: deps.userTz });
+  if (routed.intent === 'metric') {
+    const confirmation = await deps.metrics.logMetric(chatId, text, routed);
+    if (confirmation) {
+      await ctx.reply(confirmation.text);
+    }
+    return;
+  }
   if (routed.intent !== 'log') {
     await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
     return;

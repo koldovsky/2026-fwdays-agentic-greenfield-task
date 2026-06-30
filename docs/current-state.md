@@ -8,7 +8,7 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) + M3 `coach-persona` + M3 `food-text` code-complete locally.** `pipe`:
+**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) + M3 `coach-persona` + M3 `food-text` + M5 `metrics` code-complete locally.** `pipe`:
 grammY long-poll skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core
 tables), migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
 `router`: Anthropic client seam (Sonnet 4.6, single call, temp 0, cached prefix, **no agent loop**),
@@ -21,8 +21,10 @@ honest non-moralizing voice + precision-first clarification policy in the shared
 borderline — ADR-0013) seeded with `coach-persona-tone`. `food-text`: act on the `log` intent — parse
 → Food DB fact / one-call LLM estimate → `reconcileQty` (qty/basis reconciliation) → code-scaled
 `food_log` write → honest confirmation + add-to-catalog (US-2), with a deterministic `food-scale`
-eval. 92 tests green; all gates + maker≠checker review passed. Remaining: the **human deploy** + the
-live LLM/eval run incl. seeding the tone-eval baseline (need `ANTHROPIC_API_KEY` + egress).
+eval. `metrics`: deterministic body-metrics parse → upsert one row/day → like-with-like trend diffs,
+zero LLM calls (US-7). 121 tests green; all gates + maker≠checker review passed. Remaining: the
+**human deploy** + the live LLM/eval run incl. seeding the tone-eval baseline (need `ANTHROPIC_API_KEY`
++ egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -32,7 +34,7 @@ live LLM/eval run incl. seeding the tone-eval baseline (need `ANTHROPIC_API_KEY`
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
 | M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (log by text → Food DB fact / LLM estimate → code-scaled `food_log` write) landed; query/correction/clarify next |
 | M4 — Vision (photo plate) | ⬜ not started |
-| M5 — Body (metrics + progress notes) | ⬜ not started |
+| M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
 | M7 — Notion mirror | ⬜ not started |
 | M8 — Hardening | ⬜ not started |
@@ -85,7 +87,20 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   `saveLoggedFoodToCatalog` reconstructs the per-basis macros into a user-owned Food DB row; reply
   localized off the row's entryName. 92 tests green (+ deterministic `food-scale` eval, key-less).
   Reviewer-resolved (two MAJOR scaling fixes). Live estimate/parse eval cases are deploy-time (no key).
-- Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
+- **M5 `metrics`** — first body-track slice (US-7): acts on the router's `metric` intent. `src/metrics/`
+  parses terse RU/UA/EN body measurements (вес/талия/грудь/бедра/бицепс/бедро + UA/EN synonyms) into the
+  six `body_metrics` columns via a **deterministic** word-boundary-anchored keyword parser — **zero LLM
+  calls** (invariant #5). Upserts ONE tenant-scoped row per (user, date) (merges same-day fields, never
+  nulls an unmentioned one), then computes **like-with-like** trend deltas: each field diffed in code
+  against its own most-recent-prior entry (`date < D`, never vs the start, never cross-metric) from a
+  single bounded history fetch (no N+1). Confirmation is code-built (values + signed ↑/↓ deltas + prior
+  date), prose mirrors language, columns stay English. `metricStaleness` exposed for the future
+  `reviews`. 121 tests green (+28). Opus reviewer → CLEAN; resolved 3 MINOR parser false-positives
+  (word-boundary fix). Deterministic — no eval suite (unit-tested).
+- Loop tooling: `run-backlog` now assigns a **model+effort tier per phase** (Opus for propose/improve/
+  review; Sonnet 5 for apply/verify/docs/gates; Haiku for mechanical steps) — `metrics` was the first
+  change run under it (apply delegated to a Sonnet maker subagent). `run-backlog` is also **autonomous/
+  gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
 
@@ -118,8 +133,11 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    seed is deploy-time (needs key).
 7. ✅ **`food-text` (M3): code-complete + archived** — parse → Food DB lookup/estimate → code-scaled
    `food_log` write + add-to-catalog. Live estimate/parse eval is deploy-time (needs key).
-8. **`query` / `correction` / `clarify` (M3, wave 4): NEXT** — all now unblocked by `food-text`
-   (`clarify`/`food-photo` also build on `coach-persona`). `metrics` (M5, wave 3) is independently ready.
+8. ✅ **`metrics` (M5, wave 3): code-complete + archived** — deterministic body-metrics parse → upsert
+   → like-with-like trend diffs (US-7). Deterministic, no live-LLM gate.
+9. **`query` / `correction` / `clarify` / `food-photo` (wave 4): NEXT** — all unblocked by `food-text`
+   (`clarify`/`food-photo` also build on `coach-persona`). `progress-photo` (M5, wave 5) waits on
+   `metrics` + `food-photo`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

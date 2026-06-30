@@ -3,6 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { handleCallback, handleStart, handleText } from '../../src/bot/bot.js';
 import type { BotDeps } from '../../src/bot/types.js';
 import type { FoodService } from '../../src/food/types.js';
+import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
 
@@ -21,17 +22,33 @@ const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
   ...over,
 });
 
+const makeMetrics = (over: Partial<MetricsService> = {}): MetricsService => ({
+  logMetric: vi.fn().mockResolvedValue({ text: 'Записал:\nВес: 89.2 кг' }),
+  ...over,
+});
+
 const makeDeps = (
   onboarding: OnboardingService,
   intent = 'query',
   food: FoodService = makeFood(),
-): { deps: BotDeps; create: ReturnType<typeof vi.fn>; food: FoodService } => {
+  metrics: MetricsService = makeMetrics(),
+): {
+  deps: BotDeps;
+  create: ReturnType<typeof vi.fn>;
+  food: FoodService;
+  metrics: MetricsService;
+} => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
     usage: {},
   });
   const anthropic = { messages: { create } } as unknown as Anthropic;
-  return { deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food }, create, food };
+  return {
+    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics },
+    create,
+    food,
+    metrics,
+  };
 };
 
 describe('handleStart', () => {
@@ -125,6 +142,24 @@ describe('handleText', () => {
     expect(String(reply.mock.calls[0]?.[0])).toContain('330');
     // Estimate path → the add-to-Food-DB button rides along.
     expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup');
+  });
+
+  it('routes a `metric` intent to the metrics service and replies with its confirmation', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const metrics = makeMetrics({
+      logMetric: vi.fn().mockResolvedValue({ text: 'Записал:\nВес: 89.2 кг (↓0.8 с 2026-06-22)' }),
+    });
+    const { deps } = makeDeps(onboarding, 'metric', makeFood(), metrics);
+
+    await handleText({ message: { text: 'вес 89.2' }, chat: { id: 7 }, reply }, deps);
+
+    expect(metrics.logMetric).toHaveBeenCalledWith(
+      7n,
+      'вес 89.2',
+      expect.objectContaining({ intent: 'metric' }),
+    );
+    expect(String(reply.mock.calls[0]?.[0])).toContain('89.2');
   });
 
   it('persists a logged estimate to the catalog on a `food:addfdb:` tap', async () => {
