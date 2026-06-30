@@ -16,8 +16,8 @@
 | 2a — Design system (claude-design ZIP → DESIGN.md → frontend skill) | ✅ **done** |
 | 2 — Specification (requirements + OpenSpec baseline) | ✅ **done** |
 | 3 — Architecture (capability plan) | ✅ **done** |
-| 4 — Bootstrap the hand-authored loop (agents, commands, hooks, CI, checklist, check script) | ⏳ next |
-| 5–7 — Per-slice loop (build each capability, maker ≠ checker) | ⬜ |
+| 4 — Bootstrap the hand-authored loop (agents, commands, hooks, CI, checklist, check script) | ✅ **done** |
+| 5–7 — Per-slice loop (build each capability, maker ≠ checker) | ⏳ next |
 | 8 — Verification (integration + e2e + a11y) | ⬜ |
 | 9 — Maker self-review | ⬜ |
 | 10 — Checker review (two checker agents) | ⬜ |

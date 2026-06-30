@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# design system source archive (the unpacked docs/design-system/ is committed)
+docs/*.zip

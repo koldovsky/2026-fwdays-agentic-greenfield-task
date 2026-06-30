@@ -19,23 +19,26 @@ the authoritative Ukrainian source. It is the natural fit.
 
 ## Decision
 
-We will use the **NBU `NBUStatService` open API** as the **single** data source.
-Confirmed endpoints (all keyless, `&json` for JSON):
+We will use the **NBU open API** as the **single** data source. Endpoints
+(all keyless, `&json` for JSON) — **verified live 2026-06-30** while building the
+`kurs-uah` skill:
 
 - **All currencies, today:**
   `https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json`
-  → array of `{ r030, txt, rate, cc, exchangedate }` (e.g. `cc:"USD"`,
-  `rate:41.8`, `exchangedate:"29.06.2026"`).
-- **One currency, a specific date:**
-  `https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&date=YYYYMMDD&json`
+  → array of `{ r030, txt, rate, cc, exchangedate, special }` (`cc` = ISO code,
+  `txt` = Ukrainian name, `rate` = ₴ per unit, `exchangedate` = `DD.MM.YYYY`).
+- **All currencies on a given date** (archive — repeats the last business day on
+  weekends/holidays): `…/statdirectory/exchange?date=YYYYMMDD&json`.
+- **One currency on a date:** `…/statdirectory/exchange?valcode=USD&date=YYYYMMDD&json`.
+- **~30-day history (range)** — the resolved history endpoint (ADR-0002's prior
+  open question, now **closed**):
+  `https://bank.gov.ua/NBU_Exchange/exchange_site?start=YYYYMMDD&end=YYYYMMDD&valcode=USD&sort=exchangedate&order=desc&json`
+  → array of daily `{ exchangedate, cc, txt, rate, units, rate_per_unit, calcdate, … }`.
+  (Weekends/holidays carry the prior business day's `rate` with that `exchangedate` —
+  confirmed in the response, so `rate-history` must de-duplicate or label accordingly.)
 
-For the **~30-day history**, the date-range endpoint shape will be **verified
-live during the rate-history slice** (Stage 5–7, prompt 7) before coding against
-it — the candidates are NBU's period endpoint
-(`.../exchange_history?...` / `.../dynamic?...&date_start&date_end`) or, as a
-guaranteed fallback, **iterating the confirmed dated endpoint** over the last ~30
-business days. The slice picks whichever the live API actually serves; the spec
-records the chosen shape.
+The `rate-history` slice uses the **range endpoint** above; the dated archive
+endpoint remains a guaranteed per-day fallback.
 
 **Rules of use:**
 

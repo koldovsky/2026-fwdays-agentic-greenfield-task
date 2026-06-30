@@ -10,11 +10,33 @@
 
 ## Phase
 
-**Stage 3 — Architecture: complete.** Next: Stage 4 (author the loop) → per-slice build.
+**Stage 4 — Loop authored: complete.** Next: per-slice build (Stages 5–7), starting with `app-shell`.
 
 ## Last action
 
-Authored `docs/mvp-capability-plan.md`: 8-slice table, acyclic dependency graph (mermaid + textual), critical path (`app-shell → i18n → currency-list → rate-history → trend-hint`), recommended build order, per-slice DoD + risks, and an FR-coverage table proving no gaps/duplicates. (Prior: `docs/requirements.md` — **25 MVP FRs** + 1 Future + NFR/TC/BC, stable ids; `docs/context-architecture.md`; 8 baseline specs validating `--all --strict` green; `config.yaml` context.)
+Built the self-contained **`kurs-uah`** skill (`SKILL.md` + zero-dep `run.mjs`): fetches
+the official NBU rate live, prints a Ukrainian table the agent reasons over to convert
+amounts / read trends. **Live-tested** (convert both ways, 7-day trend, unknown-code
+handling) and **mirrored to `.claude` / `.cursor` / `.codex` skills** (runs in any harness).
+This **closed the ADR-0002 open question**: verified the NBU endpoints live — today
+(`statdirectory/exchange?json`), dated archive (`?date=YYYYMMDD`), and the **~30-day range**
+(`NBU_Exchange/exchange_site?start=&end=&valcode=`); ADR-0002 updated, `rate-history` slice
+de-risked.
+
+### Earlier this session
+Made the loop **portable across Claude Code · Cursor · Codex** and tidied context:
+(1) wired the **`vercel-react-best-practices`** skill via a path reference in `AGENTS.md`;
+(2) **trimmed** the verbose `# Design system` block out of `AGENTS.md` into a lean
+`# Skills (load on demand)` pointer (detail already lives in the `hryvnia-frontend-design`
+skill + `DESIGN.md`) — leaner static context;
+(3) mirrored the loop for the other tools — `.cursor/commands/` + `.codex/prompts/` for
+`propose-slice`, `review-slice`, `kurs-maker`, `kurs-reviewer`, `kurs-eval-judge` (thin
+redirectors to the canonical `.claude/` files), a `.cursor/rules/hryvnia.mdc` (alwaysApply),
+and `docs/agent-tooling.md` explaining the portability + how maker≠checker holds (run each
+checker in a fresh chat). `npm run lint` + `check:trace` still green.
+
+(Prior — Stage 4: authored the loop itself — 3 agents, 2 commands, `CHECKLIST.md`,
+`check-traceability.mjs`, git hooks (verified), CI, `.env.example`, openspec devDep + `verify`.)
 
 ## Status
 
@@ -27,14 +49,18 @@ Authored `docs/mvp-capability-plan.md`: 8-slice table, acyclic dependency graph 
   - `openspec/specs/{app-shell,i18n,currency-list,currency-picker,converter,rate-history,trend-hint,footer-sayings}/spec.md` — validate `--all --strict` green.
   - `openspec/config.yaml` — project context added.
 - **Done (Stage 3):** `docs/mvp-capability-plan.md` — slice table, acyclic dependency graph, critical path, build order, per-slice DoD + risks, FR-coverage (25/25, no gaps/dupes). **Checkpoint 2.**
+- **Done (Stage 4):** the hand-authored loop — `AGENTS.md` engineering rules; 3 agents; 2 commands; `CHECKLIST.md`; `check-traceability.mjs`; git hooks (wired + verified); CI; `.env.example`; openspec devDep + `verify` script.
 - **In progress:** —
 - **Blocked:** —
 
 ## Next steps
 
-1. **Stage 4 (author the loop):** finalize `AGENTS.md` rules; `.claude/agents/{kurs-maker,kurs-reviewer,kurs-eval-judge}.md`; `.claude/commands/{propose-slice,review-slice}.md`; `CHECKLIST.md`; `.githooks/{pre-commit,commit-msg}`; `ci.yml`; `scripts/check-traceability.mjs`; verify lint/build green + hooks fire.
-2. Then the per-slice loop, build order: `app-shell` → `i18n` → `currency-list` → `converter` → `rate-history` → `trend-hint` → `currency-picker` → *(optional)* `footer-sayings`.
-3. Before `rate-history`: verify the NBU history endpoint live (ADR-0002).
+1. **Per-slice loop (Stages 5–7)**, build order: `app-shell` → `i18n` → `currency-list` → `converter` → `rate-history` → `trend-hint` → `currency-picker` → *(optional)* `footer-sayings`. Each: `/propose-slice` → kurs-maker (tests-first) → `/review-slice` (two checkers) → archive.
+2. `rate-history` history endpoint is now **verified** (ADR-0002): use
+   `NBU_Exchange/exchange_site?start=&end=&valcode=&sort=exchangedate&order=desc&json`;
+   de-dup weekend/holiday carry-over rows.
+3. The `app/page.tsx` in-brand preview will be replaced by the real `app-shell` slice.
+4. Still **uncommitted** (Stages 1–4) — a clean checkpoint commit is advisable before slices begin.
 
 ## Notes / decisions
 

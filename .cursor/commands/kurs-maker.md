@@ -1,0 +1,5 @@
+# kurs-maker
+
+Adopt the **kurs-maker** role. Open and follow `.claude/agents/kurs-maker.md` exactly, applied to the capability I name (e.g. `converter`).
+
+**Maker ≠ checker:** run this in a FRESH chat/session, separate from whoever built the slice, so the review is independent (ADR-0003).

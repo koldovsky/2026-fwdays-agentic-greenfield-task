@@ -14,26 +14,91 @@ Before planning or implementing anything, read the docs in **`docs/`**:
 
 When scope is unclear, resolve it against `requirements.md` first; use the brief for tone and "why".
 
-# Design system
+# Stack (locked — see docs/adr/)
 
-The brand is **«Гривня»** — calm, Ukrainian-first, built around the official NBU
-rate. Before any UI work read **[DESIGN.md](DESIGN.md)** (the brand decision of
-record). Live tokens are in `app/styles/tokens/` (imported by `app/globals.css`);
-reusable components are in `components/ds/`, imported from `@/components/ds`.
+- Next.js 16.2 App Router · TypeScript strict · React 19.2 (TC-STACK-01).
+- Tailwind CSS 4 + the vendored «Гривня» design tokens/components (TC-STYLE-01).
+- **NBU `NBUStatService` open API only — keyless, free, official** (TC-DATA-01); called
+  server-side. The app runs with **zero env vars** (NFR-COST-01).
+- Recharts for the history chart (UMD global, graceful degrade) (TC-CHART-01).
+- Vitest for `lib/` unit tests; Playwright for e2e + axe a11y (TC-TEST-01).
+- **No database, auth, email, cookies, analytics, or map** (BC-PRIVACY-01).
 
-- Style with **semantic token aliases** (`--text`, `--surface`, `--brand`,
-  `--trend-*`…) or the Tailwind bridge — never raw colour ramps or hardcoded hex.
-- IBM Plex trio (self-hosted via `next/font` in `app/layout.tsx`); **IBM Plex Mono
-  with tabular figures for every number**, formatted `toLocaleString('uk-UA', …)`.
-- The vendored kit under `docs/design-system/` is the **read-only upstream**; the
-  `components/ds/` copies are adaptations and are **excluded from ESLint**.
+# Module conventions
 
-## Skills (load on demand)
+- **`lib/` is framework-free (TC-PURE-01):** no `next/*`, no `react`, no DOM globals.
+  Pure, total, 100% unit-testable. Domain logic lives here — `lib/nbu/` (response →
+  domain mappers + fetch wrapper), `lib/currency/` (`convert`, `parseAmount`,
+  `rateMove`), `lib/i18n/uk.ts`. Colocated `*.test.ts` next to each module.
+- **NBU calls** happen in Server Components / Route Handlers; never presented as if a
+  key were required.
+- **Components:** Server Components by default; `"use client"` only for interactivity.
+  Pages are thin; one shared app shell.
 
-- **`hryvnia-frontend-design`** (`.agents/skills/hryvnia-frontend-design/SKILL.md`)
-  — apply the brand when building or reviewing real pages/components.
-- **`hryvnia-design`** (`docs/design-system/SKILL.md`, `user-invocable`) — generate
-  mocks / prototypes / in-brand code from the vendored kit.
+# Correctness rules (non-negotiable)
+
+- **Error surface (NFR-OBS-01):** no user input or NBU call produces a generic 500 or
+  fails silently. Filter no-match shows inline «Нічого не знайдено», no toast. NBU
+  failure degrades to a visible state, never a blank crash.
+- **Total domain logic:** `convert` / `parseAmount` / `rateMove` are defined for every
+  input and never throw; empty/invalid input → 0 or a calm hint, never `NaN`.
+- **Locale (NFR-LOCALE-01):** parsers accept comma decimals and trailing zeros; output
+  is uk-UA (comma decimal, thin-space thousands, ₴ after) in mono tabular figures.
+- **Honesty (BC-HONESTY-01):** stale weekend/holiday rates are labelled with their real
+  `exchangedate` — never a fake "today". Never use `toISOString().slice(0,10)` for the
+  active date.
+- **Tone (BC-BRAND-01):** Ukrainian-first, calm, **no exclamation marks**, one number
+  then the detail.
+- Console silent on a healthy session; focus ring kept; motion respects `prefers-reduced-motion`.
+
+# The loop — maker ≠ checker (hand-authored, ADR-0003)
+
+Build one capability slice at a time through the per-slice loop:
+
+1. `/propose-slice <capability>` — open + validate an OpenSpec change from the spec.
+2. **kurs-maker** builds it **tests-first**: write unit tests from the spec scenarios
+   (`@trace FR-x`), observe them **fail (red)**, then implement to green. Never weaken
+   a test to pass it.
+3. `/review-slice <capability>` — the **two checkers** review (`kurs-reviewer` for spec
+   + correctness, `kurs-eval-judge` for quality). **The agent that built a slice never
+   reviews it.** Makers fix; checkers re-review until clean.
+4. Archive the change; update `current-state.md`; commit with `Slice:` / `Refs:` trailers.
+
+# Validation cadence
+
+Run before and after substantial changes (the gate is `CHECKLIST.md`):
+
+```bash
+npm run verify        # lint + check:trace + spec:validate + build
+npm run test:run      # once tests exist
+```
+
+`scripts/check-traceability.mjs` enforces that every MVP FR is cited in a spec;
+git hooks (`.githooks/`) run lint + traceability + `openspec validate` on commit;
+CI runs the full battery. A red check is a STOP — fix it, never weaken it.
+
+# Skills (load on demand)
+
+Read these by path when relevant — they are tool-neutral (work in Claude Code,
+Cursor, and Codex):
+
+- **Design — read before ANY UI work:** `.agents/skills/hryvnia-frontend-design/SKILL.md`.
+  It applies the «Гривня» brand — semantic tokens (never raw ramps/hex), `@/components/ds`,
+  IBM Plex Mono tabular numerals formatted `toLocaleString('uk-UA', …)`, Ukrainian voice,
+  a11y — and points to **[DESIGN.md](DESIGN.md)**, the brand decision of record.
+  To generate mocks/prototypes in-brand: `docs/design-system/SKILL.md` (`hryvnia-design`).
+- **React/Next performance:** `.agents/skills/vercel-react-best-practices/SKILL.md`.
+  Read its `SKILL.md` + the relevant `rules/*.md` when writing, reviewing, or refactoring
+  any React/Next code (serves NFR-PERF/OBS).
+
+# Cross-tool use (Claude Code · Cursor · Codex)
+
+This `AGENTS.md` is the portable core — all three tools read it, so the rules above
+and the loop apply everywhere. Tool-specific invocations of the loop live in:
+`.claude/{agents,commands}` (Claude Code), `.cursor/{commands,rules}` (Cursor),
+`.codex/prompts` (Codex). See **[docs/agent-tooling.md](docs/agent-tooling.md)**.
+Maker ≠ checker is preserved by running each checker in a **fresh chat**, separate
+from the maker.
 
 # Session handoff — keep this current automatically
 

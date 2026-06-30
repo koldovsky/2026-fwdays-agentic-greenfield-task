@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:trace": "node scripts/check-traceability.mjs",
+    "spec:validate": "openspec validate --all --strict --no-interactive",
+    "verify": "npm run lint && npm run check:trace && npm run spec:validate && npm run build"
   },
   "dependencies": {
     "next": "16.2.9",
@@ -14,6 +17,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@fission-ai/openspec": "^1.5.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
