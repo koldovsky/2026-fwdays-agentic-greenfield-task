@@ -72,6 +72,10 @@ npm run test:run                   # once tests exist
 
 ## G7 — Global review & release
 - [x] Global two-checker review clean; all confirmed findings fixed.
-- [ ] `npm run verify` green; CI green on the release commit.
-- [ ] `docs/technical/*` complete; README usage section; `docs/current-state.md` final.
-- [ ] PR opened with FR coverage + gate evidence.
+- [ ] `npm run verify` green (✅ confirmed locally every commit); CI green on the
+      release commit (⬜ branch not yet pushed — no GitHub Actions run exists
+      for this commit to point to).
+- [x] `docs/technical/*` complete; README usage section; `docs/current-state.md` final.
+- [ ] PR opened with FR coverage + gate evidence. (`docs/pr-description.md` drafted
+      and ready to paste; opening the actual PR needs the Stage 13 video link and
+      an explicit push — not done by an agent without confirmation.)

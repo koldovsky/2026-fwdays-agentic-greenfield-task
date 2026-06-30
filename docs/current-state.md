@@ -6,18 +6,67 @@
 
 ## Last updated
 
-`2026-07-01T02:20:00+03:00` (Europe/Kyiv)
+`2026-07-01T03:05:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
-**Stage 11 — QA proof pack: COMPLETE (CHECKLIST G6, items 1-2).** Stage 10
-(global two-checker review) committed as `c7766d7`. Next: Stage 12 (PR
-preparation), Stage 13 (recorded demo — G6 item 3, the automated headless
-recordings, lives here too; shot list already written this stage).
+**Stage 12 — PR preparation: IN PROGRESS.** Stage 11 (QA proof pack)
+committed as `0619f5b`. `docs/pr-description.md` is drafted and ready;
+the actual PR is **not opened** — blocked on the Stage 13 video link and
+on an explicit push (an agent does not push/open a PR without the user's
+go-ahead). Next: Stage 13 (record the demo), then push + open the PR.
 
 ## Last action
 
-**Stage 11 — QA proof pack, not yet committed:**
+**Stage 12 — PR preparation, not yet committed:**
+
+Closed out the remaining Stage 11 deliverable from `HRYVNIA_PROJECT_PLAN.md`
+(it scopes `docs/technical/*` + README usage section under Stage 11, not 12 —
+re-read the plan file fresh rather than trusting my own earlier
+`current-state.md` staging) and then did Stage 12 proper:
+
+1. **[`docs/technical/architecture.md`](technical/architecture.md)** — directory
+   map, the vendored-vs-authored design-system boundary, the recurring
+   hydration-boundary architectural pattern (computed once in `app/page.tsx`,
+   threaded as props — used twice, `currency-list` and `footer-sayings`),
+   and why there's no database/auth/client-side NBU calls.
+2. **[`docs/technical/data-flow.md`](technical/data-flow.md)** — the three
+   request lifecycles (first load, list retry, currency-history fetch) and
+   the caching table, re-verified against the actual route handler code
+   (`/api/rates` passes `noStore: true`, confirmed by reading
+   `app/api/rates/route.ts`, not assumed) rather than recalled from memory.
+3. **README.md** — appended a Ukrainian-language project-usage section
+   below the (unchanged) course-assignment instructions: quickstart
+   commands, a doc map, and a pointer to `docs/pr-description.md` for the
+   PR template's practices section.
+4. **[`docs/pr-description.md`](pr-description.md)** — full PR body matching
+   `.github/pull_request_template.md`'s structure, with a concrete,
+   evidence-linked description of every Agentic Engineering practice
+   applied (context engineering, loop engineering, maker≠checker run twice
+   — per-slice and globally —, verification, SDD, tools/MCP, what the user
+   decided vs. what the agent decided). Two fields intentionally left
+   `TODO`: the author's real name (only the user can fill that in) and the
+   demo video link (Stage 13).
+5. **Ticked `HRYVNIA_PROJECT_PLAN.md`** — the progress-at-a-glance table
+   (Stages 5-11 now ✅, 12 ⏳, 13 ⬜) and both checklist sections (§10
+   Deliverables, §12 Open decisions), each tick verified against the actual
+   repo state (e.g. confirmed `docs/context-architecture.md` and
+   `.claude/skills/kurs-uah/SKILL.md` exist before ticking those lines).
+6. **Ticked `CHECKLIST.md` G7** — carefully, not wholesale: `docs/technical/*`
+   + README + current-state are genuinely done (ticked); "CI green on the
+   release commit" is explicitly **not** ticked, because the branch has
+   never been pushed — no GitHub Actions run exists for any commit yet, so
+   there is nothing to point to as evidence. "PR opened" stays unticked for
+   the same reason plus the missing video link.
+
+122/122 unit tests, 14/14 e2e (unchanged — docs/markdown only this stage),
+`npm run verify` green.
+
+### Prior
+
+## Last action
+
+**Stage 11 — QA proof pack, committed as `0619f5b`:**
 
 Wrote all five CHECKLIST G6 deliverables, each built from re-verified
 evidence (re-grepped/re-read the actual code while writing, not copied from
@@ -399,27 +448,33 @@ OpenSpec change, folded into this slice's commit):**
   **and committed** (`54290cf`, `b1d6f34`, `9bd6c96`, `2ccb87b`, `77210b8`, `b191b8b`,
   bugfix `8b63d1f`, `395e992`, `1981e1e`). Stage 8 hardening committed as `2a35934`;
   Stage 9 self-review committed as `f8b4610`; Stage 10 global review + fixes committed
-  as `c7766d7`.
-- **In progress:** Stage 11 (5 QA proof-pack docs under `docs/qa/`) is complete and
-  verified but **not yet committed**.
-- **Blocked:** —
+  as `c7766d7`; Stage 11 QA proof pack committed as `0619f5b`.
+- **In progress:** Stage 12 (`docs/technical/*`, README usage section,
+  `docs/pr-description.md`, both planning-doc tick-ups) is complete and verified but
+  **not yet committed**.
+- **Blocked:** Opening the actual PR — needs the Stage 13 video link, and pushing
+  the branch is an action this agent will not take without the user's explicit
+  go-ahead (it's visible to others / hard to fully undo).
 
 ## Next steps
 
-1. **Commit** Stage 11 (the 5 QA proof-pack documents + the two CHECKLIST G6 ticks).
+1. **Commit** Stage 12's work (technical docs, README section, PR description draft,
+   the `HRYVNIA_PROJECT_PLAN.md`/`CHECKLIST.md` tick-ups).
 2. **Reload the session** so `kurs-maker`/`kurs-reviewer`/`kurs-eval-judge` register as
    real isolated Task-tool subagents (the Stage 10 global review used embedded-prompt
    `general-purpose` subagents instead, since the project-local agent types aren't
    dispatchable as named subagent types in this environment — same independence,
    different plumbing; worth re-checking after a session reload).
-3. **Stage 11 is complete (CHECKLIST G6 items 1-2 ticked). Move to Stage 12+:**
-   - Stage 12 — PR preparation. `docs/technical/*` and a README usage section are
-     still outstanding (CHECKLIST G7's remaining items) — fold into this stage.
-   - Stage 13 — the automated headless demo recordings (CHECKLIST G6 item 3 — shot
-     list is ready in `docs/qa/demo-script.md`, not yet implemented) + the 1-2 min
-     narrated walkthrough for the course submission (script also ready). A genuine
-     **vision check** of the rendered UI (axe catches WCAG-detectable issues only, not
-     visual/layout defects) belongs here too — flagged since `rate-history`, still owed.
+3. **Stage 12 is functionally complete except the push itself. Move to Stage 13:**
+   - Record the automated headless demo clips (shot list + per-clip FR assertions
+     already written in `docs/qa/demo-script.md`) and the 1-2 min narrated
+     walkthrough (script also ready, same file).
+   - A genuine **vision check** of the rendered UI (axe catches WCAG-detectable
+     issues only, not visual/layout defects) belongs here too — flagged since
+     `rate-history`, still owed.
+   - Fill in the author's real name and the video link in `docs/pr-description.md`,
+     then — with the user's explicit confirmation — push `build/hryvnia-foundation`
+     and open the PR, pasting that file's content into the template.
 
 ## Notes / decisions
 

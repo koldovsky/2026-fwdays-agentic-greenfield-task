@@ -45,3 +45,45 @@
 ---
 
 Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+
+---
+
+# «Гривня» — мій проєкт для цього завдання
+
+Спокійний, україномовний застосунок офіційного курсу НБУ: один екран,
+список валют, конвертер, графік курсу за ~30 днів і коротка фраза про
+тренд за тиждень. Дані — виключно відкритий, бездоступний `NBUStatService`;
+без бази даних, авторизації, cookies, аналітики.
+
+## Запуск
+
+```bash
+npm install
+npm run dev          # http://localhost:3000 (потрібен інтернет — дані живі)
+```
+
+## Перевірка
+
+```bash
+npm run verify        # lint + traceability + openspec validate + build
+npm run test:run       # 122 unit/integration тести (Vitest)
+npm run test:e2e        # 14 e2e-тестів, включно з axe a11y (Playwright)
+```
+
+## Де що шукати
+
+| Що | Де |
+|---|---|
+| Інженерний план і прогрес за стадіями | [`HRYVNIA_PROJECT_PLAN.md`](HRYVNIA_PROJECT_PLAN.md) |
+| Поточний стан / handoff-журнал | [`docs/current-state.md`](docs/current-state.md) |
+| Правила для агентів (`AGENTS.md`) | [`AGENTS.md`](AGENTS.md) |
+| Вимоги (FR/NFR/TC/BC) | [`docs/requirements.md`](docs/requirements.md) |
+| Архітектура | [`docs/technical/architecture.md`](docs/technical/architecture.md) |
+| QA proof pack (трасування, ризики, acceptance) | [`docs/qa/`](docs/qa/) |
+| Підсумок готовності проєкту | [`docs/qa/acceptance-report.md`](docs/qa/acceptance-report.md) |
+| Чекліст якості G0–G7 | [`CHECKLIST.md`](CHECKLIST.md) |
+| Чернетка опису для PR | [`docs/pr-description.md`](docs/pr-description.md) |
+
+Стек і застосовані практики Agentic Engineering детально описані в
+`docs/pr-description.md` (готовий текст для розділу PR-шаблону «Які
+практики застосовано»).

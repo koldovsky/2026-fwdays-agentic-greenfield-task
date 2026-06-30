@@ -17,13 +17,13 @@
 | 2 — Specification (requirements + OpenSpec baseline) | ✅ **done** |
 | 3 — Architecture (capability plan) | ✅ **done** |
 | 4 — Bootstrap the hand-authored loop (agents, commands, hooks, CI, checklist, check script) | ✅ **done** |
-| 5–7 — Per-slice loop (build each capability, maker ≠ checker) | ⏳ next |
-| 8 — Verification (integration + e2e + a11y) | ⬜ |
-| 9 — Maker self-review | ⬜ |
-| 10 — Checker review (two checker agents) | ⬜ |
-| 11 — Documentation (QA pack + README + technical docs) | ⬜ |
-| 12 — PR preparation | ⬜ |
-| 13 — Demo recording | ⬜ |
+| 5–7 — Per-slice loop (build each capability, maker ≠ checker) | ✅ **done** — all 8 slices (incl. optional `footer-sayings`) |
+| 8 — Verification (integration + e2e + a11y) | ✅ **done** |
+| 9 — Maker self-review | ✅ **done** |
+| 10 — Checker review (two checker agents) | ✅ **done** |
+| 11 — Documentation (QA pack + README + technical docs) | ✅ **done** |
+| 12 — PR preparation | ⏳ in progress — `docs/pr-description.md` drafted; PR not yet opened (blocked on Stage 13's video link + an explicit push) |
+| 13 — Demo recording | ⬜ — shot list + narration script ready in `docs/qa/demo-script.md` |
 
 Live handoff: **[docs/current-state.md](docs/current-state.md)** (the source of truth for "where are we now").
 
@@ -302,17 +302,17 @@ loading (skeleton of equal footprint); empty (no rate for date → honest messag
 
 ## 10. Deliverables checklist
 
-- [ ] Source: Next.js App Router app · pure `lib/` · DS components · `kurs-uah` skill.
-- [ ] Specs: `docs/requirements.md` + `openspec/specs/*` + archived `openspec/changes/*`.
-- [ ] `AGENTS.md` + `CLAUDE.md` + ADRs + `docs/context-architecture.md`.
-- [ ] My loop: `.claude/agents/*`, `.claude/commands/*`, `.githooks/*`, `ci.yml`, `scripts/check-traceability.mjs`.
-- [ ] Verification: unit + e2e + a11y + `docs/qa/automated-verification-latest.md`.
-- [ ] Review: `docs/qa/review-findings.md` (clean) + `docs/qa/global-review.md`.
-- [ ] Evals: `evals/cases/*.eval.ts` + `docs/qa/eval-report.md`.
-- [ ] Docs: README · `docs/qa/*` (traceability, manual plan, demo script, risk register, acceptance) · `docs/technical/*` · `docs/current-state.md`.
-- [ ] `DESIGN.md` + `docs/design-system/` + frontend design skill.
-- [ ] Demo: automated headless clips + manifest + 1–2 min walkthrough.
-- [ ] PR description + open PR; CI green.
+- [x] Source: Next.js App Router app · pure `lib/` · DS components · `kurs-uah` skill.
+- [x] Specs: `docs/requirements.md` + `openspec/specs/*` + archived `openspec/changes/*`.
+- [x] `AGENTS.md` + `CLAUDE.md` + ADRs + `docs/context-architecture.md`.
+- [x] My loop: `.claude/agents/*`, `.claude/commands/*`, `.githooks/*`, `ci.yml`, `scripts/check-traceability.mjs`.
+- [x] Verification: unit + e2e + a11y + `docs/qa/automated-verification-latest.md`.
+- [x] Review: `docs/qa/review-findings.md` (clean) + `docs/qa/global-review.md`.
+- [x] Evals: `evals/cases/*.eval.ts` + `docs/qa/eval-report.md`.
+- [x] Docs: README · `docs/qa/*` (traceability, manual plan, demo script, risk register, acceptance) · `docs/technical/*` · `docs/current-state.md`.
+- [x] `DESIGN.md` + `docs/design-system/` + frontend design skill.
+- [ ] Demo: automated headless clips + manifest + 1–2 min walkthrough. (Stage 13 — shot list ready)
+- [ ] PR description + open PR; CI green. (`docs/pr-description.md` drafted; PR not yet opened)
 
 ---
 
@@ -336,9 +336,24 @@ loading (skeleton of equal footprint); empty (no rate for date → honest messag
 
 ## 12. Open decisions / reminders
 
-- [ ] Keep the optional **footer sayings** capability, or drop it for a tighter MVP?
-- [ ] Generate the claude-design **ZIP**, drop it in, then run prompt 1 / §7A.
-- [ ] Decide whether to include one optional `BUG-x` round to showcase triage.
-- [ ] Commit Stage 1 (scaffold + docs) when ready — currently uncommitted.
-- [ ] Primary UI is **Ukrainian-only** (English only as tiny system labels).
-- [ ] All numeric/date logic uses the published `exchangedate`, never `toISOString().slice(0,10)`.
+- [x] Keep the optional **footer sayings** capability, or drop it for a tighter MVP?
+      → **Kept and built** (`FR-SAYINGS-01`, the 8th slice).
+- [x] Generate the claude-design **ZIP**, drop it in, then run prompt 1 / §7A.
+      → Done at Stage 2a; `docs/design-system/` + `components/ds/` wired.
+- [x] Decide whether to include one optional `BUG-x` round to showcase triage.
+      → Decided against a staged demo round — real bugs were found and fixed
+        organically through the normal review loop instead (a duplicate-key
+        collision and a chart-label clipping bug live-verified during
+        `rate-history`; three a11y defects and a rate-precision defect found
+        by the automated/global review stages — arguably a stronger
+        demonstration of the loop than a manufactured bug would have been).
+- [x] Commit Stage 1 (scaffold + docs) when ready — currently uncommitted.
+      → Committed long before this stage; branch `build/hryvnia-foundation`
+        is now 18 commits deep.
+- [x] Primary UI is **Ukrainian-only** (English only as tiny system labels).
+      → Held throughout; independently re-verified at Stage 10 (global
+        checker read every string in `lib/i18n/uk.ts` and all 12 sayings).
+- [x] All numeric/date logic uses the published `exchangedate`, never
+      `toISOString().slice(0,10)`.
+      → Held throughout; re-grepped the whole repo for that exact pattern
+        at the Stage 10 global review — zero real occurrences.
