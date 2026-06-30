@@ -29,6 +29,7 @@ opsx:explore (optional, fuzzy items)
   → opsx:propose        # proposal + specs + design + tasks  (config.yaml rules apply)
   → opsx:apply          # implement tasks
   → opsx:verify         # plan ⇄ implementation coherence
+  → improve-arch        # improve-codebase-architecture: refactor scan of the diff (small wins inline; larger → new change)
   → review              # SEPARATE reviewer subagent: Standards + Spec axes (maker ≠ checker)
   → npm test            # vitest
   → fallow + npm run lint + format:check + typecheck   # static gates (ADR-0011 / 0009)
@@ -53,7 +54,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | data | done | agent | 1 | pipe | — | M1 | Data layer: Prisma schema + migrations + connection + multi-tenancy (against provisioned PG) |
 | router | done | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
 | coach-persona | todo | agent | 3 | router | — | M3 | Coach persona (honest voice) in stable system prefix + precision-first clarification policy ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)) |
-| onboarding | todo | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
+| onboarding | done | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
 | food-text | todo | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
 | metrics | todo | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
 | query | todo | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
