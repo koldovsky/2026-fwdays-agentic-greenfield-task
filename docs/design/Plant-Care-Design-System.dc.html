@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Mulish:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#F4F1E8;-webkit-font-smoothing:antialiased}
+  ::selection{background:#C7D9B0;color:#1B1E18}
+</style>
+</helmet>
+
+<div style="font-family:'Mulish',system-ui,sans-serif;background:#F4F1E8;color:#1B1E18;min-height:100vh;padding:0 0 120px">
+
+  <!-- ============ HERO ============ -->
+  <header style="position:relative;overflow:hidden;background:#213D2A;color:#F4F1E8;padding:88px 56px 76px">
+    <div style="position:absolute;top:-60px;right:-40px;width:340px;height:340px;border-radius:50%;background:#2F6B3F;opacity:.55"></div>
+    <div style="position:absolute;bottom:-120px;right:140px;width:240px;height:240px;border-radius:50%;background:#7E9B6E;opacity:.32"></div>
+    <div style="position:absolute;top:60px;right:280px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(244,241,232,.25)"></div>
+    <div style="position:relative;max-width:1080px;margin:0 auto">
+      <div style="display:inline-flex;align-items:center;gap:9px;padding:7px 15px 7px 11px;border:1px solid rgba(244,241,232,.28);border-radius:999px;font-size:13px;letter-spacing:.04em;color:#DDE7CF;margin-bottom:26px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7D9B0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c5-3 8-7 8-11a8 8 0 0 0-16 0c0 4 3 8 8 11Z"></path><path d="M12 13c0-3 1.5-5 4-6"></path></svg>
+        Дизайн-система · v1.0
+      </div>
+      <h1 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:64px;line-height:1.02;margin:0 0 20px;letter-spacing:-.02em;max-width:760px">Поливайко</h1>
+      <p style="font-size:20px;line-height:1.55;max-width:560px;margin:0;color:#DDE7CF;font-weight:400">Тепла, органічна система для маленького застосунку, що нагадує доглядати за домашніми рослинами. Зелень, ґрунт, м'які форми.</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:34px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(244,241,232,.08);border-radius:14px;font-size:14px"><span style="width:18px;height:18px;border-radius:5px;background:#2F6B3F;display:inline-block"></span>Зелень</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(244,241,232,.08);border-radius:14px;font-size:14px"><span style="width:18px;height:18px;border-radius:5px;background:#A9744E;display:inline-block"></span>Земля</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(244,241,232,.08);border-radius:14px;font-size:14px"><span style="width:18px;height:18px;border-radius:5px;background:#1B1E18;display:inline-block"></span>Графіт</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(244,241,232,.08);border-radius:14px;font-size:14px">Quicksand · Mulish</div>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:1080px;margin:0 auto;padding:0 56px">
+
+    <!-- ============ PALETTE ============ -->
+    <section style="padding:76px 0 24px;border-bottom:1px solid #E2DDCF">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">01</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Палітра</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">Жива зелень як основа, земляні коричневі для тепла, теплий папір замість стерильно-білого фону.</p>
+
+      <h3 style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#5A4232;margin:0 0 16px">Зелень</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:40px">
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#2F6B3F"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Forest</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#2F6B3F</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Primary</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#213D2A"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Pine</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#213D2A</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Deep</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#7E9B6E"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Sage</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#7E9B6E</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Secondary</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#A7BE92"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Moss</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#A7BE92</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Tint</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#DDE7CF"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Mist</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#DDE7CF</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Surface</div></div></div>
+      </div>
+
+      <h3 style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#5A4232;margin:0 0 16px">Земля</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:40px">
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#5A4232"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Bark</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#5A4232</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Dark</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#A9744E"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Clay</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#A9744E</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Accent</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#E6D7BE"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Sand</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#E6D7BE</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Warm</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#F4F1E8"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Paper</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#F4F1E8</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Background</div></div></div>
+        <div style="border-radius:18px;overflow:hidden;background:#FBFAF5;border:1px solid #E2DDCF"><div style="height:104px;background:#1B1E18"></div><div style="padding:13px 14px"><div style="font-weight:700;font-size:15px;font-family:'Quicksand',sans-serif">Ink</div><div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#6E7268;margin-top:2px">#1B1E18</div><div style="font-size:11px;color:#A9744E;margin-top:6px">Text</div></div></div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;background:#DDE7CF;border-radius:14px"><span style="width:14px;height:14px;border-radius:50%;background:#2F6B3F"></span><span style="font-size:14px;font-weight:600;color:#213D2A">Здорова · полито</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;background:#F6E7D6;border-radius:14px"><span style="width:14px;height:14px;border-radius:50%;background:#A9744E"></span><span style="font-size:14px;font-weight:600;color:#5A4232">Скоро полив</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;background:#F3DAD0;border-radius:14px"><span style="width:14px;height:14px;border-radius:50%;background:#B5462E"></span><span style="font-size:14px;font-weight:600;color:#7A2E1C">Потребує води</span></div>
+      </div>
+    </section>
+
+    <!-- ============ TYPOGRAPHY ============ -->
+    <section style="padding:72px 0 24px;border-bottom:1px solid #E2DDCF">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">02</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Типографіка</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">Quicksand — м'який геометричний гротеск для заголовків. Mulish — спокійний, читабельний для тексту. Spline Sans Mono — для дрібних міток і даних.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:34px 32px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Quicksand · Headings</div>
+          <div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:46px;line-height:1.05;letter-spacing:-.02em;margin-bottom:18px">Доброго ранку</div>
+          <div style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:28px;margin-bottom:14px">Сьогодні полити 3</div>
+          <div style="font-family:'Quicksand',sans-serif;font-weight:500;font-size:20px;color:#5A4232">Монстера почувається добре</div>
+        </div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:34px 32px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Mulish · Body</div>
+          <p style="font-size:18px;line-height:1.6;margin:0 0 16px;font-weight:600">Великий текст 18 / 600</p>
+          <p style="font-size:16px;line-height:1.65;margin:0 0 16px;color:#3A3D36">Основний текст 16 / 400. Поливайте монстеру раз на тиждень, коли верхні 2–3 см ґрунту просохнуть.</p>
+          <p style="font-size:14px;line-height:1.6;margin:0 0 18px;color:#6E7268">Дрібний текст 14 — підказки та опис.</p>
+          <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.04em;color:#2F6B3F;background:#DDE7CF;padding:5px 10px;border-radius:7px">NEXT · 2 ДНІ</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:28px;margin-top:24px;padding:22px 28px;background:#213D2A;border-radius:20px;color:#DDE7CF">
+        <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:30px;color:#F4F1E8">64 / 46 / 34</div><div style="font-size:13px;margin-top:4px">Display · H1 · H2</div></div>
+        <div style="width:1px;background:rgba(244,241,232,.18)"></div>
+        <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:30px;color:#F4F1E8">28 / 20</div><div style="font-size:13px;margin-top:4px">H3 · Lead</div></div>
+        <div style="width:1px;background:rgba(244,241,232,.18)"></div>
+        <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:30px;color:#F4F1E8">16 / 14 / 12</div><div style="font-size:13px;margin-top:4px">Body · Small · Caption</div></div>
+      </div>
+    </section>
+
+    <!-- ============ ICONOGRAPHY ============ -->
+    <section style="padding:72px 0 24px;border-bottom:1px solid #E2DDCF">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">03</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Іконки</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">М'які лінійні іконки: округлі закінчення, товщина штриха 1.8, ботанічна тематика. Один колір — Forest або Bark.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:16px">
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Полив</div></div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-13 14-13 0 8-6 13-14 13Z"></path><path d="M5 19c2.5-5 6-8 11-9.5"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Листок</div></div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7"></path><path d="M12 14c-4 0-7-2.5-7-6 3.5 0 7 1.5 7 6Z"></path><path d="M12 12c0-3.5 2.5-6 6-6 0 3.5-2 6-6 6Z"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Паросток</div></div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Світло</div></div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9h12l-1.5 10.5a1.5 1.5 0 0 1-1.5 1.3H9a1.5 1.5 0 0 1-1.5-1.3L6 9Z"></path><path d="M5 9h14"></path><path d="M9.5 9C9.5 5.5 11 4 12 4s2.5 1.5 2.5 5"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Горщик</div></div>
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px;padding:22px 12px;text-align:center"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9A6 6 0 0 0 6 9c0 5-2 6-2 6h16s-2-1-2-6Z"></path><path d="M10.5 19a1.5 1.5 0 0 0 3 0"></path></svg><div style="font-size:12px;color:#6E7268;margin-top:12px">Нагадування</div></div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:24px">
+        <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;background:#2F6B3F;border-radius:18px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg><span style="color:#F4F1E8;font-size:13px">На темному</span></div>
+        <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;background:#E6D7BE;border-radius:18px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5A4232" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-13 14-13 0 8-6 13-14 13Z"></path><path d="M5 19c2.5-5 6-8 11-9.5"></path></svg><span style="color:#5A4232;font-size:13px">На піску · Bark</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:18px 22px;background:#FBFAF5;border:1px solid #E2DDCF;border-radius:18px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#A7BE92" stroke="#2F6B3F" stroke-width="1.6"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>
+          <span style="font-size:13px;color:#6E7268">Заповнена варіація</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BUTTONS & CONTROLS ============ -->
+    <section style="padding:72px 0 24px;border-bottom:1px solid #E2DDCF">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">04</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Кнопки та контроли</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">М'які заокруглення (14–18px), тактильні стани, без різких тіней.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+        <!-- Buttons -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:30px 30px 34px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Кнопки</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+            <button style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;color:#F4F1E8;background:#2F6B3F;border:none;border-radius:14px;padding:13px 24px;cursor:pointer;display:inline-flex;align-items:center;gap:8px" style-hover="background:#275834">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>
+              Полити
+            </button>
+            <button style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;color:#2F6B3F;background:transparent;border:1.5px solid #2F6B3F;border-radius:14px;padding:13px 24px;cursor:pointer" style-hover="background:#DDE7CF">Додати рослину</button>
+            <button style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;color:#213D2A;background:#DDE7CF;border:none;border-radius:14px;padding:13px 24px;cursor:pointer" style-hover="background:#CBDCB8">Деталі</button>
+            <button style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;color:#6E7268;background:transparent;border:none;border-radius:14px;padding:13px 16px;cursor:pointer" style-hover="background:#EEE9DC">Скасувати</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px">
+            <button style="background:#A9744E;border:none;border-radius:14px;width:48px;height:48px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="background:#965f3a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+            <button style="background:#FBFAF5;border:1.5px solid #E2DDCF;border-radius:14px;width:48px;height:48px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#2F6B3F"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg></button>
+            <span style="font-size:13px;color:#9a9588;margin-left:4px">Іконкові · 48px</span>
+          </div>
+        </div>
+
+        <!-- Inputs -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:30px 30px 34px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Поля вводу</div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#5A4232;margin-bottom:7px">Назва рослини</label>
+          <input value="Монстера деліційоза" style="width:100%;font-family:'Mulish',sans-serif;font-size:15px;color:#1B1E18;background:#F4F1E8;border:1.5px solid #E2DDCF;border-radius:13px;padding:12px 15px;outline:none" style-focus="border-color:#2F6B3F;background:#FBFAF5"/>
+          <div style="position:relative;margin-top:16px">
+            <svg style="position:absolute;left:14px;top:13px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9a9588" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3-3"></path></svg>
+            <input placeholder="Пошук рослини…" style="width:100%;font-family:'Mulish',sans-serif;font-size:15px;color:#1B1E18;background:#F4F1E8;border:1.5px solid #E2DDCF;border-radius:13px;padding:12px 15px 12px 42px;outline:none" style-focus="border-color:#2F6B3F;background:#FBFAF5"/>
+          </div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#5A4232;margin:16px 0 7px">Частота поливу</label>
+          <div style="display:flex;background:#F4F1E8;border:1.5px solid #E2DDCF;border-radius:13px;padding:4px;gap:4px">
+            <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:#9a9588;padding:8px;border-radius:9px;cursor:pointer">3 дні</div>
+            <div style="flex:1;text-align:center;font-size:14px;font-weight:700;color:#F4F1E8;background:#2F6B3F;padding:8px;border-radius:9px;cursor:pointer">7 днів</div>
+            <div style="flex:1;text-align:center;font-size:14px;font-weight:600;color:#9a9588;padding:8px;border-radius:9px;cursor:pointer">14 днів</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <!-- toggles & checks -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:30px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Перемикачі</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <span style="font-size:15px;font-weight:600">Нагадування про полив</span>
+            <div style="width:52px;height:30px;background:#2F6B3F;border-radius:999px;position:relative;cursor:pointer"><div style="position:absolute;top:3px;right:3px;width:24px;height:24px;background:#FBFAF5;border-radius:50%"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+            <span style="font-size:15px;font-weight:600;color:#9a9588">Підживлення</span>
+            <div style="width:52px;height:30px;background:#D8D2C2;border-radius:999px;position:relative;cursor:pointer"><div style="position:absolute;top:3px;left:3px;width:24px;height:24px;background:#FBFAF5;border-radius:50%"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="width:24px;height:24px;border-radius:8px;background:#2F6B3F;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"></path></svg></div>
+            <span style="font-size:15px">Сонячне місце</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:24px;height:24px;border-radius:8px;border:2px solid #D8D2C2;background:#F4F1E8"></div>
+            <span style="font-size:15px;color:#9a9588">Потребує обприскування</span>
+          </div>
+        </div>
+
+        <!-- moisture meter / slider -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:30px">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#A9744E;margin-bottom:22px">Прогрес та вологість</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#6E7268;margin-bottom:8px"><span>Вологість ґрунту</span><span style="color:#2F6B3F;font-weight:700">68%</span></div>
+          <div style="height:12px;background:#E6E1D3;border-radius:999px;overflow:hidden;margin-bottom:22px"><div style="width:68%;height:100%;background:#2F6B3F;border-radius:999px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#6E7268;margin-bottom:8px"><span>До наступного поливу</span><span style="color:#A9744E;font-weight:700">2 дні</span></div>
+          <div style="height:12px;background:#E6E1D3;border-radius:999px;overflow:hidden;margin-bottom:26px"><div style="width:30%;height:100%;background:#A9744E;border-radius:999px"></div></div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="flex:1;height:6px;background:#E6E1D3;border-radius:999px;position:relative"><div style="width:55%;height:100%;background:#2F6B3F;border-radius:999px"></div><div style="position:absolute;left:55%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;background:#FBFAF5;border:3px solid #2F6B3F;border-radius:50%"></div></div>
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#5A4232">55%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PLANT CARDS ============ -->
+    <section style="padding:72px 0 24px;border-bottom:1px solid #E2DDCF">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">05</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Картки рослин</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">Фото-заглушка, назва, латинська назва, статус поливу та дія. Заокруглення 22px, тепла поверхня.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+        <!-- card healthy -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:22px;overflow:hidden">
+          <div style="height:150px;background:repeating-linear-gradient(45deg,#DDE7CF,#DDE7CF 12px,#D2DEC0 12px,#D2DEC0 24px);position:relative;display:flex;align-items:flex-end;padding:14px">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#5A6B4A;background:rgba(251,250,245,.7);padding:4px 8px;border-radius:7px">фото · monstera.jpg</span>
+            <span style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;background:#DDE7CF;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;color:#213D2A"><span style="width:8px;height:8px;border-radius:50%;background:#2F6B3F"></span>Здорова</span>
+          </div>
+          <div style="padding:18px 18px 20px">
+            <h3 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:20px;margin:0 0 2px">Монстера</h3>
+            <div style="font-size:13px;font-style:italic;color:#9a9588;margin-bottom:16px">Monstera deliciosa</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6E7268;margin-bottom:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A9744E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>Полито · наступний за 5 днів</div>
+            <button style="width:100%;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;color:#2F6B3F;background:#DDE7CF;border:none;border-radius:13px;padding:12px;cursor:pointer" style-hover="background:#CBDCB8">Доглянути</button>
+          </div>
+        </div>
+        <!-- card soon -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:22px;overflow:hidden">
+          <div style="height:150px;background:repeating-linear-gradient(45deg,#E6D7BE,#E6D7BE 12px,#DCCBAF 12px,#DCCBAF 24px);position:relative;display:flex;align-items:flex-end;padding:14px">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#7A6244;background:rgba(251,250,245,.7);padding:4px 8px;border-radius:7px">фото · ficus.jpg</span>
+            <span style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;background:#F6E7D6;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;color:#5A4232"><span style="width:8px;height:8px;border-radius:50%;background:#A9744E"></span>Скоро</span>
+          </div>
+          <div style="padding:18px 18px 20px">
+            <h3 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:20px;margin:0 0 2px">Фікус</h3>
+            <div style="font-size:13px;font-style:italic;color:#9a9588;margin-bottom:16px">Ficus lyrata</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6E7268;margin-bottom:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A9744E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>Полив за 2 дні</div>
+            <button style="width:100%;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;color:#F4F1E8;background:#2F6B3F;border:none;border-radius:13px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="background:#275834"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>Полити</button>
+          </div>
+        </div>
+        <!-- card needs water -->
+        <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:22px;overflow:hidden">
+          <div style="height:150px;background:repeating-linear-gradient(45deg,#E9DCCB,#E9DCCB 12px,#DECCB4 12px,#DECCB4 24px);position:relative;display:flex;align-items:flex-end;padding:14px">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#7A6244;background:rgba(251,250,245,.7);padding:4px 8px;border-radius:7px">фото · calathea.jpg</span>
+            <span style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;background:#F3DAD0;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;color:#7A2E1C"><span style="width:8px;height:8px;border-radius:50%;background:#B5462E"></span>Потребує</span>
+          </div>
+          <div style="padding:18px 18px 20px">
+            <h3 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:20px;margin:0 0 2px">Калатея</h3>
+            <div style="font-size:13px;font-style:italic;color:#9a9588;margin-bottom:16px">Calathea orbifolia</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#B5462E;font-weight:600;margin-bottom:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B5462E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>Прострочено на 1 день</div>
+            <button style="width:100%;font-family:'Quicksand',sans-serif;font-weight:600;font-size:14px;color:#F4F1E8;background:#B5462E;border:none;border-radius:13px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="background:#9d3b25"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg>Полити зараз</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SAMPLE SCREEN ============ -->
+    <section style="padding:72px 0 0">
+      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:8px">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500">06</span>
+        <h2 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:34px;margin:0;letter-spacing:-.01em">Приклад екрана</h2>
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:#6E7268;margin:0 0 36px;max-width:540px">Усе разом: головний екран зі списком рослин і нагадуваннями. Натисніть «Полити» — рослина зникне зі списку на сьогодні.</p>
+
+      <div style="display:flex;gap:48px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+        <!-- phone -->
+        <div style="width:380px;flex:none;background:#1B1E18;border-radius:48px;padding:13px;box-shadow:0 30px 60px -20px rgba(33,61,42,.45)">
+          <div style="background:#F4F1E8;border-radius:37px;overflow:hidden;height:780px;display:flex;flex-direction:column">
+            <!-- status bar -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 28px 6px;font-size:13px;font-weight:700;color:#1B1E18"><span>9:41</span><span style="font-size:11px;letter-spacing:.1em">Поливайко</span></div>
+            <!-- header -->
+            <div style="padding:18px 24px 20px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div style="font-size:14px;color:#9a9588">Понеділок, 30 червня</div>
+                  <h1 style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:28px;margin:4px 0 0">Доброго ранку 🌿</h1>
+                </div>
+                <div style="width:44px;height:44px;border-radius:50%;background:#DDE7CF;display:flex;align-items:center;justify-content:center;font-family:'Quicksand',sans-serif;font-weight:700;color:#2F6B3F">О</div>
+              </div>
+            </div>
+            <!-- today summary -->
+            <div style="margin:0 24px 18px;background:#213D2A;border-radius:22px;padding:20px 22px;color:#F4F1E8;position:relative;overflow:hidden">
+              <div style="position:absolute;right:-20px;bottom:-30px;width:120px;height:120px;border-radius:50%;background:#2F6B3F;opacity:.5"></div>
+              <div style="position:relative">
+                <div style="font-size:13px;color:#DDE7CF;margin-bottom:6px">Сьогодні полити</div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span id="count" style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:40px;line-height:1">{{ todoCount }}</span><span style="font-size:15px;color:#DDE7CF">рослини</span></div>
+              </div>
+            </div>
+            <!-- list -->
+            <div style="flex:1;overflow-y:auto;padding:0 24px 24px">
+              <div style="font-family:'Quicksand',sans-serif;font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:#5A4232;margin:4px 0 14px">Потребують поливу</div>
+
+              <sc-for list="{{ reminders }}" as="item" hint-placeholder-count="3">
+                <div style="background:#FBFAF5;border:1px solid #E2DDCF;border-radius:20px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:14px">
+                  <div style="width:54px;height:54px;border-radius:15px;flex:none;background:repeating-linear-gradient(45deg,#DDE7CF,#DDE7CF 8px,#D2DEC0 8px,#D2DEC0 16px)"></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:17px">{{ item.name }}</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:{{ item.dueColor }};margin-top:2px">{{ item.due }}</div>
+                  </div>
+                  <sc-if value="{{ item.done }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:46px;height:46px;border-radius:14px;flex:none;background:#DDE7CF;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"></path></svg></div>
+                  </sc-if>
+                  <sc-if value="{{ item.pending }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ item.onWater }}" style="width:46px;height:46px;border-radius:14px;flex:none;background:#2F6B3F;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#275834"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z"></path></svg></button>
+                  </sc-if>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+                <div style="text-align:center;padding:30px 20px;color:#6E7268">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-13 14-13 0 8-6 13-14 13Z"></path><path d="M5 19c2.5-5 6-8 11-9.5"></path></svg>
+                  <div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:18px;color:#213D2A;margin-top:10px">Усі политі! 🌱</div>
+                  <div style="font-size:14px;margin-top:4px">Гарного дня вам і вашим рослинам.</div>
+                </div>
+              </sc-if>
+            </div>
+            <!-- tab bar -->
+            <div style="display:flex;justify-content:space-around;align-items:center;padding:14px 24px 22px;background:#FBFAF5;border-top:1px solid #E2DDCF">
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-13 14-13 0 8-6 13-14 13Z"></path><path d="M5 19c2.5-5 6-8 11-9.5"></path></svg>
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#B6B1A4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9A6 6 0 0 0 6 9c0 5-2 6-2 6h16s-2-1-2-6Z"></path><path d="M10.5 19a1.5 1.5 0 0 0 3 0"></path></svg>
+              <div style="width:48px;height:48px;border-radius:16px;background:#2F6B3F;display:flex;align-items:center;justify-content:center;margin-top:-6px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F4F1E8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#B6B1A4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#B6B1A4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- annotations -->
+        <div style="flex:1;min-width:280px;max-width:380px;padding-top:20px">
+          <div style="display:flex;gap:14px;margin-bottom:26px">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500;flex:none">A</div>
+            <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:17px;margin-bottom:3px">Темна картка-зведення</div><div style="font-size:14px;line-height:1.55;color:#6E7268">Pine #213D2A фокусує увагу на головному числі дня. М'яке зелене коло додає глибини.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;margin-bottom:26px">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500;flex:none">B</div>
+            <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:17px;margin-bottom:3px">Рядки нагадувань</div><div style="font-size:14px;line-height:1.55;color:#6E7268">Колір підпису сигналізує терміновість: коричневий — скоро, цегляний — прострочено.</div></div>
+          </div>
+          <div style="display:flex;gap:14px;margin-bottom:26px">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:13px;color:#A9744E;font-weight:500;flex:none">C</div>
+            <div><div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:17px;margin-bottom:3px">Жива дія</div><div style="font-size:14px;line-height:1.55;color:#6E7268">Кнопка-крапля поливає рослину — лічильник зменшується, рослина позначається галочкою.</div></div>
+          </div>
+          <div style="background:#DDE7CF;border-radius:18px;padding:18px 20px">
+            <div style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:15px;color:#213D2A;margin-bottom:6px">Спробуйте</div>
+            <div style="font-size:14px;line-height:1.5;color:#3A4A30">Натисніть зелені кнопки-краплі на телефоні, щоб полити рослини.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1192,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { watered: {} };
+
+  water(id) {
+    this.setState(s => ({ watered: { ...s.watered, [id]: true } }));
+  }
+
+  renderVals() {
+    const base = [
+      { id: 'calathea', name: 'Калатея', due: 'Прострочено на 1 день', dueColor: '#B5462E' },
+      { id: 'ficus',    name: 'Фікус',   due: 'Полити сьогодні',       dueColor: '#A9744E' },
+      { id: 'pothos',   name: 'Епіпремнум', due: 'Полити сьогодні',    dueColor: '#A9744E' },
+    ];
+    const reminders = base.map(p => {
+      const done = !!this.state.watered[p.id];
+      return {
+        ...p,
+        done,
+        pending: !done,
+        due: done ? 'Полито щойно ✓' : p.due,
+        dueColor: done ? '#2F6B3F' : p.dueColor,
+        onWater: () => this.water(p.id),
+      };
+    });
+    const todoCount = reminders.filter(r => !r.done).length;
+    return {
+      reminders,
+      todoCount,
+      allDone: todoCount === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

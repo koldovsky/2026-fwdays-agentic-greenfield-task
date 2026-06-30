@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-06-30T08:35:36Z",
+  "kind": "trajectory-eval",
+  "slices": [
+    "add-app-shell",
+    "add-plants",
+    "add-growth",
+    "add-watering",
+    "add-charts",
+    "add-design-system",
+    "add-reminders"
+  ],
+  "dimensions": {
+    "process-order": 93,
+    "test-integrity": 93.3,
+    "in-scope": 93,
+    "craft": 93
+  }
+}

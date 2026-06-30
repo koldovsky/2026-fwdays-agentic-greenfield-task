@@ -1,0 +1,122 @@
+{
+  "generatedBy": "scripts/check-trajectory.mjs",
+  "slices": [
+    {
+      "slice": "2026-06-29-add-app-shell",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [
+        "forms",
+        "theme",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-charts",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "charts",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-growth",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "growth",
+        "i18n",
+        "plants"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-plants",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [
+        "plants",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-29-add-watering",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "watering",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-30-add-design-system",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "i18n",
+        "theme"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-30-add-reminders",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "i18n",
+        "plants",
+        "reminders"
+      ],
+      "processComplete": true
+    }
+  ],
+  "overlaps": [
+    {
+      "domain": "theme",
+      "slices": [
+        "2026-06-29-add-app-shell",
+        "2026-06-30-add-design-system"
+      ]
+    },
+    {
+      "domain": "i18n",
+      "slices": [
+        "2026-06-29-add-app-shell",
+        "2026-06-29-add-charts",
+        "2026-06-29-add-growth",
+        "2026-06-29-add-plants",
+        "2026-06-29-add-watering",
+        "2026-06-30-add-design-system",
+        "2026-06-30-add-reminders"
+      ]
+    },
+    {
+      "domain": "plants",
+      "slices": [
+        "2026-06-29-add-growth",
+        "2026-06-29-add-plants",
+        "2026-06-30-add-reminders"
+      ]
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "check": "in-scope",
+      "msg": "lib/theme/ modified by 2 slices (2026-06-29-add-app-shell, 2026-06-30-add-design-system) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/i18n/ modified by 7 slices (2026-06-29-add-app-shell, 2026-06-29-add-charts, 2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-29-add-watering, 2026-06-30-add-design-system, 2026-06-30-add-reminders) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/plants/ modified by 3 slices (2026-06-29-add-growth, 2026-06-29-add-plants, 2026-06-30-add-reminders) — review for scope drift"
+    }
+  ]
+}

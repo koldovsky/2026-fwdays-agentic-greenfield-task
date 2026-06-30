@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* «Поливайко» design system (docs/design.md) — the SINGLE source of theme
+   tokens. One light "paper" theme: no light/dark split, no dark custom-variant,
+   no alternate-palette selector block. Every palette/status/radii/font value is
+   a token here so no component hard-codes an alternate palette (FR-DS-01,
+   FR-SHELL-02a). */
+
+@theme {
+  /* Greens */
+  --color-forest: #2F6B3F; /* primary: buttons, active states, healthy */
+  --color-pine: #213D2A; /* deep green: dark surfaces, healthy text */
+  --color-sage: #7E9B6E; /* secondary green */
+  --color-moss: #A7BE92; /* light green tint */
+  --color-mist: #DDE7CF; /* soft surface / chips / soft buttons */
+
+  /* Earth */
+  --color-bark: #5A4232; /* dark brown: sub-labels, dark text on warm surfaces */
+  --color-clay: #94623C; /* terracotta accent: numbering, "soon", secondary CTA — darkened from #A9744E to clear WCAG AA 4.5:1 as text on cloud/paper (NFR-A11Y-02) */
+  --color-sand: #E6D7BE; /* warm tan surface */
+
+  /* Neutrals */
+  --color-paper: #F4F1E8; /* app background */
+  --color-cloud: #FBFAF5; /* card surface */
+  --color-ink: #1B1E18; /* primary text / near-black */
+  --color-stone: #62655C; /* muted / secondary text — darkened from #6E7268 to clear WCAG AA 4.5:1 on paper/cloud (NFR-A11Y-02) */
+  --color-border: #E2DDCF; /* hairline borders / dividers */
+
+  /* Status — healthy / soon / overdue (dot + chip + text) */
+  --color-status-healthy-dot: #2F6B3F;
+  --color-status-healthy-chip: #DDE7CF;
+  --color-status-healthy-text: #213D2A;
+  --color-status-soon-dot: #A9744E;
+  --color-status-soon-chip: #F6E7D6;
+  --color-status-soon-text: #5A4232;
+  --color-status-overdue-dot: #B5462E;
+  --color-status-overdue-chip: #F3DAD0;
+  --color-status-overdue-text: #7A2E1C;
+
+  /* Danger button + hover (D4) */
+  --color-danger: #B5462E;
+  --color-danger-hover: #9D3B25;
+
+  /* Button hover tokens (D4) */
+  --color-forest-hover: #275834;
+  --color-soft-hover: #CBDCB8;
+  --color-ghost-hover: #EEE9DC;
+
+  /* Greys named in docs/design.md that are not first-class palette entries —
+     exposed as tokens so components reference a token, never a literal. */
+  --color-placeholder: #6D6B54; /* placeholder / idle segment — darkened from #9A9588 to clear WCAG AA 4.5:1 as text on cloud/paper (NFR-A11Y-02) */
+  --color-tab-inactive: #B6B1A4;
+  --color-switch-off: #D8D2C2;
+  --color-meter-track: #E6E1D3;
+
+  /* Striped-placeholder tints */
+  --color-stripe-green-a: #DDE7CF;
+  --color-stripe-green-b: #D2DEC0;
+  --color-stripe-sand-a: #E6D7BE;
+  --color-stripe-sand-b: #DCCBAF;
+
+  /* Radii */
+  --radius-input: 13px;
+  --radius-soft: 14px;
+  --radius-card: 22px;
+  --radius-pill: 999px;
+
+  /* Fonts — wired in app/layout.tsx via next/font/google CSS-var handles.
+     Quicksand / Spline Sans Mono are latin-only on Google Fonts, so the display
+     and mono stacks fall through to the Cyrillic-capable Mulish body handle
+     before the system fallback, keeping Cyrillic glyphs on a webfont (design D2). */
+  --font-display: var(--font-display-handle), "Quicksand", var(--font-body-handle), "Mulish", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-body-handle), "Mulish", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-handle), "Spline Sans Mono", var(--font-body-handle), "Mulish", ui-monospace, monospace;
+}
+
+/* Selection highlight (docs/design.md). */
+::selection {
+  background: #C7D9B0;
+  color: #1B1E18;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
