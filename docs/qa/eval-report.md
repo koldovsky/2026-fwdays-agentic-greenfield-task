@@ -1,4 +1,12 @@
-# Eval report — `app-shell`
+# Eval reports — «Гривня»
+
+Structured output from **kurs-eval-judge** (Checker #2: quality). One section per
+slice, appended in build order. The maker fixes failures; kurs-reviewer
+(Checker #1) judges spec compliance + correctness separately.
+
+---
+
+## Slice: `app-shell` — 2026-06-30
 
 **Judge:** kurs-eval-judge (Checker #2)  
 **Date:** 2026-06-30 (Europe/Kyiv)  
@@ -198,6 +206,153 @@ export function themeBootstrapScript(): string {
 1. **Skeleton a11y:** Consider `aria-busy="true"` on loading columns or a visually hidden «Завантаження…» status — skeleton is `aria-hidden`.
 2. **Theme label:** Optionally reflect state («Темна тема увімкнена») for clearer screen-reader feedback.
 3. **Skeleton shape:** When rate-list ships, align skeleton blocks with row/card geometry for tighter footprint match.
+
+---
+
+## Slice: `i18n` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)
+**Date:** 2026-06-30 (Europe/Kyiv)
+**Capability:** `i18n`
+**Traces:** FR-I18N-01, NFR-I18N-01
+**Sources graded:** `lib/i18n/uk.ts`, `lib/i18n/uk.test.ts`, `AppHeader.tsx`, `AppFooter.tsx`, `AppShell.tsx`, `app/page.tsx`, `app/layout.tsx`
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **98 / 100** |
+| **Automatic fails** | None |
+
+The migration centralises every user-facing string into one typed table,
+fixes a pre-existing duplication (the two column labels), preserves the brand
+voice exactly, and changes no rendered output.
+
+---
+
+### Rubric scores
+
+#### 1. `copy-centralised` — **100 / 100** — **PASS** (weight 35 → 35.0)
+
+**Criterion:** No component or page under `app/` or `components/` contains an
+inline Ukrainian (or metadata) string literal — every user-facing string is
+read from `lib/i18n/uk.ts`.
+
+| Check | Result |
+|---|---|
+| `AppHeader.tsx` reads `uk.shell.*` | ✓ lines 24-25, 31 |
+| `AppFooter.tsx` reads `uk.shell.footerProvenance` | ✓ line 8 |
+| `AppShell.tsx` reads `uk.shell.*ColumnLabel` | ✓ lines 57, 68 |
+| `app/page.tsx` reads `uk.shell.*` / `uk.home.*` | ✓ lines 36-37, 42-43 |
+| `app/layout.tsx` metadata reads `uk.meta.*` | ✓ lines 31-32 |
+| Independent recursive scan for stray Cyrillic literals | ✓ zero matches outside `lib/i18n/uk.ts` |
+
+**Evidence:**
+
+```24:25:components/app-shell/AppHeader.tsx
+            <span className="app-header__title">{uk.shell.brandTitle}</span>
+            <span className="app-header__subtitle">{uk.shell.brandSubtitle}</span>
+```
+
+---
+
+#### 2. `voice-consistent` — **100 / 100** — **PASS** (weight 25 → 25.0)
+
+**Criterion:** Every string in the table reads Ukrainian-first, calm, and
+consistent with the brand voice (`BC-BRAND-01`) — no exclamation marks anywhere.
+
+| Check | Result |
+|---|---|
+| All 9 leaves read calm, plain Ukrainian | ✓ manual read |
+| No exclamation marks anywhere in the table | ✓ confirmed by inspection and `uk.test.ts:30-34` |
+| Currency/system codes stay Latin where present | ✓ (none yet introduced in this slice) |
+
+**Evidence:**
+
+```13:18:lib/i18n/uk.ts
+    brandTitle: "Гривня",
+    brandSubtitle: "Офіційний курс НБУ",
+    themeToggleLabel: "Темна тема",
+    ratesColumnLabel: "Список курсів",
+    focusColumnLabel: "Обрана валюта",
+    footerProvenance: "Дані: відкритий API НБУ · без кук і трекерів",
+```
+
+---
+
+#### 3. `labels-deduplicated` — **96 / 100** — **PASS** (weight 20 → 19.2)
+
+**Criterion:** The rates/focus column labels are defined exactly once in
+`uk.shell` and reused verbatim by both the shell's `aria-label`s and the page's
+visible placeholder titles — not two separate literals that happen to match.
+
+| Check | Result |
+|---|---|
+| `AppShell.tsx` `aria-label`s read `uk.shell.ratesColumnLabel`/`focusColumnLabel` | ✓ |
+| `app/page.tsx` titles read the same two properties | ✓ |
+| Single definition site (not two matching literals) | ✓ `lib/i18n/uk.ts:16-17` |
+
+**Deduction (−4):** the reuse is correct and verified, but nothing in the type
+system *prevents* a future call site from re-introducing a parallel literal
+that happens to match — this is a process discipline win (caught by review),
+not a structurally enforced one. Acceptable for a string table without a
+lint rule; noted for awareness only.
+
+---
+
+#### 4. `zero-behaviour-change` — **96 / 100** — **PASS** (weight 20 → 19.2)
+
+**Criterion:** The migration is purely structural: rendered text, metadata
+title/description, and `aria-label`s are byte-identical to the `app-shell`
+slice before this change.
+
+| Check | Result |
+|---|---|
+| Brand title/subtitle unchanged | ✓ |
+| Footer provenance unchanged | ✓ |
+| Metadata title (em-dash preserved) unchanged | ✓ |
+| Placeholder hint (curly apostrophe preserved) unchanged | ✓ |
+
+**Deduction (−4):** verified by targeted spot-checks (the two non-ASCII
+punctuation marks) and full-text comparison of the nine migrated strings
+against their pre-migration source, not by an automated byte-diff against the
+prior commit. Low residual risk, not a fail — `kurs-reviewer` independently
+confirmed the same two non-ASCII cases.
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks in user copy | **None found** |
+| Fake «станом на» / today dates | **N/A — not introduced by this slice** |
+| Alarming empty states / toasts | **N/A — not introduced by this slice** |
+| `NaN` / raw error in user-facing copy | **None found** |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `copy-centralised` | 35 | 100 | 35.0 |
+| `voice-consistent` | 25 | 100 | 25.0 |
+| `labels-deduplicated` | 20 | 96 | 19.2 |
+| `zero-behaviour-change` | 20 | 96 | 19.2 |
+| **Total** | **100** | | **98 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+1. None blocking. Optional future hardening: an ESLint rule (e.g. a custom
+   `no-restricted-syntax` matching Cyrillic in JSX text/string literals) would
+   make `copy-centralised` structurally enforced rather than review-enforced —
+   worth considering once more slices land and the surface area grows.
 
 ---
 

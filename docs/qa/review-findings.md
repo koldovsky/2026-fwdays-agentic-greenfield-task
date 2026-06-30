@@ -52,3 +52,78 @@ FR-SHELL-04 empty-state **requirement text** is implemented via `leftEmptyMessag
 ### Verdict
 
 **CLEAN** — no confirmed blocking defects. Spec scenarios FR-SHELL-01 … FR-SHELL-04 are implemented; unit tests and verify gate are green. Suggestions above are hardening / follow-up items, not merge blockers for this slice.
+
+---
+
+## Slice: `i18n` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/i18n/spec.md` · change `openspec/changes/add-i18n/`
+**Scope:** FR-I18N-01, NFR-I18N-01
+**Tests:** `npm run test:run` — 13/13 passed (2 files: `lib/theme/theme.test.ts`, `lib/i18n/uk.test.ts`)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9, build)
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Component renders copy from the string table | Pass | `AppHeader.tsx:24-25,31`, `AppFooter.tsx:8`, `AppShell.tsx:57,68`, `app/page.tsx:36-37,42-43`, `app/layout.tsx:31-32` all read `uk.*`; zero inline Cyrillic literals remain (verified by recursive grep across `app/` and `components/app-shell/`) |
+| Copy follows the brand voice | Pass | `lib/i18n/uk.test.ts:30-34` asserts no `!` in any leaf; manual read of all nine string values confirms calm, Ukrainian, no hype |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `lib/i18n/uk.ts` — the table is a single flat-ish object with no
+  `en.ts` counterpart yet. `NFR-I18N-01`'s fallback requirement is explicitly
+  Future (per `design.md` Open Questions), so this is not a gap for *this*
+  slice — flagging only so the next i18n-touching slice keeps the shape
+  fallback-ready (it currently is: plain nested string leaves, no JSX or
+  interpolation baked in).
+- [suggestion] `lib/i18n/uk.test.ts:36-45` locks three of nine strings
+  byte-exact (the two brand strings + footer line) but not all nine (e.g. the
+  two placeholder hints, the meta description). Low risk since
+  `zero-empty`/`no-exclamation` cover all nine generically, but a future
+  accidental edit to an unlocked string would pass tests silently. Consider
+  locking the remaining six if copy stability becomes load-bearing.
+
+### Verified (no issue)
+
+- **FR-I18N-01 / TC-PURE-01:** `lib/i18n/uk.ts` is framework-free, pure data,
+  `as const`-typed; no `next/*`/`react`/DOM import. Colocated
+  `lib/i18n/uk.test.ts` carries `@trace FR-I18N-01` on every describe block.
+- **Tests-first discipline confirmed:** `tasks.md` §1.1 records the RED
+  observation (`Cannot find module './uk'`) before `uk.ts` was created —
+  consistent with the per-slice loop, not retrofitted.
+- **Zero stray literals:** independent recursive scan (Node, matching any
+  quoted string containing a Cyrillic codepoint) across `app/**/*.{ts,tsx}`
+  and `components/app-shell/**/*.{ts,tsx}` returns no matches outside
+  `lib/i18n/uk.ts` itself.
+- **Deduplication delivered (design.md Decision 2):** `uk.shell.ratesColumnLabel`
+  / `focusColumnLabel` are each defined once and consumed by **both**
+  `AppShell.tsx` (`aria-label`) and `app/page.tsx` (visible title) — confirmed
+  identical by reference, not just by matching string value.
+  `lib/i18n/uk.test.ts:49-53` locks both.
+- **Byte-identical migration:** spot-checked the one literal with non-ASCII
+  punctuation (`Тут з’явиться…`, U+2019 curly apostrophe) and the em-dash in
+  the metadata title (`Гривня — …`, U+2014) — both preserved exactly in
+  `uk.ts`, not silently normalised to straight-quote/hyphen equivalents.
+- **No behavioural change:** `app-shell`'s FR-SHELL-01…04 scenarios re-verified
+  against the migrated components — identical structure, only the string
+  source moved.
+- **Design discipline:** no new `@/components/ds` usage changed; no raw hex or
+  ramp tokens introduced by this slice (it touches only string literals).
+- **Eval case:** `evals/cases/i18n.eval.ts` present, rubric traces
+  `FR-I18N-01`/`NFR-I18N-01`, covers centralisation, voice, deduplication, and
+  zero-behaviour-change.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects. FR-I18N-01 and NFR-I18N-01 are fully
+implemented; the pre-existing column-label duplication is fixed, not just
+relocated; the migration is verified byte-identical. Suggestions above are
+forward-looking notes for later slices, not merge blockers.

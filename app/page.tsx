@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell/AppShell";
+import { uk } from "@/lib/i18n/uk";
 
 function PlaceholderPanel({
   title,
@@ -18,7 +19,7 @@ function PlaceholderPanel({
   );
 }
 
-/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-03 @trace FR-SHELL-04 */
+/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-03 @trace FR-SHELL-04 @trace FR-I18N-01 */
 export default function Home() {
   const [loading, setLoading] = useState(true);
 
@@ -32,14 +33,14 @@ export default function Home() {
       loading={loading}
       left={
         <PlaceholderPanel
-          title="Список курсів"
-          hint="Тут з’явиться офіційний перелік валют НБУ."
+          title={uk.shell.ratesColumnLabel}
+          hint={uk.home.ratesPlaceholderHint}
         />
       }
       right={
         <PlaceholderPanel
-          title="Обрана валюта"
-          hint="Тут буде курс, конвертер і динаміка обраної валюти."
+          title={uk.shell.focusColumnLabel}
+          hint={uk.home.focusPlaceholderHint}
         />
       }
     />

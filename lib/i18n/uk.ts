@@ -1,0 +1,29 @@
+/**
+ * Centralised Ukrainian UI copy (FR-I18N-01, NFR-I18N-01).
+ *
+ * Single source of truth for every user-facing string. Components import and
+ * read by dotted path (`uk.shell.brandTitle`) — TypeScript narrows each leaf
+ * to its literal type, so a typo at a call site is a compile error. No
+ * runtime i18n library; no lookup function (see design.md, Decision 1).
+ *
+ * Voice: Ukrainian-first, calm, no exclamation marks (BC-BRAND-01).
+ */
+export const uk = {
+  shell: {
+    brandTitle: "Гривня",
+    brandSubtitle: "Офіційний курс НБУ",
+    themeToggleLabel: "Темна тема",
+    ratesColumnLabel: "Список курсів",
+    focusColumnLabel: "Обрана валюта",
+    footerProvenance: "Дані: відкритий API НБУ · без кук і трекерів",
+  },
+  home: {
+    ratesPlaceholderHint: "Тут з’явиться офіційний перелік валют НБУ.",
+    focusPlaceholderHint: "Тут буде курс, конвертер і динаміка обраної валюти.",
+  },
+  meta: {
+    title: "Гривня — офіційний курс НБУ",
+    description:
+      "Офіційний курс гривні до іноземних валют за даними Національного банку України: курс, конвертер і динаміка.",
+  },
+} as const;

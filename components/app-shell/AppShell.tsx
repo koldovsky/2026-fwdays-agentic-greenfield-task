@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { uk } from "@/lib/i18n/uk";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { ShellSkeleton } from "./ShellSkeleton";
@@ -39,7 +40,7 @@ function ShellSlot({
   return null;
 }
 
-/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-04 */
+/** @trace FR-SHELL-01 @trace FR-SHELL-02 @trace FR-SHELL-04 @trace FR-I18N-01 */
 export function AppShell({
   left,
   right,
@@ -51,7 +52,10 @@ export function AppShell({
     <div className="app-shell">
       <AppHeader />
       <main className="shell-main">
-        <section className="shell-main__column" aria-label="Список курсів">
+        <section
+          className="shell-main__column"
+          aria-label={uk.shell.ratesColumnLabel}
+        >
           <ShellSlot
             loading={loading}
             emptyMessage={leftEmptyMessage}
@@ -59,7 +63,10 @@ export function AppShell({
             {left}
           </ShellSlot>
         </section>
-        <section className="shell-main__column" aria-label="Обрана валюта">
+        <section
+          className="shell-main__column"
+          aria-label={uk.shell.focusColumnLabel}
+        >
           <ShellSlot
             loading={loading}
             emptyMessage={rightEmptyMessage}

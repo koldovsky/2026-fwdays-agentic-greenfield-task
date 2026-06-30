@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { IBM_Plex_Serif, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ThemeScript } from "@/components/app-shell/ThemeScript";
+import { uk } from "@/lib/i18n/uk";
 import "./globals.css";
 
 // Self-hosted IBM Plex trio (full Cyrillic) — Serif = display, Sans = UI/body,
@@ -27,9 +28,8 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Гривня — офіційний курс НБУ",
-  description:
-    "Офіційний курс гривні до іноземних валют за даними Національного банку України: курс, конвертер і динаміка.",
+  title: uk.meta.title,
+  description: uk.meta.description,
 };
 
 export default function RootLayout({

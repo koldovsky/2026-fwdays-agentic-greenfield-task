@@ -1,0 +1,54 @@
+import { describe, expect, it } from "vitest";
+import { uk } from "./uk";
+
+/** Recursively collect every string leaf in the table. */
+function flattenStrings(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(flattenStrings);
+  }
+  return [];
+}
+
+/** @trace FR-I18N-01 */
+describe("uk i18n table — centralisation", () => {
+  it("has no empty leaves", () => {
+    for (const s of flattenStrings(uk)) {
+      expect(s.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("exposes the shell, home, and meta groups", () => {
+    expect(uk.shell).toBeDefined();
+    expect(uk.home).toBeDefined();
+    expect(uk.meta).toBeDefined();
+  });
+});
+
+/** @trace FR-I18N-01 BC-BRAND-01 */
+describe("uk i18n table — brand voice", () => {
+  it("contains no exclamation marks anywhere", () => {
+    for (const s of flattenStrings(uk)) {
+      expect(s).not.toMatch(/!/);
+    }
+  });
+
+  it("locks the brand lockup strings exactly", () => {
+    expect(uk.shell.brandTitle).toBe("Гривня");
+    expect(uk.shell.brandSubtitle).toBe("Офіційний курс НБУ");
+  });
+
+  it("locks the footer provenance line exactly", () => {
+    expect(uk.shell.footerProvenance).toBe(
+      "Дані: відкритий API НБУ · без кук і трекерів",
+    );
+  });
+});
+
+/** @trace FR-I18N-01 */
+describe("uk i18n table — shared column labels", () => {
+  it("defines each column label once, reused by shell and page", () => {
+    expect(uk.shell.ratesColumnLabel).toBe("Список курсів");
+    expect(uk.shell.focusColumnLabel).toBe("Обрана валюта");
+  });
+});
