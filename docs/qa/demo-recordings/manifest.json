@@ -1,0 +1,59 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "reminder-home",
+      "title": "Reminder home: due summary count + due section, water-now decrements",
+      "proof": "FR-REM-03, FR-REM-04, FR-REM-05",
+      "video": "docs/qa/demo-recordings/reminder-home.webm",
+      "screenshot": "docs/qa/demo-recordings/reminder-home.png",
+      "explainer": "docs/qa/demo-recordings/reminder-home.md",
+      "asserted": true
+    },
+    {
+      "id": "plant-crud",
+      "title": "Plant CRUD: add -> appears -> open detail -> edit",
+      "proof": "FR-PLANT-01, FR-PLANT-05, FR-PLANT-06",
+      "video": "docs/qa/demo-recordings/plant-crud.webm",
+      "screenshot": "docs/qa/demo-recordings/plant-crud.png",
+      "explainer": "docs/qa/demo-recordings/plant-crud.md",
+      "asserted": true
+    },
+    {
+      "id": "growth-and-watering",
+      "title": "Growth + watering: lists render, log one of each -> appears",
+      "proof": "FR-GROWTH-01, FR-GROWTH-02, FR-WATER-01, FR-WATER-03",
+      "video": "docs/qa/demo-recordings/growth-and-watering.webm",
+      "screenshot": "docs/qa/demo-recordings/growth-and-watering.png",
+      "explainer": "docs/qa/demo-recordings/growth-and-watering.md",
+      "asserted": true
+    },
+    {
+      "id": "charts",
+      "title": "Charts: growth + watering Recharts SVGs render on a seeded plant",
+      "proof": "FR-CHART-01, FR-CHART-02",
+      "video": "docs/qa/demo-recordings/charts.webm",
+      "screenshot": "docs/qa/demo-recordings/charts.png",
+      "explainer": "docs/qa/demo-recordings/charts.md",
+      "asserted": true
+    },
+    {
+      "id": "design-system",
+      "title": "Design system: «Поливайко» paper-theme home, brand wordmark, cards, status pills",
+      "proof": "FR-DS-01, FR-DS-03, FR-DS-05, FR-DS-06",
+      "video": "docs/qa/demo-recordings/design-system.webm",
+      "screenshot": "docs/qa/demo-recordings/design-system.png",
+      "explainer": "docs/qa/demo-recordings/design-system.md",
+      "asserted": true
+    },
+    {
+      "id": "responsive-360",
+      "title": "Responsive: home is usable at 360px with no horizontal overflow",
+      "proof": "NFR-COMPAT-01",
+      "video": "docs/qa/demo-recordings/responsive-360.webm",
+      "screenshot": "docs/qa/demo-recordings/responsive-360.png",
+      "explainer": "docs/qa/demo-recordings/responsive-360.md",
+      "asserted": true
+    }
+  ]
+}
