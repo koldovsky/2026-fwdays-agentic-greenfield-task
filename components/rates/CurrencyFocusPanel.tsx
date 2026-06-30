@@ -39,13 +39,13 @@ export function CurrencyFocusPanel({ rate }: { rate: Rate | null }) {
         <span className="currency-focus__unit">₴</span>
       </div>
       <Converter
-        key={rate.code}
+        key={`converter-${rate.code}`}
         code={rate.code}
         rate={rate.rate}
         labels={uk.converter}
         style={{ width: "100%", marginTop: 8 }}
       />
-      <CurrencyHistory key={rate.code} code={rate.code} />
+      <CurrencyHistory key={`history-${rate.code}`} code={rate.code} />
     </div>
   );
 }

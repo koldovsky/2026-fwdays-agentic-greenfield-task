@@ -469,3 +469,45 @@ rates on weekend/holiday days exactly per design.md Decision 1; `?code=ZZZ`
 re-verified). FR-HISTORY-01 … FR-HISTORY-04 are implemented and verified
 against live NBU range-endpoint data, including the previously-broken empty
 path. Suggestions above are minor, non-blocking polish.
+
+---
+
+## Post-commit bug fix — 2026-06-30 (user-reported, live-browser verified)
+
+Two bugs reported by the user after `rate-history` was already committed.
+Investigated and fixed with a real Chrome browser (Claude in Chrome
+automation), not just static code reading — both confirmed root-caused via
+console output and DOM measurement, not guessed.
+
+**Bug 1 — switching currency left the previous currency's converter visible
+alongside the new one (chart correctly replaced; converter didn't).**
+
+Root cause, found via the browser console: `React: Encountered two children
+with the same key, 'DKK'` (then `'CZK'`). `CurrencyFocusPanel.tsx` rendered
+`<Converter key={rate.code} …>` and `<CurrencyHistory key={rate.code} …>` as
+**siblings under the same parent `<div>`** — React requires key uniqueness
+across *all* siblings in a parent's children list, not just within
+same-component-type groups. Two different components sharing a key value is
+an unsupported collision, and React's documented fallback behaviour for it is
+exactly what was observed: a stale child persisting instead of being cleanly
+replaced. **Fix:** prefixed each key (`converter-${rate.code}` /
+`history-${rate.code}`) so they are unique among siblings.
+Re-verified live: selected DKK → CZK, console clean (no duplicate-key
+warning), exactly one converter block rendered. (Untestable by the project's
+existing pure-logic-only Vitest suite — this class of bug only manifests in
+real DOM reconciliation; live browser verification was the appropriate check,
+consistent with how this slice's other defect was caught.)
+
+**Bug 2 — the chart's last X-axis label ("30.06") was clipped at the right edge.**
+
+Root cause: the `AreaChart`'s `right` margin (8px) plus the last tick's
+text being centre-anchored at the very edge of the plot area left no room
+for the label's own width. **Fix:** `HistoryChart.tsx` — increased the
+chart's right margin to 16px, added `<XAxis padding={{ left: 12, right: 12
+}}>` (insets the axis range from the plot edges), and `interval=
+"preserveStartEnd"` (guarantees the first/last ticks are never skipped by
+the auto-interval logic). Re-verified via direct DOM measurement (not just a
+screenshot): the `30.06` `<text>` element's right edge sits at 476px inside a
+487px-wide SVG — fully inside, 11px to spare.
+
+Both fixes: `npm run test:run` (86/86) and `npm run verify` green.

@@ -6,13 +6,42 @@
 
 ## Last updated
 
-`2026-06-30T20:10:00+03:00` (Europe/Kyiv)
+`2026-06-30T20:35:00+03:00` (Europe/Kyiv)
 
 ## Phase
 
 **Stage 5 — Per-slice build:** **`app-shell`**, **`i18n`**, **`currency-list`**,
 **`converter`**, **`currency-picker`**, **`rate-history`** done, reviewed, archived.
-Next: **`trend-hint`** → *(optional)* **`footer-sayings`**.
+Two post-commit bugs found and fixed (live browser verified). Next:
+**`trend-hint`** → *(optional)* **`footer-sayings`**.
+
+## Last action
+
+**Two user-reported bugs, fixed and live-verified via real Chrome browser
+automation (Claude in Chrome) — first time this session a bug was diagnosed
+with an actual browser, not just code reading or curl:**
+
+1. **Switching currency left the old converter visible alongside the new
+   one.** Root cause (found via browser console): React's `"Encountered two
+   children with the same key"` — `CurrencyFocusPanel.tsx` gave `<Converter>`
+   and `<CurrencyHistory>` the **same key** (`rate.code`) as siblings under one
+   parent `<div>`. React requires key uniqueness across *all* siblings, not
+   just within same-component groups — colliding keys is unsupported behaviour
+   and manifested exactly as the report described (stale child persisting).
+   **Fix:** prefixed keys (`converter-${code}` / `history-${code}`).
+2. **Chart's last X-axis label ("30.06") was clipped.** `AreaChart`'s 8px right
+   margin left no room for the last tick's text. **Fix:** `HistoryChart.tsx` —
+   16px right margin, `XAxis padding={{left:12,right:12}}`,
+   `interval="preserveStartEnd"`.
+
+Both verified precisely (not just visually): console clean of duplicate-key
+warnings after the fix; the `30.06` tick's DOM bounding box measured at 476px
+right-edge inside a 487px SVG (11px to spare). 86/86 tests, `npm run verify`
+green. Documented as a "Post-commit bug fix" entry in
+[review-findings.md](qa/review-findings.md) (proportional weight — not a full
+slice review, since no new requirement or pure-logic module was involved).
+
+### Prior
 
 ## Last action
 

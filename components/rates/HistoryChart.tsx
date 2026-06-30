@@ -62,7 +62,7 @@ export function HistoryChart({
   return (
     <div style={{ width: "100%", height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 4 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
           <defs>
             <linearGradient id="hryv-history-fill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.18} />
@@ -76,6 +76,8 @@ export function HistoryChart({
             tickLine={false}
             axisLine={{ stroke: "var(--border)" }}
             minTickGap={28}
+            padding={{ left: 12, right: 12 }}
+            interval="preserveStartEnd"
           />
           <YAxis
             domain={[min - pad, max + pad]}
