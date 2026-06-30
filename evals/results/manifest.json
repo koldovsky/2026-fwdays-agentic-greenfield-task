@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-06-30T07:34:01Z",
+  "kind": "eval",
+  "results": [
+    {
+      "id": "eval-error-clarity-empty-plant-name",
+      "dimension": "error-clarity",
+      "proof": "FR-SHELL-03, NFR-LOC-01",
+      "score": 88,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-empty-chart-states",
+      "dimension": "usability-clarity",
+      "proof": "FR-CHART-03, NFR-LOC-01",
+      "score": 93,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-watering-frequency-representation",
+      "dimension": "usability-clarity",
+      "proof": "FR-CHART-01, NFR-LOC-01",
+      "score": 93,
+      "pass": true
+    },
+    {
+      "id": "eval-error-clarity-invalid-height",
+      "dimension": "error-clarity",
+      "proof": "FR-GROWTH-05, NFR-LOC-01",
+      "score": 90,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-empty-measurements-state",
+      "dimension": "usability-clarity",
+      "proof": "FR-GROWTH-02, NFR-LOC-01",
+      "score": 95,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-plant-list-empty-state",
+      "dimension": "usability-clarity",
+      "proof": "FR-PLANT-08, NFR-LOC-01",
+      "score": 96,
+      "pass": true
+    },
+    {
+      "id": "eval-error-clarity-future-acquired-date",
+      "dimension": "error-clarity",
+      "proof": "FR-PLANT-03, NFR-LOC-01",
+      "score": 85,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-reminder-due-line-clarity",
+      "dimension": "usability-clarity",
+      "proof": "FR-REM-04, NFR-LOC-01",
+      "score": 96,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-all-done-empty-state",
+      "dimension": "usability-clarity",
+      "proof": "FR-REM-06, NFR-LOC-01",
+      "score": 93,
+      "pass": true
+    },
+    {
+      "id": "eval-error-clarity-invalid-watering",
+      "dimension": "error-clarity",
+      "proof": "FR-WATER-02, NFR-LOC-01",
+      "score": 93,
+      "pass": true
+    },
+    {
+      "id": "eval-usability-empty-waterings-state",
+      "dimension": "usability-clarity",
+      "proof": "FR-WATER-03, NFR-LOC-01",
+      "score": 92,
+      "pass": true
+    }
+  ]
+}
