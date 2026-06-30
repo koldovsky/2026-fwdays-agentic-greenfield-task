@@ -51,7 +51,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | provision | done | manual | 0 | — | — | M0 | Coolify provisioning: project + capped Postgres + env/secrets + GHCR — [runbook](../docs/runbooks/coolify-setup.md) (GHCR public toggle deferred to first `pipe` push, path A) |
 | pipe | done | agent | 0 | provision | — | M0 | Pipe: skeleton + long-poll + `/start` echo + Dockerfile + CI→GHCR + Coolify deploy |
 | data | done | agent | 1 | pipe | — | M1 | Data layer: Prisma schema + migrations + connection + multi-tenancy (against provisioned PG) |
-| router | todo | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
+| router | done | agent | 2 | data | FR-1 | M3 | Message router: 6-intent classifier + Anthropic client + date/TZ (§8.0) |
 | coach-persona | todo | agent | 3 | router | — | M3 | Coach persona (honest voice) in stable system prefix + precision-first clarification policy ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)) |
 | onboarding | todo | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
 | food-text | todo | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
