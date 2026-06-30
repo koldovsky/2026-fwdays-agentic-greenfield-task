@@ -1,0 +1,30 @@
+<!-- @dsCard group="Brand" viewport="700x210" name="Voice — calm & practical" subtitle="Ukrainian-first · no exclamation marks · one number, then the detail" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 20px 22px; background: var(--surface); font-family: var(--font-sans); color: var(--text); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .item { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; }
+  .good { border-left: 3px solid var(--up); }
+  .bad { border-left: 3px solid var(--down); }
+  .lab { font-family: var(--font-mono); font-size: 10px; letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+  .good .lab { color: var(--up-deep); }
+  .bad .lab { color: var(--down-deep); }
+  .txt { font-size: 14px; line-height: 1.4; }
+  .bad .txt { color: var(--text-muted); }
+  .cap { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+  <p class="cap">One number, then the detail</p>
+  <div class="grid">
+    <div class="item good"><div class="lab">Так</div><div class="txt">41,85 ₴ за долар — за тиждень майже без змін.</div></div>
+    <div class="item bad"><div class="lab">Не так</div><div class="txt">Курс долара знову вибухнув — це треба бачити!!!</div></div>
+    <div class="item good"><div class="lab">Так</div><div class="txt">Долар за тиждень зміцнів на 1,2% до гривні.</div></div>
+    <div class="item bad"><div class="lab">Не так</div><div class="txt">USD/UAH up — buy now before it moons.</div></div>
+  </div>
+</body>
+</html>

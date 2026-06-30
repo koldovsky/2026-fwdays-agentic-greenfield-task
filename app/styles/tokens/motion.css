@@ -1,0 +1,33 @@
+/* ============================================================
+   Motion — Гривня
+   Calm, unhurried. Gentle ease-out for entrances, quick for
+   interaction feedback. Nothing bounces. All decorative motion
+   is gated behind prefers-reduced-motion.
+   ============================================================ */
+
+:root {
+  --dur-instant: 80ms;   /* @kind other */
+  --dur-fast:    140ms;  /* @kind other */
+  --dur-base:    220ms;  /* @kind other */
+  --dur-slow:    360ms;  /* @kind other */
+
+  /* Easing */
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);   /* @kind other */  /* calm settle */
+  --ease-in-out: cubic-bezier(0.45, 0, 0.4, 1);       /* @kind other */
+  --ease-soft:   cubic-bezier(0.33, 0, 0.2, 1);        /* @kind other */
+
+  --transition-control: background-color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        color var(--dur-fast) var(--ease-out),
+                        box-shadow var(--dur-fast) var(--ease-out),
+                        transform var(--dur-fast) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;  /* @kind other */
+    --dur-fast:    0ms;  /* @kind other */
+    --dur-base:    0ms;  /* @kind other */
+    --dur-slow:    0ms;  /* @kind other */
+  }
+}

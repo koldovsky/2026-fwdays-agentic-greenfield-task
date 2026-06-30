@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>Гривня — огляд дизайн-системи</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { margin: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
+  header { padding: 28px var(--gutter); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; position: sticky; top: 0; background: color-mix(in oklab, var(--bg) 85%, transparent); backdrop-filter: blur(12px); z-index: 5; }
+  .coin { width: 44px; height: 44px; border-radius: 50%; background: var(--green-500); border: 2px solid var(--brass-400); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); }
+  .coin span { color: #faf4e6; font-weight: 600; font-size: 24px; }
+  h1 { font-family: var(--font-serif); font-size: 26px; margin: 0; font-weight: 600; }
+  .sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; color: var(--text-muted); }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px var(--gutter) 64px; }
+  h2 { font-family: var(--font-serif); font-size: 20px; margin: 32px 0 4px; }
+  .grpcap { font-family: var(--font-mono); font-size: 11px; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .card .cap { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card .nm { font-weight: 600; font-size: 14px; }
+  .card .dim { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+  .card iframe { width: 100%; border: 0; display: block; background: var(--surface); }
+  .full { grid-column: 1 / -1; }
+  .note { background: var(--accent-soft); border: 1px solid var(--brass-200); color: var(--brass-700); border-radius: var(--radius-md); padding: 14px 16px; font-size: 14px; line-height: 1.5; margin: 18px 0 0; }
+  .note b { color: var(--brass-700); }
+  a.link { color: var(--text-link); font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <div class="coin"><span>&#8372;</span></div>
+  <div>
+    <h1>Гривня — дизайн-система</h1>
+    <div class="sub">ОГЛЯД · FOUNDATIONS · COMPONENTS · APP</div>
+  </div>
+</header>
+<main>
+  <div class="note">
+    <b>Примітка.</b> Картки фундаменту (кольори, типографіка, бренд) рендеряться одразу.
+    Картки компонентів і застосунок «Гривня» оживають після того, як компілятор збере
+    <code>_ds_bundle.js</code> — для цього у меню Share встановіть тип файлу
+    <b>Design System</b>. Нижче вони показані в рамках, що заповняться автоматично.
+  </div>
+
+  <h2>Colors</h2>
+  <div class="grpcap">Палітра «Ledger» — зелений, латунь, тепле паперове сіре, тренд</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><span class="nm">Brand — Green &amp; Brass</span></div><iframe src="guidelines/colors-brand.html" height="200"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Neutrals — Warm paper</span></div><iframe src="guidelines/colors-neutrals.html" height="150"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Trend semantics</span></div><iframe src="guidelines/colors-trend.html" height="200"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Surfaces — Light</span></div><iframe src="guidelines/colors-surfaces-light.html" height="150"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Surfaces — Dark</span></div><iframe src="guidelines/colors-surfaces-dark.html" height="150"></iframe></div>
+  </div>
+
+  <h2>Type</h2>
+  <div class="grpcap">IBM Plex Serif · Sans · Mono — повна кирилиця, табличні цифри</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><span class="nm">Families</span></div><iframe src="guidelines/type-families.html" height="240"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Type scale</span></div><iframe src="guidelines/type-scale.html" height="250"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Numerals — tabular</span></div><iframe src="guidelines/type-numerals.html" height="180"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Spacing scale</span></div><iframe src="guidelines/spacing-scale.html" height="150"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Radius &amp; elevation</span></div><iframe src="guidelines/radius-elevation.html" height="150"></iframe></div>
+  </div>
+
+  <h2>Brand</h2>
+  <div class="grpcap">Лого · голос · іконографія</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><span class="nm">Logo &amp; wordmark</span></div><iframe src="guidelines/brand-logo.html" height="180"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Voice</span></div><iframe src="guidelines/brand-voice.html" height="210"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Iconography — Lucide</span></div><iframe src="guidelines/iconography.html" height="180"></iframe></div>
+  </div>
+
+  <h2>Components <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">(потрібен _ds_bundle.js)</span></h2>
+  <div class="grpcap">Core controls + rates primitives</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><span class="nm">Core — controls</span><span class="dim">Button · Input · Tabs · Badge · Chip</span></div><iframe src="components/core/core.card.html" height="480"></iframe></div>
+    <div class="card"><div class="cap"><span class="nm">Rates — money primitives</span><span class="dim">TrendBadge · RateRow · Converter</span></div><iframe src="components/rates/rates.card.html" height="480"></iframe></div>
+  </div>
+
+  <h2>Застосунок «Гривня» <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">(потрібен _ds_bundle.js)</span></h2>
+  <div class="grpcap">Курси → фокус на валюті → конвертер або історія за 30 днів · <a class="link" href="ui_kits/hryvnia/index.html">відкрити на весь екран</a></div>
+  <div class="grid">
+    <div class="card full"><div class="cap"><span class="nm">Гривня — app</span><span class="dim">ui_kits/hryvnia/index.html</span></div><iframe src="ui_kits/hryvnia/index.html" height="780"></iframe></div>
+  </div>
+</main>
+</body>
+</html>

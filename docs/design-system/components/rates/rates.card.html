@@ -1,0 +1,69 @@
+<!-- @dsCard group="Components" viewport="700x520" name="Rates — money primitives" subtitle="TrendBadge · CurrencyAvatar · AsOfBadge · RateRow · Converter · CurrencyPicker" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg); font-family: var(--font-sans); }
+  .grp { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 10px; }
+  .block { margin-bottom: 22px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; box-shadow: var(--shadow-sm); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const DS = (function(){ for (const k in window){ const v = window[k]; if (v && v.Button && v.RateRow) return v; } return {}; })();
+const { TrendBadge, CurrencyAvatar, AsOfBadge, RateRow, Converter, Card } = DS;
+
+const rows = [
+  { code:'USD', name:'Долар США', rate:41.8540, delta:0.12 },
+  { code:'EUR', name:'Євро', rate:45.1208, delta:-0.31 },
+  { code:'PLN', name:'Злотий', rate:10.6471, delta:0.08 },
+];
+
+function Demo() {
+  return (
+    <div>
+      <div className="block">
+        <p className="grp">TrendBadge · CurrencyAvatar · AsOfBadge</p>
+        <div className="row">
+          <TrendBadge delta={1.2} />
+          <TrendBadge delta={-0.4} />
+          <TrendBadge delta={0.0} />
+          <TrendBadge delta={2.1} size="lg" solid />
+          <CurrencyAvatar code="USD" />
+          <CurrencyAvatar flag="🇪🇺" code="EUR" />
+          <AsOfBadge date="29.06.2026" />
+          <AsOfBadge date="27.06.2026" stale />
+        </div>
+      </div>
+      <div className="two">
+        <div>
+          <p className="grp">RateRow — the list line</p>
+          <div className="panel" style={{padding:6}}>
+            {rows.map((r,i)=>(<RateRow key={r.code} {...r} interactive selected={i===0} />))}
+          </div>
+        </div>
+        <div>
+          <p className="grp">Converter — UAH ⇄ foreign</p>
+          <div className="panel">
+            <Converter code="USD" rate={41.8540} defaultAmount="100" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

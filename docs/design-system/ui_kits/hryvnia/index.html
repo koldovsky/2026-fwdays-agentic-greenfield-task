@@ -1,0 +1,47 @@
+<!-- @dsCard group="Гривня" viewport="1120x760" name="Гривня — app" subtitle="Rates list → focus a currency → convert or read the 30-day history" -->
+<!-- @startingPoint section="Гривня" subtitle="Full official-rate app: rates, converter, 30-day history" viewport="1120x760" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Гривня — офіційний курс</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="data.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body { font-family: var(--font-sans); }
+  #root { min-height: 100vh; }
+  @media (max-width: 1099px) {
+    .hryv-main { grid-template-columns: minmax(0, 1fr) !important; }
+  }
+  @media (max-width: 560px) {
+    .hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="Header.jsx"></script>
+<script type="text/babel" src="RatesPanel.jsx"></script>
+<script type="text/babel" src="FocusHero.jsx"></script>
+<script type="text/babel" src="DetailPanel.jsx"></script>
+<script type="text/babel" src="Footer.jsx"></script>
+<script type="text/babel" src="App.jsx"></script>
+<script type="text/babel" data-presets="react">
+  const mount = () => {
+    if (!window.HryvniaApp || !window.HryvniaData) { setTimeout(mount, 30); return; }
+    ReactDOM.createRoot(document.getElementById('root')).render(<window.HryvniaApp />);
+    if (window.lucide) window.lucide.createIcons();
+  };
+  mount();
+</script>
+</body>
+</html>

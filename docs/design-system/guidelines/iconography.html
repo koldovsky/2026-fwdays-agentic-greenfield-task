@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" viewport="700x180" name="Iconography — Lucide" subtitle="1.75 stroke, rounded caps. Money + UI set" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  body { margin: 0; padding: 20px 22px; background: var(--surface); font-family: var(--font-sans); color: var(--text-secondary); }
+  .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 16px 10px; }
+  .ic { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ic i { color: var(--text); }
+  .ic span { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); }
+  .cap { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 14px; }
+</style>
+</head>
+<body>
+  <p class="cap">Calm 1.75 stroke · currentColor</p>
+  <div class="grid" id="g"></div>
+  <script>
+    const names = ['trending-up','trending-down','arrow-up-right','arrow-down-right','arrow-right-left','arrow-down-up','coins','banknote','calendar','search','chevrons-up-down','chevron-right','circle-check','info','minus','x','wifi-off','sun','moon','star'];
+    const g = document.getElementById('g');
+    g.innerHTML = names.map(n => `<div class="ic"><i data-lucide="${n}"></i><span>${n}</span></div>`).join('');
+    lucide.createIcons({ attrs: { width: 22, height: 22, 'stroke-width': 1.75 } });
+  </script>
+</body>
+</html>

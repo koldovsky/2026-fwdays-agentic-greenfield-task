@@ -1,0 +1,38 @@
+<!-- @dsCard group="Colors" viewport="700x186" name="Trend semantics" subtitle="Strengthen / weaken / flat — muted, honest, never neon" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 18px 20px; background: var(--surface); font-family: var(--font-sans); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .col { display: flex; flex-direction: column; gap: 6px; }
+  .name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .bar { height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; padding: 0 10px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+  .swrow { display: flex; gap: 6px; }
+  .sw { flex: 1; height: 24px; border-radius: var(--radius-xs); }
+  .cap { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+  <p class="cap">Up · Down · Flat — bg / fg / solid</p>
+  <div class="grid">
+    <div class="col">
+      <span class="name">↗ Зміцнів (up)</span>
+      <div class="bar" style="background:var(--trend-up-bg);color:var(--trend-up-fg)">+1,20%</div>
+      <div class="swrow"><div class="sw" style="background:var(--up-soft)"></div><div class="sw" style="background:var(--up)"></div><div class="sw" style="background:var(--up-deep)"></div></div>
+    </div>
+    <div class="col">
+      <span class="name">↘ Послабшав (down)</span>
+      <div class="bar" style="background:var(--trend-down-bg);color:var(--trend-down-fg)">−0,40%</div>
+      <div class="swrow"><div class="sw" style="background:var(--down-soft)"></div><div class="sw" style="background:var(--down)"></div><div class="sw" style="background:var(--down-deep)"></div></div>
+    </div>
+    <div class="col">
+      <span class="name">— Без змін (flat)</span>
+      <div class="bar" style="background:var(--trend-flat-bg);color:var(--trend-flat-fg)">0,00%</div>
+      <div class="swrow"><div class="sw" style="background:var(--flat-soft)"></div><div class="sw" style="background:var(--flat)"></div><div class="sw" style="background:var(--flat-deep)"></div></div>
+    </div>
+  </div>
+</body>
+</html>

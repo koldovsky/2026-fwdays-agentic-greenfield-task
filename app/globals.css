@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Гривня design tokens — the single source of truth for colour,
+   type, spacing, radius, shadows, motion. Vendored reference lives
+   in docs/design-system/; these are the live copies. See DESIGN.md.
+   ============================================================ */
+@import "./styles/tokens/fonts.css";
+@import "./styles/tokens/colors.css";
+@import "./styles/tokens/typography.css";
+@import "./styles/tokens/spacing.css";
+@import "./styles/tokens/radius.css";
+@import "./styles/tokens/shadows.css";
+@import "./styles/tokens/motion.css";
+@import "./styles/tokens/base.css";
+
+/* ============================================================
+   Tailwind bridge — expose the semantic aliases as theme-aware
+   utilities (bg-surface, text-text, border-border, text-brand,
+   text-trend-up, font-serif/sans/mono…). For anything not bridged,
+   use var(--token) directly. Always consume SEMANTIC aliases,
+   never the raw ramps.
+   ============================================================ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-trend-up: var(--trend-up-solid);
+  --color-trend-down: var(--trend-down-solid);
+  --color-trend-flat: var(--trend-flat-solid);
+
+  --font-serif: var(--font-plex-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}

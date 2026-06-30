@@ -1,0 +1,27 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Surfaces — Light" subtitle="Semantic surface, text & border aliases on warm paper" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 18px 20px; background: var(--bg); font-family: var(--font-sans); }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .tile { border-radius: var(--radius-md); border: 1px solid var(--border); padding: 12px; height: 86px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+  .nm { font-family: var(--font-mono); font-size: 11px; }
+  .role { font-size: 11px; }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="tile" style="background:var(--bg)"><span class="nm" style="color:var(--text)">--bg</span><span class="role" style="color:var(--text-secondary)">page</span></div>
+    <div class="tile" style="background:var(--surface);box-shadow:var(--shadow-sm)"><span class="nm" style="color:var(--text)">--surface</span><span class="role" style="color:var(--text-secondary)">card</span></div>
+    <div class="tile" style="background:var(--surface-sunken)"><span class="nm" style="color:var(--text)">--surface-sunken</span><span class="role" style="color:var(--text-secondary)">field</span></div>
+    <div class="tile" style="background:var(--surface)">
+      <span class="nm" style="color:var(--text)"><span class="dot" style="background:var(--text)"></span>--text</span>
+      <span class="nm" style="color:var(--text-secondary)"><span class="dot" style="background:var(--text-muted)"></span>--text-muted</span>
+    </div>
+  </div>
+</body>
+</html>

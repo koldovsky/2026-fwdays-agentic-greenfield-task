@@ -1,0 +1,16 @@
+/* ============================================================
+   Radius — Гривня
+   Crisp but not sharp. A touch tighter than a consumer app —
+   this is an official rates table, so corners stay composed.
+   ============================================================ */
+
+:root {
+  --radius-xs:   3px;
+  --radius-sm:   6px;
+  --radius-md:   10px;   /* default — inputs, buttons */
+  --radius-lg:   14px;   /* cards */
+  --radius-xl:   18px;   /* large panels */
+  --radius-2xl:  24px;
+  --radius-pill: 999px;  /* chips, trend pills, toggles */
+  --radius-circle: 50%;
+}

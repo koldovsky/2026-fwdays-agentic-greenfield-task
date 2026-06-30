@@ -1,0 +1,8 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Гривня">
+  
+  <circle cx="48" cy="48" r="44" fill="#2f6a4f"></circle>
+  <circle cx="48" cy="48" r="44" fill="none" stroke="#c2933a" stroke-width="3"></circle>
+  <circle cx="48" cy="48" r="37" fill="none" stroke="#c2933a" stroke-width="1.5" opacity="0.55"></circle>
+  
+  <text x="48" y="49" fill="#faf4e6" font-family="&#39;IBM Plex Sans&#39;,&#39;Segoe UI&#39;,system-ui,sans-serif" font-size="52" font-weight="600" text-anchor="middle" dominant-baseline="central">₴</text>
+</svg>

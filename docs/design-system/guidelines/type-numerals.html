@@ -1,0 +1,27 @@
+<!-- @dsCard group="Type" viewport="700x176" name="Numerals — tabular mono" subtitle="Every figure is mono with tabular figures so rate columns align" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 18px 22px; background: var(--surface); font-family: var(--font-mono); color: var(--text); font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 5px 0; font-size: 15px; }
+  .code { color: var(--text-secondary); font-weight: 600; }
+  .rate { text-align: right; font-weight: 600; }
+  .d-up { text-align: right; color: var(--up-deep); }
+  .d-dn { text-align: right; color: var(--down-deep); }
+  .cap { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 8px; }
+</style>
+</head>
+<body>
+  <p class="cap">Columns line up — same glyph width</p>
+  <table>
+    <tr><td class="code">USD</td><td class="rate">41,8540 ₴</td><td class="d-up">+0,12%</td></tr>
+    <tr><td class="code">EUR</td><td class="rate">45,1208 ₴</td><td class="d-dn">−0,31%</td></tr>
+    <tr><td class="code">PLN</td><td class="rate">10,6471 ₴</td><td class="d-up">+0,08%</td></tr>
+    <tr><td class="code">GBP</td><td class="rate">53,0719 ₴</td><td class="d-dn">−0,44%</td></tr>
+  </table>
+</body>
+</html>

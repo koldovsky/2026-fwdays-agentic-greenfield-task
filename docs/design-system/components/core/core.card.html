@@ -1,0 +1,79 @@
+<!-- @dsCard group="Components" viewport="700x500" name="Core — controls" subtitle="Button · IconButton · Input · Select · Switch · Tabs · Badge · Chip · Card" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin: 0; padding: 22px; background: var(--bg); font-family: var(--font-sans); }
+  .grp { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 10px; }
+  .block { margin-bottom: 22px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const DS = (function(){ for (const k in window){ const v = window[k]; if (v && v.Button && v.RateRow) return v; } return {}; })();
+const { Button, IconButton, Input, Select, Switch, Tabs, Badge, Chip, Card } = DS;
+
+function Demo() {
+  const [tab, setTab] = React.useState('rates');
+  const [dark, setDark] = React.useState(false);
+  const [cur, setCur] = React.useState('USD');
+  return (
+    <div>
+      <div className="block">
+        <p className="grp">Button — variants & sizes</p>
+        <div className="row">
+          <Button variant="primary" iconLeft="arrow-right-left">Поміняти</Button>
+          <Button variant="secondary">Всі валюти</Button>
+          <Button variant="outline">Деталі</Button>
+          <Button variant="ghost" iconRight="chevron-right">Більше</Button>
+          <Button size="sm">sm</Button>
+          <Button size="lg">lg</Button>
+          <Button disabled>disabled</Button>
+        </div>
+      </div>
+      <div className="block">
+        <p className="grp">IconButton · Switch · Tabs · Select</p>
+        <div className="row">
+          <IconButton icon="arrow-down-up" label="Напрям" variant="outline" />
+          <IconButton icon="star" label="Обране" variant="soft" />
+          <Switch checked={dark} onChange={setDark} label="Нічна тема" />
+          <Tabs value={tab} onChange={setTab} tabs={[{value:'rates',label:'Курси'},{value:'convert',label:'Конвертер'},{value:'history',label:'Історія'}]} />
+          <Select value={cur} onChange={(e)=>setCur(e.target.value)} icon="coins" style={{width:180}}
+            options={[{value:'USD',label:'Долар США'},{value:'EUR',label:'Євро'},{value:'PLN',label:'Злотий'}]} />
+        </div>
+      </div>
+      <div className="block">
+        <p className="grp">Input</p>
+        <div className="row">
+          <Input icon="search" placeholder="Знайдіть валюту" size="lg" style={{width:260}} />
+          <Input mono align="right" suffix="₴" defaultValue="100,00" style={{width:160}} />
+        </div>
+      </div>
+      <div className="block" style={{marginBottom:0}}>
+        <p className="grp">Badge · Chip</p>
+        <div className="row">
+          <Badge tone="brand">Офіційний</Badge>
+          <Badge tone="up" mono>+1,20%</Badge>
+          <Badge tone="down" mono>−0,40%</Badge>
+          <Badge tone="flat">Без змін</Badge>
+          <Badge tone="accent" solid>НБУ</Badge>
+          <Chip icon="star" active>USD</Chip>
+          <Chip onRemove={()=>{}}>PLN</Chip>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

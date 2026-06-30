@@ -1,0 +1,13 @@
+/* ============================================================
+   Fonts — Гривня (wired for Next.js)
+   ------------------------------------------------------------
+   The IBM Plex trio (Serif = display, Sans = UI/body, Mono = all
+   numerics) is SELF-HOSTED via `next/font/google` in
+   `app/layout.tsx`, which exposes these variables on <html>:
+     --font-plex-serif   --font-plex-sans   --font-plex-mono
+   `typography.css` maps the semantic family aliases
+   (--font-serif / --font-sans / --font-mono) onto them.
+
+   No external @import here — self-hosting keeps the app keyless,
+   privacy-respecting and offline-safe (no Google Fonts request).
+   ============================================================ */

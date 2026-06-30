@@ -1,0 +1,30 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Radius & elevation" subtitle="Composed corners · soft warm-tinted shadows" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 18px 22px; background: var(--bg); font-family: var(--font-sans); }
+  .row { display: flex; gap: 16px; align-items: center; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .box { width: 64px; height: 52px; background: var(--surface); border: 1px solid var(--border); }
+  .n { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+  .sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="col"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="n">sm·6</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-md)"></div><span class="n">md·10</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="n">lg·14</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-xl)"></div><span class="n">xl·18</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-pill);width:52px"></div><span class="n">pill</span></div>
+    <div class="sep"></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:none"></div><span class="n">sm</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-md);border:none"></div><span class="n">md</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:none"></div><span class="n">lg</span></div>
+    <div class="col"><div class="box" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);border:none"></div><span class="n">xl</span></div>
+  </div>
+</body>
+</html>
