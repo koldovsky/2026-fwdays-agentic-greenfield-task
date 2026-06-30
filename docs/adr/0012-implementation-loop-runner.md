@@ -2,6 +2,15 @@
 
 *Status: Accepted (decision + design; runner is bootstrap tooling, hand-built next) · Date: 2026-06-29 · Source: [openspec/backlog.md](../../openspec/backlog.md), [openspec/config.yaml](../../openspec/config.yaml) rules, AGENTS.md "How we work" loop*
 
+> **Amendment (2026-06-30):** the two human checkpoints below (post-`propose`, pre-`archive`) are
+> **dropped in favor of an autonomous, gate-driven run.** The loop proceeds change-by-change without
+> sign-off; it escalates to the human **only on a critical fork** (an ambiguity or irreversible
+> decision the gates can't resolve). Rationale: the mechanical gates — `validate --strict`,
+> `opsx:verify`, the separate **maker ≠ checker** reviewer subagent, tests/static/evals — already
+> catch a bad plan or diff, so a blocking human gate at every change is friction the single developer
+> doesn't want. Maker ≠ checker is **unchanged** (still a hard structural gate). The checkpoint
+> language in the sections below is superseded by this amendment.
+
 ## Context
 [openspec/backlog.md](../../openspec/backlog.md) slices the PRD into 14 dependency-ordered OpenSpec
 changes with a machine-readable DAG (`id · status · wave · blocked-by`). We need an **orchestrator**

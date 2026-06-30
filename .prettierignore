@@ -8,6 +8,7 @@ openspec/changes/
 
 # Externally-consumed tool configs we don't own the style of.
 .coderabbit.yaml
+.claude/statusline.mjs
 
 # Hand-authored prose (PRD, ADRs, requirements, README) — not Prettier's job.
 # Prettier owns code formatting; Markdown stays as written.

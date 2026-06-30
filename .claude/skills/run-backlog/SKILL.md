@@ -47,9 +47,13 @@ planned-but-absent command.
    (structural gate, distinct from coherence). Fix or re-propose until validation passes.
    *Done when:* `validate --strict` exits 0.
 
-4. **Checkpoint 1 — human approves the plan.** Present the proposal/specs/design summary and **wait**
-   for explicit approval before any code is written.
-   *Done when:* the human approves (or asks for revisions, which you make and re-present).
+4. **Plan gate (autonomous).** Log a one-paragraph proposal/specs/design summary and **proceed** —
+   do **not** wait for human sign-off. The loop is gate-driven, not approval-driven: validation
+   (step 3) is the structural gate; coherence (`opsx:verify`, step 6) and the reviewer subagent
+   (step 7) catch a bad plan downstream. **Escalate to the human only on a *critical fork*** — an
+   ambiguity or irreversible/architectural decision the gates can't resolve (use `AskUserQuestion`,
+   then continue). Otherwise pick the sensible default and keep moving.
+   *Done when:* the plan summary is logged and no critical fork is open.
 
 5. **Apply (maker).** Run `opsx:apply` to implement `tasks.md`. This agent is the **maker**.
    *Done when:* every task in `tasks.md` is checked.
@@ -80,9 +84,11 @@ planned-but-absent command.
     PR at the end, per ADR-0012).
     *Done when:* the commit lands on the work branch.
 
-12. **Checkpoint 2 — human eyeballs before archive.** Show the review outcome + diff and **wait** for
-    a go-ahead (archive's spec-sync is sticky).
-    *Done when:* the human approves the archive.
+12. **Pre-archive gate (autonomous).** Log the review outcome + diff summary and **proceed** to
+    archive — do **not** wait for human sign-off. All gates (verify, reviewer subagent, tests,
+    static, evals, docs) have already passed by here; archive's spec-sync is the recorded
+    consequence of that green state. **Escalate only on a critical concern** the gates didn't cover.
+    *Done when:* the review outcome is logged and no critical concern is open.
 
 13. **Archive.** Run `opsx:archive`, then set the change's `status: done` in the backlog.
     *Done when:* the change is archived and the backlog reflects `done`.

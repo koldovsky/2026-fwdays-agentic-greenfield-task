@@ -38,9 +38,9 @@ rules:
     - Keep DB fields, enum values, and meal/source literals in English even when prose mirrors the user's language.
   design:
     - State the memory footprint and confirm build-off-box (CI -> GHCR; no build steps on the production host).
-    - Justify every LLM call: single deterministic call, structured output / tool-use, prompt-cache the stable system prefix — no agent loop.
+    - 'Justify every LLM call: single deterministic call, structured output / tool-use, prompt-cache the stable system prefix — no agent loop.'
     - Add or cite an ADR in docs/adr/ for any significant or reversed architectural decision.
   tasks:
-    - Add a verification task per touched invariant (test/eval: SUM totals, fact/estimate tag, image-never-on-disk, "вчера" back-dating).
-    - Final task is always - hand the diff to a SEPARATE reviewer subagent (the `review` skill: Standards + Spec axes) before commit. Maker != checker; no self-approval.
+    - 'Add a verification task per touched invariant (test/eval: SUM totals, fact/estimate tag, image-never-on-disk, "вчера" back-dating).'
+    - 'Final task is always - hand the diff to a SEPARATE reviewer subagent (the `review` skill: Standards + Spec axes) before commit. Maker != checker; no self-approval.'
     - Keep each task to <= one session; order by dependency.
