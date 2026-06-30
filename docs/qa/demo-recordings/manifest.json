@@ -8,7 +8,12 @@
       "video": "docs/qa/demo-recordings/reminder-home.webm",
       "screenshot": "docs/qa/demo-recordings/reminder-home.png",
       "explainer": "docs/qa/demo-recordings/reminder-home.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "AFTER state renders correctly: the dark-green due-summary banner «Сьогодні полити» shows a large white «1» (decremented from 3), and a «ПОТРЕБУЮТЬ ПОЛИВУ» due section lists the due plant «Демо: Скоро полити» with a «Полити сьогодні» link and a water-drop action button, with a matching green «Полити» button on the card below. All text is legible at good contrast. Caveat: a single still cannot directly show the two taps / 3->1 transition; if proving the decrement is required, capture before/after frames or a sequence rather than this single AFTER frame."
+      }
     },
     {
       "id": "plant-crud",
@@ -17,7 +22,12 @@
       "video": "docs/qa/demo-recordings/plant-crud.webm",
       "screenshot": "docs/qa/demo-recordings/plant-crud.png",
       "explainer": "docs/qa/demo-recordings/plant-crud.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Final list view «Мої рослини» renders fully with a card titled «Демо-запис рослини 1782805709646 (оновлено)» — the «(оновлено)» / «(updated)» suffix is direct evidence the created plant was edited and the user returned to the list where the card is present, satisfying the end-state of FR-PLANT-01/05/06. Text is legible: dark-green headings and bold black card titles on cream have strong contrast; status pills («Потребує поливу», «Здорова», «Скоро полив») are clear. Note: as a single still it only proves the return-to-list endpoint, not the intermediate add/detail/edit screens; if proving each step is required, capture per-step frames rather than only the settled list."
+      }
     },
     {
       "id": "growth-and-watering",
@@ -26,7 +36,12 @@
       "video": "docs/qa/demo-recordings/growth-and-watering.webm",
       "screenshot": "docs/qa/demo-recordings/growth-and-watering.png",
       "explainer": "docs/qa/demo-recordings/growth-and-watering.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Both lists render with data and both new entries appear. Growth list («Вимірювання росту») tops with the new «37.3 см — 30.06.2026» entry above 11.5 см and 9 см, and its growth chart plots three rising points. Watering list («Поливи») tops with the new «30.06.2026 — Демо полив 1782805720170» entry above two older waterings, and the watering chart plots three points. Text is legible: dark headings/values on cream, green «Записати» buttons with white text, no spinners or empty states."
+      }
     },
     {
       "id": "charts",
@@ -35,7 +50,12 @@
       "video": "docs/qa/demo-recordings/charts.webm",
       "screenshot": "docs/qa/demo-recordings/charts.png",
       "explainer": "docs/qa/demo-recordings/charts.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Both Recharts SVGs render for the seeded plant. The growth chart «Графік росту рослини» shows a green rising curve with Y-axis «Висота (см)» 0-40, dated X-axis, and three data points (9/11.5/37.3 cm) matching the measurement list (FR-CHART-01). The watering chart «Графік поливів рослини» shows an orange line with Y-axis «Поливів за день» 0-4 and three markers at value 1 across dated X-axis (FR-CHART-02). No spinners or empty states; all axis labels, dates, and section headings are dark-on-cream and legible."
+      }
     },
     {
       "id": "design-system",
@@ -44,7 +64,12 @@
       "video": "docs/qa/demo-recordings/design-system.webm",
       "screenshot": "docs/qa/demo-recordings/design-system.png",
       "explainer": "docs/qa/demo-recordings/design-system.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "All four requirements visibly render on the paper theme: the «Поливайко» wordmark with green drop logo (FR-DS-01) in the header; the warm cream background with sage-green striped placeholders and forest-green accents (FR-DS-03); multiple themed card components with title/species/date/status/action buttons plus list cards (FR-DS-05); and distinct status pills — green «Здорова», coral «Потребує поливу», brown «Скоро полив» each with a colored dot (FR-DS-06). Text is legible with strong contrast (e.g., white-on-dark-green «Сьогодні полити» banner); only minor low-contrast item is the small gray «.jpg» placeholder filename captions over the sage stripes, which are non-essential decorative labels."
+      }
     },
     {
       "id": "responsive-360",
@@ -53,7 +78,12 @@
       "video": "docs/qa/demo-recordings/responsive-360.webm",
       "screenshot": "docs/qa/demo-recordings/responsive-360.png",
       "explainer": "docs/qa/demo-recordings/responsive-360.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "At 360px wide, the «Поливайко» home screen renders as a clean single-column layout: header (logo + «Рослини»), «Мої рослини» title, «Додати рослину» button, a dark «Сьогодні полити 2» summary card, and a vertical stack of plant cards with status badges, images, names, species/dates, and action buttons — all within the viewport margins with no content clipped or overflowing the right edge, proving NFR-COMPAT-01. Text is legible (dark headings on cream, white-on-green/red buttons, clear pink/green status badges); the gray monospace filename labels are slightly faint but still readable."
+      }
     }
   ]
 }
