@@ -57,7 +57,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | onboarding | done | agent | 2 | data | US-1 | M2 | Onboarding: `/start` Q&A → Mifflin–St Jeor targets |
 | food-text | done | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
 | metrics | done | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
-| query | todo | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
+| query | done | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
 | correction | todo | agent | 4 | food-text | US-5 | M3 | Correct last entry |
 | clarify | todo | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
 | food-photo | todo | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted — ask on hidden calorie-movers (ADR-0015) |
