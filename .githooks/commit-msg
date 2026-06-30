@@ -1,0 +1,35 @@
+#!/bin/sh
+# Гривня — commit-msg gate (hand-authored, see ADR-0003).
+# Conventional Commit subject; feature/fix commits must cite requirement ids so
+# the history stays traceable. Merges/reverts/fixups are exempt.
+
+msg_file="$1"
+subject=$(head -1 "$msg_file")
+
+case "$subject" in
+  "Merge "*|"Revert "*|fixup!*|squash!*) exit 0 ;;
+esac
+
+# Conventional Commit: type(scope)?: description
+if ! printf '%s' "$subject" | grep -Eq '^(feat|fix|docs|chore|test|build|refactor|ci|style|perf)(\([a-z0-9-]+\))?: .+'; then
+  echo "✗ commit-msg: subject must be a Conventional Commit — type(scope): description" >&2
+  echo "  got: $subject" >&2
+  exit 1
+fi
+
+if [ "${#subject}" -gt 72 ]; then
+  echo "✗ commit-msg: subject is ${#subject} chars (max 72)." >&2
+  exit 1
+fi
+
+# feat/fix commits must carry a Refs:/Slice: trailer citing requirement ids.
+type=$(printf '%s' "$subject" | sed -E 's/^([a-z]+).*/\1/')
+if [ "$type" = "feat" ] || [ "$type" = "fix" ]; then
+  if ! grep -Eq '^(Refs|Slice):' "$msg_file"; then
+    echo "✗ commit-msg: $type commits need a 'Refs:' or 'Slice:' trailer citing requirement ids." >&2
+    echo "  e.g.  Refs: FR-CONVERT-01, FR-CONVERT-02" >&2
+    exit 1
+  fi
+fi
+
+exit 0

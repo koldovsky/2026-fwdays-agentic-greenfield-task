@@ -1,0 +1,30 @@
+/* ============================================================
+   Spacing & layout — Гривня
+   4px base grid. Calm and ledger-tidy. Layout breakpoints:
+   768px (tablet) and 1100px (desktop two-column: rates + panel).
+   ============================================================ */
+
+:root {
+  --space-0:   0;
+  --space-1:   0.25rem;  /* 4 */
+  --space-2:   0.5rem;   /* 8 */
+  --space-3:   0.75rem;  /* 12 */
+  --space-4:   1rem;     /* 16 */
+  --space-5:   1.5rem;   /* 24 */
+  --space-6:   2rem;     /* 32 */
+  --space-7:   2.5rem;   /* 40 */
+  --space-8:   3rem;     /* 48 */
+  --space-9:   4rem;     /* 64 */
+  --space-10:  5rem;     /* 80 */
+
+  /* Component sizing */
+  --control-h-sm: 2rem;     /* 32 */
+  --control-h:    2.5rem;   /* 40 — default control height */
+  --control-h-lg: 3rem;     /* 48 */
+
+  /* Layout */
+  --content-max:   1120px;
+  --gutter:        var(--space-5);
+  --bp-tablet:     768px;
+  --bp-desktop:    1100px;
+}

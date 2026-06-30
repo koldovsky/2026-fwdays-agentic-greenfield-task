@@ -1,0 +1,33 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+context: |
+  Project: «Гривня» — a calm, Ukrainian-first web app for the official NBU
+  exchange rate (rates list, currency picker, UAH⇄currency converter, ~30-day
+  history chart, one-sentence trend hint).
+  Stack: Next.js 16.2 App Router, TypeScript strict, React 19.2, Tailwind 4 +
+  vendored design tokens (DESIGN.md). Domain logic in a framework-free lib/,
+  unit-tested with Vitest; e2e with Playwright.
+  Data: NBU NBUStatService open API only — keyless, free, official; called
+  server-side; runs with zero env vars.
+  Conventions: requirement ids FR/NFR/TC/BC are stable (docs/requirements.md);
+  maker ≠ checker (own kurs-maker / kurs-reviewer / kurs-eval-judge);
+  Ukrainian-first, calm, no exclamation marks; honest stale-rate labelling.

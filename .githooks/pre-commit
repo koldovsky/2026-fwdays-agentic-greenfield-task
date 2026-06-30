@@ -1,0 +1,16 @@
+#!/bin/sh
+# Гривня — pre-commit gate (hand-authored, see ADR-0003).
+# Fast, deterministic checks. A red check is a STOP; weakening it is not allowed.
+# Build is intentionally left to CI (too slow for every commit).
+set -e
+
+echo "[pre-commit] lint"
+npm run --silent lint
+
+echo "[pre-commit] traceability (every MVP FR cited in a spec)"
+node scripts/check-traceability.mjs
+
+echo "[pre-commit] openspec validate --all --strict"
+npx --no-install openspec validate --all --strict --no-interactive
+
+echo "[pre-commit] ok"

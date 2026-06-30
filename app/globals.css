@@ -1,0 +1,441 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Гривня design tokens — the single source of truth for colour,
+   type, spacing, radius, shadows, motion. Vendored reference lives
+   in docs/design-system/; these are the live copies. See DESIGN.md.
+   ============================================================ */
+@import "./styles/tokens/fonts.css";
+@import "./styles/tokens/colors.css";
+@import "./styles/tokens/typography.css";
+@import "./styles/tokens/spacing.css";
+@import "./styles/tokens/radius.css";
+@import "./styles/tokens/shadows.css";
+@import "./styles/tokens/motion.css";
+@import "./styles/tokens/base.css";
+
+/* ============================================================
+   Tailwind bridge — expose the semantic aliases as theme-aware
+   utilities (bg-surface, text-text, border-border, text-brand,
+   text-trend-up, font-serif/sans/mono…). For anything not bridged,
+   use var(--token) directly. Always consume SEMANTIC aliases,
+   never the raw ramps.
+   ============================================================ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-trend-up: var(--trend-up-solid);
+  --color-trend-down: var(--trend-down-solid);
+  --color-trend-flat: var(--trend-flat-solid);
+
+  --font-serif: var(--font-plex-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+/* ============================================================
+   App shell — header, two-column main, footer, skeletons
+   ============================================================ */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  flex: 1;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.app-header__lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.app-header__logo {
+  flex: none;
+}
+
+.app-header__titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.app-header__title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--text);
+  letter-spacing: var(--tracking-tight);
+}
+
+.app-header__subtitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.shell-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--gutter) var(--space-7);
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .shell-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  }
+
+  /* Focus/converter column stays in view while the rates list scrolls past
+     it. Scoped to the two-column breakpoint only — sticky offers no benefit
+     once the columns stack. top = sticky header height (~68px) + breathing
+     room, so it settles just below the header, never under it. */
+  .shell-main__column--sticky {
+    position: sticky;
+    top: calc(68px + var(--space-4));
+    align-self: start;
+    max-height: calc(100vh - 68px - var(--space-6));
+    overflow-y: auto;
+  }
+}
+
+.shell-main__column {
+  min-width: 0;
+}
+
+.shell-slot-empty {
+  margin: 0;
+  padding: var(--space-5);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.app-footer {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.app-footer__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+
+.app-footer__provenance {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.app-footer__saying {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.shell-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.shell-skeleton__block {
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+}
+
+.shell-skeleton__block--hero {
+  height: 10rem;
+}
+
+.shell-skeleton__block--row {
+  height: 3rem;
+}
+
+.shell-skeleton__block--short {
+  width: 65%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell-skeleton__block {
+    animation: shell-pulse var(--dur-slow) var(--ease-soft) infinite alternate;
+  }
+}
+
+@keyframes shell-pulse {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.shell-placeholder {
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.shell-placeholder__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.shell-placeholder__hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   Currency list — rows, focus panel, error state
+   ============================================================ */
+
+.currency-list__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.currency-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: var(--transition-control);
+}
+
+.currency-row:hover {
+  background: var(--surface-hover);
+}
+
+.currency-row[data-selected] {
+  background: var(--brand-soft);
+  border-color: var(--brand-border);
+}
+
+.currency-row:focus-visible {
+  outline: none;
+}
+
+.currency-row__identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.currency-row__code {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.currency-row__name {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.currency-row__rate {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.currency-row__unit {
+  margin-left: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.currency-focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.currency-focus__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.currency-focus__code {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.currency-focus__name {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.currency-focus__rate {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+}
+
+.currency-focus__unit {
+  margin-left: 4px;
+  font-size: var(--text-lg);
+  color: var(--accent);
+}
+
+.currency-history {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.currency-history__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.currency-history__skeleton {
+  height: 240px;
+}
+
+.trend-hint {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.trend-hint[data-tone="up"] {
+  color: var(--trend-up-fg);
+}
+
+.trend-hint[data-tone="down"] {
+  color: var(--trend-down-fg);
+}
+
+.trend-hint[data-tone="flat"] {
+  color: var(--trend-flat-fg);
+}
+
+.history-chart__tooltip {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 6px 10px;
+}
+
+.history-chart__tooltip-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.history-chart__tooltip-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rates-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.rates-error__message {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

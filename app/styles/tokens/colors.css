@@ -1,0 +1,189 @@
+/* ============================================================
+   Colors — Гривня "Ledger"
+   ------------------------------------------------------------
+   A calm, official palette for reading an exchange rate. Warm
+   paper neutrals (a ledger, not a screen); a deep treasury green
+   as the brand; muted brass as the coin / ₴ accent. Trend
+   semantics are honest, never neon: green = strengthen, clay =
+   weaken, warm-grey = flat.
+
+   Structure:
+     1. Base ramps   — raw, theme-agnostic color values
+     2. Semantic     — light theme (default, :root)
+     3. Semantic     — dark theme ([data-theme="dark"])
+   Always consume the SEMANTIC aliases in components, not raw ramps.
+   ============================================================ */
+
+:root {
+  /* ---- 1. Base ramps ------------------------------------- */
+
+  /* Green (brand — treasury / hryvnia) */
+  --green-50:  #eef4ef;
+  --green-100: #d8e7dd;
+  --green-200: #b3cdbd;
+  --green-300: #84ad96;
+  --green-400: #548a6f;
+  --green-500: #2f6a4f;   /* primary */
+  --green-600: #275840;
+  --green-700: #1f4634;
+  --green-800: #1a3a2b;
+  --green-900: #142d22;
+
+  /* Brass (accent — the coin, the ₴) */
+  --brass-50:  #faf4e6;
+  --brass-100: #f3e6c6;
+  --brass-200: #e8cd92;
+  --brass-300: #d8b15f;
+  --brass-400: #c2933a;   /* accent */
+  --brass-500: #a87a2a;
+  --brass-600: #8a6322;
+  --brass-700: #6e4f1f;
+
+  /* Warm neutrals (paper / ink) */
+  --paper-0:   #ffffff;
+  --paper-25:  #faf8f3;
+  --paper-50:  #f4f1ea;
+  --paper-100: #ebe7dc;
+  --paper-200: #ddd7c9;
+  --paper-300: #c5bda9;
+  --paper-400: #a39a84;
+  --paper-500: #7e7560;
+  --paper-600: #605949;
+  --paper-700: #484338;
+  --paper-750: #36322a;
+  --paper-800: #28251f;
+  --paper-850: #1e1c16;
+  --paper-900: #161410;
+  --paper-950: #100e0a;
+
+  /* Trend semantics — muted, honest */
+  --up-soft:    #dcebe0;
+  --up:         #2f8a5c;
+  --up-deep:    #236b46;
+  --down-soft:  #f4ddd5;
+  --down:       #bd5a40;
+  --down-deep:  #934531;
+  --flat-soft:  #ece8df;
+  --flat:       #7e7560;
+  --flat-deep:  #605949;
+
+  /* ---- 2. Semantic aliases — LIGHT (default) ------------- */
+
+  /* Brand */
+  --brand:            var(--green-500);
+  --brand-hover:      var(--green-600);
+  --brand-active:     var(--green-700);
+  --brand-soft:       var(--green-50);
+  --brand-soft-hover: var(--green-100);
+  --brand-border:     var(--green-200);
+  --brand-on:         #ffffff;
+
+  --accent:           var(--brass-400);
+  --accent-hover:     var(--brass-500);
+  --accent-soft:      var(--brass-50);
+  --accent-on:        #2a1f06;
+  /* Text/icon color for content ON --accent-soft (e.g. the stale-rate
+     badge) — distinct from --accent, which is tuned for icons/borders on
+     neutral surfaces and only reaches 2.5:1 on --accent-soft. Found live
+     via axe in the Stage 8 e2e a11y suite (NFR-A11Y-02). */
+  --accent-strong:    var(--brass-600);
+
+  /* Surfaces */
+  --bg:               var(--paper-25);   /* page */
+  --surface:          #fffdf8;           /* card — warm white */
+  --surface-raised:   #ffffff;
+  --surface-sunken:   var(--paper-50);
+  --surface-hover:    var(--paper-50);
+  --scrim:            rgba(22, 20, 16, 0.45);
+
+  /* Text */
+  --text:             var(--paper-900);
+  --text-secondary:   var(--paper-600);
+  /* paper-500 (#7e7560) only reaches 4.16:1 against the warmest light
+     surfaces (the converter's --surface-sunken at 14px reaches just
+     4.48:1) — fails WCAG AA's 4.5:1 floor at the small sizes this token is
+     used at (currency names, header subtitle, footer). #716956 clears
+     4.5:1 with margin (4.8-5:1+) across every surface it appears on, while
+     staying visually distinct from --text-secondary (#605949). Found live
+     via axe in the Stage 8 e2e a11y suite (NFR-A11Y-02). */
+  --text-muted:       #716956;
+  /* paper-400 (#a39a84) reaches only 2.63:1 on --bg — badly fails AA at
+     small sizes (footer saying, the gold/silver unit suffix). #756f5f is
+     the minimum darkening that clears 4.5:1 here; it lands close to
+     --text-muted because this warm-cream background leaves little room
+     for a meaningfully lighter "faint" tier and stay AA-compliant. */
+  --text-faint:       #756f5f;
+  --text-on-brand:    #ffffff;
+  --text-link:        var(--green-600);
+
+  /* Borders & lines */
+  --border:           var(--paper-200);
+  --border-strong:    var(--paper-300);
+  --border-subtle:    var(--paper-100);
+  --ring:             color-mix(in oklab, var(--green-500) 42%, transparent);
+
+  /* Trend role aliases (resolve per theme) */
+  --trend-up-bg:    var(--up-soft);
+  --trend-up-fg:    var(--up-deep);
+  --trend-up-solid: var(--up);
+  --trend-down-bg:    var(--down-soft);
+  --trend-down-fg:    var(--down-deep);
+  --trend-down-solid: var(--down);
+  --trend-flat-bg:    var(--flat-soft);
+  --trend-flat-fg:    var(--flat-deep);
+  --trend-flat-solid: var(--flat);
+}
+
+/* ---- 3. Semantic aliases — DARK ------------------------- */
+
+[data-theme="dark"] {
+  --brand:            var(--green-300);
+  --brand-hover:      var(--green-200);
+  --brand-active:     #b6d6c2;
+  --brand-soft:       color-mix(in oklab, var(--green-500) 24%, var(--paper-900));
+  --brand-soft-hover: color-mix(in oklab, var(--green-500) 32%, var(--paper-900));
+  --brand-border:     color-mix(in oklab, var(--green-300) 40%, var(--paper-900));
+  --brand-on:         #0c1d15;
+
+  --accent:           var(--brass-300);
+  --accent-hover:     var(--brass-200);
+  --accent-soft:      color-mix(in oklab, var(--brass-400) 22%, var(--paper-900));
+  --accent-on:        #1a1305;
+  /* var(--brass-600) (light's --accent-strong value) is only 2.5:1 here —
+     dark --accent-soft is a dark muddy brown, not a light cream, so it
+     needs a LIGHT brass, not a dark one. --brass-300 reaches 6.68:1. */
+  --accent-strong:    var(--brass-300);
+
+  --bg:               var(--paper-950);
+  --surface:          var(--paper-900);
+  --surface-raised:   var(--paper-850);
+  --surface-sunken:   #0b0907;
+  --surface-hover:    var(--paper-850);
+  --scrim:            rgba(0, 0, 0, 0.6);
+
+  --text:             #f3efe6;
+  --text-secondary:   var(--paper-300);
+  --text-muted:       var(--paper-400);
+  /* paper-500 (#7e7560) reaches only 4.22:1 on dark --bg — fails AA at
+     small sizes (footer saying). #88806d is the minimum lightening that
+     clears 4.5:1 while staying distinct (darker) than --text-muted
+     (paper-400, #a39a84). Found live via axe (NFR-A11Y-02). */
+  --text-faint:       #88806d;
+  --text-on-brand:    #0c1d15;
+  --text-link:        var(--green-300);
+
+  --border:           color-mix(in oklab, var(--paper-400) 24%, var(--paper-900));
+  --border-strong:    color-mix(in oklab, var(--paper-400) 38%, var(--paper-900));
+  --border-subtle:    color-mix(in oklab, var(--paper-400) 14%, var(--paper-900));
+  --ring:             color-mix(in oklab, var(--green-300) 60%, transparent);
+
+  --trend-up-bg:    color-mix(in oklab, var(--up) 26%, var(--paper-900));
+  --trend-up-fg:    #8ed4ac;
+  --trend-up-solid: var(--up);
+  --trend-down-bg:    color-mix(in oklab, var(--down) 26%, var(--paper-900));
+  --trend-down-fg:    #e6a08c;
+  --trend-down-solid: var(--down);
+  --trend-flat-bg:    color-mix(in oklab, var(--flat) 26%, var(--paper-900));
+  --trend-flat-fg:    var(--paper-300);
+  --trend-flat-solid: var(--paper-400);
+}

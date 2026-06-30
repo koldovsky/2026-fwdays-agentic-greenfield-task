@@ -1,0 +1,13 @@
+/* ============================================================
+   Fonts — Гривня
+   IBM Plex Serif : display + headings. Full Cyrillic, editorial,
+                    reads like a published rates table.
+   IBM Plex Sans  : UI + body. Precise, institutional, full Cyrillic.
+   IBM Plex Mono  : every numeric (rates, deltas, amounts, dates).
+                    Full Cyrillic, true tabular figures.
+   The whole Plex trio is one coherent family — calm and official.
+   Loaded from Google Fonts' CDN. Consumers self-host by replacing
+   the src URLs.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');

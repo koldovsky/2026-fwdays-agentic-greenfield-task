@@ -1,0 +1,40 @@
+<!-- @dsCard group="Brand" viewport="700x180" name="Logo & wordmark" subtitle="A coin bearing the ₴, with the «Гривня» lockup" -->
+<!DOCTYPE html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--surface); font-family: var(--font-sans); }
+  .row { display: flex; align-items: center; gap: 36px; }
+  .mark { display: flex; align-items: center; gap: 16px; }
+  .coin { width: 64px; height: 64px; border-radius: 50%; background: var(--green-500); border: 2.5px solid var(--brass-400); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); }
+  .coin span { color: #faf4e6; font-family: var(--font-sans); font-weight: 600; font-size: 34px; line-height: 1; }
+  .word { font-family: var(--font-serif); font-weight: 600; font-size: 34px; color: var(--text); letter-spacing: -0.01em; }
+  .sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--text-muted); margin-top: 2px; }
+  .dark { background: var(--paper-900); border-radius: var(--radius-lg); padding: 16px 20px; }
+  .cap { font-size: 11px; color: var(--text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; font-weight: 600; margin: 0 0 14px; }
+</style>
+</head>
+<body>
+  <p class="cap">Mark · wordmark · on-dark</p>
+  <div class="row">
+    <div class="mark">
+      <div class="coin"><span>&#8372;</span></div>
+      <div>
+        <div class="word">Гривня</div>
+        <div class="sub">ОФІЦІЙНИЙ КУРС НБУ</div>
+      </div>
+    </div>
+    <div class="dark">
+      <div class="mark">
+        <div class="coin"><span>&#8372;</span></div>
+        <div>
+          <div class="word" style="color:#f3efe6">Гривня</div>
+          <div class="sub" style="color:#a39a84">ОФІЦІЙНИЙ КУРС НБУ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

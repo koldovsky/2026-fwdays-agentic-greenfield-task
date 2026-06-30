@@ -1,0 +1,28 @@
+---
+description: «Гривня» project rules and the spec-driven maker ≠ checker loop.
+globs:
+alwaysApply: true
+---
+
+# «Гривня» — project rules
+
+Follow **[AGENTS.md](../../AGENTS.md)** as the source of truth: the locked stack,
+`lib/` purity (`TC-PURE-01`), the correctness rules (no 500/blank/silent failure;
+total domain logic; uk-UA locale; honest stale-rate labelling; Ukrainian-first,
+**no exclamation marks**), and the load-on-demand skills.
+
+Before any work, read `docs/product-brief.md`, `docs/requirements.md` (FR/NFR/TC/BC),
+the relevant `openspec/specs/<capability>/spec.md`, and `docs/adr/`. Before any UI
+work, read `DESIGN.md` and use `@/components/ds` with semantic tokens (never hex).
+
+## The loop (build one slice at a time)
+
+1. `/propose-slice <capability>` — open + validate an OpenSpec change from the spec.
+2. `/kurs-maker <capability>` — build it **tests-first** (write failing unit tests
+   from the spec scenarios, `@trace FR-x`, observe red, then green; never weaken a test).
+3. **In a fresh chat** (maker ≠ checker): `/review-slice <capability>` — run
+   `/kurs-reviewer` (spec + correctness) and `/kurs-eval-judge` (quality). Fix, re-review until clean.
+4. Archive the change; update `docs/current-state.md`; commit with `Slice:` / `Refs:` trailers.
+
+Gate every change with `npm run verify` (lint + check:trace + spec:validate + build).
+The git hooks in `.githooks/` enforce this on commit. See `docs/agent-tooling.md`.

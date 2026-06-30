@@ -1,0 +1,14 @@
+/* ============================================================
+   Гривня (Hryvnia) — Global stylesheet entry point.
+   Consumers link THIS file. It is a list of @import lines only;
+   all real rules live in the imported token files.
+   ============================================================ */
+
+@import url("./tokens/fonts.css");
+@import url("./tokens/colors.css");
+@import url("./tokens/typography.css");
+@import url("./tokens/spacing.css");
+@import url("./tokens/radius.css");
+@import url("./tokens/shadows.css");
+@import url("./tokens/motion.css");
+@import url("./tokens/base.css");
