@@ -16,7 +16,7 @@ const clientReturning = (
 };
 
 describe('parseStructured', () => {
-  it('makes exactly one call with temperature 0 and a cached system prefix', async () => {
+  it('makes exactly one call with a cached prefix and no deprecated temperature param', async () => {
     const { client, create } = clientReturning([
       { type: 'text', text: JSON.stringify({ intent: 'log' }) },
     ]);
@@ -25,10 +25,10 @@ describe('parseStructured', () => {
 
     expect(create).toHaveBeenCalledTimes(1);
     const params = create.mock.calls[0]?.[0] as {
-      temperature: number;
+      temperature?: number;
       system: { cache_control?: unknown }[];
     };
-    expect(params.temperature).toBe(0);
+    expect(params.temperature).toBeUndefined();
     expect(params.system[0]?.cache_control).toEqual({ type: 'ephemeral' });
     expect(result.data.intent).toBe('log');
   });

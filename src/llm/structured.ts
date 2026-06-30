@@ -3,8 +3,11 @@ import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { systemPrefixBlocks } from './systemPrefix.js';
 
-// Sonnet 4.6 — chosen for cost; still accepts temperature (unlike Opus 4.7+/Fable), so temperature 0
-// gives reproducible, code-gradeable classification.
+// Sonnet 4.6 — chosen for cost. We omit `temperature`: it's being deprecated for sampling control
+// (already removed / 400 on Opus 4.7+ and Fable), and reproducibility here doesn't rest on it —
+// the constrained structured output + small schema do (temperature=0 never guaranteed identical
+// outputs even where accepted). NOTE: this drops the temp-0 lever ADR-0013 evals assumed; revisit
+// there if eval reproducibility regresses.
 const MODEL = 'claude-sonnet-4-6';
 
 export interface StructuredResult<T> {
@@ -14,7 +17,7 @@ export interface StructuredResult<T> {
 
 /**
  * THE seam for model calls (invariant #5): exactly one `messages.create` request, structured output
- * (a JSON schema derived from the caller's zod schema), temperature 0, cached system prefix, and
+ * (a JSON schema derived from the caller's zod schema), a cached system prefix, and
  * ONLY the current message in `messages` (invariant #1 — no chat history). No tool-call loop. Every
  * LLM feature parses through here. The output is validated client-side with the same zod schema.
  */
@@ -31,7 +34,6 @@ export const parseStructured = async <T>(
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: 1024,
-    temperature: 0,
     system: systemPrefixBlocks(),
     output_config: { format: { type: 'json_schema', schema: jsonSchema } },
     messages: [{ role: 'user', content: userText }],

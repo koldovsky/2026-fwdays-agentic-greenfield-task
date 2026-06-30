@@ -3,7 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { classifyMessage } from '../../src/router/router.js';
 
 interface ParseParams {
-  temperature: number;
+  temperature?: number;
   messages: { role: string; content: unknown }[];
   system: { cache_control?: unknown }[];
 }
@@ -39,7 +39,7 @@ describe('classifyMessage', () => {
     expect(routed.date).toBe('2026-06-30');
   });
 
-  it('sends no chat history beyond the current message, at temperature 0', async () => {
+  it('sends no chat history beyond the current message, with no temperature param', async () => {
     const { client, create } = makeClient({ intent: 'query', date: 'today' });
 
     await classifyMessage(client, 'сколько белка?', { userTz: 'Europe/Kyiv', now });
@@ -47,7 +47,7 @@ describe('classifyMessage', () => {
     const params = firstParams(create);
     expect(params.messages).toHaveLength(1);
     expect(params.messages[0]).toEqual({ role: 'user', content: 'сколько белка?' });
-    expect(params.temperature).toBe(0);
+    expect(params.temperature).toBeUndefined();
   });
 
   it('marks the system prefix as a cacheable block', async () => {
