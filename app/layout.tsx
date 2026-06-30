@@ -41,7 +41,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${plexSerif.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeScript />
         {/* Lucide line icons — the design system's Icon component reads
             window.lucide. Flagged substitution (no house icon set yet). */}

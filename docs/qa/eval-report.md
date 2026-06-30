@@ -514,4 +514,183 @@ No trend element anywhere in the row.
 
 ---
 
+## Slice: `converter` — 2026-06-30
+
+**Judge:** kurs-eval-judge (Checker #2)  
+**Date:** 2026-06-30 (Europe/Kyiv)  
+**Capability:** `converter`  
+**Traces:** FR-CONVERT-01, FR-CONVERT-02, FR-CONVERT-03, FR-CONVERT-04, FR-CONVERT-05, NFR-LOCALE-01, NFR-OBS-01  
+**Sources graded:** `components/ds/rates/Converter.jsx`, `components/rates/CurrencyFocusPanel.tsx`, `lib/i18n/uk.ts` (`converter.*`), `lib/currency/{parseAmount,formatAmount,convert}.ts`
+
+---
+
+### Overall verdict
+
+| | |
+|---|---|
+| **Verdict** | **PASS** |
+| **Total score** | **95 / 100** |
+| **Automatic fails** | None |
+| **Pass threshold** | Each rubric criterion ≥ 70 |
+
+The converter slice delivers calm Ukrainian labels, locale-aware parsing without alarming error UI, uk-UA mono tabular results with correct unit suffixes, and a direction swap that flips labels while keeping the official rate line visible. No exclamation marks, `NaN`, toasts, or crash paths appear in user-facing copy.
+
+---
+
+### Rubric scores
+
+#### 1. `locale-input-clarity` — **94 / 100** — **PASS** (weight 30 → 28.2)
+
+**Criterion:** The amount field accepts comma decimals («100,50») and ignores stray spaces without alarming errors, toasts, or crashes on garbage input.
+
+| Check | Result |
+|---|---|
+| Comma decimal parsed (`100,50` → 100.5) | ✓ `parseAmount.ts:8-13` + unit tests |
+| Stray spaces ignored (`1 000,50`) | ✓ strips `\s` before parse |
+| Trailing zeros accepted (`100,500`) | ✓ |
+| Garbage / empty → 0, never throws | ✓ no error toast or inline alarm |
+| `inputMode="decimal"` on amount field | ✓ mobile keyboard hint |
+
+**Evidence:**
+
+```46:51:components/ds/rates/Converter.jsx
+        <Input
+          mono align="right" size="lg" suffix={fromUnit}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          inputMode="decimal"
+        />
+```
+
+**Deduction (−6):** invalid characters (e.g. «abc») remain visible in the input while the result calmly shows «0,00» — correct per NFR-OBS-01, but a sighted user gets no gentle hint that the typed characters were ignored (not alarming, slightly opaque).
+
+---
+
+#### 2. `result-formatting` — **97 / 100** — **PASS** (weight 30 → 29.1)
+
+**Criterion:** Conversion results render in mono tabular figures with uk-UA formatting (comma decimal, grouped thousands) and the correct unit suffix (₴ or ISO code).
+
+| Check | Result |
+|---|---|
+| `toLocaleString('uk-UA', …)` via `formatAmount` | ✓ comma decimal + thin-space thousands |
+| Tabular mono on result | ✓ `fontFamily: var(--font-mono)`, `fontVariantNumeric: tabular-nums` |
+| Unit suffix matches direction | ✓ `toUnit` is `₴` (foreign→UAH) or ISO code (UAH→foreign) |
+| Official rate line between fields | ✓ `1 {code} = {formatAmount(rate)} ₴` |
+| Non-finite guard → «0,00» | ✓ `formatAmount.ts:10` |
+
+**Evidence:**
+
+```76:84:components/ds/rates/Converter.jsx
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums',
+            fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-lg)', color: 'var(--brand)',
+          }}>
+            {formatAmount(result)}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: 'var(--brand)', opacity: 0.7 }}>
+            {toUnit}
+          </span>
+```
+
+**Deduction (−3):** ₴ sits in a separate span rather than a single «1 308,40 ₴» string — visually correct and matches the focus-panel hero pattern, but the number and unit are two nodes (minor consistency nit vs. spec exemplar wording).
+
+---
+
+#### 3. `swap-discoverability` — **94 / 100** — **PASS** (weight 25 → 23.5)
+
+**Criterion:** The swap control has a calm Ukrainian label; activating it visibly flips direction and recalculates the result — no exclamation marks.
+
+| Check | Result |
+|---|---|
+| Calm Ukrainian label | ✓ `uk.converter.swap`: «Поміняти напрям» |
+| No exclamation marks | ✓ confirmed in `uk.ts` and `uk.test.ts:31-34` |
+| Direction flip on activate | ✓ toggles `foreign-to-uah` ↔ `uah-to-foreign` |
+| Field labels flip with direction | ✓ `amountInForeign`/`amountInUah`, `resultInUah`/`resultInForeign` |
+| Rate line stays visible | ✓ unchanged `1 {code} = … ₴` row |
+| Accessible name + tooltip | ✓ `IconButton` `aria-label` + `title={label}` |
+
+**Evidence:**
+
+```55:63:components/ds/rates/Converter.jsx
+        <IconButton
+          icon="arrow-down-up"
+          label={labels.swap}
+          variant="soft"
+          onClick={() => setDirection((d) => d === 'foreign-to-uah' ? 'uah-to-foreign' : 'foreign-to-uah')}
+        />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+          1 {code} = <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatAmount(rate)} ₴</span>
+        </span>
+```
+
+**Deduction (−6):** label is icon-only with tooltip/`aria-label` per DS `IconButton` convention — meets «has a calm Ukrainian label», but sighted users who never hover may rely on the arrow icon alone for discoverability.
+
+---
+
+#### 4. `empty-input-calmness` — **100 / 100** — **PASS** (weight 15 → 15.0)
+
+**Criterion:** Clearing the amount field shows «0,00» in the result — never NaN, never a blank crash, never a toast.
+
+| Check | Result |
+|---|---|
+| Empty string → parseAmount 0 | ✓ |
+| convert(0, …) → 0 | ✓ `convert.ts:13` |
+| formatAmount(0) → «0,00» | ✓ unit test |
+| No error UI on clear | ✓ no conditional error branch in Converter |
+| No toast | ✓ |
+
+**Evidence:**
+
+```33:35:components/ds/rates/Converter.jsx
+  const value = parseAmount(amount);
+  const fromForeign = direction === 'foreign-to-uah';
+  const result = convert(value, rate, direction);
+```
+
+Clearing the field yields `formatAmount(0)` → «0,00» with no auxiliary error surface.
+
+---
+
+### Scenario checks
+
+| Scenario | Description | Verdict | Notes |
+|---|---|---|---|
+| `comma-decimal-conversion` | USD, enter «100,50» → uk-UA mono result with ₴ | **PASS** | `parseAmount` + `formatAmount` pipeline; amount field `mono` + suffix |
+| `swap-direction` | Activate «Поміняти напрям» — labels/units flip; rate line stays | **PASS** | Direction state drives labels and `toUnit`; rate row unchanged |
+| `empty-input` | Clear amount → «0,00» calmly; no error UI | **PASS** | Total parse/convert/format chain |
+| `currency-change-reset` | New currency remounts fresh direction/amount | **PASS** | `CurrencyFocusPanel` `key={rate.code}` on `<Converter>` |
+
+---
+
+### Automatic-fail audit
+
+| Trigger | Result |
+|---|---|
+| Exclamation marks in user copy | **None found** — `uk.converter.*` and defaults clean |
+| Fake «станом на» / today dates | **None found** — rate line is unit quote only |
+| Alarming empty states / toasts | **None found** |
+| `NaN` / raw error in user-facing copy | **None found** — `formatAmount` guards non-finite |
+
+---
+
+### Weighted total
+
+| Criterion | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| `locale-input-clarity` | 30 | 94 | 28.2 |
+| `result-formatting` | 30 | 97 | 29.1 |
+| `swap-discoverability` | 25 | 94 | 23.5 |
+| `empty-input-calmness` | 15 | 100 | 15.0 |
+| **Total** | **100** | | **95 / 100** |
+
+---
+
+### Fixes for maker (optional polish — not blocking)
+
+1. **Invalid-input hint:** Optionally strip or softly highlight non-numeric characters on blur — keep calm, no toast (would tighten `locale-input-clarity` evidence).
+2. **Swap discoverability:** Optional visible text adjacent to the icon («Поміняти напрям») for sighted users who do not hover — only if DESIGN approves departing from icon-only `IconButton`.
+3. **Label voice:** «Це у гривнях» / «Це у {code}» are calm; a future polish could align result captions with «one number then detail» if a copy pass lands.
+
+---
+
 *Checker #2 only — no source edits made. Failures would return to kurs-maker.*

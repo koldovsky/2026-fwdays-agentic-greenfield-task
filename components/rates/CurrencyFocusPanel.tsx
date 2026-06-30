@@ -1,15 +1,14 @@
 "use client";
 
-import { CurrencyAvatar } from "@/components/ds";
+import { Converter, CurrencyAvatar } from "@/components/ds";
 import { uk } from "@/lib/i18n/uk";
 import type { Rate } from "@/lib/nbu/mapRates";
 
 /**
  * Right-slot summary for the active currency. Empty state is a calm prompt,
- * not a blank panel (NFR-OBS-01). `converter` and `rate-history` extend this
- * panel in later slices.
+ * not a blank panel (NFR-OBS-01). Embeds the converter when a rate is active.
  *
- * @trace FR-RATES-04
+ * @trace FR-RATES-04 FR-CONVERT-01 FR-CONVERT-02 FR-CONVERT-03 FR-CONVERT-04 FR-CONVERT-05
  */
 export function CurrencyFocusPanel({ rate }: { rate: Rate | null }) {
   if (!rate) {
@@ -36,6 +35,13 @@ export function CurrencyFocusPanel({ rate }: { rate: Rate | null }) {
         {fmtRate}
         <span className="currency-focus__unit">₴</span>
       </div>
+      <Converter
+        key={rate.code}
+        code={rate.code}
+        rate={rate.rate}
+        labels={uk.converter}
+        style={{ width: "100%", marginTop: 8 }}
+      />
     </div>
   );
 }

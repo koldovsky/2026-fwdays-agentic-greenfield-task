@@ -239,3 +239,58 @@ implemented and verified against live NBU data, not just fixtures. The one
 candidate gap (unit display) was investigated against the live API and the
 vendored design reference and found to be correctly handled, not missing.
 Suggestions above are transparency notes and minor hardening, not blockers.
+
+---
+
+## Slice: `converter` — 2026-06-30
+
+**Reviewer:** kurs-reviewer (Checker #1)
+**Spec:** `openspec/specs/converter/spec.md` · change `openspec/changes/add-converter/`
+**Scope:** FR-CONVERT-01 … FR-CONVERT-05, NFR-LOCALE-01, NFR-OBS-01, FR-I18N-01 (labels), FR-RATES-04 (embed point), BC-HONESTY-01 (rate line)
+**Tests:** `npm run test:run` — 52/52 passed (8 files; this slice adds `lib/currency/{parseAmount,convert,formatAmount}.test.ts`, 18 tests)
+**Gate:** `npm run verify` — green (lint, traceability 25/25, `openspec validate --all --strict` 9/9 including `change/add-converter`, build)
+
+### Spec scenario coverage
+
+| Scenario | Status | Evidence |
+| --- | --- | --- |
+| Convert foreign to UAH | Pass | Default direction `foreign-to-uah` (`Converter.jsx:32`); `parseAmount` → `convert(value, rate, direction)` → `formatAmount(result)` with `toUnit` `₴` (`Converter.jsx:33-35,80-83`) |
+| Swap direction | Pass | `IconButton` toggles `direction` between `foreign-to-uah` and `uah-to-foreign` (`Converter.jsx:55-59`); labels/units flip via `fromForeign` (`Converter.jsx:37-38,44,68`) |
+| Comma decimal is accepted | Pass | `parseAmount("100,50")` → `100.5` (`parseAmount.test.ts:6-8`); wired in `Converter.jsx:33,49` |
+| Result is formatted for uk-UA | Pass | `formatAmount(1308.4)` asserts uk-UA grouping + comma decimal (`formatAmount.test.ts:6-14`); result field uses `fontVariantNumeric: 'tabular-nums'` + mono (`Converter.jsx:76-80`) |
+| Empty input | Pass | `parseAmount("")` / `"abc"` → `0` (`parseAmount.test.ts:19-26`); `convert(0, …)` → `0` (`convert.test.ts:22-25`); UI shows `formatAmount(0)` → `"0,00"` (`formatAmount.test.ts:16-18`, `Converter.jsx:80`) |
+
+### Findings
+
+#### Blocking
+
+None.
+
+#### Suggestions (non-blocking)
+
+- [suggestion] `lib/currency/parseAmount.ts:11` — non-digit characters are stripped, not rejected; mixed input like `"12abc34"` parses as `1234` rather than `0`. Spec scenario covers fully non-numeric `"abc"` → `0`; this permissive path matches pre-refactor DS behaviour (noted in `docs/current-state.md` §Self-review). Acceptable for `NFR-OBS-01` (no crash), but stricter FR-CONVERT-05 readers may expect `0` for any contaminated string.
+
+- [suggestion] `lib/currency/convert.ts:16-19` — no runtime guard for an invalid `direction` value; any string other than `"foreign-to-uah"` falls through to the divide branch. Safe today because `Converter.jsx:59` only toggles the two typed literals, but a defensive `return 0` on unknown direction would make the total contract explicit (`FR-CONVERT-05`).
+
+- [suggestion] `lib/currency/formatAmount.test.ts:7-12` — primary assertion delegates to `toLocaleString('uk-UA', …)` (tautological with the implementation). The secondary `toMatch(/^1.308,40$/)` adds structure coverage but does not pin the thousands-separator codepoint (NBSP vs narrow no-break space). Consistent with project-wide `toLocaleString` convention (`DESIGN.md:103-104`, `current-state.md:70-71`); not a slice-specific gap.
+
+- [suggestion] `components/ds/rates/Converter.jsx:17-21` — JSDoc claims controlled `amount` + `direction` props, but the component only exposes `defaultAmount` and internal state. Stale documentation from the DS template; behaviour matches `design.md` Decision 2 (self-managing state). No spec requirement for controlled mode.
+
+- [suggestion] `components/rates/CurrencyFocusPanel.tsx:22-25` vs `Converter.jsx:62` — identity summary formats the official rate with up to 4 fractional digits; the converter rate line uses `formatAmount(rate)` (2 decimals). Same numeric rate, different precision — intentional per `design.md` Decision 5, but visually slightly inconsistent (`FR-CONVERT-04` / list parity).
+
+### Verified (no issue)
+
+- **TC-PURE-01:** `lib/currency/{parseAmount,convert,formatAmount}.ts` are framework-free (no `next/*`/`react`/DOM imports); all three are total and never throw; colocated tests carry `@trace FR-CONVERT-*` / `NFR-LOCALE-01`.
+- **Tests-first discipline:** `tasks.md` §1–3 record RED-before-implementation for each module; test cases map directly to spec scenarios (comma decimal, spaces, trailing zeros, empty/invalid, bidirectional convert, rate guards, uk-UA format).
+- **FR-CONVERT-01 / FR-CONVERT-03:** Both directions at the official `rate` prop; swap control with Ukrainian label from `uk.converter.swap` (`uk.ts:30`, `Converter.jsx:57`).
+- **FR-CONVERT-04 / NFR-LOCALE-01:** uk-UA formatting via `formatAmount` → `toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })`; mono tabular on input (`Input.jsx:64`, `mono` prop) and result (`Converter.jsx:77`).
+- **FR-CONVERT-05 / NFR-OBS-01:** Empty, whitespace, non-numeric, null/undefined, non-finite amount/rate all resolve to `0` / `"0,00"` without throw; no toast or error UI on bad typing (`design.md` Decision 4).
+- **Integration:** `CurrencyFocusPanel` renders calm `uk.rates.selectPrompt` when `rate === null` (`CurrencyFocusPanel.tsx:14-19`); embeds `<Converter key={rate.code} code={rate.code} rate={rate.rate} labels={uk.converter} />` when active (`CurrencyFocusPanel.tsx:38-44`) — satisfies FR-RATES-04 embed contract.
+- **BC-HONESTY-01:** Rate line `1 {code} = {formatAmount(rate)} ₴` uses the same official `rate.rate` as the list row — not fabricated or separately cached (`Converter.jsx:61-63`).
+- **FR-I18N-01:** All converter labels sourced from `uk.converter.*`; DS defaults preserved for preview-only path (`Converter.jsx:9-14,30`).
+- **Design discipline:** Reuses `@/components/ds` `Converter`, `Input`, `IconButton`; semantic tokens only in converter block (`var(--brand*)`, `var(--font-mono)`, etc.) — no raw hex introduced.
+- **Eval case:** `evals/cases/converter.eval.ts` present with rubric tracing FR-CONVERT-01…05, NFR-LOCALE-01, NFR-OBS-01.
+
+### Verdict
+
+**CLEAN** — no confirmed blocking defects. All five baseline spec scenarios are implemented and covered by honest unit tests; `npm run test:run` and `npm run verify` are green. Suggestions above are edge-case hardening and documentation nits, not merge blockers for this slice.

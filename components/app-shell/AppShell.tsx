@@ -64,7 +64,7 @@ export function AppShell({
           </ShellSlot>
         </section>
         <section
-          className="shell-main__column"
+          className="shell-main__column shell-main__column--sticky"
           aria-label={uk.shell.focusColumnLabel}
         >
           <ShellSlot

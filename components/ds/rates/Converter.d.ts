@@ -1,5 +1,13 @@
 import * as React from 'react';
 
+export interface ConverterLabels {
+  amountInForeign: (code: string) => string;
+  amountInUah: string;
+  resultInUah: string;
+  resultInForeign: (code: string) => string;
+  swap: string;
+}
+
 /**
  * Props for the official-rate converter.
  *
@@ -12,6 +20,8 @@ export interface ConverterProps {
   rate?: number;
   /** Initial amount string (locale-aware: "100,50" ok). Default "100". */
   defaultAmount?: string;
+  /** Optional label overrides; defaults preserve DS preview strings. */
+  labels?: Partial<ConverterLabels>;
   style?: React.CSSProperties;
 }
 

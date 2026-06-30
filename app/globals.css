@@ -122,6 +122,18 @@
   .shell-main {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   }
+
+  /* Focus/converter column stays in view while the rates list scrolls past
+     it. Scoped to the two-column breakpoint only — sticky offers no benefit
+     once the columns stack. top = sticky header height (~68px) + breathing
+     room, so it settles just below the header, never under it. */
+  .shell-main__column--sticky {
+    position: sticky;
+    top: calc(68px + var(--space-4));
+    align-self: start;
+    max-height: calc(100vh - 68px - var(--space-6));
+    overflow-y: auto;
+  }
 }
 
 .shell-main__column {
@@ -255,7 +267,6 @@
 
 .currency-row:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 .currency-row__identity {

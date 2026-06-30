@@ -37,7 +37,7 @@ export function Input({
         height: heights[size] || heights.md,
         padding: '0 14px',
         background: 'var(--surface-sunken)',
-        border: `1px solid ${focus ? 'var(--brand)' : 'var(--border)'}`,
+        border: '1px solid var(--border)',
         borderRadius: 'var(--radius-md)',
         boxShadow: focus ? 'var(--focus-ring)' : 'var(--shadow-inset)',
         transition: 'var(--transition-control)',

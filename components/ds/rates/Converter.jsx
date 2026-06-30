@@ -2,6 +2,17 @@
 import React from 'react';
 import { Input } from '../core/Input.jsx';
 import { IconButton } from '../core/IconButton.jsx';
+import { parseAmount } from '@/lib/currency/parseAmount';
+import { convert } from '@/lib/currency/convert';
+import { formatAmount } from '@/lib/currency/formatAmount';
+
+const DEFAULT_LABELS = {
+  amountInForeign: (code) => `Сума у ${code}`,
+  amountInUah: 'Сума у гривнях',
+  resultInUah: 'Це у гривнях',
+  resultInForeign: (code) => `Це у ${code}`,
+  swap: 'Поміняти напрям',
+};
 
 /**
  * Converter — UAH ⇄ foreign currency at the official rate. Two mono
@@ -9,22 +20,19 @@ import { IconButton } from '../core/IconButton.jsx';
  * Locale-aware: accepts "100,50" and trailing zeros. Controlled via
  * `amount` + `direction`, or self-managing if those are omitted.
  */
-function parseAmount(raw) {
-  if (raw == null) return 0;
-  const cleaned = String(raw).replace(/\s/g, '').replace(',', '.').replace(/[^0-9.]/g, '');
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) ? n : 0;
-}
-
-const fmt = (n) => n.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-export function Converter({ code = 'USD', rate = 1, defaultAmount = '100', style = {} }) {
+export function Converter({
+  code = 'USD',
+  rate = 1,
+  defaultAmount = '100',
+  labels: labelsProp,
+  style = {},
+}) {
+  const labels = { ...DEFAULT_LABELS, ...labelsProp };
   const [amount, setAmount] = React.useState(defaultAmount);
-  // direction: 'uah-to-foreign' means the typed amount is UAH
   const [direction, setDirection] = React.useState('foreign-to-uah');
   const value = parseAmount(amount);
   const fromForeign = direction === 'foreign-to-uah';
-  const result = fromForeign ? value * rate : (rate ? value / rate : 0);
+  const result = convert(value, rate, direction);
 
   const fromUnit = fromForeign ? code : '₴';
   const toUnit = fromForeign ? '₴' : code;
@@ -33,7 +41,7 @@ export function Converter({ code = 'USD', rate = 1, defaultAmount = '100', style
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, ...style }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
-          {fromForeign ? `Сума у ${code}` : 'Сума у гривнях'}
+          {fromForeign ? labels.amountInForeign(code) : labels.amountInUah}
         </label>
         <Input
           mono align="right" size="lg" suffix={fromUnit}
@@ -46,18 +54,18 @@ export function Converter({ code = 'USD', rate = 1, defaultAmount = '100', style
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <IconButton
           icon="arrow-down-up"
-          label="Поміняти напрям"
+          label={labels.swap}
           variant="soft"
           onClick={() => setDirection((d) => d === 'foreign-to-uah' ? 'uah-to-foreign' : 'foreign-to-uah')}
         />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-          1 {code} = <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{fmt(rate)} ₴</span>
+          1 {code} = <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatAmount(rate)} ₴</span>
         </span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
-          {fromForeign ? 'Це у гривнях' : `Це у ${code}`}
+          {fromForeign ? labels.resultInUah : labels.resultInForeign(code)}
         </label>
         <div style={{
           display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 8,
@@ -69,7 +77,7 @@ export function Converter({ code = 'USD', rate = 1, defaultAmount = '100', style
             fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums',
             fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-lg)', color: 'var(--brand)',
           }}>
-            {fmt(result)}
+            {formatAmount(result)}
           </span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: 'var(--brand)', opacity: 0.7 }}>
             {toUnit}

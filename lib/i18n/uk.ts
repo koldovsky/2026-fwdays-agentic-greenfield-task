@@ -22,6 +22,13 @@ export const uk = {
     retry: "Спробувати ще раз",
     selectPrompt: "Оберіть валюту зі списку зліва.",
   },
+  converter: {
+    amountInForeign: (code: string) => `Сума у ${code}`,
+    amountInUah: "Сума у гривнях",
+    resultInUah: "Це у гривнях",
+    resultInForeign: (code: string) => `Це у ${code}`,
+    swap: "Поміняти напрям",
+  },
   meta: {
     title: "Гривня — офіційний курс НБУ",
     description:

@@ -18,10 +18,11 @@ describe("uk i18n table — centralisation", () => {
     }
   });
 
-  it("exposes the shell, rates, and meta groups", () => {
+  it("exposes the shell, rates, meta, and converter groups", () => {
     expect(uk.shell).toBeDefined();
     expect(uk.rates).toBeDefined();
     expect(uk.meta).toBeDefined();
+    expect(uk.converter).toBeDefined();
   });
 });
 

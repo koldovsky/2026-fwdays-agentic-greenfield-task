@@ -19,7 +19,7 @@ body {
 }
 
 /* Calm focus: visible ring, never removed */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+:where(a, button, select, textarea, [tabindex]):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
   border-radius: var(--radius-sm);
