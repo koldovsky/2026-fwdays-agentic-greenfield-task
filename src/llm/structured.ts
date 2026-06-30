@@ -1,14 +1,13 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { MODEL } from './client.js';
 import { systemPrefixBlocks } from './systemPrefix.js';
 
-// Sonnet 4.6 — chosen for cost. We omit `temperature` (ADR-0017): it's being deprecated for sampling
-// control (already removed / 400 on Opus 4.7+ and Fable), and reproducibility here doesn't rest on it
-// — the constrained structured output + small schema do (temperature=0 never guaranteed identical
-// outputs even where accepted). This amends ADR-0013's "evals at temperature 0"; revisit there if
-// eval reproducibility regresses once the live run happens.
-const MODEL = 'claude-sonnet-4-6';
+// We omit `temperature` (ADR-0017): it's being deprecated for sampling control (already removed / 400
+// on Opus 4.7+ and Fable), and reproducibility here doesn't rest on it — the constrained structured
+// output + small schema do (temperature=0 never guaranteed identical outputs even where accepted).
+// This amends ADR-0013's "evals at temperature 0"; revisit there if eval reproducibility regresses.
 
 export interface StructuredResult<T> {
   data: T;

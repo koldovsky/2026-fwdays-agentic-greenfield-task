@@ -8,16 +8,19 @@ tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dep
 **change backlog** (what the impl loop runs next) lives in [openspec/backlog.md](../openspec/backlog.md).
 
 ## TL;DR
-**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) code-complete locally.** `pipe`:
+**M0 `pipe` + M1 `data` + M2 `onboarding` + M3 `router` (FR-1) + M3 `coach-persona` code-complete locally.** `pipe`:
 grammY long-poll skeleton, zod config, `/health`, Dockerfile, CI→GHCR. `data`: Prisma schema (5 core
 tables), migration, pooled client, `user_id` tenancy helper, `migrate deploy` + `$connect` at startup.
 `router`: Anthropic client seam (Sonnet 4.6, single call, temp 0, cached prefix, **no agent loop**),
 6-intent classifier, date-resolved-in-code (TZ back-dating), eval framework (runner + key-less
 ratchet + 18-case dataset). `onboarding`: `/start` Q&A → DB-backed state machine (ADR-0016, the DB
 *is* the state — resumes after restart) → Mifflin–St Jeor targets in code (no LLM, no-extreme-deficit
-floor), inline-keyboard choices + validated numeric free text, weight → `body_metrics`. 54 tests green;
-all gates + maker≠checker review passed. Remaining: the **human deploy** + the live LLM/eval run (need
-`ANTHROPIC_API_KEY` + egress).
+floor), inline-keyboard choices + validated numeric free text, weight → `body_metrics`. `coach-persona`:
+honest non-moralizing voice + precision-first clarification policy in the shared cached prefix
+(ADR-0015), plus the first **LLM judge-eval** path (rubric grader, CRITICAL gating, double-judge on
+borderline — ADR-0013) seeded with `coach-persona-tone`. 66 tests green; all gates + maker≠checker
+review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
+baseline (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -25,7 +28,7 @@ all gates + maker≠checker review passed. Remaining: the **human deploy** + the
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
-| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework landed; food-text/query/correction/clarify/coach-persona next |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona (voice/policy + judge-eval) landed; food-text/query/correction/clarify next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | ⬜ not started |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -60,6 +63,14 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   `users` fetch + `body_metrics` existence check (no N+1); answers persist on arrival (`upsert`
   find-or-create, weight → `body_metrics`); resumes after restart. `/start`, `callback_query`, and
   onboarding-gated `message:text` handlers. 14 tests (calculator/flow/bot). Reviewer-resolved.
+- **M3 `coach-persona`** — honest non-moralizing **Coaching Voice** + **precision-first** clarification
+  policy (ADR-0015) written into the shared, prompt-cached `src/llm/systemPrefix.ts` (one
+  `cache_control: ephemeral` block, now past Sonnet's ~2048-token cache min). First **judge-eval**
+  path (ADR-0013): `evals/judge.ts` (pure CRITICAL-cap + borderline double-judge helpers + `llmJudge`
+  call), `evals/cases/coach-persona-tone.eval.ts` (RU/UA/EN tone rubric, produces through the real
+  prefix), wired into `evals/run.ts`; judge scores ride the existing key-less ratchet unchanged.
+  Shared `MODEL` const extracted to `src/llm/client.ts`. 12 new tests. Reviewer-resolved. Live tone
+  run + baseline seed is **deploy-time** (no key in sandbox; baseline stays `{}` so the ratchet passes).
 - Loop tooling: `run-backlog` is now **autonomous/gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
@@ -88,9 +99,11 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    deploy-time (needs key).
 5. ✅ **`onboarding` (M2): code-complete + archived** — DB-backed `/start` Q&A → Mifflin targets
    (ADR-0016). On-box verify is deploy-time (human).
-6. **`coach-persona` (M3, wave 3) / `food-text` (M3): NEXT** — both unblocked by `router`:
-   `coach-persona` lands the honest voice into the cached prefix + precision-first policy; `food-text`
-   is the first food-track slice.
+6. ✅ **`coach-persona` (M3, wave 3): code-complete + archived** — honest voice + precision-first
+   policy in the shared cached prefix + first judge-eval path (ADR-0015/0013). Live tone run + baseline
+   seed is deploy-time (needs key).
+7. **`food-text` (M3): NEXT** — first food-track slice (parse → Food DB lookup → `food_log` write),
+   unblocked by `router`. `clarify`/`food-photo` (wave 4) now also build on `coach-persona`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
