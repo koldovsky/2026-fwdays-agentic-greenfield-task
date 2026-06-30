@@ -4,16 +4,16 @@
 > code/specs/tests, verify and update it). Timezone: Europe/Kiev.
 
 - **Last updated:** 2026-06-30, Europe/Kiev.
-- **Phase:** **Phase 6 (QA proof) COMPLETE.** Phases 4 (build) + the «Поливайко»
-  design/reminders scope change + Phase 5 (E2E + seed) all landed earlier; this
-  update records the QA proof pack. All 7 changes archived. The committed QA pack
-  under `docs/qa/` is authored and evidence-linked: `README.md` (index + repro),
-  `requirements-traceability-matrix.md` (human-readable, derived from
-  `trace/trace.json` + code), `manual-test-plan.md` (MTC-01..08, Chrome-executable),
-  `demo-script.md` (maps the 6 clips), `risk-register.md` (R-01..R-10), and
-  `mvp-acceptance-report.md` (gate status G0–G6 + acceptance, ready for sign-off).
-  **Next: Phase 7** — global review + trajectory-eval + docs + release (deploy out
-  of MVP scope per ADR-0001).
+- **Phase:** **Phase 7 (global review + docs) COMPLETE — project DONE (no deploy
+  per ADR-0001).** The Phase 7 global review-gate + trajectory-eval (28/28 pass,
+  ~93) landed earlier; this update records the final documentation pass. All 7
+  changes archived; QA pack under `docs/qa/` is complete (eval 11/11, recordings
+  6/6 + vision 6/6, traceability PASS, security-review clean, acceptance report
+  ready for sign-off). **Technical docs authored** under `docs/technical/`:
+  `architecture.md`, `data-model.md`, `workflows.md`, `testing.md`,
+  `operations.md`. **Effort log** `docs/estimation.md` and the stakeholder
+  **`docs/delivery-report.md`** are authored, evidence-linked to the QA pack.
+  **No further phase** — deploy is out of MVP scope (ADR-0001).
 
 ### Phase 6 evidence (what exists, re-verified 2026-06-30)
 - **Unit/component:** 433 passing (42 files) — `npm run test:run` rerun 11:00 Kiev.
@@ -35,10 +35,11 @@
   predating AA token darkening (R-06); reconcile eval `inlineMessageFor*` keys to
   the `fieldErrors.*` contract (R-08, cosmetic).
 
-### Exact next task (Phase 7)
-Run the global `review-gate` re-run + `trajectory-eval` workflow, finalize the
-technical docs (`docs/technical/`), and assemble the customer delivery report.
-No deploy (ADR-0001). Do NOT renumber requirements (BC-03).
+### Exact next task
+None — MVP delivered and documented. If the customer signs off
+`docs/qa/mvp-acceptance-report.md`, the project closes. Only remaining open
+release action is the manual cross-browser spot-check (R-04). Do NOT renumber
+requirements (BC-03). Future work / deploy would start a new ADR + change cycle.
 
 <details><summary>Slice 5 detail (add-charts)</summary>
 
