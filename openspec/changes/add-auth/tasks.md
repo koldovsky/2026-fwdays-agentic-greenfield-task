@@ -5,10 +5,10 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 1. Shared contracts + pure password validator (TC-PURE-01, TC-TEST-01)
 
-- [ ] 1.1 Add auth contracts to `@honeydo/shared`: `SignUpRequest`, `SignInRequest`, `GoogleSignInRequest`, `RefreshRequest`, `AuthTokens`, `AuthUser` (never includes password)
-- [ ] 1.2 Write failing unit tests for a pure `validatePassword(password)` (min length, character-class/entropy rules) returning a typed `{ valid, errors }` result
-- [ ] 1.3 Implement `validatePassword` framework-free; get tests to 100% coverage
-- [ ] 1.4 Export from the shared barrel; `npm run build -w @honeydo/shared` green
+- [x] 1.1 Add auth contracts to `@honeydo/shared`: `SignUpRequest`, `SignInRequest`, `GoogleSignInRequest`, `RefreshRequest`, `AuthTokens`, `AuthUser` (never includes password)
+- [x] 1.2 Write failing unit tests for a pure `validatePassword(password)` (min length, character-class/entropy rules) returning a typed `{ valid, errors }` result
+- [x] 1.3 Implement `validatePassword` framework-free; get tests to 100% coverage
+- [x] 1.4 Export from the shared barrel; `npm run build -w @honeydo/shared` green
 
 ## 2. Data model + migration
 
