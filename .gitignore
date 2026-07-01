@@ -1,27 +1,13 @@
-# Стек у цьому завданні — будь-який. Додавай сюди ігнори свого стеку за потреби.
-
-# OS / редактори
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.log
-
-# Секрети / змінні середовища
+# Secrets
 .env
-.env.*
-!.env.example
+service-account.json
 
-# Залежності та артефакти збірки (типові для різних стеків)
+# Runtime data
+#data/
+#logs/
+
+# Dependencies
 node_modules/
-dist/
-build/
-out/
-.next/
-__pycache__/
-*.pyc
-.venv/
-venv/
-target/
-bin/
-obj/
+
+# Loose log files
+*.log

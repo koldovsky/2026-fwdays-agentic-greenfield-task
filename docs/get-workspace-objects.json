@@ -1,0 +1,456 @@
+{
+    "errorMessage": "",
+    "errorCode": "0",
+    "Workspace": [
+        {
+            "Name": "MAIN",
+            "Status": "Checkpointed",
+            "CreatedByName": "SADMIN",
+            "Version": [
+                {
+                    "VerNum": "13",
+                    "Comments": "1",
+                    "Object": {
+                        "Operation": "Insert",
+                        "ObjName": "Areon Code Review Service",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "12",
+                    "Comments": "SUN-892 bug fix",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SP Premise Rental",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "11",
+                    "Comments": "deliver",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Legal Department Service",
+                            "ObjType": "Business Service"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Reject Reason Popup Applet",
+                            "ObjType": "Applet"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "10",
+                    "Comments": "deliver 891",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "FINS PickList Contact Status",
+                        "ObjType": "Pick List"
+                    }
+                },
+                {
+                    "VerNum": "9",
+                    "Comments": "1",
+                    "Object": [
+                        {
+                            "Operation": "Insert",
+                            "ObjName": "Base SP Workspace",
+                            "ObjType": "Integration Object"
+                        },
+                        {
+                            "Operation": "Insert",
+                            "ObjName": "SP Workspace",
+                            "ObjType": "Business Object"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "8",
+                    "Comments": "1",
+                    "Object": {
+                        "Operation": "Insert",
+                        "ObjName": "Workspace",
+                        "ObjType": "Integration Object"
+                    }
+                },
+                {
+                    "VerNum": "7",
+                    "Comments": "Deliver",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity",
+                            "ObjType": "Business Object"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity Form Applet",
+                            "ObjType": "Applet"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Reject Reason Popup Applet",
+                            "ObjType": "Applet"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "6",
+                    "Comments": "fix",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SPAreonKyivstarBS",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "5",
+                    "Comments": "ok",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Location",
+                            "ObjType": "Business Component"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Premise Rental",
+                            "ObjType": "Business Service"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "4",
+                    "Comments": "ok"
+                },
+                {
+                    "VerNum": "3",
+                    "Comments": "ok",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "X_RAMP_DEREG_REASON",
+                        "ObjType": "Symbolic String"
+                    }
+                },
+                {
+                    "VerNum": "2",
+                    "Comments": "ok",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SP New Account Form Applet",
+                        "ObjType": "Applet"
+                    }
+                },
+                {
+                    "VerNum": "1",
+                    "Comments": "1",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Account Appointment List Applet",
+                            "ObjType": "Applet"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity",
+                            "ObjType": "Business Component"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Repository Base Version"
+                }
+            ]
+        },
+        {
+            "Name": "dev_dshevchuk_sun-874",
+            "Status": "Delivered",
+            "CreatedByName": "DSHEVCHUK",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "ok",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SP Buildings List Applet",
+                        "ObjType": "Applet"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_dshevchuk_sun-882",
+            "Status": "Delivered",
+            "CreatedByName": "DSHEVCHUK",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "ok",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Location",
+                            "ObjType": "Business Component"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Premise Rental",
+                            "ObjType": "Business Service"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_dshevchuk_sun-fo",
+            "Status": "Delivered",
+            "CreatedByName": "DSHEVCHUK",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "ok",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SP New Account Form Applet",
+                        "ObjType": "Applet"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_mhorobets_sun886",
+            "Status": "Delivered",
+            "CreatedByName": "MHOROBETS",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "Check",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity",
+                            "ObjType": "Business Object"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity Form Applet",
+                            "ObjType": "Applet"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Reject Reason Popup Applet",
+                            "ObjType": "Applet"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_mhorobets_sun886_fixemail",
+            "Status": "Delivered",
+            "CreatedByName": "MHOROBETS",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "check\r\n",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Legal Department Service",
+                            "ObjType": "Business Service"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Reject Reason Popup Applet",
+                            "ObjType": "Applet"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_mhorobets_sun891",
+            "Status": "Delivered",
+            "CreatedByName": "MHOROBETS",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "check\r\n",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "FINS PickList Contact Status",
+                            "ObjType": "Pick List"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Account Status PickList",
+                            "ObjType": "Pick List"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_mmorozov_20260624_fixkyivstar",
+            "Status": "Delivered",
+            "CreatedByName": "MMOROZOV",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "fix",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SPAreonKyivstarBS",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_orogov_fix20260618",
+            "Status": "Delivered",
+            "CreatedByName": "OROGOV",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "1",
+                    "Object": [
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Account Appointment List Applet",
+                            "ObjType": "Applet"
+                        },
+                        {
+                            "Operation": "Update",
+                            "ObjName": "SP Opportunity",
+                            "ObjType": "Business Component"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_orogov_test_io",
+            "Status": "Delivered",
+            "CreatedByName": "OROGOV",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "1",
+                    "Object": {
+                        "Operation": "Insert",
+                        "ObjName": "Workspace",
+                        "ObjType": "Integration Object"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_orogov_test_io_2",
+            "Status": "Delivered",
+            "CreatedByName": "OROGOV",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "1",
+                    "Object": [
+                        {
+                            "Operation": "Insert",
+                            "ObjName": "Base SP Workspace",
+                            "ObjType": "Integration Object"
+                        },
+                        {
+                            "Operation": "Insert",
+                            "ObjName": "SP Workspace",
+                            "ObjType": "Business Object"
+                        }
+                    ]
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_orogov_ws",
+            "Status": "Delivered",
+            "CreatedByName": "OROGOV",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "1",
+                    "Object": {
+                        "Operation": "Insert",
+                        "ObjName": "Areon Code Review Service",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "Enter Comments"
+                }
+            ]
+        },
+        {
+            "Name": "dev_spishchuk_sun_892",
+            "Status": "Delivered",
+            "CreatedByName": "SPISHCHUK",
+            "Version": [
+                {
+                    "VerNum": "1",
+                    "Comments": "done",
+                    "Object": {
+                        "Operation": "Update",
+                        "ObjName": "SP Premise Rental",
+                        "ObjType": "Business Service"
+                    }
+                },
+                {
+                    "VerNum": "0",
+                    "Comments": "fix bug"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "siebel-review",
+  "version": "1.0.0",
+  "description": "Automated Siebel CRM code review tool via Vertex AI and Jira",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/AreonDevelopment/siebel-review.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://gitlab.com/AreonDevelopment/siebel-review/issues"
+  },
+  "homepage": "https://gitlab.com/AreonDevelopment/siebel-review#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.55.0",
+    "@google/genai": "^2.10.0",
+    "axios": "^1.18.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "node-cron": "^4.5.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "port": 5000,
+  "siebel": {
+    "concurrency": 3
+  },
+  "ai": {
+    "vertex": {
+      "location": "europe-central2",
+      "model": "gemini-2.5-flash",
+      "generationConfig": {
+        "maxOutputTokens": 65535,
+        "temperature": 1,
+        "topP": 0.95,
+        "safetySettings": [
+          { "category": "HARM_CATEGORY_HATE_SPEECH",       "threshold": "OFF" },
+          { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" },
+          { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" },
+          { "category": "HARM_CATEGORY_HARASSMENT",        "threshold": "OFF" }
+        ]
+      },
+      "systemInstructionFile": "instructions.md",
+      "thinkingConfig": {
+        "thinkingBudget": 8192
+      },
+      "tools": [
+        {
+          "retrieval": {
+            "vertexRagStore": {
+              "ragResources": [
+                {
+                  "ragCorpus": "projects/xxxxxx/locations/europe-central2/ragCorpora/1111111111"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "claude": {
+      "model": "claude-sonnet-4-6",
+      "maxTokens": 16000,
+      "cacheMode": "ephemeral",
+      "systemInstructionFile": "instructions.md"
+    }
+  }
+}
