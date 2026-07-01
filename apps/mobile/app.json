@@ -1,33 +1,42 @@
 {
-  "expo": {
-    "name": "Honeydo",
-    "slug": "honeydo",
-    "scheme": "honeydo",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.blackflamy.honeydo"
-    },
-    "android": {
-      "package": "com.blackflamy.honeydo",
-      "adaptiveIcon": {
-        "backgroundColor": "#1C1A17",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-secure-store",
-      "expo-web-browser"
-    ]
-  }
+	"expo": {
+		"name": "Honeydo",
+		"slug": "honeydo",
+		"scheme": "honeydo",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./assets/icon.png",
+		"userInterfaceStyle": "automatic",
+		"newArchEnabled": true,
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.blackflamy.honeydo"
+		},
+		"android": {
+			"package": "com.blackflamy.honeydo",
+			"adaptiveIcon": {
+				"backgroundColor": "#1C1A17",
+				"foregroundImage": "./assets/android-icon-foreground.png",
+				"backgroundImage": "./assets/android-icon-background.png",
+				"monochromeImage": "./assets/android-icon-monochrome.png"
+			},
+			"predictiveBackGestureEnabled": false
+		},
+		"web": {
+			"favicon": "./assets/favicon.png"
+		},
+		"plugins": [
+			"expo-secure-store",
+			"expo-web-browser",
+			[
+				"expo-build-properties",
+				{
+					"ios": {
+						"buildReactNativeFromSource": true,
+						"usePrecompiledModules": false
+					}
+				}
+			]
+		]
+	}
 }
