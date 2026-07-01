@@ -6,6 +6,21 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T23:00Z — Proposed `add-auth` (Phase 1, capability 01)
+
+**Done:** `/opsx:propose add-auth` — created the change with all 4 artifacts (proposal, design,
+specs/auth/spec.md, tasks), `valid --strict`. Covers FR-AUTH-01→06 + NFR-SEC-01: email/password
++ Google (OAuth2+PKCE) sign-in, one account per verified email, JWT access + DB-backed rotating
+refresh with reuse detection, argon2 hashing, `JwtAuthGuard`/`@CurrentUser`, and a shared pure
+`validatePassword`. 9 task groups, test-first shared → api → mobile.
+
+**State now:** Planning only, no implementation yet. `add-auth` is the active OpenSpec change.
+
+**Next steps:** `/opsx:apply add-auth` to implement (start with the shared validator, test-first).
+Auth-screen final styling still waits on the brand decision (backend/shared work is unblocked).
+
+---
+
 ## 2026-06-30T22:45Z — Archived `add-foundation`; `foundation` spec promoted
 
 **Done:** Completed the last two foundation tasks (3.5 boot verified this session; 6.3 archive)
