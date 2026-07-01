@@ -4,9 +4,11 @@
  * single source of truth for request/response shapes; never duplicate them in an app.
  */
 
-/** A single tracked time entry. `durationSec` is null while the timer runs. */
+/** A single tracked time entry, owned by one user. `durationSec` is null while running. */
 export interface TimeEntry {
   id: string;
+  /** Owning user's id (BC-SCOPE-01). */
+  userId: string;
   /** Free-text note about what the user is doing. */
   note: string;
   /** ISO 8601 start timestamp. */
@@ -15,13 +17,35 @@ export interface TimeEntry {
   stoppedAt: string | null;
   /** Elapsed seconds once stopped, or null while running. */
   durationSec: number | null;
+  /** ISO 8601 creation timestamp. */
+  createdAt: string;
+  /** ISO 8601 last-update timestamp. */
+  updatedAt: string;
 }
 
-/** Payload to start a new timer. */
+/** Payload to start a new timer. Starting stops any running entry first (FR-ENTRY-03). */
 export interface CreateTimeEntry {
   note: string;
   /** Optional explicit start; defaults to server "now" when omitted. */
   startedAt?: string;
+}
+
+/** Payload to add a completed manual entry with explicit times (FR-ENTRY-04). */
+export interface ManualTimeEntry {
+  note: string;
+  /** ISO 8601 start timestamp. */
+  startedAt: string;
+  /** ISO 8601 stop timestamp; MUST be after `startedAt`. */
+  stoppedAt: string;
+}
+
+/** Payload to edit an existing entry; every field optional (FR-ENTRY-05). */
+export interface UpdateTimeEntry {
+  note?: string;
+  /** ISO 8601 start timestamp. */
+  startedAt?: string;
+  /** ISO 8601 stop timestamp. */
+  stoppedAt?: string;
 }
 
 /** Payload to stop a running timer. */

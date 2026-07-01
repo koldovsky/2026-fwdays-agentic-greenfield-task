@@ -20,6 +20,7 @@ model User {
   updatedAt    DateTime       @updatedAt
   identities   AuthIdentity[]
   refreshTokens RefreshToken[]
+  timeEntries  TimeEntry[]
 }
 
 /// A sign-in provider linked to a user. One verified email maps to one User across
@@ -52,9 +53,13 @@ model RefreshToken {
   @@index([userId])
 }
 
-/// A single tracked time entry. `stoppedAt`/`durationSec` are null while running.
+/// A single tracked time entry, owned by one user (BC-SCOPE-01). `stoppedAt`/
+/// `durationSec` are null while running; at most one running entry per user is an
+/// invariant enforced in the service transaction (FR-ENTRY-01/03/11).
 model TimeEntry {
   id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   note        String
   startedAt   DateTime  @default(now())
   stoppedAt   DateTime?
@@ -62,5 +67,5 @@ model TimeEntry {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@index([startedAt])
+  @@index([userId, startedAt])
 }

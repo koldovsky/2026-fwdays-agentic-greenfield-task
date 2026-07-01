@@ -29,6 +29,21 @@ export function formatDurationClock(totalSec: number): string {
 }
 
 /**
+ * Full `h:mm:ss` clock readout. Unlike `formatDurationClock`, hours are always
+ * present: 32m → "0:32:00", 5048s → "1:24:08". Used where a fixed-width elapsed
+ * readout is wanted (FR-ENTRY-09).
+ */
+export function formatDurationHms(totalSec: number): string {
+  const s = normalize(totalSec);
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const seconds = s % 60;
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return `${hours}:${mm}:${ss}`;
+}
+
+/**
  * Compact total for summaries. "6h 12m", "32m", "45s". Drops zero leading units
  * and omits seconds once there is at least a minute.
  */
