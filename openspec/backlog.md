@@ -60,7 +60,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | query | done | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
 | correction | done | agent | 4 | food-text | US-5 | M3 | Correct last entry |
 | shared-lang | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `src/util/lang.ts` (`detectLang`/`Lang`/Cyrillic regexes) — dedupe 3 copies (backend-conventions rule #12) |
-| shared-fmt | todo | agent | 4 | food-text, metrics, query | — | M3 | Extract `fmt` (trailing-`.0` trim) — dedupe 3 copies in food/metrics/query confirm/answer (rule #12, sibling of shared-lang; surfaced by shared-lang step-7 scan) |
+| shared-fmt | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `fmt` (trailing-`.0` trim) — dedupe 3 copies in food/metrics/query confirm/answer (rule #12, sibling of shared-lang; surfaced by shared-lang step-7 scan) |
 | clarify | todo | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
 | food-photo | todo | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted — ask on hidden calorie-movers (ADR-0015) |
 | progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
