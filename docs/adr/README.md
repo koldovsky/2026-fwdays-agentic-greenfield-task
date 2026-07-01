@@ -27,5 +27,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0017](./0017-drop-temperature-from-llm-seam.md) | Drop the `temperature` param from the LLM seam (deprecation; amends ADR-0013) | Accepted |
 | [0018](./0018-run-backlog-model-tiering.md) | Opus·high for the run-backlog loop; Haiku only for mechanical steps (amends ADR-0012) | Accepted |
 | [0019](./0019-in-memory-open-question-store.md) | In-memory ephemeral store for the Open Question (contrast ADR-0016) | Accepted |
+| [0020](./0020-per-user-local-midnight-review-cron.md) | Per-user local-midnight review cron (hourly global tick) | Accepted |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.

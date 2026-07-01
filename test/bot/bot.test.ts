@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import {
   handleCallback,
+  handleDone,
   handlePhoto,
   handleProgressCommand,
   handleStart,
@@ -18,6 +19,7 @@ import { AnswerStatus, Field, type OnboardingService } from '../../src/onboardin
 import type { ProgressStore } from '../../src/progress/store.js';
 import type { ProgressService } from '../../src/progress/types.js';
 import type { QueryService } from '../../src/query/types.js';
+import type { ReviewService } from '../../src/reviews/types.js';
 
 // fs write-path spies for the CRITICAL image-never-persisted test (invariant #4) at the layer that
 // actually materializes the Telegram bytes — `downloadPhotoBase64` in bot.ts. ESM namespaces aren't
@@ -144,6 +146,11 @@ const makeQuery = (over: Partial<QueryService> = {}): QueryService => ({
   ...over,
 });
 
+const makeReviews = (over: Partial<ReviewService> = {}): ReviewService => ({
+  generateDaily: vi.fn().mockResolvedValue({ text: 'Ревью дня — 24.06.2026', rollups: [] }),
+  ...over,
+});
+
 const makeProgress = (over: Partial<ProgressService> = {}): ProgressService => ({
   analyzeAndSave: vi.fn().mockResolvedValue({ text: 'Живот в профиль стал заметно площе.' }),
   ...over,
@@ -171,6 +178,7 @@ const makeDeps = (
   clarify: ClarifyStore = makeClarify(),
   progress: ProgressService = makeProgress(),
   progressArm: ProgressStore = makeProgressArm(),
+  reviews: ReviewService = makeReviews(),
 ): {
   deps: BotDeps;
   create: ReturnType<typeof vi.fn>;
@@ -180,6 +188,7 @@ const makeDeps = (
   clarify: ClarifyStore;
   progress: ProgressService;
   progressArm: ProgressStore;
+  reviews: ReviewService;
 } => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
@@ -194,6 +203,7 @@ const makeDeps = (
       food,
       metrics,
       query,
+      reviews,
       clarify,
       progress,
       progressArm,
@@ -205,6 +215,7 @@ const makeDeps = (
     clarify,
     progress,
     progressArm,
+    reviews,
   };
 };
 
@@ -269,13 +280,15 @@ describe('handleText', () => {
   it('falls through to the classifier when onboarding is complete', async () => {
     const reply = vi.fn().mockResolvedValue(undefined);
     const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
-    const { deps, create } = makeDeps(onboarding, 'review_trigger');
+    const { deps, create, reviews } = makeDeps(onboarding, 'review_trigger');
 
     await handleText({ message: { text: 'как там моя неделя?' }, chat: { id: 7 }, reply }, deps);
 
     expect(onboarding.submitAnswer).not.toHaveBeenCalled();
     expect(create).toHaveBeenCalledTimes(1);
-    expect(String(reply.mock.calls[0]?.[0])).toContain('review_trigger');
+    // A `review_trigger` classification generates today's daily review, mirroring the trigger text.
+    expect(reviews.generateDaily).toHaveBeenCalledWith(7n, { triggerText: 'как там моя неделя?' });
+    expect(String(reply.mock.calls[0]?.[0])).toContain('Ревью дня');
   });
 
   it('routes a `query` intent to the query service and replies with its answer', async () => {
@@ -796,6 +809,54 @@ describe('progress-photo routing (US-8)', () => {
     expect(armSpy).toHaveBeenCalledWith(7n);
     expect(reply).toHaveBeenCalledTimes(1);
     expect(String(reply.mock.calls[0]?.[0]).length).toBeGreaterThan(0);
+  });
+
+  it("handleDone generates today's daily review (no trigger text → Russian default) and replies", async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const reviews = makeReviews();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'log',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      makeProgress(),
+      makeProgressArm(),
+      reviews,
+    );
+
+    await handleDone({ chat: { id: 7 }, reply }, deps);
+
+    expect(reviews.generateDaily).toHaveBeenCalledWith(7n);
+    expect(String(reply.mock.calls[0]?.[0])).toContain('Ревью дня');
+  });
+
+  it('handleDone delivers a rollup alongside the daily (each as its own reply, in order)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const reviews = makeReviews({
+      generateDaily: vi.fn().mockResolvedValue({
+        text: 'Ревью дня — 05.07.2026',
+        rollups: ['Ревью недели — 29.06 – 05.07.2026'],
+      }),
+    });
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'log',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      makeProgress(),
+      makeProgressArm(),
+      reviews,
+    );
+
+    await handleDone({ chat: { id: 7 }, reply }, deps);
+
+    expect(reply).toHaveBeenCalledTimes(2);
+    expect(String(reply.mock.calls[0]?.[0])).toContain('Ревью дня');
+    expect(String(reply.mock.calls[1]?.[0])).toContain('Ревью недели');
   });
 
   it('routes a captioned progress photo to the progress service, not logPhoto', async () => {

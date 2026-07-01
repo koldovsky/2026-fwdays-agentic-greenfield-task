@@ -7,6 +7,7 @@ import type { OnboardingService } from '../onboarding/types.js';
 import type { ProgressStore } from '../progress/store.js';
 import type { ProgressService } from '../progress/types.js';
 import type { QueryService } from '../query/types.js';
+import type { ReviewService } from '../reviews/types.js';
 
 /** Dependencies the message handlers need (the LLM client, the user's timezone, onboarding, food). */
 export interface BotDeps {
@@ -16,6 +17,7 @@ export interface BotDeps {
   food: FoodService;
   metrics: MetricsService;
   query: QueryService;
+  reviews: ReviewService;
   clarify: ClarifyStore;
   progress: ProgressService;
   progressArm: ProgressStore;

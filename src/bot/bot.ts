@@ -12,6 +12,7 @@ import {
 } from '../onboarding/types.js';
 import { catalogReply } from '../food/confirm.js';
 import type { Confirmation } from '../food/types.js';
+import { deliverReview } from '../reviews/service.js';
 import type {
   BotDeps,
   CallbackContext,
@@ -172,6 +173,13 @@ const dispatch = async (
     await replyIfConfirmed(ctx.reply, await deps.food.correctLast(chatId, text, routed));
     return;
   }
+  if (routed.intent === 'review_trigger') {
+    const result = await deps.reviews.generateDaily(chatId, { triggerText: text });
+    if (result) {
+      await deliverReview((body) => ctx.reply(body), result);
+    }
+    return;
+  }
   if (routed.intent !== 'log') {
     await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
     return;
@@ -283,6 +291,21 @@ const downloadPhotoBase64 = async (ctx: PhotoContext): Promise<string | null> =>
   const bytes = await response.arrayBuffer();
 
   return Buffer.from(bytes).toString('base64');
+};
+
+/**
+ * `/done`: generate + reply today's daily review (user TZ), marking the day reviewed. The bare
+ * command carries no language signal, so prose defaults to Russian (design D5) — the natural-language
+ * `review_trigger` path mirrors the message language instead.
+ */
+export const handleDone = async (ctx: StartContext, deps: BotDeps): Promise<void> => {
+  if (!ctx.chat) {
+    return;
+  }
+  const result = await deps.reviews.generateDaily(BigInt(ctx.chat.id));
+  if (result) {
+    await deliverReview((body) => ctx.reply(body), result);
+  }
 };
 
 /** `/progress`: arm the ephemeral flag so the NEXT photo is read as progress, and prompt for it. */
@@ -428,6 +451,7 @@ export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promi
 export const createBot = (token: string, deps: BotDeps): Bot => {
   const bot = new Bot(token);
   bot.command('start', (ctx) => handleStart(ctx, deps));
+  bot.command('done', (ctx) => handleDone(ctx, deps));
   bot.command('progress', (ctx) => handleProgressCommand(ctx, deps));
   bot.on('callback_query:data', (ctx) => handleCallback(ctx, deps));
   bot.on('message:text', (ctx) => handleText(ctx, deps));

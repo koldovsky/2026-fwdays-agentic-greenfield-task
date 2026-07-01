@@ -12,6 +12,8 @@ import { createOnboardingService } from './onboarding/flow.js';
 import { createProgressService } from './progress/service.js';
 import { progressStore } from './progress/store.js';
 import { createQueryService } from './query/service.js';
+import { createReviewsService } from './reviews/service.js';
+import { startReviewScheduler, type SendFn } from './reviews/scheduler.js';
 
 /** Confirm the DB is reachable (migrations are applied by `migrate deploy` before this). */
 const connectDbOrExit = async (): Promise<void> => {
@@ -60,6 +62,7 @@ const main = async (): Promise<void> => {
   const metrics = createMetricsService(prisma);
   const query = createQueryService(prisma);
   const progress = createProgressService(prisma, anthropic, env.TZ);
+  const reviews = createReviewsService(prisma, { anthropic });
   const bot = createBot(env.TELEGRAM_BOT_TOKEN, {
     anthropic,
     userTz: env.TZ,
@@ -67,11 +70,17 @@ const main = async (): Promise<void> => {
     food,
     metrics,
     query,
+    reviews,
     clarify: clarifyStore,
     progress,
     progressArm: progressStore,
   });
   registerShutdown(bot, health);
+
+  // Midnight review fallback (ADR-0020): one hourly node-cron sweep pushes each user's finished-day
+  // review at their local midnight. Started before `bot.start()` (which blocks until shutdown).
+  const send: SendFn = (chatId, text) => bot.api.sendMessage(chatId.toString(), text);
+  startReviewScheduler(reviews, prisma, send);
 
   // Long-poll (getUpdates) — no webhook, no public ingress, no TLS (ADR-0014).
   console.log('Starting bot (long-poll)...');

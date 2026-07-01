@@ -7,3 +7,6 @@
  * shift it here). `isoDate` is a `YYYY-MM-DD` string.
  */
 export const toDbDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00.000Z`);
+
+/** Inverse of {@link toDbDate}: a `@db.Date` value (UTC midnight) back to its `YYYY-MM-DD` string. */
+export const isoFromDbDate = (date: Date): string => date.toISOString().slice(0, 10);

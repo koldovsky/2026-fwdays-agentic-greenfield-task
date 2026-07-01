@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { sumForDate } from '../../src/query/aggregate.js';
+import { dailyTotalsForRange, sumForDate } from '../../src/query/aggregate.js';
 import type { QueryClient } from '../../src/query/types.js';
 
 // The returned totals must come straight from the (mocked) `_sum` — never reduced from fetched rows
@@ -68,5 +68,71 @@ describe('sumForDate', () => {
 
     expect(aggregateArgs.value?.where.userId).toBe(42);
     expect(aggregateArgs.value?.where.date).toEqual(new Date('2026-06-29T00:00:00.000Z'));
+  });
+});
+
+interface GroupByArgs {
+  by: string[];
+  where: Record<string, unknown>;
+  _sum: Record<string, boolean>;
+}
+
+const makeRangeFake = (
+  groups: { date: Date; _sum: Record<string, unknown> }[],
+): {
+  client: QueryClient;
+  groupBy: ReturnType<typeof vi.fn>;
+  groupByArgs: { value: GroupByArgs | undefined };
+} => {
+  const groupByArgs: { value: GroupByArgs | undefined } = { value: undefined };
+  const groupBy = vi.fn((args: GroupByArgs) => {
+    groupByArgs.value = args;
+    return Promise.resolve(groups);
+  });
+  const client = { foodLog: { groupBy } } as unknown as QueryClient;
+
+  return { client, groupBy, groupByArgs };
+};
+
+describe('dailyTotalsForRange', () => {
+  it('groups per day via a SINGLE groupBy (no N+1) and coerces Decimals to numbers', async () => {
+    const { client, groupBy, groupByArgs } = makeRangeFake([
+      {
+        date: new Date('2026-06-23T00:00:00.000Z'),
+        _sum: { kcal: 1500, proteinG: 120, fatG: 40, carbsG: 130 },
+      },
+      {
+        date: new Date('2026-06-22T00:00:00.000Z'),
+        _sum: { kcal: 1600, proteinG: { toString: () => '110.5' }, fatG: 50, carbsG: 140 },
+      },
+    ]);
+
+    const rows = await dailyTotalsForRange(client, 7, '2026-06-22', '2026-06-28');
+
+    expect(groupBy).toHaveBeenCalledTimes(1);
+    expect(groupByArgs.value?.by).toEqual(['date']);
+    // Sorted ascending by date, regardless of the DB return order.
+    expect(rows[0]?.date).toBe('2026-06-22');
+    expect(rows[0]?.proteinG).toBe(110.5);
+    expect(rows[1]?.date).toBe('2026-06-23');
+    expect(rows).toHaveLength(2);
+  });
+
+  it('scopes the groupBy to the tenant and the [start, end] range (invariant #8)', async () => {
+    const { client, groupByArgs } = makeRangeFake([]);
+
+    await dailyTotalsForRange(client, 42, '2026-06-01', '2026-06-30');
+
+    expect(groupByArgs.value?.where.userId).toBe(42);
+    expect(groupByArgs.value?.where.date).toEqual({
+      gte: new Date('2026-06-01T00:00:00.000Z'),
+      lte: new Date('2026-06-30T00:00:00.000Z'),
+    });
+  });
+
+  it('returns an empty array when no day in the range has rows', async () => {
+    const { client } = makeRangeFake([]);
+
+    expect(await dailyTotalsForRange(client, 7, '2026-06-01', '2026-06-07')).toEqual([]);
   });
 });

@@ -1,5 +1,6 @@
 import type { BodyMetric } from '@prisma/client';
 import { tenantWhere } from '../db/tenancy.js';
+import { isoFromDbDate } from '../util/date.js';
 import type {
   MetricColumn,
   MetricDelta,
@@ -37,8 +38,6 @@ export const priorHistory = async (
     take: HISTORY_LIMIT,
   });
 
-const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
-
 /** The most recent row carrying a non-null `column` in `history` (already ordered newest first). */
 const mostRecentRow = (history: BodyMetric[], column: MetricColumn): BodyMetric | null =>
   history.find((row) => row[column] !== null) ?? null;
@@ -60,7 +59,7 @@ export const computeDeltas = (parsed: ParsedMetrics, history: BodyMetric[]): Met
       value,
       prior,
       delta: prior === null ? null : value - prior,
-      priorDate: priorRow === null ? null : toIsoDate(priorRow.date),
+      priorDate: priorRow === null ? null : isoFromDbDate(priorRow.date),
     });
   }
 

@@ -1,7 +1,9 @@
+import { isoFromDbDate } from '../util/date.js';
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** The user-local calendar date for an instant, as YYYY-MM-DD (en-CA formats to that shape). */
-const localDateString = (instant: Date, timeZone: string): string =>
+export const localDateString = (instant: Date, timeZone: string): string =>
   new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
@@ -10,14 +12,14 @@ const localDateString = (instant: Date, timeZone: string): string =>
   }).format(instant);
 
 /** Add `delta` days to a YYYY-MM-DD date (UTC math on the calendar date — no TZ shift). */
-const addDays = (isoDate: string, delta: number): string => {
+export const addDays = (isoDate: string, delta: number): string => {
   const parts = isoDate.split('-');
   const year = Number(parts[0]);
   const month = Number(parts[1]);
   const day = Number(parts[2]);
   const dt = new Date(Date.UTC(year, month - 1, day));
   dt.setUTCDate(dt.getUTCDate() + delta);
-  return dt.toISOString().slice(0, 10);
+  return isoFromDbDate(dt);
 };
 
 /**

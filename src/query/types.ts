@@ -16,6 +16,15 @@ export interface DayTotals {
   entryCount: number;
 }
 
+/** One day's `food_log` SUM within a range groupBy — numbers coerced at the aggregate boundary. */
+export interface DayTotalsRow {
+  date: string; // YYYY-MM-DD
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+}
+
 /** The user's per-day onboarding targets (`users.target_*`) — nullable per-nutrient until set. */
 export interface Targets {
   kcal: number | null;
