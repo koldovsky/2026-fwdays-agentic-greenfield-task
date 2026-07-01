@@ -1,24 +1,10 @@
 import type { DayTotals, Nutrient, QueryAnswer, Targets } from './types.js';
+import { detectLang, type Lang } from '../util/lang.js';
 
 // Build the answer (design §3). The prose CONTAINS the numbers, so it's assembled in code, never by
 // the model (invariants #1/#2/#5 — no LLM call on this path at all). Prose mirrors the user's
 // language (invariant #6); the stored field names stay English. An empty day answers honestly
 // ("nothing logged"), never a bare 0 that would read as a measured intake.
-
-type Lang = 'uk' | 'ru' | 'en';
-
-const UK_CHARS = /[іїєґ]/i;
-const CYRILLIC = /[а-яё]/i;
-
-const detectLang = (text: string): Lang => {
-  if (UK_CHARS.test(text)) {
-    return 'uk';
-  }
-  if (CYRILLIC.test(text)) {
-    return 'ru';
-  }
-  return 'en';
-};
 
 /** Trim a trailing `.0` so whole units read cleanly; kcal is always a whole Int already. */
 const fmt = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));

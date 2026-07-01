@@ -1,23 +1,9 @@
 import type { MetricColumn, MetricConfirmation, MetricDelta } from './types.js';
+import { detectLang, type Lang } from '../util/lang.js';
 
 // Build the confirmation (design §4). The prose CONTAINS the numbers + deltas, so it's assembled in
 // code, never by the model (invariants #1/#2/#5 — no LLM call on this path at all). Prose mirrors the
 // user's language (invariant #6); the stored columns stay English. A first-ever metric shows no delta.
-
-type Lang = 'uk' | 'ru' | 'en';
-
-const UK_CHARS = /[іїєґ]/i;
-const CYRILLIC = /[а-яё]/i;
-
-const detectLang = (text: string): Lang => {
-  if (UK_CHARS.test(text)) {
-    return 'uk';
-  }
-  if (CYRILLIC.test(text)) {
-    return 'ru';
-  }
-  return 'en';
-};
 
 /** Trim a trailing `.0` so whole units read cleanly. */
 const fmt = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
