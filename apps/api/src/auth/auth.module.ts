@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import type ms from 'ms';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { GoogleVerifier } from './google.verifier';
 import { TokenService } from './token.service';
 
 @Module({
@@ -23,7 +24,7 @@ import { TokenService } from './token.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenService],
+  providers: [AuthService, TokenService, GoogleVerifier],
   exports: [AuthService, TokenService],
 })
 export class AuthModule {}

@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import type { AuthSession, AuthTokens } from '@honeydo/shared';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
+import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -22,6 +23,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   signIn(@Body() dto: SignInDto): Promise<AuthSession> {
     return this.auth.signIn(dto);
+  }
+
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  google(@Body() dto: GoogleSignInDto): Promise<AuthSession> {
+    return this.auth.signInWithGoogle(dto);
   }
 
   @Post('refresh')

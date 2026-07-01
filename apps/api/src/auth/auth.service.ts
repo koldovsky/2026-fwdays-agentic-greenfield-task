@@ -12,8 +12,10 @@ import {
   type AuthUser,
 } from '@honeydo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
+import { GoogleVerifier } from './google.verifier';
 import { TokenService } from './token.service';
 
 interface UserWithIdentities {
@@ -28,6 +30,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
+    private readonly google: GoogleVerifier,
   ) {}
 
   /** Email + password sign-up with shared strength validation (FR-AUTH-01). */
@@ -73,6 +76,57 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password.');
     }
     return this.startSession(user);
+  }
+
+  /**
+   * Google sign-in. Verifies the id_token, then returns the existing Google account,
+   * links Google to an existing same-email account (FR-AUTH-04), or provisions a new
+   * account (FR-AUTH-03).
+   */
+  async signInWithGoogle(dto: GoogleSignInDto): Promise<AuthSession> {
+    const profile = await this.google.verify(dto.idToken);
+
+    const identity = await this.prisma.authIdentity.findUnique({
+      where: {
+        provider_providerUserId: {
+          provider: 'google',
+          providerUserId: profile.sub,
+        },
+      },
+      include: { user: { include: { identities: true } } },
+    });
+    if (identity) {
+      return this.startSession(identity.user);
+    }
+
+    const existing = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+      include: { identities: true },
+    });
+    if (existing) {
+      // Link Google to the existing account rather than creating a duplicate.
+      const linked = await this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          identities: {
+            create: { provider: 'google', providerUserId: profile.sub },
+          },
+        },
+        include: { identities: true },
+      });
+      return this.startSession(linked);
+    }
+
+    const created = await this.prisma.user.create({
+      data: {
+        email: profile.email,
+        identities: {
+          create: { provider: 'google', providerUserId: profile.sub },
+        },
+      },
+      include: { identities: true },
+    });
+    return this.startSession(created);
   }
 
   /** Issue tokens and shape the public session payload. */

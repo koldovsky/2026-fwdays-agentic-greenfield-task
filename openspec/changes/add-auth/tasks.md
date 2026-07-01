@@ -34,10 +34,10 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 5. API — Google sign-in + account linking (FR-AUTH-03/04)
 
-- [ ] 5.1 `POST /auth/google` — verify the Google `id_token` with `google-auth-library` (strict audience + issuer)
-- [ ] 5.2 Provision on first sign-in; create `User` + `google` `AuthIdentity` (FR-AUTH-03)
-- [ ] 5.3 Link by verified email: if a `User` exists, attach a `google` identity instead of creating a duplicate (FR-AUTH-04)
-- [ ] 5.4 e2e (mocked verifier): first Google sign-in provisions; same-email password account links, not duplicates
+- [x] 5.1 `POST /auth/google` — verify the Google `id_token` with `google-auth-library` (strict audience + issuer)
+- [x] 5.2 Provision on first sign-in; create `User` + `google` `AuthIdentity` (FR-AUTH-03)
+- [x] 5.3 Link by verified email: if a `User` exists, attach a `google` identity instead of creating a duplicate (FR-AUTH-04)
+- [x] 5.4 e2e (mocked verifier): first Google sign-in provisions; same-email password account links, not duplicates
 
 ## 6. API — authorization primitives (FR-AUTH-06)
 
