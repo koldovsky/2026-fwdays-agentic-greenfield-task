@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -57,12 +56,14 @@ export function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <ScrollView
       style={{ flex: 1, backgroundColor: t.colors.bg }}
+      contentContainerStyle={{ padding: t.screenGutter, paddingTop: t.space[10] }}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+      showsVerticalScrollIndicator={false}
     >
-      <View style={{ flex: 1, justifyContent: 'center', padding: t.screenGutter }}>
-        <View style={{ gap: t.space[2], marginBottom: t.space[6] }}>
+      <View style={{ gap: t.space[2], marginBottom: t.space[6] }}>
           <Text
             style={{
               color: t.colors.text,
@@ -186,8 +187,7 @@ export function AuthScreen() {
             {mode === 'signin' ? 'Create an account' : 'Sign in'}
           </TextLink>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </ScrollView>
   );
 }
 

@@ -56,6 +56,21 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T14:45Z — Auth screen: real fix for input tremble
+
+**Done:** The earlier fixed-height/reserved-slot change didn't stop the tremble — root cause
+was the **vertically-centered form inside a KeyboardAvoidingView**, which re-centers the whole
+column (including the focused input) on any height change (keyboard accessory/autofill bar).
+Replaced it with a **top-anchored ScrollView** (`automaticallyAdjustKeyboardInsets`,
+`keyboardShouldPersistTaps`), dropped KeyboardAvoidingView. Now inputs stay put; only content
+below can move, and the keyboard scrolls instead of shoving layout.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean (722 modules).
+
+**Next steps:** User confirms tremble is gone on-device; then `openspec archive add-auth`.
+
+---
+
 ## 2026-07-01T14:30Z — Auth screen: stable layout + link affordance
 
 **Done:** Fixed input "trembling" (layout reflow): the centered form re-centered whenever an
