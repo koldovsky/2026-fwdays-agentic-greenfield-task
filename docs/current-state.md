@@ -56,6 +56,21 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T18:45Z — Archived `add-theming`; `theming` spec promoted
+
+**Done:** Archived `add-theming` (sync chosen). Delta promoted to `openspec/specs/theming/spec.md`
+(5 requirements, validates); change moved to `archive/2026-07-01-add-theming`. Phase 1 complete
+(auth, app-shell, theming). Four living specs; no active changes.
+
+**Open (deferred by owner):** the AA accent-text-on-Light finding — recommend adding an
+`accentText` token (accent in Dark, darker amber e.g. #A85D00 in Light) for `TextLink`/accent
+text; sync to design tokens. Not blocking; tracked here + in the archived design.md.
+
+**Next steps:** Capability 04 `time-entries` — the MVP core loop (shared + api + mobile). Bigger
+than the last few; `/opsx:propose add-time-entries-core`.
+
+---
+
 ## 2026-07-01T18:30Z — Implemented `add-theming` (FR-THEME-01/02/03)
 
 **Done:** Applied `add-theming` (JS-only, no rebuild). `preference.ts` (secure-store, default

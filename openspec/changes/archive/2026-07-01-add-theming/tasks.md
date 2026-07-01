@@ -30,4 +30,4 @@ Run mobile typecheck + lint + `expo export` before committing.
 - [x] 5.1 Mobile `tsc --noEmit` + `eslint .` green; `expo export` bundles clean
 - [x] 5.2 `openspec validate add-theming --strict`
 - [x] 5.3 Update `docs/current-state.md`; commit to `dev` (reviewed, referencing FR-THEME IDs)
-- [ ] 5.4 `openspec archive add-theming` once verified on-device
+- [x] 5.4 `openspec archive add-theming` once verified on-device
