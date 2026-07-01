@@ -37,3 +37,21 @@ export interface CallbackContext {
   reply: ReplyFn;
   answerCallbackQuery: () => Promise<unknown>;
 }
+
+/** One Telegram photo size — only the fields the largest-size pick + download need. */
+export interface PhotoSize {
+  file_id: string;
+}
+
+/**
+ * Minimal grammY photo-message surface (keeps `handlePhoto` unit-testable with a fake ctx — no live
+ * runtime). `getFile` yields the file path; `api.token` builds the Telegram file endpoint. The bytes
+ * are fetched into a base64 string in memory and never written to disk (invariant #4).
+ */
+export interface PhotoContext {
+  message: { photo: PhotoSize[]; caption?: string | undefined };
+  chat?: { id: number } | undefined;
+  reply: ReplyFn;
+  getFile: () => Promise<{ file_path?: string | undefined }>;
+  api: { token: string };
+}

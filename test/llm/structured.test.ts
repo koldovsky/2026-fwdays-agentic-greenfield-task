@@ -37,4 +37,42 @@ describe('parseStructured', () => {
     const { client } = clientReturning([]);
     await expect(parseStructured(client, schema, 'hello')).rejects.toThrow(/no text output/);
   });
+
+  it('sends one request with the image block BEFORE the text when an image is supplied', async () => {
+    const { client, create } = clientReturning([
+      { type: 'text', text: JSON.stringify({ intent: 'photo' }) },
+    ]);
+
+    await parseStructured(client, schema, 'what is on the plate', [
+      { data: 'BASE64BYTES', mediaType: 'image/jpeg' },
+    ]);
+
+    expect(create).toHaveBeenCalledTimes(1); // one call, no loop (invariant #5)
+    const params = create.mock.calls[0]?.[0] as {
+      messages: { role: string; content: unknown[] }[];
+    };
+    const content = params.messages[0]?.content as {
+      type: string;
+      source?: { type: string; media_type: string; data: string };
+      text?: string;
+    }[];
+    expect(content[0]?.type).toBe('image');
+    expect(content[0]?.source).toEqual({
+      type: 'base64',
+      media_type: 'image/jpeg',
+      data: 'BASE64BYTES',
+    });
+    expect(content[1]).toEqual({ type: 'text', text: 'what is on the plate' });
+  });
+
+  it('sends a plain text user message (unchanged) when no image is supplied', async () => {
+    const { client, create } = clientReturning([
+      { type: 'text', text: JSON.stringify({ intent: 'log' }) },
+    ]);
+
+    await parseStructured(client, schema, 'hello');
+
+    const params = create.mock.calls[0]?.[0] as { messages: { content: unknown }[] };
+    expect(params.messages[0]?.content).toBe('hello');
+  });
 });

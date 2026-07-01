@@ -63,6 +63,37 @@ export const lookupById = async (
   return toMatch(row);
 };
 
+/**
+ * Batched name lookup for a plate photo (design D3): ONE `findMany` over all item names (own +
+ * global via `catalogWhere`, own preferred via the same orderBy), reduced in code to a
+ * best-match-per-lowercased-name Map — never one query per item (no N+1, invariant #8). Rows sort
+ * own-first, so the first row seen for a name is the preferred match; later duplicates are ignored.
+ */
+export const lookupFoodsByNames = async (
+  client: FoodClient,
+  userId: number,
+  names: string[],
+): Promise<Map<string, CatalogMatch>> => {
+  const best = new Map<string, CatalogMatch>();
+  if (names.length === 0) {
+    return best;
+  }
+
+  const rows = await client.foodDatabase.findMany({
+    where: catalogWhere(userId, { name: { in: names, mode: 'insensitive' } }),
+    orderBy: { userId: { sort: 'desc', nulls: 'last' } },
+  });
+
+  for (const row of rows) {
+    const key = row.name.toLowerCase();
+    if (!best.has(key)) {
+      best.set(key, toMatch(row));
+    }
+  }
+
+  return best;
+};
+
 export const lookupFood = async (
   client: FoodClient,
   userId: number,

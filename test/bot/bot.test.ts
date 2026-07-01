@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
-import { handleCallback, handleStart, handleText } from '../../src/bot/bot.js';
+import { handleCallback, handlePhoto, handleStart, handleText } from '../../src/bot/bot.js';
+import type { PhotoContext } from '../../src/bot/types.js';
 import type { BotDeps } from '../../src/bot/types.js';
 import type { ClarifyStore } from '../../src/clarify/store.js';
 import type { OpenQuestion } from '../../src/clarify/types.js';
@@ -9,6 +10,30 @@ import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
 import type { QueryService } from '../../src/query/types.js';
+
+// fs write-path spies for the CRITICAL image-never-persisted test (invariant #4) at the layer that
+// actually materializes the Telegram bytes — `downloadPhotoBase64` in bot.ts. ESM namespaces aren't
+// spy-able after import, so the write functions are mocked at module scope; a full handlePhoto run
+// (download → base64 → logPhoto) must call none of them.
+const { fsWriteFile, fsWriteFileSync, fsCreateWriteStream, fspWriteFile } = vi.hoisted(() => ({
+  fsWriteFile: vi.fn(),
+  fsWriteFileSync: vi.fn(),
+  fsCreateWriteStream: vi.fn(),
+  fspWriteFile: vi.fn(),
+}));
+vi.mock('node:fs', async (importActual) => {
+  const actual = await importActual<Record<string, unknown>>();
+  return {
+    ...actual,
+    writeFile: fsWriteFile,
+    writeFileSync: fsWriteFileSync,
+    createWriteStream: fsCreateWriteStream,
+  };
+});
+vi.mock('node:fs/promises', async (importActual) => {
+  const actual = await importActual<Record<string, unknown>>();
+  return { ...actual, writeFile: fspWriteFile };
+});
 
 // A fresh in-memory clarify store per test (mirrors the module singleton's set/peek/take contract)
 // so pending-question state never leaks between cases.
@@ -66,6 +91,7 @@ const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
     kind: 'logged',
     confirmation: { text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' },
   }),
+  logPhoto: vi.fn().mockResolvedValue({ text: 'Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' }),
   saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'тест' }),
   correctLast: vi
     .fn()
@@ -485,5 +511,126 @@ describe('handleCallback', () => {
 
     expect(answerCallbackQuery).not.toHaveBeenCalled();
     expect(onboarding.submitAnswer).not.toHaveBeenCalled();
+  });
+});
+
+// A fake photo ctx: getFile yields a path, ctx.api.token builds the endpoint. Global fetch is stubbed
+// so the download stays in memory (invariant #4) — no real network, no disk.
+const makePhotoCtx = (
+  caption: string | undefined,
+  reply: ReturnType<typeof vi.fn>,
+  getFile = vi.fn().mockResolvedValue({ file_path: 'photos/file_1.jpg' }),
+): PhotoContext => ({
+  message: { photo: [{ file_id: 'small' }, { file_id: 'largest' }], caption },
+  chat: { id: 7 },
+  reply: reply as PhotoContext['reply'],
+  getFile,
+  api: { token: 'BOT_TOKEN' },
+});
+
+describe('handlePhoto', () => {
+  it('downloads the largest photo to base64 in memory and logs it via the food service', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding();
+    const food = makeFood();
+    const { deps } = makeDeps(onboarding, 'query', food);
+    const getFile = vi.fn().mockResolvedValue({ file_path: 'photos/file_1.jpg' });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('куриное филе', reply, getFile), deps);
+
+    expect(getFile).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.telegram.org/file/botBOT_TOKEN/photos/file_1.jpg',
+    );
+    const call = (food.logPhoto as ReturnType<typeof vi.fn>).mock.calls[0] as
+      [bigint, string, string] | undefined;
+    expect(call?.[0]).toBe(7n);
+    expect(call?.[1]).toBe('куриное филе');
+    expect(call?.[2]).toBe(Buffer.from([1, 2, 3]).toString('base64'));
+    expect(reply).toHaveBeenCalledWith('Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('passes an empty caption when the photo has none', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([9])));
+
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+
+    expect((food.logPhoto as ReturnType<typeof vi.fn>).mock.calls[0]?.[1]).toBe('');
+    fetchSpy.mockRestore();
+  });
+
+  it('skips the photo while onboarding is incomplete (no download, no log)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(true) });
+    const { deps } = makeDeps(onboarding, 'query', food);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const getFile = vi.fn();
+
+    await handlePhoto(makePhotoCtx('plate', reply, getFile), deps);
+
+    expect(getFile).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('stays silent when the file has no path (nothing to download)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const getFile = vi.fn().mockResolvedValue({});
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await handlePhoto(makePhotoCtx('plate', reply, getFile), deps);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    expect(reply).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('never base64s an error body: a non-2xx file endpoint skips the log (no vision call)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('Not Found', { status: 404 }));
+
+    await handlePhoto(makePhotoCtx('plate', reply), deps);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    expect(reply).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('CRITICAL — writes nothing to disk across the download+log path (invariant #4)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('куриное филе', reply), deps);
+
+    // the byte-materializing layer (downloadPhotoBase64) must touch no fs write path
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

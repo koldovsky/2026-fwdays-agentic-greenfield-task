@@ -11,7 +11,14 @@ import {
 } from '../onboarding/types.js';
 import { catalogReply } from '../food/confirm.js';
 import type { Confirmation } from '../food/types.js';
-import type { BotDeps, CallbackContext, ReplyFn, StartContext, TextContext } from './types.js';
+import type {
+  BotDeps,
+  CallbackContext,
+  PhotoContext,
+  ReplyFn,
+  StartContext,
+  TextContext,
+} from './types.js';
 
 // Callback data is namespaced so each handler tells its own buttons apart: `onb:<field>:<value>` for
 // onboarding, `food:addfdb:<foodLogId>` for the add-to-Food-DB offer, `q:<value>` for an Open
@@ -245,6 +252,58 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
   await resolvePending(ctx, deps, chatId, pending);
 };
 
+/**
+ * Download a Telegram photo to base64 IN MEMORY (invariant #4): pick the LARGEST size (last element),
+ * resolve its file path via grammY `getFile`, fetch the bytes from the Telegram file endpoint, and
+ * return a base64 string. It receives no path and writes nothing to disk — the CRITICAL fs-spy test
+ * asserts zero writes across a full run. `null` when the file path is missing (nothing to download)
+ * or the Telegram file endpoint returns non-2xx (expired/invalid link — never base64 an error body
+ * into the vision call).
+ */
+const downloadPhotoBase64 = async (ctx: PhotoContext): Promise<string | null> => {
+  const largest = ctx.message.photo.at(-1);
+  if (!largest) {
+    return null;
+  }
+  const file = await ctx.getFile();
+  if (!file.file_path) {
+    return null;
+  }
+
+  const url = `https://api.telegram.org/file/bot${ctx.api.token}/${file.file_path}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
+  const bytes = await response.arrayBuffer();
+
+  return Buffer.from(bytes).toString('base64');
+};
+
+/**
+ * A plate photo. Onboarding-gated exactly like `handleText` (a photo mid-onboarding is not a food
+ * log). Otherwise: download the bytes to base64 in memory, run the single vision call via
+ * `logPhoto`, and reply with the multi-item confirmation. The image is never persisted (invariant #4).
+ */
+export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<void> => {
+  if (!ctx.chat) {
+    return;
+  }
+  const chatId = BigInt(ctx.chat.id);
+
+  if (await deps.onboarding.isOnboarding(chatId)) {
+    return;
+  }
+
+  const imageBase64 = await downloadPhotoBase64(ctx);
+  if (imageBase64 === null) {
+    return;
+  }
+
+  const confirmation = await deps.food.logPhoto(chatId, ctx.message.caption ?? '', imageBase64);
+  await replyIfConfirmed(ctx.reply, confirmation);
+};
+
 /** `food:addfdb:<id>` tap — persist the logged estimate to the user's Food DB. */
 const handleFoodCallback = async (
   ctx: CallbackContext,
@@ -321,5 +380,6 @@ export const createBot = (token: string, deps: BotDeps): Bot => {
   bot.command('start', (ctx) => handleStart(ctx, deps));
   bot.on('callback_query:data', (ctx) => handleCallback(ctx, deps));
   bot.on('message:text', (ctx) => handleText(ctx, deps));
+  bot.on('message:photo', (ctx) => handlePhoto(ctx, deps));
   return bot;
 };

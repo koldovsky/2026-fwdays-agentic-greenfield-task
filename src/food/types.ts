@@ -55,6 +55,8 @@ export interface CatalogResult {
 
 export interface FoodService {
   logFood: (chatId: bigint, text: string, routed: RoutedLog) => Promise<LogOutcome | null>;
+  /** Log a plate photo (food-photo): one vision call → one row per item → multi-item confirmation. */
+  logPhoto: (chatId: bigint, caption: string, imageBase64: string) => Promise<Confirmation | null>;
   saveToCatalog: (chatId: bigint, foodLogId: number) => Promise<CatalogResult>;
   correctLast: (
     chatId: bigint,

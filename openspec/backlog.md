@@ -62,7 +62,8 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | shared-lang | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `src/util/lang.ts` (`detectLang`/`Lang`/Cyrillic regexes) — dedupe 3 copies (backend-conventions rule #12) |
 | shared-fmt | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `fmt` (trailing-`.0` trim) — dedupe 3 copies in food/metrics/query confirm/answer (rule #12, sibling of shared-lang; surfaced by shared-lang step-7 scan) |
 | clarify | done | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
-| food-photo | todo | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted — ask on hidden calorie-movers (ADR-0015) |
+| food-photo | doing | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), multi-item, fact-vs-estimate, ephemeral, never persisted (core US-3; interactive ask split to `food-photo-ask`) |
+| food-photo-ask | todo | agent | 5 | food-photo, clarify | US-3/US-6 | M4 | Precision-first plate ask: hold extracted items as a photo-variant Open Question, resolve via ONE text-only refine (image already discarded — can't re-run vision), reuse clarify UI/expiry (ADR-0015) |
 | progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
 | reviews | todo | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
 | notion-mirror | todo | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
@@ -83,6 +84,10 @@ provision (manual) → pipe → data ─┬─ router ─┬─ food-text ─┬
              └─ onboarding                            │
                     food-text + metrics + coach-persona → reviews → notion-mirror → hardening
 ```
+
+**food-photo-ask** (wave 5): food-photo + clarify → the precision-first plate ask, split out of
+`food-photo` because invariant #4 (image discarded) makes it a text-only-refine mechanic distinct
+from the text-log ask.
 
 **shared-lang** (tech-debt, off-DAG): food-text + metrics + query → extract `src/util/lang.ts`. Run it
 **before** clarify / food-photo / progress-photo / reviews — those voice surfaces also detect the
@@ -194,13 +199,33 @@ sent to the model**; on expiry → log best `estimate` (the fallback, not the fi
 **ask/log discrimination** dataset eval (asks fire on high-leverage unknowns and *only* those). US-6.
 
 ### food-photo — M4 · blocked-by: food-text, coach-persona
-Plate photo streamed to vision (**1 call**) → structured items + estimates. Caption naming a Food
-DB product prefers Food DB macros (fact) over visual estimate. Per **precision-first**
-([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)): if the photo is
-self-sufficient → log, no question; if a hidden calorie-mover is ambiguous (oil/butter, sauce,
-fried-vs-baked, portion) → **one batched question** (reuses the `clarify` mechanic) before logging.
-Visual-only items `estimate` ±20–30%. Rows inserted; confirmed. **Image discarded immediately —
-never written to disk/DB.** US-3.
+**Core US-3 slice** (the interactive ask is split to `food-photo-ask` below — see note). Plate photo
+streamed to vision (**1 call**, extends the shared `parseStructured` seam with an optional image
+block — invariant #5) → structured multi-item list + macro estimates. Each item resolves through a
+**batched** Food DB lookup (own + global): a name match → `source: fact` with Food DB macros (this
+is "caption naming a Food DB product prefers Food DB macros over visual estimate"); a miss → the
+vision estimate itself (`source: estimate` ±20–30%, **zero** extra LLM calls — the visual macros
+*are* the estimate). One `food_log` row per item, meal inferred from the user-TZ clock, date = today
+(user TZ). Confirmation lists each row's OWN numbers (never a hand-summed total — that's `query`),
+honest estimate note, language-mirrored. **Image bytes stream to the model and are discarded
+immediately — never written to disk/DB (invariant #4, spied test).** US-3.
+
+> **Scope note (2026-07-01):** the precision-first *interactive* ask was split to `food-photo-ask`.
+> Rationale: invariant #4 discards the image right after the vision call, so a follow-up question
+> can't re-run vision — its answer must be resolved by a **text-only** refine over the held item
+> list, a distinct mechanic from the text-log ask and a modification of the shared `clarify` types.
+> US-3's acceptance bar (vision→items→fact/estimate→insert→confirm→image-discard) is fully met by
+> this core; precision-first is honored here via the honest `estimate` tag (invariant #3, the
+> pressure-release valve). The batched ask lands next in `food-photo-ask`.
+
+### food-photo-ask — M4 · blocked-by: food-photo, clarify
+The precision-first **plate-level** ask deferred from `food-photo`. When the vision call flags a
+hidden high-leverage calorie-mover (oil/butter, sauce/dressing, fried-vs-baked, unknown portion),
+hold the extracted item list as a **photo-variant Open Question** (discriminated union on the
+`clarify` store — the image is already gone) and ask **one batched question**, reusing the `clarify`
+inline-keyboard UI + ephemeral store + expiry fallback. The answer is applied by **ONE text-only
+structured refine call** over the held items (≤1 call, no re-vision — invariant #4/#5); on expiry →
+log the items as detected estimates (never drop). US-3 (ask half) + US-6 mechanic.
 
 ### progress-photo — M5 · blocked-by: metrics, food-photo
 Via `/progress` or caption `прогресс`. Vision → qualitative notes (key marker: belly in profile);

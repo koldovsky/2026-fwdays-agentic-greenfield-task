@@ -74,6 +74,22 @@ const buildEntryConfirmation = (
 export const buildConfirmation = (text: string, row: FoodLog): Confirmation =>
   buildEntryConfirmation(LOGGED_VERB, text, row);
 
+/**
+ * Multi-item plate confirmation (food-photo, invariant #2): assembled in code, listing EACH row's
+ * own numbers via the same `macroLine` — never a hand-summed plate total (that stays the query
+ * capability). One honest estimate note if any row is an `estimate` (invariant #3). Prose language
+ * mirrors the caption (default when empty); enum/structural values stay English (invariant #6). No
+ * per-item add-to-catalog button in this slice (scope guard) — the plain `Confirmation.text` shape.
+ */
+export const buildPlateConfirmation = (caption: string, rows: FoodLog[]): Confirmation => {
+  const lang = detectLang(caption);
+  const lines = rows.map((row) => `• ${macroLine(lang, row)}`);
+  const body = `${LOGGED_VERB[lang]}:\n${lines.join('\n')}`;
+  const hasEstimate = rows.some((row) => row.source === FoodSource.estimate);
+
+  return { text: hasEstimate ? `${body}${ESTIMATE_NOTE[lang]}` : body };
+};
+
 /** Reply when a `correction` arrives but the user has no `food_log` row yet (honest, no write). */
 export const noEntryReply = (text: string): Confirmation => ({
   text: NO_ENTRY[detectLang(text)],

@@ -6,6 +6,7 @@
 <!-- shared-lang (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/lang.ts, deduped 3 detectLang copies; filed shared-fmt follow-up -->
 <!-- shared-fmt (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/num.ts (fmt), deduped 3 copies; shared-lang sibling closed -->
 <!-- clarify (US-6, M3, wave 4) landed 2026-07-01: precision-first Open Question mechanic (ephemeral in-memory store ADR-0019, ask-vs-log decision, resolve/expiry-fallback); unblocked after 2 review rounds (C1 disambiguation + invariant-#6 language); extracted src/util/num.ts DECIMAL_SOURCE -->
+<!-- food-photo (US-3, M4, wave 4) landed 2026-07-01: plate photo → ONE vision call (seam extended with optional image block, invariant #5) → multi-item extraction → batched Food-DB lookup (fact-vs-estimate per item, no N+1) → one code-scaled food_log row per item → multi-item confirmation; image base64 in memory only, never persisted (invariant #4, CRITICAL fs-spy test); interactive plate ask split to food-photo-ask (image discarded, needs text-only refine) -->
 
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
@@ -54,7 +55,7 @@ baselines (need `ANTHROPIC_API_KEY` + egress).
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
 | M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** + **query** + **correction** + **clarify** (US-6: precision-first Open Question — ask-vs-log, ephemeral store, resolve/expiry-fallback) landed; food-photo (M4) next voice surface |
-| M4 — Vision (photo plate) | ⬜ not started |
+| M4 — Vision (photo plate) | 🟡 **food-photo** landed (US-3 core: 1 vision call → multi-item, fact-vs-estimate, one row/item, image never persisted); `food-photo-ask` (interactive plate ask) + `progress-photo` next; on-box vision-accuracy eval deferred (needs labeled image set + key) |
 | M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
 | M7 — Notion mirror | ⬜ not started |
@@ -171,6 +172,23 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   record the asked `unknown`); round 2 → 1 MAJOR (invariant #6: resolved-answer confirmation localized
   off the answer, not the user's words) + MINOR + a suggestion; round 3 → CLEAN. No chat history to the
   model (#1), tenant-scoped writes (#8), language-mirrored prose (#6).
+- **M4 `food-photo`** (wave 4, US-3) — the **vision front door** (§8.3). Extended the single LLM seam
+  (`src/llm/structured.ts`) with an optional `images` param → image content block(s) **before** the
+  text in the SAME one `messages.create` (invariant #5, text callers untouched). New `src/food/photo.ts`:
+  `estimatePlate` (ONE vision call → `{ items: PlateItem[] }`, each item = name + `per` basis + macros +
+  observed qty) and `resolvePlate` (per-item fact-vs-estimate). Added `lookupFoodsByNames` to
+  `lookup.ts` — ONE batched `findMany` over all names (own+global via `catalogWhere`, own preferred),
+  reduced to a best-match-per-name Map (no N+1). A name hit → `fromMatch` (`fact`, Food-DB macros
+  preferred over the visual estimate); a miss → the vision item's OWN macros as `estimate` with **zero**
+  extra LLM calls (invariant #5). `service.logPhoto` writes one code-scaled `food_log` row per item via
+  the existing `writeFoodLog` (tenant-scoped #8, no hand-summed total #2), meal from `inferMeal`, date =
+  today (user TZ via `resolveDate`). New `buildPlateConfirmation` in `confirm.ts` reuses `macroLine` +
+  `detectLang` + `fmt` (no copies, rule #12): per-row lines + one honest estimate note, prose mirrors
+  the caption. Bot `message:photo` handler downloads the largest `PhotoSize` to **base64 in memory** and
+  discards it — **never written to disk/DB** (invariant #4; the **CRITICAL fs-spy test** asserts zero
+  writes across a full `logPhoto` run). 220 tests green (+~23). Live vision-accuracy eval **deferred**
+  (needs a labeled image set + key — logged skip, ADR-0013). Interactive plate ask split to
+  `food-photo-ask` (invariant #4 discards the image, so the follow-up is a text-only refine).
 - Loop tooling: `run-backlog` assigns a **model+effort tier per phase** — **Opus · high for every
   reasoning/implementation/coherence/prose phase** (propose, plan gate, apply-maker, verify, dup/improve,
   review, sync-docs, pre-archive, archive spec-sync) and **Haiku · low** only for pure mechanical steps
@@ -225,8 +243,12 @@ added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), 
 13. ✅ **`clarify` (M3, wave 4, US-6): code-complete + archived** — precision-first Open Question
     mechanic (ask-vs-log, ephemeral store ADR-0019, resolve/expiry-fallback). Two review rounds
     resolved. Live discrimination eval is deploy-time (needs key).
-14. **`food-photo` (M4, wave 4): NEXT** — builds on `coach-persona` + reuses the `clarify` mechanic;
-    the shared `lang`/`num` homes exist so no `detectLang`/`fmt`/number-regex copies. `reviews` (wave 5)
+14. ✅ **`food-photo` (M4, wave 4, US-3): code-complete** — plate photo → ONE vision call (seam extended
+    with optional image block) → multi-item extraction → batched fact-vs-estimate lookup → one
+    code-scaled row per item → multi-item confirmation; image base64 in memory only, never persisted
+    (CRITICAL fs-spy test). Live vision eval deferred (needs image set + key). Review + archive pending.
+15. **`food-photo-ask` (M4, wave 5): NEXT** — precision-first plate ask over the extracted items as a
+    photo-variant Open Question (text-only refine — the image is already discarded). `reviews` (wave 5)
     is also ready (`food-text` + `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`.
 
 ## Key decisions (locked)

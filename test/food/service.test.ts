@@ -6,6 +6,29 @@ import type { LogOutcome } from '../../src/clarify/types.js';
 import { createFoodService } from '../../src/food/service.js';
 import type { FoodClient, FoodService } from '../../src/food/types.js';
 
+// fs write-path spies for the CRITICAL image-never-persisted test (invariant #4). ESM namespaces
+// aren't spy-able after import, so the write functions are mocked at module scope with tracked fns
+// (real reads are preserved via ...actual). A full logPhoto run must call none of them.
+const { fsWriteFile, fsWriteFileSync, fsCreateWriteStream, fspWriteFile } = vi.hoisted(() => ({
+  fsWriteFile: vi.fn(),
+  fsWriteFileSync: vi.fn(),
+  fsCreateWriteStream: vi.fn(),
+  fspWriteFile: vi.fn(),
+}));
+vi.mock('node:fs', async (importActual) => {
+  const actual = await importActual<Record<string, unknown>>();
+  return {
+    ...actual,
+    writeFile: fsWriteFile,
+    writeFileSync: fsWriteFileSync,
+    createWriteStream: fsCreateWriteStream,
+  };
+});
+vi.mock('node:fs/promises', async (importActual) => {
+  const actual = await importActual<Record<string, unknown>>();
+  return { ...actual, writeFile: fspWriteFile };
+});
+
 // A logFood call that logs directly (no clarification) — unwrap to its confirmation. The clarify
 // change turned logFood into a LogOutcome discriminated union; these direct-log cases assert the
 // unchanged write/confirm path (invariants #2/#3/#8), so a returned `ask` here is a test failure.
@@ -207,6 +230,144 @@ describe('createFoodService.correctLast', () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+// --- Plate photo (food-photo) ---------------------------------------------------------------------
+
+const PLATE = {
+  items: [
+    {
+      name: 'куриное филе',
+      per: 'per100g',
+      kcal: 165,
+      proteinG: 31,
+      fatG: 3.6,
+      carbsG: 0,
+      qty: 200,
+    },
+    { name: 'борщ', per: 'dish', kcal: 250, proteinG: 8, fatG: 10, carbsG: 30, qty: 1 },
+    { name: 'рис', per: 'per100g', kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, qty: 150 },
+  ],
+};
+
+const makePlateAnthropic = (plate: unknown = PLATE): Anthropic =>
+  ({
+    messages: {
+      create: vi.fn().mockResolvedValue({
+        content: [{ type: 'text', text: JSON.stringify(plate) }],
+        usage: { cache_read_input_tokens: 0 },
+      }),
+    },
+  }) as unknown as Anthropic;
+
+// A photo fake: the batched findMany returns the given catalog rows for the whole plate at once.
+const makePhotoFake = (
+  catalogRows: unknown[] = [],
+): { client: FoodClient; created: CreatedRow[]; findMany: ReturnType<typeof vi.fn> } => {
+  const created: CreatedRow[] = [];
+  const findMany = vi.fn().mockResolvedValue(catalogRows);
+
+  const client = {
+    user: { findUnique: vi.fn().mockResolvedValue({ id: 7 }) },
+    foodDatabase: { findMany },
+    foodLog: {
+      create: vi.fn((args: CreatedRow) => {
+        created.push(args);
+        return Promise.resolve({ id: created.length, ...args.data });
+      }),
+    },
+  } as unknown as FoodClient;
+
+  return { client, created, findMany };
+};
+
+describe('createFoodService.logPhoto', () => {
+  it('writes one tenant-scoped, code-scaled row per item — no hand-summed total', async () => {
+    const { client, created, findMany } = makePhotoFake([
+      {
+        id: 42,
+        name: 'куриное филе',
+        per: FoodPer.per100g,
+        kcal: 165,
+        proteinG: 31,
+        fatG: 3.6,
+        carbsG: 0,
+      },
+    ]);
+    const svc = createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON);
+
+    const confirmation = await svc.logPhoto(99n, 'куриное филе, борщ и рис', 'BASE64');
+
+    expect(findMany).toHaveBeenCalledTimes(1); // ONE batched lookup for the whole plate (no N+1)
+    expect(created).toHaveLength(3); // one row per item (invariant #8)
+
+    const chicken = created[0]?.data;
+    expect(chicken?.userId).toBe(7); // tenant-scoped
+    expect(chicken?.source).toBe(FoodSource.fact); // caption/name match → Food-DB fact
+    expect(chicken?.foodDbId).toBe(42);
+    expect(chicken?.kcal).toBe(330); // 165 × 200/100, scaled in code (invariant #2)
+    expect(chicken?.meal).toBe('lunch');
+    expect(chicken?.date).toEqual(new Date('2026-06-30T00:00:00.000Z')); // today (user TZ)
+
+    const borsch = created[1]?.data;
+    expect(borsch?.source).toBe(FoodSource.estimate); // visual-only → estimate
+    expect(borsch?.foodDbId).toBeNull();
+    expect(borsch?.kcal).toBe(250); // 250 × 1 (dish), the vision item's own macros
+
+    const rice = created[2]?.data;
+    expect(rice?.kcal).toBe(195); // 130 × 150/100 in code
+
+    // Every row carries its OWN numbers; no per-plate total is computed or stored (invariant #2).
+    const totalIfSummed = 330 + 250 + 195;
+    expect(created.some((r) => r.data.kcal === totalIfSummed)).toBe(false);
+
+    // Confirmation lists per-row numbers + an estimate note (mixed plate), prose in the caption lang.
+    expect(confirmation?.text).toContain('330');
+    expect(confirmation?.text).toContain('250');
+    expect(confirmation?.text).toContain('195');
+    expect(confirmation?.text).toContain('±20');
+    expect(confirmation?.text).not.toContain(String(totalIfSummed));
+  });
+
+  it('CRITICAL: never writes the image bytes anywhere during a full logPhoto run (invariant #4)', async () => {
+    // ESM namespaces aren't spy-able, so the fs write paths are mocked at module scope (see top of
+    // file) with tracked fns. A full logPhoto run must touch none of them — the image lives only in
+    // the base64 string and is discarded (invariant #4).
+    const { client } = makePhotoFake([]);
+    const svc = createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON);
+
+    await svc.logPhoto(99n, 'plate', 'BASE64BYTES');
+
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
+  });
+
+  it('returns null for an unknown chat_id (no user → no write)', async () => {
+    const { client, created } = makePhotoFake([]);
+    (client.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await createFoodService(
+      client,
+      makePlateAnthropic(),
+      'Europe/Kyiv',
+      NOON,
+    ).logPhoto(99n, 'plate', 'BASE64');
+
+    expect(result).toBeNull();
+    expect(created).toHaveLength(0);
+  });
+
+  it('returns null and writes nothing when vision finds no items', async () => {
+    const { client, created } = makePhotoFake([]);
+    const svc = createFoodService(client, makePlateAnthropic({ items: [] }), 'Europe/Kyiv', NOON);
+
+    const result = await svc.logPhoto(99n, '', 'BASE64');
+
+    expect(result).toBeNull();
+    expect(created).toHaveLength(0);
   });
 });
 

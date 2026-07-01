@@ -13,7 +13,8 @@ import type { FoodPer, MacroBase } from './types.js';
 // fills it — guided by the prefix's hidden-leverage checklist — only when a high-leverage
 // calorie-mover is hidden; the macros always come back and serve as the expiry-fallback estimate.
 
-const PER_VALUES = ['per100g', 'per100ml', 'portion', 'piece', 'dish'] as const;
+/** The `per`-basis literal tuple for zod schemas (the FoodPer enum's members). One home (rule #12). */
+export const PER_VALUES = ['per100g', 'per100ml', 'portion', 'piece', 'dish'] as const;
 
 const clarifySchema = z.object({
   unknown: z
