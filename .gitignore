@@ -36,3 +36,7 @@ obj/
 
 # Test coverage
 coverage/
+
+
+# Native
+/ios

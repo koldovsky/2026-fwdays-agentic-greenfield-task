@@ -56,6 +56,24 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T13:00Z — iOS dev build enabled (prebuild verified)
+
+**Done:** Prepared a development build (expo-dev-client) for physical-device testing since
+Expo Go is too old on the user's phone. Ran `expo prebuild --clean` from `apps/mobile` →
+generated `apps/mobile/ios/Honeydo.xcworkspace`, CocoaPods installed clean (98 pods),
+monorepo autolinking works. Mobile `ios`/`android` scripts now use `expo run:*`; root
+`.gitignore` guards a stray root `/ios`. `apps/mobile/ios` is gitignored.
+
+**State now:** Native iOS project generated and buildable on this machine (Xcode 26.6,
+CocoaPods 1.16.2). Device install still requires the user's Apple ID signing + a connected
+iPhone (can't be done here). API must run for the app to work (Docker was down this session).
+
+**Next steps:** In Xcode, set the signing Team on the Honeydo target (unique bundle id if
+com.honeydo.app collides), then `npx expo run:ios --device`. Then `openspec archive add-auth`
+(task 9.4) once auth is verified on-device.
+
+---
+
 ## 2026-06-30T22:38Z — Fixed `npm run api` boot failure + committed foundation
 
 **Done:** Diagnosed the reported `Cannot find module .../dist/main` error: root cause was
