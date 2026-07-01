@@ -1,42 +1,48 @@
 {
-	"expo": {
-		"name": "Honeydo",
-		"slug": "honeydo",
-		"scheme": "honeydo",
-		"version": "1.0.0",
-		"orientation": "portrait",
-		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "automatic",
-		"newArchEnabled": true,
-		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.blackflamy.honeydo"
-		},
-		"android": {
-			"package": "com.blackflamy.honeydo",
-			"adaptiveIcon": {
-				"backgroundColor": "#1C1A17",
-				"foregroundImage": "./assets/android-icon-foreground.png",
-				"backgroundImage": "./assets/android-icon-background.png",
-				"monochromeImage": "./assets/android-icon-monochrome.png"
-			},
-			"predictiveBackGestureEnabled": false
-		},
-		"web": {
-			"favicon": "./assets/favicon.png"
-		},
-		"plugins": [
-			"expo-secure-store",
-			"expo-web-browser",
-			[
-				"expo-build-properties",
-				{
-					"ios": {
-						"buildReactNativeFromSource": true,
-						"usePrecompiledModules": false
-					}
-				}
-			]
-		]
-	}
+  "expo": {
+    "name": "Honeydo",
+    "slug": "honeydo",
+    "scheme": "honeydo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blackflamy.honeydo"
+    },
+    "android": {
+      "package": "com.blackflamy.honeydo",
+      "adaptiveIcon": {
+        "backgroundColor": "#1C1A17",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true,
+            "usePrecompiledModules": false,
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.767324284545-sritsbie7vtq10mmcva9ddn50r3g0r35"
+        }
+      ]
+    ]
+  }
 }

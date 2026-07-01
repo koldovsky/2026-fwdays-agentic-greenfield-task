@@ -1,30 +1,39 @@
-import { useEffect } from 'react';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { GOOGLE_CLIENT_ID } from '../config';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '../config';
 import { useAuthStore } from '../store/authStore';
 
-// Finishes the web-browser auth session when the app is resumed via redirect.
-void WebBrowser.maybeCompleteAuthSession();
+// Native Google Sign-In (FR-AUTH-03). The iOS client identifies the app; the Web client
+// is the id_token audience (serverClientId) so the API verifies it against its
+// GOOGLE_CLIENT_ID — no browser redirect, no redirect_uri config.
+const configured = GOOGLE_IOS_CLIENT_ID !== '' && GOOGLE_WEB_CLIENT_ID !== '';
+if (configured) {
+  GoogleSignin.configure({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+  });
+}
 
-/**
- * Google OAuth 2.0 + PKCE via expo-auth-session (FR-AUTH-03). On success, forwards the
- * Google id_token to the API. `available` is false when no client id is configured.
- */
 export function useGoogleAuth() {
   const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_CLIENT_ID,
-  });
 
-  useEffect(() => {
-    if (response?.type !== 'success') return;
-    const idToken = response.authentication?.idToken ?? response.params.id_token;
-    if (idToken) void signInWithGoogle(idToken);
-  }, [response, signInWithGoogle]);
-
-  return {
-    available: GOOGLE_CLIENT_ID !== '' && request !== null,
-    signIn: () => promptAsync(),
+  const signIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response) && response.data.idToken) {
+        await signInWithGoogle(response.data.idToken);
+      }
+    } catch (e) {
+      // Swallow the user cancelling the sheet; other failures surface in logs.
+      if (isErrorWithCode(e) && e.code === statusCodes.SIGN_IN_CANCELLED) return;
+      console.warn('Google sign-in failed', e);
+    }
   };
+
+  return { available: configured, signIn };
 }

@@ -56,6 +56,26 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T16:00Z — Google Sign-In: switch to native SDK (fixes redirect_uri_mismatch)
+
+**Done:** expo-auth-session's browser flow caused `Error 400: redirect_uri_mismatch` (a native
+app can't use a Web client's redirect, and iOS clients have no redirect field). Replaced it
+with **@react-native-google-signin/google-signin**: configured with `iosClientId` (FE) +
+`webClientId` (BE, as serverClientId) so the id_token audience = the Web client — the API
+verifies it unchanged. Added the plugin `iosUrlScheme` (reversed iOS client id → Info.plist),
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to mobile env, and rewrote `useGoogleAuth`. Removed the now-
+unused expo-auth-session/web-browser/crypto. Pod install needed `useFrameworks: "static"` in
+expo-build-properties (GoogleSignIn's AppCheckCore needs modular headers) — verified pod install
+succeeds (GoogleSignIn 9.2.0).
+
+**State now:** Mobile typecheck + lint green; iOS bundle clean; Info.plist has the URL scheme;
+pods install. No GCloud redirect URIs to configure. **Rebuild required** (`npm run ios:device`).
+
+**Next steps:** User rebuilds + tests Google on-device; then `openspec archive add-auth`. If the
+native compile fails on `useFrameworks: static` + RN-from-source, revisit those build props.
+
+---
+
 ## 2026-07-01T15:35Z — Native modules need dev-build rebuild; icons folder + structure rule
 
 **Done:** Diagnosed the on-device "Unimplemented component: ViewManagerAdapter_ExpoLinearGradient"
