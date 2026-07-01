@@ -129,6 +129,18 @@ export class AuthService {
     return this.startSession(created);
   }
 
+  /** Current authenticated user for a validated access token (FR-AUTH-06). */
+  async getUser(userId: string): Promise<AuthUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { identities: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return this.toAuthUser(user);
+  }
+
   /** Issue tokens and shape the public session payload. */
   async startSession(user: UserWithIdentities): Promise<AuthSession> {
     const tokens = await this.tokens.issueTokens({

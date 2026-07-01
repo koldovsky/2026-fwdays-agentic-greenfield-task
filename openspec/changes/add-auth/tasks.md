@@ -41,9 +41,9 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 6. API — authorization primitives (FR-AUTH-06)
 
-- [ ] 6.1 `JwtAuthGuard` (passport-jwt) + `@CurrentUser()` param decorator, exported for later capabilities
-- [ ] 6.2 Protect a sample endpoint (e.g. `GET /auth/me` returning `AuthUser`); unauthenticated → 401
-- [ ] 6.3 e2e: no/invalid token → 401; valid token → 200 with the user
+- [x] 6.1 `JwtAuthGuard` (passport-jwt) + `@CurrentUser()` param decorator, exported for later capabilities
+- [x] 6.2 Protect a sample endpoint (e.g. `GET /auth/me` returning `AuthUser`); unauthenticated → 401
+- [x] 6.3 e2e: no/invalid token → 401; valid token → 200 with the user
 
 ## 7. Mobile — session plumbing (FR-AUTH-06)
 

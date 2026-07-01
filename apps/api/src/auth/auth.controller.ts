@@ -1,11 +1,22 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import type { AuthSession, AuthTokens } from '@honeydo/shared';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import type { AuthSession, AuthTokens, AuthUser } from '@honeydo/shared';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
+import { CurrentUser } from './decorators/current-user.decorator';
 import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { AuthenticatedUser } from './strategies/jwt.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -41,5 +52,11 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Body() dto: RefreshDto): Promise<void> {
     await this.tokens.revoke(dto.refreshToken);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  me(@CurrentUser() user: AuthenticatedUser): Promise<AuthUser> {
+    return this.auth.getUser(user.userId);
   }
 }
