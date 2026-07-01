@@ -65,8 +65,8 @@ validation, TC-STACK-02) → mobile UI.
 | Phase | Capabilities | Why here | Candidate OpenSpec change(s) |
 |-------|--------------|----------|------------------------------|
 | **0. Foundation** *(in progress)* | `foundation` | Monorepo, `@honeydo/shared`, Prisma/Postgres, design tokens, health endpoint already scaffolded. | `add-foundation` (or treat as done) |
-| **1. Gated app** | `auth` → `app-shell` → `theming` | Nothing is usable until login + gated navigation exist; everything is user-scoped (BC-SCOPE-01). Theming underpins all screens (tokens already integrated). | `add-auth`, `add-app-shell`, `add-theming` |
-| **2. Core loop** | `time-entries` | The MVP's spine (BC-DEMO-01): start/stop/manual/edit/delete/continue + day-grouped history + pure duration. | `add-time-entries-core` (likely split: `-api`, `-mobile`) |
+| **1. Gated app** | `auth` → `app-shell` → `theming` | Nothing is usable until login + gated navigation exist; everything is user-scoped (BC-SCOPE-01). `app-shell` provides the four tabs (Timer, History, Stats, Profile) that later capabilities fill. Theming underpins all screens (tokens already integrated). | `add-auth`, `add-app-shell`, `add-theming` |
+| **2. Core loop** | `time-entries` | The MVP's spine (BC-DEMO-01): start/stop/manual/edit/delete/continue + pure duration. Fills **two** app-shell tabs — the **Timer** screen (loop) and the **History** screen (day-grouped list); History is a view of the same entries, not a separate capability. | `add-time-entries-core` (likely split: `-api`, `-mobile`) |
 | **3. Organize** | `tags` | Tagging + history filtering builds directly on entries. | `add-tags` |
 | **4. Review** | `profile-stats` | Weekly chart + totals + per-tag breakdown; pure aggregation. Needs entries (+ tags). | `add-profile-stats` |
 | **5. AI** | `daily-insight` | Server-side insight consumes the **numeric summary** from stats aggregation (FR-INSIGHT-04); reuses Phase-4 pure fns. Anthropic API, backend-only (TC-STACK-07). | `add-daily-insight` |

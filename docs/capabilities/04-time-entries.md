@@ -7,7 +7,10 @@
 ## Summary
 
 The MVP spine: the start/stop tracking loop with manual entry, edit/delete, continue, and a
-day-grouped history. One running entry at a time is the single source of truth.
+day-grouped history. One running entry at a time is the single source of truth. Fills **two
+separate `app-shell` tabs** — the **Timer** screen (the loop: start/stop/manual/edit) and the
+**History** screen (day-grouped list). Both render the same `TimeEntry` data; History is a view
+of it, not a separate capability.
 
 ## Requirements
 
@@ -38,8 +41,10 @@ day-grouped history. One running entry at a time is the single source of truth.
 - Shared: `TimeEntry` contracts (started, refine the existing skeleton), start/stop/continue DTOs.
 - API: time-entries module + `TimeEntry` Prisma model (exists), enforce single-running invariant
   server-side (FR-ENTRY-03), CRUD + continue endpoints, class-validator DTOs.
-- Mobile: Timer/History screen, optimistic start/stop via TanStack Query, virtualized list
-  (FlashList), continue action, manual-entry + edit forms.
+- Mobile: **two screens** filling the app-shell tabs — the **Timer** screen (start/stop with
+  optimistic updates via TanStack Query, continue action, manual-entry + edit forms) and the
+  **History** screen (day-grouped, virtualized list via FlashList, per-day totals). Both read
+  the shared entry store; tag filtering on History lands with `tags` (FR-TAG-04).
 
 ## Non-goals
 

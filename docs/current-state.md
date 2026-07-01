@@ -56,6 +56,22 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T17:30Z — Empty-state halo → circle; History-screen context in docs
+
+**Done:** Empty-state gradient background halo was a square `<Rect>` — swapped to a `<Circle>`
+so it reads round (logo squircle unchanged). Reviewed all capabilities for History-tab context:
+`04-time-entries.md` said "Timer/History screen" (implying one page) — updated to make clear
+`time-entries` fills **two separate app-shell tabs** (Timer screen + History screen), and noted
+the same in `implementation-plan.md`. Decision: History stays part of `time-entries` (it's a
+view of the same entries; FR-ENTRY-07/FR-TAG-04/NFR-PERF-02 define it) — **not** a new
+capability; the tab separation is an app-shell navigation concern.
+
+**State now:** Mobile typecheck + lint + bundle green. JS-only (hot-reloads).
+
+**Next steps:** Verify empty-state halo + 4 tabs on-device; `/opsx:archive add-app-shell`.
+
+---
+
 ## 2026-07-01T17:10Z — app-shell: 4 tabs per design (was 3)
 
 **Done:** The design UI kit (`ui_kits/honeydo/App.jsx`) has **four** tabs — Timer, History,
