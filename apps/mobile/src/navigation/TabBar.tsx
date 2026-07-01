@@ -1,13 +1,15 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
-import { BarChart3, Timer, User, type LucideIcon } from 'lucide-react-native';
+import { BarChart2, List, Timer, User, type LucideIcon } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 
+// Matches the design UI kit: timer, list, bar-chart-2, user.
 const ICONS: Record<string, LucideIcon> = {
-  TimerHistory: Timer,
-  Stats: BarChart3,
+  Timer,
+  History: List,
+  Stats: BarChart2,
   Profile: User,
 };
 

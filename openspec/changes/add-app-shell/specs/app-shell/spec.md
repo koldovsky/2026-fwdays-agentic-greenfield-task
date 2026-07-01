@@ -2,15 +2,15 @@
 
 ### Requirement: Bottom-tab navigation
 
-When signed in, the app SHALL present bottom-tab navigation with three tabs —
-**Timer/History**, **Stats**, and **Profile** — using the design system's tab bar. The
+When signed in, the app SHALL present bottom-tab navigation with four tabs —
+**Timer**, **History**, **Stats**, and **Profile** — using the design system's tab bar. The
 active tab SHALL be visually indicated, and switching tabs SHALL preserve each tab's state.
 (FR-SHELL-01)
 
 #### Scenario: Signed-in user sees and switches tabs
 
 - **WHEN** a signed-in user opens the app
-- **THEN** a bottom tab bar shows Timer/History, Stats, and Profile with the current tab marked active
+- **THEN** a bottom tab bar shows Timer, History, Stats, and Profile with the current tab marked active
 - **AND** tapping a tab shows that tab's screen without signing the user out
 
 ### Requirement: The app is gated behind authentication
@@ -42,16 +42,16 @@ than either destination flashing. (FR-SHELL-02)
 
 ### Requirement: First-run empty state
 
-When a signed-in user has no time entries, the Timer/History tab SHALL show a first-run
+When a signed-in user has no time entries, the Timer tab SHALL show a first-run
 empty state — hero copy plus a prominent "Start your first entry" affordance — instead of an
 empty list. (FR-SHELL-03)
 
 #### Scenario: New user sees the empty state
 
-- **WHEN** a signed-in user with zero entries opens the Timer/History tab
+- **WHEN** a signed-in user with zero entries opens the Timer tab
 - **THEN** a hero empty state with a prominent "Start your first entry" action is shown
 
 #### Scenario: Empty state gives way to content
 
 - **WHEN** the user has at least one entry
-- **THEN** the Timer/History tab shows entries instead of the empty state
+- **THEN** the Timer tab shows entries instead of the empty state

@@ -43,7 +43,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 
 | ID          | Description                                                                                  | Status   |
 | ----------- | -------------------------------------------------------------------------------------------- | -------- |
-| FR-SHELL-01 | Bottom-tab navigation: **Timer/History**, **Stats**, **Profile**                             | proposed |
+| FR-SHELL-01 | Bottom-tab navigation: **Timer**, **History**, **Stats**, **Profile**                        | proposed |
 | FR-SHELL-02 | Unauthenticated users see only the auth screen; the rest of the app is gated                 | proposed |
 | FR-SHELL-03 | First-run empty state (no entries): hero copy + a prominent "Start your first entry" affordance | proposed |
 

@@ -11,7 +11,7 @@ adds the tab layout + empty state (FR-SHELL-01/02/03). Design reference:
 **Goals:**
 - A gated root navigator: auth screen when signed out, tabs when signed in, a splash while
   the session restores — driven by `useAuthStore`.
-- A bottom-tab shell (Timer/History, Stats, Profile) with the design's blurred amber tab bar.
+- A bottom-tab shell (Timer, History, Stats, Profile) with the design's blurred amber tab bar.
 - A reusable `EmptyState` and the first-run "Start your first entry" screen.
 - Structure that later capabilities drop screens into without touching navigation.
 
@@ -35,10 +35,12 @@ adds the tab layout + empty state (FR-SHELL-01/02/03). Design reference:
   with an amber active state — not the stock iOS tab bar. Pass a custom `tabBar` to
   `bottom-tabs` built from theme tokens + `expo-blur` (`BlurView`) + Lucide icons, matching
   `honeydo-design/components/app/TabBar.jsx`. Tab height/safe-area from `theme.layout.tabBarHeight`.
-- **Three tabs per the requirement.** Timer/History (combined), Stats, Profile — not four. The
-  Timer/History tab hosts the empty state now; History/Timer content arrives with `time-entries`.
+- **Four tabs, per the design UI kit** (`ui_kits/honeydo/App.jsx`): Timer, History, Stats,
+  Profile (Lucide `timer`, `list`, `bar-chart-2`, `user`). The **Timer** tab hosts the empty
+  state now; the Timer/History content arrives with `time-entries`. (Supersedes the earlier
+  "Timer/History combined" reading — FR-SHELL-01 updated to match the design.)
 - **Empty state as a component.** A reusable `EmptyState` (honeycomb hero + bee glyph + primary
-  action) per `EmptyScreen.jsx`; the Timer/History screen shows it while entries are empty. Until
+  action) per `EmptyScreen.jsx`; the Timer screen shows it while entries are empty. Until
   `time-entries` exists there are no entries, so it renders the empty state by default.
 - **`src/navigation/`** holds the navigators + tab bar (project-structure rule); screens stay in
   `src/screens/`.
@@ -60,7 +62,7 @@ adds the tab layout + empty state (FR-SHELL-01/02/03). Design reference:
 
 - Add nav deps via `npx expo install` (SDK-compatible). Prebuild + rebuild the dev client.
 - Refactor `App.tsx`: `ThemeProvider` → `NavigationContainer` → gated root. Reuse `AuthScreen`
-  and the current `HomeScreen` (becomes the Timer/History placeholder / empty state host).
+  and the current `HomeScreen` (becomes the Timer placeholder / empty state host).
 - No data migration; no API/shared changes; reversible by removing `src/navigation/` and
   restoring the inline gate.
 

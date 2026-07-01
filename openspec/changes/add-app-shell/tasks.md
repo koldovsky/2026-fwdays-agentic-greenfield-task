@@ -18,20 +18,20 @@ an `expo export` bundle before committing.
 
 ## 3. Bottom-tab shell + design tab bar (FR-SHELL-01)
 
-- [x] 3.1 Bottom-tab navigator with three tabs: Timer/History, Stats, Profile
+- [x] 3.1 Bottom-tab navigator with four tabs: Timer, History, Stats, Profile
 - [x] 3.2 Custom `tabBar` per `honeydo-design/components/app/TabBar.jsx`: `expo-blur` translucent surface, amber active state, Lucide icons, height/safe-area from `theme.layout.tabBarHeight` — tokens only, no raw hex
 - [x] 3.3 Active-tab indication + labels in sentence case; icons match the design intent
 
 ## 4. Tab screens (placeholders)
 
-- [x] 4.1 `TimerHistoryScreen` — hosts the empty state now (Timer/History content lands with `time-entries`)
+- [x] 4.1 `TimerScreen` hosts the empty state; `HistoryScreen` placeholder (both fill in with `time-entries`)
 - [x] 4.2 `StatsScreen` placeholder (token-driven, titled)
 - [x] 4.3 `ProfileScreen` placeholder showing the signed-in user + sign-out (reuse existing sign-out)
 
 ## 5. First-run empty state (FR-SHELL-03)
 
 - [x] 5.1 Reusable `EmptyState` component per `EmptyScreen.jsx` — honeycomb hero + bee glyph + primary action, from tokens
-- [x] 5.2 Timer/History shows the empty state ("Start your first entry") while entries are empty, behind a simple `hasEntries` boolean (wired to the real query in `time-entries`)
+- [x] 5.2 Timer tab shows the empty state ("Start your first entry") while entries are empty, behind a simple `hasEntries` boolean (wired to the real query in `time-entries`)
 
 ## 6. Finalize
 

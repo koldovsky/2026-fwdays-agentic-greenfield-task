@@ -56,6 +56,23 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T17:10Z — app-shell: 4 tabs per design (was 3)
+
+**Done:** The design UI kit (`ui_kits/honeydo/App.jsx`) has **four** tabs — Timer, History,
+Stats, Profile — not the "Timer/History" combined tab I'd read from FR-SHELL-01. Owner
+confirmed the design wins. Updated FR-SHELL-01 (requirements.md), the capability doc, and the
+add-app-shell change (spec/tasks/design/proposal). Implemented: split TimerHistoryScreen into
+`TimerScreen` (empty-state host) + `HistoryScreen` placeholder, TabNavigator now has 4 tabs,
+TabBar icons match the design (timer, list, bar-chart-2, user). Also fixed the empty-state
+logo (radial svg halo + visible gradient) earlier this session.
+
+**State now:** Mobile typecheck + lint + bundle green; change validates. 18/19 tasks; only 6.5
+(archive after on-device verify) left. JS-only change → hot-reloads (no rebuild needed).
+
+**Next steps:** Verify the 4 tabs on-device, then `/opsx:archive add-app-shell`.
+
+---
+
 ## 2026-07-01T16:45Z — Implemented `add-app-shell` (FR-SHELL-01/02/03)
 
 **Done:** Applied `add-app-shell`. React Navigation (native-stack root + bottom-tabs). `App.tsx`

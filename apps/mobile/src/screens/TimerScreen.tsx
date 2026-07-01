@@ -3,10 +3,10 @@ import { EmptyState } from '../components/EmptyState';
 import { useTheme } from '../theme';
 
 /**
- * Timer/History tab. Shows the first-run empty state until there are entries (FR-SHELL-03).
- * The real timer + day-grouped history land with the `time-entries` capability.
+ * Timer tab. Shows the first-run empty state until there are entries (FR-SHELL-03). The
+ * running timer + start/stop land with the `time-entries` capability.
  */
-export function TimerHistoryScreen() {
+export function TimerScreen() {
   const t = useTheme();
   // Placeholder until time-entries wires the real query; flip drives the empty state.
   const hasEntries = false;

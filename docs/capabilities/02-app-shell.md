@@ -1,6 +1,6 @@
 # Capability: app-shell
 
-- **Order:** 02 · **Phase:** 1 · **OpenSpec change:** `add-app-shell` · **Status:** not started
+- **Order:** 02 · **Phase:** 1 · **OpenSpec change:** `add-app-shell` · **Status:** in progress
 - **Depends on:** auth · **Blocks:** time-entries (and all screens)
 - **Packages:** `apps/mobile`
 
@@ -13,7 +13,7 @@ plus the first-run empty state.
 
 | ID | Description |
 |----|-------------|
-| FR-SHELL-01 | Bottom-tab navigation: **Timer/History**, **Stats**, **Profile** |
+| FR-SHELL-01 | Bottom-tab navigation: **Timer**, **History**, **Stats**, **Profile** (4 tabs, per design) |
 | FR-SHELL-02 | Unauthenticated users see only the auth screen; the rest of the app is gated |
 | FR-SHELL-03 | First-run empty state (no entries): hero copy + prominent "Start your first entry" |
 

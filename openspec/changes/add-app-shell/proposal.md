@@ -9,8 +9,8 @@ screen slots into.
 ## What Changes
 
 - **New `app-shell` capability**: a gated **root navigator** (auth screen when signed out,
-  the tabbed app when signed in) and a **bottom-tab shell** with three tabs — **Timer/History**,
-  **Stats**, **Profile** — using the design system's blurred amber tab bar. The Timer/History
+  the tabbed app when signed in) and a **bottom-tab shell** with four tabs — **Timer**, **History**,
+  **Stats**, **Profile** — using the design system's blurred amber tab bar. The Timer
   tab shows the **first-run empty state** (hero + "Start your first entry") when the user has
   no entries. (FR-SHELL-01/02/03)
 - **Mobile (`@honeydo/mobile`)**: add React Navigation (native stack for the root, bottom
@@ -23,7 +23,7 @@ screen slots into.
 
 ### New Capabilities
 - `app-shell`: the mobile navigation shell — auth gating at the navigator level, bottom-tab
-  layout (Timer/History, Stats, Profile), and the first-run empty state. The home for all
+  layout (Timer, History, Stats, Profile), and the first-run empty state. The home for all
   authenticated screens.
 
 ### Modified Capabilities
@@ -37,7 +37,7 @@ screen slots into.
   and `expo-blur` (for the translucent tab bar). Several are **native modules** → the dev
   build must be rebuilt (`npm run ios:device`).
 - **Entry/structure**: `App.tsx` wraps the tree in `NavigationContainer`; the current
-  `HomeScreen` placeholder becomes the Timer/History tab's screen. New `src/navigation/`
+  `HomeScreen` placeholder becomes the Timer tab screen. New `src/navigation/`
   (navigators, tab bar) per the project-structure rule.
 - **Downstream**: real tab content (timers, stats, profile) lands in later capabilities;
   this change ships placeholders + the empty state only.
