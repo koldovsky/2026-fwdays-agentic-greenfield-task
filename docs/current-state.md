@@ -56,6 +56,25 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T16:45Z — Implemented `add-app-shell` (FR-SHELL-01/02/03)
+
+**Done:** Applied `add-app-shell`. React Navigation (native-stack root + bottom-tabs). `App.tsx`
+now: `SafeAreaProvider` → `ThemeProvider` → `NavigationContainer` (bg bridged to avoid white
+flash). `RootNavigator` gates on `useAuthStore` (loading splash / Auth / Tabs). Custom
+`TabBar` (expo-blur + amber active + Lucide icons) per the design; 3 tabs (Timer/History,
+Stats, Profile). Reusable `EmptyState` (honey-jar hero) per EmptyScreen; Timer/History shows
+"Start your first entry" behind a `hasEntries` placeholder. Removed HomeScreen. Added nav +
+safe-area + screens + expo-blur deps.
+
+**State now:** Mobile typecheck + lint + bundle green; prebuild pods install (115) under
+useFrameworks:static. 34/35 tasks; only 6.5 (archive after on-device verify) left. **Rebuild
+required** (`npm run ios:device`) — native modules.
+
+**Next steps:** User rebuilds + verifies tabs/gate/empty-state on-device, then
+`/opsx:archive add-app-shell`. Then capability 03 (theming) or 04 (time-entries).
+
+---
+
 ## 2026-07-01T16:20Z — Proposed `add-app-shell` (capability 02)
 
 **Done:** Archived `add-auth` (auth spec promoted), then `/opsx:propose add-app-shell` — all 4
