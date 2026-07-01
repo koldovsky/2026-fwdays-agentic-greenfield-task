@@ -56,6 +56,22 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T17:50Z — Archived `add-app-shell`; `app-shell` spec promoted
+
+**Done:** Empty-state glow finalized (reliable iOS wrapper shadow — boxShadow wasn't rendering
+on the native gradient view under New Arch). User confirmed the shell works on-device. Archived
+`add-app-shell` (sync chosen): delta promoted to `openspec/specs/app-shell/spec.md` (3
+requirements, validates); change moved to `archive/2026-07-01-add-app-shell`. No active changes.
+
+**State now:** Three living specs — foundation, auth, app-shell. Phase 1 done except `theming`
+(the Light/Dark/System switch). Mobile app: gated 4-tab shell (Timer/History/Stats/Profile),
+auth flow, empty state.
+
+**Next steps:** Capability 03 `theming` (`/opsx:propose add-theming`) or jump to 04
+`time-entries` (the core loop). Recommend theming first (quick, unblocks polish) then time-entries.
+
+---
+
 ## 2026-07-01T17:30Z — Empty-state halo → circle; History-screen context in docs
 
 **Done:** Empty-state gradient background halo was a square `<Rect>` — swapped to a `<Circle>`

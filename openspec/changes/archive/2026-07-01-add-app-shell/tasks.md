@@ -39,4 +39,4 @@ an `expo export` bundle before committing.
 - [x] 6.2 `expo prebuild --clean` + verify new native pods install (under `useFrameworks: static`)
 - [x] 6.3 `openspec validate add-app-shell --strict`
 - [x] 6.4 Update `docs/current-state.md`; commit to `dev` (reviewed, referencing FR-SHELL IDs). Rebuild note: `npm run ios:device` (native modules)
-- [ ] 6.5 `openspec archive add-app-shell` once implemented and verified on-device
+- [x] 6.5 `openspec archive add-app-shell` once implemented and verified on-device

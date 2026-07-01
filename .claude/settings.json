@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const d=require\\('./package.json'\\).dependencies; console.log\\(Object.fromEntries\\(Object.entries\\(d\\).filter\\(\\([k]\\)=>/navigation|screens|safe-area|blur/.test\\(k\\)\\)\\)\\)\")",
+      "Bash(perl -0pi -e 's/- \\\\[ \\\\] \\([1-5]\\\\.\\\\d \\)/- [x] $1/g; s/- \\\\[ \\\\] \\(6\\\\.[1-4] \\)/- [x] $1/g' openspec/changes/add-app-shell/tasks.md)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(perl -0pi -e 's{the Timer/History screen shows it}{the Timer screen shows it}g; s{becomes the Timer/History placeholder / empty state host}{becomes the Timer placeholder / empty state host}g' openspec/changes/add-app-shell/design.md)",
+      "Bash(perl -0pi -e 's{three tabs: Timer/History, Stats, Profile}{four tabs: Timer, History, Stats, Profile}g; s{`TimerHistoryScreen` — hosts the empty state now \\\\\\(Timer/History content lands with `time-entries`\\\\\\)}{`TimerScreen` hosts the empty state; `HistoryScreen` placeholder \\(both fill in with `time-entries`\\)}g; s{Timer/History shows the empty state}{Timer tab shows the empty state}g' openspec/changes/add-app-shell/tasks.md)",
+      "Bash(perl -0pi -e 's{three tabs — \\\\*\\\\*Timer/History\\\\*\\\\*,\\\\n  \\\\*\\\\*Stats\\\\*\\\\*, \\\\*\\\\*Profile\\\\*\\\\*}{four tabs — **Timer**, **History**,\\\\n  **Stats**, **Profile**}g; s{The Timer/History}{The Timer}g; s{layout \\\\\\(Timer/History, Stats, Profile\\\\\\)}{layout \\(Timer, History, Stats, Profile\\)}g; s{becomes the Timer/History tab.s screen}{becomes the Timer tab screen}g' openspec/changes/add-app-shell/proposal.md)",
+      "Bash(cd /Users/blackflame/my-fullstack-weekdays/Honeydo/apps/mobile *)",
+      "Read(//Users/blackflame/my-fullstack-weekdays/**)",
+      "Bash(echo \"BUNDLE=$?\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('mode:', d['actionContext']['mode']\\); print\\('artifacts:', [\\(a['id'],a['status']\\) for a in d['artifacts']]\\)\")"
+    ]
+  }
+}
