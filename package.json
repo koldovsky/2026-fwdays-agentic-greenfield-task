@@ -11,6 +11,10 @@
   },
   "scripts": {
     "mobile": "npm run start -w @honeydo/mobile",
+    "ios": "npm run ios -w @honeydo/mobile",
+    "ios:device": "npm run ios:device -w @honeydo/mobile",
+    "android": "npm run android -w @honeydo/mobile",
+    "prebuild": "npm run prebuild -w @honeydo/mobile",
     "api": "npm run start -w @honeydo/api",
     "migrate": "npm run prisma:migrate -w @honeydo/api",
     "db:up": "docker compose up -d db",

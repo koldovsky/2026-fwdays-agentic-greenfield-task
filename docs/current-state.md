@@ -56,6 +56,27 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T13:30Z — Fixed root-run dev-build breakage + added guardrail scripts
+
+**Done:** Running `expo run:ios` from the repo ROOT (instead of apps/mobile) built the app
+from the root project, which autolinked only root deps → the installed app lacked
+`ExpoSecureStore` (runtime "Cannot find native module 'ExpoSecureStore'") and re-hit the
+AppEntry error. Cleaned the root again (reverted root package.json/lock; removed root
+ios/, app.json, tsconfig.json) and regenerated apps/mobile/ios cleanly — verified
+ExpoSecureStore is autolinked (Podfile.lock + ExpoModulesProvider.swift register
+SecureStoreModule). Added **root delegating scripts** (`npm run ios` / `ios:device` /
+`android` / `prebuild`) that always target `@honeydo/mobile`, so building from the repo
+root now does the right thing instead of breaking.
+
+**State now:** apps/mobile/ios regenerated with all native modules. Rebuild with
+`npm run ios:device` (works from anywhere). Old broken app on device is a different bundle
+id (com.blackflamy.honeydo) — delete it; the correct one is com.honeydo.app.
+
+**Next steps:** User reruns `npm run ios:device`, then verifies auth on-device (API must be
+running). Then `openspec archive add-auth` (task 9.4).
+
+---
+
 ## 2026-07-01T13:00Z — iOS dev build enabled (prebuild verified)
 
 **Done:** Prepared a development build (expo-dev-client) for physical-device testing since
