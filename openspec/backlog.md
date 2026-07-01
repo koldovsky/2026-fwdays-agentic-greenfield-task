@@ -65,7 +65,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | food-photo | done | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), multi-item, fact-vs-estimate, ephemeral, never persisted (core US-3; interactive ask split to `food-photo-ask`) |
 | food-photo-ask | done | agent | 5 | food-photo, clarify | US-3/US-6 | M4 | Precision-first plate ask: hold extracted items as a photo-variant Open Question, resolve via ONE text-only refine (image already discarded — can't re-run vision), reuse clarify UI/expiry (ADR-0015) |
 | progress-photo | done | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
-| reviews | doing | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
+| reviews | done | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
 | shared-tenant-resolve | todo | agent | 6 | food-text, metrics, query, progress-photo | — | M3 | Extract `resolveUserId` (chat_id → internal user id) to `src/db/` — dedupe 1 named copy (food) + 2 inline (metrics/query) + progress (rule #12, sibling of shared-lang; surfaced by progress-photo step-7/review) |
 | notion-mirror | todo | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
 | hardening | todo | agent | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
