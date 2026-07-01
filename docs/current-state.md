@@ -56,6 +56,22 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T16:20Z — Proposed `add-app-shell` (capability 02)
+
+**Done:** Archived `add-auth` (auth spec promoted), then `/opsx:propose add-app-shell` — all 4
+artifacts, `valid --strict`. Covers FR-SHELL-01/02/03: a gated root navigator (auth ↔ tabs via
+`useAuthStore`), a bottom-tab shell (Timer/History, Stats, Profile) with the design's blurred
+amber tab bar, and the first-run empty state. React Navigation (native-stack + bottom-tabs,
+custom tab bar via expo-blur), mobile-only. 6 task groups.
+
+**State now:** Planning only. `add-app-shell` is the active change; `auth` + `foundation` are
+living specs.
+
+**Next steps:** `/opsx:apply add-app-shell` (native deps → rebuild). Reproduce the
+`honeydo-design` TabBar/EmptyScreen faithfully per the design rule.
+
+---
+
 ## 2026-07-01T16:00Z — Google Sign-In: switch to native SDK (fixes redirect_uri_mismatch)
 
 **Done:** expo-auth-session's browser flow caused `Error 400: redirect_uri_mismatch` (a native
