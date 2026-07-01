@@ -67,7 +67,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | progress-photo | done | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
 | reviews | done | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
 | shared-tenant-resolve | done | agent | 6 | food-text, metrics, query, progress-photo | — | M3 | Extract `resolveUserId` (chat_id → internal user id) to `src/db/` — dedupe 1 named copy (food) + 2 inline (metrics/query) + progress (rule #12, sibling of shared-lang; surfaced by progress-photo step-7/review) |
-| notion-mirror | todo | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
+| notion-mirror | done | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
 | hardening | todo | agent | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
 
 **Waves** = parallel cohorts. After wave 2, the **food track** (food-text → query/correction/
