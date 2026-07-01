@@ -6,6 +6,7 @@ import { buildQuestion } from '../clarify/question.js';
 import { resolveAnswer } from '../clarify/resolve.js';
 import { toClarification } from '../clarify/types.js';
 import type { LogOutcome, OpenQuestion, PhotoOpenQuestion } from '../clarify/types.js';
+import { resolveUserId } from '../db/resolveUser.js';
 import { resolveDate } from '../router/date.js';
 import { saveLoggedFoodToCatalog } from './addToCatalog.js';
 import { buildConfirmation, buildPlateConfirmation, noProductReply } from './confirm.js';
@@ -29,12 +30,6 @@ import type {
 // Food-logging service (US-2, §8.2): orchestration only — resolve → infer meal → write → confirm.
 // All SQL lives in the lookup/write/catalog modules behind the tenancy choke-point (invariant #8).
 // `now` is injectable so meal inference is deterministic under test.
-
-/** Resolve the tenant's internal id from their Telegram chat_id (the chat is the auth). */
-const resolveUserId = async (prisma: FoodClient, chatId: bigint): Promise<number | null> => {
-  const user = await prisma.user.findUnique({ where: { chatId }, select: { id: true } });
-  return user?.id ?? null;
-};
 
 /**
  * Write one code-scaled, tenant-scoped `food_log` row per resolved plate item (invariants #2/#8) —

@@ -1,3 +1,4 @@
+import { resolveUserId } from '../db/resolveUser.js';
 import { toDbDate } from '../util/date.js';
 import { buildConfirmation, noMetricsReply } from './confirm.js';
 import { parseMetrics } from './parse.js';
@@ -15,8 +16,8 @@ export const createMetricsService = (client: MetricsClient): MetricsService => (
     text: string,
     routed: RoutedMetric,
   ): Promise<MetricConfirmation | null> {
-    const user = await client.user.findUnique({ where: { chatId }, select: { id: true } });
-    if (!user) {
+    const userId = await resolveUserId(client, chatId);
+    if (userId === null) {
       return null;
     }
 
@@ -25,8 +26,8 @@ export const createMetricsService = (client: MetricsClient): MetricsService => (
       return noMetricsReply(text);
     }
 
-    const history = await priorHistory(client, user.id, toDbDate(routed.date));
-    await upsertMetrics(client, user.id, routed.date, parsed);
+    const history = await priorHistory(client, userId, toDbDate(routed.date));
+    await upsertMetrics(client, userId, routed.date, parsed);
     const deltas = computeDeltas(parsed, history);
 
     return buildConfirmation(text, deltas);

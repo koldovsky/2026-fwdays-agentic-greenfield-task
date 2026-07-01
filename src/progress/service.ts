@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import { resolveUserId } from '../db/resolveUser.js';
 import { resolveDate } from '../router/date.js';
 import { analyzeProgress } from './analyze.js';
 import { writeProgressNote } from './write.js';
@@ -8,12 +9,6 @@ import type { ProgressClient, ProgressReply, ProgressService } from './types.js'
 // (invariant #5) → persist the text observations for today (user TZ) → reply with that prose. The
 // image arrives as base64 and is never persisted (invariant #4 — enforced upstream + by the fs-spy
 // test + the write signature). Body/progress data is sensitive (invariant #9): never log raw values.
-
-/** Resolve the tenant's internal id from their Telegram chat_id (the chat is the auth). */
-const resolveUserId = async (client: ProgressClient, chatId: bigint): Promise<number | null> => {
-  const user = await client.user.findUnique({ where: { chatId }, select: { id: true } });
-  return user?.id ?? null;
-};
 
 export const createProgressService = (
   client: ProgressClient,
