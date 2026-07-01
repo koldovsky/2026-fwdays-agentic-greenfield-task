@@ -10,10 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.honeydo.app"
+      "bundleIdentifier": "com.blackflamy.honeydo"
     },
     "android": {
-      "package": "com.honeydo.app",
+      "package": "com.blackflamy.honeydo",
       "adaptiveIcon": {
         "backgroundColor": "#1C1A17",
         "foregroundImage": "./assets/android-icon-foreground.png",

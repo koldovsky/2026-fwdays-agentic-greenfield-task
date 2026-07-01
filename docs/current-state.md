@@ -56,6 +56,19 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T13:45Z — Unique bundle id for device signing
+
+**Done:** Device build failed signing because `com.honeydo.app` is already registered to
+another Apple team. Changed the bundle id (ios + android) to `com.blackflamy.honeydo` (the
+id that already registered to the user's team in the earlier root build) and re-prebuilt;
+the native project now signs under team ZXQ369UC2M.
+
+**State now:** Rerun `npm run ios:device` — signing should pass and the dev build installs.
+
+**Next steps:** Verify auth on-device (API running), then `openspec archive add-auth`.
+
+---
+
 ## 2026-07-01T13:30Z — Fixed root-run dev-build breakage + added guardrail scripts
 
 **Done:** Running `expo run:ios` from the repo ROOT (instead of apps/mobile) built the app
