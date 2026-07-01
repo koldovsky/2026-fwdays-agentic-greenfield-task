@@ -210,7 +210,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (17 changes + 1 manual `provision`;
 `shared-tenant-resolve` tech-debt follow-up filed 2026-07-01 by `progress-photo`;
 added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), driven by
-`/run-backlog` (ADR-0012/0013).
+`/ship-change` (ADR-0012/0013; renamed from `/run-backlog` 2026-07-02 per **ADR-0021**, now a
+`SKILL.md` + `PROFILE.md` split with named `.claude/agents/ship-*` per phase).
 
 ## Next up
 1. ✅ **`provision` (manual, M0): DONE** — Coolify `nutrition-bot` project; Postgres capped 256 MB +

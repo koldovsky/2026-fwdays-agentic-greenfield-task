@@ -43,11 +43,14 @@ improve-codebase-architecture (codebase-wide dup scan + refactor scan of the dif
 `triage` / `improve-codebase-architecture` as alternate entry points.
 
 The loop is sliced into a dependency-ordered backlog of OpenSpec changes
-([openspec/backlog.md](./openspec/backlog.md)) and driven by the **run-backlog** skill (`/run-backlog`)
+([openspec/backlog.md](./openspec/backlog.md)) and driven by the **ship-change** skill (`/ship-change`)
 — the orchestrator that picks the next *ready* change, runs every gate (incl. `openspec validate
 --strict`, a **codebase-wide duplication scan** (step 7, [backend-conventions](#code-conventions)
-rule #12), + the evals from [ADR-0013](./docs/adr/0013-eval-framework.md)), and stops/marks `blocked`
-on failure. See [ADR-0012](./docs/adr/0012-implementation-loop-runner.md) for its full shape.
+rule #12), + the evals from [ADR-0013](./docs/adr/0013-eval-framework.md)), and marks `blocked` on
+failure then continues to the next ready change. The skill splits into a generic `SKILL.md` + a
+repo-specific `PROFILE.md`, and delegates each phase to a named agent under `.claude/agents/`
+(`ship-maker`/`-verifier`/`-arch`/`-reviewer`/`-gates`/`-docs`) so maker ≠ checker is a distinct
+subagent. See [ADR-0012](./docs/adr/0012-implementation-loop-runner.md) for its full shape.
 
 **Maker ≠ reviewer is a hard gate, enforced by convention (not a schema artifact).** After
 `opsx:apply` + `opsx:verify`, the agent that wrote the code does **not** self-approve: hand the diff

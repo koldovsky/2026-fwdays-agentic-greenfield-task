@@ -172,7 +172,7 @@ corrected value. US-5.
 across `src/food/confirm.ts`, `src/metrics/confirm.ts`, and `src/query/answer.ts` — three homes for
 one fact, the canonical violation of
 [backend-conventions](../.claude/skills/backend-conventions/SKILL.md) rule #12 (surfaced by the
-`/run-backlog` step-7 duplication gate). Extract one `src/util/lang.ts` (`export const detectLang`,
+`/ship-change` step-7 duplication gate). Extract one `src/util/lang.ts` (`export const detectLang`,
 `export type Lang`), repoint all three importers, delete the local copies. **No behavior change** —
 the existing food/metrics/query suites stay green; add `test/util/lang.test.ts` covering the detection
 table (uk via `іїєґ`, ru via `а-яё`, en default). **Run before `clarify`/`food-photo`/

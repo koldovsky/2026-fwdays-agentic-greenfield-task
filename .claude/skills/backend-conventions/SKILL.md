@@ -259,5 +259,5 @@ export const detectLang = (text: string): Lang => { … };
 // food/confirm.ts, metrics/confirm.ts, query/answer.ts:  import { detectLang, type Lang } from '../util/lang';
 ```
 
-This is enforced by the **duplication gate** in `/run-backlog` step 7 (maker extracts) and
+This is enforced by the **duplication gate** in `/ship-change` step 7 (maker extracts) and
 re-checked by the **Standards** review axis (checker verifies) — see AGENTS.md "How we work".
