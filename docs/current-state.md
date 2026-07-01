@@ -6,6 +6,27 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-06-30T23:30Z — Implemented `add-auth` (33/35 tasks)
+
+**Done:** `/opsx:apply add-auth` — auth capability end to end. Shared: pure `validatePassword`
+(100% cov) + auth contracts. API: `User`/`AuthIdentity`/`RefreshToken` + migration; `AuthModule`
+with argon2 hashing, short-lived access JWT + sha256-hashed rotating refresh tokens (reuse
+detection + logout revocation), Google id_token verification with provision/link, and
+`JwtAuthGuard`/`@CurrentUser`/`GET /auth/me`. Mobile: secure token store, fetch client with
+transparent refresh-on-401, `useAuth` context, and a token-styled auth screen (email/password +
+Google PKCE) with an auth gate. Committed in 7 focused layers on `dev`. FR-AUTH-01→06, NFR-SEC-01.
+
+**State now:** `npm run gate` green; mobile lint+typecheck green; **13 API e2e pass** (password
+signup/signin/weak/dup/badcreds, refresh rotate + reuse-reject, logout, Google provision/link,
+/me 401+200). `openspec validate add-auth --strict` passes. Change is 4/4 artifacts, 33/35 tasks.
+
+**Next steps:** Two tasks remain: 8.4 (mobile restyle — waits on brand decision) and 9.4
+(`/opsx:archive add-auth`). Mobile flow is typecheck/lint-clean but **not yet run on a device**
+(no simulator here) — verify the sign-in/up/Google flow on-device before archiving. Then
+Phase 1 continues with app-shell + theming.
+
+---
+
 ## 2026-06-30T23:00Z — Proposed `add-auth` (Phase 1, capability 01)
 
 **Done:** `/opsx:propose add-auth` — created the change with all 4 artifacts (proposal, design,
