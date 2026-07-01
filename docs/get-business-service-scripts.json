@@ -1,0 +1,450 @@
+{
+    "lastpage": "false",
+    "items": [
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "PropSetToStr",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "10",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function PropSetToStr(Inputs:PropertySet)\n{\n\tvar res = \"\";\n\tvar bs = TheApplication().GetService(\"\"+\"XML Converter\");\n\tvar out = TheApplication().NewPropertySet();\n\tbs.InvokeMethod(\"PropSetToXML\",Inputs, out);\n\tres = out.GetValue();\n\tbs = null;\n\tout = null;\n\treturn res;\n}\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/PropSetToStr",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/PropSetToStr",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "Service_PreInvokeMethod",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "12",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function Service_PreInvokeMethod (MethodName, Inputs, Outputs)\n{\n\tif(MethodName == \"getUserDatabyPhone\") {\n\tthis.getUserDatabyPhone(Inputs, Outputs);\n\treturn (CancelOperation);\n\t}\n\t\n\tif(MethodName == \"createActivity\") {\n\tthis.createActivity(Inputs, Outputs);\n\treturn (CancelOperation);\n\t}\n\n\tif (MethodName == \"originate\") {\n        this.originate(Inputs, Outputs);\n        return (CancelOperation);\n    }\n\n\tif (MethodName == \"callcontrol\") {\n        this.callcontrol(Inputs, Outputs);\n        return (CancelOperation);\n    }\n\n\tif (MethodName == \"checkUserPhone\") {\n        this.checkUserPhone(Inputs, Outputs);\n        return (CancelOperation);\n    }\n\n\treturn (ContinueOperation);\n}",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/Service_PreInvokeMethod",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/Service_PreInvokeMethod",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "callcontrol",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "1",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function callcontrol(Inputs: PropertySet, Outputs: PropertySet) \n{\n\ntry\n{\nvar svc:Service = TheApplication().GetService(\"\"+\"EAI HTTP Transport\");\nvar srvConverter:Service = TheApplication().GetService(\"EAI JSON Converter\");\nvar inp:PropertySet = TheApplication().NewPropertySet();\nvar oup:PropertySet = TheApplication().NewPropertySet();\nvar oup1:PropertySet = TheApplication().NewPropertySet();\nvar integrator_id = getSysPref(\"KyivstarIntId\");\nvar sToken = getSysPref(\"KyivstarToken\");\nvar sUrl = \"https://fmc.kyivstar.ua/api/fmc/v1/callcontrol?integrator_id=\"+integrator_id+\"\";\nvar callControlId = Inputs.GetProperty(\"callControlId\");\nvar action = Inputs.GetProperty(\"action\");\n\nvar request = \"{\\\"call_control_id\\\":\\\"\" + callControlId + \"\\\",\\\"action\\\":\\\"\" + action + \"\\\"}\";\n\n\tinp.SetProperty(\"HTTPRequestURLTemplate\", sUrl);\n\tinp.SetProperty(\"HTTPRequestMethod\", \"POST\");\n\tinp.SetProperty(\"HTTPContentType\", \"application/json\");\n\tinp.SetProperty(\"HDR.Authorization\", \"Bearer \" + sToken);\n\tinp.SetProperty(\"CharSetConversion\", \"UTF-8\");\n\tinp.SetProperty(\"HTTPSleepTime\", \"10000\");\n\tinp.SetValue(request);\n\n\tthis.saveLogWithLevel(callControlId, this.PropSetToStr(inp), \"callcontrol\", \"Start\", \"request\", \"5\", \"Business Service\", \"SPXxxxxxKyivstarBS\", \"SPXxxxxxKyivstarBS.callcontrol\");\n\tsvc.InvokeMethod(\"SendReceive\", inp, oup);\n\tthis.saveLogWithLevel(callControlId, this.PropSetToStr(oup), \"callcontrol\", \"End\", \"responce\", \"5\", \"Business Service\", \"SPXxxxxxKyivstarBS\", \"SPXxxxxxKyivstarBS.callcontrol\");\n\n}\ncatch(e)\n{\nOutputs.SetProperty(\"errorCode\", \"1\");\nOutputs.SetProperty(\"errorMsg\", \"\" + e);\nthis.saveLogWithLevel(callControlId, \"error:\" + e, \"callcontrol\", \"error\", \"request\", \"5\", \"Business Service\", \"SPXxxxxxKyivstarBS\", \"SPXxxxxxKyivstarBS.callcontrol\");\n}\nfinally\n{\nif (Outputs.GetProperty(\"errorCode\") == \"\")\n{\nOutputs.SetProperty(\"errorCode\", \"0\");\n}\ninp = null;\noup = null;\nsvc = null;\n}\n\n\n}\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/callcontrol",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/callcontrol",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "checkUserPhone",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "2",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function checkUserPhone(Inputs: PropertySet, Outputs: PropertySet) \n{\nvar BO = TheApplication().GetBusObject(\"Employee\");\nvar BC = BO.GetBusComp(\"Employee\");\nvar userId = Inputs.GetProperty(\"userId\");\nvar Phone = \"\";\n\ntry\n{\n\tBC.SetViewMode(AllView);\n\tBC.ActivateField(\"Cell Phone #\");\n\tBC.ClearToQuery();\n\tBC.SetSearchExpr(\"[Id] = '\"+userId+\"'\");\n\tBC.ExecuteQuery(ForwardOnly);\n\tif(BC.FirstRecord())\n\t{\n\tPhone = BC.GetFieldValue(\"Cell Phone #\");\n\t}\n}\ncatch(e)\n{\nOutputs.SetProperty(\"errorCode\", \"1\");\nOutputs.SetProperty(\"errorMsg\", \"\" + e);\n}\nfinally\n{\nif (Outputs.GetProperty(\"errorCode\") == \"\")\n{\nOutputs.SetProperty(\"errorCode\", \"0\");\nOutputs.SetProperty(\"phone\", Phone);\n}\nBC = null;\nBO = null;\n}\n\n}\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/checkUserPhone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/checkUserPhone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "createActivity",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "3",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function createActivity(Inputs: PropertySet, Outputs: PropertySet)\n{\n//var ContactId = Inputs.GetProperty(\"ContactId\");\nvar ContactId = \"\";\nvar Desc = Inputs.GetProperty(\"Desc\");\nvar OwnerId = Inputs.GetProperty(\"OwnerId\");\nvar Direction = Inputs.GetProperty(\"Direction\");\nvar PhoneNum = Inputs.GetProperty(\"PhoneNum\");\nvar CallId = Inputs.GetProperty(\"CallId\");\nvar CallControlId = Inputs.GetProperty(\"CallControlId\");\nvar ActionId = \"\";\nvar sTimeStamp:chars;\nClib.strftime(sTimeStamp,\"%m/%d/%Y %H:%M:%S\",new Date());\nvar DateTime = sTimeStamp;\n\nvar BO: BusObject;\nvar bcAction: BusComp;\nvar bcContact: BusComp;\nvar bcPick: BusComp;\nvar ErrorCode = \"0\";\nvar ErrorMsg = \"\";\n\nvar sType=\"\";\nvar bcFind : BusComp;\nvar iCnt = 0;\nvar sFoundId = \"\";\nvar isRec = false;\nvar bcMVG : BusComp;\nvar bcAssoc : BusComp;\n\ntry\n{\n\tif (Direction == \"incoming\")\n\t\t{\n\t\t\tDirection = \"Вхідний\";\n\t\t}\n\telse\n\t\t{\n\t\t\tDirection = \"Вихідний\";\n\t\t}\n\n\tsType= TheApplication().InvokeMethod(\"LookupValue\", \"SP_ACTIVITY_TYPE\", \"Call\");\n\n\tDesc = \"Вхідний дзвінок \" + PhoneNum;\n\t// пошук ФО Contact\n\n\tif (PhoneNum != \"\" && PhoneNum != null)\n\t{\n\t\tBO = TheApplication().GetBusObject(\"Contact\");\n\t\tbcFind = BO.GetBusComp(\"Contact\");\n\n\t\tbcFind.SetViewMode(AllView);\n\t\tbcFind.ActivateField(\"SP LOV Primary Phone Number\");\n\n\t\tbcFind.ClearToQuery();\n\t\tbcFind.SetSearchExpr(\"[SP LOV Primary Phone Number] = '\" + PhoneNum + \"'\");\n\t\tbcFind.ExecuteQuery(ForwardOnly);\n\n\t\tiCnt = 0;\n\t\tsFoundId = \"\";\n\t\tisRec = bcFind.FirstRecord();\n\n\t\twhile(isRec)\n\t\t{\n\t\t\tiCnt++;\n\n\t\t\tif(iCnt == 1)\n\t\t\t{\n\t\t\t\tsFoundId = bcFind.GetFieldValue(\"Id\");\n\t\t\t}\n\n\t\t\tisRec = bcFind.NextRecord();\n\t\t}\n\n\t\tif(iCnt == 1)\n\t\t{\n\t\t\tContactId = sFoundId;\n\t\t}\n\t\telse if(iCnt > 1)\n\t\t{\n\t\t\tDesc = Desc + \"\\nЗнайдено \" + iCnt + \" фізичних осіб з даним номером\";\n\t\t}\n\n\t\tBO = null;\n\t\tbcFind = null;\n\t}\n\n\tif (ContactId != \"\" && ContactId != null)\n\t{\n\t\tBO = TheApplication().GetBusObject(\"Contact\");\n\t\tbcContact = BO.GetBusComp(\"Contact\");\n\t\tbcAction = BO.GetBusComp(\"Action\");\n\n\t\tbcContact.SetViewMode(AllView);\n\t\tbcContact.ClearToQuery();\n\t\tbcContact.SetSearchExpr(\"[Id] = '\" + ContactId + \"'\");\n\t\tbcContact.ExecuteQuery(ForwardOnly);\n\n\t\tif (!bcContact.FirstRecord())\n\t\t{\n\t\t\tErrorCode = \"1\";\n\t\t\tErrorMsg = \"Контакт не знайдено\";\n\t\t\treturn;\n\t\t}\n\t}\n\telse\n\t{\n\t\tBO = TheApplication().GetBusObject(\"Action\");\n\t\tbcAction = BO.GetBusComp(\"Action\");\n\t}\n\n\tbcAction.InvokeMethod(\"SetAdminMode\", \"TRUE\");\n\tbcAction.SetViewMode(AllView);\n\tbcAction.ActivateField(\"Priority\");\n\tbcAction.ActivateField(\"SP Channel\");\n\tbcAction.ActivateField(\"Description\");\n\tbcAction.ActivateField(\"SP Direction\");\n\tbcAction.ActivateField(\"SP Phone Number\");\n\tbcAction.ActivateField(\"SP Call Id\");\n\tbcAction.ActivateField(\"SP Call Control Id\");\n\n\tbcAction.ActivateField(\"SP Activity Date\");\n\tbcAction.ActivateField(\"Start Time\");\n\tbcAction.ActivateField(\"End Time\");\n\tbcAction.ActivateField(\"End Date\");\n\tbcAction.ActivateField(\"Due Date\");\n\n\tbcAction.ActivateField(\"Contact Id\");\n\tbcAction.ActivateField(\"Account Id\");\n\tbcAction.ActivateField(\"Primary Owner Id\");\n\n\tbcAction.ClearToQuery();\n\tbcAction.SetSearchExpr(\"[SP Call Control Id] = '\" + CallControlId + \"'\");\n\tbcAction.ExecuteQuery(ForwardOnly);\n\n\tif (bcAction.FirstRecord())\n\t{\n\t\t// Повторный вызов = конец звонка\n//яку дату краще?\n\t\tbcAction.SetFieldValue(\"End Time\", DateTime);\n\t\tbcAction.SetFieldValue(\"End Date\", DateTime);\n\t\tbcAction.SetFieldValue(\"Due Date\", DateTime);\n\n\t\tbcAction.WriteRecord();\n\t}\n\telse\n\t{\n\t\t// Первый вызов = начало звонка\n\t\tbcAction.NewRecord(NewAfter);\n\n\t\tbcAction.SetFieldValue(\"Category\", TheApplication().InvokeMethod(\"LookupValue\", \"TODO_TYPE\", \"General\"));\n\t\tbcAction.SetFieldValue(\"Type\", sType);\n\t\tbcAction.SetFieldValue(\"SP Channel\", TheApplication().InvokeMethod(\"LookupValue\", \"SP_ACTIVITY_CHANNEL\", \"Phone\"));\n\n//яку дату краще?\n\t\tbcAction.SetFieldValue(\"SP Activity Date\", DateTime);\t\n\t\tbcAction.SetFieldValue(\"Start Time\", DateTime);\n\n\t\tbcAction.SetFieldValue(\"SP Direction\", Direction);\n\t\tbcAction.SetFieldValue(\"SP Phone Number\", PhoneNum);\n\t\tbcAction.SetFieldValue(\"SP Call Id\", CallId);\n\t\tbcAction.SetFieldValue(\"SP Call Control Id\", CallControlId);\n\t\tif(OwnerId != \"\" && OwnerId != null)\n\t\t{\n\t\t\tbcAction.SetFieldValue(\"Primary Owner Id\", OwnerId);\n\t\t}\n\n\t\t// Пошук ЮО Account\n\n\n\t\tiCnt = 0;\n\t\tsFoundId = \"\";\n\n\t\tbcFind = BO.GetBusComp(\"Account\");\n\n\t\tbcFind.SetViewMode(AllView);\n\t\tbcFind.ActivateField(\"SP LOV Primary Phone Number\");\n\n\t\tbcFind.ClearToQuery();\n\t\tbcFind.SetSearchExpr(\"[SP LOV Primary Phone Number] = '\" + PhoneNum + \"'\");\n\t\tbcFind.ExecuteQuery(ForwardOnly);\n\n\t\tisRec = bcFind.FirstRecord();\n\n\t\twhile(isRec)\n\t\t{\n\t\t\tiCnt++;\n\n\t\t\tif(iCnt == 1)\n\t\t\t{\n\t\t\t\tsFoundId = bcFind.GetFieldValue(\"Id\");\n\t\t\t}\n\n\t\t\tisRec = bcFind.NextRecord();\n\t\t}\n\n\t\tif(iCnt == 1)\n\t\t{\n\t\t\tbcAction.SetFieldValue(\"Account Id\", sFoundId);\n\t\t}\n\t\telse if(iCnt > 1)\n\t\t{\n\t\t\tDesc = Desc + \"\\nЗнайдено \" + iCnt + \" юридичних осіб з даним номером\";\n\t\t}\n\n\t\tbcAction.SetFieldValue(\"Description\", Desc);\n\t\tbcAction.WriteRecord();\n\t}\n\n\tActionId = bcAction.GetFieldValue(\"Id\");\n\n}\ncatch(e)\n{\nErrorCode = \"1\";\nErrorMsg = e.toString();\n}\nfinally\n{\nif(bcAction != null)\n{\n\tbcAction.InvokeMethod(\"SetAdminMode\", \"FALSE\");\n}\nOutputs.SetProperty(\"ActionId\", ActionId);\nOutputs.SetProperty(\"ErrorCode\", ErrorCode);\nOutputs.SetProperty(\"ErrorMsg\", ErrorMsg);\nBO = null;\nbcMVG  = null;\nbcAssoc  = null;\nbcAction = null;\nbcFind = null;\nbcContact = null;\n}\n\n\n}",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/createActivity",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/createActivity",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "getSysPref",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "4",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function getSysPref(name)\n{\n\ttry\n\t{\t\t\n\t    var sRet:chars = \"\";\n\t\tvar boSysPref:BusObject = TheApplication().GetBusObject(\"System Preferences\");\n\t\tvar bcSysPref:BusComp = boSysPref.GetBusComp(\"System Preferences\");\n\n\t\tbcSysPref.ActivateField(\"Name\");\n\t\tbcSysPref.ActivateField(\"Value\");\n        bcSysPref.SetViewMode(AllView);\t\t\n\t\tbcSysPref.SetSearchExpr(\"[Name] = '\" + name + \"'\");\n\t\tbcSysPref.ExecuteQuery(ForwardOnly);\n\t\tif (bcSysPref.FirstRecord())\n\t\t{\n\t\t\tsRet = bcSysPref.GetFieldValue(\"Value\");\n\t\t}\t\t\n\t}finally{\n\t\tbcSysPref = null;\t\t\n\t\tboSysPref = null;\n\t}\n\treturn (sRet);\n}",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getSysPref",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getSysPref",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "getUserDatabyPhone",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "6",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function getUserDatabyPhone(Inputs: PropertySet, Outputs: PropertySet)\n{\nvar BOCon = TheApplication().GetBusObject(\"Contact\");\nvar BCCon = BOCon.GetBusComp(\"Contact\");\nvar BOAcc = TheApplication().GetBusObject(\"Account\");\nvar BCAcc = BOAcc.GetBusComp(\"Account\");\nvar Phone = Inputs.GetProperty(\"PhoneNumber\");\nvar FullName = \"\";\nvar ErrorCode = \"0\";\nvar ErrorMsg = \"\";\nvar psContacts = TheApplication().NewPropertySet();\nvar psAccounts = TheApplication().NewPropertySet();\n\ntry\n{\n\tBCCon.SetViewMode(AllView);\n\tBCCon.ActivateField(\"SP Primary Phone Number\");\n\tBCCon.ActivateField(\"SP Full Name\");\n\tBCCon.ClearToQuery();\n\tBCCon.SetSearchExpr(\"EXISTS ([SP Primary Phone Number] = '\"+Phone+\"')\");\n\tBCCon.ExecuteQuery(ForwardOnly);\n\tvar recCon = BCCon.FirstRecord();\n\tvar i = 0;\n\tpsContacts.SetType(\"ListOfcontacts\");\n\twhile(recCon && i < 3)\n\t{\n\tvar psContact = TheApplication().NewPropertySet();\n\tpsContact.SetType(\"contact\");\n\tpsContact.SetProperty(\"ContactId\", BCCon.GetFieldValue(\"Id\"));\n\tpsContact.SetProperty(\"FullName\", BCCon.GetFieldValue(\"SP Full Name\"));\n\tpsContacts.AddChild(psContact);\n\ti++;\n\trecCon = BCCon.NextRecord();\n\t}\n\n\tBCAcc.SetViewMode(AllView);\n\tBCAcc.ActivateField(\"SP Primary Phone Number\");\n\tBCAcc.ActivateField(\"Name\");\n\tBCAcc.ClearToQuery();\n\tBCAcc.SetSearchExpr(\"EXISTS ([SP Primary Phone Number] = '\"+Phone+\"')\");\n\tBCAcc.ExecuteQuery(ForwardOnly);\n\tvar recAcc = BCAcc.FirstRecord();\n\tvar y = 0;\n\tpsAccounts.SetType(\"ListOfaccounts\");\n\twhile(recAcc && y < 3)\n\t{\n\tvar psAccount = TheApplication().NewPropertySet();\n\tpsAccount.SetType(\"account\");\n\tpsAccount.SetProperty(\"AccountId\", BCAcc.GetFieldValue(\"Id\"));\n\tpsAccount.SetProperty(\"FullName\", BCAcc.GetFieldValue(\"Name\"));\n\tpsAccounts.AddChild(psAccount);\n\ty++;\n\trecAcc = BCAcc.NextRecord();\n\t}\n\n}\ncatch(e)\n{\nErrorCode = \"1\";\nErrorMsg = e.toString();\n}\nfinally\n{\nOutputs.SetProperty(\"ErrorCode\", ErrorCode);\nOutputs.SetProperty(\"ErrorMsg\", ErrorMsg);\nOutputs.AddChild(psContacts);\nOutputs.AddChild(psAccounts);\nBCCon = BCAcc = BCAcc = BOCon = null;\n}\n\n}",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserDatabyPhone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserDatabyPhone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "getUserDataby_Phone",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "5",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function getUserDataby_Phone(phone)\n{\nvar BO = TheApplication().GetBusObject(\"Contact\");\nvar BC = BO.GetBusComp(\"Contact\");\nvar ContactId = \"\";\n\n\tBC.SetViewMode(AllView);\n\tBC.ActivateField(\"SP Primary Phone Number\");\n\tBC.ActivateField(\"SP Full Name\");\n\tBC.ClearToQuery();\n\tBC.SetSearchExpr(\"EXISTS ([SP Primary Phone Number] = '\"+phone+\"')\");\n\tBC.ExecuteQuery(ForwardOnly);\n\tvar countReq = BC.CountRecords();\n\tif(countReq < 2)\n\t{\n\t\tif(BC.FirstRecord())\n\t\t{\n\t\tContactId = BC.GetFieldValue(\"Id\");\n\t\t}\n\t}\n\nreturn ContactId;\n}\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserDataby_Phone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserDataby_Phone",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "getUserPhonebyId",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "7",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function getUserPhonebyId(UserId)\n{\nvar BO = TheApplication().GetBusObject(\"Employee\");\nvar BC = BO.GetBusComp(\"Employee\");\nvar userPhone = \"\";\n\n\tBC.SetViewMode(AllView);\n\tBC.ActivateField(\"Cell Phone #\");\n\tBC.ClearToQuery();\n\tBC.SetSearchExpr(\"[Id] = '\"+UserId+\"'\");\n\tBC.ExecuteQuery(ForwardOnly);\n\tif(BC.FirstRecord())\n\t{\n\t\tuserPhone = BC.GetFieldValue(\"Cell Phone #\");\n\t}\n\nreturn userPhone;\n}\n\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserPhonebyId",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/getUserPhonebyId",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        },
+        {
+            "Tools Application Use": "",
+            "Parent Inactive": "N",
+            "Repository Name": "Siebel Repository",
+            "Project Locked By Id": "",
+            "Parent Name": "SPXxxxxxKyivstarBS",
+            "Name": "invokeCreateActivity",
+            "Project UI Freeze": "N",
+            "Project Id": "1-5NG2Z",
+            "Project UI Freeze By Id": "",
+            "Comments": "",
+            "Object Locked": "",
+            "Sequence": "8",
+            "Project Locked": "N",
+            "Repository Id": "1-1-1",
+            "Object Language Locked": "",
+            "Project Locked Language": "",
+            "Inactive": "N",
+            "Service Application Use": "",
+            "Sales Application Use": "",
+            "Script": "function invokeCreateActivity(ContactId,Desc,OwnerId,Direction,PhoneNum,CallId,CallControlId)\n{\nvar svc = TheApplication().GetService(\"SPXxxxxxKyivstarBS\");\nvar psInputs = TheApplication().NewPropertySet();\nvar psOutputs = TheApplication().NewPropertySet();\n\npsInputs.SetProperty(\"ContactId\",ContactId);\npsInputs.SetProperty(\"Desc\",Desc);\npsInputs.SetProperty(\"OwnerId\",OwnerId);\npsInputs.SetProperty(\"Direction\",Direction);\npsInputs.SetProperty(\"CallId\",CallId);\npsInputs.SetProperty(\"PhoneNum\",PhoneNum);\npsInputs.SetProperty(\"CallControlId\",CallControlId);\n\nsvc.InvokeMethod(\"createActivity\", psInputs, psOutputs);\n}\n\n",
+            "Project Name": "SP Kyivstar Integration",
+            "Object Locked By Id": "",
+            "First Level Container Module": "",
+            "Program Language": "JS",
+            "Parent Id": "1-5PH98",
+            "Link": [
+                {
+                    "rel": "self",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/invokeCreateActivity",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script/invokeCreateActivity",
+                    "name": "Business Service Server Script"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS",
+                    "name": "Business Service"
+                }
+            ]
+        }
+    ],
+    "Link": {
+        "rel": "self",
+        "href": "https://sblapp.local:442/rent/v1.0/workspace/dev_mmorozov_20260624_fixkyivstar/Business Service/SPXxxxxxKyivstarBS/Business Service Server Script",
+        "name": "Business Service Server Script"
+    }
+}
