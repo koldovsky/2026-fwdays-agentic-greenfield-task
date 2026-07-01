@@ -14,7 +14,7 @@ interface EmptyStateProps {
 
 /**
  * First-run / empty hero per the design system EmptyScreen: a gradient squircle + hexagon
- * resting in an amber glow (shadow-glow), title, description, and one primary action.
+ * resting in a soft amber glow, title, description, and one primary action.
  */
 export function EmptyState({
 	title,
@@ -34,23 +34,35 @@ export function EmptyState({
 				gap: t.space[3],
 			}}
 		>
-			{/* Honey jar — gradient squircle resting in an amber glow (design shadow-glow) */}
-			<LinearGradient
-				colors={[t.colors.highlightGold, t.colors.accentPressed]}
-				start={{ x: 0.15, y: 0 }}
-				end={{ x: 0.85, y: 1 }}
+			{/* Honey jar — gradient squircle resting in a soft amber glow. The wrapper casts
+			    the glow (reliable iOS shadow); the gradient fills it. */}
+			<View
 				style={{
-					width: 96,
-					height: 96,
-					borderRadius: 24,
-					alignItems: 'center',
-					justifyContent: 'center',
 					marginBottom: t.space[6],
-					boxShadow: `0px 0px 0px 1px ${t.colors.accentSoft}, 0px 8px 28px ${t.colors.runningGlow}`,
+					borderRadius: 26,
+					backgroundColor: t.colors.accentPressed,
+					shadowColor: t.colors.accent,
+					shadowOpacity: 0.6,
+					shadowRadius: 24,
+					shadowOffset: { width: 0, height: 10 },
+					elevation: 12,
 				}}
 			>
-				<Hexagon size={48} color={t.colors.onAccent} fill={t.colors.onAccent} />
-			</LinearGradient>
+				<LinearGradient
+					colors={[t.colors.highlightGold, t.colors.accentPressed]}
+					start={{ x: 0.1, y: 0 }}
+					end={{ x: 0.9, y: 1 }}
+					style={{
+						width: 104,
+						height: 104,
+						borderRadius: 26,
+						alignItems: 'center',
+						justifyContent: 'center',
+					}}
+				>
+					<Hexagon size={52} color={t.colors.onAccent} fill={t.colors.onAccent} />
+				</LinearGradient>
+			</View>
 
 			<Text
 				style={{
