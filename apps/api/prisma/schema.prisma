@@ -10,6 +10,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// The single signed-in user. `passwordHash` is null for accounts created via Google
+/// only (an argon2 hash otherwise — never plaintext, NFR-SEC-01).
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  identities   AuthIdentity[]
+  refreshTokens RefreshToken[]
+}
+
+/// A sign-in provider linked to a user. One verified email maps to one User across
+/// providers (FR-AUTH-04). `provider` is "password" or "google".
+model AuthIdentity {
+  id             String   @id @default(cuid())
+  provider       String
+  /// Stable id from the provider (Google `sub`); the user id itself for password.
+  providerUserId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+/// A rotating refresh token. Only the token hash is stored; rotation sets `revokedAt`
+/// and `replacedById` (FR-AUTH-05, NFR-SEC-01).
+model RefreshToken {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+}
+
 /// A single tracked time entry. `stoppedAt`/`durationSec` are null while running.
 model TimeEntry {
   id          String    @id @default(cuid())

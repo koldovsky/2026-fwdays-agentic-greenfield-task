@@ -12,9 +12,9 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 2. Data model + migration
 
-- [ ] 2.1 Add Prisma models `User` (unique email, optional `passwordHash`), `AuthIdentity` (`provider`, `providerUserId`, `userId`, unique per provider+providerUserId), `RefreshToken` (hashed token, `userId`, `expiresAt`, `revokedAt`, `replacedById`), with indexes
-- [ ] 2.2 `prisma migrate dev --name add-auth`; regenerate client
-- [ ] 2.3 Add env keys to `.env` + `.env.example`: `JWT_ACCESS_SECRET`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- [x] 2.1 Add Prisma models `User` (unique email, optional `passwordHash`), `AuthIdentity` (`provider`, `providerUserId`, `userId`, unique per provider+providerUserId), `RefreshToken` (hashed token, `userId`, `expiresAt`, `revokedAt`, `replacedById`), with indexes
+- [x] 2.2 `prisma migrate dev --name add-auth`; regenerate client
+- [x] 2.3 Add env keys to `.env` + `.env.example`: `JWT_ACCESS_SECRET`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
 ## 3. API — password auth, hashing, tokens (FR-AUTH-01/02, NFR-SEC-01)
 
