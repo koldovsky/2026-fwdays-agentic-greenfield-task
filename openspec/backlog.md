@@ -1,6 +1,6 @@
 # Change Backlog — Sport & Nutrition Coach
 
-*Last updated: 2026-06-30 · Single source of truth for **what work remains and in what order**.*
+*Last updated: 2026-07-01 · Single source of truth for **what work remains and in what order**.*
 
 This is the **dependency-ordered backlog of OpenSpec changes**. Each row maps **1:1** to a future
 `openspec/changes/<id>/` — the `id` here **is** the change id. The implementation loop reads this
@@ -58,7 +58,8 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | food-text | done | agent | 3 | router | US-2 | M3 | Food log by text: parse → Food DB lookup/add → food_log write |
 | metrics | done | agent | 3 | router | US-7 | M5 | Body metrics + trend diffs (like-vs-like) |
 | query | done | agent | 4 | food-text | US-4 | M3 | Ask the DB: SQL SUM (DB-as-memory) |
-| correction | todo | agent | 4 | food-text | US-5 | M3 | Correct last entry |
+| correction | done | agent | 4 | food-text | US-5 | M3 | Correct last entry |
+| shared-lang | todo | agent | 4 | food-text, metrics, query | — | M3 | Extract `src/util/lang.ts` (`detectLang`/`Lang`/Cyrillic regexes) — dedupe 3 copies (backend-conventions rule #12) |
 | clarify | todo | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
 | food-photo | todo | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), ephemeral, never persisted — ask on hidden calorie-movers (ADR-0015) |
 | progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
@@ -81,6 +82,10 @@ provision (manual) → pipe → data ─┬─ router ─┬─ food-text ─┬
              └─ onboarding                            │
                     food-text + metrics + coach-persona → reviews → notion-mirror → hardening
 ```
+
+**shared-lang** (tech-debt, off-DAG): food-text + metrics + query → extract `src/util/lang.ts`. Run it
+**before** clarify / food-photo / progress-photo / reviews — those voice surfaces also detect the
+user's language, so the shared module must exist first or they'll write copies #4-7.
 
 ---
 
@@ -154,6 +159,19 @@ DB is the memory. US-4.
 ### correction — M3 · blocked-by: food-text
 Router classifies `correction` → update the last relevant entry; confirmation reflects the
 corrected value. US-5.
+
+### shared-lang — M3 · blocked-by: food-text, metrics, query
+`detectLang`, the `Lang` type, and the `UK_CHARS`/`CYRILLIC` regexes are copy-pasted **verbatim**
+across `src/food/confirm.ts`, `src/metrics/confirm.ts`, and `src/query/answer.ts` — three homes for
+one fact, the canonical violation of
+[backend-conventions](../.claude/skills/backend-conventions/SKILL.md) rule #12 (surfaced by the
+`/run-backlog` step-7 duplication gate). Extract one `src/util/lang.ts` (`export const detectLang`,
+`export type Lang`), repoint all three importers, delete the local copies. **No behavior change** —
+the existing food/metrics/query suites stay green; add `test/util/lang.test.ts` covering the detection
+table (uk via `іїєґ`, ru via `а-яё`, en default). **Run before `clarify`/`food-photo`/
+`progress-photo`/`reviews`** — those voice surfaces also mirror the user's language, so landing the
+shared module first stops copies #4-7 from ever being written. Touches files from already-archived
+changes, hence its own change (not folded into any feature). No US (tech debt).
 
 ### clarify — M3 · blocked-by: food-text, coach-persona
 Implements the **precision-first** ask from coach-persona / [ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md):
