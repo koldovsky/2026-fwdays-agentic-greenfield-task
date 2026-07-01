@@ -13,6 +13,7 @@ import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ApiError } from '../api/client';
 import { type AuthFormValues, signInSchema, signUpSchema } from '../auth/authSchemas';
 import { useGoogleAuth } from '../auth/useGoogleAuth';
+import { TextLink } from '../components/TextLink';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme';
 
@@ -60,8 +61,8 @@ export function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1, backgroundColor: t.colors.bg }}
     >
-      <View style={{ flex: 1, justifyContent: 'center', padding: t.screenGutter, gap: t.space[4] }}>
-        <View style={{ gap: t.space[2] }}>
+      <View style={{ flex: 1, justifyContent: 'center', padding: t.screenGutter }}>
+        <View style={{ gap: t.space[2], marginBottom: t.space[6] }}>
           <Text
             style={{
               color: t.colors.text,
@@ -76,50 +77,53 @@ export function AuthScreen() {
           </Text>
         </View>
 
-        <View style={{ gap: t.space[3] }}>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Email"
-                placeholderTextColor={t.colors.textMuted}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-                style={inputStyle(t)}
-              />
-            )}
-          />
-          {errors.email ? <FieldError t={t} message={errors.email.message} /> : null}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="Email"
+              placeholderTextColor={t.colors.textMuted}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              style={inputStyle(t)}
+            />
+          )}
+        />
+        <ErrorSlot t={t} message={errors.email?.message} />
 
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Password"
-                placeholderTextColor={t.colors.textMuted}
-                secureTextEntry
-                autoCapitalize="none"
-                style={inputStyle(t)}
-              />
-            )}
-          />
-          {errors.password ? <FieldError t={t} message={errors.password.message} /> : null}
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="Password"
+              placeholderTextColor={t.colors.textMuted}
+              secureTextEntry
+              autoCapitalize="none"
+              textContentType="password"
+              style={inputStyle(t)}
+            />
+          )}
+        />
+        <ErrorSlot t={t} message={errors.password?.message} />
+
+        {/* Fixed-height slot so a server error doesn't shift the layout. */}
+        <View style={{ minHeight: t.space[6], justifyContent: 'center' }}>
+          {serverError ? (
+            <Text style={{ color: t.colors.accent, fontSize: t.fontSize.subhead }}>
+              {serverError}
+            </Text>
+          ) : null}
         </View>
-
-        {serverError ? (
-          <Text style={{ color: t.colors.accent, fontSize: t.fontSize.subhead }}>
-            {serverError}
-          </Text>
-        ) : null}
 
         <Pressable
           onPress={() => void handleSubmit(onSubmit)()}
@@ -128,8 +132,9 @@ export function AuthScreen() {
             backgroundColor: t.colors.accent,
             opacity: isSubmitting ? 0.5 : 1,
             borderRadius: t.radius.pill,
-            paddingVertical: t.space[4],
+            height: 52,
             alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {isSubmitting ? (
@@ -151,11 +156,13 @@ export function AuthScreen() {
           <Pressable
             onPress={() => void google.signIn()}
             style={{
+              marginTop: t.space[3],
               borderColor: t.colors.border,
               borderWidth: 1,
               borderRadius: t.radius.pill,
-              paddingVertical: t.space[4],
+              height: 52,
               alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <Text style={{ color: t.colors.text, fontSize: t.fontSize.headline }}>
@@ -164,22 +171,36 @@ export function AuthScreen() {
           </Pressable>
         ) : null}
 
-        <Pressable onPress={toggleMode} style={{ alignItems: 'center', paddingVertical: t.space[2] }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: t.space[5],
+          }}
+        >
           <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead }}>
-            {mode === 'signin'
-              ? 'New here? Create an account'
-              : 'Already have an account? Sign in'}
+            {mode === 'signin' ? 'New here? ' : 'Already have an account? '}
           </Text>
-        </Pressable>
+          <TextLink onPress={toggleMode}>
+            {mode === 'signin' ? 'Create an account' : 'Sign in'}
+          </TextLink>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-function FieldError({ t, message }: { t: ReturnType<typeof useTheme>; message?: string }) {
-  if (!message) return null;
+/** Always-present, fixed-height row so showing/hiding a field error can't reflow the form. */
+function ErrorSlot({ t, message }: { t: ReturnType<typeof useTheme>; message?: string }) {
   return (
-    <Text style={{ color: t.colors.accent, fontSize: t.fontSize.footnote }}>{message}</Text>
+    <View style={{ minHeight: t.space[5], paddingTop: t.space[1], paddingBottom: t.space[2] }}>
+      {message ? (
+        <Text style={{ color: t.colors.accent, fontSize: t.fontSize.footnote }}>
+          {message}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -189,8 +210,8 @@ function inputStyle(t: ReturnType<typeof useTheme>) {
     borderColor: t.colors.border,
     borderWidth: 1,
     borderRadius: t.radius.md,
+    height: 52,
     paddingHorizontal: t.space[4],
-    paddingVertical: t.space[4],
     color: t.colors.text,
     fontSize: t.fontSize.body,
   } as const;

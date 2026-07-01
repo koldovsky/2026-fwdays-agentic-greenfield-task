@@ -56,6 +56,20 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T14:30Z — Auth screen: stable layout + link affordance
+
+**Done:** Fixed input "trembling" (layout reflow): the centered form re-centered whenever an
+error line or the iOS keyboard-accessory changed height. Gave inputs/buttons a fixed height
+(52) and reserved fixed-height slots for field + server errors, and added
+`textContentType` to the inputs. Added a reusable `TextLink` (accent + underline) and used
+it for the auth mode toggle so "Create an account" / "Sign in" read as tappable links.
+
+**State now:** Mobile typecheck + lint green. Layout no longer shifts on focus/typing.
+
+**Next steps:** Continue on-device auth verification; `openspec archive add-auth` when done.
+
+---
+
 ## 2026-07-01T14:10Z — Mobile forms + state conventions (RHF+Zod, Zustand)
 
 **Done:** Added an AGENTS.md rule: mobile forms validate with **React Hook Form + Zod**
