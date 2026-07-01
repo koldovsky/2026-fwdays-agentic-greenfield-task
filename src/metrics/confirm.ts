@@ -1,12 +1,10 @@
 import type { MetricColumn, MetricConfirmation, MetricDelta } from './types.js';
 import { detectLang, type Lang } from '../util/lang.js';
+import { fmt } from '../util/num.js';
 
 // Build the confirmation (design §4). The prose CONTAINS the numbers + deltas, so it's assembled in
 // code, never by the model (invariants #1/#2/#5 — no LLM call on this path at all). Prose mirrors the
 // user's language (invariant #6); the stored columns stay English. A first-ever metric shows no delta.
-
-/** Trim a trailing `.0` so whole units read cleanly. */
-const fmt = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 const UNIT: Record<MetricColumn, string> = {
   weightKg: 'кг',

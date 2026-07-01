@@ -4,6 +4,7 @@
 
 <!-- correction (M3, wave 4) landed 2026-07-01: in-place edit of the last food_log entry -->
 <!-- shared-lang (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/lang.ts, deduped 3 detectLang copies; filed shared-fmt follow-up -->
+<!-- shared-fmt (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/num.ts (fmt), deduped 3 copies; shared-lang sibling closed -->
 
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
@@ -32,7 +33,9 @@ zero LLM calls (US-7). `query`: DB-as-memory — answer a nutrition question fro
 in code, **zero** LLM calls; a named product re-resolves through the same `resolveFood` pipeline, ≤1
 call), tenant-scoped, honest confirmation (US-5). `shared-lang`: extracted `src/util/lang.ts` (one home for
 `detectLang`/`Lang`/Cyrillic regexes), deduped 3 verbatim copies (rule #12), no behavior change.
-166 tests green; all gates + maker≠checker review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
+`shared-fmt`: extracted `src/util/num.ts` (one home for the `fmt` trailing-`.0` trim), deduped the
+sibling 3-copy triple (rule #12), no behavior change.
+170 tests green; all gates + maker≠checker review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
 baseline (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
@@ -134,6 +137,13 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   query suites stay green; added `test/util/lang.test.ts` (uk via `іїєґ`, ru via `а-яё`, en default, mixed
   precedence). 166 tests green (+4). Opus reviewer → CLEAN (0 findings). The step-7 scan also surfaced a
   sibling `fmt` triple-copy → filed **`shared-fmt`** follow-up (out of scope here).
+- **M3 `shared-fmt`** (wave 4, tech debt, no US) — extracted `src/util/num.ts` (`export fmt`, the
+  trailing-`.0` trim) and repointed `src/food/confirm.ts`, `src/metrics/confirm.ts`, `src/query/answer.ts`
+  to it, deleting the 3 verbatim copies (backend-conventions rule #12; the sibling dup the `shared-lang`
+  step-7 scan surfaced). **No behavior change** — food/metrics/query suites stay green; added
+  `test/util/num.test.ts` (integer, fractional-round, whole-valued float, negatives). 170 tests green
+  (+4). Opus reviewer → CLEAN (0 findings, both axes). Lands before the voice surfaces
+  (`clarify`/`food-photo`) can write copies #4+.
 - Loop tooling: `run-backlog` now assigns a **model+effort tier per phase** (Opus for propose/improve/
   review; Sonnet 5 for apply/verify/docs/gates; Haiku for mechanical steps) — `metrics` was the first
   change run under it (apply delegated to a Sonnet maker subagent). `run-backlog` is also **autonomous/
@@ -180,10 +190,11 @@ added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), 
     live-LLM gate.
 11. ✅ **`shared-lang` (M3, wave 4, tech debt): code-complete + archived** — extracted `src/util/lang.ts`,
     deduped the 3-copy `detectLang` before the voice surfaces. Deterministic, no live-LLM gate.
-12. **`clarify` / `food-photo` (wave 4): NEXT** — both build on `coach-persona`; the shared `lang` home now
-    exists so they won't re-copy `detectLang`. `reviews` (wave 5) is also unblocked (`food-text` +
-    `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`. Tech-debt **`shared-fmt`**
-    (sibling `fmt` triple-copy, filed by the shared-lang step-7 scan) is also ready.
+12. ✅ **`shared-fmt` (M3, wave 4, tech debt): code-complete + archived** — extracted `src/util/num.ts`
+    (`fmt`), deduped the sibling 3-copy triple before the voice surfaces. Deterministic, no live-LLM gate.
+13. **`clarify` / `food-photo` (wave 4): NEXT** — both build on `coach-persona`; the shared `lang` +
+    `num` homes now exist so they won't re-copy `detectLang`/`fmt`. `reviews` (wave 5) is also unblocked
+    (`food-text` + `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.
