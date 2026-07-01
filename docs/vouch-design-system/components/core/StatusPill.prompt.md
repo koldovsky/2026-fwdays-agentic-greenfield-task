@@ -1,4 +1,4 @@
-Inline status pill for the CV-Agent tailoring pipeline. Shows the current job state with a colored dot indicator and text label.
+Inline status pill for the Vouch tailoring pipeline. Shows the current job state with a colored dot indicator and text label.
 
 ```jsx
 <StatusPill status="queued" />

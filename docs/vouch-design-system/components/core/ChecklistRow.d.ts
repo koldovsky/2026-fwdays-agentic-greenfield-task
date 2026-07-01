@@ -1,10 +1,10 @@
 /**
- * Single requirement row in the CV-Agent compliance checklist.
+ * Single requirement row in the Vouch compliance checklist.
  * Displays requirement title, must/nice badge, one-sentence rationale,
  * and a right-aligned status label with colored dot.
  * FR-CHECKLIST-02
  *
- * @startingPoint section="CV-Agent" subtitle="Compliance checklist row — met / partial / gap / overclaim" viewport="700x80"
+ * @startingPoint section="Vouch" subtitle="Compliance checklist row — met / partial / gap / overclaim" viewport="700x80"
  */
 export interface ChecklistRowProps {
   /** Requirement title (e.g. "5+ years React") */

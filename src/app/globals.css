@@ -1,26 +1,123 @@
-@import "../../web/node_modules/tailwindcss/dist/lib.d.mts";
+@import "tailwindcss";
+
+/*
+ * Vouch design tokens.
+ * Source of truth: docs/vouch-design-system/tokens/*.css (+ DESIGN.md).
+ * Tailwind-namespaced tokens live in @theme so utilities are generated
+ * (bg-ink, text-brand, font-display, rounded-xl, shadow-card, …).
+ * Font families resolve to next/font variables set in layout.tsx.
+ */
+@theme inline {
+  /* ── Fonts (wired to next/font in layout.tsx) ── */
+  --font-display: var(--font-bricolage);
+  --font-body: var(--font-hanken);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-hanken);
+
+  /* ── Brand ── */
+  --color-ink: #16243d;
+  --color-ink-soft: #5a6678;
+  --color-ink-muted: #94a0b0;
+  --color-ink-faint: #b3bcc8;
+  --color-brand: #3257c5;
+  --color-brand-hover: #2a47a8;
+  --color-brand-wash: #eaf0fd;
+
+  /* ── Surfaces ── */
+  --color-surface-card: #ffffff;
+  --color-surface-canvas: #f4f5f7;
+  --color-surface-warm: #faf7f2;
+  --color-surface-ink: #16243d;
+  --color-hairline: #e3e6ea;
+  --color-hairline-warm: #ece7dd;
+
+  /* ── Status: met / partial / gap / overclaim-risk ── */
+  --color-met: #2f8f5b;
+  --color-met-bg: #e7f4ec;
+  --color-partial: #c79a1e;
+  --color-partial-bg: #fbf3da;
+  --color-partial-text: #b08816;
+  --color-gap: #d05151;
+  --color-gap-bg: #fbe9e9;
+  --color-gap-text: #c0403d;
+  --color-overclaim: #e08a3c;
+  --color-overclaim-bg: #fbeede;
+  --color-overclaim-text: #cf7726;
+
+  /* ── Type scale (font-size utilities) ── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 26px;
+  --text-3xl: 34px;
+  --text-4xl: 40px;
+  --text-5xl: 52px;
+  --text-display: 56px;
+
+  /* ── Line height ── */
+  --leading-tight: 1.04;
+  --leading-snug: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.55;
+  --leading-loose: 1.6;
+
+  /* ── Letter spacing ── */
+  --tracking-tightest: -0.025em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: -0.01em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.12em;
+  --tracking-eyebrow: 0.14em;
+
+  /* ── Border radius ── */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 18px;
+  --radius-3xl: 20px;
+  --radius-pill: 999px;
+
+  /* ── Elevation ── */
+  --shadow-card: 0 1px 3px rgba(22, 36, 61, 0.08);
+  --shadow-lifted: 0 4px 16px -4px rgba(22, 36, 61, 0.18);
+  --shadow-float: 0 18px 40px -24px rgba(22, 36, 61, 0.35);
+  --shadow-deep: 0 40px 80px -30px rgba(0, 0, 0, 0.55);
+  --shadow-ink: 0 24px 50px -24px rgba(22, 36, 61, 0.5);
+  --shadow-brand: 0 2px 8px rgba(50, 87, 197, 0.25);
+  --shadow-brand-strong: 0 8px 24px -6px rgba(50, 87, 197, 0.6);
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* ── Spacing scale (4px base) — raw vars, not Tailwind's --spacing ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* ── Semantic aliases ── */
+  --text-primary: var(--color-ink);
+  --text-secondary: var(--color-ink-soft);
+  --text-muted: var(--color-ink-muted);
+  --surface-page: var(--color-surface-canvas);
+  --border: var(--color-hairline);
+  --accent: var(--color-brand);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
 }

@@ -1,20 +1,32 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Shown to AI when creating artifacts (proposal, specs, design, tasks).
+context: |
+  Product: Vouch — a Ukrainian-first "Honest Resume Tailor". It rewrites CV
+  bullets to fit a job description while grounding every claim in the candidate's
+  real experience; it flags overclaim-risk before export. Honesty is the product.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Source of truth: docs/cv-agent-requirements.md (PRD, stable IDs FR-*/NFR-*/TC-*/BC-*).
+  Narrative: docs/cv-agent-product-brief.md. Architecture: docs/system-design.md
+  (Feature-Sliced Design + async two-pass tailoring pipeline). Design: docs/DESIGN.md.
+
+  Stack: Next.js 16 App Router, TypeScript strict, React 19, Tailwind v4.
+  Anthropic Claude (latest models) for generation + a separate stricter grounding
+  pass. BullMQ + Redis queue, Postgres, merchant-of-record billing. shared/lib is
+  framework-free and 100% unit-testable (TC-PURE-01).
+
+  Conventions: every requirement traces to a PRD ID — cite them in specs and tasks.
+  Ukrainian-first UI, calm/direct tone, no emoji, no exclamation points. Overclaim
+  detection is non-negotiable and cannot be disabled (BC-HONESTY-02).
+
+rules:
+  proposal:
+    - State the motivation in terms of the PRD; reference the FR/NFR/BC IDs it serves.
+    - Keep it focused — one buildable increment per change.
+  specs:
+    - Every Requirement cites the PRD ID(s) it implements (e.g. "Implements FR-CHECKLIST-01").
+    - Each Requirement has at least one WHEN/THEN scenario, including a failure/honesty path where relevant.
+    - Pure logic (scoring, i18n) must be expressed as deterministic, testable behavior (TC-PURE-01).
+  tasks:
+    - Break work into chunks of max ~2 hours.
+    - Include a verification task (build/lint/test → evidence) and an independent review pass (maker ≠ checker).

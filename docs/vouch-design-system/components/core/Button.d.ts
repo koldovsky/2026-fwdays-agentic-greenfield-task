@@ -1,5 +1,5 @@
 /**
- * Primary interaction control for CV-Agent UI.
+ * Primary interaction control for Vouch UI.
  * Four visual variants (primary/secondary/ghost/dark), three sizes, disabled state.
  *
  * @startingPoint section="Components" subtitle="Buttons — all variants and sizes" viewport="700x180"

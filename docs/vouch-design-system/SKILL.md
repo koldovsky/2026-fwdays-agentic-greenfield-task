@@ -1,6 +1,6 @@
 ---
-name: cv-agent-design
-description: Use this skill to generate well-branded interfaces and assets for CV-Agent, an honest AI-powered resume tailor. Contains essential design guidelines, color tokens, type system, component library, and UI kit for the CV-Agent product. Use for production code or throwaway prototypes/mocks.
+name: vouch-design
+description: Use this skill to generate well-branded interfaces and assets for Vouch, an honest AI-powered resume tailor. Contains essential design guidelines, color tokens, type system, component library, and UI kit for the Vouch product. Use for production code or throwaway prototypes/mocks.
 user-invocable: true
 ---
 

@@ -1,5 +1,5 @@
 /**
- * Pricing tier card for CV-Agent's three plans.
+ * Pricing tier card for Vouch's three plans.
  * Featured (Pro) card renders with ink background and elevated shadow.
  * FR-SALES-03
  */

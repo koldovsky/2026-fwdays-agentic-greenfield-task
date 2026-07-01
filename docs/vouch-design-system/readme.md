@@ -1,8 +1,8 @@
-# CV-Agent Design System
+# Vouch Design System
 
 ## About
 
-CV-Agent is a Ukrainian-first "Honest Resume Tailor" — a web tool that rewrites CV bullets to fit a specific job description while rigorously grounding every claim in the candidate's actual experience. The product's core differentiator is honesty: it never invents skills, flags overclaim-risk bullets before export, and shows a transparent per-requirement compliance checklist with a weighted match score.
+Vouch is a Ukrainian-first "Honest Resume Tailor" — a web tool that rewrites CV bullets to fit a specific job description while rigorously grounding every claim in the candidate's actual experience. The product's core differentiator is honesty: it never invents skills, flags overclaim-risk bullets before export, and shows a transparent per-requirement compliance checklist with a weighted match score.
 
 **Key PRD feature refs:**
 - FR-CV-01: CV upload (PDF/DOCX)
@@ -20,7 +20,7 @@ CV-Agent is a Ukrainian-first "Honest Resume Tailor" — a web tool that rewrite
 
 ## Content Fundamentals
 
-**Voice:** Direct, calm, honest. CV-Agent speaks like a knowledgeable colleague who respects your intelligence. No hype, no exclamation points, no marketing fluff.
+**Voice:** Direct, calm, honest. Vouch speaks like a knowledgeable colleague who respects your intelligence. No hype, no exclamation points, no marketing fluff.
 
 **Tone:** Warm but precise. The tool handles something personal (your career) with care. Copy acknowledges complexity without catastrophizing.
 
@@ -132,7 +132,7 @@ tokens/
   spacing.css                      Spacing + border-radius tokens
   shadows.css                      Shadow tokens
 assets/
-  logo.svg                         CV-Agent logotype (icon + wordmark)
+  logo.svg                         Vouch logotype (icon + wordmark)
 guidelines/
   brand-colors.card.html           Brand & ink palette specimen
   surface-colors.card.html         Surface color specimen
@@ -155,6 +155,6 @@ components/
     UploadZone.jsx / .d.ts / .prompt.md
     core.card.html                 Component preview card
 ui_kits/
-  cv-agent/
+  vouch/
     index.html                     Main app — upload → results workflow
 ```

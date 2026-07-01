@@ -1,4 +1,4 @@
-Primary action button for CV-Agent interfaces. Use `primary` for the main CTA, `secondary` for supporting actions, `ghost` for text-link-style actions, `dark` for actions on light surfaces that need extra weight (e.g. "Export PDF").
+Primary action button for Vouch interfaces. Use `primary` for the main CTA, `secondary` for supporting actions, `ghost` for text-link-style actions, `dark` for actions on light surfaces that need extra weight (e.g. "Export PDF").
 
 ```jsx
 // Primary CTA
