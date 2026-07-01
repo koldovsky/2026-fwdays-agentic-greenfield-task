@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Hexagon, Play, Sparkles } from 'lucide-react-native';
 import { Text, View } from 'react-native';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { Button } from './Button';
 import { useTheme } from '../theme';
 
@@ -28,31 +29,38 @@ export function EmptyState({ title, description, actionLabel, onAction, tip }: E
         gap: t.space[3],
       }}
     >
-      {/* Honey jar — empty, waiting to fill */}
+      {/* Honey jar — a soft amber halo behind a gradient squircle, waiting to fill */}
       <View
         style={{
-          width: 132,
-          height: 132,
-          borderRadius: 66,
-          backgroundColor: t.colors.accentFaint,
+          width: 140,
+          height: 140,
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: t.space[4],
         }}
       >
+        <Svg width={140} height={140} style={{ position: 'absolute' }}>
+          <Defs>
+            <RadialGradient id="honeyHalo" cx="50%" cy="42%" r="55%">
+              <Stop offset="0%" stopColor={t.colors.accent} stopOpacity={0.3} />
+              <Stop offset="100%" stopColor={t.colors.accent} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect x={0} y={0} width={140} height={140} fill="url(#honeyHalo)" />
+        </Svg>
         <LinearGradient
-          colors={[t.colors.highlightGold, t.colors.accent]}
+          colors={[t.colors.highlightGold, t.colors.accentPressed]}
           start={{ x: 0.15, y: 0 }}
           end={{ x: 0.85, y: 1 }}
           style={{
-            width: 92,
-            height: 92,
-            borderRadius: 22,
+            width: 96,
+            height: 96,
+            borderRadius: 24,
             alignItems: 'center',
             justifyContent: 'center',
             shadowColor: t.colors.accent,
-            shadowOpacity: 0.5,
-            shadowRadius: 20,
+            shadowOpacity: 0.45,
+            shadowRadius: 22,
             shadowOffset: { width: 0, height: 0 },
           }}
         >
