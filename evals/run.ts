@@ -2,12 +2,13 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { FoodPer } from '@prisma/client';
 import { loadEnv } from '../src/config/env.js';
+import { estimateFood } from '../src/food/estimate.js';
 import { scaleFactor, scaleMacros } from '../src/food/scale.js';
 import type { MacroBase, ScaledMacros } from '../src/food/types.js';
 import { createAnthropicClient } from '../src/llm/client.js';
 import { classifyMessage } from '../src/router/router.js';
 import { coachPersonaToneCases } from './cases/coach-persona-tone.eval.js';
-import { accuracy, gradeExact } from './grade.js';
+import { accuracy, gradeAsk, gradeExact } from './grade.js';
 import { gradeWithJudge, llmJudge, type JudgeCase } from './judge.js';
 
 // Local-only eval runner (ADR-0013): issues the REAL operations (no temperature override — ADR-0017)
@@ -58,6 +59,32 @@ const runFoodScale = (): number => {
   return accuracy(hits);
 };
 
+interface DiscriminationCase {
+  input: string;
+  expected: { asks: boolean };
+}
+
+/**
+ * Ask/log discrimination (ADR-0015, US-6): the estimate call's optional `clarify` field IS the ask
+ * signal (design D1 — the semantic judgment rides that one call, no extra request). A case passes
+ * when the model raises a question exactly when the label says it should. Multiple-Food-DB-match
+ * disambiguation is code-detected (covered by test/clarify/decide.test.ts), so it is not graded here.
+ */
+const runClarifyDiscrimination = async (client: Anthropic): Promise<number> => {
+  const lines = readFileSync('evals/datasets/clarify-discrimination.jsonl', 'utf8')
+    .trim()
+    .split('\n');
+
+  const hits: boolean[] = [];
+  for (const line of lines) {
+    const testCase = JSON.parse(line) as DiscriminationCase;
+    const estimate = await estimateFood(client, testCase.input);
+    hits.push(gradeAsk(testCase.expected.asks, estimate.clarify != null));
+  }
+
+  return accuracy(hits);
+};
+
 /** Mean judge score (0–100) over a judge suite; each case re-judged when borderline (judge.ts). */
 const runJudgeSuite = async (
   client: Anthropic,
@@ -80,6 +107,7 @@ const main = async (): Promise<void> => {
   const results = {
     'router-intent': { intent: await runRouterIntent(client, env.TZ) },
     'food-scale': { accuracy: runFoodScale() },
+    'clarify-discrimination': { accuracy: await runClarifyDiscrimination(client) },
     'coach-persona-tone': {
       score: await runJudgeSuite(client, coachPersonaToneCases, TONE_THRESHOLD),
     },

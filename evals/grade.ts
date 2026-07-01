@@ -4,6 +4,9 @@
 /** Exact match for enum/label fields (intent, source, meal). */
 export const gradeExact = (expected: string, actual: string): boolean => expected === actual;
 
+/** Ask/log discrimination: did the model raise a clarifying question exactly when it should? */
+export const gradeAsk = (expected: boolean, actual: boolean): boolean => expected === actual;
+
 /** Accuracy over a set of pass/fail results (empty set scores 1 — nothing to fail). */
 export const accuracy = (results: boolean[]): number =>
   results.length === 0 ? 1 : results.filter(Boolean).length / results.length;

@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { FoodPer, FoodSource } from '@prisma/client';
+import type { Confirmation } from '../../src/food/types.js';
+import type { LogOutcome } from '../../src/clarify/types.js';
 import { createFoodService } from '../../src/food/service.js';
 import type { FoodClient, FoodService } from '../../src/food/types.js';
+
+// A logFood call that logs directly (no clarification) — unwrap to its confirmation. The clarify
+// change turned logFood into a LogOutcome discriminated union; these direct-log cases assert the
+// unchanged write/confirm path (invariants #2/#3/#8), so a returned `ask` here is a test failure.
+const loggedOf = (outcome: LogOutcome | null): Confirmation | undefined =>
+  outcome?.kind === 'logged' ? outcome.confirmation : undefined;
 
 // End-to-end service wiring over a fake Prisma: every row carries user_id (invariant #8), the entry
 // lands on the router-resolved date incl. "вчера" back-dating (invariant #1), and the confirmation
@@ -23,6 +31,9 @@ const makeFake = (
     user: { findUnique: vi.fn().mockResolvedValue({ id: 7 }) },
     foodDatabase: {
       findFirst: vi.fn().mockResolvedValue(match),
+      // The log path resolves through lookupCandidates (findMany): a hit is a one-element list, a
+      // miss is empty (falls through to the estimate call).
+      findMany: vi.fn().mockResolvedValue(match ? [match] : []),
       create: vi.fn((args: CreatedRow) => {
         catalogCreates.push(args);
         return Promise.resolve({ id: 99, ...args.data });
@@ -68,12 +79,14 @@ describe('createFoodService.logFood', () => {
     });
     const service = createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON);
 
-    const confirmation = await service.logFood(99n, '200г куриного филе', {
-      date: '2026-06-30',
-      product: 'куриного филе',
-      quantity: 200,
-      unit: 'г',
-    });
+    const confirmation = loggedOf(
+      await service.logFood(99n, '200г куриного филе', {
+        date: '2026-06-30',
+        product: 'куриного филе',
+        quantity: 200,
+        unit: 'г',
+      }),
+    );
 
     const row = created[0]?.data;
     expect(row?.userId).toBe(7); // invariant #8
@@ -113,12 +126,14 @@ describe('createFoodService.logFood', () => {
     const { client, created } = makeFake(null);
     const service = createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON);
 
-    const confirmation = await service.logFood(99n, 'тарелка борща', {
-      date: '2026-06-30',
-      product: 'борщ',
-      quantity: 1,
-      unit: '',
-    });
+    const confirmation = loggedOf(
+      await service.logFood(99n, 'тарелка борща', {
+        date: '2026-06-30',
+        product: 'борщ',
+        quantity: 1,
+        unit: '',
+      }),
+    );
 
     expect(created[0]?.data.source).toBe(FoodSource.estimate);
     expect(created[0]?.data.foodDbId).toBeNull();
@@ -172,7 +187,7 @@ describe('createFoodService.logFood', () => {
     const { client, created } = makeFake(null);
     const service = createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON);
 
-    const confirmation = await service.logFood(99n, 'спасибо', { date: '2026-06-30' });
+    const confirmation = loggedOf(await service.logFood(99n, 'спасибо', { date: '2026-06-30' }));
 
     expect(created).toHaveLength(0);
     expect(confirmation?.text).toBeTruthy();

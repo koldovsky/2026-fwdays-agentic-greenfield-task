@@ -1,0 +1,9 @@
+{"input":"творог","expected":{"asks":true},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"hidden protein variant fat% (0/5/9) — high-leverage"}}
+{"input":"картошка","expected":{"asks":true},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"prep hidden (fried in oil vs boiled) — high-leverage cooking fat"}}
+{"input":"салат","expected":{"asks":true},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"dressing/mayo hidden — high-leverage"}}
+{"input":"кофе","expected":{"asks":true},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"sugar/milk hidden turns a ~2 kcal black coffee into a latte — high-leverage"}}
+{"input":"орехи","expected":{"asks":true},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"unknown portion of a calorie-dense food — a handful (~30г/200 kcal) vs a bowl (~150г/1000 kcal) swings ~800 kcal, high-leverage portion (spec enumerates unknown portion as a distinct must-ask)"}}
+{"input":"200г куриного филе","expected":{"asks":false},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"complete text — product, portion, no hidden mover"}}
+{"input":"2 варёных яйца","expected":{"asks":false},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"complete: count + prep stated, low-leverage"}}
+{"input":"150г варёной гречки","expected":{"asks":false},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"complete: portion + prep stated"}}
+{"input":"банан","expected":{"asks":false},"meta":{"capability":"open-question-clarification","trace":["US-6"],"note":"sub-threshold uncertainty (portion moves ≈±50 kcal) — log an estimate, do not ask (invariant #3)"}}

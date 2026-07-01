@@ -2,11 +2,55 @@ import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { handleCallback, handleStart, handleText } from '../../src/bot/bot.js';
 import type { BotDeps } from '../../src/bot/types.js';
-import type { FoodService } from '../../src/food/types.js';
+import type { ClarifyStore } from '../../src/clarify/store.js';
+import type { OpenQuestion } from '../../src/clarify/types.js';
+import type { FoodService, ResolvedFood } from '../../src/food/types.js';
 import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
 import type { QueryService } from '../../src/query/types.js';
+
+// A fresh in-memory clarify store per test (mirrors the module singleton's set/peek/take contract)
+// so pending-question state never leaks between cases.
+const makeClarify = (initial: [bigint, OpenQuestion][] = []): ClarifyStore => {
+  const map = new Map<bigint, OpenQuestion>(initial);
+  return {
+    set: (chatId, question) => void map.set(chatId, question),
+    peek: (chatId) => map.get(chatId) ?? null,
+    take: (chatId) => {
+      const question = map.get(chatId) ?? null;
+      map.delete(chatId);
+      return question;
+    },
+  };
+};
+
+const resolvedStub = (): ResolvedFood => ({
+  name: 'творог',
+  per: 'per100g',
+  base: { kcal: 100, proteinG: 16, fatG: 5, carbsG: 3 },
+  qty: 100,
+  unit: 'g',
+  source: 'estimate',
+  foodDbId: null,
+});
+
+const pendingStub = (askedAt: Date): OpenQuestion => ({
+  resolved: resolvedStub(),
+  parsed: { product: 'творог', qty: undefined, unit: '' },
+  clarification: {
+    kind: 'descriptor',
+    unknown: 'fat%',
+    question: 'Какой жирности?',
+    options: [
+      { label: '5%', value: '5%' },
+      { label: '9%', value: '9%' },
+    ],
+  },
+  meal: 'lunch',
+  date: '2026-06-30',
+  askedAt,
+});
 
 const makeOnboarding = (over: Partial<OnboardingService> = {}): OnboardingService => ({
   startSession: vi.fn().mockResolvedValue({ question: QUESTIONS[Field.AGE] }),
@@ -18,11 +62,18 @@ const makeOnboarding = (over: Partial<OnboardingService> = {}): OnboardingServic
 });
 
 const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
-  logFood: vi.fn().mockResolvedValue({ text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' }),
+  logFood: vi.fn().mockResolvedValue({
+    kind: 'logged',
+    confirmation: { text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' },
+  }),
   saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'тест' }),
   correctLast: vi
     .fn()
     .mockResolvedValue({ text: 'Исправил: тест — 150 ккал · Б 1 / Ж 1 / У 1 г.' }),
+  resolveAnswer: vi
+    .fn()
+    .mockResolvedValue({ text: 'Записал: творог 5% — 121 ккал · Б 16 / Ж 5 / У 3 г.' }),
+  logExpiredEstimate: vi.fn().mockResolvedValue(undefined),
   ...over,
 });
 
@@ -42,12 +93,14 @@ const makeDeps = (
   food: FoodService = makeFood(),
   metrics: MetricsService = makeMetrics(),
   query: QueryService = makeQuery(),
+  clarify: ClarifyStore = makeClarify(),
 ): {
   deps: BotDeps;
   create: ReturnType<typeof vi.fn>;
   food: FoodService;
   metrics: MetricsService;
   query: QueryService;
+  clarify: ClarifyStore;
 } => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
@@ -55,11 +108,12 @@ const makeDeps = (
   });
   const anthropic = { messages: { create } } as unknown as Anthropic;
   return {
-    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics, query },
+    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics, query, clarify },
     create,
     food,
     metrics,
     query,
+    clarify,
   };
 };
 
@@ -167,8 +221,11 @@ describe('handleText', () => {
     const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
     const food = makeFood({
       logFood: vi.fn().mockResolvedValue({
-        text: 'Записал: курица — 330 ккал',
-        addToCatalog: { id: 5, label: '➕ В базу продуктов' },
+        kind: 'logged',
+        confirmation: {
+          text: 'Записал: курица — 330 ккал',
+          addToCatalog: { id: 5, label: '➕ В базу продуктов' },
+        },
       }),
     });
     const { deps } = makeDeps(onboarding, 'log', food);
@@ -261,6 +318,96 @@ describe('handleText', () => {
     expect(onboarding.isOnboarding).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
   });
+
+  it('stores the Open Question and poses it (with a keyboard) on a `log` ask outcome', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const pendingRecord = pendingStub(new Date());
+    const food = makeFood({
+      logFood: vi.fn().mockResolvedValue({
+        kind: 'ask',
+        question: { text: 'Какой жирности творог?', options: ['0%', '5%', '9%'] },
+        pending: pendingRecord,
+      }),
+    });
+    const clarify = makeClarify();
+    const { deps } = makeDeps(onboarding, 'log', food, makeMetrics(), makeQuery(), clarify);
+
+    await handleText({ message: { text: 'творог' }, chat: { id: 7 }, reply }, deps);
+
+    expect(clarify.peek(7n)).toBe(pendingRecord); // held for the next message
+    expect(String(reply.mock.calls[0]?.[0])).toContain('жирности');
+    expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup'); // inline keyboard
+    expect(food.resolveAnswer).not.toHaveBeenCalled();
+  });
+
+  it('resolves a pending question on a fresh `answer` and clears it (classified with the flag)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const clarify = makeClarify([[7n, pendingStub(new Date())]]);
+    const food = makeFood();
+    const { deps, create } = makeDeps(
+      onboarding,
+      'answer',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      clarify,
+    );
+
+    await handleText({ message: { text: '5%' }, chat: { id: 7 }, reply }, deps);
+
+    // The router is asked WITH the pending flag so `answer` is selectable — and only the current
+    // message is sent (no chat history, invariant #1).
+    const routerArgs = create.mock.calls[0]?.[0] as { messages: { content: string }[] };
+    expect(routerArgs.messages).toHaveLength(1);
+    expect(routerArgs.messages[0]?.content).toBe('5%');
+    expect(food.resolveAnswer).toHaveBeenCalledWith(
+      7n,
+      expect.objectContaining({ date: '2026-06-30' }),
+      '5%',
+    );
+    expect(clarify.peek(7n)).toBeNull(); // cleared
+    expect(food.logExpiredEstimate).not.toHaveBeenCalled();
+    expect(String(reply.mock.calls[0]?.[0])).toContain('творог');
+  });
+
+  it('falls back to the estimate on a NON-answer while pending, then routes the new message fresh', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const clarify = makeClarify([[7n, pendingStub(new Date())]]);
+    const food = makeFood();
+    const metrics = makeMetrics();
+    const { deps } = makeDeps(onboarding, 'metric', food, metrics, makeQuery(), clarify);
+
+    await handleText({ message: { text: 'вес 89.2' }, chat: { id: 7 }, reply }, deps);
+
+    expect(food.logExpiredEstimate).toHaveBeenCalledWith(
+      7n,
+      expect.objectContaining({ date: '2026-06-30' }),
+    );
+    expect(food.resolveAnswer).not.toHaveBeenCalled(); // the new message is NOT consumed as the answer
+    expect(clarify.peek(7n)).toBeNull();
+    expect(metrics.logMetric).toHaveBeenCalled(); // handled fresh
+  });
+
+  it('falls back to the estimate when the pending question has expired, then routes fresh', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const expired = pendingStub(new Date(Date.now() - 60 * 60 * 1000)); // an hour old > 10 min TTL
+    const clarify = makeClarify([[7n, expired]]);
+    const food = makeFood();
+    const metrics = makeMetrics();
+    const { deps, create } = makeDeps(onboarding, 'metric', food, metrics, makeQuery(), clarify);
+
+    await handleText({ message: { text: 'вес 89.2' }, chat: { id: 7 }, reply }, deps);
+
+    expect(food.logExpiredEstimate).toHaveBeenCalledWith(7n, expired); // never drop the entry (#3)
+    expect(clarify.peek(7n)).toBeNull();
+    expect(metrics.logMetric).toHaveBeenCalled();
+    // The classifier is called once, fresh — NOT with the pending flag (the question is gone).
+    expect(create).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('handleCallback', () => {
@@ -281,6 +428,48 @@ describe('handleCallback', () => {
 
     expect(answerCallbackQuery).toHaveBeenCalledTimes(1);
     expect(onboarding.submitAnswer).toHaveBeenCalledWith(9n, 'male');
+  });
+
+  it('resolves the pending question from a `q:<index>` tap (mapped to the option value) and clears it', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding();
+    const clarify = makeClarify([[9n, pendingStub(new Date())]]);
+    const food = makeFood();
+    const { deps } = makeDeps(onboarding, 'query', food, makeMetrics(), makeQuery(), clarify);
+
+    // `q:0` indexes the first stored option; its English value ('5%') is what resolution acts on —
+    // the callback_data never carries the (possibly oversized Cyrillic) value itself (W2 fix).
+    await handleCallback(
+      { callbackQuery: { data: 'q:0' }, chat: { id: 9 }, reply, answerCallbackQuery },
+      deps,
+    );
+
+    expect(answerCallbackQuery).toHaveBeenCalledTimes(1);
+    expect(food.resolveAnswer).toHaveBeenCalledWith(
+      9n,
+      expect.objectContaining({ date: '2026-06-30' }),
+      '5%',
+    );
+    expect(clarify.peek(9n)).toBeNull();
+    expect(onboarding.submitAnswer).not.toHaveBeenCalled();
+  });
+
+  it('acknowledges and ignores a stale `q:` tap with no pending question (guard)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding();
+    const food = makeFood();
+    const { deps } = makeDeps(onboarding, 'query', food, makeMetrics(), makeQuery(), makeClarify());
+
+    await handleCallback(
+      { callbackQuery: { data: 'q:5%' }, chat: { id: 9 }, reply, answerCallbackQuery },
+      deps,
+    );
+
+    expect(answerCallbackQuery).toHaveBeenCalledTimes(1); // acknowledged
+    expect(food.resolveAnswer).not.toHaveBeenCalled(); // nothing to resolve
+    expect(reply).not.toHaveBeenCalled();
   });
 
   it('ignores callback data that is not its own', async () => {

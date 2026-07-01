@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { InlineKeyboard } from 'grammy';
+import type { ClarifyStore } from '../clarify/store.js';
 import type { FoodService } from '../food/types.js';
 import type { MetricsService } from '../metrics/types.js';
 import type { OnboardingService } from '../onboarding/types.js';
@@ -13,6 +14,7 @@ export interface BotDeps {
   food: FoodService;
   metrics: MetricsService;
   query: QueryService;
+  clarify: ClarifyStore;
 }
 
 export type ReplyFn = (text: string, other?: { reply_markup?: InlineKeyboard }) => Promise<unknown>;

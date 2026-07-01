@@ -2,6 +2,7 @@ import type { Server } from 'node:http';
 import type { Bot } from 'grammy';
 import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
+import { clarifyStore } from './clarify/store.js';
 import { createHealthServer } from './bot/health.js';
 import { prisma } from './db/client.js';
 import { createFoodService } from './food/service.js';
@@ -63,6 +64,7 @@ const main = async (): Promise<void> => {
     food,
     metrics,
     query,
+    clarify: clarifyStore,
   });
   registerShutdown(bot, health);
 

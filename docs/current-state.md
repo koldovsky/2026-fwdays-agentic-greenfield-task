@@ -5,6 +5,7 @@
 <!-- correction (M3, wave 4) landed 2026-07-01: in-place edit of the last food_log entry -->
 <!-- shared-lang (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/lang.ts, deduped 3 detectLang copies; filed shared-fmt follow-up -->
 <!-- shared-fmt (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/num.ts (fmt), deduped 3 copies; shared-lang sibling closed -->
+<!-- clarify (US-6, M3, wave 4) landed 2026-07-01: precision-first Open Question mechanic (ephemeral in-memory store ADR-0019, ask-vs-log decision, resolve/expiry-fallback); unblocked after 2 review rounds (C1 disambiguation + invariant-#6 language); extracted src/util/num.ts DECIMAL_SOURCE -->
 
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
@@ -34,9 +35,17 @@ in code, **zero** LLM calls; a named product re-resolves through the same `resol
 call), tenant-scoped, honest confirmation (US-5). `shared-lang`: extracted `src/util/lang.ts` (one home for
 `detectLang`/`Lang`/Cyrillic regexes), deduped 3 verbatim copies (rule #12), no behavior change.
 `shared-fmt`: extracted `src/util/num.ts` (one home for the `fmt` trailing-`.0` trim), deduped the
-sibling 3-copy triple (rule #12), no behavior change.
-170 tests green; all gates + maker≠checker review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
-baseline (need `ANTHROPIC_API_KEY` + egress).
+sibling 3-copy triple (rule #12), no behavior change. `clarify`: precision-first **Open Question**
+mechanic (US-6) — `src/clarify/` (ephemeral in-memory store ADR-0019, `decideAskOrLog`, question
+shaping, answer resolve, expiry-fallback); `logFood` returns a discriminated `LogOutcome`; asks one
+batched question only on a hidden high-leverage mover (estimate `clarify` field) or multiple Food-DB
+matches, else logs directly; the answer routes by the stored `Clarification.kind` (quantity rescale =
+0 calls, descriptor re-resolve ≤1, disambiguation select-by-id = a `fact`), no chat history to the
+model (invariant #1), tenant-scoped write (#8), language-mirrored prose (#6).
+197 tests green; all gates + a **two-round** maker≠checker review passed (round 1: C1 disambiguation
+non-functional; round 2: invariant-#6 language on the resolved-answer confirmation). Remaining: the
+**human deploy** + the live LLM/eval run incl. seeding the tone-eval + clarify-discrimination
+baselines (need `ANTHROPIC_API_KEY` + egress).
 
 ## Milestone status *(milestones defined in [prd.md](./prd.md) §9)*
 | Milestone | State |
@@ -44,7 +53,7 @@ baseline (need `ANTHROPIC_API_KEY` + egress).
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
-| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (Food DB fact / LLM estimate → code-scaled `food_log` write) + **query** (DB-as-memory: tenant-scoped SUM → totals vs goal) + **correction** (in-place edit of the last entry, US-5) landed; clarify next |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** + **query** + **correction** + **clarify** (US-6: precision-first Open Question — ask-vs-log, ephemeral store, resolve/expiry-fallback) landed; food-photo (M4) next voice surface |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -146,6 +155,22 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   `test/util/num.test.ts` (integer, fractional-round, whole-valued float, negatives). 170 tests green
   (+4). Opus reviewer → CLEAN (0 findings, both axes). Lands before the voice surfaces
   (`clarify`/`food-photo`) can write copies #4+.
+- **M3 `clarify`** (wave 4, US-6) — the precision-first **Open Question** mechanic (ADR-0015). New
+  `src/clarify/` module: `store.ts` (ephemeral in-memory `Map<chatId, OpenQuestion>`, lazy `isExpired`,
+  no timer — ADR-0019), `decide.ts` (`decideAskOrLog`: ask on the estimate call's optional `clarify`
+  field or on >1 Food-DB match, else log — **zero new LLM call class**), `question.ts` (localized
+  disambiguation prose via `src/util/lang.ts`), `resolve.ts` (routes by the stored `Clarification.kind`
+  — quantity = code rescale/0 calls, descriptor = re-resolve/≤1 call, disambiguation = select-by-id →
+  `fact`/0 calls; expiry fallback logs an honest `estimate`, never drops the entry). `logFood` now
+  returns a discriminated `LogOutcome` (`logged` | `ask`); bot wires a `q:<index>` callback namespace
+  (index, not value → 64-byte-safe) + pending-question branches in `handleText`. Estimate schema gained
+  an optional `clarify` object; authored the `clarify-discrimination` eval (deterministic grader; live
+  run deploy-time). Extracted `src/util/num.ts` `DECIMAL_SOURCE` (deduped the number regex vs
+  `metrics/parse.ts`, rule #12). 197 tests green (+27). **Two review rounds**: round 1 → 1 CRITICAL
+  (multi-match disambiguation lost the `fact` + bare-number misroute — root cause: `OpenQuestion` didn't
+  record the asked `unknown`); round 2 → 1 MAJOR (invariant #6: resolved-answer confirmation localized
+  off the answer, not the user's words) + MINOR + a suggestion; round 3 → CLEAN. No chat history to the
+  model (#1), tenant-scoped writes (#8), language-mirrored prose (#6).
 - Loop tooling: `run-backlog` assigns a **model+effort tier per phase** — **Opus · high for every
   reasoning/implementation/coherence/prose phase** (propose, plan gate, apply-maker, verify, dup/improve,
   review, sync-docs, pre-archive, archive spec-sync) and **Haiku · low** only for pure mechanical steps
@@ -197,9 +222,12 @@ added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), 
     deduped the 3-copy `detectLang` before the voice surfaces. Deterministic, no live-LLM gate.
 12. ✅ **`shared-fmt` (M3, wave 4, tech debt): code-complete + archived** — extracted `src/util/num.ts`
     (`fmt`), deduped the sibling 3-copy triple before the voice surfaces. Deterministic, no live-LLM gate.
-13. **`clarify` / `food-photo` (wave 4): NEXT** — both build on `coach-persona`; the shared `lang` +
-    `num` homes now exist so they won't re-copy `detectLang`/`fmt`. `reviews` (wave 5) is also unblocked
-    (`food-text` + `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`.
+13. ✅ **`clarify` (M3, wave 4, US-6): code-complete + archived** — precision-first Open Question
+    mechanic (ask-vs-log, ephemeral store ADR-0019, resolve/expiry-fallback). Two review rounds
+    resolved. Live discrimination eval is deploy-time (needs key).
+14. **`food-photo` (M4, wave 4): NEXT** — builds on `coach-persona` + reuses the `clarify` mechanic;
+    the shared `lang`/`num` homes exist so no `detectLang`/`fmt`/number-regex copies. `reviews` (wave 5)
+    is also ready (`food-text` + `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

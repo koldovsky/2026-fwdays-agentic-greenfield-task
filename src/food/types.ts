@@ -1,4 +1,5 @@
 import type { PrismaClient, FoodPer, Meal, FoodSource } from '@prisma/client';
+import type { LogOutcome, OpenQuestion } from '../clarify/types.js';
 
 // Food-logging domain shapes (US-2, §8.2). The fact path (Food DB match) and the estimate path
 // (one LLM call) both converge on ResolvedFood, so scaling + write + confirm run once for either.
@@ -53,13 +54,21 @@ export interface CatalogResult {
 }
 
 export interface FoodService {
-  logFood: (chatId: bigint, text: string, routed: RoutedLog) => Promise<Confirmation | null>;
+  logFood: (chatId: bigint, text: string, routed: RoutedLog) => Promise<LogOutcome | null>;
   saveToCatalog: (chatId: bigint, foodLogId: number) => Promise<CatalogResult>;
   correctLast: (
     chatId: bigint,
     text: string,
     routed: RoutedCorrection,
   ) => Promise<Confirmation | null>;
+  /** Refine the pending Open Question with the user's answer and log it (clarify capability). */
+  resolveAnswer: (
+    chatId: bigint,
+    pending: OpenQuestion,
+    answer: string,
+  ) => Promise<Confirmation | null>;
+  /** Expiry/no-answer fallback: log the pending resolved-so-far food as an honest `estimate`. */
+  logExpiredEstimate: (chatId: bigint, pending: OpenQuestion) => Promise<Confirmation | null>;
 }
 
 /** The router output fields food-text reads (intent already known to be `log`). */

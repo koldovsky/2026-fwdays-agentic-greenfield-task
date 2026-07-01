@@ -1,3 +1,4 @@
+import { DECIMAL_SOURCE } from '../util/num.js';
 import type { MetricColumn, ParsedMetrics } from './types.js';
 
 // Deterministic synonym→column parser (design §1, invariant #5: no LLM call on this path). Body
@@ -26,7 +27,7 @@ const RANGES: Record<MetricColumn, { min: number; max: number }> = {
   thighCm: { min: 20, max: 120 },
 };
 
-const NUMBER = '(\\d+(?:[.,]\\d+)?)';
+const NUMBER = `(${DECIMAL_SOURCE})`;
 
 /**
  * One scan pattern per column: a synonym at a word boundary, optional colon/space, then a number.
