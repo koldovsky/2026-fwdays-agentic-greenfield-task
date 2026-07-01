@@ -18,6 +18,7 @@ const resolved: ResolvedFood = {
 };
 
 const question = (askedAt: Date): OpenQuestion => ({
+  variant: 'text',
   resolved,
   parsed: { product: 'творог', qty: undefined, unit: '' },
   clarification: { kind: 'descriptor', unknown: 'fat%', question: 'Какой жирности?' },
@@ -31,7 +32,8 @@ describe('clarify store', () => {
     const chatId = 101n;
     set(chatId, question(new Date()));
 
-    expect(peek(chatId)?.resolved.name).toBe('творог');
+    const stored = peek(chatId);
+    expect(stored?.variant === 'text' ? stored.resolved.name : null).toBe('творог');
     expect(peek(chatId)).not.toBeNull(); // peek is non-destructive
 
     take(chatId);
@@ -62,7 +64,7 @@ describe('clarify store', () => {
     set(chatId, stored);
 
     expect(Object.keys(peek(chatId) ?? {}).sort()).toEqual(
-      ['askedAt', 'clarification', 'date', 'meal', 'parsed', 'resolved'].sort(),
+      ['askedAt', 'clarification', 'date', 'meal', 'parsed', 'resolved', 'variant'].sort(),
     );
 
     take(chatId);

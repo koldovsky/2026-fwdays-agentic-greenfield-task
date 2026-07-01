@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { FoodPer, FoodSource, Meal } from '@prisma/client';
 import { resolveAnswer } from '../../src/clarify/resolve.js';
-import type { Clarification, OpenQuestion } from '../../src/clarify/types.js';
+import type { Clarification, TextOpenQuestion } from '../../src/clarify/types.js';
 import type { FoodClient, ParsedFood, ResolvedFood } from '../../src/food/types.js';
 
 // Answer resolution (design D3, revised): the pending question's `clarification.kind` — not the
@@ -57,7 +57,11 @@ const resolved = (over: Partial<ResolvedFood> = {}): ResolvedFood => ({
 
 const parsed: ParsedFood = { product: 'творог', qty: undefined, unit: '' };
 
-const pending = (clarification: Clarification, over: Partial<ResolvedFood> = {}): OpenQuestion => ({
+const pending = (
+  clarification: Clarification,
+  over: Partial<ResolvedFood> = {},
+): TextOpenQuestion => ({
+  variant: 'text',
   resolved: resolved(over),
   parsed,
   clarification,

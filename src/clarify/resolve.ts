@@ -6,7 +6,7 @@ import { isWeightOrVolumeUnit, reconcileQty } from '../food/scale.js';
 import type { Confirmation, FoodClient, ParsedFood, ResolvedFood } from '../food/types.js';
 import { writeFoodLog } from '../food/write.js';
 import { DECIMAL_SOURCE } from '../util/num.js';
-import type { OpenQuestion } from './types.js';
+import type { TextOpenQuestion } from './types.js';
 
 // Answer resolution (design D3, revised per review). The pending question's `clarification.kind` —
 // NOT the answer's shape — decides how the answer is applied, so a bare "5" answering a fat% question
@@ -69,7 +69,7 @@ const refineDisambiguation = async (
   client: FoodClient,
   anthropic: Anthropic,
   userId: number,
-  pending: OpenQuestion,
+  pending: TextOpenQuestion,
   answer: string,
 ): Promise<ResolvedFood> => {
   const id = Number(answer);
@@ -88,7 +88,7 @@ const refine = (
   client: FoodClient,
   anthropic: Anthropic,
   userId: number,
-  pending: OpenQuestion,
+  pending: TextOpenQuestion,
   answer: string,
 ): Promise<ResolvedFood> | ResolvedFood => {
   if (pending.clarification.kind === 'disambiguation') {
@@ -108,7 +108,7 @@ export const resolveAnswer = async (
   client: FoodClient,
   anthropic: Anthropic,
   userId: number,
-  pending: OpenQuestion,
+  pending: TextOpenQuestion,
   answer: string,
 ): Promise<Confirmation> => {
   const refined = await refine(client, anthropic, userId, pending, answer);

@@ -16,7 +16,12 @@ import type { FoodPer, MacroBase } from './types.js';
 /** The `per`-basis literal tuple for zod schemas (the FoodPer enum's members). One home (rule #12). */
 export const PER_VALUES = ['per100g', 'per100ml', 'portion', 'piece', 'dish'] as const;
 
-const clarifySchema = z.object({
+/**
+ * The optional `clarify` object riding a structured estimate/vision response (the `RawClarify` shape):
+ * ONE home for both the text estimate and the plate vision schema (rule #12) — the model fills it only
+ * for a hidden high-leverage calorie-mover.
+ */
+export const clarifySchema = z.object({
   unknown: z
     .string()
     .describe('the single hidden high-leverage variable, e.g. "fat%", "cooking fat"'),

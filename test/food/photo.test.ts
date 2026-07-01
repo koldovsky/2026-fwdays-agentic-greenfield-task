@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { FoodPer, FoodSource } from '@prisma/client';
-import { estimatePlate, resolvePlate, type PlateItem } from '../../src/food/photo.js';
-import type { FoodClient } from '../../src/food/types.js';
+import { estimatePlate, refinePlate, resolvePlate, type PlateItem } from '../../src/food/photo.js';
+import type { FoodClient, ResolvedFood } from '../../src/food/types.js';
 
-// Vision extraction + per-item resolution (food-photo). Asserts the seam is called EXACTLY ONCE with
-// the image (invariant #5), items parse, a Food-DB name hit is a `fact` and a miss is an `estimate`
-// from the vision macros with ZERO extra calls, and the batched lookup issues ONE query (no N+1).
+// Vision extraction + per-item resolution + text-only refine (food-photo/-ask). Asserts the vision
+// seam is called EXACTLY ONCE with the image (invariant #5), items parse, an optional plate-level
+// `clarify` rides that same response, a Food-DB name hit is a `fact` and a miss is an `estimate` from
+// the vision macros with ZERO extra calls, the batched lookup issues ONE query (no N+1), and the
+// answer refine is exactly one TEXT-ONLY call carrying no image (invariant #4).
 
 const PLATE_ITEMS: PlateItem[] = [
   { name: 'куриное филе', per: 'per100g', kcal: 165, proteinG: 31, fatG: 3.6, carbsG: 0, qty: 200 },
@@ -36,7 +38,7 @@ describe('estimatePlate', () => {
   it('issues exactly one vision call carrying the image and parses the items', async () => {
     const { client, create } = makeAnthropic();
 
-    const items = await estimatePlate(client, 'BASE64', 'куриное филе и борщ');
+    const { items, clarify } = await estimatePlate(client, 'BASE64', 'куриное филе и борщ');
 
     expect(create).toHaveBeenCalledTimes(1); // one vision call, no loop (invariant #5)
     const params = create.mock.calls[0]?.[0] as { messages: { content: { type: string }[] }[] };
@@ -44,12 +46,74 @@ describe('estimatePlate', () => {
     expect(items).toHaveLength(2);
     expect(items[0]?.name).toBe('куриное филе');
     expect(items[1]?.per).toBe('dish');
+    expect(clarify).toBeNull(); // no flag on a plain plate
+  });
+
+  it('surfaces a plate-level clarify when the model raises one (still one vision call)', async () => {
+    const { client, create } = makeAnthropic({
+      items: PLATE_ITEMS,
+      clarify: { unknown: 'dressing', question: 'Салат с заправкой?', options: ['yes', 'no'] },
+    });
+
+    const { clarify } = await estimatePlate(client, 'BASE64', 'салат');
+
+    expect(create).toHaveBeenCalledTimes(1); // the flag rides the SAME response, no extra call (#5)
+    expect(clarify?.unknown).toBe('dressing');
+    expect(clarify?.options).toEqual(['yes', 'no']);
   });
 
   it('folds an empty caption cleanly (no caption line) and still makes one call', async () => {
     const { client, create } = makeAnthropic();
     await estimatePlate(client, 'BASE64', '');
     expect(create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('refinePlate', () => {
+  const held: ResolvedFood[] = [
+    {
+      name: 'салат',
+      per: FoodPer.dish,
+      base: { kcal: 120, proteinG: 4, fatG: 6, carbsG: 12 },
+      qty: 1,
+      unit: 'dish',
+      source: FoodSource.estimate,
+      foodDbId: null,
+    },
+  ];
+
+  it('makes exactly one TEXT-ONLY call — no image, only held items + the answer (invariants #1/#4/#5)', async () => {
+    const adjusted: PlateItem[] = [
+      { name: 'салат', per: 'dish', kcal: 260, proteinG: 4, fatG: 20, carbsG: 12, qty: 1 },
+    ];
+    const { client, create } = makeAnthropic({ items: adjusted });
+
+    const items = await refinePlate(client, held, 'with 1 tbsp oil');
+
+    expect(create).toHaveBeenCalledTimes(1); // ≤1 refine call, no loop (invariant #5)
+    const params = create.mock.calls[0]?.[0] as { messages: { content: unknown }[] };
+    // No image block anywhere — the refine never re-runs vision (invariant #4).
+    expect(typeof params.messages[0]?.content).toBe('string');
+    const sent = params.messages[0]?.content as string;
+    expect(sent).toContain('салат'); // the held item
+    expect(sent).toContain('with 1 tbsp oil'); // the answer
+    // FIX 1: added ingredients must be returned as a SEPARATE item so a fact item's mover survives
+    // the caller's resolvePlate rebuild — the prompt instructs it explicitly.
+    expect(sent).toContain('SEPARATE additional item');
+    expect(items[0]?.fatG).toBe(20); // the adjusted macros come back
+  });
+
+  it('returns an appended item for an added-fat answer (the mover is its own line)', async () => {
+    const withOil: PlateItem[] = [
+      { name: 'салат', per: 'dish', kcal: 120, proteinG: 4, fatG: 6, carbsG: 12, qty: 1 },
+      { name: 'масло', per: 'portion', kcal: 120, proteinG: 0, fatG: 14, carbsG: 0, qty: 1 },
+    ];
+    const { client } = makeAnthropic({ items: withOil });
+
+    const items = await refinePlate(client, held, 'с оливковым маслом');
+
+    expect(items).toHaveLength(2); // the salad plus a distinct oil item
+    expect(items[1]?.name).toBe('масло'); // the mover survives as its own line, not folded away
   });
 });
 

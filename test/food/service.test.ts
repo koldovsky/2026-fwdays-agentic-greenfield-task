@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
-import { FoodPer, FoodSource } from '@prisma/client';
-import type { Confirmation } from '../../src/food/types.js';
-import type { LogOutcome } from '../../src/clarify/types.js';
+import { FoodPer, FoodSource, Meal } from '@prisma/client';
+import type { Confirmation, ResolvedFood } from '../../src/food/types.js';
+import type { LogOutcome, PhotoOpenQuestion } from '../../src/clarify/types.js';
 import { createFoodService } from '../../src/food/service.js';
 import type { FoodClient, FoodService } from '../../src/food/types.js';
 
@@ -297,7 +297,7 @@ describe('createFoodService.logPhoto', () => {
     ]);
     const svc = createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON);
 
-    const confirmation = await svc.logPhoto(99n, 'куриное филе, борщ и рис', 'BASE64');
+    const confirmation = loggedOf(await svc.logPhoto(99n, 'куриное филе, борщ и рис', 'BASE64'));
 
     expect(findMany).toHaveBeenCalledTimes(1); // ONE batched lookup for the whole plate (no N+1)
     expect(created).toHaveLength(3); // one row per item (invariant #8)
@@ -368,6 +368,234 @@ describe('createFoodService.logPhoto', () => {
 
     expect(result).toBeNull();
     expect(created).toHaveLength(0);
+  });
+});
+
+// --- Plate ask (food-photo-ask): flag → hold → text-only refine → log; expiry logs all as estimate --
+
+const makePlateAnthropicSpy = (
+  plate: unknown,
+): { anthropic: Anthropic; create: ReturnType<typeof vi.fn> } => {
+  const create = vi.fn().mockResolvedValue({
+    content: [{ type: 'text', text: JSON.stringify(plate) }],
+    usage: { cache_read_input_tokens: 0 },
+  });
+  return { anthropic: { messages: { create } } as unknown as Anthropic, create };
+};
+
+// A pending photo Open Question: two held items (a miss-estimate salad + a rice that hits the
+// catalog), the model-written clarify question in Russian (its language localizes the confirmation).
+const photoPending = (over: Partial<PhotoOpenQuestion> = {}): PhotoOpenQuestion => ({
+  variant: 'photo',
+  items: [
+    {
+      name: 'салат',
+      per: FoodPer.dish,
+      base: { kcal: 120, proteinG: 4, fatG: 6, carbsG: 12 },
+      qty: 1,
+      unit: 'dish',
+      source: FoodSource.estimate,
+      foodDbId: null,
+    },
+    {
+      name: 'рис',
+      per: FoodPer.per100g,
+      base: { kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28 },
+      qty: 150,
+      unit: 'g',
+      source: FoodSource.estimate,
+      foodDbId: null,
+    },
+  ] as ResolvedFood[],
+  caption: 'салат и рис',
+  clarification: {
+    kind: 'descriptor',
+    unknown: 'dressing',
+    question: 'Салат с заправкой?',
+    options: [
+      { label: 'yes', value: 'yes' },
+      { label: 'no', value: 'no' },
+    ],
+  },
+  meal: Meal.lunch,
+  date: '2026-06-29',
+  askedAt: new Date('2026-06-29T10:00:00Z'),
+  ...over,
+});
+
+describe('createFoodService.logPhoto — plate ask', () => {
+  it('a flagged plate asks and writes NO row until answered (holds a photo Open Question)', async () => {
+    const { client, created } = makePhotoFake([]);
+    const anthropic = makePlateAnthropic({
+      items: PLATE.items,
+      clarify: { unknown: 'dressing', question: 'Салат с заправкой?', options: ['yes', 'no'] },
+    });
+
+    const outcome = await createFoodService(client, anthropic, 'Europe/Kyiv', NOON).logPhoto(
+      99n,
+      'салат',
+      'BASE64',
+    );
+
+    expect(outcome?.kind).toBe('ask'); // deferred, not logged
+    expect(created).toHaveLength(0); // nothing written yet (invariant: ask ≠ log)
+    if (outcome?.kind === 'ask') {
+      expect(outcome.pending.variant).toBe('photo');
+      expect(outcome.question.text).toContain('заправк'); // the model's question, user's language
+      expect(outcome.question.options).toHaveLength(2); // inline-keyboard fixed choices
+    }
+  });
+
+  it('an UNFLAGGED plate still logs immediately (regression — no clarify, no ask)', async () => {
+    const { client, created } = makePhotoFake([]);
+    const outcome = await createFoodService(
+      client,
+      makePlateAnthropic(),
+      'Europe/Kyiv',
+      NOON,
+    ).logPhoto(99n, 'plate', 'BASE64');
+
+    expect(outcome?.kind).toBe('logged');
+    expect(created).toHaveLength(3); // one row per item, straight through
+  });
+});
+
+describe('createFoodService.resolveAnswer — photo variant', () => {
+  // An added-fat answer comes back as a SEPARATE 'масло' item (FIX 1) so the mover survives the
+  // caller's resolvePlate rebuild — the two original items are unchanged, the oil is appended.
+  const refined = {
+    items: [
+      { name: 'салат', per: 'dish', kcal: 120, proteinG: 4, fatG: 6, carbsG: 12, qty: 1 },
+      { name: 'рис', per: 'per100g', kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, qty: 150 },
+      { name: 'масло', per: 'portion', kcal: 120, proteinG: 0, fatG: 14, carbsG: 0, qty: 1 },
+    ],
+  };
+
+  it('refines the held items by ONE text-only call and logs the added mover as its own row', async () => {
+    // 'рис' hits the catalog → a fact after refine; 'салат' misses → estimate (invariant #3).
+    const { client, created, findMany } = makePhotoFake([
+      {
+        id: 50,
+        name: 'рис',
+        per: FoodPer.per100g,
+        kcal: 130,
+        proteinG: 2.7,
+        fatG: 0.3,
+        carbsG: 28,
+      },
+    ]);
+    const { anthropic, create } = makePlateAnthropicSpy(refined);
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+    ).resolveAnswer(99n, photoPending(), 'с оливковым маслом');
+
+    expect(create).toHaveBeenCalledTimes(1); // exactly one refine call (invariant #5)
+    // The refine is TEXT-ONLY — no image block, only the held items + the answer (invariants #1/#4).
+    const sent = create.mock.calls[0]?.[0] as { messages: { content: unknown }[] };
+    expect(typeof sent.messages[0]?.content).toBe('string');
+    expect(sent.messages).toHaveLength(1); // no chat history (invariant #1)
+
+    expect(findMany).toHaveBeenCalledTimes(1); // ONE batched re-resolve lookup (no N+1)
+    expect(created).toHaveLength(3); // salad + rice + the appended oil mover (FIX 1)
+    expect(created.every((r) => r.data.userId === 7)).toBe(true); // tenant-scoped (invariant #8)
+    expect(created[0]?.data.source).toBe(FoodSource.estimate); // salad miss
+    expect(created[0]?.data.kcal).toBe(120); // dish ×1, scaled in code (#2)
+    expect(created[1]?.data.source).toBe(FoodSource.fact); // rice catalog hit
+    expect(created[1]?.data.foodDbId).toBe(50);
+    expect(created[1]?.data.kcal).toBe(195); // 130 ×150/100 in code (invariant #2)
+    // The added fat is logged as its OWN estimate row — the mover is NOT dropped into a fact item.
+    const oil = created.find((r) => r.data.entryName === 'масло')?.data;
+    expect(oil?.source).toBe(FoodSource.estimate);
+    expect(oil?.kcal).toBe(120);
+    expect(created[0]?.data.meal).toBe(Meal.lunch); // from the ask event, not re-inferred
+    expect(created[0]?.data.date).toEqual(new Date('2026-06-29T00:00:00.000Z')); // captured date
+    expect(confirmation?.text).toContain('195'); // per-row numbers, prose in Russian
+    expect(confirmation?.text.startsWith('Записал')).toBe(true); // language from the stored caption
+  });
+
+  it('CRITICAL: the photo refine writes no image bytes anywhere (invariant #4)', async () => {
+    const { client } = makePhotoFake([]);
+    const { anthropic } = makePlateAnthropicSpy(refined);
+
+    await createFoodService(client, anthropic, 'Europe/Kyiv', NOON).resolveAnswer(
+      99n,
+      photoPending(),
+      'no',
+    );
+
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
+  });
+
+  it('scopes plate writes to the acting user (two-user isolation, invariant #8)', async () => {
+    const { client, created } = makePhotoFake([]);
+    (client.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 8 });
+    const { anthropic } = makePlateAnthropicSpy(refined);
+
+    await createFoodService(client, anthropic, 'Europe/Kyiv', NOON).resolveAnswer(
+      42n,
+      photoPending(),
+      'no',
+    );
+
+    expect(created.length).toBeGreaterThan(0);
+    expect(created.every((r) => r.data.userId === 8)).toBe(true); // only the acting tenant
+    expect(created.some((r) => r.data.userId === 7)).toBe(false);
+  });
+});
+
+describe('createFoodService.logExpiredEstimate — photo variant', () => {
+  // Held items already tagged at ask time: a catalog `fact` (rice) + a visual `estimate` (salad).
+  const mixedItems: ResolvedFood[] = [
+    {
+      name: 'рис',
+      per: FoodPer.per100g,
+      base: { kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28 },
+      qty: 150,
+      unit: 'g',
+      source: FoodSource.fact,
+      foodDbId: 50,
+    },
+    {
+      name: 'салат',
+      per: FoodPer.dish,
+      base: { kcal: 120, proteinG: 4, fatG: 6, carbsG: 12 },
+      qty: 1,
+      unit: 'dish',
+      source: FoodSource.estimate,
+      foodDbId: null,
+    },
+  ];
+
+  it('logs EVERY held item AS-IS, preserving each resolved source, no LLM call, never dropped (#3)', async () => {
+    const { client, created, findMany } = makePhotoFake([]);
+    const { anthropic, create } = makePlateAnthropicSpy({ items: [] });
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+    ).logExpiredEstimate(99n, photoPending({ items: mixedItems }));
+
+    expect(create).not.toHaveBeenCalled(); // no model call on expiry (invariant #5)
+    expect(findMany).not.toHaveBeenCalled(); // no catalog re-resolve — items written as-is
+    expect(created).toHaveLength(2); // both held items written, none dropped (invariant #3)
+    expect(created.every((r) => r.data.userId === 7)).toBe(true); // tenant-scoped (invariant #8)
+    // The catalog fact STAYS a fact; the visual estimate STAYS an estimate (invariant #3, FIX 2).
+    expect(created[0]?.data.source).toBe(FoodSource.fact);
+    expect(created[0]?.data.foodDbId).toBe(50);
+    expect(created[0]?.data.kcal).toBe(195); // 130 ×150/100 from the held macros, in code
+    expect(created[1]?.data.source).toBe(FoodSource.estimate);
+    expect(created[1]?.data.foodDbId).toBeNull();
+    expect(created[0]?.data.date).toEqual(new Date('2026-06-29T00:00:00.000Z')); // captured date
+    expect(confirmation?.text).toContain('±20'); // honest estimate note (a mixed plate has one)
   });
 });
 

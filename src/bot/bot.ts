@@ -282,8 +282,10 @@ const downloadPhotoBase64 = async (ctx: PhotoContext): Promise<string | null> =>
 
 /**
  * A plate photo. Onboarding-gated exactly like `handleText` (a photo mid-onboarding is not a food
- * log). Otherwise: download the bytes to base64 in memory, run the single vision call via
- * `logPhoto`, and reply with the multi-item confirmation. The image is never persisted (invariant #4).
+ * log). Otherwise: download the bytes to base64 in memory, run the single vision call via `logPhoto`,
+ * and either reply with the multi-item confirmation or — on an `ask` outcome (a hidden high-leverage
+ * mover) — store the photo Open Question and pose it (mirrors `dispatch`). The image lives only in the
+ * base64 string and is never persisted (invariant #4).
  */
 export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<void> => {
   if (!ctx.chat) {
@@ -300,8 +302,16 @@ export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<voi
     return;
   }
 
-  const confirmation = await deps.food.logPhoto(chatId, ctx.message.caption ?? '', imageBase64);
-  await replyIfConfirmed(ctx.reply, confirmation);
+  const outcome = await deps.food.logPhoto(chatId, ctx.message.caption ?? '', imageBase64);
+  if (!outcome) {
+    return;
+  }
+  if (outcome.kind === 'ask') {
+    deps.clarify.set(chatId, outcome.pending);
+    await askClarify(ctx.reply, outcome.question);
+    return;
+  }
+  await replyConfirmation(ctx.reply, outcome.confirmation);
 };
 
 /** `food:addfdb:<id>` tap — persist the logged estimate to the user's Food DB. */

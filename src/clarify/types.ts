@@ -55,20 +55,46 @@ export const toClarification = (raw: RawClarify): Clarification => {
 };
 
 /**
- * The pending Open Question held in-memory (ADR-0019). Holds ONLY what's needed to log on
- * resolution — the resolved-so-far food (also the expiry-fallback estimate), the ORIGINAL parsed
- * input (product/qty/unit, so an answer re-scales or re-resolves from the right basis), what was
- * asked (`clarification`, whose `kind` routes the answer), the meal captured at ASK time (no
- * boundary drift), and the target date — never any chat transcript (invariant #1).
+ * Fields common to every pending Open Question (ADR-0019): what was asked (`clarification`, whose
+ * `kind` routes the answer), the meal captured at ASK time (no boundary drift), the target date, and
+ * the ask timestamp for the lazy TTL — never any chat transcript (invariant #1).
  */
-export interface OpenQuestion {
-  resolved: ResolvedFood;
-  parsed: ParsedFood;
+interface OpenQuestionBase {
   clarification: Clarification;
   meal: Meal;
   date: string;
   askedAt: Date;
 }
+
+/**
+ * The text-log ask (design D1). Holds the resolved-so-far food (also the expiry-fallback estimate)
+ * and the ORIGINAL parsed input (product/qty/unit, so an answer re-scales or re-resolves from the
+ * right basis).
+ */
+export interface TextOpenQuestion extends OpenQuestionBase {
+  variant: 'text';
+  resolved: ResolvedFood;
+  parsed: ParsedFood;
+}
+
+/**
+ * The plate-photo ask (design D1). Holds the resolved-so-far item LIST — an answer refines the whole
+ * list by ONE text-only call (the image is already discarded, invariant #4), and expiry logs every
+ * held item with its resolved source. Also keeps the user's `caption` (text, not the image — invariant
+ * #4 forbids only the bytes) as a stable language anchor for the confirmation. No `parsed`, no image.
+ */
+export interface PhotoOpenQuestion extends OpenQuestionBase {
+  variant: 'photo';
+  items: ResolvedFood[];
+  caption: string;
+}
+
+/**
+ * The pending Open Question held in-memory (ADR-0019), a discriminated union on `variant`. Holds ONLY
+ * what's needed to log on resolution — never any chat transcript (invariant #1). One store, one
+ * per-chat slot, transparent to the union.
+ */
+export type OpenQuestion = TextOpenQuestion | PhotoOpenQuestion;
 
 /** The outbound clarifying message the bot renders — prose + optional inline-keyboard choices. */
 export interface OutboundQuestion {

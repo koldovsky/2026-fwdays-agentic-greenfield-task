@@ -61,6 +61,7 @@ const resolvedStub = (): ResolvedFood => ({
 });
 
 const pendingStub = (askedAt: Date): OpenQuestion => ({
+  variant: 'text',
   resolved: resolvedStub(),
   parsed: { product: 'творог', qty: undefined, unit: '' },
   clarification: {
@@ -70,6 +71,25 @@ const pendingStub = (askedAt: Date): OpenQuestion => ({
     options: [
       { label: '5%', value: '5%' },
       { label: '9%', value: '9%' },
+    ],
+  },
+  meal: 'lunch',
+  date: '2026-06-30',
+  askedAt,
+});
+
+// A pending PHOTO Open Question — holds an item LIST, no `parsed`, no image (design D1).
+const photoPendingStub = (askedAt: Date): OpenQuestion => ({
+  variant: 'photo',
+  items: [resolvedStub()],
+  caption: 'салат',
+  clarification: {
+    kind: 'descriptor',
+    unknown: 'dressing',
+    question: 'Салат с заправкой?',
+    options: [
+      { label: 'yes', value: 'yes' },
+      { label: 'no', value: 'no' },
     ],
   },
   meal: 'lunch',
@@ -91,7 +111,10 @@ const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
     kind: 'logged',
     confirmation: { text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' },
   }),
-  logPhoto: vi.fn().mockResolvedValue({ text: 'Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' }),
+  logPhoto: vi.fn().mockResolvedValue({
+    kind: 'logged',
+    confirmation: { text: 'Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' },
+  }),
   saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'тест' }),
   correctLast: vi
     .fn()
@@ -553,6 +576,81 @@ describe('handlePhoto', () => {
     expect(reply).toHaveBeenCalledWith('Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.');
 
     fetchSpy.mockRestore();
+  });
+
+  it('stores the photo Open Question and poses it (inline keyboard) on a plate `ask` outcome', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const pendingRecord = photoPendingStub(new Date());
+    const food = makeFood({
+      logPhoto: vi.fn().mockResolvedValue({
+        kind: 'ask',
+        question: {
+          text: 'Салат с заправкой?',
+          options: [
+            { label: 'yes', value: 'yes' },
+            { label: 'no', value: 'no' },
+          ],
+        },
+        pending: pendingRecord,
+      }),
+    });
+    const clarify = makeClarify();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food, makeMetrics(), makeQuery(), clarify);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('салат', reply), deps);
+
+    expect(clarify.peek(7n)).toBe(pendingRecord); // held for the next message (photo variant)
+    expect(String(reply.mock.calls[0]?.[0])).toContain('заправк');
+    expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup'); // inline keyboard
+    fetchSpy.mockRestore();
+  });
+
+  it('resolves a pending photo question via a `q:<index>` tap and a free-text answer alike', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+
+    // A tap: q:1 → the stored option value 'no' resolves through the SAME service path as text.
+    const tapClarify = makeClarify([[9n, photoPendingStub(new Date())]]);
+    const tapDeps = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      tapClarify,
+    );
+    await handleCallback(
+      { callbackQuery: { data: 'q:1' }, chat: { id: 9 }, reply, answerCallbackQuery },
+      tapDeps.deps,
+    );
+    expect(food.resolveAnswer).toHaveBeenCalledWith(
+      9n,
+      expect.objectContaining({ variant: 'photo' }),
+      'no',
+    );
+    expect(tapClarify.peek(9n)).toBeNull(); // cleared
+
+    // Free text: routed as `answer` while the photo question is pending → resolveAnswer with the text.
+    const textClarify = makeClarify([[7n, photoPendingStub(new Date())]]);
+    const textDeps = makeDeps(
+      makeOnboarding(),
+      'answer',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      textClarify,
+    );
+    await handleText({ message: { text: 'с маслом' }, chat: { id: 7 }, reply }, textDeps.deps);
+    expect(food.resolveAnswer).toHaveBeenCalledWith(
+      7n,
+      expect.objectContaining({ variant: 'photo' }),
+      'с маслом',
+    );
+    expect(textClarify.peek(7n)).toBeNull();
   });
 
   it('passes an empty caption when the photo has none', async () => {

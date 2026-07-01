@@ -4,13 +4,14 @@ import type { FoodLog } from '@prisma/client';
 import { decideAskOrLog } from '../clarify/decide.js';
 import { buildQuestion } from '../clarify/question.js';
 import { resolveAnswer } from '../clarify/resolve.js';
-import type { LogOutcome, OpenQuestion } from '../clarify/types.js';
+import { toClarification } from '../clarify/types.js';
+import type { LogOutcome, OpenQuestion, PhotoOpenQuestion } from '../clarify/types.js';
 import { resolveDate } from '../router/date.js';
 import { saveLoggedFoodToCatalog } from './addToCatalog.js';
 import { buildConfirmation, buildPlateConfirmation, noProductReply } from './confirm.js';
 import { correctLast } from './correct.js';
 import { inferMeal } from './meal.js';
-import { estimatePlate, resolvePlate } from './photo.js';
+import { estimatePlate, refinePlate, resolvePlate } from './photo.js';
 import { resolveForLog } from './resolve.js';
 import { writeFoodLog } from './write.js';
 import type {
@@ -18,7 +19,9 @@ import type {
   Confirmation,
   FoodClient,
   FoodService,
+  Meal,
   ParsedFood,
+  ResolvedFood,
   RoutedCorrection,
   RoutedLog,
 } from './types.js';
@@ -31,6 +34,67 @@ import type {
 const resolveUserId = async (prisma: FoodClient, chatId: bigint): Promise<number | null> => {
   const user = await prisma.user.findUnique({ where: { chatId }, select: { id: true } });
   return user?.id ?? null;
+};
+
+/**
+ * Write one code-scaled, tenant-scoped `food_log` row per resolved plate item (invariants #2/#8) —
+ * ONE home for the plate write loop shared by the log-immediately, answer-refine, and expiry paths
+ * (rule #12). No per-plate total is ever computed (invariant #2).
+ */
+const writePlateRows = async (
+  prisma: FoodClient,
+  userId: number,
+  items: ResolvedFood[],
+  date: string,
+  meal: Meal,
+): Promise<FoodLog[]> => {
+  const rows: FoodLog[] = [];
+  for (const resolved of items) {
+    rows.push(await writeFoodLog(prisma, userId, resolved, date, meal));
+  }
+
+  return rows;
+};
+
+/**
+ * The language anchor for a plate confirmation (invariant #6): the user's own caption when they gave
+ * one, else the model-written clarify question (the answer may be a bare id or an English tap that
+ * carries no language). Caption is text, not the image — storing it does NOT breach invariant #4.
+ */
+const plateLangAnchor = (pending: PhotoOpenQuestion): string =>
+  pending.caption.trim() !== '' ? pending.caption : pending.clarification.question;
+
+/**
+ * Resolve a photo Open Question: ONE text-only refine over the held items + the answer (never
+ * re-vision, invariant #4), re-resolve fact/estimate, then one row per item.
+ */
+const resolvePlateAnswer = async (
+  prisma: FoodClient,
+  anthropic: Anthropic,
+  userId: number,
+  pending: PhotoOpenQuestion,
+  answer: string,
+): Promise<Confirmation> => {
+  const refined = await refinePlate(anthropic, pending.items, answer);
+  const resolvedItems = await resolvePlate(prisma, userId, refined);
+  const rows = await writePlateRows(prisma, userId, resolvedItems, pending.date, pending.meal);
+
+  return buildPlateConfirmation(plateLangAnchor(pending), rows);
+};
+
+/**
+ * Expiry fallback for a photo Open Question (invariant #3 — never drop): log EVERY held item AS-IS for
+ * the captured meal/date, preserving each item's resolved source/foodDbId (a catalog `fact` stays a
+ * fact — invariant #3 "catalog match = fact"), with no further model call.
+ */
+const expirePlateEstimate = async (
+  prisma: FoodClient,
+  userId: number,
+  pending: PhotoOpenQuestion,
+): Promise<Confirmation> => {
+  const rows = await writePlateRows(prisma, userId, pending.items, pending.date, pending.meal);
+
+  return buildPlateConfirmation(plateLangAnchor(pending), rows);
 };
 
 export const createFoodService = (
@@ -67,6 +131,7 @@ export const createFoodService = (
       // in, not the one they answered in; carry the original `parsed` so the answer re-scales/-resolves
       // from the right basis (design D3, revised).
       const pending: OpenQuestion = {
+        variant: 'text',
         resolved,
         parsed,
         clarification,
@@ -82,22 +147,20 @@ export const createFoodService = (
     return { kind: 'logged', confirmation: buildConfirmation(text, row) };
   },
 
-  // Photo front door (US-3, §8.3): ONE vision call → itemized macros → one code-scaled `food_log`
-  // row per item → multi-item confirmation. The image arrives as base64 and is never persisted
-  // (invariant #4 — enforced upstream + by the fs-spy test). Meal from the user clock, date = today
-  // (user TZ, via the shared resolveDate — never hand-rolled). Each row goes through writeFoodLog,
-  // so macros are scaled in code and tenant-scoped (invariants #2/#8); no per-plate total anywhere.
-  async logPhoto(
-    chatId: bigint,
-    caption: string,
-    imageBase64: string,
-  ): Promise<Confirmation | null> {
+  // Photo front door (US-3, §8.3): ONE vision call → itemized macros → either log-immediately (one
+  // code-scaled `food_log` row per item → multi-item confirmation) OR, when the vision call flags a
+  // hidden high-leverage mover (`clarify`, riding the SAME response — invariant #5), hold the resolved
+  // item LIST as a photo-variant Open Question and ask (design D2). The image arrives as base64 and is
+  // never persisted (invariant #4 — enforced upstream + by the fs-spy test). Meal from the user clock,
+  // date = today (user TZ, via the shared resolveDate). Rows go through writeFoodLog, so macros are
+  // scaled in code and tenant-scoped (invariants #2/#8); no per-plate total anywhere.
+  async logPhoto(chatId: bigint, caption: string, imageBase64: string): Promise<LogOutcome | null> {
     const userId = await resolveUserId(prisma, chatId);
     if (userId === null) {
       return null;
     }
 
-    const items = await estimatePlate(anthropic, imageBase64, caption);
+    const { items, clarify } = await estimatePlate(anthropic, imageBase64, caption);
     if (items.length === 0) {
       return null;
     }
@@ -106,12 +169,25 @@ export const createFoodService = (
     const meal = inferMeal(now(), userTz);
     const date = resolveDate('today', userTz, now());
 
-    const rows: FoodLog[] = [];
-    for (const resolved of resolvedItems) {
-      rows.push(await writeFoodLog(prisma, userId, resolved, date, meal));
+    if (clarify) {
+      // Capture the item list + meal/date at ASK time so a boundary-crossing answer/expiry logs the
+      // meal the user ate in. No image is held — it was already discarded (invariant #4).
+      const clarification = toClarification(clarify);
+      const pending: PhotoOpenQuestion = {
+        variant: 'photo',
+        items: resolvedItems,
+        caption, // text only (invariant #4 forbids the image bytes, not the caption)
+        clarification,
+        meal,
+        date,
+        askedAt: now(),
+      };
+      return { kind: 'ask', question: buildQuestion(clarification, caption), pending };
     }
 
-    return buildPlateConfirmation(caption, rows);
+    const rows = await writePlateRows(prisma, userId, resolvedItems, date, meal);
+
+    return { kind: 'logged', confirmation: buildPlateConfirmation(caption, rows) };
   },
 
   async saveToCatalog(chatId: bigint, foodLogId: number): Promise<CatalogResult> {
@@ -146,7 +222,12 @@ export const createFoodService = (
       return null;
     }
 
-    // Meal comes from the pending question (captured at ask time), not re-inferred now — see logFood.
+    // Branch on the variant (design D5) — the text/callback handlers stay variant-agnostic. Meal comes
+    // from the pending question (captured at ask time), not re-inferred now — see logFood.
+    if (pending.variant === 'photo') {
+      return resolvePlateAnswer(prisma, anthropic, userId, pending, answer);
+    }
+
     return resolveAnswer(prisma, anthropic, userId, pending, answer);
   },
 
@@ -157,6 +238,11 @@ export const createFoodService = (
     const userId = await resolveUserId(prisma, chatId);
     if (userId === null) {
       return null;
+    }
+
+    // Branch on the variant (design D5): a photo logs EVERY held item, a text logs the one food.
+    if (pending.variant === 'photo') {
+      return expirePlateEstimate(prisma, userId, pending);
     }
 
     const fallback = { ...pending.resolved, source: FoodSource.estimate, foodDbId: null };
