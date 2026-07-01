@@ -47,16 +47,16 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 7. Mobile — session plumbing (FR-AUTH-06)
 
-- [ ] 7.1 Add `expo-secure-store` + `expo-auth-session`; store/read access + refresh tokens securely
-- [ ] 7.2 API client attaches the access token; on 401 attempts one refresh + retry, else clears session and routes to auth
-- [ ] 7.3 Auth state/context (`useAuth`) exposing `signIn`/`signUp`/`signInWithGoogle`/`signOut` + current user
+- [x] 7.1 Add `expo-secure-store` + `expo-auth-session`; store/read access + refresh tokens securely
+- [x] 7.2 API client attaches the access token; on 401 attempts one refresh + retry, else clears session and routes to auth
+- [x] 7.3 Auth state/context (`useAuth`) exposing `signIn`/`signUp`/`signInWithGoogle`/`signOut` + current user
 
 ## 8. Mobile — auth screen (FR-AUTH-01/02/03, FR-THEME-03)
 
-- [ ] 8.1 Auth screen: email/password form (client-side `validatePassword` from shared) + "Continue with Google", built from design tokens (no raw hex)
-- [ ] 8.2 Wire Google OAuth 2.0 + PKCE via `expo-auth-session`; send `id_token` to `POST /auth/google`
-- [ ] 8.3 Sign-out control clears the session
-- [ ] 8.4 Restyle pass deferred until the brand decision is resolved (tracked in current-state.md)
+- [x] 8.1 Auth screen: email/password form (client-side `validatePassword` from shared) + "Continue with Google", built from design tokens (no raw hex)
+- [x] 8.2 Wire Google OAuth 2.0 + PKCE via `expo-auth-session`; send `id_token` to `POST /auth/google`
+- [x] 8.3 Sign-out control clears the session
+- [x] 8.4 Restyle pass deferred until the brand decision is resolved (tracked in current-state.md)
 
 ## 9. Finalize
 

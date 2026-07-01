@@ -1,86 +1,30 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { AuthProvider, useAuth } from './src/auth/AuthContext';
+import { AuthScreen } from './src/screens/AuthScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 import { ThemeProvider, useTheme } from './src/theme';
 
-function Home() {
+// Auth gate: nothing but the auth screen until signed in (FR-AUTH-06, FR-SHELL-02).
+function Root() {
   const t = useTheme();
-  return (
-    <View style={[styles.container, { backgroundColor: t.colors.bg, padding: t.screenGutter }]}>
-      <Text style={[styles.eyebrow, { color: t.colors.textMuted }]}>TODAY</Text>
-      <Text
-        style={{
-          color: t.colors.text,
-          fontSize: t.fontSize.largeTitle,
-          fontWeight: t.fontWeight.heavy,
-          marginTop: t.space[2],
-        }}
-      >
-        Your hive is empty
-      </Text>
-      <Text
-        style={{
-          color: t.colors.textMuted,
-          fontSize: t.fontSize.body,
-          lineHeight: t.fontSize.body * t.lineHeight.normal,
-          marginTop: t.space[3],
-        }}
-      >
-        Start a timer with a quick note about what you're doing. Stop it when you switch.
-        That's the whole thing.
-      </Text>
+  const { status } = useAuth();
 
-      <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: t.colors.surface,
-            borderColor: t.colors.border,
-            borderRadius: t.radius.md,
-            padding: t.space[5],
-            marginTop: t.space[6],
-          },
-          t.shadow[2],
-        ]}
-      >
-        <Text
-          style={{
-            color: t.colors.onAccent,
-            backgroundColor: t.colors.accent,
-            alignSelf: 'flex-start',
-            paddingHorizontal: t.space[4],
-            paddingVertical: t.space[2],
-            borderRadius: t.radius.pill,
-            fontWeight: t.fontWeight.semibold,
-          }}
-        >
-          Start a timer
-        </Text>
+  if (status === 'loading') {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={t.colors.accent} />
       </View>
-
-      <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
-    </View>
-  );
+    );
+  }
+  return status === 'signedIn' ? <HomeScreen /> : <AuthScreen />;
 }
 
 export default function App() {
   return (
     <ThemeProvider>
-      <Home />
+      <AuthProvider>
+        <Root />
+      </AuthProvider>
     </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.2,
-  },
-  card: {
-    borderWidth: 1,
-  },
-});
