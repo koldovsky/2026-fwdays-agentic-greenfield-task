@@ -56,6 +56,27 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T15:15Z — Auth screen rebuilt to match the design system
+
+**Done:** The auth form didn't follow the design. Rebuilt it against
+`honeydo-design/ui_kits/honeydo/AuthScreen.jsx`: gradient hexagon logo mark, amber top
+glow, labeled inputs with leading Lucide icons (mail/lock) on `surface-alt` with amber
+focus, an "or" divider, a Google-branded button, and the "Create an account" link. Added
+reusable token-driven `Input` + `Button` components (per the skill's core components) and a
+`GoogleIcon`. Icons via `lucide-react-native` (+ `react-native-svg`), gradients via
+`expo-linear-gradient`. **Strengthened the design rule** (root + mobile AGENTS): reproduce
+the skill reference faithfully — functional-but-unstyled UI is a defect; note substitutions,
+never drop elements.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean. Deferred: the fine
+honeycomb texture (only the amber glow is ported) and "Forgot password?" (no reset flow —
+out of scope per DESIGN non-goals). Lucide barrel import inflates the module graph; can
+switch to per-icon later if bundle size matters.
+
+**Next steps:** On-device visual check; then `openspec archive add-auth`.
+
+---
+
 ## 2026-07-01T14:45Z — Auth screen: real fix for input tremble
 
 **Done:** The earlier fixed-height/reserved-slot change didn't stop the tremble — root cause

@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Hexagon, Lock, Mail } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ApiError } from '../api/client';
 import { type AuthFormValues, signInSchema, signUpSchema } from '../auth/authSchemas';
 import { useGoogleAuth } from '../auth/useGoogleAuth';
+import { Button } from '../components/Button';
+import { GoogleIcon } from '../components/GoogleIcon';
+import { Input } from '../components/Input';
 import { TextLink } from '../components/TextLink';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme';
@@ -56,43 +54,78 @@ export function AuthScreen() {
   };
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: t.colors.bg }}
-      contentContainerStyle={{ padding: t.screenGutter, paddingTop: t.space[10] }}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={{ gap: t.space[2], marginBottom: t.space[6] }}>
+    <View style={{ flex: 1, backgroundColor: t.colors.bg }}>
+      {/* Soft amber glow from the top — the honey hero backdrop. */}
+      <LinearGradient
+        colors={[t.colors.accentSoft, 'transparent']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }}
+        pointerEvents="none"
+      />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: t.screenGutter, paddingTop: t.space[10] }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo mark + welcome */}
+        <View style={{ alignItems: 'center', marginBottom: t.space[7] }}>
+          <LinearGradient
+            colors={[t.colors.highlightGold, t.colors.accentPressed]}
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            style={[
+              {
+                width: 78,
+                height: 78,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: t.space[4],
+              },
+              t.shadow[3],
+            ]}
+          >
+            <Hexagon size={40} color={t.colors.onAccent} fill={t.colors.onAccent} />
+          </LinearGradient>
           <Text
             style={{
               color: t.colors.text,
-              fontSize: t.fontSize.largeTitle,
+              fontSize: t.fontSize.title,
               fontWeight: t.fontWeight.heavy,
             }}
           >
-            {mode === 'signin' ? 'Welcome back' : 'Create your hive'}
+            {mode === 'signin' ? 'Welcome to Honeydo' : 'Create your hive'}
           </Text>
-          <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.body }}>
+          <Text
+            style={{
+              color: t.colors.textMuted,
+              fontSize: t.fontSize.callout,
+              marginTop: t.space[2],
+              textAlign: 'center',
+            }}
+          >
             Track your day, one sweet entry at a time.
           </Text>
         </View>
 
+        {/* Fields */}
         <Controller
           control={control}
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
+            <Input
+              label="Email"
+              leadingIcon={<Mail size={18} color={t.colors.textMuted} />}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              placeholder="Email"
-              placeholderTextColor={t.colors.textMuted}
+              placeholder="you@honey.do"
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
-              style={inputStyle(t)}
             />
           )}
         />
@@ -102,23 +135,22 @@ export function AuthScreen() {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
+            <Input
+              label="Password"
+              leadingIcon={<Lock size={18} color={t.colors.textMuted} />}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              placeholder="Password"
-              placeholderTextColor={t.colors.textMuted}
+              placeholder="••••••••"
               secureTextEntry
               autoCapitalize="none"
               textContentType="password"
-              style={inputStyle(t)}
             />
           )}
         />
         <ErrorSlot t={t} message={errors.password?.message} />
 
-        {/* Fixed-height slot so a server error doesn't shift the layout. */}
-        <View style={{ minHeight: t.space[6], justifyContent: 'center' }}>
+        <View style={{ minHeight: t.space[5], justifyContent: 'center', marginBottom: t.space[2] }}>
           {serverError ? (
             <Text style={{ color: t.colors.accent, fontSize: t.fontSize.subhead }}>
               {serverError}
@@ -126,50 +158,35 @@ export function AuthScreen() {
           ) : null}
         </View>
 
-        <Pressable
-          onPress={() => void handleSubmit(onSubmit)()}
-          disabled={isSubmitting}
-          style={{
-            backgroundColor: t.colors.accent,
-            opacity: isSubmitting ? 0.5 : 1,
-            borderRadius: t.radius.pill,
-            height: 52,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color={t.colors.onAccent} />
-          ) : (
-            <Text
-              style={{
-                color: t.colors.onAccent,
-                fontSize: t.fontSize.headline,
-                fontWeight: t.fontWeight.semibold,
-              }}
-            >
-              {mode === 'signin' ? 'Sign in' : 'Sign up'}
-            </Text>
-          )}
-        </Pressable>
+        <Button onPress={() => void handleSubmit(onSubmit)()} loading={isSubmitting}>
+          {mode === 'signin' ? 'Sign in' : 'Sign up'}
+        </Button>
 
         {google.available ? (
-          <Pressable
-            onPress={() => void google.signIn()}
-            style={{
-              marginTop: t.space[3],
-              borderColor: t.colors.border,
-              borderWidth: 1,
-              borderRadius: t.radius.pill,
-              height: 52,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: t.colors.text, fontSize: t.fontSize.headline }}>
+          <>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: t.space[3],
+                marginVertical: t.space[4],
+              }}
+            >
+              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
+              <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.footnote }}>
+                or
+              </Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
+            </View>
+
+            <Button
+              variant="secondary"
+              onPress={() => void google.signIn()}
+              leadingIcon={<GoogleIcon size={20} />}
+            >
               Continue with Google
-            </Text>
-          </Pressable>
+            </Button>
+          </>
         ) : null}
 
         <View
@@ -177,7 +194,7 @@ export function AuthScreen() {
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            marginTop: t.space[5],
+            marginTop: t.space[7],
           }}
         >
           <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead }}>
@@ -188,6 +205,7 @@ export function AuthScreen() {
           </TextLink>
         </View>
       </ScrollView>
+    </View>
   );
 }
 
@@ -202,17 +220,4 @@ function ErrorSlot({ t, message }: { t: ReturnType<typeof useTheme>; message?: s
       ) : null}
     </View>
   );
-}
-
-function inputStyle(t: ReturnType<typeof useTheme>) {
-  return {
-    backgroundColor: t.colors.surface,
-    borderColor: t.colors.border,
-    borderWidth: 1,
-    borderRadius: t.radius.md,
-    height: 52,
-    paddingHorizontal: t.space[4],
-    color: t.colors.text,
-    fontSize: t.fontSize.body,
-  } as const;
 }

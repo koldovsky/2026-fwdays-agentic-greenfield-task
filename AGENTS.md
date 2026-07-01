@@ -62,6 +62,10 @@ Newest entry first. Keep it concise; it is a hand-off note, not a changelog of e
   UI kit, brand specimens) is installed as a skill at
   `.agents/skills/honeydo-design/`; invoke the `honeydo-design` skill for prototypes
   or deep design work.
+- **Reproduce the reference, don't approximate it.** For any screen/component, open the
+  matching file in the skill (`ui_kits/honeydo/`, `components/`) and match it fully —
+  brand marks, icons, labels, dividers, hero backgrounds, states, copy. Functional-but-
+  unstyled UI is a defect. See `apps/mobile/AGENTS.md` for the detailed rule.
 - **Tokens only, never raw hex** in app code. Color/spacing/radius/type/motion all
   come from named tokens (centralized as a typed theme in `apps/mobile/`). Light/Dark
   must stay a token swap; Dark is the default. Keep the RN theme object in sync with
