@@ -25,5 +25,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0015](./0015-coach-persona-precision-first-clarification.md) | Coach persona & precision-first clarification policy | Accepted (refines requirements §8.7) |
 | [0016](./0016-db-backed-onboarding-state-machine.md) | DB-backed onboarding state machine (no conversation plugin) | Accepted |
 | [0017](./0017-drop-temperature-from-llm-seam.md) | Drop the `temperature` param from the LLM seam (deprecation; amends ADR-0013) | Accepted |
+| [0018](./0018-run-backlog-model-tiering.md) | Opus·high for the run-backlog loop; Haiku only for mechanical steps (amends ADR-0012) | Accepted |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.

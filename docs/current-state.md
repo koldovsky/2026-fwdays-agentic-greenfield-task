@@ -55,8 +55,10 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 
 ## Done
 - Product/architecture docs: `docs/prd.md`, `docs/requirements.md`, `docs/review-templates.md`.
-- Decision records: `docs/adr/` (0001–0016). Latest: **ADR-0016** DB-backed onboarding state machine
-  (the DB is the source of progress — resume-after-restart, no chat state). **ADR-0015** coach persona
+- Decision records: `docs/adr/` (0001–0018). Latest: **ADR-0018** run-backlog model tiering (Opus·high
+  for every reasoning/impl loop phase, Haiku only for mechanical steps; amends ADR-0012 — dev-loop only,
+  not the bot's Sonnet 4.6 runtime). **ADR-0017** dropped `temperature` from the LLM seam. **ADR-0016**
+  DB-backed onboarding state machine (resume-after-restart, no chat state). **ADR-0015** coach persona
   (honest voice) + precision-first clarification policy (grilled 2026-06-30).
 - Agent docs: `AGENTS.md` (canonical) + `CLAUDE.md` (pointer).
 - CodeRabbit config + PR template (from homework starter).
@@ -144,10 +146,13 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   `test/util/num.test.ts` (integer, fractional-round, whole-valued float, negatives). 170 tests green
   (+4). Opus reviewer → CLEAN (0 findings, both axes). Lands before the voice surfaces
   (`clarify`/`food-photo`) can write copies #4+.
-- Loop tooling: `run-backlog` now assigns a **model+effort tier per phase** (Opus for propose/improve/
-  review; Sonnet 5 for apply/verify/docs/gates; Haiku for mechanical steps) — `metrics` was the first
-  change run under it (apply delegated to a Sonnet maker subagent). `run-backlog` is also **autonomous/
-  gate-driven** — the two human checkpoints dropped,
+- Loop tooling: `run-backlog` assigns a **model+effort tier per phase** — **Opus · high for every
+  reasoning/implementation/coherence/prose phase** (propose, plan gate, apply-maker, verify, dup/improve,
+  review, sync-docs, pre-archive, archive spec-sync) and **Haiku · low** only for pure mechanical steps
+  (select, test-run, evals, commit, archive-move). No phase runs on Sonnet: at current pricing Opus·high
+  is both stronger and cheaper than Sonnet 5 for this work (updated 2026-07-01; earlier the reasoning/impl
+  phases were Sonnet 5). Maker ≠ checker stays a **role** split — apply and review are separate Opus
+  subagents. `run-backlog` is also **autonomous/gate-driven** — the two human checkpoints dropped,
   escalate only on a critical fork (ADR-0012 amendment 2026-06-30). Fixed an `openspec/config.yaml`
   YAML bug (colon-space in unquoted scalars silently dropped the `design`/`tasks` rule arrays).
 

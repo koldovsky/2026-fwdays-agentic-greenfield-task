@@ -24,36 +24,43 @@ Two laws hold for the whole run:
 
 ## Model per phase
 
-Match each phase to the cheapest model that does its job well — **don't run Opus everywhere**. The
-principle: **Opus** only for deep or adversarial judgement; **Sonnet 5** for implementation, coherence
-reasoning, and prose; **Haiku** for mechanical tool-running. Escalate a phase one tier *only* when a
-light step hits a non-obvious problem (e.g. a red test that needs real diagnosis) — note the bump.
+Rationale: [ADR-0018](../../../docs/adr/0018-run-backlog-model-tiering.md) (amends ADR-0012). This
+is the **dev-loop** tiering, not the bot's runtime model (that's Sonnet 4.6, ADR-0003).
+
+Match each phase to the cheapest model that does its job well. The principle: **Opus · high** for
+**every reasoning, implementation, coherence, and prose phase** — at current pricing Opus at high
+effort is both stronger *and* cheaper than Sonnet 5 for this work, so there's no tier to trade down
+to; **Haiku · low** only for pure mechanical tool-running (bookkeeping, running npm, git). No phase
+runs on Sonnet. Escalate Haiku → Opus the moment a mechanical step hits a non-obvious problem (e.g. a
+red test that needs real diagnosis) — note the bump.
 
 | Phase / gate | Model · effort | Why this tier |
 |---|---|---|
 | explore (`opsx:explore`, optional) | **Opus · high** | open-ended problem shaping |
 | select (step 2) | **Haiku · low** | bookkeeping: pick lowest-wave ready, flip status |
 | propose (step 3) | **Opus · high** | spec/design judgement — gets the slice right |
-| plan gate (step 4) | **Sonnet · medium** | summarize + judge "critical fork?" |
-| apply — maker (step 5) | **Sonnet 5 · max** | high-volume mechanical implementation |
-| verify (step 6) | **Sonnet · high** | plan ⇄ impl coherence (careful, not adversarial) |
+| plan gate (step 4) | **Opus · high** | summarize + judge "critical fork?" |
+| apply — maker (step 5) | **Opus · high** | high-volume mechanical implementation |
+| verify (step 6) | **Opus · high** | plan ⇄ impl coherence (careful, not adversarial) |
 | dup-gate + improve-arch (step 7) | **Opus · high** | codebase-wide duplication scan + architectural judgement |
 | review — checker (step 8) | **Opus · high** | adversarial correctness + standards |
-| test + static (step 9) | **Haiku · low** | run npm, report green (→ Sonnet to diagnose a red) |
+| test + static (step 9) | **Haiku · low** | run npm, report green (→ Opus to diagnose a red) |
 | evals (step 10) | **Haiku · low** | run scripts + ratchet check |
-| sync docs (step 11) | **Sonnet · medium** | accurate current-state edits |
+| sync docs (step 11) | **Opus · high** | accurate current-state edits |
 | commit (step 12) | **Haiku · low** | conventional message + git |
-| pre-archive gate (step 13) | **Sonnet · medium** | log outcome + judge "critical concern?" |
-| archive (step 14) | **Haiku · low** | mechanical move (spec-sync subagent on **Sonnet**) |
+| pre-archive gate (step 13) | **Opus · high** | log outcome + judge "critical concern?" |
+| archive (step 14) | **Haiku · low** | mechanical move (spec-sync subagent on **Opus**) |
 
 Mechanism depends on where the phase runs:
 
 - **Subagent phases** (improve-arch, review, the archive spec-sync): pass `model` (and `effort` where
   the subagent supports it) on the `Agent` call.
-- **Main-thread phases** (`opsx:explore`/`propose`/`apply`/`verify`, the mechanical steps): switch the
-  session model with `/model` for that phase, or delegate it to a subagent of the target tier. In
-  practice, keep the orchestrator on **Sonnet 5** (its natural tier for the gate-running + light steps)
-  and delegate **out** to Opus for propose/improve/review and to a Sonnet-max subagent for apply.
+- **Main-thread phases** (`opsx:explore`/`propose`/`apply`/`verify`, the mechanical steps): keep the
+  orchestrator on **Opus · high** — that is the tier every reasoning/impl phase wants, so no `/model`
+  switching is needed for them. Still delegate **apply** and **review** **out** to *separate* Opus
+  subagents: maker ≠ checker is a role separation, not a model one (the apply maker and the review
+  checker must be distinct agents even though both run Opus). Drop to **Haiku** only for the pure
+  mechanical steps — either via `/model` or by delegating them to a Haiku subagent.
 
 ## Before the loop
 
@@ -80,7 +87,7 @@ planned-but-absent command.
    (structural gate, distinct from coherence). Fix or re-propose until validation passes.
    *Done when:* `validate --strict` exits 0.
 
-4. **Plan gate (autonomous)** *(Sonnet · medium)*. Log a one-paragraph proposal/specs/design summary and **proceed** —
+4. **Plan gate (autonomous)** *(Opus · high)*. Log a one-paragraph proposal/specs/design summary and **proceed** —
    do **not** wait for human sign-off. The loop is gate-driven, not approval-driven: validation
    (step 3) is the structural gate; coherence (`opsx:verify`, step 6) and the reviewer subagent
    (step 8) catch a bad plan downstream. **Escalate to the human only on a *critical fork*** — an
@@ -88,12 +95,12 @@ planned-but-absent command.
    then continue). Otherwise pick the sensible default and keep moving.
    *Done when:* the plan summary is logged and no critical fork is open.
 
-5. **Apply (maker)** *(Sonnet 5 · max)*. Run `opsx:apply` to implement `tasks.md`. This agent
-   is the **maker** — run it on Sonnet 5 at max effort (switch the session model or delegate to a
-   Sonnet subagent).
+5. **Apply (maker)** *(Opus · high)*. Run `opsx:apply` to implement `tasks.md`. This agent
+   is the **maker** — delegate it to a **separate** Opus subagent so it stays distinct from the
+   step-8 checker (maker ≠ checker is a role separation; both run Opus).
    *Done when:* every task in `tasks.md` is checked.
 
-6. **Verify** *(Sonnet · high)*. Run `opsx:verify` (plan ⇄ implementation coherence).
+6. **Verify** *(Opus · high)*. Run `opsx:verify` (plan ⇄ implementation coherence).
    *Done when:* verify reports coherent.
 
 7. **Duplication gate + improve architecture (refactor scan)** *(Opus · high)*.
@@ -127,7 +134,7 @@ planned-but-absent command.
    finding (maker fixes, checker re-reviews) — findings are not retried blindly and not waved past.
    *Done when:* the reviewer returns clean.
 
-9. **Test + static gates** *(Haiku · low; → Sonnet to diagnose a red)*. Run `npm test`, then `npm run lint`, `npm run format:check`,
+9. **Test + static gates** *(Haiku · low; → Opus to diagnose a red)*. Run `npm test`, then `npm run lint`, `npm run format:check`,
    `npm run typecheck`, and fallow (when wired). All green.
    *Done when:* every wired gate exits 0 (skip-with-note any not yet wired).
 
@@ -136,7 +143,7 @@ planned-but-absent command.
     change touches no capability suite, or the eval scripts are not wired yet.
     *Done when:* the ratchet passes, or the gate is justifiably skipped (logged).
 
-11. **Sync docs** *(Sonnet · medium)*. Update `docs/current-state.md` (milestone/feature/decision lines + date), flip any
+11. **Sync docs** *(Opus · high)*. Update `docs/current-state.md` (milestone/feature/decision lines + date), flip any
     AGENTS.md *planned → live* commands this change made real, then run `npm run docs:check`.
     *Done when:* `docs:check` exits 0.
 
@@ -145,13 +152,13 @@ planned-but-absent command.
     PR at the end, per ADR-0012).
     *Done when:* the commit lands on the work branch.
 
-13. **Pre-archive gate (autonomous)** *(Sonnet · medium)*. Log the review outcome + diff summary and **proceed** to
+13. **Pre-archive gate (autonomous)** *(Opus · high)*. Log the review outcome + diff summary and **proceed** to
     archive — do **not** wait for human sign-off. All gates (verify, refactor scan, reviewer subagent,
     tests, static, evals, docs) have already passed by here; archive's spec-sync is the recorded
     consequence of that green state. **Escalate only on a critical concern** the gates didn't cover.
     *Done when:* the review outcome is logged and no critical concern is open.
 
-14. **Archive** *(Haiku · low; spec-sync subagent on Sonnet)*. Run `opsx:archive`, then set the change's `status: done` in the backlog.
+14. **Archive** *(Haiku · low; spec-sync subagent on Opus)*. Run `opsx:archive`, then set the change's `status: done` in the backlog.
     *Done when:* the change is archived and the backlog reflects `done`.
 
 15. **Next.** Return to step 2. A change that just reached `done` may now make dependents **ready**.
