@@ -2,6 +2,9 @@
 
 *Last updated: 2026-07-01 · by: Ihor + agent · Update rule: see bottom*
 
+<!-- correction (M3, wave 4) landed 2026-07-01: in-place edit of the last food_log entry -->
+
+
 Living snapshot of where the **whole project** is right now. Read at session start; update at
 session end or after meaningful progress. This is the cross-cutting status — per-change specs and
 tasks live in `openspec/`; product/architecture intent lives in `docs/`. The dependency-ordered
@@ -23,7 +26,10 @@ borderline — ADR-0013) seeded with `coach-persona-tone`. `food-text`: act on t
 `food_log` write → honest confirmation + add-to-catalog (US-2), with a deterministic `food-scale`
 eval. `metrics`: deterministic body-metrics parse → upsert one row/day → like-with-like trend diffs,
 zero LLM calls (US-7). `query`: DB-as-memory — answer a nutrition question from a tenant-scoped
-`food_log` SUM → totals vs goal, zero LLM calls (US-4). 149 tests green; all gates + maker≠checker
+`food_log` SUM → totals vs goal, zero LLM calls (US-4). `correction`: act on the `correction` intent
+— update the user's most recent `food_log` row **in place** (quantity-only rescales the row's own basis
+in code, **zero** LLM calls; a named product re-resolves through the same `resolveFood` pipeline, ≤1
+call), tenant-scoped, honest confirmation (US-5). 162 tests green; all gates + maker≠checker
 review passed. Remaining: the **human deploy** + the live LLM/eval run incl. seeding the tone-eval
 baseline (need `ANTHROPIC_API_KEY` + egress).
 
@@ -33,7 +39,7 @@ baseline (need `ANTHROPIC_API_KEY` + egress).
 | M0 — Pipe (skeleton, long-poll, Dockerfile, CI→GHCR, Coolify) | 🟡 in progress (provision ✅; `pipe` code-complete + archived; **deploy round-trip pending human**) |
 | M1 — Data (Postgres capped+tuned, Prisma schema+migrations) | 🟡 code-complete + archived; on-box migrate/read-write pending human deploy |
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
-| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (Food DB fact / LLM estimate → code-scaled `food_log` write) + **query** (DB-as-memory: tenant-scoped SUM → totals vs goal) landed; correction/clarify next |
+| M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** (Food DB fact / LLM estimate → code-scaled `food_log` write) + **query** (DB-as-memory: tenant-scoped SUM → totals vs goal) + **correction** (in-place edit of the last entry, US-5) landed; clarify next |
 | M4 — Vision (photo plate) | ⬜ not started |
 | M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
@@ -108,6 +114,17 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   otherwise; an empty day answers honestly ("nothing logged"), never a misleading `0`. Prose mirrors
   language, fields stay English. 149 tests green (+28). Opus reviewer → CLEAN (no findings).
   Deterministic — no eval suite (unit-tested).
+- **M3 `correction`** (wave 4, US-5) — acts on the router's `correction` intent: updates the acting
+  user's **most recent** `food_log` row **in place** (never inserts). Quantity-only recovers the row's
+  own per-basis and rescales in code (`base × factor`, **zero** LLM calls, invariant #2/#5); a named
+  product re-resolves through the same `resolveFood` pipeline logging uses (Food DB hit → `fact`, miss →
+  **one** structured estimate, no loop). Read (`findLastFoodLog`, `id DESC`) and write (`updateFoodLog`,
+  `updateMany`) both go through `tenantWhere` — another user's row can never be touched (invariant #8).
+  Confirmation reuses the food-text builder (`buildCorrectionConfirmation`), mirrors language, keeps
+  enums English, offers add-to-catalog when the correction lands on an estimate. Extracted `foodLogValues`
+  (one home for the `resolved → row` scale+mapping, shared by insert/update) + `resolveUserId` (deduped
+  the service preamble). 162 tests green (+13). Opus reviewer → resolved 1 dup WARNING + 1 coverage
+  SUGGESTION (two-user isolation test). Deterministic core — no eval suite.
 - Loop tooling: `run-backlog` now assigns a **model+effort tier per phase** (Opus for propose/improve/
   review; Sonnet 5 for apply/verify/docs/gates; Haiku for mechanical steps) — `metrics` was the first
   change run under it (apply delegated to a Sonnet maker subagent). `run-backlog` is also **autonomous/
@@ -148,9 +165,13 @@ added `coach-persona` wave 3 on 2026-06-30), driven by `/run-backlog` (ADR-0012/
    → like-with-like trend diffs (US-7). Deterministic, no live-LLM gate.
 9. ✅ **`query` (M3, wave 4): code-complete + archived** — DB-as-memory SUM → totals vs goal (US-4).
    Deterministic, no live-LLM gate.
-10. **`correction` / `clarify` / `food-photo` (wave 4): NEXT** — all unblocked by `food-text`
-    (`clarify`/`food-photo` also build on `coach-persona`). `reviews` (wave 5) is also unblocked now
-    (`food-text` + `metrics` + `coach-persona` all done); `progress-photo` waits on `food-photo`.
+10. ✅ **`correction` (M3, wave 4): code-complete + archived** — in-place edit of the last `food_log`
+    entry (quantity rescale in code / product re-resolve), tenant-scoped (US-5). Deterministic core, no
+    live-LLM gate.
+11. **`shared-lang` / `clarify` / `food-photo` (wave 4): NEXT** — all unblocked (`shared-lang` extracts
+    the 3-copy `detectLang` before the voice surfaces; `clarify`/`food-photo` build on `coach-persona`).
+    `reviews` (wave 5) is also unblocked (`food-text` + `metrics` + `coach-persona` done);
+    `progress-photo` waits on `food-photo`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

@@ -55,6 +55,11 @@ export interface CatalogResult {
 export interface FoodService {
   logFood: (chatId: bigint, text: string, routed: RoutedLog) => Promise<Confirmation | null>;
   saveToCatalog: (chatId: bigint, foodLogId: number) => Promise<CatalogResult>;
+  correctLast: (
+    chatId: bigint,
+    text: string,
+    routed: RoutedCorrection,
+  ) => Promise<Confirmation | null>;
 }
 
 /** The router output fields food-text reads (intent already known to be `log`). */
@@ -64,6 +69,9 @@ export interface RoutedLog {
   quantity?: number | undefined;
   unit?: string | undefined;
 }
+
+/** Same shape as {@link RoutedLog} — the router emits identical fields for `correction` (design D3). */
+export type RoutedCorrection = RoutedLog;
 
 // Narrow structural surface over Prisma — a real PrismaClient satisfies it; tests pass a cast mock.
 export type FoodClient = Pick<PrismaClient, 'user' | 'foodDatabase' | 'foodLog'>;

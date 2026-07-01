@@ -55,14 +55,27 @@ const NO_PRODUCT: Record<Lang, string> = {
   en: "I didn't catch the food. Send a product and amount, e.g. “200g chicken breast”.",
 };
 
+const CORRECTED_VERB: Record<Lang, string> = { uk: 'Виправив', ru: 'Исправил', en: 'Corrected' };
+
+const NO_ENTRY: Record<Lang, string> = {
+  uk: "Ще немає жодного запису, який можна виправити. Спочатку запиши, що ти з'їв.",
+  ru: 'Пока нет ни одной записи, которую можно исправить. Сначала запиши, что ты съел.',
+  en: "There's nothing logged yet to correct. Log a food entry first.",
+};
+
 /** Log-by-default still needs a product — nudge in the user's language when the parse has none. */
 export const noProductReply = (text: string): Confirmation => ({
   text: NO_PRODUCT[detectLang(text)],
 });
 
-export const buildConfirmation = (text: string, row: FoodLog): Confirmation => {
+/** Shared confirmation body for logging and correcting — only the leading verb differs. */
+const buildEntryConfirmation = (
+  verb: Record<Lang, string>,
+  text: string,
+  row: FoodLog,
+): Confirmation => {
   const lang = detectLang(text);
-  const base = `${LOGGED_VERB[lang]}: ${macroLine(lang, row)}.`;
+  const base = `${verb[lang]}: ${macroLine(lang, row)}.`;
 
   if (row.source === FoodSource.fact) {
     return { text: base };
@@ -73,6 +86,18 @@ export const buildConfirmation = (text: string, row: FoodLog): Confirmation => {
     addToCatalog: { id: row.id, label: ADD_LABEL[lang] },
   };
 };
+
+export const buildConfirmation = (text: string, row: FoodLog): Confirmation =>
+  buildEntryConfirmation(LOGGED_VERB, text, row);
+
+/** Reply when a `correction` arrives but the user has no `food_log` row yet (honest, no write). */
+export const noEntryReply = (text: string): Confirmation => ({
+  text: NO_ENTRY[detectLang(text)],
+});
+
+/** Confirmation for an in-place correction — same shape as {@link buildConfirmation}, different verb. */
+export const buildCorrectionConfirmation = (text: string, row: FoodLog): Confirmation =>
+  buildEntryConfirmation(CORRECTED_VERB, text, row);
 
 const CATALOG_SAVED: Record<Lang, string> = {
   uk: '✅ Додав у твою базу продуктів.',

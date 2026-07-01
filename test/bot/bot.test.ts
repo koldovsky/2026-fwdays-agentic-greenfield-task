@@ -20,6 +20,9 @@ const makeOnboarding = (over: Partial<OnboardingService> = {}): OnboardingServic
 const makeFood = (over: Partial<FoodService> = {}): FoodService => ({
   logFood: vi.fn().mockResolvedValue({ text: 'Записал: тест — 100 ккал · Б 1 / Ж 1 / У 1 г.' }),
   saveToCatalog: vi.fn().mockResolvedValue({ saved: true, entryName: 'тест' }),
+  correctLast: vi
+    .fn()
+    .mockResolvedValue({ text: 'Исправил: тест — 150 ккал · Б 1 / Ж 1 / У 1 г.' }),
   ...over,
 });
 
@@ -180,6 +183,35 @@ describe('handleText', () => {
     expect(String(reply.mock.calls[0]?.[0])).toContain('330');
     // Estimate path → the add-to-Food-DB button rides along.
     expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup');
+  });
+
+  it('routes a `correction` intent to the food service and replies with the corrected confirmation', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const food = makeFood({
+      correctLast: vi.fn().mockResolvedValue({ text: 'Исправил: курица — 248 ккал' }),
+    });
+    const { deps } = makeDeps(onboarding, 'correction', food);
+
+    await handleText({ message: { text: 'нет, 150г' }, chat: { id: 7 }, reply }, deps);
+
+    expect(food.correctLast).toHaveBeenCalledWith(
+      7n,
+      'нет, 150г',
+      expect.objectContaining({ intent: 'correction' }),
+    );
+    expect(String(reply.mock.calls[0]?.[0])).toContain('248');
+  });
+
+  it('does not reply when the correction service returns null (unknown chat_id)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const onboarding = makeOnboarding({ isOnboarding: vi.fn().mockResolvedValue(false) });
+    const food = makeFood({ correctLast: vi.fn().mockResolvedValue(null) });
+    const { deps } = makeDeps(onboarding, 'correction', food);
+
+    await handleText({ message: { text: 'нет, 150г' }, chat: { id: 7 }, reply }, deps);
+
+    expect(reply).not.toHaveBeenCalled();
   });
 
   it('routes a `metric` intent to the metrics service and replies with its confirmation', async () => {

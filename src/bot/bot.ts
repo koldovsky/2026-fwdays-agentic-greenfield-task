@@ -122,6 +122,13 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
     }
     return;
   }
+  if (routed.intent === 'correction') {
+    const confirmation = await deps.food.correctLast(chatId, text, routed);
+    if (confirmation) {
+      await replyConfirmation(ctx.reply, confirmation);
+    }
+    return;
+  }
   if (routed.intent !== 'log') {
     await ctx.reply(`intent: ${routed.intent} · date: ${routed.date}`);
     return;

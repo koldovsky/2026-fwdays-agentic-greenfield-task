@@ -180,6 +180,21 @@ describe('createFoodService.logFood', () => {
   });
 });
 
+describe('createFoodService.correctLast', () => {
+  it('returns null for an unknown chat_id (no user, no correction attempted)', async () => {
+    const { client } = makeFake(null);
+    (client.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await service(client).correctLast(99n, 'нет, 150г', {
+      date: '2026-06-30',
+      quantity: 150,
+      unit: 'г',
+    });
+
+    expect(result).toBeNull();
+  });
+});
+
 describe('createFoodService.saveToCatalog', () => {
   it('reconstructs the per-basis macros from the logged row and stores a user-owned entry', async () => {
     // The logged estimate row the button refers to (200 g, per100g basis, scaled).
