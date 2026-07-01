@@ -1,14 +1,12 @@
 import type { FoodLog, FoodSource } from '@prisma/client';
 import { tenantWhere } from '../db/tenancy.js';
+import { toDbDate } from '../util/date.js';
 import { scaleFactor, scaleMacros } from './scale.js';
 import type { FoodClient, Meal, ResolvedFood } from './types.js';
 
 // Write one food_log row (§8.2 step 3). Macros are scaled in code here — the row carries its OWN
 // numbers, never a SUM and never a model-emitted figure (invariants #1/#2). user_id is injected via
 // tenantWhere so the tenant filter is never forgotten on a write (invariant #8).
-
-/** The user-local calendar day as a `@db.Date` value (UTC midnight, no TZ skew). */
-const toDbDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00.000Z`);
 
 /** The `resolved → food_log` value columns (macros scaled in code) shared by insert and update. */
 interface FoodLogValues {

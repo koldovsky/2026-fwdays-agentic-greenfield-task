@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
-import { handleCallback, handlePhoto, handleStart, handleText } from '../../src/bot/bot.js';
+import {
+  handleCallback,
+  handlePhoto,
+  handleProgressCommand,
+  handleStart,
+  handleText,
+} from '../../src/bot/bot.js';
 import type { PhotoContext } from '../../src/bot/types.js';
 import type { BotDeps } from '../../src/bot/types.js';
 import type { ClarifyStore } from '../../src/clarify/store.js';
@@ -9,6 +15,8 @@ import type { FoodService, ResolvedFood } from '../../src/food/types.js';
 import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
 import { AnswerStatus, Field, type OnboardingService } from '../../src/onboarding/types.js';
+import type { ProgressStore } from '../../src/progress/store.js';
+import type { ProgressService } from '../../src/progress/types.js';
 import type { QueryService } from '../../src/query/types.js';
 
 // fs write-path spies for the CRITICAL image-never-persisted test (invariant #4) at the layer that
@@ -136,6 +144,24 @@ const makeQuery = (over: Partial<QueryService> = {}): QueryService => ({
   ...over,
 });
 
+const makeProgress = (over: Partial<ProgressService> = {}): ProgressService => ({
+  analyzeAndSave: vi.fn().mockResolvedValue({ text: 'Живот в профиль стал заметно площе.' }),
+  ...over,
+});
+
+// A fresh in-memory arming store per test (mirrors the module singleton's arm/take contract).
+const makeProgressArm = (armed: bigint[] = []): ProgressStore => {
+  const map = new Map<bigint, Date>(armed.map((id) => [id, new Date()]));
+  return {
+    arm: (chatId) => void map.set(chatId, new Date()),
+    take: (chatId) => {
+      const at = map.get(chatId) ?? null;
+      map.delete(chatId);
+      return at;
+    },
+  };
+};
+
 const makeDeps = (
   onboarding: OnboardingService,
   intent = 'query',
@@ -143,6 +169,8 @@ const makeDeps = (
   metrics: MetricsService = makeMetrics(),
   query: QueryService = makeQuery(),
   clarify: ClarifyStore = makeClarify(),
+  progress: ProgressService = makeProgress(),
+  progressArm: ProgressStore = makeProgressArm(),
 ): {
   deps: BotDeps;
   create: ReturnType<typeof vi.fn>;
@@ -150,6 +178,8 @@ const makeDeps = (
   metrics: MetricsService;
   query: QueryService;
   clarify: ClarifyStore;
+  progress: ProgressService;
+  progressArm: ProgressStore;
 } => {
   const create = vi.fn().mockResolvedValue({
     content: [{ type: 'text', text: JSON.stringify({ intent, date: 'today' }) }],
@@ -157,12 +187,24 @@ const makeDeps = (
   });
   const anthropic = { messages: { create } } as unknown as Anthropic;
   return {
-    deps: { anthropic, userTz: 'Europe/Kyiv', onboarding, food, metrics, query, clarify },
+    deps: {
+      anthropic,
+      userTz: 'Europe/Kyiv',
+      onboarding,
+      food,
+      metrics,
+      query,
+      clarify,
+      progress,
+      progressArm,
+    },
     create,
     food,
     metrics,
     query,
     clarify,
+    progress,
+    progressArm,
   };
 };
 
@@ -729,6 +771,200 @@ describe('handlePhoto', () => {
     expect(fsWriteFileSync).not.toHaveBeenCalled();
     expect(fsCreateWriteStream).not.toHaveBeenCalled();
     expect(fspWriteFile).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+});
+
+describe('progress-photo routing (US-8)', () => {
+  it('/progress arms the next photo and replies with an instruction', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const progressArm = makeProgressArm();
+    const armSpy = vi.spyOn(progressArm, 'arm');
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      makeProgress(),
+      progressArm,
+    );
+
+    await handleProgressCommand({ chat: { id: 7 }, reply }, deps);
+
+    expect(armSpy).toHaveBeenCalledWith(7n);
+    expect(reply).toHaveBeenCalledTimes(1);
+    expect(String(reply.mock.calls[0]?.[0]).length).toBeGreaterThan(0);
+  });
+
+  it('routes a captioned progress photo to the progress service, not logPhoto', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('мой прогресс', reply), deps);
+
+    expect(progress.analyzeAndSave).toHaveBeenCalledWith(
+      7n,
+      'мой прогресс',
+      Buffer.from([1, 2, 3]).toString('base64'),
+    );
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    expect(reply).toHaveBeenCalledWith('Живот в профиль стал заметно площе.');
+    fetchSpy.mockRestore();
+  });
+
+  it('CRITICAL — writes nothing to disk across the progress route (invariant #4)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const progress = makeProgress();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('мой прогресс', reply), deps);
+
+    // the progress route materializes bytes (download → base64) then hands them to the service —
+    // no fs write path is touched (the service-level fs-spy covers analyze → save; this covers the
+    // download half on the progress route, so the union spans the full download → analyze → save run)
+    expect(progress.analyzeAndSave).toHaveBeenCalled();
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('routes an armed uncaptioned photo to the progress service', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    const progressArm = makeProgressArm([7n]); // /progress already armed chat 7
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+      progressArm,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+
+    expect(progress.analyzeAndSave).toHaveBeenCalledTimes(1);
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('an unarmed uncaptioned photo still routes to logPhoto (food default)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+
+    expect(food.logPhoto).toHaveBeenCalledTimes(1);
+    expect(progress.analyzeAndSave).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('an expired arming flag falls back to the food path', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    // An armed-at an hour ago (> 10 min TTL) → expired.
+    const progressArm: ProgressStore = {
+      arm: vi.fn(),
+      take: vi.fn().mockReturnValue(new Date(Date.now() - 60 * 60 * 1000)),
+    };
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+      progressArm,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+
+    expect(food.logPhoto).toHaveBeenCalledTimes(1);
+    expect(progress.analyzeAndSave).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('consumes the arming flag on every photo so a stray /progress cannot reroute a later food photo', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    const progressArm = makeProgressArm([7n]);
+    const takeSpy = vi.spyOn(progressArm, 'take');
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+      progressArm,
+    );
+    // A fresh Response per call — a body can only be read once.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response(new Uint8Array([1, 2, 3]))));
+
+    // First photo consumes the flag → progress.
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+    // Second photo: flag already gone → food.
+    await handlePhoto(makePhotoCtx(undefined, reply), deps);
+
+    expect(takeSpy).toHaveBeenCalledTimes(2); // consumed on both
+    expect(progress.analyzeAndSave).toHaveBeenCalledTimes(1); // only the first
+    expect(food.logPhoto).toHaveBeenCalledTimes(1); // the second
     fetchSpy.mockRestore();
   });
 });

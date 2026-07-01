@@ -64,8 +64,9 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | clarify | done | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
 | food-photo | done | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), multi-item, fact-vs-estimate, ephemeral, never persisted (core US-3; interactive ask split to `food-photo-ask`) |
 | food-photo-ask | done | agent | 5 | food-photo, clarify | US-3/US-6 | M4 | Precision-first plate ask: hold extracted items as a photo-variant Open Question, resolve via ONE text-only refine (image already discarded — can't re-run vision), reuse clarify UI/expiry (ADR-0015) |
-| progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
+| progress-photo | doing | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
 | reviews | todo | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
+| shared-tenant-resolve | todo | agent | 6 | food-text, metrics, query, progress-photo | — | M3 | Extract `resolveUserId` (chat_id → internal user id) to `src/db/` — dedupe 1 named copy (food) + 2 inline (metrics/query) + progress (rule #12, sibling of shared-lang; surfaced by progress-photo step-7/review) |
 | notion-mirror | todo | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
 | hardening | todo | agent | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
 
@@ -237,6 +238,18 @@ Midnight cron fallback if not reviewed. After a daily: **Sunday** → weekly (fr
 **last day of month** → monthly (from that month's weeklies). `reviewed_flag` per (user, date)
 prevents doubles. Output per [review-templates.md](../docs/review-templates.md): **numbers from
 code, prose from model**, in the honest **Coaching Voice** from coach-persona ([ADR-0015](../docs/adr/0015-coach-persona-precision-first-clarification.md)). US-9.
+
+### shared-tenant-resolve — M3 · blocked-by: food-text, metrics, query, progress-photo
+The "resolve the tenant's internal `id` from their Telegram `chat_id`" preamble has drifted into four
+homes: a module-private `resolveUserId` in `src/food/service.ts` **and** `src/progress/service.ts`,
+plus the inline `user.findUnique({ where: { chatId }, select: { id: true } })` form in
+`src/metrics/service.ts` and `src/query/service.ts` — the same rule #12 spread `shared-lang`/
+`shared-fmt` fixed for `detectLang`/`fmt`, surfaced by the `progress-photo` step-7 dup gate + reviewer
+(SUGGESTION #4). Extract one `resolveUserId(client, chatId): Promise<number | null>` to `src/db/`
+(sibling of `tenancy.ts`, structural client type so every narrow service client satisfies it), repoint
+all four services, delete the copies. **No behavior change** — the food/metrics/query/progress suites
+stay green; add `test/db/*` coverage. Its own change (touches already-archived service files, not
+folded into a feature — same precedent as `shared-lang`). No US (tech debt).
 
 ### notion-mirror — M7 · blocked-by: data, reviews
 Each successful Postgres write enqueues a Notion sync job. Background worker writes the page

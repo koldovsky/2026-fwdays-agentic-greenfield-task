@@ -1,7 +1,7 @@
 // Core data layer (M1). Source of truth = Postgres (invariant #1). Every domain row carries
 // user_id (invariant #8). Stored numbers: Int for kcal, Decimal for grams/cm/kg — never Float
 // (backend-conventions rule 10). DB column/table names are snake_case via @map; enum values stay
-// English. Deferred tables (open_questions, notion_*, progress_notes) land with their features.
+// English. Deferred tables (open_questions, notion_*) land with their features.
 
 generator client {
   provider = "prisma-client-js"
@@ -66,6 +66,7 @@ model User {
   bodyMetrics    BodyMetric[]
   reviews        Review[]
   foodDatabase   FoodDatabase[]
+  progressNotes  ProgressNote[]
 
   @@map("users")
 }
@@ -146,4 +147,20 @@ model Review {
   @@unique([userId, period, periodStart])
   @@index([userId, period])
   @@map("reviews")
+}
+
+// Progress-photo notes (US-8, M5). One row per body-photo check-in: only the qualitative text
+// observations from the single vision call are persisted — there is NO image column (invariant #4
+// enforced structurally at rest; the bytes live only transiently in memory during the call).
+model ProgressNote {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  date         DateTime @db.Date
+  observations String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("progress_notes")
 }

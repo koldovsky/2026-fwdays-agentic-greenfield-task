@@ -1,6 +1,7 @@
 import { Bot, InlineKeyboard } from 'grammy';
 import { isExpired } from '../clarify/store.js';
 import type { OpenQuestion, OutboundQuestion } from '../clarify/types.js';
+import { isProgressCaption } from '../progress/detect.js';
 import { classifyMessage } from '../router/router.js';
 import {
   AnswerStatus,
@@ -27,6 +28,10 @@ const CALLBACK_PREFIX = 'onb:';
 const FOOD_ADD_PREFIX = 'food:addfdb:';
 const CLARIFY_PREFIX = 'q:';
 const WELCOME = 'Привіт! Я твій тренер з харчування. Налаштуймо твій профіль — кілька запитань.';
+// `/progress` arms the next photo (design D4). The instruction is Russian — the primary RU/UA user
+// base (mirrors the caption-less Russian default, design D6); a caption on the photo can still switch
+// the analysis language.
+const PROGRESS_PROMPT = 'Пришли фото прогресса (лучше в профиль) — оценю визуальные изменения.';
 
 const buildKeyboard = (question: Question): InlineKeyboard => {
   const kb = new InlineKeyboard();
@@ -280,11 +285,34 @@ const downloadPhotoBase64 = async (ctx: PhotoContext): Promise<string | null> =>
   return Buffer.from(bytes).toString('base64');
 };
 
+/** `/progress`: arm the ephemeral flag so the NEXT photo is read as progress, and prompt for it. */
+export const handleProgressCommand = async (ctx: StartContext, deps: BotDeps): Promise<void> => {
+  if (!ctx.chat) {
+    return;
+  }
+  deps.progressArm.arm(BigInt(ctx.chat.id));
+  await ctx.reply(PROGRESS_PROMPT);
+};
+
 /**
- * A plate photo. Onboarding-gated exactly like `handleText` (a photo mid-onboarding is not a food
- * log). Otherwise: download the bytes to base64 in memory, run the single vision call via `logPhoto`,
- * and either reply with the multi-item confirmation or — on an `ask` outcome (a hidden high-leverage
- * mover) — store the photo Open Question and pose it (mirrors `dispatch`). The image lives only in the
+ * Whether this photo is a progress photo (design D3). Always CONSUME the arming flag (`take`) so a
+ * stray `/progress` can't reroute a later food photo: it routes progress only if the caption names a
+ * progress keyword OR the flag is present-and-fresh (`!isExpired`). An expired/absent flag is a no-op.
+ */
+const isProgressPhoto = (deps: BotDeps, chatId: bigint, caption: string): boolean => {
+  const armedAt = deps.progressArm.take(chatId); // consumed regardless of the outcome
+  if (isProgressCaption(caption)) {
+    return true;
+  }
+  return armedAt !== null && !isExpired(armedAt, new Date());
+};
+
+/**
+ * A photo. Onboarding-gated exactly like `handleText` (a photo mid-onboarding is not a log). Then
+ * download the bytes to base64 in memory (invariant #4 — never disk) and route: a progress photo
+ * (caption keyword or a fresh `/progress` arming flag) goes to the progress service (one vision call →
+ * observations reply); anything else stays a food plate via `logPhoto` (unchanged), which may reply
+ * with the multi-item confirmation or pose a hidden-mover Open Question. The image lives only in the
  * base64 string and is never persisted (invariant #4).
  */
 export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<void> => {
@@ -297,12 +325,24 @@ export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<voi
     return;
   }
 
+  const caption = ctx.message.caption ?? '';
+  // Decide the route BEFORE downloading so the arming flag is consumed on every photo (design D3).
+  const progress = isProgressPhoto(deps, chatId, caption);
+
   const imageBase64 = await downloadPhotoBase64(ctx);
   if (imageBase64 === null) {
     return;
   }
 
-  const outcome = await deps.food.logPhoto(chatId, ctx.message.caption ?? '', imageBase64);
+  if (progress) {
+    const reply = await deps.progress.analyzeAndSave(chatId, caption, imageBase64);
+    if (reply) {
+      await ctx.reply(reply.text);
+    }
+    return;
+  }
+
+  const outcome = await deps.food.logPhoto(chatId, caption, imageBase64);
   if (!outcome) {
     return;
   }
@@ -388,6 +428,7 @@ export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promi
 export const createBot = (token: string, deps: BotDeps): Bot => {
   const bot = new Bot(token);
   bot.command('start', (ctx) => handleStart(ctx, deps));
+  bot.command('progress', (ctx) => handleProgressCommand(ctx, deps));
   bot.on('callback_query:data', (ctx) => handleCallback(ctx, deps));
   bot.on('message:text', (ctx) => handleText(ctx, deps));
   bot.on('message:photo', (ctx) => handlePhoto(ctx, deps));

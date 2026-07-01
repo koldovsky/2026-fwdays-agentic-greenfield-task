@@ -7,6 +7,7 @@
 <!-- shared-fmt (M3, wave 4, tech debt) landed 2026-07-01: extracted src/util/num.ts (fmt), deduped 3 copies; shared-lang sibling closed -->
 <!-- clarify (US-6, M3, wave 4) landed 2026-07-01: precision-first Open Question mechanic (ephemeral in-memory store ADR-0019, ask-vs-log decision, resolve/expiry-fallback); unblocked after 2 review rounds (C1 disambiguation + invariant-#6 language); extracted src/util/num.ts DECIMAL_SOURCE -->
 <!-- food-photo (US-3, M4, wave 4) landed 2026-07-01: plate photo → ONE vision call (seam extended with optional image block, invariant #5) → multi-item extraction → batched Food-DB lookup (fact-vs-estimate per item, no N+1) → one code-scaled food_log row per item → multi-item confirmation; image base64 in memory only, never persisted (invariant #4, CRITICAL fs-spy test); interactive plate ask split to food-photo-ask (image discarded, needs text-only refine) -->
+<!-- progress-photo (US-8, M5, wave 5) landed 2026-07-01: body progress photo → ONE vision call (reuses the seam's image block, invariant #5) → qualitative prose observations (belly-in-profile marker, honest coach voice, NO body-fat %/diagnosis — invariant #2, forbidden in the prompt) → persist TEXT ONLY to a new tenant-scoped progress_notes table (id/user_id/date/observations/created_at — NO image column, invariant #4 at rest); routing: caption keyword (RU прогресс/UA прогрес/EN progress) OR an ephemeral /progress arming flag (Map<chatId,Date>, reuses clarify TTL_MS/isExpired — no new TTL, ADR-0019, consumed on every photo) — else stays a food plate; language decided IN the analyze prompt (mirror caption; no caption → Russian, design D6 — no detectLang on empty text); image base64 in memory only, never persisted (CRITICAL fs-spy test across the full analyze→save run); deduped toDbDate → src/util/date.ts, repointed the 4 verbatim copies (food/write, metrics/write, metrics/service, query/aggregate, rule #12) + extracted the image/jpeg media type → src/llm/structured.ts TELEGRAM_PHOTO_MEDIA_TYPE (killed copy #2 in food/photo+progress/analyze); 257 tests total; Opus reviewer → APPROVE (no CRITICAL/MAJOR), resolved fs-spy split (added a unified progress-route fs-spy) + filed shared-tenant-resolve follow-up (resolveUserId spread across food/metrics/query/progress, rule #12, shared-lang precedent); live judge eval deferred (needs labeled image set + key). Closes the M5 body track alongside metrics. -->
 <!-- food-photo-ask (US-3/US-6, M4, wave 5) landed 2026-07-01: precision-first plate ask — vision flags one hidden high-leverage mover via an optional plate-level `clarify` on the SAME one call (invariant #5); OpenQuestion becomes a discriminated union on `variant` (text | photo), photo variant holds ResolvedFood[] + clarification + meal/date, NO image (invariant #4); logPhoto → LogOutcome; the answer refines the held items via ONE text-only refinePlate call (no re-vision, no chat history — invariants #1/#4) → resolvePlate re-tag fact/estimate → one code-scaled row per item (an added mover comes back as its OWN item so a fact item's calories survive); expiry logs EVERY held item AS-IS preserving each resolved source (fact stays fact — invariant #3, never drops); caption stored as the confirmation language anchor (text only, invariant #4 unbroken); bot handlePhoto gains the ask branch (reuses store + q:<index> UI); tests 233 total -->
 
 
@@ -57,7 +58,7 @@ baselines (need `ANTHROPIC_API_KEY` + egress).
 | M2 — Onboarding (`/start` + targets) | 🟡 code-complete + archived; on-box verify pending human deploy |
 | M3 — Core logging (text + Food DB) | 🟡 router (FR-1) + LLM-client seam + eval framework + coach-persona + **food-text** + **query** + **correction** + **clarify** (US-6: precision-first Open Question — ask-vs-log, ephemeral store, resolve/expiry-fallback) landed; food-photo (M4) next voice surface |
 | M4 — Vision (photo plate) | 🟡 **food-photo** + **food-photo-ask** landed (US-3: 1 vision call → multi-item, fact-vs-estimate, one row/item, image never persisted; precision-first plate ask — vision flags one hidden mover, photo-variant Open Question, ONE text-only refine on the answer, expiry logs all as estimate); `progress-photo` next; on-box vision-accuracy eval deferred (needs labeled image set + key) |
-| M5 — Body (metrics + progress notes) | 🟡 **metrics** landed (parse body metrics → upsert one row/day → like-with-like trend diffs); progress-photo next |
+| M5 — Body (metrics + progress notes) | 🟡 **metrics** + **progress-photo** landed (metrics: parse → upsert one row/day → like-with-like trend diffs; progress-photo: US-8, one vision call → qualitative prose → text-only progress_notes, image never persisted); body track code-complete |
 | M6 — Reviews (daily + cron + rollups) | ⬜ not started |
 | M7 — Notion mirror | ⬜ not started |
 | M8 — Hardening | ⬜ not started |
@@ -205,7 +206,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   Coolify pulls + runs → container `migrate deploy` creates tables → confirm `/start` round-trip +
   `/health` + a DB read/write, idle RSS < 512 MB.
 
-Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (16 changes + 1 manual `provision`;
+Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (17 changes + 1 manual `provision`;
+`shared-tenant-resolve` tech-debt follow-up filed 2026-07-01 by `progress-photo`;
 added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), driven by
 `/run-backlog` (ADR-0012/0013).
 
@@ -248,9 +250,14 @@ added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), 
     with optional image block) → multi-item extraction → batched fact-vs-estimate lookup → one
     code-scaled row per item → multi-item confirmation; image base64 in memory only, never persisted
     (CRITICAL fs-spy test). Live vision eval deferred (needs image set + key). Review + archive pending.
-15. **`food-photo-ask` (M4, wave 5): NEXT** — precision-first plate ask over the extracted items as a
-    photo-variant Open Question (text-only refine — the image is already discarded). `reviews` (wave 5)
-    is also ready (`food-text` + `metrics` + `coach-persona` done); `progress-photo` waits on `food-photo`.
+15. ✅ **`food-photo-ask` (M4, wave 5): code-complete + archived** — precision-first plate ask over the
+    extracted items as a photo-variant Open Question (text-only refine — the image is already discarded).
+16. ✅ **`progress-photo` (M5, wave 5, US-8): code-complete** — body photo → ONE vision call → qualitative
+    prose observations → text-only `progress_notes` (image never persisted, CRITICAL fs-spy); caption/`/progress`
+    routing. Opus reviewer → APPROVE. Live judge eval deferred (needs image set + key). Closes the M5 body track.
+17. **`reviews` (M6, wave 5): NEXT** — ready (`food-text` + `metrics` + `coach-persona` done): manual/`
+    /done` trigger + midnight cron fallback + weekly/monthly rollups (US-9). `notion-mirror` (M7) waits on
+    `reviews`; `shared-tenant-resolve` (tech debt) is also ready.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

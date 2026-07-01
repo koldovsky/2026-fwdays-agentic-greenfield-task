@@ -1,14 +1,12 @@
 import type { BodyMetric } from '@prisma/client';
 import { tenantWhere } from '../db/tenancy.js';
+import { toDbDate } from '../util/date.js';
 import type { MetricsClient, ParsedMetrics } from './types.js';
 
 // Upsert one body_metrics row per (user, date) — design §2. A same-date second message merges the
 // parsed fields onto the existing row; it never nulls out a column the message didn't mention. No
 // native composite-key upsert (no unique constraint on userId+date), so this is a tenant-scoped
 // findFirst → update else create — both legs go through tenantWhere (invariant #8).
-
-/** The user-local calendar day as a `@db.Date` value (UTC midnight, no TZ skew) — mirrors food/write. */
-const toDbDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00.000Z`);
 
 export const upsertMetrics = async (
   client: MetricsClient,

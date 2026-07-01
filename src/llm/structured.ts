@@ -20,6 +20,9 @@ export interface StructuredImage {
   mediaType: Anthropic.Base64ImageSource['media_type'];
 }
 
+/** Telegram delivers photos as JPEG — one home for every vision caller's media type (rule #12). */
+export const TELEGRAM_PHOTO_MEDIA_TYPE: Anthropic.Base64ImageSource['media_type'] = 'image/jpeg';
+
 /** Build the user message content: image block(s) BEFORE the text (invariant #5, still one call). */
 const userContent = (
   userText: string,

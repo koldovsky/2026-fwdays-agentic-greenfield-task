@@ -2,7 +2,11 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { FoodSource } from '@prisma/client';
 import { z } from 'zod';
 import type { RawClarify } from '../clarify/types.js';
-import { parseStructured, type StructuredImage } from '../llm/structured.js';
+import {
+  TELEGRAM_PHOTO_MEDIA_TYPE,
+  parseStructured,
+  type StructuredImage,
+} from '../llm/structured.js';
 import { PER_VALUES, clarifySchema } from './estimate.js';
 import { lookupFoodsByNames } from './lookup.js';
 import { fromMatch } from './resolve.js';
@@ -14,8 +18,6 @@ import type { FoodClient, ResolvedFood } from './types.js';
 // the text estimate schema's fields (design D2). Everything after the extracted items reuses the
 // text pipeline: batched Food-DB lookup → fact-vs-estimate resolution → code-scaled write/confirm.
 // The image bytes live only in the base64 argument and are never persisted (invariant #4).
-
-const IMAGE_MEDIA_TYPE = 'image/jpeg'; // Telegram delivers photos as JPEG (design D5).
 
 const plateItemSchema = z.object({
   name: z
@@ -76,7 +78,7 @@ export const estimatePlate = async (
     'quantity in that basis unit. Per the precision-first policy, also set `clarify` iff a ' +
     `high-leverage calorie-mover is hidden.${captionLine}`;
 
-  const images: StructuredImage[] = [{ data: imageBase64, mediaType: IMAGE_MEDIA_TYPE }];
+  const images: StructuredImage[] = [{ data: imageBase64, mediaType: TELEGRAM_PHOTO_MEDIA_TYPE }];
   const { data } = await parseStructured(client, plateSchema, userText, images);
 
   return { items: data.items, clarify: data.clarify ?? null };

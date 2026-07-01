@@ -4,6 +4,8 @@ import type { ClarifyStore } from '../clarify/store.js';
 import type { FoodService } from '../food/types.js';
 import type { MetricsService } from '../metrics/types.js';
 import type { OnboardingService } from '../onboarding/types.js';
+import type { ProgressStore } from '../progress/store.js';
+import type { ProgressService } from '../progress/types.js';
 import type { QueryService } from '../query/types.js';
 
 /** Dependencies the message handlers need (the LLM client, the user's timezone, onboarding, food). */
@@ -15,6 +17,8 @@ export interface BotDeps {
   metrics: MetricsService;
   query: QueryService;
   clarify: ClarifyStore;
+  progress: ProgressService;
+  progressArm: ProgressStore;
 }
 
 export type ReplyFn = (text: string, other?: { reply_markup?: InlineKeyboard }) => Promise<unknown>;
