@@ -18,19 +18,19 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 
 ## 3. API — password auth, hashing, tokens (FR-AUTH-01/02, NFR-SEC-01)
 
-- [ ] 3.1 Add deps: `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `argon2`, `google-auth-library`
-- [ ] 3.2 `AuthModule` + `AuthService`: argon2 hash/verify; issue short-lived access JWT + opaque refresh token (store only its hash)
-- [ ] 3.3 `POST /auth/signup` — validate password via shared validator, reject weak (FR-AUTH-01) and duplicate email; return `AuthTokens`
-- [ ] 3.4 `POST /auth/signin` — verify credentials, issue tokens; reject invalid without disclosing which factor (FR-AUTH-02)
-- [ ] 3.5 DTOs use class-validator; confirm the global `ValidationPipe` strips/rejects extras (TC-STACK-02)
-- [ ] 3.6 e2e: signup → signin happy path + weak-password + duplicate-email + bad-credentials
+- [x] 3.1 Add deps: `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `argon2`, `google-auth-library`
+- [x] 3.2 `AuthModule` + `AuthService`: argon2 hash/verify; issue short-lived access JWT + opaque refresh token (store only its hash)
+- [x] 3.3 `POST /auth/signup` — validate password via shared validator, reject weak (FR-AUTH-01) and duplicate email; return `AuthTokens`
+- [x] 3.4 `POST /auth/signin` — verify credentials, issue tokens; reject invalid without disclosing which factor (FR-AUTH-02)
+- [x] 3.5 DTOs use class-validator; confirm the global `ValidationPipe` strips/rejects extras (TC-STACK-02)
+- [x] 3.6 e2e: signup → signin happy path + weak-password + duplicate-email + bad-credentials
 
 ## 4. API — refresh rotation, sign-out (FR-AUTH-05, NFR-SEC-01)
 
-- [ ] 4.1 `POST /auth/refresh` — validate against a non-revoked/non-expired row, rotate (issue new pair, mark old rotated via `revokedAt`/`replacedById`)
-- [ ] 4.2 Reuse detection — presenting a rotated token is rejected and revokes the user's token chain
-- [ ] 4.3 `POST /auth/logout` — revoke the current refresh token server-side (FR-AUTH-05)
-- [ ] 4.4 e2e: refresh rotates + old token rejected; logout then refresh rejected
+- [x] 4.1 `POST /auth/refresh` — validate against a non-revoked/non-expired row, rotate (issue new pair, mark old rotated via `revokedAt`/`replacedById`)
+- [x] 4.2 Reuse detection — presenting a rotated token is rejected and revokes the user's token chain
+- [x] 4.3 `POST /auth/logout` — revoke the current refresh token server-side (FR-AUTH-05)
+- [x] 4.4 e2e: refresh rotates + old token rejected; logout then refresh rejected
 
 ## 5. API — Google sign-in + account linking (FR-AUTH-03/04)
 
