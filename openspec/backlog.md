@@ -62,7 +62,7 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | shared-lang | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `src/util/lang.ts` (`detectLang`/`Lang`/Cyrillic regexes) — dedupe 3 copies (backend-conventions rule #12) |
 | shared-fmt | done | agent | 4 | food-text, metrics, query | — | M3 | Extract `fmt` (trailing-`.0` trim) — dedupe 3 copies in food/metrics/query confirm/answer (rule #12, sibling of shared-lang; surfaced by shared-lang step-7 scan) |
 | clarify | done | agent | 4 | food-text, coach-persona | US-6 | M3 | Ephemeral open-question + inline keyboard — precision-first ask (ADR-0015) |
-| food-photo | doing | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), multi-item, fact-vs-estimate, ephemeral, never persisted (core US-3; interactive ask split to `food-photo-ask`) |
+| food-photo | done | agent | 4 | food-text, coach-persona | US-3 | M4 | Plate photo: vision (1 call), multi-item, fact-vs-estimate, ephemeral, never persisted (core US-3; interactive ask split to `food-photo-ask`) |
 | food-photo-ask | todo | agent | 5 | food-photo, clarify | US-3/US-6 | M4 | Precision-first plate ask: hold extracted items as a photo-variant Open Question, resolve via ONE text-only refine (image already discarded — can't re-run vision), reuse clarify UI/expiry (ADR-0015) |
 | progress-photo | todo | agent | 5 | metrics, food-photo | US-8 | M5 | Progress photo → qualitative notes (ephemeral) |
 | reviews | todo | agent | 5 | food-text, metrics, coach-persona | US-9 | M6 | Reviews: daily + cron fallback + weekly/monthly rollups |
