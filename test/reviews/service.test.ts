@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
 import { createReviewsService } from '../../src/reviews/service.js';
 import type { ProseGenerator, ReviewClient } from '../../src/reviews/types.js';
+import type { NotionOutbox } from '../../src/notion/types.js';
 
 // Service wiring over a fake Prisma. The load-bearing invariants: every rendered number is the SUM /
 // average of the (mocked) food_log — never the prose (invariant #2); exactly ONE prose call per
@@ -80,7 +81,7 @@ const makeFake = (options: FakeOptions = {}): Fake => {
     review: {
       upsert: vi.fn((args: UpsertArgs) => {
         upserts.push(args);
-        return Promise.resolve(undefined);
+        return Promise.resolve({ id: upserts.length }); // `select: { id: true }` → the persisted id
       }),
       findUnique: vi.fn().mockResolvedValue(null),
     },
@@ -217,6 +218,41 @@ describe('createReviewsService.generateDaily — tenant isolation (invariant #8)
 
     expect(result).toBeNull();
     expect(upserts).toHaveLength(0);
+  });
+});
+
+describe('createReviewsService.generateDaily — Notion mirror enqueue (US-10)', () => {
+  it('enqueues a review mirror job for the tenant after each persisted review', async () => {
+    const { client } = makeFake({ userId: 7 });
+    const outbox: NotionOutbox = { enqueue: vi.fn().mockResolvedValue(undefined) };
+
+    await createReviewsService(client, {
+      anthropic: {} as Anthropic,
+      generateProse: fixedProse,
+      outbox,
+    }).generateDaily(11n, { date: WED });
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({ sourceTable: 'review', sourceId: 1, userId: 7 });
+  });
+
+  it('enqueues once per persisted review on a Sunday (daily + weekly rollup)', async () => {
+    const { client } = makeFake({
+      groupRows: [
+        {
+          date: new Date('2026-06-28T00:00:00.000Z'),
+          _sum: { kcal: 1600, proteinG: 120, fatG: 40, carbsG: 130 },
+        },
+      ],
+    });
+    const outbox: NotionOutbox = { enqueue: vi.fn().mockResolvedValue(undefined) };
+
+    await createReviewsService(client, {
+      anthropic: {} as Anthropic,
+      generateProse: fixedProse,
+      outbox,
+    }).generateDaily(11n, { date: '2026-06-28' }); // Sunday → daily + weekly
+
+    expect(outbox.enqueue).toHaveBeenCalledTimes(2);
   });
 });
 

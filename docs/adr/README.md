@@ -29,5 +29,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0019](./0019-in-memory-open-question-store.md) | In-memory ephemeral store for the Open Question (contrast ADR-0016) | Accepted |
 | [0020](./0020-per-user-local-midnight-review-cron.md) | Per-user local-midnight review cron (hourly global tick) | Accepted |
 | [0021](./0021-ship-change-skill-profile-split.md) | Rename loop runner to `ship-change`; `SKILL.md`+`PROFILE.md` split with named per-phase agents (amends ADR-0012) | Accepted |
+| [0022](./0022-notion-mirror-outbox-poll-worker.md) | Notion mirror via durable outbox + in-process poll worker (builds on ADR-0007) | Accepted (real Notion round-trip is a deploy-time gate) |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.

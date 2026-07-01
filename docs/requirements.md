@@ -144,7 +144,9 @@ copy — set up from day one.
 - **progress_notes**: id, user_id, date, observations (text), created_at  *(no image)*
 - **reviews**: id, user_id, period (daily/weekly/monthly), period_start, period_end,
   body (text), reviewed_flag, created_at
-- **notion_sync**: id, source_table, source_id, notion_page_id, status, attempts, last_error
+- **notion_sync**: id, source_table, source_id, user_id, notion_page_id, status
+  (pending/done/failed/dead), attempts, last_error, next_attempt_at, created_at, updated_at
+  *(durable outbox; index `(status, next_attempt_at)`; idempotency key `(source_table, source_id)`)*
 - **notion_config**: user_id, auth_type ('env'|'oauth'), credential_ref, db_foodlog_id,
   db_reviews_id, db_metrics_id, db_fooddb_id, enabled  *(see §9; only 'env' in v1)*
 - **open_questions**: id, user_id, question_type, draft_payload (jsonb), created_at,
@@ -283,6 +285,14 @@ ambiguity. Fall back to free text when the answer isn't a small fixed set ("ск
 ---
 
 ## 9. Notion Mirror (nice-to-have, from day one)
+
+> **Status (M7, implemented 2026-07-02, `notion-mirror`):** live behind the `NOTION_TOKEN` flag.
+> Realized exactly as specified below — `notion_sync` durable outbox + `notion_config` per-user
+> config, best-effort post-write enqueue, one in-process ~3 req/s poll worker (exp-backoff →
+> dead-letter), `NotionCredentialResolver` with the `env` branch (`oauth` stubbed to skip). See
+> [adr/0022-notion-mirror-outbox-poll-worker.md](./adr/0022-notion-mirror-outbox-poll-worker.md) for
+> the mechanism (post-write vs transactional outbox, poll vs LISTEN/NOTIFY, in-process vs separate
+> process). The live migration apply + the real Notion round-trip are deploy-time gates.
 
 **Principle: Postgres is source of truth. Notion is best-effort and async.**
 

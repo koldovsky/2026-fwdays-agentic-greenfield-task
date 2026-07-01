@@ -7,7 +7,10 @@ import { resolveAnswer } from '../clarify/resolve.js';
 import { toClarification } from '../clarify/types.js';
 import type { LogOutcome, OpenQuestion, PhotoOpenQuestion } from '../clarify/types.js';
 import { resolveUserId } from '../db/resolveUser.js';
+import { noopOutbox } from '../notion/outbox.js';
+import type { NotionOutbox } from '../notion/types.js';
 import { resolveDate } from '../router/date.js';
+import { systemNow } from '../util/date.js';
 import { saveLoggedFoodToCatalog } from './addToCatalog.js';
 import { buildConfirmation, buildPlateConfirmation, noProductReply } from './confirm.js';
 import { correctLast } from './correct.js';
@@ -29,15 +32,22 @@ import type {
 
 // Food-logging service (US-2, §8.2): orchestration only — resolve → infer meal → write → confirm.
 // All SQL lives in the lookup/write/catalog modules behind the tenancy choke-point (invariant #8).
-// `now` is injectable so meal inference is deterministic under test.
+// `now` is injectable so meal inference is deterministic under test. Each mirrored `food_log`/
+// `food_database` write is followed by a best-effort Notion enqueue (US-10) — post-write in the
+// service layer, never throwing (noopOutbox when the mirror is off), so the reply is never blocked.
+
+/** Best-effort mirror enqueue for one written `food_log` row (US-10, invariant #8); never throws. */
+const enqueueFoodLog = (outbox: NotionOutbox, userId: number, row: FoodLog): Promise<void> =>
+  outbox.enqueue({ sourceTable: 'food_log', sourceId: row.id, userId });
 
 /**
  * Write one code-scaled, tenant-scoped `food_log` row per resolved plate item (invariants #2/#8) —
  * ONE home for the plate write loop shared by the log-immediately, answer-refine, and expiry paths
- * (rule #12). No per-plate total is ever computed (invariant #2).
+ * (rule #12). Each row is mirror-enqueued right after its write. No per-plate total (invariant #2).
  */
 const writePlateRows = async (
   prisma: FoodClient,
+  outbox: NotionOutbox,
   userId: number,
   items: ResolvedFood[],
   date: string,
@@ -45,7 +55,9 @@ const writePlateRows = async (
 ): Promise<FoodLog[]> => {
   const rows: FoodLog[] = [];
   for (const resolved of items) {
-    rows.push(await writeFoodLog(prisma, userId, resolved, date, meal));
+    const row = await writeFoodLog(prisma, userId, resolved, date, meal);
+    await enqueueFoodLog(outbox, userId, row);
+    rows.push(row);
   }
 
   return rows;
@@ -66,13 +78,21 @@ const plateLangAnchor = (pending: PhotoOpenQuestion): string =>
 const resolvePlateAnswer = async (
   prisma: FoodClient,
   anthropic: Anthropic,
+  outbox: NotionOutbox,
   userId: number,
   pending: PhotoOpenQuestion,
   answer: string,
 ): Promise<Confirmation> => {
   const refined = await refinePlate(anthropic, pending.items, answer);
   const resolvedItems = await resolvePlate(prisma, userId, refined);
-  const rows = await writePlateRows(prisma, userId, resolvedItems, pending.date, pending.meal);
+  const rows = await writePlateRows(
+    prisma,
+    outbox,
+    userId,
+    resolvedItems,
+    pending.date,
+    pending.meal,
+  );
 
   return buildPlateConfirmation(plateLangAnchor(pending), rows);
 };
@@ -84,10 +104,18 @@ const resolvePlateAnswer = async (
  */
 const expirePlateEstimate = async (
   prisma: FoodClient,
+  outbox: NotionOutbox,
   userId: number,
   pending: PhotoOpenQuestion,
 ): Promise<Confirmation> => {
-  const rows = await writePlateRows(prisma, userId, pending.items, pending.date, pending.meal);
+  const rows = await writePlateRows(
+    prisma,
+    outbox,
+    userId,
+    pending.items,
+    pending.date,
+    pending.meal,
+  );
 
   return buildPlateConfirmation(plateLangAnchor(pending), rows);
 };
@@ -96,7 +124,8 @@ export const createFoodService = (
   prisma: FoodClient,
   anthropic: Anthropic,
   userTz: string,
-  now: () => Date = () => new Date(),
+  now: () => Date = systemNow,
+  outbox: NotionOutbox = noopOutbox,
 ): FoodService => ({
   async logFood(chatId: bigint, text: string, routed: RoutedLog): Promise<LogOutcome | null> {
     const userId = await resolveUserId(prisma, chatId);
@@ -138,6 +167,7 @@ export const createFoodService = (
     }
 
     const row = await writeFoodLog(prisma, userId, resolved, routed.date, meal);
+    await enqueueFoodLog(outbox, userId, row);
 
     return { kind: 'logged', confirmation: buildConfirmation(text, row) };
   },
@@ -180,7 +210,7 @@ export const createFoodService = (
       return { kind: 'ask', question: buildQuestion(clarification, caption), pending };
     }
 
-    const rows = await writePlateRows(prisma, userId, resolvedItems, date, meal);
+    const rows = await writePlateRows(prisma, outbox, userId, resolvedItems, date, meal);
 
     return { kind: 'logged', confirmation: buildPlateConfirmation(caption, rows) };
   },
@@ -191,7 +221,12 @@ export const createFoodService = (
       return { saved: false, entryName: null };
     }
 
-    return saveLoggedFoodToCatalog(prisma, userId, foodLogId);
+    const { result, foodDbId } = await saveLoggedFoodToCatalog(prisma, userId, foodLogId);
+    if (foodDbId !== null) {
+      await outbox.enqueue({ sourceTable: 'food_database', sourceId: foodDbId, userId });
+    }
+
+    return result;
   },
 
   async correctLast(
@@ -204,7 +239,12 @@ export const createFoodService = (
       return null;
     }
 
-    return correctLast(prisma, anthropic, userId, text, routed);
+    const { confirmation, row } = await correctLast(prisma, anthropic, userId, text, routed);
+    if (row) {
+      await enqueueFoodLog(outbox, userId, row);
+    }
+
+    return confirmation;
   },
 
   async resolveAnswer(
@@ -220,10 +260,13 @@ export const createFoodService = (
     // Branch on the variant (design D5) — the text/callback handlers stay variant-agnostic. Meal comes
     // from the pending question (captured at ask time), not re-inferred now — see logFood.
     if (pending.variant === 'photo') {
-      return resolvePlateAnswer(prisma, anthropic, userId, pending, answer);
+      return resolvePlateAnswer(prisma, anthropic, outbox, userId, pending, answer);
     }
 
-    return resolveAnswer(prisma, anthropic, userId, pending, answer);
+    const { confirmation, row } = await resolveAnswer(prisma, anthropic, userId, pending, answer);
+    await enqueueFoodLog(outbox, userId, row);
+
+    return confirmation;
   },
 
   // Expiry/no-answer fallback (invariants #3/#8): write the resolved-so-far food as `estimate` for
@@ -237,11 +280,12 @@ export const createFoodService = (
 
     // Branch on the variant (design D5): a photo logs EVERY held item, a text logs the one food.
     if (pending.variant === 'photo') {
-      return expirePlateEstimate(prisma, userId, pending);
+      return expirePlateEstimate(prisma, outbox, userId, pending);
     }
 
     const fallback = { ...pending.resolved, source: FoodSource.estimate, foodDbId: null };
     const row = await writeFoodLog(prisma, userId, fallback, pending.date, pending.meal);
+    await enqueueFoodLog(outbox, userId, row);
 
     return buildConfirmation(pending.parsed.product, row);
   },

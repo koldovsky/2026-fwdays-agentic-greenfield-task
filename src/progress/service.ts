@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { resolveUserId } from '../db/resolveUser.js';
 import { resolveDate } from '../router/date.js';
+import { systemNow } from '../util/date.js';
 import { analyzeProgress } from './analyze.js';
 import { writeProgressNote } from './write.js';
 import type { ProgressClient, ProgressReply, ProgressService } from './types.js';
@@ -14,7 +15,7 @@ export const createProgressService = (
   client: ProgressClient,
   anthropic: Anthropic,
   userTz: string,
-  now: () => Date = () => new Date(),
+  now: () => Date = systemNow,
 ): ProgressService => ({
   async analyzeAndSave(
     chatId: bigint,

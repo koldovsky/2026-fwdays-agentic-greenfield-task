@@ -1,13 +1,16 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { BodyMetric } from '@prisma/client';
 import { resolveUserId } from '../db/resolveUser.js';
+import { noopOutbox } from '../notion/outbox.js';
+import type { NotionOutbox } from '../notion/types.js';
 import { round1 } from '../food/scale.js';
 import { priorHistory } from '../metrics/trend.js';
 import { dailyTotalsForRange, sumForDate } from '../query/aggregate.js';
 import type { DayTotalsRow, Targets } from '../query/types.js';
 import { resolveDate } from '../router/date.js';
-import { toDbDate } from '../util/date.js';
+import { systemNow, toDbDate } from '../util/date.js';
 import { detectLang } from '../util/lang.js';
+import { nullableNumber } from '../util/num.js';
 import { dailyFoodMeta, metricsInRange, summarizeMetric } from './aggregate.js';
 import {
   average,
@@ -48,6 +51,7 @@ export interface ReviewDeps {
   anthropic: Anthropic;
   generateProse?: ProseGenerator;
   now?: () => Date;
+  outbox?: NotionOutbox; // best-effort Notion mirror (US-10); defaults to a no-op when mirror is off
 }
 
 interface Profile {
@@ -74,9 +78,9 @@ const loadProfile = async (client: ReviewClient, userId: number): Promise<Profil
     tz: user.tz,
     targets: {
       kcal: user.targetKcal,
-      proteinG: user.targetProteinG === null ? null : Number(user.targetProteinG),
-      fatG: user.targetFatG === null ? null : Number(user.targetFatG),
-      carbsG: user.targetCarbsG === null ? null : Number(user.targetCarbsG),
+      proteinG: nullableNumber(user.targetProteinG),
+      fatG: nullableNumber(user.targetFatG),
+      carbsG: nullableNumber(user.targetCarbsG),
     },
   };
 };
@@ -100,10 +104,15 @@ export const deliverReview = async (
 };
 
 export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): ReviewService => {
-  const now = deps.now ?? ((): Date => new Date());
+  const now = deps.now ?? systemNow;
+  const outbox = deps.outbox ?? noopOutbox;
   const generateProse: ProseGenerator =
     deps.generateProse ??
     ((period, promptText) => generateReviewProse(deps.anthropic, period, promptText));
+
+  // Best-effort mirror enqueue after a review is persisted (US-10): never throws (noopOutbox off).
+  const enqueueReview = (userId: number, reviewId: number): Promise<void> =>
+    outbox.enqueue({ sourceTable: 'review', sourceId: reviewId, userId });
 
   // The three period reads both rollups share — issued in parallel (independent queries).
   const loadPeriodReads = (
@@ -139,7 +148,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
 
     const prose = stats.empty ? {} : await generateProse('daily', buildPrompt(stats, lang));
     const body = renderReview(stats, prose, lang);
-    await upsertReview(
+    const reviewId = await upsertReview(
       client,
       userId,
       'daily',
@@ -148,6 +157,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
       body,
       reviewed,
     );
+    await enqueueReview(userId, reviewId);
 
     return body;
   };
@@ -180,7 +190,16 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
 
     const prose = rows.length === 0 ? {} : await generateProse('weekly', buildPrompt(stats, lang));
     const body = renderReview(stats, prose, lang);
-    await upsertReview(client, userId, 'weekly', toDbDate(start), toDbDate(end), body, reviewed);
+    const reviewId = await upsertReview(
+      client,
+      userId,
+      'weekly',
+      toDbDate(start),
+      toDbDate(end),
+      body,
+      reviewed,
+    );
+    await enqueueReview(userId, reviewId);
 
     return body;
   };
@@ -222,7 +241,16 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
 
     const prose = rows.length === 0 ? {} : await generateProse('monthly', buildPrompt(stats, lang));
     const body = renderReview(stats, prose, lang);
-    await upsertReview(client, userId, 'monthly', toDbDate(start), toDbDate(end), body, reviewed);
+    const reviewId = await upsertReview(
+      client,
+      userId,
+      'monthly',
+      toDbDate(start),
+      toDbDate(end),
+      body,
+      reviewed,
+    );
+    await enqueueReview(userId, reviewId);
 
     return body;
   };

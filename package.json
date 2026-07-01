@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.107.0",
+    "@notionhq/client": "^2.3.0",
     "@prisma/client": "^6.19.3",
     "grammy": "^1.30.0",
     "node-cron": "^3.0.3",

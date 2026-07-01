@@ -53,16 +53,22 @@ const resolveProductCorrection = async (
   return resolveFood(client, anthropic, userId, parsed);
 };
 
+/** The corrected row (for the mirror enqueue) alongside its confirmation; `row` null = nothing to fix. */
+export interface CorrectionResult {
+  confirmation: Confirmation;
+  row: FoodLog | null;
+}
+
 export const correctLast = async (
   client: FoodClient,
   anthropic: Anthropic,
   userId: number,
   text: string,
   routed: RoutedCorrection,
-): Promise<Confirmation> => {
+): Promise<CorrectionResult> => {
   const row = await findLastFoodLog(client, userId);
   if (!row) {
-    return noEntryReply(text);
+    return { confirmation: noEntryReply(text), row: null };
   }
 
   const resolved = routed.product
@@ -71,8 +77,8 @@ export const correctLast = async (
 
   const updated = await updateFoodLog(client, userId, row.id, resolved);
   if (!updated) {
-    return noEntryReply(text);
+    return { confirmation: noEntryReply(text), row: null };
   }
 
-  return buildCorrectionConfirmation(text, updated);
+  return { confirmation: buildCorrectionConfirmation(text, updated), row: updated };
 };

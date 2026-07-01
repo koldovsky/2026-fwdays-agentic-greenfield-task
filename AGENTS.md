@@ -162,13 +162,13 @@ Required env vars (no secret committed; never store secrets in the DB):
 | `ANTHROPIC_API_KEY` | LLM (Sonnet 4.6 primary) |
 | `DATABASE_URL` | Postgres connection (Prisma) |
 | `PORT` | internal `/health` probe port (no public ingress — long-poll, ADR-0014); default `3000` |
-| `NOTION_TOKEN` | owner's integration token (mirror); env only, never in DB · **optional until M7** |
-| `NOTION_DB_FOODLOG_ID` / `_REVIEWS_ID` / `_METRICS_ID` / `_FOODDB_ID` | owner's 4 Notion DB IDs · **optional until M7** |
+| `NOTION_TOKEN` | owner's integration token (mirror); env only, never in DB · **optional** — the mirror is live (M7) but stays off until set; also gates the worker start |
+| `NOTION_DB_FOODLOG_ID` / `_REVIEWS_ID` / `_METRICS_ID` / `_FOODDB_ID` | owner's 4 Notion DB IDs · **optional** — needed for the M7 mirror; seeded into `notion_config` on first enqueue |
 | `TZ` / default user tz | review cron timing (default `Europe/Kyiv`) |
 
-The `NOTION_*` vars are **optional in the zod schema** (the Notion mirror is M7, feature-flagged) —
-the bot must boot without them. All others are required. Confirm exact names against the `config/`
-schema when scaffolded.
+The `NOTION_*` vars are **optional in the zod schema** (the Notion mirror is M7 — now live, but
+feature-flagged: mirror off / worker not started unless `NOTION_TOKEN` is set) — the bot must boot
+without them. All others are required. Confirm exact names against the `config/` schema when scaffolded.
 
 ## Workflow & verification
 

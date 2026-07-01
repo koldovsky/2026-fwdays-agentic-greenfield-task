@@ -8,19 +8,24 @@ import { prisma } from './db/client.js';
 import { createFoodService } from './food/service.js';
 import { createAnthropicClient } from './llm/client.js';
 import { createMetricsService } from './metrics/service.js';
+import { createNotionOutbox, noopOutbox, warnIfIncompleteNotionConfig } from './notion/outbox.js';
+import { startNotionWorker, type NotionWorker } from './notion/worker.js';
+import type { NotionOutbox } from './notion/types.js';
 import { createOnboardingService } from './onboarding/flow.js';
 import { createProgressService } from './progress/service.js';
 import { progressStore } from './progress/store.js';
 import { createQueryService } from './query/service.js';
 import { createReviewsService } from './reviews/service.js';
 import { startReviewScheduler, type SendFn } from './reviews/scheduler.js';
+import { systemNow } from './util/date.js';
+import { errorMessage } from './util/error.js';
 
 /** Confirm the DB is reachable (migrations are applied by `migrate deploy` before this). */
 const connectDbOrExit = async (): Promise<void> => {
   try {
     await prisma.$connect();
   } catch (error) {
-    console.error('Database connection failed:', error instanceof Error ? error.message : error);
+    console.error('Database connection failed:', errorMessage(error));
     process.exit(1);
   }
 };
@@ -36,10 +41,12 @@ const loadEnvOrExit = (): Env => {
   }
 };
 
-const registerShutdown = (bot: Bot, health: Server): void => {
+const registerShutdown = (bot: Bot, health: Server, worker: NotionWorker | null): void => {
   const shutdown = async (signal: string): Promise<void> => {
     console.log(`Received ${signal}, shutting down...`);
     await bot.stop();
+    // Stop polling and let the in-flight mirror row finish before we drop the DB (invariant #7).
+    await worker?.stop();
     health.close();
     await prisma.$disconnect();
   };
@@ -57,12 +64,17 @@ const main = async (): Promise<void> => {
   health.listen(env.PORT, () => console.log(`Health server listening on :${env.PORT}`));
 
   const anthropic = createAnthropicClient(env.ANTHROPIC_API_KEY);
+  // Best-effort Notion mirror (US-10, M7): a real outbox only when a token is configured, else a
+  // no-op so the bot boots and behaves identically with no NOTION_* set. Warn once if the token is
+  // set but the DB ids are incomplete (rows would silently skip forever).
+  warnIfIncompleteNotionConfig(env);
+  const outbox: NotionOutbox = env.NOTION_TOKEN ? createNotionOutbox(prisma, env) : noopOutbox;
   const onboarding = createOnboardingService(prisma);
-  const food = createFoodService(prisma, anthropic, env.TZ);
-  const metrics = createMetricsService(prisma);
+  const food = createFoodService(prisma, anthropic, env.TZ, systemNow, outbox);
+  const metrics = createMetricsService(prisma, outbox);
   const query = createQueryService(prisma);
   const progress = createProgressService(prisma, anthropic, env.TZ);
-  const reviews = createReviewsService(prisma, { anthropic });
+  const reviews = createReviewsService(prisma, { anthropic, outbox });
   const bot = createBot(env.TELEGRAM_BOT_TOKEN, {
     anthropic,
     userTz: env.TZ,
@@ -75,7 +87,10 @@ const main = async (): Promise<void> => {
     progress,
     progressArm: progressStore,
   });
-  registerShutdown(bot, health);
+  // In-process Notion mirror worker (US-10; invariant #7 — no second process). Started only when a
+  // token is set; its stop() is awaited in shutdown so an in-flight row finishes cleanly.
+  const worker = env.NOTION_TOKEN ? startNotionWorker(prisma, env) : null;
+  registerShutdown(bot, health, worker);
 
   // Midnight review fallback (ADR-0020): one hourly node-cron sweep pushes each user's finished-day
   // review at their local midnight. Started before `bot.start()` (which blocks until shutdown).

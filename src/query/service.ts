@@ -1,3 +1,4 @@
+import { nullableNumber } from '../util/num.js';
 import { buildAnswer } from './answer.js';
 import { sumForDate } from './aggregate.js';
 import { parseAsk } from './parseAsk.js';
@@ -29,9 +30,9 @@ export const createQueryService = (client: QueryClient): QueryService => ({
 
     const targets: Targets = {
       kcal: user.targetKcal,
-      proteinG: user.targetProteinG !== null ? Number(user.targetProteinG) : null,
-      fatG: user.targetFatG !== null ? Number(user.targetFatG) : null,
-      carbsG: user.targetCarbsG !== null ? Number(user.targetCarbsG) : null,
+      proteinG: nullableNumber(user.targetProteinG),
+      fatG: nullableNumber(user.targetFatG),
+      carbsG: nullableNumber(user.targetCarbsG),
     };
 
     const asked = parseAsk(text);

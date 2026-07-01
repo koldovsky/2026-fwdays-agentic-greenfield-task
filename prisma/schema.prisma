@@ -1,7 +1,7 @@
 // Core data layer (M1). Source of truth = Postgres (invariant #1). Every domain row carries
 // user_id (invariant #8). Stored numbers: Int for kcal, Decimal for grams/cm/kg — never Float
 // (backend-conventions rule 10). DB column/table names are snake_case via @map; enum values stay
-// English. Deferred tables (open_questions, notion_*) land with their features.
+// English. Deferred tables (open_questions) land with their features.
 
 generator client {
   provider = "prisma-client-js"
@@ -46,6 +46,35 @@ enum ReviewPeriod {
   @@map("review_period")
 }
 
+// US-10 (M7): the async best-effort Notion mirror. `source_table` names which Postgres table a
+// `notion_sync` outbox row mirrors (`review` = the `reviews` table, singular for the source kind).
+enum NotionSourceTable {
+  food_log
+  food_database
+  body_metrics
+  review
+
+  @@map("notion_source_table")
+}
+
+enum NotionSyncStatus {
+  pending
+  done
+  failed
+  dead
+
+  @@map("notion_sync_status")
+}
+
+// v1 implements only `env`; `oauth` is declared so a future per-user OAuth slots in without a
+// write-path change (the resolver skips `oauth` rows for now).
+enum NotionAuthType {
+  env
+  oauth
+
+  @@map("notion_auth_type")
+}
+
 model User {
   id             Int      @id @default(autoincrement())
   chatId         BigInt   @unique @map("chat_id")
@@ -67,6 +96,8 @@ model User {
   reviews        Review[]
   foodDatabase   FoodDatabase[]
   progressNotes  ProgressNote[]
+  notionSync     NotionSync[]
+  notionConfig   NotionConfig?
 
   @@map("users")
 }
@@ -163,4 +194,49 @@ model ProgressNote {
 
   @@index([userId, date])
   @@map("progress_notes")
+}
+
+// Durable outbox (US-10, §9): one row per Postgres write to mirror. The worker polls
+// `(status, next_attempt_at)`; the idempotency key `(source_table, source_id)` lets a correction
+// patch the existing Notion page (via the stored `notion_page_id`) rather than duplicate it.
+// `last_error` holds an error MESSAGE only — never raw body/progress values (invariant #9).
+model NotionSync {
+  id            Int               @id @default(autoincrement())
+  userId        Int               @map("user_id")
+  sourceTable   NotionSourceTable @map("source_table")
+  sourceId      Int               @map("source_id")
+  notionPageId  String?           @map("notion_page_id")
+  status        NotionSyncStatus  @default(pending)
+  attempts      Int               @default(0)
+  lastError     String?           @map("last_error")
+  nextAttemptAt DateTime?         @map("next_attempt_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([sourceTable, sourceId])
+  @@map("notion_sync")
+}
+
+// Per-user mirror config (US-10, §9). `credential_ref` holds the env var NAME (e.g. "NOTION_TOKEN"),
+// never the secret itself (invariant #9). Shaped so a future OAuth user is a new `auth_type` branch,
+// not a write-path change. v1 seeds one `env` row for the owner lazily on first enqueue.
+model NotionConfig {
+  id            Int            @id @default(autoincrement())
+  userId        Int            @unique @map("user_id")
+  authType      NotionAuthType @map("auth_type")
+  credentialRef String         @map("credential_ref")
+  dbFoodlogId   String         @map("db_foodlog_id")
+  dbReviewsId   String         @map("db_reviews_id")
+  dbMetricsId   String         @map("db_metrics_id")
+  dbFooddbId    String         @map("db_fooddb_id")
+  enabled       Boolean        @default(true)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notion_config")
 }

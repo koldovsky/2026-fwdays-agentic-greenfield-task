@@ -91,7 +91,13 @@ describe('resolveAnswer — quantity kind (zero LLM calls)', () => {
     const { client, created } = makeClient();
     const { anthropic, create } = makeAnthropic();
 
-    const confirmation = await resolveAnswer(client, anthropic, 7, pending(quantity), '150 грамм');
+    const { confirmation } = await resolveAnswer(
+      client,
+      anthropic,
+      7,
+      pending(quantity),
+      '150 грамм',
+    );
 
     expect(create).not.toHaveBeenCalled(); // invariant #5 — quantity refine never touches the model
     const row = created[0]?.data;
@@ -120,7 +126,7 @@ describe('resolveAnswer — descriptor kind (≤1 LLM call)', () => {
     const { client, created } = makeClient(null);
     const { anthropic, create } = makeAnthropic();
 
-    const confirmation = await resolveAnswer(client, anthropic, 7, pending(descriptor), '5%');
+    const { confirmation } = await resolveAnswer(client, anthropic, 7, pending(descriptor), '5%');
 
     expect(create).toHaveBeenCalledTimes(1); // descriptor re-resolve = at most one call (invariant #5)
     // Only the folded product string reaches the model — no prior turns (invariant #1).
@@ -163,7 +169,13 @@ describe('resolveAnswer — disambiguation kind (select by id, zero estimate cal
     const { anthropic, create } = makeAnthropic();
 
     // The `q:` tap resolves to the option value — the chosen row id "12".
-    const confirmation = await resolveAnswer(client, anthropic, 7, pending(disambiguation), '12');
+    const { confirmation } = await resolveAnswer(
+      client,
+      anthropic,
+      7,
+      pending(disambiguation),
+      '12',
+    );
 
     expect(create).not.toHaveBeenCalled(); // Food-DB select = fact, no estimate call (invariant #5)
     // Confirmation mirrors the original product's language, not the numeric id answer (invariant #6).

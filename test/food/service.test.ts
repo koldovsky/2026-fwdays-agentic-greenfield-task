@@ -5,6 +5,7 @@ import type { Confirmation, ResolvedFood } from '../../src/food/types.js';
 import type { LogOutcome, PhotoOpenQuestion } from '../../src/clarify/types.js';
 import { createFoodService } from '../../src/food/service.js';
 import type { FoodClient, FoodService } from '../../src/food/types.js';
+import type { NotionOutbox } from '../../src/notion/types.js';
 
 // fs write-path spies for the CRITICAL image-never-persisted test (invariant #4). ESM namespaces
 // aren't spy-able after import, so the write functions are mocked at module scope with tracked fns
@@ -596,6 +597,120 @@ describe('createFoodService.logExpiredEstimate — photo variant', () => {
     expect(created[1]?.data.foodDbId).toBeNull();
     expect(created[0]?.data.date).toEqual(new Date('2026-06-29T00:00:00.000Z')); // captured date
     expect(confirmation?.text).toContain('±20'); // honest estimate note (a mixed plate has one)
+  });
+});
+
+describe('createFoodService — Notion mirror enqueue (US-10)', () => {
+  const spyOutbox = (): NotionOutbox => ({ enqueue: vi.fn().mockResolvedValue(undefined) });
+
+  it('enqueues a food_log job for the tenant after a direct log (invariant #8)', async () => {
+    const { client } = makeFake({
+      id: 42,
+      name: 'куриное филе',
+      per: FoodPer.per100g,
+      kcal: 165,
+      proteinG: 31,
+      fatG: 3.6,
+      carbsG: 0,
+    });
+    const outbox = spyOutbox();
+
+    await createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON, outbox).logFood(
+      99n,
+      '200г куриного филе',
+      { date: '2026-06-30', product: 'куриного филе', quantity: 200, unit: 'г' },
+    );
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'food_log',
+      sourceId: 1,
+      userId: 7,
+    });
+  });
+
+  it('enqueues a food_log job per plate row (photo path)', async () => {
+    const { client } = makePhotoFake([]);
+    const outbox = spyOutbox();
+
+    await createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON, outbox).logPhoto(
+      99n,
+      'plate',
+      'BASE64',
+    );
+
+    expect(outbox.enqueue).toHaveBeenCalledTimes(3); // one per item
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'food_log',
+      sourceId: 1,
+      userId: 7,
+    });
+  });
+
+  it('enqueues a food_database job after add-to-catalog', async () => {
+    const { client } = makeFake(null, {
+      id: 1,
+      userId: 7,
+      entryName: 'борщ',
+      qty: 200,
+      unit: 'g',
+      kcal: 120,
+      proteinG: 3,
+      fatG: 0.4,
+      carbsG: 28,
+      foodDbId: null,
+    });
+    const outbox = spyOutbox();
+
+    await createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON, outbox).saveToCatalog(
+      99n,
+      1,
+    );
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'food_database',
+      sourceId: 99, // the new food_database row id
+      userId: 7,
+    });
+  });
+
+  it('enqueues a food_log job for the corrected (same) row', async () => {
+    const lastRow = {
+      id: 42,
+      userId: 7,
+      entryName: 'куриное филе',
+      qty: 200,
+      unit: 'g',
+      kcal: 330,
+      proteinG: 62,
+      fatG: 7.2,
+      carbsG: 0,
+      source: FoodSource.fact,
+      foodDbId: 5,
+      date: new Date('2026-06-30T00:00:00.000Z'),
+      meal: 'lunch',
+    };
+    const client = {
+      user: { findUnique: vi.fn().mockResolvedValue({ id: 7 }) },
+      foodDatabase: { findFirst: vi.fn().mockResolvedValue(null) },
+      foodLog: {
+        findFirst: vi.fn().mockResolvedValue(lastRow),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        create: vi.fn(),
+      },
+    } as unknown as FoodClient;
+    const outbox = spyOutbox();
+
+    await createFoodService(client, makeAnthropic(), 'Europe/Kyiv', NOON, outbox).correctLast(
+      99n,
+      '150г',
+      { date: '2026-06-30', quantity: 150, unit: 'г' },
+    );
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'food_log',
+      sourceId: 42, // the SAME row id → the worker patches the existing page
+      userId: 7,
+    });
   });
 });
 

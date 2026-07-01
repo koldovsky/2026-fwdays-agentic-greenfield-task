@@ -8,28 +8,35 @@ import type { CatalogResult, FoodClient } from './types.js';
 // of the same product matches as `fact`. Only un-catalogued estimate rows qualify (foodDbId IS NULL).
 // Returns the row's entryName so the caller can localize the reply (invariant #6).
 
+/** The user-facing result plus the new `food_database` id (for the mirror enqueue); id null = no add. */
+export interface CatalogSaveResult {
+  result: CatalogResult;
+  foodDbId: number | null;
+}
+
 export const saveLoggedFoodToCatalog = async (
   client: FoodClient,
   userId: number,
   foodLogId: number,
-): Promise<CatalogResult> => {
+): Promise<CatalogSaveResult> => {
   const row = await client.foodLog.findFirst({ where: tenantWhere(userId, { id: foodLogId }) });
   if (!row) {
-    return { saved: false, entryName: null };
+    return { result: { saved: false, entryName: null }, foodDbId: null };
   }
   if (row.foodDbId !== null) {
-    return { saved: false, entryName: row.entryName }; // already catalogued (a fact) — nothing to add
+    // already catalogued (a fact) — nothing to add
+    return { result: { saved: false, entryName: row.entryName }, foodDbId: null };
   }
 
   const per = perForUnit(row.unit);
   const factor = scaleFactor(Number(row.qty), per);
   if (factor <= 0) {
-    return { saved: false, entryName: row.entryName };
+    return { result: { saved: false, entryName: row.entryName }, foodDbId: null };
   }
 
   const base = unscaleMacros(macroBaseFromRow(row), factor);
 
-  await client.foodDatabase.create({
+  const created = await client.foodDatabase.create({
     data: {
       userId,
       name: row.entryName,
@@ -41,5 +48,5 @@ export const saveLoggedFoodToCatalog = async (
     },
   });
 
-  return { saved: true, entryName: row.entryName };
+  return { result: { saved: true, entryName: row.entryName }, foodDbId: created.id };
 };

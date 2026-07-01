@@ -2,6 +2,7 @@ import type { BodyMetric, Meal } from '@prisma/client';
 import { tenantWhere } from '../db/tenancy.js';
 import type { MetricColumn } from '../metrics/types.js';
 import { toDbDate } from '../util/date.js';
+import { nullableNumber } from '../util/num.js';
 import type { ReviewClient } from './types.js';
 
 // Review DB reads (design D3/D7). Food NUMBERS come from the query SUM seam (sumForDate /
@@ -33,9 +34,6 @@ export const dailyFoodMeta = async (
 
   return { meals, estimateCount };
 };
-
-const numeric = (value: BodyMetric[MetricColumn]): number | null =>
-  value === null ? null : Number(value);
 
 /** All body_metrics rows within `[start, end]`, ascending, tenant-scoped (one query). */
 export const metricsInRange = (
@@ -70,8 +68,8 @@ export const summarizeMetric = (
   const priorRow = priorRowsNewestFirst.find((row) => row[column] !== null) ?? null;
 
   return {
-    startValue: startRow ? numeric(startRow[column]) : null,
-    endValue: endRow ? numeric(endRow[column]) : null,
-    priorValue: priorRow ? numeric(priorRow[column]) : null,
+    startValue: startRow ? nullableNumber(startRow[column]) : null,
+    endValue: endRow ? nullableNumber(endRow[column]) : null,
+    priorValue: priorRow ? nullableNumber(priorRow[column]) : null,
   };
 };

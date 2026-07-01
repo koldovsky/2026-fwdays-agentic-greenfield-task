@@ -1,6 +1,7 @@
 import { schedule as cronSchedule, type ScheduledTask } from 'node-cron';
 import { addDays, localDateString } from '../router/date.js';
-import { toDbDate } from '../util/date.js';
+import { systemNow, toDbDate } from '../util/date.js';
+import { errorMessage } from '../util/error.js';
 import { localHour } from './compute.js';
 import { deliverReview } from './service.js';
 import type { ReviewClient, ReviewService } from './types.js';
@@ -61,9 +62,7 @@ export const sweepReviews = async (
         await deliverReview((text) => send(user.chatId, text), result);
       }
     } catch (error) {
-      console.warn(
-        `review sweep failed for user ${user.id}: ${error instanceof Error ? error.message : 'unknown error'}`,
-      );
+      console.warn(`review sweep failed for user ${user.id}: ${errorMessage(error)}`);
     }
   }
 };
@@ -75,7 +74,7 @@ export const startReviewScheduler = (
   send: SendFn,
   options: SchedulerOptions = {},
 ): ScheduledTask => {
-  const now = options.now ?? ((): Date => new Date());
+  const now = options.now ?? systemNow;
   const schedule = options.schedule ?? cronSchedule;
 
   return schedule(CRON_HOURLY, () => {

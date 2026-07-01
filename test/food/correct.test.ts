@@ -98,7 +98,7 @@ describe('correctLast — quantity-only rescale', () => {
     const { anthropic, create } = makeAnthropic();
     const routed: RoutedCorrection = { date: '2026-06-30', quantity: 150, unit: 'г' };
 
-    const confirmation = await correctLast(client, anthropic, 7, 'нет, 150г', routed);
+    const { confirmation } = await correctLast(client, anthropic, 7, 'нет, 150г', routed);
 
     expect(create).not.toHaveBeenCalled(); // invariant #5 — quantity-only never touches the model
     expect(inserts).toBe(0); // in place, never an insert
@@ -146,7 +146,7 @@ describe('correctLast — named-product re-resolution', () => {
       unit: 'г',
     };
 
-    const confirmation = await correctLast(client, anthropic, 7, 'не борщ, 200г риса', routed);
+    const { confirmation } = await correctLast(client, anthropic, 7, 'не борщ, 200г риса', routed);
 
     expect(create).not.toHaveBeenCalled(); // Food DB hit = fact, zero LLM calls
     const data = updates[0]?.data;
@@ -174,7 +174,7 @@ describe('correctLast — named-product re-resolution', () => {
       unit: 'г',
     };
 
-    const confirmation = await correctLast(client, anthropic, 7, 'это солянка, 300г', routed);
+    const { confirmation } = await correctLast(client, anthropic, 7, 'это солянка, 300г', routed);
 
     expect(create).toHaveBeenCalledTimes(1); // miss → exactly one estimate call
     const data = updates[0]?.data;
@@ -191,7 +191,7 @@ describe('correctLast — no entry to correct', () => {
     const { client, updates, inserts } = makeFake(null);
     const { anthropic, create } = makeAnthropic();
 
-    const confirmation = await correctLast(client, anthropic, 7, 'нет, исправь', {
+    const { confirmation } = await correctLast(client, anthropic, 7, 'нет, исправь', {
       date: '2026-06-30',
       quantity: 150,
       unit: 'г',
@@ -277,7 +277,7 @@ describe('correctLast — language mirroring (invariant #6)', () => {
       const { client, updates } = makeFake(chickenRow());
       const { anthropic } = makeAnthropic();
 
-      const confirmation = await correctLast(client, anthropic, 7, text, {
+      const { confirmation } = await correctLast(client, anthropic, 7, text, {
         date: '2026-06-30',
         quantity: 150,
         unit: 'г',

@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import type { FoodLog } from '@prisma/client';
 import { buildConfirmation } from '../food/confirm.js';
 import { lookupById } from '../food/lookup.js';
 import { fromMatch, resolveFood } from '../food/resolve.js';
@@ -104,18 +105,24 @@ const refine = (
   return refineDescriptor(client, anthropic, userId, pending.parsed, answer);
 };
 
+/** The logged row (for the mirror enqueue) alongside the confirmation the caller replies with. */
+export interface AnswerResult {
+  confirmation: Confirmation;
+  row: FoodLog;
+}
+
 export const resolveAnswer = async (
   client: FoodClient,
   anthropic: Anthropic,
   userId: number,
   pending: TextOpenQuestion,
   answer: string,
-): Promise<Confirmation> => {
+): Promise<AnswerResult> => {
   const refined = await refine(client, anthropic, userId, pending, answer);
   const row = await writeFoodLog(client, userId, refined, pending.date, pending.meal);
 
   // Detect the confirmation's language from the user's ORIGINAL product words, not the answer —
   // a `q:` disambiguation tap answers with a numeric row id ("12") and a descriptor tap with "5%",
   // neither of which carries the user's language (invariant #6). Mirrors logExpiredEstimate.
-  return buildConfirmation(pending.parsed.product, row);
+  return { confirmation: buildConfirmation(pending.parsed.product, row), row };
 };

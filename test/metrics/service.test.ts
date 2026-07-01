@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Env } from '../../src/config/env.js';
 import { createMetricsService } from '../../src/metrics/service.js';
+import { createNotionOutbox } from '../../src/notion/outbox.js';
+import type { NotionOutbox, OutboxClient } from '../../src/notion/types.js';
 import type { MetricsClient } from '../../src/metrics/types.js';
 
 // End-to-end service wiring over a fake Prisma: every row carries user_id and the prior-history read
@@ -131,6 +134,38 @@ describe('createMetricsService.logMetric', () => {
     expect(confirmation?.text).toContain('90');
     expect(confirmation?.text).not.toContain('↓');
     expect(confirmation?.text).not.toContain('↑');
+  });
+
+  it('enqueues a body_metrics mirror job for the tenant after the write (US-10, invariant #8)', async () => {
+    const { client } = makeFake();
+    const outbox: NotionOutbox = { enqueue: vi.fn().mockResolvedValue(undefined) };
+
+    await createMetricsService(client, outbox).logMetric(99n, 'вес 89.2', { date: '2026-06-30' });
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'body_metrics',
+      sourceId: 1,
+      userId: 7,
+    });
+  });
+
+  it('confirms normally even when the mirror enqueue fails (reply-safe, invariant #1)', async () => {
+    const { client } = makeFake();
+    // A real outbox whose insert throws: the wrapper swallows it, so the reply is unaffected.
+    const outboxClient = {
+      notionSync: { create: vi.fn().mockRejectedValue(new Error('db down')) },
+      notionConfig: { upsert: vi.fn().mockResolvedValue({}) },
+    } as unknown as OutboxClient;
+    const env = { NOTION_TOKEN: 't' } as unknown as Env;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    const confirmation = await createMetricsService(
+      client,
+      createNotionOutbox(outboxClient, env),
+    ).logMetric(99n, 'вес 89.2', { date: '2026-06-30' });
+
+    expect(confirmation?.text).toContain('89.2'); // identical confirmation, no thrown error
+    warn.mockRestore();
   });
 
   it('nudges (no write) when nothing parses — log-by-default', async () => {

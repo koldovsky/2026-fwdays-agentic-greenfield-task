@@ -10,3 +10,9 @@ export const toDbDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00
 
 /** Inverse of {@link toDbDate}: a `@db.Date` value (UTC midnight) back to its `YYYY-MM-DD` string. */
 export const isoFromDbDate = (date: Date): string => date.toISOString().slice(0, 10);
+
+/**
+ * The real wall clock — the default for every injectable `now` seam (rule #12: one home for the
+ * `() => new Date()` fallback the services, schedulers and the Notion worker all share).
+ */
+export const systemNow = (): Date => new Date();

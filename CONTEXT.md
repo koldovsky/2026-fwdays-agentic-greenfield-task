@@ -122,3 +122,9 @@ _Avoid_: primary DB, master.
 The best-effort, asynchronous copy of a User's data into their own Notion workspace. It never blocks
 the bot and is never authoritative — losing a Mirror write loses nothing.
 _Avoid_: sync, backup (the backup is the separate database dump).
+
+**Sync Job**:
+One pending unit of Mirror work — enqueued the moment a Postgres write commits, then drained
+independently of the reply. It is retried on failure and, once it has exhausted its attempts, parked
+(dead) rather than lost; the source row stays safe in the Source of Truth regardless.
+_Avoid_: task, queue item, message (those are the plumbing, not the domain unit).
