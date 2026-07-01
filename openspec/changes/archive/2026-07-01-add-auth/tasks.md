@@ -63,4 +63,4 @@ behavior and `design.md` for approach. Run `npm run gate` before committing each
 - [x] 9.1 `npm run gate` green (shared + api); mobile lint/typecheck green
 - [x] 9.2 `openspec validate add-auth --strict`
 - [x] 9.3 Update `docs/current-state.md`; commit each layer to `dev` (reviewed, referencing FR-AUTH IDs)
-- [ ] 9.4 `openspec archive add-auth` once implemented and verified
+- [x] 9.4 `openspec archive add-auth` once implemented and verified
