@@ -56,6 +56,20 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T18:10Z — Proposed `add-theming` (capability 03)
+
+**Done:** `/opsx:propose add-theming` — all 4 artifacts, `valid --strict`. Covers FR-THEME-01/02/03/04
++ NFR-A11Y-02: a Light/Dark/System control on Profile, persisted + applied instantly (Dark default).
+The token mechanism already exists in ThemeProvider; this adds the tri-state preference + persistence
++ a SegmentedControl. Key decision: persist via **expo-secure-store** (already installed) → JS-only,
+no rebuild. FR-THEME-04 (native surfaces follow system) deferred. 5 task groups.
+
+**State now:** Planning only. `add-theming` is the active change; foundation/auth/app-shell are living specs.
+
+**Next steps:** `/opsx:apply add-theming` (JS-only, hot-reloads). Then capability 04 `time-entries`.
+
+---
+
 ## 2026-07-01T17:50Z — Archived `add-app-shell`; `app-shell` spec promoted
 
 **Done:** Empty-state glow finalized (reliable iOS wrapper shadow — boxShadow wasn't rendering
