@@ -34,3 +34,24 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 - **State: use Zustand for shared/app state** (`src/store/`), not React Context or prop
   drilling. Keep stores small and typed; components subscribe with selectors. Local,
   component-only UI state stays in `useState`.
+
+## Project structure (place files by responsibility)
+
+Organize `apps/mobile/src/` by concern — one clear home per kind of file. Don't dump
+everything into `components/`.
+
+- `src/screens/` — one screen per file (top-level route targets).
+- `src/components/` — **reusable UI components** composed of primitives (`Input`,
+  `Button`, `TextLink`). Not icons, not screens.
+- `src/icons/` — **icon components** (SVG / vector). An icon is not a UI component —
+  `GoogleIcon` lives here, not in `components/`.
+- `src/store/` — Zustand stores (app/shared state).
+- `src/api/` — API client + request helpers.
+- `src/auth/` — the auth **feature/domain** (schemas, token store, hooks). Group a
+  feature's own logic together; as features grow prefer a feature folder over scattering.
+- `src/theme/` — design tokens + `ThemeProvider`.
+- `assets/` — **static binary assets** only (images, fonts) — not code.
+
+**Rule:** before adding a file, pick the folder that matches its responsibility; if none
+fits, add a new well-named one rather than overloading `components/`. Keep imports pointing
+at these homes so structure stays legible.

@@ -56,6 +56,23 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T15:35Z — Native modules need dev-build rebuild; icons folder + structure rule
+
+**Done:** Diagnosed the on-device "Unimplemented component: ViewManagerAdapter_ExpoLinearGradient"
++ "U" icon placeholders — the dev build predates the newly-added **native** modules
+(`react-native-svg`, `expo-linear-gradient`). Regenerated the native project and verified both
+autolink (Podfile.lock + ExpoModulesProvider register `LinearGradientModule`/`RNSVG`), so a
+**rebuild** (`npm run ios:device`, NOT JS hot-reload) clears it. Moved `GoogleIcon` to
+`src/icons/` (icons aren't components) and added a **project-structure rule** to
+`apps/mobile/AGENTS.md` (screens/components/icons/store/api/auth/theme/assets by responsibility).
+
+**State now:** Mobile typecheck + lint green; iOS bundle clean. Native modules linked.
+User must **rebuild the dev build** to see the redesigned screen render correctly.
+
+**Next steps:** `npm run ios:device` on-device; visual check; then `openspec archive add-auth`.
+
+---
+
 ## 2026-07-01T15:15Z — Auth screen rebuilt to match the design system
 
 **Done:** The auth form didn't follow the design. Rebuilt it against
