@@ -1,11 +1,23 @@
 /**
- * Honeydo theme context. Resolves the active color scheme (defaulting to Dark,
- * per DESIGN.md) and exposes the full token set plus derived fills through
- * `useTheme()`. The Light/Dark swap stays a single switch — screens read
+ * Honeydo theme context. Resolves the active color scheme from the user's appearance
+ * preference (`light` / `dark` / `system`, default Dark per DESIGN.md), persisted across
+ * launches. Exposes the token set via `useTheme()` and the preference via
+ * `useThemeControls()`. The Light/Dark swap stays a single switch — screens read
  * `theme.colors.*`, never raw hex.
  */
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useColorScheme } from 'react-native';
+import {
+  type AppearancePreference,
+  loadPreference,
+  savePreference,
+} from './preference';
 import {
   type ColorScheme,
   type Palette,
@@ -41,8 +53,9 @@ export interface Theme {
 interface ThemeContextValue {
   theme: Theme;
   scheme: ColorScheme;
-  /** Override the system scheme. Pass `null` to follow the OS again. */
-  setScheme: (scheme: ColorScheme | null) => void;
+  /** The user's appearance intent (`light` / `dark` / `system`). */
+  preference: AppearancePreference;
+  setPreference: (preference: AppearancePreference) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -67,15 +80,37 @@ function buildTheme(scheme: ColorScheme): Theme {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  const [override, setOverride] = useState<ColorScheme | null>(null);
+  // Start at the default (Dark) so there's no light flash; swap when the stored value loads.
+  const [preference, setPreferenceState] = useState<AppearancePreference>('dark');
 
-  // Default to Dark unless the OS explicitly asks for Light (DESIGN.md: Dark default).
-  const scheme: ColorScheme = override ?? (systemScheme === 'light' ? 'light' : 'dark');
+  useEffect(() => {
+    let active = true;
+    void loadPreference().then((stored) => {
+      if (active) setPreferenceState(stored);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const setPreference = (next: AppearancePreference) => {
+    setPreferenceState(next);
+    savePreference(next);
+  };
+
+  // Resolve: `system` follows the OS; otherwise the explicit choice. Default Dark.
+  const scheme: ColorScheme =
+    preference === 'system'
+      ? systemScheme === 'light'
+        ? 'light'
+        : 'dark'
+      : preference;
+
   const theme = useMemo(() => buildTheme(scheme), [scheme]);
 
-  const value = useMemo(
-    () => ({ theme, scheme, setScheme: setOverride }),
-    [theme, scheme]
+  const value = useMemo<ThemeContextValue>(
+    () => ({ theme, scheme, preference, setPreference }),
+    [theme, scheme, preference],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -90,5 +125,9 @@ export function useTheme(): Theme {
 export function useThemeControls() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useThemeControls must be used within <ThemeProvider>');
-  return { scheme: ctx.scheme, setScheme: ctx.setScheme };
+  return {
+    scheme: ctx.scheme,
+    preference: ctx.preference,
+    setPreference: ctx.setPreference,
+  };
 }

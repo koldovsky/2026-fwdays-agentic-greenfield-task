@@ -56,6 +56,27 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T18:30Z — Implemented `add-theming` (FR-THEME-01/02/03)
+
+**Done:** Applied `add-theming` (JS-only, no rebuild). `preference.ts` (secure-store, default
+dark); `ThemeProvider` now holds a tri-state preference (light/dark/system), loads on mount (no
+flash), resolves system→OS, persists on change; `useThemeControls` exposes `{ preference,
+setPreference }`. New token-driven `SegmentedControl` per the design; Profile has an APPEARANCE
+section. Typecheck/lint/bundle green; change validates.
+
+**AA finding (NFR-A11Y-02):** all text passes AA **except accent _text_ on the Light bg**
+(#F5A300 on #FFFBF2 = 2.01). Fine as a fill (onAccent/accent = 8.05); the gap is amber
+links/error text on cream (e.g. TextLink). **Flagged, not silently changed** (brand token):
+recommend an `accentText`/`link` token = accent in Dark, darker amber (#A85D00, AA-text) in
+Light. Needs owner decision.
+
+**State now:** 8/9 tasks; only 5.4 (archive after on-device verify) left. Hot-reloads.
+
+**Next steps:** Verify Light/Dark/System on-device; decide the accentText token; then
+`/opsx:archive add-theming`. Then capability 04 `time-entries`.
+
+---
+
 ## 2026-07-01T18:10Z — Proposed `add-theming` (capability 03)
 
 **Done:** `/opsx:propose add-theming` — all 4 artifacts, `valid --strict`. Covers FR-THEME-01/02/03/04

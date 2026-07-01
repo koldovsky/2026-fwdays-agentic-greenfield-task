@@ -64,5 +64,10 @@ The token theme already exists: `ThemeProvider` resolves `scheme = override ?? (
 
 - **Preference key + storage:** confirm `expo-secure-store` under `honeydo.themePreference`
   (vs. adding AsyncStorage) — proposal assumes secure-store for the no-rebuild win.
-- **AA audit outcome:** if any pair falls short of AA, that's a token adjustment in `tokens.ts`
-  synced back to the `honeydo-design` tokens — flag rather than silently tweak.
+- **AA audit outcome (FINDING):** all text pairs pass AA-text in both themes **except**
+  `accent` **text** on the Light `bg`/`surface` (`#F5A300` on `#FFFBF2` = **2.01**, fails). It's
+  fine as a fill (button `onAccent` on `accent` = 8.05) — the gap is amber *text/icons* on light
+  (links like `TextLink`, error text, the tip glyph). Fix (needs an owner call — it's a brand
+  token): add a semantic `accentText`/`link` token = `accent` in Dark, a darker amber in Light
+  (`#A85D00` ≈ 4.81, AA-text; `#C97A04` = 3.24 is UI-only), and point `TextLink`/accent text at
+  it. Flagged, not silently changed; sync back to `.agents/skills/honeydo-design/tokens/`.
