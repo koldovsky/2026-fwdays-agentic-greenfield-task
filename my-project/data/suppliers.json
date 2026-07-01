@@ -1,0 +1,20 @@
+[
+  {
+    "supplierId": "sup_101",
+    "companyName": "Apex Steel Works",
+    "contactName": "Sarah Jenkins",
+    "email": "procurement@apexsteel.com",
+    "phone": "+1-555-019-8234",
+    "leadTimeDays": 5,
+    "rating": 4.8
+  },
+  {
+    "supplierId": "sup_102",
+    "companyName": "Polymer Synthetics Corp",
+    "contactName": "Michael Chang",
+    "email": "orders@polysynth.com",
+    "phone": "+1-555-014-9988",
+    "leadTimeDays": 7,
+    "rating": 4.2
+  }
+]

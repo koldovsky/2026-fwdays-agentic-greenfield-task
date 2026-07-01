@@ -1,0 +1,19 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "forgeflow-extended-table-tour",
+      "title": "ForgeFlow extended tour with live table additions",
+      "proof": "FR-1, FR-2, FR-8, FR-9, FR-10, FR-11, FR-13, FR-14, FR-18, FR-19, FR-20, FR-29, FR-30, FR-35",
+      "video": "docs/qa/extended-demo-recordings/forgeflow-extended-table-tour.webm",
+      "screenshot": "docs/qa/extended-demo-recordings/forgeflow-extended-table-tour.png",
+      "explainer": "docs/qa/extended-demo-recordings/forgeflow-extended-table-tour.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Settled 1280x800 still inspected: navigation, movement table, quantities, reasons, documents, and actor labels are readable without clipping."
+      }
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+Product Requirements Document: 
+Corporate Procurement and Manufacturing Inventory SystemIndustrial Context and Operational ChallengesManufacturing enterprises rely on the seamless coordination of physical materials, procurement workflows, and factory schedules to maintain a competitive market position. Inefficient oversight of inventory balances often manifests in two distinct operational bottlenecks: critical raw material stockouts that halt active production lines, and excessive inventory accumulation that ties up working capital in slow-moving items. Historically, small-to-medium manufacturing environments have managed these workflows using isolated spreadsheets. While spreadsheets are accessible, they do not scale, lack native support for relational tracking, and are prone to data entry errors and overwrites.Establishing a centralized, web-based portal bridges the gap between material procurement and production management. Rather than overwriting a single stock balance metric, the system uses a transactional ledger design. This approach maintains accurate real-time inventory balances while capturing the historical timeline of every inbound supplier delivery, raw material consumption event, and completed production run. By providing complete visibility across the material lifecycle, the platform reduces administrative delays, coordinates purchasing with actual production needs, and ensures raw materials are tracked from arrival to final assembly.Core Architectural Design and Concurrency ControlFor early prototyping and validation, the portal uses a file-based JSON storage system, mimicking relational database structures without the immediate overhead of an external SQL engine. While JSON is highly adaptable and simplifies frontend state integration, it presents technical challenges regarding multi-user concurrency and transactional safety on a web server.Concurrency and Transactional Integrity MechanicsBecause web applications handle asynchronous requests, simultaneous writes to a single JSON file risk data loss, race conditions, and file corruption. To mitigate these issues, the system implements an application-level concurrency control pattern:Exclusive Write-Locking: The application handles file access through a custom wrapper. When a request initiates a write operation, the system acquires an exclusive lock on the file. Subsequent read or write requests to that file are queued in memory using a first-in, first-out (FIFO) promise chain.Atomic File Updates: Rather than modifying a JSON file in place, the server loads the dataset, processes modifications in memory, writes the updated payload to a temporary file, and performs an atomic replace operation. This ensures that if a system failure occurs mid-write, the original database file remains uncorrupted.Relational Integrity Mapping: The application layer validates relational logic to maintain clean data structures. Before deleting or modifying a key, the system verifies all linked records across other files, matching the behavior of primary and foreign keys in relational databases.File Database ArchitectureThe file-based storage architecture is organized into seven distinct files, each mapped to a specific operational domain:File NameFunctional PurposePrimary KeyForeign Key LinksKey Schema Attributesusers.jsonStores credentials and authorization roles.userIdNoneusername, passwordHash, role.suppliers.jsonProfiles raw material vendors and lead times.supplierIdNonecompanyName, leadTimeDays, rating.raw_materials.jsonTracks input items, prices, and stock types.materialIdsupplierId[cite: 8, 18]sku, quantityInStock, stockType.finished_goods.jsonLists completed manufactured items.productIdbomId[cite: 19]sku, quantityInStock, unitPrice.bom.jsonDefines assembly bills of materials.bomIdproductIdversion, materials list.purchase_orders.jsonTracks procurement from draft to delivery.poIdsupplierId[cite: 11, 20]status, items array, totalCost.stock_movements.jsonAudits warehouse modifications and reasons.movementIditemId, userId[cite: 6]direction, quantity, reasonCode.Database Schema Definitions and Test DatasetsThe structured JSON schemas and production-grade mock datasets below provide the initial data state for system development and testing.Schema and Seed Dataset: users.jsonTracks authorized employees, system roles, and credentials.JSON[
+  {
+    "userId": "usr_001",
+    "username": "test",
+    "passwordHash": "test",
+    "fullName": "System Testing Administrator",
+    "role": "Admin",
+    "isActive": true
+  },
+  {
+    "userId": "usr_002",
+    "username": "operator1",
+    "passwordHash": "securepass123",
+    "fullName": "Warehouse Floor Lead",
+    "role": "Staff",
+    "isActive": true
+  }
+]
+Schema and Seed Dataset: suppliers.jsonMaintains vendor profiles, physical contact details, average fulfillment speeds, and performance metrics.JSON[
+  {
+    "supplierId": "sup_101",
+    "companyName": "Apex Steel Works",
+    "contactName": "Sarah Jenkins",
+    "email": "procurement@apexsteel.com",
+    "phone": "+1-555-019-8234",
+    "leadTimeDays": 5,
+    "rating": 4.8
+  },
+  {
+    "supplierId": "sup_102",
+    "companyName": "Polymer Synthetics Corp",
+    "contactName": "Michael Chang",
+    "email": "orders@polysynth.com",
+    "phone": "+1-555-014-9988",
+    "leadTimeDays": 7,
+    "rating": 4.2
+  }
+]
+Schema and Seed Dataset: raw_materials.jsonTracks manufacturing inputs, physical categories, safety thresholds, and structural stock conditions.JSON[
+  {
+    "materialId": "mat_201",
+    "materialName": "Hardened Carbon Steel Rod 20mm",
+    "sku": "RM-ST-20MM",
+    "category": "Metals",
+    "quantityInStock": 150.00,
+    "unitOfMeasure": "KG",
+    "unitPrice": 12.50,
+    "reorderLevel": 50.00,
+    "stockType": "unrestricted",
+    "supplierId": "sup_101"
+  },
+  {
+    "materialId": "mat_202",
+    "materialName": "Industrial Polyurethane Resin",
+    "sku": "RM-PL-RESIN",
+    "category": "Plastics",
+    "quantityInStock": 45.00,
+    "unitOfMeasure": "L",
+    "unitPrice": 25.00,
+    "reorderLevel": 60.00,
+    "stockType": "quality_inspection",
+    "supplierId": "sup_102"
+  },
+  {
+    "materialId": "mat_203",
+    "materialName": "Anti-Corrosion Structural Coating",
+    "sku": "RM-CH-COAT",
+    "category": "Chemicals",
+    "quantityInStock": 12.00,
+    "unitOfMeasure": "L",
+    "unitPrice": 18.00,
+    "reorderLevel": 20.00,
+    "stockType": "blocked",
+    "supplierId": "sup_102"
+  }
+]
+Schema and Seed Dataset: finished_goods.jsonManages finished items manufactured on-site and ready for customer fulfillment.JSON[
+  {
+    "productId": "prd_301",
+    "productName": "Heavy Duty Steel Bracket",
+    "sku": "FG-ST-HDB",
+    "category": "Structural Consumables",
+    "quantityInStock": 80.00,
+    "unitOfMeasure": "PC",
+    "unitPrice": 45.00,
+    "reorderLevel": 20.00,
+    "bomId": "bom_401"
+  }
+]
+Schema and Seed Dataset: bom.jsonDefines the raw materials and assembly components required to manufacture a finished good.JSON[
+  {
+    "bomId": "bom_401",
+    "productId": "prd_301",
+    "version": "1.0",
+    "materials": [
+      {
+        "materialId": "mat_201",
+        "quantityRequired": 1.50
+      },
+      {
+        "materialId": "mat_202",
+        "quantityRequired": 0.25
+      }
+    ]
+  }
+]
+Schema and Seed Dataset: purchase_orders.jsonTracks physical deliveries throughout the procurement lifecycle.JSON[
+  {
+    "poId": "po_501",
+    "poNumber": "PO-2026-0001",
+    "supplierId": "sup_101",
+    "status": "Received",
+    "items": [
+      {
+        "materialId": "mat_201",
+        "quantityOrdered": 100.00,
+        "unitPrice": 12.50,
+        "quantityReceived": 100.00
+      }
+    ],
+    "totalCost": 1250.00,
+    "createdDate": "2026-03-01T08:30:00Z",
+    "receivedDate": "2026-03-06T14:15:00Z"
+  },
+  {
+    "poId": "po_502",
+    "poNumber": "PO-2026-0002",
+    "supplierId": "sup_102",
+    "status": "Ordered",
+    "items": [
+      {
+        "materialId": "mat_202",
+        "quantityOrdered": 50.00,
+        "unitPrice": 25.00,
+        "quantityReceived": 0.00
+      }
+    ],
+    "totalCost": 1250.00,
+    "createdDate": "2026-03-08T10:00:00Z",
+    "receivedDate": null
+  }
+]
+Schema and Seed Dataset: stock_movements.jsonProvides an audit trail of stock changes, capturing details on why and when items moved.JSON[
+  {
+    "movementId": "mvt_601",
+    "timestamp": "2026-03-06T14:20:00Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_201",
+    "quantity": 100.00,
+    "direction": "IN",
+    "reason": "Purchase Order Receipt",
+    "associatedDocId": "po_501",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_602",
+    "timestamp": "2026-03-09T09:15:00Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_201",
+    "quantity": -1.50,
+    "direction": "OUT",
+    "reason": "Production Consumption",
+    "associatedDocId": "bom_401",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_603",
+    "timestamp": "2026-03-09T09:15:00Z",
+    "itemType": "FINISHED_GOOD",
+    "itemId": "prd_301",
+    "quantity": 1.00,
+    "direction": "IN",
+    "reason": "Work Order Completion",
+    "associatedDocId": "bom_401",
+    "userId": "usr_001"
+  }
+]
+User Authorization and Session LifecycleSecurity and user tracking are managed through an authentication workflow integrated with the file-based database.Sign-In and Session Validation ProtocolsTo meet validation requirements, the application is pre-configured with a default administrative account:$$\text{Username} = \text{"test"}, \quad \text{Password} = \text{"test"}$$[cite: 16]Authentication runs through a secure server-side pipeline:+------------------+         Enters credentials          +-------------------+
+|                  | ----------------------------------> |                   |
+| Login Form UI    |                                     | Server Auth Guard |
+|                  | <---------------------------------- |                   |
++------------------+     Deny: Displays Login Error      +-------------------+
+         |                                                         |
+         |                                                         | Match Found in
+         |                                                         | users.json File
+         |                                                         v
+         |                                               +-------------------+
+         |             Redirects to /dashboard           |                   |
+         +<--------------------------------------------- | Sets Session      |
+                                                         | Cookie            |
+                                                         +-------------------+
+Authentication Endpoint: Submitting the login form initiates a POST request to /api/auth/login. The server reads users.json and verifies the credentials. For this prototype, the credentials are encrypted in transit but verified using a direct string match on the server.Session Cookie: Upon successful verification, the server issues an HTTP-only session cookie. This secure cookie stores the user's ID and role, authorizing subsequent requests.Access Control Guard: A global routing guard checks for a valid session before rendering secure pages. Unauthorized access attempts automatically redirect to the /login view.Session Termination: Clicking the logout button clears the session cookie and redirects the user to the login page.User Roles and System Access ControlsSystem operations are restricted by role to maintain data integrity and support clear separation of duties:Functional AreaUser ActionAdmin Role PermissionStaff Role PermissionGuardrail RuleSystem AccessAccess Admin ControlsApprovedDeniedRestricts access to user management tools.Vendor ProfilesModify Supplier MasterApprovedDeniedPrevents unauthorized modifications to supplier details.Stock RecordsEdit Base Item SettingsApprovedDeniedProtects system SKUs and minimum safety levels from unauthorized edits.ProcurementGenerate Purchase RequestsApprovedApprovedRequires a valid supplier link from the database.Inventory IntakePost Physical ReceiptsApprovedApprovedVerifies received counts against the original PO.ManufacturingLog Assembly RunsApprovedApprovedChecks raw material availability before starting a run.Audit LogsView Movement LedgersApprovedRead-OnlyRestricts data modifications to maintain an accurate audit trail.End-to-End Procurement Lifecycle and Material IntakeThe procurement module tracks purchase orders through their entire lifecycle, transitioning items from initial requests into managed inventory.  1. Purchase Requisition
+  +------------------------------------------------------------+
+  | Staff identifies a shortage and drafts a material request. |
+  +------------------------------------------------------------+
+                                |
+                                v
+  2. Order Review & Approval
+  +------------------------------------------------------------+
+  | Approvers verify the request details against current       |
+  | budgets and operational requirements.                      |
+  +------------------------------------------------------------+
+                                |
+                                v
+  3. Formal PO Issuance
+  +------------------------------------------------------------+
+  | System generates a unique PO code and transmits            |
+  | details to the selected supplier.           |
+  +------------------------------------------------------------+
+                                |
+                                v
+  4. Physical Intake Validation
+  +------------------------------------------------------------+
+  | On delivery, warehouse staff count items and log quantities |
+  | to begin the quality review process [cite: 10, 17].        |
+  +------------------------------------------------------------+
+                                |
+                                v
+  5. Three-Way Matching
+  +------------------------------------------------------------+
+  | System compares original PO quantities, receiving logs,    |
+  | and the supplier's invoice to verify accuracy.|
+  +------------------------------------------------------------+
+                                |
+                                v
+  6. Financial Reconciliation & Closure
+  +------------------------------------------------------------+
+  | Accounts payable approves the final payment and closes     |
+  | the completed purchase order.                   |
+  +------------------------------------------------------------+
+The Six Stages of Procurement TrackingThe tracking system traces transactions from initial department requisitions to final accounts reconciliation:Purchase Requisition: Staff submit requests listing required materials, quantities, estimated costs, and intended suppliers. These requests remain internal and do not represent a financial commitment to the vendor.Approval: A purchasing manager reviews the request details. If the order meets budget guidelines, it is approved for purchase order generation.Purchase Order Issuance: The system generates a formal PO using details from the approved requisition, assigns a unique tracking number, and sends the document to the supplier. This creates a binding contract and establishes a pending delivery in the system.Physical Receipt Verification: When the delivery arrives at the warehouse, staff count the items and log received quantities against the original PO. Any discrepancies are recorded to maintain inventory accuracy.Three-Way Invoice Matching: To prevent billing errors, the system runs a three-way match comparing the original purchase order, the receiving log, and the vendor's invoice. If the values match within tolerance limits, the invoice is approved for payment.Financial Reconciliation & Closure: The accounts team marks the invoice as paid and shifts the purchase order status to "Closed" in purchase_orders.json, completing the transaction lifecycle.Operational Rules for Inventory IntakeTo ensure inventory accuracy during intake, the system enforces strict data validation rules:Inbound Balance Tracking: Received quantities are verified against the original purchase order. If a delivery is incomplete, the system marks the PO status as "Partially Received" and leaves the remaining balance open. When all items are accounted for, the status is updated to "Received".Quality Hold Isolation: Newly arrived materials default to a "quality_inspection" status in raw_materials.json. This keeps them isolated in the system and prevents them from being assigned to active production runs until quality checks are complete.Transactional Logging: When an intake status is updated, the system increments the material balance in raw_materials.json and logs a confirmation entry in stock_movements.json.Manufacturing Conversions and Bill of Materials ApplicationThe manufacturing module processes physical transformations on the production floor, converting raw input materials into finished goods.+--------------------------------------------------------------------------+
+|                       Material Verification Request                       |
++--------------------------------------------------------------------------+
+  The system pulls the Bill of Materials recipe from `bom.json`.
+  It calculates raw material requirements for the target production quantity:
+  Required Stock = Output Quantity x BOM Material Requirement Factor.
+                                |
+                                v
++--------------------------------------------------------------------------+
+|                      Inventory Sufficiency Evaluation                    |
++--------------------------------------------------------------------------+
+  Does current stock in `raw_materials.json` meet the required quantities?
+  Is the material marked with a usable stock status like 'unrestricted'?
+                                |
+                +---------------+---------------+
+                | Yes                           | No
+                v                               v
++-------------------------------+ +-------------------------------+
+|     Execution Authorization   | |      System Access Block      |
++-------------------------------+ +-------------------------------+
+  Reduces raw material stock.     Operation halts.
+  Increments finished goods stock.| Displays inventory shortage    |
+  Logs 'Production' movements.| alert on screen.
++-------------------------------+ +-------------------------------+
+Production Rules and ValidationsTo protect inventory data and prevent stock discrepancies, the system enforces strict validations before any production run can proceed:Stock Status Restrictions: The system only allocates raw materials with an "unrestricted" status to active production runs. Materials marked as "quality_inspection" or "blocked" are bypassed, preventing compromised inputs from entering assembly pipelines.Run Verification: When a user initiates a manufacturing run, the system validates current stock levels against the BOM requirements. If any material falls short of the calculated threshold, the process halts and the user receives an alert detailing the shortage.Synchronized Stock Updates: On successful execution, the system processes updates across related database files. It reduces the raw material balance in raw_materials.json, increases the finished goods count in finished_goods.json, and records the material updates in stock_movements.json.Detailed Movement Reason CodesTo maintain a clean audit trail, every stock change is logged with a specific reason code in stock_movements.json:Movement Reason CodeDirectionContext and DescriptionPurchase Order Receipt[cite: 10]INLogs newly arrived raw materials from approved supplier orders.Production Consumption[cite: 7, 17]OUTRecords raw materials pulled from inventory for manufacturing.Work Order Completion[cite: 22]INLogs newly assembled finished goods posted to active inventory.Production Scrap[cite: 17]OUTRecords damaged or out-of-specification materials discarded during production.Inventory Adjustment[cite: 17]IN/OUTCaptures manual corrections made during physical counts.Quality Status Shift[cite: 17]AdjustRecords status changes, such as moving items from QA hold to unrestricted stock.Inventory Valuation, Mathematical Indicators, and Threshold AlertingThe portal provides an analytics dashboard to help users track operational performance, monitor inventory valuations, and manage reorder cycles.Real-Time Financial CalculationsThe application runs background calculations to determine financial values for both raw materials and finished goods:Raw Materials Inventory Valuation: Sums the total value of all materials stored in the warehouse:$$V_{\text{raw}} = \sum_{i=1}^{n} \left( Q_{\text{stock}, i} \times U_{\text{cost}, i} \right)$$[cite: 3]Finished Goods Inventory Valuation: Sums the market value of all completed assemblies:$$V_{\text{raw}} = \sum_{i=1}^{n} \left( Q_{\text{stock}, i} \times U_{\text{cost}, i} \right)$$Economic Order Quantity (EOQ): To help optimize purchasing, the system calculates the ideal order size using demand data, order costs, and storage fees:$$EOQ = \sqrt{\frac{2 \times D \times S}{H}}$$[cite: 23]$$\text{Where: } D = \text{Annual Demand}, \quad S = \text{Administrative Cost per PO}, \quad H = \text{Holding Cost per Unit per Year}$$Automation of Stock Warning AlertsTo help prevent material stockouts, the portal automates reorder alerting using a defined safety calculation:Reorder Level Rule: The system flags an item for reorder when its current stock falls below its minimum safety threshold:$$\text{Alert Status} = \begin{cases} \text{"Healthy"} & \text{if } Q_{\text{stock}} > \text{Reorder Level} \\ \text{"Reorder Needed"} & \text{if } Q_{\text{stock}} \le \text{Reorder Level} \end{cases}$$[cite: 3, 23]Visual Status Flags: In the dashboard view, the system applies visual indicators to highlight items that need attention:Stock Status Alert CodeVisual IndicatorVisual PriorityOperational Trigger Conditions🟢 Healthy[cite: 23]Green CircleLowStock levels are safely above reorder points.🟡 Low Stock[cite: 23]Yellow CircleMediumStock levels have dropped below reorder points.🔴 Critical[cite: 23]Red CircleHighStock is exhausted or near zero.These alerts appear directly on the main dashboard, giving purchasing agents immediate visibility into items that require active replenishment.Portal Interface WireframesThe portal layout is designed for simplicity, providing easy navigation and clear access to key system functions.Login Interface WireframeThe entry portal features a simple secure login card:+-----------------------------------------------------------------------+
+|                                                                       |
+|                     MANUFACTURING PORTAL LOG IN                       |
+|                                                                       |
+|        +-----------------------------------------------------+        |
+|        | Username: [ test                                  ] |        |
+|        +-----------------------------------------------------+        |
+|                                                                       |
+|        +-----------------------------------------------------+        |
+|        | Password: [ ****                                  ] |        |
+|        +-----------------------------------------------------+        |
+|                                                                       |
+|        +-----------------------------------------------------+        |
+|        |                     [ SIGN IN ]                     |        |
+|        +-----------------------------------------------------+        |
+|                                                                       |
++-----------------------------------------------------------------------+
+Dashboard Interface WireframeThe administrative workspace displays key metrics, system alerts, and navigation links:+------------------------------------------------------------------------------------+
+| [Brand Logo]           Corporate Procurement & Inventory Portal     [User: test]   |
++------------------------------------------------------------------------------------+
+| Navigation:  [Dashboard]  [Procurement]  [Manufacturing]  [Ledger History]  [Exit] |
++------------------------------------------------------------------------------------+
+|  FINANCIALS OVERVIEW                                                               |
+|  +------------------------+  +------------------------+  +-----------------------+ |
+|  | Raw Materials Value    |  | Finished Goods Value   |  | Pending Orders Value  | |
+|  | $3,150.00              |  | $3,600.00              |  | $1,250.00             | |
+|  +------------------------+  +------------------------+  +-----------------------+ |
+|                                                                                    |
+|  ACTIVE REORDER WARNINGS (Items below safety threshold)                             |
+|  +-------------------------------------------------------------------------------+ |
+|  | Material Code | SKU Code     | Description            | In Stock | Status     | |
+|  | mat_202       | RM-PL-RESIN  | Polyurethane Resin     | 45.00 L  | 🟡 Low     | |
+|  | mat_203       | RM-CH-COAT   | Anti-Corrosion Coating | 12.00 L  | 🔴 Critical| |
+|  +-------------------------------------------------------------------------------+ |
+|                                                                                    |
+|  QUICK ACTIONS PANEL                                                               |
+|  +-------------------------+   +-------------------------+   +-------------------+ |
+|  | [Create Purchase PO]    |   | [Schedule Production]   |   | [Add Supplier]    | |
+|  +-------------------------+   +-------------------------+   +-------------------+ |
++------------------------------------------------------------------------------------+
+Procurement Operations Panel WireframeThis panel manages purchase orders and material intake:+------------------------------------------------------------------------------------+
+| [Brand Logo]           Corporate Procurement & Inventory Portal     [User: test]   |
++------------------------------------------------------------------------------------+
+|  PURCHASE ORDER ENGINE                                                             |
+|                                                                                    |
+|  Draft Supplier Order:                                                             |
+|  Supplier:  [ Polymer Synthetics Corp (sup_102)                                  v ]|
+|  Material:  [ Industrial Polyurethane Resin (mat_202)                            v ]|
+|  Quantity:  [ 50.00             ]                                                  |
+|  Unit Cost: $25.00                                                                 |
+|  Total:     $1,250.00                                                              |
+|                                                                                    |
+|  [ TRANSMIT PURCHASE ORDER ]                                                       |
+|                                                                                    |
+|  Active Orders Tracking:                                                           |
+|  +-------------------------------------------------------------------------------+ |
+|  | PO Code     | Supplier             | Status    | Value     | Action           | |
+|  | PO-2026-002 | Polymer Synthetics   | Ordered   | $1,250.00 | [Receive Goods]  | |
+|  | PO-2026-001 | Apex Steel Works     | Received  | $1,250.00 | [Archived View]  | |
+|  +-------------------------------------------------------------------------------+ |
++------------------------------------------------------------------------------------+
+Manufacturing Assembly Control WireframeThis interface is used to schedule production runs and review product structures:+------------------------------------------------------------------------------------+
+| [Brand Logo]           Corporate Procurement & Inventory Portal     [User: test]   |
++------------------------------------------------------------------------------------+
+|  PRODUCTION CONTROL WORKSPACE                                                      |
+|                                                                                    |
+|  Configure Active Production Run:                                                  |
+|  Assembly Target:  [ Heavy Duty Steel Bracket (prd_301)                          v ]|
+|  Target Output:    [ 10                ] (Units to Assemble)                       |
+|                                                                                    |
+|  Calculated Material Requirements (Based on active BOM_401):                       |
+|  * Hardened Carbon Steel Rod: 15.00 KG (In Stock: 150.00 KG) - OK                  |
+|  * Polyurethane Resin:         2.50 L  (In Stock: 45.00 L)  - OK                  |
+|                                                                                    |
+|  [ AUTHORIZE MANUFACTURING RUN ]                                                   |
+|                                                                                    |
+|  Product Structures Master Records (Bill of Materials):                            |
+|  +-------------------------------------------------------------------------------+ |
+|  | Target Good  | SKU Code   | BOM Version  | Elements Listed                    | |
+|  | prd_301      | FG-ST-HDB  | v1.0         | mat_201 (1.50), mat_202 (0.25)     | |
+|  +-------------------------------------------------------------------------------+ |
++------------------------------------------------------------------------------------+
+Technical Constraints and Future RoadmapWhile a file-based prototype is ideal for initial testing, the platform design considers future operational scaling.Operational Boundaries of Flat-File DatabasesBefore moving to a production environment, developers must consider the limitations of JSON storage:Parsing Bottlenecks: Because flat-file databases require the application to read and parse entire JSON strings for every query, system performance can degrade once datasets grow beyond a few thousand rows.No Native Indexing: Without database indexing, queries require sequential scans, which increases CPU load as records accumulate.Single-Server Dependency: File-system locking mechanisms require all web processes to run on a single server, which limits horizontal scaling.Transition to Relational Database Management SystemsTo support future growth, the system's database queries are isolated behind a unified data access layer. This architectural isolation simplifies future database upgrades:+------------------------+
+| Application UI Layer   |
++------------------------+
+            |
+            v
++------------------------+
+| Unified Data Interface |
++------------------------+
+            |
+     +------+------+
+     |             |
+     v             v
++----------+  +------------+
+| JSON DB  |  | RDBMS      |  <-- Future Migration Path
+| (Active) |  | PostgreSQL |      (No code changes required
++----------+  +------------+       at the UI layer)
+This design ensures that transitioning the data layer to an enterprise database (like SQLite, PostgreSQL, or SQL Server) requires updating only the connection module, leaving the core application logic untouched 1 . This migration strategy allows the platform to scale seamlessly from a prototype to a multi-site enterprise solution 2 .

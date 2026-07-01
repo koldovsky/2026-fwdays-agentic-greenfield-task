@@ -1,0 +1,589 @@
+{
+  "generatedBy": "scripts/check-traceability.mjs",
+  "requirements": {
+    "FR-1": "MVP",
+    "FR-2": "MVP",
+    "FR-3": "MVP",
+    "FR-4": "MVP",
+    "FR-5": "MVP",
+    "FR-6": "MVP",
+    "FR-7": "MVP",
+    "FR-8": "MVP",
+    "FR-9": "MVP",
+    "FR-10": "MVP",
+    "FR-11": "MVP",
+    "FR-12": "MVP",
+    "FR-13": "MVP",
+    "FR-14": "MVP",
+    "FR-15": "MVP",
+    "FR-16": "MVP",
+    "FR-17": "MVP",
+    "FR-18": "MVP",
+    "FR-19": "MVP",
+    "FR-20": "MVP",
+    "FR-21": "MVP",
+    "FR-22": "MVP",
+    "FR-23": "MVP",
+    "FR-24": "MVP",
+    "FR-25": "Future",
+    "FR-26": "Future",
+    "FR-27": "Future",
+    "FR-28": "Future",
+    "FR-29": "MVP",
+    "FR-30": "MVP",
+    "FR-31": "MVP",
+    "FR-32": "MVP",
+    "FR-33": "MVP",
+    "FR-34": "MVP",
+    "FR-35": "MVP",
+    "FR-36": "MVP",
+    "FR-37": "MVP",
+    "FR-38": "MVP",
+    "FR-39": "MVP",
+    "FR-40": "Future",
+    "FR-41": "Future",
+    "NFR-1": "MVP",
+    "NFR-2": "MVP",
+    "NFR-3": "MVP",
+    "NFR-4": "MVP",
+    "NFR-5": "MVP",
+    "NFR-6": "MVP",
+    "NFR-7": "MVP",
+    "NFR-8": "MVP",
+    "NFR-9": "MVP",
+    "NFR-10": "MVP",
+    "NFR-11": "MVP",
+    "NFR-12": "MVP",
+    "NFR-13": "Future",
+    "TC-1": "MVP",
+    "TC-2": "MVP",
+    "TC-3": "MVP",
+    "TC-4": "MVP",
+    "TC-5": "MVP",
+    "TC-6": "MVP",
+    "TC-7": "MVP",
+    "TC-8": "Future",
+    "BC-1": "MVP",
+    "BC-2": "MVP",
+    "BC-3": "MVP",
+    "BC-4": "Future"
+  },
+  "links": [
+    {
+      "id": "FR-1",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/auth.test.ts",
+        "tests/auth.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-2",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-3",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/auth.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-4",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-5",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-6",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/auth.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-7",
+      "specs": [
+        "openspec/specs/authentication/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/auth.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-8",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts",
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-9",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts",
+        "evals/cases/sample.eval.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-10",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-11",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-12",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-13",
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-14",
+      "specs": [
+        "openspec/specs/master-data/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-15",
+      "specs": [
+        "openspec/specs/master-data/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-16",
+      "specs": [
+        "openspec/specs/master-data/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-17",
+      "specs": [
+        "openspec/specs/master-data/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-18",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-19",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-20",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-21",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts",
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-22",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-23",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-24",
+      "specs": [
+        "openspec/specs/procurement/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-29",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts",
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-30",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-31",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-32",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-33",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-34",
+      "specs": [
+        "openspec/specs/manufacturing/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-35",
+      "specs": [
+        "openspec/specs/ledger-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json",
+        "docs/qa/extended-demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-36",
+      "specs": [
+        "openspec/specs/ledger-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-37",
+      "specs": [
+        "openspec/specs/ledger-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-38",
+      "specs": [
+        "openspec/specs/ledger-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-39",
+      "specs": [
+        "openspec/specs/ledger-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/domain.test.ts"
+      ],
+      "recordings": []
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "check": "recording-evidence",
+      "msg": "FR-3 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-4 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-5 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-6 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-7 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-12 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-15 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-16 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-17 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-21 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-22 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-23 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-24 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-31 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-32 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-33 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-34 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-36 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-37 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-38 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-39 is not referenced by any recording manifest under docs/qa/"
+    }
+  ]
+}

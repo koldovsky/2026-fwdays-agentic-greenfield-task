@@ -1,0 +1,13 @@
+[
+  {
+    "productId": "prd_301",
+    "productName": "Heavy Duty Steel Bracket",
+    "sku": "FG-ST-HDB",
+    "category": "Structural Consumables",
+    "quantityInStock": 80,
+    "unitOfMeasure": "PC",
+    "unitPrice": 45,
+    "reorderLevel": 20,
+    "bomId": "bom_401"
+  }
+]
