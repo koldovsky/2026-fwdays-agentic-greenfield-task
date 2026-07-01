@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { GOOGLE_CLIENT_ID } from '../config';
-import { useAuth } from './AuthContext';
+import { useAuthStore } from '../store/authStore';
 
 // Finishes the web-browser auth session when the app is resumed via redirect.
 void WebBrowser.maybeCompleteAuthSession();
@@ -12,7 +12,7 @@ void WebBrowser.maybeCompleteAuthSession();
  * Google id_token to the API. `available` is false when no client id is configured.
  */
 export function useGoogleAuth() {
-  const { signInWithGoogle } = useAuth();
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
   });

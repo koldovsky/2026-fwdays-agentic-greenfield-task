@@ -1,12 +1,13 @@
 import { Pressable, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme';
 
 /** Placeholder signed-in screen. The real tabbed shell arrives with app-shell. */
 export function HomeScreen() {
   const t = useTheme();
-  const { user, signOut } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.bg, padding: t.screenGutter, justifyContent: 'center', gap: t.space[3] }}>

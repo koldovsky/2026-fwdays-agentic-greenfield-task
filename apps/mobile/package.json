@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "expo": "~57.0.1",
     "expo-auth-session": "~57.0.1",
     "expo-build-properties": "^57.0.2",
@@ -12,7 +13,10 @@
     "expo-status-bar": "~57.0.0",
     "expo-web-browser": "~57.0.0",
     "react": "19.2.3",
-    "react-native": "0.86.0"
+    "react-hook-form": "^7.80.0",
+    "react-native": "0.86.0",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

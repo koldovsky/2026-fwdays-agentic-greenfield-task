@@ -56,6 +56,24 @@ and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
 
 ---
 
+## 2026-07-01T14:10Z — Mobile forms + state conventions (RHF+Zod, Zustand)
+
+**Done:** Added an AGENTS.md rule: mobile forms validate with **React Hook Form + Zod**
+(via `@hookform/resolvers`), reusing shared validators; shared/app **state uses Zustand**
+(`src/store/`), not Context. Applied it: migrated the auth Context to a Zustand
+`useAuthStore`, and rebuilt `AuthScreen` with RHF + Zod schemas that call the shared
+`validatePassword` (one policy for client + server). Zod 4 needed the `standardSchemaResolver`
+(the `zodResolver` overloads don't match Zod 4). Removed `AuthContext.tsx`. Installed
+react-hook-form, zod, @hookform/resolvers, zustand.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean (721 modules). No
+dedicated OpenSpec/agent skill for RHF/Zod/Zustand exists in the registry, so none installed —
+libraries + the AGENTS rule + existing vercel react/react-native skills cover it.
+
+**Next steps:** Continue on-device auth verification; `openspec archive add-auth` when done.
+
+---
+
 ## 2026-07-01T13:45Z — Unique bundle id for device signing
 
 **Done:** Device build failed signing because `com.honeydo.app` is already registered to

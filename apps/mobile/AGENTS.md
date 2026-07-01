@@ -13,3 +13,11 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
   `.agents/skills/honeydo-design/tokens/`.
 - Consume the API over REST; import contract types from `@honeydo/shared`. Never
   import the Prisma client here.
+- **Forms: validate with a library, never ad-hoc.** Every form uses **React Hook Form**
+  with a **Zod** schema via `@hookform/resolvers/zod` — no manual `useState` + `if`
+  checks. Wrap React Native inputs in RHF's `Controller`. Where a rule already exists in
+  `@honeydo/shared` (e.g. `validatePassword`), the Zod schema MUST call it so client and
+  server share one policy; don't re-encode validation.
+- **State: use Zustand for shared/app state** (`src/store/`), not React Context or prop
+  drilling. Keep stores small and typed; components subscribe with selectors. Local,
+  component-only UI state stays in `useState`.
