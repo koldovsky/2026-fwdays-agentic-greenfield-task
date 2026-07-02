@@ -6,6 +6,24 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T14:00Z — Archived `add-time-entries-core` (capability 04 complete)
+
+**Done:** On-device smoke passed ("all good"); marked task 6.2 done (**32/32**) and ran
+`openspec archive add-time-entries-core -y`. Promoted the delta into a new living spec
+`openspec/specs/time-entries/spec.md` (**+11 requirements**, validates `--strict`); change moved to
+`openspec/changes/archive/2026-07-02-add-time-entries-core/`. No active changes remain.
+
+**State now:** MVP core loop is live end-to-end (shared pure logic + API single-running invariant +
+Timer/History UI). Five living specs: foundation, auth, app-shell, theming, **time-entries**.
+`npm run gate` green.
+
+**Next steps:** Capability 05 **`tags`** (`/opsx:propose add-tags`) — tag CRUD + assign to entries
++ History filter (FR-TAG-01→04), building on this loop. Still-open small debts: mirror the
+`danger`/`scrim` tokens into `.agents/skills/honeydo-design/tokens/`, and reflect the auth `name`
+addition in `openspec/specs/auth`.
+
+---
+
 ## 2026-07-02T13:30Z — Fourth fixes pass (interaction polish)
 
 1. **Pull-to-refresh** now works: Timer `ScrollView` got `alwaysBounceVertical` (short content

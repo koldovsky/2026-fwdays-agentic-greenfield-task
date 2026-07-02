@@ -45,5 +45,5 @@
 ## 6. Verify & document
 
 - [x] 6.1 Run repo `npm run gate` (lint + typecheck + test + build) green; verify no raw-hex/design-token lint violations in new mobile UI
-- [ ] 6.2 Manual device smoke: start → stop → manual add → edit → delete → continue; confirm single running entry and day grouping
+- [x] 6.2 Manual device smoke: start → stop → manual add → edit → delete → continue; confirm single running entry and day grouping
 - [x] 6.3 Update `docs/current-state.md` (newest-first) with what shipped, FR IDs covered, and next steps; mark requirement statuses if appropriate
