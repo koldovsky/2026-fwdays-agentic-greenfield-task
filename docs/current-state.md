@@ -96,7 +96,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   ADR-0014, zod env, internal `/health`), Vitest suites (env/bot/health, 9 tests), multi-stage
   `Dockerfile` (non-root, heap-capped) + `.dockerignore`, CI `image` job (build on PRs, push GHCR on
   `main`) + `typecheck` wired. `npm run dev/build/start` now live. Reviewer-resolved (rule-6 arrows,
-  PR image build). **Fallow still deferred** (ADR-0011 — not wired; tracer-bullet scope).
+  PR image build). **Fallow wired report-only** (ADR-0011 — CI `Fallow · report-only` step, `npx
+  fallow --ci`, `continue-on-error`; promote to blocking once baseline clean).
 - **M1 `data` layer** — `prisma/schema.prisma` (users, food_database, food_log, body_metrics,
   reviews; Int kcal, Decimal grams/cm, `@db.Date`, English enums), `prisma/migrations/*_init`,
   `src/db/client.ts` (pooled singleton, `connection_limit=5`), `src/db/tenancy.ts` (`user_id`

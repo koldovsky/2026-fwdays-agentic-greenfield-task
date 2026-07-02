@@ -1,6 +1,6 @@
 # ADR-0011 — Fallow for static analysis (dead code, duplication, complexity)
 
-*Status: Accepted (implementation deferred to M0) · Date: 2026-06-29 · Source: AGENTS.md "How we work" review axis, requirements §4, [fallow.tools](https://fallow.tools/docs/quickstart/)*
+*Status: Accepted · wired report-only in `ci.yml` (`Fallow · report-only`, `npx fallow --ci`, `continue-on-error`) — promote to blocking once baseline clean · Date: 2026-06-29 · Source: AGENTS.md "How we work" review axis, requirements §4, [fallow.tools](https://fallow.tools/docs/quickstart/)*
 
 ## Context
 ESLint + Prettier ([ADR-0009](./0009-eslint-prettier-lint-format.md)) cover per-file correctness

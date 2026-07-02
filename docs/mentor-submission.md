@@ -106,6 +106,20 @@ double-judge на межі) застосований лише там, де пр�
 що блокують push, якщо документи дрейфують від коду. Git-хуки husky: **pre-commit** (lint-staged) +
 **pre-push** (`docs:check` → `npm test`).
 
+**CI-конвеєр як ворота (`.github/workflows/ci.yml`).** Один `quality`-job ганяє **весь ланцюг
+воріт у порядку** на кожен PR і push: `lint` → `format:check` → `docs:check` → `typecheck` →
+`test` → `check:evals` (key-less eval-ратчет) — червоний будь-який крок валить PR. Окремий
+`image`-job збирає Docker-образ на PR і **пушить у GHCR лише на `main`** (збірка off-box, host не
+робить `npm install`/`tsc`). Той самий набір воріт локально в husky-хуках — тож CI лише дублює те,
+що вже пройшло на машині, а не є єдиним місцем перевірки.
+
+**Fallow (ADR-0011) — whole-program статичний аналіз, report-only.** Dead-code, дублікати,
+complexity hotspots, яких per-file ESLint не бачить, ловить крок `Fallow · report-only` у CI
+(`npx fallow --ci`, `continue-on-error`). Per **graduation-path** з ADR-0011 він **не блокує** PR —
+лише поверхає знахідки; promote до блокуючих воріт (прибрати `continue-on-error`) коли baseline
+чистий, тим самим шляхом, що пройшов ESLint. Паралельно codebase-wide dedup робить **dup-gate**
+циклу (крок 7, backend-conventions rule #12) — дублікати ловляться на кожному слайсі.
+
 ### Специфікації наперед (SDD)
 Кожна можливість описана в OpenSpec (`openspec/specs/<capability>/spec.md` — **19 capability-спеків**)
 **до написання коду**, і кожна зміна проходить власну change-теку (proposal → design → tasks),

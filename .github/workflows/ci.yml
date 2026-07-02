@@ -48,6 +48,14 @@ jobs:
       - name: Eval ratchet
         run: npm run check:evals
 
+      # Whole-program static analysis (ADR-0011) — dead-code, duplication, complexity hotspots
+      # that per-file ESLint can't see. REPORT-ONLY per the ADR graduation path: surfaces
+      # findings without failing the PR. Promote to blocking (drop continue-on-error) once the
+      # baseline is clean — the same path ESLint took.
+      - name: Static analysis (Fallow · report-only)
+        run: npx --yes fallow --ci
+        continue-on-error: true
+
   # Off-box build → GHCR. Local gates are authoritative (ADR-0012); this is the one signal local
   # can't reproduce. The image is BUILT on every CI run (so a broken Dockerfile fails the PR, not
   # post-merge) but PUSHED to GHCR only on `main`. Coolify pulls the pushed image.
