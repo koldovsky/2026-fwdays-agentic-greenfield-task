@@ -6,6 +6,25 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T20:20Z — Archived `add-profile-stats` (specs synced)
+
+Synced the `profile-stats` delta and archived the change. `openspec validate --specs` green
+(7/7).
+
+- **Spec sync:** new capability `openspec/specs/profile-stats/spec.md` created from the delta
+  (all 6 requirements verbatim: FR-STATS-01→05, TC-STACK-06). Gave it a real Purpose (was a
+  fresh capability, no prior main spec to merge).
+- **Archive:** `openspec/changes/add-profile-stats/` → `openspec/changes/archive/2026-07-02-add-profile-stats/`.
+- **Warning:** archived with task **7.2** (manual device smoke) still open — code + automated
+  gate are green; only on-device verification is outstanding (same posture as `add-tags`).
+
+**State now:** Phases 1–4 (foundation, time-entries, tags, profile-stats) implemented and
+archived. Next capability per the plan is **`daily-insight`** (Phase 5).
+
+**Next steps:** run the 7.2 device smoke when convenient; then `/opsx-propose daily-insight`.
+
+---
+
 ## 2026-07-02T20:12Z — Implemented `add-profile-stats` (Stats + Profile identity)
 
 Built Phase 4 `profile-stats` — the review surface — shared-first, client-side aggregation, no
