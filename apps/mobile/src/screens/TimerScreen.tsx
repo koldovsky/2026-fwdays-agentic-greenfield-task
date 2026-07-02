@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Plus, Square } from 'lucide-react-native';
 import type { TimeEntry } from '@honeydo/shared';
 import { EmptyState } from '../components/EmptyState';
 import { EntryFormModal, type EntryFormValues } from '../components/EntryFormModal';
+import { KEYBOARD_DONE_ID } from '../components/KeyboardDoneAccessory';
 import { PressableScale } from '../components/PressableScale';
 import { TimerEntry } from '../components/TimerEntry';
 import { useElapsed } from '../hooks/useElapsed';
@@ -38,7 +39,7 @@ function isSameLocalDay(iso: string, ref: Date): boolean {
  */
 export function TimerScreen() {
   const t = useTheme();
-  const { data: entries = [], isLoading } = useEntries();
+  const { data: entries = [], isLoading, refetch, isRefetching } = useEntries();
   const running = useRunningEntry();
 
   const start = useStartEntry();
@@ -97,6 +98,13 @@ export function TimerScreen() {
           contentContainerStyle={{ padding: t.screenGutter, gap: t.space[4] }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => void refetch()}
+              tintColor={t.colors.accent}
+            />
+          }
         >
           <StartControl
             running={running}
@@ -262,6 +270,8 @@ function StartControl({
         placeholder="What are you working on?"
         placeholderTextColor={t.colors.textMuted}
         autoFocus={autoFocus}
+        returnKeyType="done"
+        inputAccessoryViewID={KEYBOARD_DONE_ID}
         style={{ color: t.colors.text, fontSize: t.fontSize.headline, fontWeight: t.fontWeight.semibold }}
       />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

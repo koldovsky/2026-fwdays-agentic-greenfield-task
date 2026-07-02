@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardDoneAccessory } from './src/components/KeyboardDoneAccessory';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
 
@@ -36,6 +37,7 @@ export default function App() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <NavRoot />
+          <KeyboardDoneAccessory />
         </QueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>

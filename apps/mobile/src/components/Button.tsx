@@ -14,6 +14,8 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   leadingIcon?: ReactNode;
+  /** Tint the label with the danger color (e.g. Sign out) — secondary variant only. */
+  destructive?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export function Button({
   disabled = false,
   loading = false,
   leadingIcon,
+  destructive = false,
 }: ButtonProps) {
   const t = useTheme();
   const height = size === 'lg' ? 56 : 48;
@@ -35,7 +38,7 @@ export function Button({
 
   const isPrimary = variant === 'primary';
   const bg = isPrimary ? t.colors.accent : t.colors.surface;
-  const fg = isPrimary ? t.colors.onAccent : t.colors.text;
+  const fg = destructive ? t.colors.danger : isPrimary ? t.colors.onAccent : t.colors.text;
 
   return (
     <PressableScale

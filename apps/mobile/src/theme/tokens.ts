@@ -32,6 +32,7 @@ export interface Palette {
   border: string;
   success: string;
   successSoft: string;
+  danger: string;
   onAccent: string;
 }
 
@@ -47,6 +48,7 @@ const dark: Palette = {
   border: '#3A332B',
   success: '#7BC57F',
   successSoft: '#243023',
+  danger: '#E07A5F',
   onAccent: '#2A1B05',
 };
 
@@ -62,6 +64,7 @@ const light: Palette = {
   border: '#F0E2C8',
   success: '#3E8E4F',
   successSoft: '#E3F1DE',
+  danger: '#C0492E',
   onAccent: '#2A1B05',
 };
 

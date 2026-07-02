@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import type { TimeEntry } from '@honeydo/shared';
@@ -37,7 +37,7 @@ function dayLabel(dateKey: string): string {
 /** History tab: entries grouped by local day, newest first, with per-day totals. */
 export function HistoryScreen() {
   const t = useTheme();
-  const { data: entries = [], isLoading } = useEntries();
+  const { data: entries = [], isLoading, refetch, isRefetching } = useEntries();
   const continueEntry = useContinueEntry();
   const update = useUpdateEntry();
   const remove = useDeleteEntry();
@@ -78,6 +78,13 @@ export function HistoryScreen() {
           }
           getItemType={(item) => item.kind}
           contentContainerStyle={{ paddingHorizontal: t.screenGutter, paddingBottom: t.space[8] }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => void refetch()}
+              tintColor={t.colors.accent}
+            />
+          }
           renderItem={({ item }) =>
             item.kind === 'header' ? (
               <View

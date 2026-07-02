@@ -1,5 +1,6 @@
 import { forwardRef, type ReactNode, useState } from 'react';
 import { Text, TextInput, type TextInputProps, View } from 'react-native';
+import { KEYBOARD_DONE_ID } from './KeyboardDoneAccessory';
 import { useTheme } from '../theme';
 
 interface InputProps extends TextInputProps {
@@ -48,6 +49,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         <TextInput
           ref={ref}
           placeholderTextColor={t.colors.textMuted}
+          inputAccessoryViewID={KEYBOARD_DONE_ID}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);

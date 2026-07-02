@@ -2,8 +2,8 @@ import { Pressable, Text } from 'react-native';
 import { useTheme } from '../theme';
 
 /**
- * A tappable inline text link — accent-colored + underlined so it reads as actionable.
- * Reuse for all "link"-style text buttons (e.g. the auth mode toggle).
+ * A tappable inline text link — accent-colored so it reads as actionable (the amber
+ * already signals it; no underline). Reuse for all "link"-style text buttons.
  */
 export function TextLink({
   children,
@@ -21,7 +21,6 @@ export function TextLink({
             color: t.colors.accent,
             fontSize: t.fontSize.subhead,
             fontWeight: t.fontWeight.semibold,
-            textDecorationLine: 'underline',
             opacity: pressed ? 0.6 : 1,
           }}
         >

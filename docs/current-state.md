@@ -6,6 +6,31 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T12:00Z — Second fixes pass: destructive Sign out, picker UX, refresh, keyboard
+
+**Done:** Seven small feedback items.
+1. Added a `danger` token (both themes) + `Button destructive` prop; **Sign out** now reads red
+   (matches design `#E07A5F`).
+2. Add/edit sheet: iOS date/time uses the native **compact** picker (opens its own popover — no
+   overlap with the note input, Cancel stays reachable); picking dismisses the keyboard.
+3. The entry form now **resets** to fresh defaults every time the sheet opens.
+4. Removed the underline from `TextLink` (amber already signals it; also applied to the modal
+   Cancel/Delete which now use `danger`).
+5. **Google name:** root cause was the returning-identity early-return not backfilling — the API
+   now backfills `name` from the verified Google profile on sign-in when missing (also covers
+   accounts created before name capture). Verify in the DB via `npx prisma studio` (User table).
+6. **Pull-to-refresh** on Timer + History (RefreshControl → `refetch`).
+7. iOS keyboard **Done** bar via a single root `KeyboardDoneAccessory` (`InputAccessoryView`);
+   the shared `Input` and the Timer note field reference it.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. `danger` token added to
+`tokens.ts` but **not yet mirrored** into `.agents/skills/honeydo-design/tokens/` — sync if we keep
+it. Still needs the on-device rebuild + smoke (task 6.2).
+
+**Next steps:** on-device smoke of all the above, then `/opsx:archive add-time-entries-core`.
+
+---
+
 ## 2026-07-02T11:10Z — Post-review fixes: user name, empty-state CTA, keyboard, motion
 
 **Done:** Feedback pass on the time-entries UI.

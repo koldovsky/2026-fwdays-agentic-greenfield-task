@@ -98,6 +98,16 @@ export class AuthService {
       include: { user: { include: { identities: true } } },
     });
     if (identity) {
+      // Returning Google user. Backfill the name if we didn't have one yet (e.g. the
+      // account predates name capture), so the profile fills in on next sign-in.
+      if (!identity.user.name && profile.name) {
+        const updated = await this.prisma.user.update({
+          where: { id: identity.user.id },
+          data: { name: profile.name },
+          include: { identities: true },
+        });
+        return this.startSession(updated);
+      }
       return this.startSession(identity.user);
     }
 

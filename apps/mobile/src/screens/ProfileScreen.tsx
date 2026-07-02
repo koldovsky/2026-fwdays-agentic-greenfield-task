@@ -46,7 +46,7 @@ export function ProfileScreen() {
         </View>
 
         <View style={{ flex: 1 }} />
-        <Button variant="secondary" onPress={() => void signOut()}>
+        <Button variant="secondary" destructive onPress={() => void signOut()}>
           Sign out
         </Button>
       </View>

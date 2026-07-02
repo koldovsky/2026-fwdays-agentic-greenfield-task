@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,6 +16,7 @@ import type { TimeEntry } from '@honeydo/shared';
 import { useTheme } from '../theme';
 import { Button } from './Button';
 import { Input } from './Input';
+import { KEYBOARD_DONE_ID } from './KeyboardDoneAccessory';
 import { TextLink } from './TextLink';
 
 const entrySchema = z
@@ -55,6 +57,7 @@ function defaultValues(entry?: TimeEntry | null): EntryFormValues {
 /**
  * Add-or-edit sheet for a time entry (FR-ENTRY-04/05). Validated with React Hook Form +
  * Zod (end-after-start); the times feed the resolver via `Controller` and native pickers.
+ * The form resets to fresh defaults each time it opens.
  */
 export function EntryFormModal({
   visible,
@@ -69,11 +72,17 @@ export function EntryFormModal({
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<EntryFormValues>({
     resolver: standardSchemaResolver(entrySchema),
     defaultValues: defaultValues(entry),
   });
+
+  // Clear/seed the form each time the sheet opens (fresh add, or the edited entry).
+  useEffect(() => {
+    if (visible) reset(defaultValues(entry));
+  }, [visible, entry, reset]);
 
   const submit = async (values: EntryFormValues) => {
     await onSubmit(values);
@@ -81,12 +90,7 @@ export function EntryFormModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: t.colors.fillSoft }}
@@ -119,11 +123,13 @@ export function EntryFormModal({
                 onBlur={onBlur}
                 placeholder="What did you work on?"
                 autoFocus={!isEdit}
+                inputAccessoryViewID={KEYBOARD_DONE_ID}
+                returnKeyType="done"
               />
             )}
           />
           {errors.note ? (
-            <Text style={{ color: t.colors.accent, fontSize: t.fontSize.footnote }}>
+            <Text style={{ color: t.colors.danger, fontSize: t.fontSize.footnote }}>
               {errors.note.message}
             </Text>
           ) : null}
@@ -143,7 +149,7 @@ export function EntryFormModal({
             )}
           />
           {errors.stoppedAt ? (
-            <Text style={{ color: t.colors.accent, fontSize: t.fontSize.footnote }}>
+            <Text style={{ color: t.colors.danger, fontSize: t.fontSize.footnote }}>
               {errors.stoppedAt.message}
             </Text>
           ) : null}
@@ -158,7 +164,7 @@ export function EntryFormModal({
               accessibilityRole="button"
               style={{ alignItems: 'center', paddingVertical: t.space[2] }}
             >
-              <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.semibold }}>
+              <Text style={{ color: t.colors.danger, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.semibold }}>
                 Delete entry
               </Text>
             </Pressable>
@@ -175,7 +181,10 @@ interface DateTimeFieldProps {
   onChange: (date: Date) => void;
 }
 
-/** A labeled row that reveals a native date-time picker (FR-ENTRY-04/05). */
+/**
+ * A labeled date-time control. iOS uses the native `compact` picker (opens its own
+ * popover — no layout shift, no keyboard clash). Android reveals a dialog on tap.
+ */
 function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
   const t = useTheme();
   const [open, setOpen] = useState(false);
@@ -187,38 +196,60 @@ function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
   });
 
   return (
-    <View style={{ gap: t.space[2] }}>
-      <Pressable
-        onPress={() => setOpen((v) => !v)}
-        accessibilityRole="button"
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: 52,
-          paddingHorizontal: t.space[4],
-          backgroundColor: t.colors.surfaceAlt,
-          borderWidth: 1,
-          borderColor: open ? t.colors.accent : t.colors.border,
-          borderRadius: t.radius.md,
-        }}
-      >
-        <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.semibold }}>
-          {label}
-        </Text>
-        <Text style={{ color: t.colors.text, fontSize: t.fontSize.body }}>{formatted}</Text>
-      </Pressable>
-      {open ? (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: 52,
+        paddingHorizontal: t.space[4],
+        paddingVertical: t.space[2],
+        backgroundColor: t.colors.surfaceAlt,
+        borderWidth: 1,
+        borderColor: t.colors.border,
+        borderRadius: t.radius.md,
+      }}
+    >
+      <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.semibold }}>
+        {label}
+      </Text>
+
+      {Platform.OS === 'ios' ? (
         <DateTimePicker
           value={value}
           mode="datetime"
-          display="spinner"
+          display="compact"
           themeVariant={t.scheme}
+          // Opening the picker popover; drop the keyboard so nothing overlaps.
           onChange={(_e, date) => {
+            Keyboard.dismiss();
             if (date) onChange(date);
           }}
         />
-      ) : null}
+      ) : (
+        <>
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss();
+              setOpen(true);
+            }}
+            accessibilityRole="button"
+          >
+            <Text style={{ color: t.colors.text, fontSize: t.fontSize.body }}>{formatted}</Text>
+          </Pressable>
+          {open ? (
+            <DateTimePicker
+              value={value}
+              mode="datetime"
+              display="default"
+              onChange={(_e, date) => {
+                setOpen(false);
+                if (date) onChange(date);
+              }}
+            />
+          ) : null}
+        </>
+      )}
     </View>
   );
 }
