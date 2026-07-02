@@ -18,6 +18,18 @@ export interface Prompt {
   readonly messages: readonly PromptMessage[];
 }
 
+// --- Pass 0: JD requirement extraction (FR-JD-01/02) -----------------------
+
+export interface ExtractionInput {
+  /** Raw job-description text pasted by the user. */
+  readonly jobDescription: string;
+}
+
+/** Ranked (most important first) requirements extracted from the JD. */
+export interface ExtractionResult {
+  readonly requirements: readonly Requirement[];
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {

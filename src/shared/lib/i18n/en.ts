@@ -30,6 +30,15 @@ export const en: Dictionary = {
   },
   workspace: {
     lead: "Check the job match and choose which bullets to export.",
+    cvLabel: "Résumé text",
+    jdLabel: "Job description",
+  },
+  tailorRun: {
+    queued: "Queued",
+    processing: "Tailoring your résumé",
+    done: "Done",
+    failed: "We could not tailor your résumé. Try again — this attempt was not counted.",
+    emptyInput: "Add your résumé text and the job description.",
   },
   auth: {
     signInTitle: "Sign in",

@@ -3,12 +3,14 @@
 // { ok: false, error } so the pipeline can fail honestly (NFR-OBS-01).
 
 import type {
+  ExtractionResult,
   GeneratedBullet,
   GenerationResult,
   GroundingLabel,
   GroundingResult,
   GroundingVerdict,
   ParseResult,
+  Requirement,
 } from "./types";
 
 const GROUNDING_LABELS: readonly GroundingLabel[] = [
@@ -57,6 +59,66 @@ function asString(value: unknown): string | undefined {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// --- Pass 0: extraction response (FR-JD-01/02) ------------------------------
+
+const IMPORTANCE_VALUES = ["must-have", "nice-to-have"] as const;
+
+function normalizeImportance(value: unknown): Requirement["importance"] | undefined {
+  const importance = asString(value)?.trim().toLowerCase();
+  return IMPORTANCE_VALUES.find((v) => v === importance);
+}
+
+/**
+ * Parse the extraction response into ranked requirements. Order in the array IS
+ * the rank (FR-JD-01). An unknown importance maps conservatively to
+ * `nice-to-have`; keywords fall back to the requirement text itself so the pure
+ * scorer always has something to match on.
+ */
+export function parseExtractionResponse(
+  raw: string,
+): ParseResult<ExtractionResult> {
+  const root = extractJson(raw);
+  if (root === undefined) return fail("Відповідь не містить валідного JSON");
+  if (!isObject(root)) return fail("Очікувався JSON-обʼєкт з полем requirements");
+
+  const rawRequirements = root["requirements"];
+  if (!Array.isArray(rawRequirements)) {
+    return fail("Поле requirements відсутнє або не є масивом");
+  }
+  if (rawRequirements.length === 0) {
+    return fail("Список requirements порожній");
+  }
+
+  const requirements: Requirement[] = [];
+  for (const [index, entry] of rawRequirements.entries()) {
+    if (!isObject(entry)) {
+      return fail(`Вимога ${index} не є обʼєктом`);
+    }
+    const text = asString(entry["text"])?.trim();
+    if (!text) {
+      return fail(`Вимога ${index} не має тексту`);
+    }
+    const id = asString(entry["id"])?.trim() || `r${index + 1}`;
+    // Never over-trust the model: unknown importance is only "nice-to-have".
+    const importance = normalizeImportance(entry["importance"]) ?? "nice-to-have";
+    const rawKeywords = entry["keywords"];
+    const keywords = Array.isArray(rawKeywords)
+      ? rawKeywords
+          .map((k) => asString(k)?.trim())
+          .filter((k): k is string => Boolean(k))
+      : [];
+
+    requirements.push({
+      id,
+      text,
+      importance,
+      keywords: keywords.length > 0 ? keywords : [text],
+    });
+  }
+
+  return ok({ requirements });
 }
 
 // --- Pass 1: generation response ------------------------------------------

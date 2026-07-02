@@ -4,6 +4,7 @@
 // JD, or the ranked requirements (BC-HONESTY-01 / FR-BULLETS-03).
 
 import type {
+  ExtractionInput,
   GenerationInput,
   GroundingInput,
   Prompt,
@@ -45,6 +46,23 @@ export const GROUNDING_SYSTEM_PROMPT = [
   '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"..."}]}',
 ].join("\n");
 
+/**
+ * Extraction system prompt (pass 0). Turns a pasted JD into a ranked requirement
+ * list with `must-have` / `nice-to-have` labels and matchable keywords
+ * (FR-JD-01/02). Sees ONLY the JD — never the CV (it runs before generation).
+ */
+export const EXTRACTION_SYSTEM_PROMPT = [
+  "Ти — аналітик вакансій. З опису вакансії витягни список вимог.",
+  "Ранжуй вимоги від найважливішої до найменш важливої.",
+  'Кожну вимогу познач "must-have" (обовʼязкова) або "nice-to-have" (бажана).',
+  "Для кожної вимоги додай keywords — короткі терміни (технології, навички),",
+  "за якими вимогу можна знайти в тексті резюме. Мови програмування та назви",
+  "технологій залишай мовою оригіналу.",
+  "Не вигадуй вимог, яких немає в описі вакансії.",
+  "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
+  '{"requirements":[{"id":"r1","text":"...","importance":"must-have","keywords":["..."]}]}',
+].join("\n");
+
 // --- Helpers --------------------------------------------------------------
 
 function formatRequirements(
@@ -67,6 +85,28 @@ function formatSentences(sentences: readonly string[]): string {
 function formatBullets(bullets: GroundingInput["bullets"]): string {
   if (bullets.length === 0) return "(пунктів немає)";
   return bullets.map((b) => `[${b.id}] ${b.text}`).join("\n");
+}
+
+// --- Pass 0: extraction prompt ---------------------------------------------
+
+/**
+ * Build the extraction prompt (pass 0). Carries only the raw JD text
+ * (FR-JD-01) — the CV is never part of extraction.
+ */
+export function buildExtractionPrompt(input: ExtractionInput): Prompt {
+  const userContent = [
+    "## Опис вакансії",
+    input.jobDescription.trim() || "(опис відсутній)",
+    "",
+    "Витягни ранжований список вимог вакансії.",
+  ].join("\n");
+
+  const messages: readonly PromptMessage[] = [
+    { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ];
+
+  return { messages };
 }
 
 // --- Pass 1: generation prompt --------------------------------------------

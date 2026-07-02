@@ -37,6 +37,20 @@ export interface Dictionary {
   readonly workspace: {
     /** Short lead line under the result title. */
     readonly lead: string;
+    /** CV textarea label (FR-CV-02). */
+    readonly cvLabel: string;
+    /** JD textarea label (FR-JD-01). */
+    readonly jdLabel: string;
+  };
+  readonly tailorRun: {
+    /** Visible progress states (FR-TAILOR-01): queued → processing → done. */
+    readonly queued: string;
+    readonly processing: string;
+    readonly done: string;
+    /** Calm failure copy after retries are exhausted (FR-TAILOR-03, NFR-OBS-01). */
+    readonly failed: string;
+    /** Shown when the form is submitted without both texts. */
+    readonly emptyInput: string;
   };
   readonly auth: {
     /** Sign-in page title (FR-AUTH-01). */

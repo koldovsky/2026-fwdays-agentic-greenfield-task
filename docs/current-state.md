@@ -67,10 +67,13 @@
 2. ~~Rename internal locale `uk` → `ua`~~ — done + committed, gates green (lint, 163 tests,
    build). NOTE kept: ISO 639-1 for Ukrainian is `uk`; `ua` is internal naming only — any
    future `<html lang>` / `hreflang` for Ukrainian pages must still emit `uk`.
-3. **App flows (no LLM key needed): `edit-bullet` (FR-EDIT-01/02) + `paste-jd` (FR-JD-01)**
-   via openspec-propose → implement in `/tailor` workspace → verify → checker.
-5. **`add-agent-loop`** — still blocked on `ANTHROPIC_API_KEY` (no `.env` in repo).
-6. **`add-payments-emulator`**, then **`landing-animations`**.
+3. **Implement `add-agent-loop`** (proposal + tasks already in `openspec/changes/`):
+   provider port (1.1–1.2), skill registry (2.1–2.4, grounding context-isolated),
+   bounded loop + retry (3.1–3.2), inline route-handler MVP + workspace wiring (3.3–3.4).
+   Fake LLM provider in tests — `ANTHROPIC_API_KEY` only blocks live E2E, not code.
+4. honesty-eval (4.1) → agent-verify (4.2) → checker-review (4.3).
+5. Then `edit-bullet` (FR-EDIT-01/02) + `paste-jd` (FR-JD-01) surfaces,
+   `add-payments-emulator`, `landing-animations`.
 
 Also open: `export-resume`, `upload-cv` (TC-PARSE-01/02).
 
