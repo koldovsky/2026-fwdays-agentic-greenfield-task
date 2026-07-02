@@ -31,7 +31,7 @@ export function ResultView({ left, right, locale = "uk" }: ResultViewProps) {
         <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-muted m-0">
           {copy.eyebrow}
         </p>
-        <h2 className="font-display text-3xl tracking-tight text-ink mt-2 mb-0">
+        <h2 className="font-display text-3xl font-semibold tracking-tight text-ink mt-2 mb-0">
           {copy.title}
         </h2>
       </header>
