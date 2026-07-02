@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { FoodPer, FoodSource, Meal } from '@prisma/client';
 import type { Confirmation, ResolvedFood } from '../../src/food/types.js';
-import type { LogOutcome, PhotoOpenQuestion } from '../../src/clarify/types.js';
+import type { LogOutcome, OpenQuestion, PhotoOpenQuestion } from '../../src/clarify/types.js';
 import { createFoodService } from '../../src/food/service.js';
 import type { FoodClient, FoodService } from '../../src/food/types.js';
 import type { NotionOutbox } from '../../src/notion/types.js';
@@ -866,6 +866,178 @@ describe('createFoodService — Notion mirror enqueue (US-10)', () => {
       sourceId: 42, // the SAME row id → the worker patches the existing page
       userId: 7,
     });
+  });
+});
+
+// --- composite-dish: save a multi-item dish as one named portion product, then reuse by name --------
+
+describe('createFoodService composite-dish save (resolveAnswer saveDish variant)', () => {
+  const spyAnthropic = (): { anthropic: Anthropic; create: ReturnType<typeof vi.fn> } => {
+    const create = vi.fn();
+    return { anthropic: { messages: { create } } as unknown as Anthropic, create };
+  };
+
+  const logRow = (over: Record<string, unknown>): Record<string, unknown> => ({
+    id: 1,
+    userId: 7,
+    kcal: 100,
+    proteinG: 10,
+    fatG: 2,
+    carbsG: 5,
+    ...over,
+  });
+
+  const makeSaveFake = (
+    logs: Record<string, unknown>[],
+    existing: unknown = null,
+  ): { client: FoodClient; created: CreatedRow[]; findManyWhere: unknown[] } => {
+    const created: CreatedRow[] = [];
+    const findManyWhere: unknown[] = [];
+    const client = {
+      user: { findUnique: vi.fn().mockResolvedValue({ id: 7 }) },
+      foodDatabase: {
+        findFirst: vi.fn().mockResolvedValue(existing),
+        create: vi.fn((args: CreatedRow) => {
+          created.push(args);
+          return Promise.resolve({ id: 555, ...args.data });
+        }),
+        update: vi.fn((args: { where: { id: number }; data: Record<string, unknown> }) =>
+          Promise.resolve({ id: args.where.id, ...args.data }),
+        ),
+      },
+      foodLog: {
+        findMany: vi.fn((args: { where: unknown }) => {
+          findManyWhere.push(args.where);
+          return Promise.resolve(logs);
+        }),
+      },
+    } as unknown as FoodClient;
+
+    return { client, created, findManyWhere };
+  };
+
+  // The composite save is reached ONLY through the live pending-`saveDish` answer path: a pending
+  // saveDish question + `resolveAnswer(chatId, pending, name)` (design D3) — there is no public
+  // `saveDish` method (the save has one entry point, rule #12).
+  const savePending = (rowIds: number[]): OpenQuestion => ({
+    variant: 'saveDish',
+    rowIds,
+    askedAt: new Date(),
+  });
+
+  it('creates ONE portion row summed from the re-read rows, with zero LLM calls (invariants #1/#2)', async () => {
+    const { client, created, findManyWhere } = makeSaveFake([
+      logRow({ id: 11, kcal: 120, proteinG: 24, fatG: 1.5, carbsG: 3 }),
+      logRow({ id: 12, kcal: 90, proteinG: 6, fatG: 3, carbsG: 9 }),
+    ]);
+    const { anthropic, create } = spyAnthropic();
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+    ).resolveAnswer(
+      99n,
+      savePending([11, 12]),
+      'protein cocktail', // the free-text answer IS the dish name (design D3)
+    );
+
+    expect(create).not.toHaveBeenCalled(); // save is deterministic — no model call
+    expect(findManyWhere[0]).toEqual({ userId: 7, id: { in: [11, 12] } }); // tenant-scoped re-read (#8)
+    const row = created[0]?.data;
+    expect(row?.userId).toBe(7);
+    expect(row?.name).toBe('protein cocktail');
+    expect(row?.per).toBe(FoodPer.portion);
+    expect(row?.kcal).toBe(210); // 120 + 90, summed in code (invariant #2)
+    expect(row?.proteinG).toBe(30);
+    expect(confirmation?.text).toBeTruthy(); // a localized saved confirmation
+  });
+
+  it('enqueues the food_database mirror after a save; a best-effort mirror never blocks the reply (US-10)', async () => {
+    const { client } = makeSaveFake([logRow({ id: 11, kcal: 100 })]);
+    const { anthropic } = spyAnthropic();
+    const outbox: NotionOutbox = { enqueue: vi.fn().mockResolvedValue(undefined) };
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+      outbox,
+    ).resolveAnswer(99n, savePending([11]), 'snack');
+
+    expect(outbox.enqueue).toHaveBeenCalledWith({
+      sourceTable: 'food_database',
+      sourceId: 555, // the new food_database row id
+      userId: 7,
+    });
+    expect(confirmation?.text).toBeTruthy(); // the reply is produced regardless (Postgres is truth, #1)
+  });
+
+  it('returns null (no save) for an unknown chat_id', async () => {
+    const { client, created } = makeSaveFake([logRow({ id: 11 })]);
+    (client.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    const { anthropic } = spyAnthropic();
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+    ).resolveAnswer(99n, savePending([11]), 'x');
+
+    expect(confirmation).toBeNull();
+    expect(created).toHaveLength(0);
+  });
+
+  it('REUSE (invariant #3): logging the saved dish name resolves to a fact, quantity scales in code', async () => {
+    // A stubbed catalog row = the saved composite dish (one portion). The log path finds it by name →
+    // FACT, scaled by qty, with NO estimate/LLM call — reuse rides the existing pipeline unchanged (D4).
+    const dish = {
+      id: 555,
+      name: 'protein cocktail',
+      per: FoodPer.portion,
+      kcal: 210,
+      proteinG: 30,
+      fatG: 4.5,
+      carbsG: 12,
+    };
+    const { client, created } = makeFake(dish);
+    const { anthropic, create } = spyAnthropic();
+    const svc = createFoodService(client, anthropic, 'Europe/Kyiv', NOON);
+
+    await svc.logFood(99n, 'protein cocktail', { date: '2026-06-30', product: 'protein cocktail' });
+    await svc.logFood(99n, '2 protein cocktail', {
+      date: '2026-06-30',
+      product: 'protein cocktail',
+      quantity: 2,
+    });
+
+    expect(create).not.toHaveBeenCalled(); // catalog hit → no estimate call
+    const one = created[0]?.data;
+    expect(one?.source).toBe(FoodSource.fact);
+    expect(one?.foodDbId).toBe(555);
+    expect(one?.kcal).toBe(210); // one portion (invariant #3 — catalog match = fact)
+    const two = created[1]?.data;
+    expect(two?.kcal).toBe(420); // 2 portions, scaled by two in code (invariant #2)
+    expect(two?.source).toBe(FoodSource.fact);
+  });
+
+  it('an expired saveDish drops — nothing is saved or logged (invariant #1)', async () => {
+    const { client, created } = makeSaveFake([logRow({ id: 11 })]);
+    const { anthropic } = spyAnthropic();
+    const pending: OpenQuestion = { variant: 'saveDish', rowIds: [11], askedAt: new Date() };
+
+    const confirmation = await createFoodService(
+      client,
+      anthropic,
+      'Europe/Kyiv',
+      NOON,
+    ).logExpiredEstimate(99n, pending);
+
+    expect(confirmation).toBeNull();
+    expect(created).toHaveLength(0);
   });
 });
 

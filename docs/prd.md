@@ -92,6 +92,10 @@ Each story is testable; acceptance criteria double as eval/test targets.
   portion, `source=fact`. No match → estimate, `source=estimate`, offer to add to the Food Database. Meal
   type inferred if absent. Row inserted for the correct date (user TZ). Confirmation **never**
   hand-sums the day — totals come from a SUM query only.
+- **Composite dish (US-2 extension):** a recurring **multi-item** dish can be saved once as one named
+  `portion` Food Database product (macros = the components **summed in code**, re-read from the logged
+  rows — no LLM) via a **"➕ Save as dish"** button, then re-logged by name as a `fact` (quantity
+  scales it). Reuse rides the existing name lookup — no new resolve path. See requirements §8.2.
 
 ### 6.3 Log food by photo — *"Here's a photo of my plate (or the label)."*
 - **US-3:** As a user, I send a plate photo **or a nutrition-facts / КБЖУ label** (optionally

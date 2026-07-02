@@ -7,7 +7,7 @@ import { buildPlateConfirmation } from '../../src/food/confirm.js';
 // estimate note when any row is an estimate (invariant #3); prose mirrors the caption language while
 // enum/structural values stay English (invariant #6).
 
-const row = (over: Partial<FoodLog>): FoodLog =>
+const row = (over: Record<string, unknown>): FoodLog =>
   ({
     id: 1,
     userId: 7,
@@ -90,9 +90,36 @@ describe('buildPlateConfirmation', () => {
   });
 
   it('falls back to the default language when the caption is empty', () => {
-    const { text } = buildPlateConfirmation('', [
-      row({ per: FoodPer.per100g } as Partial<FoodLog>),
-    ]);
+    const { text } = buildPlateConfirmation('', [row({ per: FoodPer.per100g })]);
     expect(text).toContain('Logged'); // detectLang('') → en (module default)
+  });
+
+  // composite-dish (spec: a multi-item plate offers save-as-dish; a single-item plate does not).
+  it('attaches a dish payload (row ids + localized label) for a MULTI-item plate', () => {
+    const rows = [
+      row({ id: 11, entryName: 'chicken', source: FoodSource.fact }),
+      row({ id: 12, entryName: 'rice', source: FoodSource.fact }),
+    ];
+
+    const { dish } = buildPlateConfirmation('protein cocktail', rows);
+
+    expect(dish?.rowIds).toEqual([11, 12]); // the just-written row ids, for re-read at save (invariant #1)
+    expect(dish?.label).toContain('Save as dish'); // localized off the (English) caption (invariant #6)
+  });
+
+  it('localizes the save-as-dish label to the caption language (EN/UA)', () => {
+    const rows = [
+      row({ id: 1, entryName: 'молоко', source: FoodSource.fact }),
+      row({ id: 2, entryName: 'протеин', source: FoodSource.fact }),
+    ];
+    // English caption → English label; a Ukrainian caption → Ukrainian label. (A generic-Cyrillic
+    // caption resolves to Ukrainian too under the current temporary RU→UA demo hack in detectLang.)
+    expect(buildPlateConfirmation('protein cocktail', rows).dish?.label).toContain('Save as dish');
+    expect(buildPlateConfirmation('протеїновий коктейль', rows).dish?.label).toContain('страву');
+  });
+
+  it('offers NO dish payload for a single-item plate (its own entry already is the product)', () => {
+    const { dish } = buildPlateConfirmation('chicken', [row({ id: 5, source: FoodSource.fact })]);
+    expect(dish).toBeUndefined();
   });
 });

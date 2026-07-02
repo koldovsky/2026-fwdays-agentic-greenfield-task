@@ -45,6 +45,10 @@ export interface ParsedFood {
 export interface Confirmation {
   text: string;
   addToCatalog?: { id: number; label: string }; // present iff estimate path
+  // Present iff a MULTI-item plate (composite-dish): the just-written row ids the "save as dish" button
+  // carries (macros are re-read from them at save — invariant #1) and the localized button label
+  // (invariant #6, mirroring `addToCatalog.label`). The name is asked for at tap time, not carried here.
+  dish?: { rowIds: number[]; label: string };
 }
 
 /** Outcome of an add-to-catalog tap. `entryName` (the row's, in the user's language) localizes the reply. */

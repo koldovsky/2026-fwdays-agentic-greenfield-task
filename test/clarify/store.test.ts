@@ -43,7 +43,8 @@ describe('clarify store', () => {
     const chatId = 102n;
     set(chatId, question(new Date()));
 
-    expect(take(chatId)?.date).toBe('2026-06-30');
+    const taken = take(chatId);
+    expect(taken?.variant === 'text' ? taken.date : null).toBe('2026-06-30');
     expect(take(chatId)).toBeNull();
     expect(peek(chatId)).toBeNull();
   });

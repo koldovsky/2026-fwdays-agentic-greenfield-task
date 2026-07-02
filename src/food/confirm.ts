@@ -1,6 +1,6 @@
 import { FoodSource } from '@prisma/client';
 import type { FoodLog } from '@prisma/client';
-import { macroBaseFromRow } from './scale.js';
+import { macroBaseFromRow, sumMacros } from './scale.js';
 import type { CatalogResult, Confirmation } from './types.js';
 import { detectLang, detectLangOrRu, type Lang } from '../util/lang.js';
 import { fmt } from '../util/num.js';
@@ -30,21 +30,14 @@ const TOTAL_LABEL: Record<Lang, string> = { uk: 'Разом', ru: 'Итого', 
  * kcal is the Int column; macros come from each row's own basis via `macroBaseFromRow` (no re-scaling).
  */
 const totalLine = (lang: Lang, rows: FoodLog[]): string => {
-  const kcal = rows.reduce((sum, row) => sum + row.kcal, 0);
-  const totals = rows.reduce(
-    (acc, row) => {
-      const m = macroBaseFromRow(row);
-      return { p: acc.p + m.proteinG, f: acc.f + m.fatG, c: acc.c + m.carbsG };
-    },
-    { p: 0, f: 0, c: 0 },
-  );
-  const p = fmt(totals.p);
-  const f = fmt(totals.f);
-  const c = fmt(totals.c);
+  const totals = sumMacros(rows);
+  const p = fmt(totals.proteinG);
+  const f = fmt(totals.fatG);
+  const c = fmt(totals.carbsG);
   if (lang === 'en') {
-    return `${TOTAL_LABEL.en} — ${kcal} kcal · P ${p} / F ${f} / C ${c} g`;
+    return `${TOTAL_LABEL.en} — ${totals.kcal} kcal · P ${p} / F ${f} / C ${c} g`;
   }
-  return `${TOTAL_LABEL[lang]} — ${kcal} ккал · Б ${p} / Ж ${f} / ${lang === 'uk' ? 'В' : 'У'} ${c} г`;
+  return `${TOTAL_LABEL[lang]} — ${totals.kcal} ккал · Б ${p} / Ж ${f} / ${lang === 'uk' ? 'В' : 'У'} ${c} г`;
 };
 const ESTIMATE_NOTE: Record<Lang, string> = {
   uk: ' Це приблизна оцінка (±20–30%).',
@@ -55,6 +48,14 @@ const ADD_LABEL: Record<Lang, string> = {
   uk: '➕ До бази продуктів',
   ru: '➕ В базу продуктов',
   en: '➕ Add to Food DB',
+};
+
+// Composite-dish: the "save this whole plate as one named product" button label (invariant #6 — the
+// label is prose, localized off the caption; the callback data + `per` stay English structural values).
+const SAVE_DISH_LABEL: Record<Lang, string> = {
+  uk: '➕ Зберегти як страву',
+  ru: '➕ Сохранить как блюдо',
+  en: '➕ Save as dish',
 };
 
 const NO_PRODUCT: Record<Lang, string> = {
@@ -109,13 +110,27 @@ export const buildConfirmation = (text: string, row: FoodLog): Confirmation =>
 export const buildPlateConfirmation = (caption: string, rows: FoodLog[]): Confirmation => {
   const lang = detectLang(caption);
   const lines = rows.map((row) => `• ${macroLine(lang, row)}`);
-  if (rows.length > 1) {
+  const multi = rows.length > 1;
+  if (multi) {
     lines.push(totalLine(lang, rows));
   }
   const body = `${LOGGED_VERB[lang]}:\n${lines.join('\n')}`;
   const hasEstimate = rows.some((row) => row.source === FoodSource.estimate);
+  const text = hasEstimate ? `${body}${ESTIMATE_NOTE[lang]}` : body;
 
-  return { text: hasEstimate ? `${body}${ESTIMATE_NOTE[lang]}` : body };
+  // A single-item plate offers no dish save — its own entry already is the product (composite-dish
+  // guard). A multi-item plate carries the just-written row ids + a localized "save as dish" button.
+  if (!multi) {
+    return { text };
+  }
+
+  return {
+    text,
+    dish: {
+      rowIds: rows.map((row) => row.id),
+      label: SAVE_DISH_LABEL[lang],
+    },
+  };
 };
 
 /** Reply when a `correction` arrives but the user has no `food_log` row yet (honest, no write). */
@@ -145,4 +160,33 @@ const CATALOG_SKIPPED: Record<Lang, string> = {
 export const catalogReply = (result: CatalogResult): string => {
   const lang = detectLangOrRu(result.entryName);
   return result.saved ? CATALOG_SAVED[lang] : CATALOG_SKIPPED[lang];
+};
+
+// Composite-dish name prompt + saved reply (invariant #6). The prompt is posed at button-tap time,
+// when the only inbound signal is the (stateless) callback — so there is no caption to detect from and
+// it defaults to the no-language default (design D6 precedent). The saved reply detects off the dish
+// name the user just typed (their own words). `per`/enums stay English; only this prose is localized.
+const NAME_PROMPT: Record<Lang, string> = {
+  uk: 'Як назвати цю страву? Напиши назву — збережу її як один продукт.',
+  ru: 'Как назвать это блюдо? Напиши название — сохраню его как один продукт.',
+  en: 'What should I call this dish? Send a name and I’ll save it as one product.',
+};
+const DISH_SAVED: Record<Lang, string> = {
+  uk: '✅ Зберіг страву в твоїй базі продуктів.',
+  ru: '✅ Сохранил блюдо в твоей базе продуктов.',
+  en: '✅ Saved the dish to your Food DB.',
+};
+const DISH_NOT_SAVED: Record<Lang, string> = {
+  uk: 'Не вдалося зберегти страву — записи не знайдено.',
+  ru: 'Не удалось сохранить блюдо — записи не найдены.',
+  en: "Couldn't save the dish — the entries weren't found.",
+};
+
+/** The localized "name this dish?" prompt (no caption at tap time → the no-signal default, design D6). */
+export const dishNamePrompt = (hint?: string): string => NAME_PROMPT[detectLangOrRu(hint)];
+
+/** Reply after a composite-dish save, localized off the dish name the user typed (invariant #6). */
+export const dishSavedReply = (result: CatalogResult): Confirmation => {
+  const lang = detectLangOrRu(result.entryName);
+  return { text: result.saved ? DISH_SAVED[lang] : DISH_NOT_SAVED[lang] };
 };

@@ -13,7 +13,7 @@ import {
   type Question,
   type Targets,
 } from '../onboarding/types.js';
-import { catalogReply } from '../food/confirm.js';
+import { catalogReply, dishNamePrompt } from '../food/confirm.js';
 import type { Confirmation } from '../food/types.js';
 import { deliverReview } from '../reviews/service.js';
 import type {
@@ -30,6 +30,10 @@ import type {
 // Question fixed choice (the chosen English option value carried verbatim — invariant #6).
 const CALLBACK_PREFIX = 'onb:';
 const FOOD_ADD_PREFIX = 'food:addfdb:';
+// `food:savedish:<id,id,…>` — the just-written plate row ids the composite-dish save re-reads (design
+// D3). Telegram caps callback_data at 64 bytes, so an over-long id list omits the button (see below).
+const SAVE_DISH_PREFIX = 'food:savedish:';
+const CALLBACK_DATA_LIMIT = 64;
 const CLARIFY_PREFIX = 'q:';
 const WELCOME = 'Привіт! Я твій тренер з харчування. Налаштуймо твій профіль — кілька запитань.';
 // `/progress` arms the next photo (design D4). The instruction is Russian — the primary RU/UA user
@@ -96,16 +100,40 @@ export const handleStart = async (ctx: StartContext, deps: BotDeps): Promise<voi
   await askQuestion(ctx.reply.bind(ctx), question);
 };
 
-/** Reply with a food confirmation, attaching the add-to-Food-DB button on the estimate path. */
+/**
+ * The inline keyboard a confirmation carries, or `null` for a plain reply. The estimate path offers
+ * add-to-Food-DB; a multi-item plate offers "save as dish" — the callback carries the row ids joined
+ * compactly, and the button is OMITTED (logged, never truncated) when that payload would blow the
+ * 64-byte callback_data cap (a rare large dish — design D3). The two offers never co-occur in practice.
+ */
+const confirmationKeyboard = (confirmation: Confirmation): InlineKeyboard | null => {
+  if (confirmation.addToCatalog) {
+    return new InlineKeyboard().text(
+      confirmation.addToCatalog.label,
+      `${FOOD_ADD_PREFIX}${confirmation.addToCatalog.id}`,
+    );
+  }
+  if (confirmation.dish) {
+    const data = `${SAVE_DISH_PREFIX}${confirmation.dish.rowIds.join(',')}`;
+    if (Buffer.byteLength(data, 'utf8') > CALLBACK_DATA_LIMIT) {
+      console.log(
+        `[bot] save-as-dish button omitted: ${confirmation.dish.rowIds.length} ids exceed the callback limit`,
+      );
+      return null;
+    }
+    return new InlineKeyboard().text(confirmation.dish.label, data);
+  }
+
+  return null;
+};
+
+/** Reply with a food confirmation, attaching the add-to-Food-DB / save-as-dish button when offered. */
 const replyConfirmation = async (reply: ReplyFn, confirmation: Confirmation): Promise<void> => {
-  if (!confirmation.addToCatalog) {
+  const kb = confirmationKeyboard(confirmation);
+  if (!kb) {
     await reply(confirmation.text);
     return;
   }
-  const kb = new InlineKeyboard().text(
-    confirmation.addToCatalog.label,
-    `${FOOD_ADD_PREFIX}${confirmation.addToCatalog.id}`,
-  );
   await reply(confirmation.text, { reply_markup: kb });
 };
 
@@ -157,6 +185,11 @@ const handleLogOutcome = async (
 
 /** Map a `q:<index>` tap back to the pending question's stored option value (null if out of range). */
 const optionValueAt = (pending: OpenQuestion, token: string): string | null => {
+  // A saveDish question has no fixed choices (it's answered by a free-text name), so a `q:` tap against
+  // it never maps to an option — guard before touching `clarification`, which it does not carry.
+  if (pending.variant === 'saveDish') {
+    return null;
+  }
   const index = Number(token);
   const option = pending.clarification.options?.[index];
   return Number.isInteger(index) && option ? option.value : null;
@@ -436,6 +469,38 @@ const handleFoodCallback = async (
   await ctx.reply(catalogReply(result));
 };
 
+/** Parse the compact `<id,id,…>` row-id list from a `food:savedish:` callback (drops non-ids). */
+const parseDishIds = (raw: string): number[] =>
+  raw
+    .split(',')
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+/**
+ * `food:savedish:<ids>` tap — start the composite-dish save (design D3). Parse the just-written row
+ * ids, set a pending free-text `saveDish` question (reusing the one-pending-per-chat clarify store +
+ * TTL, ADR-0019), and ask for a name; the next text message resolves it via the existing pending path
+ * → `deps.food.resolveAnswer` (the `saveDish` variant). No macros are held — they're re-read from the
+ * rows at save (invariant #1).
+ */
+const handleSaveDishCallback = async (
+  ctx: CallbackContext,
+  deps: BotDeps,
+  data: string,
+): Promise<void> => {
+  await ctx.answerCallbackQuery();
+  if (!ctx.chat) {
+    return;
+  }
+  const rowIds = parseDishIds(data.slice(SAVE_DISH_PREFIX.length));
+  if (rowIds.length === 0) {
+    return;
+  }
+  const chatId = BigInt(ctx.chat.id);
+  deps.clarify.set(chatId, { variant: 'saveDish', rowIds, askedAt: new Date() });
+  await ctx.reply(dishNamePrompt());
+};
+
 /**
  * `q:<index>` tap — the chosen fixed answer to a pending Open Question. Maps the index back to the
  * stored option value, refines-and-logs via the food service, then clears the pending question. A tap
@@ -477,6 +542,10 @@ const handleClarifyCallback = async (
 export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promise<void> => {
   const data = ctx.callbackQuery?.data;
   if (!data || !ctx.chat) {
+    return;
+  }
+  if (data.startsWith(SAVE_DISH_PREFIX)) {
+    await handleSaveDishCallback(ctx, deps, data);
     return;
   }
   if (data.startsWith(FOOD_ADD_PREFIX)) {

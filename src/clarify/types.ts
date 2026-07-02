@@ -100,11 +100,24 @@ export interface PhotoOpenQuestion extends OpenQuestionBase {
 }
 
 /**
+ * The pending "name this dish" question (composite-dish, design D3). A free-text ask (no options, no
+ * `clarification`) that carries ONLY the just-written `food_log` row ids — NOT their macros (invariant
+ * #1: the numbers are re-read from those rows at save time). It reuses the one-pending-per-chat store
+ * purely for the TTL (`askedAt`); no meal/date/basis is held because `saveDishToCatalog` re-reads
+ * everything it needs from the rows. On expiry it simply drops — nothing was logged, nothing to log.
+ */
+export interface SaveDishOpenQuestion {
+  variant: 'saveDish';
+  rowIds: number[];
+  askedAt: Date;
+}
+
+/**
  * The pending Open Question held in-memory (ADR-0019), a discriminated union on `variant`. Holds ONLY
- * what's needed to log on resolution — never any chat transcript (invariant #1). One store, one
+ * what's needed to log/save on resolution — never any chat transcript (invariant #1). One store, one
  * per-chat slot, transparent to the union.
  */
-export type OpenQuestion = TextOpenQuestion | PhotoOpenQuestion;
+export type OpenQuestion = TextOpenQuestion | PhotoOpenQuestion | SaveDishOpenQuestion;
 
 /** The outbound clarifying message the bot renders — prose + optional inline-keyboard choices. */
 export interface OutboundQuestion {

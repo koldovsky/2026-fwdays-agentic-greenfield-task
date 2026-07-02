@@ -254,6 +254,20 @@ ambiguity. Fall back to free text when the answer isn't a small fixed set ("ск
 3. Infer meal type if not given; INSERT into **Food Log** for today (user TZ).
 4. Confirm. **Never hand-sum daily totals in chat** — totals come from a SUM query only.
 
+**Save a multi-item dish (composite dish).** A recurring multi-item plate (protein cocktail = whey +
+milk, coffee + cream) can be saved once as **one** named Food Database product and re-logged by name:
+- After a **multi-item** plate logs (§8.3), the confirmation offers a **"➕ Save as dish"** button. A
+  single-item log offers none (its own entry already is the product). Tapping asks for a **name** (free
+  text, one-pending-per-chat mechanic, ADR-0019); the next message is the name.
+- The saved row is **one** user-owned `food_database` entry with `per = portion` (one portion = the
+  whole dish). Its macros are the dish components' kcal/protein/fat/carbs **summed in code**, **re-read
+  from the `food_log` rows** at save time (invariants #1/#2 — never a chat/UI number, never
+  model-emitted). Find-or-update by `(user_id, name)` case-insensitive: a re-save **refreshes**, never
+  duplicates; a name clashing with a global product creates the user's **own** row (invariant #8). The
+  save makes **zero** LLM calls and is mirrored to Notion best-effort (US-10).
+- **Reuse by name** rides the existing lookup (step 2) unchanged: logging "protein cocktail" resolves
+  the saved row → `source = fact`; a quantity scales it ("2 protein cocktail" → two portions, in code).
+
 ### 8.3 Log food by photo (plate or nutrition label)
 An image may be a **plate to identify visually OR a nutrition-facts / КБЖУ label**; several photos
 in one Telegram **media group** buffer (bot-layer debounce) into a single logging event.
@@ -264,7 +278,8 @@ in one Telegram **media group** buffer (bot-layer debounce) into a single loggin
    visual**: macros read from a printed label → `source=fact` (its own label macros, **not**
    overridden by a catalog match); a Food Database name match → `fact`; a visual/typical guess →
    `estimate` (±20–30%).
-3. INSERT one row per item; confirm.
+3. INSERT one row per item; confirm. A **multi-item** confirmation also offers **"➕ Save as dish"**
+   (composite dish — see §8.2 "Save a multi-item dish").
 4. **Image(s) discarded immediately** — never written to disk/storage.
 
 See [ADR-0024](./adr/0024-photo-label-as-fact.md) (label = fact, caption-driven, media-group one call).

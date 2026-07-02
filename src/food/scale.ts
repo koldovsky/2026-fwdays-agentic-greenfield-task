@@ -19,6 +19,33 @@ export const macroBaseFromRow = (row: MacroRow): MacroBase => ({
   carbsG: Number(row.carbsG),
 });
 
+/**
+ * Sum rows into one macro total (kcal stays Int, macros round to 1dp at the end) — the per-plate total
+ * summed IN CODE from `food_log` rows, never a model number (invariant #2). One home (rule #12) for the
+ * plate confirmation's total line and the composite-dish save, which computed this identically.
+ */
+export const sumMacros = (rows: readonly MacroRow[]): MacroBase => {
+  const totals = rows.reduce<MacroBase>(
+    (acc, row) => {
+      const m = macroBaseFromRow(row);
+      return {
+        kcal: acc.kcal + m.kcal,
+        proteinG: acc.proteinG + m.proteinG,
+        fatG: acc.fatG + m.fatG,
+        carbsG: acc.carbsG + m.carbsG,
+      };
+    },
+    { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
+  );
+
+  return {
+    kcal: totals.kcal,
+    proteinG: round1(totals.proteinG),
+    fatG: round1(totals.fatG),
+    carbsG: round1(totals.carbsG),
+  };
+};
+
 // Scaling is PURE CODE — the model never emits the final per-entry numbers (invariants #2/#5). The
 // scale factor is keyed off the `per` BASIS, not the raw unit: a weight/volume basis (per100g/
 // per100ml) divides by 100 (qty is grams/ml); a count basis (portion/piece/dish) multiplies by qty.

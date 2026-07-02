@@ -55,6 +55,14 @@ The collection of a user's Food Entries — their per-user, per-day consumed rec
 the logged entries, never re-read from chat.
 _Avoid_: diary, journal, history.
 
+**Composite Dish**:
+A recurring multi-item dish (protein cocktail, coffee with cream) saved once as **one** user-owned
+Food Database product with basis `portion` — one portion = the whole dish, its macros the components
+**summed in code** (re-read from the logged Food Entries, never model-emitted). Re-logging it by name
+is an ordinary Fact match; there is no separate dish table or component breakdown — a Composite Dish
+_is_ a plain Food Database row.
+_Avoid_: recipe, combo, meal (a meal is the slot), bundle.
+
 **Meal**:
 The slot a Food Entry belongs to — `breakfast`, `lunch`, `dinner`, `snack` — inferred when unstated.
 A grouping of entries, not an entry itself.

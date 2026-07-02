@@ -12,11 +12,17 @@ import type { NotionOutbox } from '../notion/types.js';
 import { resolveDate } from '../router/date.js';
 import { systemNow } from '../util/date.js';
 import { saveLoggedFoodToCatalog } from './addToCatalog.js';
-import { buildConfirmation, buildPlateConfirmation, noProductReply } from './confirm.js';
+import {
+  buildConfirmation,
+  buildPlateConfirmation,
+  dishSavedReply,
+  noProductReply,
+} from './confirm.js';
 import { correctLast } from './correct.js';
 import { inferMeal } from './meal.js';
 import { estimatePlate, refinePlate, resolvePlate } from './photo.js';
 import { resolveForLog } from './resolve.js';
+import { saveDishToCatalog } from './saveDish.js';
 import { writeFoodLog } from './write.js';
 import type {
   CatalogResult,
@@ -39,6 +45,20 @@ import type {
 /** Best-effort mirror enqueue for one written `food_log` row (US-10, invariant #8); never throws. */
 const enqueueFoodLog = (outbox: NotionOutbox, userId: number, row: FoodLog): Promise<void> =>
   outbox.enqueue({ sourceTable: 'food_log', sourceId: row.id, userId });
+
+/**
+ * Best-effort mirror enqueue for a new/updated `food_database` row (US-10, invariant #8) — no-op when
+ * nothing was written (`foodDbId === null`). One home (rule #12) for the add-to-catalog and
+ * composite-dish save paths, which enqueued this identically.
+ */
+const enqueueFoodDb = (
+  outbox: NotionOutbox,
+  userId: number,
+  foodDbId: number | null,
+): Promise<void> =>
+  foodDbId === null
+    ? Promise.resolve()
+    : outbox.enqueue({ sourceTable: 'food_database', sourceId: foodDbId, userId });
 
 /**
  * Write one code-scaled, tenant-scoped `food_log` row per resolved plate item (invariants #2/#8) —
@@ -118,6 +138,25 @@ const expirePlateEstimate = async (
   );
 
   return buildPlateConfirmation(plateLangAnchor(pending), rows);
+};
+
+/**
+ * Save a just-logged multi-item dish as one named `portion` product (composite-dish): re-read the rows,
+ * sum in code, find-or-update the user's row, then best-effort mirror the new/updated `food_database`
+ * row (US-10 — after commit, never blocking/failing the reply, invariant #1). ONE home (rule #12) for
+ * the composite save, driven by the pending-`saveDish` answer path in `resolveAnswer`.
+ */
+const saveComposite = async (
+  prisma: FoodClient,
+  outbox: NotionOutbox,
+  userId: number,
+  rowIds: number[],
+  name: string,
+): Promise<Confirmation> => {
+  const { result, foodDbId } = await saveDishToCatalog(prisma, userId, rowIds, name);
+  await enqueueFoodDb(outbox, userId, foodDbId);
+
+  return dishSavedReply(result);
 };
 
 export const createFoodService = (
@@ -224,9 +263,7 @@ export const createFoodService = (
     }
 
     const { result, foodDbId } = await saveLoggedFoodToCatalog(prisma, userId, foodLogId);
-    if (foodDbId !== null) {
-      await outbox.enqueue({ sourceTable: 'food_database', sourceId: foodDbId, userId });
-    }
+    await enqueueFoodDb(outbox, userId, foodDbId);
 
     return result;
   },
@@ -264,6 +301,11 @@ export const createFoodService = (
     if (pending.variant === 'photo') {
       return resolvePlateAnswer(prisma, anthropic, outbox, userId, pending, answer);
     }
+    // A pending "save as dish" resolves the answer AS THE DISH NAME (composite-dish, design D3) — the
+    // macros are re-read from the held row ids, never from the answer (invariants #1/#2). Zero LLM calls.
+    if (pending.variant === 'saveDish') {
+      return saveComposite(prisma, outbox, userId, pending.rowIds, answer);
+    }
 
     const { confirmation, row } = await resolveAnswer(prisma, anthropic, userId, pending, answer);
     await enqueueFoodLog(outbox, userId, row);
@@ -275,6 +317,12 @@ export const createFoodService = (
   // its original date and meal — never drop the entry. Returns the confirmation so a late tap can
   // surface it; the food service stays the single writer of food_log.
   async logExpiredEstimate(chatId: bigint, pending: OpenQuestion): Promise<Confirmation | null> {
+    // A pending "save as dish" that expires simply DROPS (composite-dish): nothing was logged on the
+    // ask, so there is nothing to fall back to — no dish saved, no row written (invariant #1).
+    if (pending.variant === 'saveDish') {
+      return null;
+    }
+
     const userId = await resolveUserId(prisma, chatId);
     if (userId === null) {
       return null;

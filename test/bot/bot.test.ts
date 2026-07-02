@@ -15,7 +15,7 @@ import type { PhotoContext } from '../../src/bot/types.js';
 import type { BotDeps } from '../../src/bot/types.js';
 import { createMediaGroupBuffer, type Schedule } from '../../src/bot/mediaGroup.js';
 import type { ClarifyStore } from '../../src/clarify/store.js';
-import type { OpenQuestion } from '../../src/clarify/types.js';
+import type { LogOutcome, OpenQuestion } from '../../src/clarify/types.js';
 import type { FoodService, ResolvedFood } from '../../src/food/types.js';
 import type { MetricsService } from '../../src/metrics/types.js';
 import { QUESTIONS } from '../../src/onboarding/questions.js';
@@ -1233,6 +1233,134 @@ describe('handleBotError', () => {
     const logged = errorLog.mock.calls.map((c) => String(c[0])).join('\n');
     expect(logged).toContain('network down');
     errorLog.mockRestore();
+  });
+});
+
+// composite-dish (save as dish): the multi-item plate button → pending name question → save.
+describe('save-as-dish button + flow', () => {
+  const dishConfirmation = (rowIds: number[]): LogOutcome => ({
+    kind: 'logged',
+    confirmation: {
+      text: 'Записал:\n• молоко — 60 ккал\n• протеин — 380 ккал\nИтого — 440 ккал',
+      dish: { rowIds, label: '➕ Сохранить как блюдо' },
+    },
+  });
+
+  const callbackData = (other: unknown): string | undefined => {
+    const kb = (other as { reply_markup?: { inline_keyboard?: { callback_data?: string }[][] } })
+      ?.reply_markup;
+    return kb?.inline_keyboard?.[0]?.[0]?.callback_data;
+  };
+
+  it('renders the save-as-dish button (callback carries the row ids) for a multi-item plate', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood({ logPhoto: vi.fn().mockResolvedValue(dishConfirmation([11, 12])) });
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('протеиновый коктейль', reply), deps);
+
+    expect(reply.mock.calls[0]?.[1]).toHaveProperty('reply_markup');
+    expect(callbackData(reply.mock.calls[0]?.[1])).toBe('food:savedish:11,12');
+    fetchSpy.mockRestore();
+  });
+
+  it('OMITS the button (logs a note) when the row-id payload would exceed the 64-byte callback limit', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const manyIds = Array.from({ length: 30 }, (_, i) => i + 1); // joined + prefix > 64 bytes
+    const food = makeFood({ logPhoto: vi.fn().mockResolvedValue(dishConfirmation(manyIds)) });
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    await handlePhoto(makePhotoCtx('big plate', reply), deps);
+
+    expect(reply.mock.calls[0]?.[1]).toBeUndefined(); // plain reply, no keyboard
+    expect(logSpy).toHaveBeenCalled(); // omission is logged, never truncated
+    logSpy.mockRestore();
+    fetchSpy.mockRestore();
+  });
+
+  it('a food:savedish tap acks, sets a pending saveDish question, and asks for a name', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const clarify = makeClarify();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      clarify,
+    );
+
+    await handleCallback(
+      {
+        callbackQuery: { data: 'food:savedish:11,12' },
+        chat: { id: 9 },
+        reply,
+        answerCallbackQuery,
+      },
+      deps,
+    );
+
+    expect(answerCallbackQuery).toHaveBeenCalledTimes(1);
+    const pending = clarify.peek(9n);
+    expect(pending?.variant).toBe('saveDish');
+    expect(pending?.variant === 'saveDish' ? pending.rowIds : null).toEqual([11, 12]);
+    expect(String(reply.mock.calls[0]?.[0]).length).toBeGreaterThan(0); // the name prompt
+  });
+
+  it('ignores a malformed food:savedish tap with no valid ids (guard)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const clarify = makeClarify();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      makeFood(),
+      makeMetrics(),
+      makeQuery(),
+      clarify,
+    );
+
+    await handleCallback(
+      { callbackQuery: { data: 'food:savedish:abc' }, chat: { id: 9 }, reply, answerCallbackQuery },
+      deps,
+    );
+
+    expect(answerCallbackQuery).toHaveBeenCalledTimes(1);
+    expect(clarify.peek(9n)).toBeNull(); // nothing pending
+    expect(reply).not.toHaveBeenCalled();
+  });
+
+  it('the next text after tapping resolves as the dish name via food.resolveAnswer (pending path)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const pending: OpenQuestion = { variant: 'saveDish', rowIds: [11, 12], askedAt: new Date() };
+    const clarify = makeClarify([[7n, pending]]);
+    const food = makeFood();
+    // Classified as `answer` while the saveDish question is pending → resolveAnswer with the name.
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'answer',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      clarify,
+    );
+
+    await handleText({ message: { text: 'протеиновый коктейль' }, chat: { id: 7 }, reply }, deps);
+
+    expect(food.resolveAnswer).toHaveBeenCalledWith(
+      7n,
+      expect.objectContaining({ variant: 'saveDish', rowIds: [11, 12] }),
+      'протеиновый коктейль',
+    );
+    expect(clarify.peek(7n)).toBeNull(); // cleared
   });
 });
 
