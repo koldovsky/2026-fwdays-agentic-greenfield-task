@@ -64,10 +64,16 @@
 ## Working on
 
 - **`add-agent-loop` — increment 1 DONE** (verifier PASS + checker ship, 0 blockers; 179 tests).
-  Next = **increment 2**: inline `/api/tailor` NDJSON streaming route (task 3.3) that resolves the
-  provider at the edge (`resolveLlmProvider`) and streams `runTailoringLoop` events to the client
-  (FR-TAILOR-01/02, NFR-PERF-01/02). NOTE: writing a route handler → first read the Next.js guide
-  in `node_modules/next/dist/docs/` (AGENTS.md: "This is NOT the Next.js you know").
+  **Increment 2 IN PROGRESS** — inline `/api/tailor` NDJSON streaming route (task 3.3). Next 16
+  API read from bundled docs: `src/app/api/tailor/route.ts` POST → `ReadableStream` + `TextEncoder`,
+  `Content-Type: application/x-ndjson`, `runtime="nodejs"` + `maxDuration` (skip `dynamic`/
+  `fetchCache` — removed under Cache Components; POST stream is inherently dynamic). Resolve
+  provider INSIDE the stream (`resolveLlmProvider` throws on missing key) → missing key = calm
+  `error` event, never a raw 500 (NFR-OBS-01). Coerce missing cv/jd → "" so the loop emits
+  `empty_input`. `route.test.ts` mocks `resolveLlmProvider` (spread importOriginal, override only
+  that fn) to inject the fake — no `?fake=1` prod backdoor. 4 cases: NDJSON happy stream + headers;
+  calm error on provider-resolve failure; 400 invalid_body; empty_input. FR-TAILOR-01/02,
+  NFR-PERF-01/02, NFR-OBS-01.
 - **`add-auth` remainder** — password reset email (needs a sender). **Google OAuth (FR-AUTH-02)
   DEFERRED per user 2026-07-03 — credentials (email+pass) is the only auth for now; not blocking.**
   `add-persistence` done except checker-review (4.3).
