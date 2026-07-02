@@ -1,4 +1,4 @@
-  ---
+---
 name: ship-arch
 description: ship-change step 7 (dup-gate + refactor scan) — blocks new duplicates, finds deepening wins in the touched files. Spawned by the /ship-change orchestrator; not for standalone use.
 model: opus
