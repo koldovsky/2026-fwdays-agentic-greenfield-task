@@ -6,9 +6,8 @@ experience. The design language is restrained and editorial — navy ink + one
 brand blue, two grotesque typefaces, no emoji, no icon libraries.
 
 The full design system lives in [`docs/vouch-design-system/`](vouch-design-system/)
-(tokens, component specs, UI kit, guidelines) and is also exposed as the
-`/vouch-design` skill. **Read `docs/vouch-design-system/readme.md` before
-designing any new surface.**
+(tokens, component specs, UI kit, guidelines). **Read
+`docs/vouch-design-system/readme.md` before designing any new surface.**
 
 ## How the system is wired into the app
 

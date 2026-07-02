@@ -13,11 +13,10 @@ Verification pass for a Vouch change. Prove it works with evidence — never "se
 1. **Scope.** `git diff --stat` (working tree) or vs `main`. List changed files and the requirement IDs they touch — grep the PRD: `grep -n "FR-\|NFR-" docs/cv-agent-requirements.md`.
 
 2. **Static gates** (run, capture output):
-   - Build: `node_modules/.bin/next build`
-   - Lint: `node_modules/.bin/eslint .`
-   - Note: `yarn build`/`lint` are broken — scripts point at a nonexistent `web/node_modules`. Use the bins directly (blocker tracked in `docs/current-state.md`).
+   - Build: `yarn build`
+   - Lint: `yarn lint`
 
-3. **Tests.** If a test runner is configured, run the tests covering the diff. Pure `shared/lib` (scoring, i18n) must have unit tests (`TC-PURE-01`, `FR-CHECKLIST-01`). If there is no test for touched logic, say so — do NOT claim it is covered.
+3. **Tests.** `yarn test` (Vitest). Run the tests covering the diff. Pure `shared/lib` (scoring, i18n) must have unit tests (`TC-PURE-01`, `FR-CHECKLIST-01`). If there is no test for touched logic, say so — do NOT claim it is covered.
 
 4. **Behavioral.** For each touched `FR-*`, state exactly how it was exercised (route, action, input). `BC-DEMO-01`: every FR must be exercisable on the live URL. Check the console is silent on a healthy session (`NFR-OBS-02`). For honesty-touching changes, confirm overclaim bullets stay excluded from export (`BC-HONESTY-02`).
 

@@ -54,13 +54,15 @@ numbers. Implements FR-SALES-03.
 - **AND** the Pro renewal price is displayed as a plain number, not obscured
 
 ### Requirement: FAQ accordion
-The system SHALL render the FAQ as an accessible accordion: each question is a
-button that toggles its answer, exposes `aria-expanded`, and is operable by
-keyboard. Implements FR-SALES-01, NFR-A11Y-01.
+The system SHALL render the FAQ as an accessible accordion built on native
+`<details>/<summary>` disclosure elements: each question toggles its answer,
+exposes its expanded/collapsed state to assistive technology via the platform's
+disclosure semantics, is operable by keyboard, and ships no client-side
+JavaScript. Implements FR-SALES-01, NFR-A11Y-01.
 
 #### Scenario: Toggle a question
 - **WHEN** the visitor activates a FAQ question via mouse or keyboard
-- **THEN** its answer expands, `aria-expanded` becomes `true`, and activating it again collapses the answer
+- **THEN** its answer expands (the `<details>` element gains `open`), the expanded state is exposed to assistive technology, and activating it again collapses the answer
 
 ### Requirement: Brand and privacy compliance
 The landing page SHALL use only the defined design tokens and `shared/ui`

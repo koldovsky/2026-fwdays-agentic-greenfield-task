@@ -43,7 +43,7 @@ Project skills live in `.claude/skills/` (Claude Code) and `.cline/skills/` + `.
 
 This project is spec-driven (OpenSpec, `schema: spec-driven`). **Spec before code** for any new or changed capability.
 
-- **Baseline specs** live in `openspec/specs/<capability>/spec.md` — the current committed truth (`Purpose` + `Requirements` with `WHEN/THEN` scenarios). Today: `app-shell`, `design-system`, `checklist`, `bullets`. Every requirement cites its PRD ID.
+- **Baseline specs** live in `openspec/specs/<capability>/spec.md` — the current committed truth (`Purpose` + `Requirements` with `WHEN/THEN` scenarios). Today: `app-shell`, `design-system`, `checklist`, `bullets`, `marketing-landing`. Every requirement cites its PRD ID.
 - **Changes** are proposed as deltas under `openspec/changes/` via the openspec skills: `openspec-propose` → `openspec-apply` → `openspec-archive` (archive folds deltas into the baseline specs).
 - The PRD (`docs/cv-agent-requirements.md`) stays the source of truth for *what* and *why*; specs make behavior testable (`WHEN/THEN`) and traceable. Keep them in sync.
 - Validate specs/changes: `openspec validate --specs` (or `openspec validate <change>`). Project context + artifact rules are in `openspec/config.yaml`.
@@ -52,6 +52,6 @@ Workflow: propose a change → generate specs/design/tasks → implement (`fsd-s
 
 ## Design
 
-Read [`DESIGN.md`](docs/DESIGN.md) before building or restyling any UI — it covers the brand rules and how the design system is wired into the app. The full system (tokens, components, UI kit, guidelines) lives in `docs/vouch-design-system/` and as the `/vouch-design` skill.
+Read [`DESIGN.md`](docs/DESIGN.md) before building or restyling any UI — it covers the brand rules and how the design system is wired into the app. The full system (tokens, components, UI kit, guidelines) lives in `docs/vouch-design-system/`.
 
 Quick rules: design tokens are Tailwind v4 `@theme` vars in `src/app/globals.css` — style with utilities (`bg-ink`, `text-brand`, `font-display`, `rounded-xl`, `shadow-card`). Fonts load via `next/font` in `src/app/layout.tsx`. Never add new brand hues, emoji, exclamation points, or icon libraries.
