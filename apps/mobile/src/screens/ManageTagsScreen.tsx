@@ -37,19 +37,20 @@ export function ManageTagsScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
       {/* Custom header: a bare back chevron (no bg/border) + centered title. */}
-      <View style={{ height: 48, justifyContent: 'center', paddingHorizontal: t.space[2] }}>
+      <View style={{ height: 52, justifyContent: 'center' }}>
         <PressableScale
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel="Back"
-          hitSlop={12}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
           style={{
             position: 'absolute',
-            left: t.space[2],
+            left: 0,
             top: 0,
             bottom: 0,
-            width: 44,
-            alignItems: 'center',
+            width: 64,
+            paddingLeft: t.space[3],
+            alignItems: 'flex-start',
             justifyContent: 'center',
           }}
         >
