@@ -6,6 +6,22 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T19:50Z — Archived `add-tags`; promoted its specs to main
+
+`/openspec-archive-change add-tags`: all 4 artifacts done, 28/29 tasks (only 7.2 device smoke
+outstanding — archived with confirmation). Synced the delta specs to main first:
+- **New `tags` spec** (`openspec/specs/tags/spec.md`): create / assign / rename-delete-detach /
+  filter-history / user-scoped requirements. (FR-TAG-01→04, BC-SCOPE-01, FR-AUTH-06)
+- **`time-entries` spec**: "Continue a past entry" finalized to copy the description **and its
+  tags**, plus a new "Continue copies the source entry's tags" scenario. (FR-ENTRY-08)
+
+Change moved to `openspec/changes/archive/2026-07-02-add-tags/`; `openspec list` is now empty.
+
+**Next steps:** run the 7.2 device smoke against a build; then the next capability per
+`docs/implementation-plan.md` (profile-stats → daily-insight → home-widget).
+
+---
+
 ## 2026-07-02T19:45Z — Timer composer glow no longer clipped by the header
 
 The running/composer card's amber glow was being cut off at the top: `StartControl` lived
