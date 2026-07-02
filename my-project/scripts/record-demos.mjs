@@ -42,65 +42,77 @@ const settle = async (page, ms = 1500) => {
 const CLIPS = [
   {
     id: "forgeflow-extended-table-tour",
-    title: "ForgeFlow extended tour with live table additions",
-    proof: "FR-1, FR-2, FR-8, FR-9, FR-10, FR-11, FR-13, FR-14, FR-18, FR-19, FR-20, FR-29, FR-30, FR-35",
+    title: "Створення та повне оприбуткування замовлення у ForgeFlow",
+    description: "Створення замовлення на 24 одиниці, його поява зі статусом «Замовлено», повне оприбуткування, оновлення запасу до 174 кг і рух +24 у журналі.",
+    proof: "FR-1, FR-2, FR-8, FR-11, FR-13, FR-18, FR-19, FR-20, FR-22, FR-23, FR-24, FR-35",
     run: async (page) => {
+      const scenarioStartedAt = Date.now();
       await page.goto(`${BASE_URL}/login`);
       await settle(page, 2500);
-      assert(await page.getByRole("heading", { name: "Welcome to ForgeFlow" }).isVisible(), "login is visible");
+      assert(await page.getByRole("heading", { name: "Вітаємо у ForgeFlow" }).isVisible(), "login is visible");
 
-      await page.getByLabel("Username").fill("test");
-      await page.getByLabel("Password").fill("test");
-      await page.getByRole("button", { name: "Sign in securely" }).click();
+      await page.getByLabel("Ім’я користувача").fill("test");
+      await page.getByLabel("Пароль").fill("test");
+      await page.getByRole("button", { name: "Увійти безпечно" }).click();
       await page.waitForURL("**/dashboard");
-      await settle(page, 9500);
-      assert(await page.getByRole("heading", { name: "Good morning, team" }).isVisible(), "dashboard is visible");
-      assert(await page.getByText("Raw materials", { exact: true }).isVisible(), "raw valuation is visible");
+      await settle(page, 5000);
+      assert(await page.getByRole("heading", { name: "Доброго дня, командо" }).isVisible(), "dashboard is visible");
+      assert(await page.getByText("Сировина", { exact: true }).isVisible(), "raw valuation is visible");
+      assert(await page.getByRole("link", { name: "Огляд" }).getAttribute("aria-current") === "page", "dashboard navigation is persistently active");
+      const dashboardText = await page.locator("body").innerText();
+      assert(dashboardText.includes("грн"), "dashboard values use the UAH suffix");
+      assert(!dashboardText.includes("$") && !dashboardText.includes("USD"), "dashboard contains no dollar sign or USD code");
 
-      await page.getByRole("link", { name: "Inventory", exact: true }).click();
-      await page.waitForURL("**/inventory");
-      await settle(page, 4500);
-      assert(await page.getByRole("heading", { name: "Inventory & suppliers" }).isVisible(), "inventory is visible");
-
-      await page.getByLabel("Company").fill("Northstar Demo Metals");
-      await page.getByLabel("Contact").fill("Marta Demo");
-      await page.getByLabel("Email").fill("orders@northstar.demo");
-      await page.getByLabel("Phone").fill("+1-555-010-2040");
-      await page.getByLabel("Lead time (days)").fill("4");
-      await page.getByLabel("Rating").fill("4.9");
-      await page.getByRole("button", { name: "Add supplier" }).click();
-      await page.waitForURL("**/inventory?success=**");
-      await settle(page, 9500);
-      assert(await page.getByText("Northstar Demo Metals").isVisible(), "new supplier appears in the table");
-
-      await page.getByRole("link", { name: "Procurement" }).click();
+      await page.getByRole("link", { name: "Закупівлі" }).click();
       await page.waitForURL("**/procurement");
-      await settle(page, 4000);
-      assert(await page.getByRole("heading", { name: "Procurement engine" }).isVisible(), "procurement is visible");
-      assert(await page.getByText("Purchase order tracking").isVisible(), "order tracking is visible");
+      await settle(page, 3000);
+      assert(await page.getByRole("heading", { name: "Керування закупівлями" }).isVisible(), "procurement is visible");
+      assert(await page.getByText("Відстеження закупівель").isVisible(), "order tracking is visible");
+      assert(await page.getByRole("link", { name: "Закупівлі" }).getAttribute("aria-current") === "page", "procurement navigation is persistently active");
 
-      await page.getByLabel("Supplier").selectOption({ label: "Northstar Demo Metals" });
-      await page.getByLabel("Material").selectOption("mat_201");
-      await page.getByLabel("Quantity", { exact: true }).fill("24");
-      await page.getByLabel("Unit price").fill("12.50");
-      await page.getByRole("button", { name: "Issue purchase order" }).click();
+      await page.getByLabel("Постачальник").selectOption("sup_101");
+      await page.getByLabel("Матеріал").selectOption("mat_201");
+      await page.getByLabel("Кількість", { exact: true }).fill("24");
+      await page.getByLabel("Ціна за одиницю").fill("12.50");
+      await settle(page, 3000);
+      await page.getByRole("button", { name: "Оформити замовлення" }).click();
       await page.waitForURL("**/procurement?success=**");
-      await settle(page, 9500);
-      const newOrderRow = page.getByRole("row").filter({ hasText: "Northstar Demo Metals" });
+      await settle(page, 7000);
+      const newOrderRow = page.getByRole("row").filter({ hasText: "Сталь-Пром Україна" }).filter({ hasText: "0 / 24" }).first();
       assert(await newOrderRow.isVisible(), "new purchase order appears in the tracking table");
-      assert(await newOrderRow.getByText("$300.00").isVisible(), "new order total is visible");
+      assert(await newOrderRow.getByText(/300,00 грн/).isVisible(), "new order total is visible in UAH");
+      assert(await newOrderRow.getByText("Замовлено", { exact: true }).isVisible(), "new order has ordered status");
+      const orderNumber = await newOrderRow.locator("td").first().locator("strong").textContent();
+      assert(Boolean(orderNumber), "new order number is visible");
 
-      await page.getByRole("link", { name: "Manufacturing" }).click();
-      await page.waitForURL("**/manufacturing");
-      await settle(page, 8500);
-      assert(await page.getByRole("heading", { name: "Production control" }).isVisible(), "manufacturing is visible");
-      assert(await page.getByText("10-unit material preview").isVisible(), "BOM preview is visible");
+      await newOrderRow.getByRole("spinbutton", { name: `Отримана кількість для ${orderNumber}` }).fill("24");
+      await settle(page, 3000);
+      await newOrderRow.getByRole("button", { name: "Оприбуткувати" }).click();
+      await page.waitForURL("**/procurement?success=**");
+      await settle(page, 7000);
+      assert(await page.getByText("Надходження оприбутковано та передано на контроль якості.").isVisible(), "receipt success message is visible");
+      const receivedOrderRow = page.getByRole("row").filter({ hasText: orderNumber }).first();
+      assert(await receivedOrderRow.getByText("Отримано", { exact: true }).isVisible(), "order has received status");
+      assert(await receivedOrderRow.getByText("24 / 24", { exact: true }).isVisible(), "order is fully received");
 
-      await page.getByRole("link", { name: "Movement ledger" }).click();
+      await page.getByRole("link", { name: "Запаси", exact: true }).click();
+      await page.waitForURL("**/inventory");
+      await settle(page, 5000);
+      const materialRow = page.getByRole("row").filter({ hasText: "Загартований сталевий прут 20 мм" }).first();
+      assert(await materialRow.getByText("174 кг", { exact: true }).isVisible(), "received stock increases inventory from 150 to 174");
+      assert(await materialRow.locator("span.badge", { hasText: "Контроль якості" }).isVisible(), "received stock is in quality inspection");
+
+      await page.getByRole("link", { name: "Журнал рухів" }).click();
       await page.waitForURL("**/ledger");
-      await settle(page, 5500);
-      assert(await page.getByRole("heading", { name: "Movement ledger" }).isVisible(), "ledger is visible");
-      assert(await page.getByText("Production Consumption").first().isVisible(), "movement history is visible");
+      await settle(page, 5000);
+      assert(await page.getByRole("heading", { name: "Журнал рухів" }).isVisible(), "ledger is visible");
+      const receiptMovement = page.getByRole("row").filter({ hasText: "Надходження за замовленням" }).filter({ hasText: "+24" }).first();
+      assert(await receiptMovement.isVisible(), "receipt movement is visible in the ledger");
+
+      // Hold the final proof frame only as long as needed to keep the clip near
+      // 57 seconds. main() adds one more 1.5-second settled-frame pause.
+      const remainingToTarget = 55_500 - (Date.now() - scenarioStartedAt);
+      if (remainingToTarget > 0) await page.waitForTimeout(remainingToTarget);
     },
   },
 ];
@@ -127,6 +139,7 @@ async function main() {
   for (const clip of CLIPS) {
     const context = await browser.newContext({ viewport: VIEWPORT, recordVideo: { dir: join(OUT_DIR, "raw"), size: VIEWPORT } });
     const page = await context.newPage();
+    const recordingStartedAt = Date.now();
     let asserted = true;
     let error = null;
     try {
@@ -147,9 +160,10 @@ async function main() {
 
     await writeFile(
       join(OUT_DIR, `${clip.id}.md`),
-      `# ${clip.title}\n\n**Proves:** ${clip.proof}\n\n**Result:** ${asserted ? "asserted ✓" : `FAILED — ${error}`}\n\n![still](${clip.id}.png)\n`,
+      `# ${clip.title}\n\n${clip.description}\n\n**Підтверджує:** ${clip.proof}\n\n**Результат:** ${asserted ? "підтверджено ✓" : `ПОМИЛКА — ${error}`}\n\n![Знімок інтерфейсу](${clip.id}.png)\n`,
     );
-    results.push({ id: clip.id, title: clip.title, proof: clip.proof, video: videoPath.replaceAll("\\", "/"), screenshot: shot.replaceAll("\\", "/"), explainer: join(OUT_DIR, `${clip.id}.md`).replaceAll("\\", "/"), asserted });
+    const durationSeconds = Number(((Date.now() - recordingStartedAt) / 1000).toFixed(1));
+    results.push({ id: clip.id, title: clip.title, proof: clip.proof, video: videoPath.replaceAll("\\", "/"), screenshot: shot.replaceAll("\\", "/"), explainer: join(OUT_DIR, `${clip.id}.md`).replaceAll("\\", "/"), asserted, durationSeconds });
     console.log(`${asserted ? "✓" : "✗"} ${clip.id} (${clip.proof})${error ? ` — ${error}` : ""}`);
   }
 

@@ -130,5 +130,5 @@
 - Treat `quantity <= 0` as Critical, `0 < quantity <= reorderLevel` as Low, and greater quantities as Healthy.
 - On receipt, set the material's entire stock status to `quality_inspection`, matching the supplied flat-file schema, which has no per-lot status.
 - Keep the supplied direct-match demo password behavior for local evaluation, isolated behind an auth service; document that production requires password hashing.
-- English-only UI; USD currency and UTC timestamps displayed in the browser's locale.
+- Україномовний інтерфейс; суми у гривнях позначаються суфіксом `грн`, а часові позначки UTC відображаються за українською локаллю.
 - Do not add user-management screens to MVP; enforce the supplied Admin/Staff accounts and reserve account administration for Future. Admin authorization is still enforced for supplier and inventory-master changes.

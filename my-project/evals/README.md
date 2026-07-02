@@ -110,6 +110,12 @@ node scripts/check-eval-ratchet.mjs
 Wire as `eval:run` (the workflow) and `check:eval` (the ratchet). The ratchet
 is part of the `qa:verify` battery and the G5/G7 gates.
 
+## ForgeFlow cases
+
+The placeholder sample has been removed. The current suite contains six executable cases across procurement, manufacturing, dashboard, and master data. `tests/evals.test.ts` runs every `produce()` function against the current domain code so stale or fabricated outputs fail the deterministic test battery.
+
+The committed 2026-07-02 result is explicitly marked `retrospective-self-assessment`: it establishes a non-skipping ratchet baseline but does not claim maker-checker independence. A future `eval-suite` run with a fresh judge agent must replace that result before calling G7 independently judged.
+
 ## Relationship to recordings
 
 **Recordings are kept, unchanged.** An eval and a recording can cover the same

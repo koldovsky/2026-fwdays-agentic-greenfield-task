@@ -1,11 +1,11 @@
 [
   {
     "materialId": "mat_201",
-    "materialName": "Hardened Carbon Steel Rod 20mm",
+    "materialName": "Загартований сталевий прут 20 мм",
     "sku": "RM-ST-20MM",
-    "category": "Metals",
+    "category": "Метали",
     "quantityInStock": 150,
-    "unitOfMeasure": "KG",
+    "unitOfMeasure": "кг",
     "unitPrice": 12.5,
     "reorderLevel": 50,
     "stockType": "unrestricted",
@@ -13,11 +13,11 @@
   },
   {
     "materialId": "mat_202",
-    "materialName": "Industrial Polyurethane Resin",
+    "materialName": "Промислова поліуретанова смола",
     "sku": "RM-PL-RESIN",
-    "category": "Plastics",
+    "category": "Полімери",
     "quantityInStock": 45,
-    "unitOfMeasure": "L",
+    "unitOfMeasure": "л",
     "unitPrice": 25,
     "reorderLevel": 60,
     "stockType": "quality_inspection",
@@ -25,14 +25,14 @@
   },
   {
     "materialId": "mat_203",
-    "materialName": "Anti-Corrosion Structural Coating",
+    "materialName": "Антикорозійне структурне покриття",
     "sku": "RM-CH-COAT",
-    "category": "Chemicals",
-    "quantityInStock": 12,
-    "unitOfMeasure": "L",
+    "category": "Хімічні матеріали",
+    "quantityInStock": 67,
+    "unitOfMeasure": "л",
     "unitPrice": 18,
     "reorderLevel": 20,
-    "stockType": "blocked",
+    "stockType": "quality_inspection",
     "supplierId": "sup_102"
   }
 ]

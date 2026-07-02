@@ -6,7 +6,7 @@
     "itemId": "mat_201",
     "quantity": 100,
     "direction": "IN",
-    "reason": "Purchase Order Receipt",
+    "reason": "Надходження за замовленням",
     "associatedDocId": "po_501",
     "userId": "usr_001"
   },
@@ -17,7 +17,7 @@
     "itemId": "mat_201",
     "quantity": -1.5,
     "direction": "OUT",
-    "reason": "Production Consumption",
+    "reason": "Списання у виробництво",
     "associatedDocId": "bom_401",
     "userId": "usr_001"
   },
@@ -28,8 +28,19 @@
     "itemId": "prd_301",
     "quantity": 1,
     "direction": "IN",
-    "reason": "Work Order Completion",
+    "reason": "Завершення виробничого замовлення",
     "associatedDocId": "bom_401",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_1782932707733_guz1m",
+    "timestamp": "2026-07-01T19:05:07.733Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_203",
+    "quantity": 55,
+    "direction": "IN",
+    "reason": "Надходження за замовленням",
+    "associatedDocId": "po_1782932695108_tcmoh",
     "userId": "usr_001"
   }
 ]

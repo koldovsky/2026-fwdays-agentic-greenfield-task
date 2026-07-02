@@ -19,5 +19,4 @@ export async function getSession(): Promise<Session | null> {
   try { return (await jwtVerify(token, secret)).payload as unknown as Session; } catch { return null; }
 }
 export async function requireSession(): Promise<Session> { const session = await getSession(); if (!session) redirect("/login"); return session; }
-export async function requireAdmin(): Promise<Session> { const session = await requireSession(); if (session.role !== "Admin") throw new Error("Administrator access is required."); return session; }
-
+export async function requireAdmin(): Promise<Session> { const session = await requireSession(); if (session.role !== "Адміністратор") throw new Error("Потрібні права адміністратора."); return session; }

@@ -1,0 +1,11 @@
+{
+  "clean": true,
+  "reviewedAt": "2026-07-02T14:20:00Z",
+  "scope": "add-manufacturing",
+  "mode": "retrospective-self-audit",
+  "confirmedFindings": [],
+  "limitations": [
+    "Archive reconstructed after delivery and cannot establish original test-first ordering.",
+    "Maker-checker independence remains a future external-review task."
+  ]
+}

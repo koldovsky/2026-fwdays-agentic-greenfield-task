@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authenticate } from "./auth/core";
 import { clearSession, createSession, requireAdmin, requireSession } from "./auth/session";
 import { executeProduction } from "./manufacturing";
+import { addSupplier, updateMaterialSettings } from "./master-data";
 import { createOrder, receiveOrder } from "./procurement";
 import { readDatabase, transaction } from "./repository";
 
@@ -14,9 +15,9 @@ const go = (path: string, message: string, kind: "success" | "error" = "success"
 
 export async function loginAction(form: FormData) {
   const parsed = z.object({ username: text, password: text }).safeParse(Object.fromEntries(form));
-  if (!parsed.success) return go("/login", "Enter both username and password.", "error");
+  if (!parsed.success) return go("/login", "Введіть ім’я користувача та пароль.", "error");
   const user = authenticate((await readDatabase()).users, parsed.data.username, parsed.data.password);
-  if (!user) return go("/login", "Invalid username or password.", "error");
+  if (!user) return go("/login", "Неправильне ім’я користувача або пароль.", "error");
   await createSession({ userId: user.userId, username: user.username, fullName: user.fullName, role: user.role });
   redirect("/dashboard");
 }
@@ -25,33 +26,33 @@ export async function createSupplierAction(form: FormData) {
   try {
     await requireAdmin();
     const value = z.object({ companyName: text, contactName: text, email: z.email(), phone: text, leadTimeDays: z.coerce.number().int().nonnegative(), rating: z.coerce.number().min(0).max(5) }).parse(Object.fromEntries(form));
-    await transaction((data) => { data.suppliers.push({ supplierId: `sup_${Date.now()}`, ...value }); return data; });
-  } catch (error) { go("/inventory", error instanceof Error ? error.message : "Supplier could not be created.", "error"); }
-  revalidatePath("/inventory"); go("/inventory", "Supplier added.");
+    await transaction((data) => addSupplier(data, { supplierId: `sup_${Date.now()}`, ...value }));
+  } catch (error) { go("/inventory", error instanceof Error ? error.message : "Не вдалося створити постачальника.", "error"); }
+  revalidatePath("/inventory"); go("/inventory", "Постачальника додано.");
 }
 export async function updateMaterialAction(form: FormData) {
   try {
     await requireAdmin();
     const value = z.object({ materialId: text, reorderLevel: z.coerce.number().nonnegative(), stockType: z.enum(["unrestricted", "quality_inspection", "blocked"]) }).parse(Object.fromEntries(form));
-    await transaction((data) => { const item = data.rawMaterials.find((m) => m.materialId === value.materialId); if (!item) throw new Error("Material not found."); Object.assign(item, value); return data; });
-  } catch (error) { go("/inventory", error instanceof Error ? error.message : "Material could not be updated.", "error"); }
-  revalidatePath("/inventory"); go("/inventory", "Material settings updated.");
+    await transaction((data) => updateMaterialSettings(data, value.materialId, value.reorderLevel, value.stockType));
+  } catch (error) { go("/inventory", error instanceof Error ? error.message : "Не вдалося оновити матеріал.", "error"); }
+  revalidatePath("/inventory"); go("/inventory", "Налаштування матеріалу оновлено.");
 }
 export async function createOrderAction(form: FormData) {
   const session = await requireSession();
   try { const value = z.object({ supplierId: text, materialId: text, quantity: positive, unitPrice: positive }).parse(Object.fromEntries(form)); await transaction((data) => createOrder(data, value.supplierId, value.materialId, value.quantity, value.unitPrice)); }
-  catch (error) { go("/procurement", error instanceof Error ? error.message : "Order could not be created.", "error"); }
-  revalidatePath("/procurement"); go("/procurement", `Purchase order created by ${session.username}.`);
+  catch (error) { go("/procurement", error instanceof Error ? error.message : "Не вдалося створити замовлення.", "error"); }
+  revalidatePath("/procurement"); go("/procurement", `Замовлення створив користувач ${session.username}.`);
 }
 export async function receiveOrderAction(form: FormData) {
   const session = await requireSession();
   try { const value = z.object({ poId: text, quantity: positive }).parse(Object.fromEntries(form)); await transaction((data) => receiveOrder(data, value.poId, value.quantity, session.userId)); }
-  catch (error) { go("/procurement", error instanceof Error ? error.message : "Receipt could not be posted.", "error"); }
-  revalidatePath("/procurement"); go("/procurement", "Receipt posted to quality inspection.");
+  catch (error) { go("/procurement", error instanceof Error ? error.message : "Не вдалося оприбуткувати надходження.", "error"); }
+  revalidatePath("/procurement"); go("/procurement", "Надходження оприбутковано та передано на контроль якості.");
 }
 export async function productionAction(form: FormData) {
   const session = await requireSession();
   try { const value = z.object({ productId: text, quantity: positive }).parse(Object.fromEntries(form)); await transaction((data) => executeProduction(data, value.productId, value.quantity, session.userId)); }
-  catch (error) { go("/manufacturing", error instanceof Error ? error.message : "Production run could not be completed.", "error"); }
-  revalidatePath("/manufacturing"); go("/manufacturing", "Production run completed and movements recorded.");
+  catch (error) { go("/manufacturing", error instanceof Error ? error.message : "Не вдалося завершити виробничий запуск.", "error"); }
+  revalidatePath("/manufacturing"); go("/manufacturing", "Виробничий запуск завершено, рухи записано.");
 }

@@ -3,3 +3,4 @@ node_modules/
 coverage/
 *.tsbuildinfo
 **/raw/
+.DS_Store

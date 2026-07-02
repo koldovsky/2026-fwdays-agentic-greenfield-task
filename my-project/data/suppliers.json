@@ -1,19 +1,19 @@
 [
   {
     "supplierId": "sup_101",
-    "companyName": "Apex Steel Works",
-    "contactName": "Sarah Jenkins",
+    "companyName": "Сталь-Пром Україна",
+    "contactName": "Сара Дженкінс",
     "email": "procurement@apexsteel.com",
-    "phone": "+1-555-019-8234",
+    "phone": "+380 44 555 01 01",
     "leadTimeDays": 5,
     "rating": 4.8
   },
   {
     "supplierId": "sup_102",
-    "companyName": "Polymer Synthetics Corp",
-    "contactName": "Michael Chang",
+    "companyName": "Полімерні Системи",
+    "contactName": "Михайло Чанг",
     "email": "orders@polysynth.com",
-    "phone": "+1-555-014-9988",
+    "phone": "+380 44 555 01 02",
     "leadTimeDays": 7,
     "rating": 4.2
   }

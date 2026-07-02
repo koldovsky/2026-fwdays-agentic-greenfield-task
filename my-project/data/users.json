@@ -3,16 +3,16 @@
     "userId": "usr_001",
     "username": "test",
     "passwordHash": "test",
-    "fullName": "System Testing Administrator",
-    "role": "Admin",
+    "fullName": "Адміністратор тестової системи",
+    "role": "Адміністратор",
     "isActive": true
   },
   {
     "userId": "usr_002",
     "username": "operator1",
     "passwordHash": "securepass123",
-    "fullName": "Warehouse Floor Lead",
-    "role": "Staff",
+    "fullName": "Керівник складської зміни",
+    "role": "Працівник",
     "isActive": true
   }
 ]

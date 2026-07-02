@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-07-02T14:18:41Z",
+  "kind": "eval",
+  "reviewMode": "retrospective-self-assessment",
+  "independentJudge": false,
+  "results": [
+    { "id": "eval-procurement-excess-receipt", "dimension": "error-clarity", "proof": "FR-21, NFR-3, NFR-7", "score": 95, "pass": true },
+    { "id": "eval-procurement-invalid-reference", "dimension": "error-clarity", "proof": "FR-18, FR-39, NFR-3", "score": 95, "pass": true },
+    { "id": "eval-manufacturing-quality-hold", "dimension": "decision-clarity", "proof": "FR-31, FR-34, NFR-3, NFR-7", "score": 95, "pass": true },
+    { "id": "eval-manufacturing-shortage", "dimension": "decision-clarity", "proof": "FR-31, FR-34, NFR-3", "score": 95, "pass": true },
+    { "id": "eval-dashboard-critical-stock-label", "dimension": "status-clarity", "proof": "FR-11, FR-12, NFR-7, NFR-10", "score": 95, "pass": true },
+    { "id": "eval-master-data-invalid-rating", "dimension": "error-clarity", "proof": "FR-14, NFR-3, NFR-7", "score": 95, "pass": true }
+  ]
+}

@@ -10,7 +10,7 @@ Result: PASS
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
 | forgeflow-product-tour | FR-1, FR-2, FR-8, FR-9, FR-10, FR-11, FR-13, FR-20, FR-29, FR-30, FR-35 | 1665809 | yes | yes | met |
-| forgeflow-extended-table-tour | FR-1, FR-2, FR-8, FR-9, FR-10, FR-11, FR-13, FR-14, FR-18, FR-19, FR-20, FR-29, FR-30, FR-35 | 3045891 | yes | yes | met |
+| forgeflow-extended-table-tour | FR-1, FR-2, FR-8, FR-11, FR-13, FR-18, FR-19, FR-20, FR-22, FR-23, FR-24, FR-35 | 2968992 | yes | yes | met |
 
 ## Failures
 
