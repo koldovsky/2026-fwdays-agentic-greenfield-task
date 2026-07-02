@@ -98,7 +98,14 @@ export const parseStructured = async <T>(
   const startedAt = Date.now();
   const message = await client.messages.create({
     model: MODEL,
-    max_tokens: 1024,
+    // 1536, not 1024: Sonnet 5's tokenizer emits ~30% more tokens for the same text than 4.6, so a
+    // review-prose reply that fit under 1024 could now truncate (stop_reason "max_tokens"). Output is
+    // a hard cap, billed only on tokens used — the headroom is free for the short classify/extract calls.
+    max_tokens: 1536,
+    // Sonnet 5 runs adaptive thinking when `thinking` is unset (4.6 ran thinking-off by omission).
+    // These are deterministic single structured calls (invariant #5) — thinking would only add
+    // latency + thinking-token spend for no quality gain, so disable it explicitly.
+    thinking: { type: 'disabled' },
     system: systemPrefixBlocks(),
     output_config: { format: { type: 'json_schema', schema: jsonSchema } },
     messages: [{ role: 'user', content: userContent(userText, images) }],
