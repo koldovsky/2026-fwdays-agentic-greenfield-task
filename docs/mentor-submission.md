@@ -4,7 +4,7 @@
 Ihor Volchkov
 
 ## Проєкт
-**Sport & Nutrition Coach** — Telegram-бот особистого тренера з харчування на «сушці»
+**Sport & Nutrition Coach** — Telegram-бот особистого тренера з харчування
 (TypeScript / Node.js, **без фреймворку** — чистий TS під RAM-обмежений хост · grammY ·
 Prisma · PostgreSQL · Anthropic API, Sonnet). Бот онбордить користувача, рахує калораж і
 макроси (Mifflin–St Jeor у коді, без LLM), логує їжу текстом **і фото тарілки / етикетки
@@ -16,9 +16,6 @@ Prisma · PostgreSQL · Anthropic API, Sonnet). Бот онбордить кор
 structured-output — інакше вартість × 10–50).
 
 ## Відео-демо (1–2 хв)
-_(записати перед здачею — сценарій у Telegram: `/start` онбординг → лог їжі текстом
-«запиши 200г курячого філе» → фото етикетки КБЖУ → «скільки білка сьогодні?» →
-`/done` денне рев'ю. Браузерної UI немає — це backend-бот, демо повністю в Telegram.)_
 Video: https://drive.google.com/file/d/1d2JlxrcrmFpL3pKTSxoQbCSdfOUJRxa5/view?usp=sharing
 
 ## Які практики Agentic Engineering застосовано
@@ -86,7 +83,7 @@ Sonnet 5 на цій роботі), Haiku·low лише на суто механ
 archive-move).
 
 ### Верифікація — тести, evals, перевірки, а не «здається, працює»
-**Unit + integration:** **363 тести на Vitest** у 55 файлах (`test/` дзеркалить `src/`). Критичні
+**Unit + integration:** **405 тестів на Vitest** у 55 файлах (`test/` дзеркалить `src/`). Критичні
 інваріанти покриті **прямо як тести, не evals** (граничне правило ADR-0013: *немає виклику LLM →
 це тест, а не eval*): **fs-spy** доводить, що байти зображення ніколи не торкаються диска на всьому
 прогоні `logPhoto` (CRITICAL), суми = `SQL SUM` (ніколи hand-summed), Mifflin–St Jeor і trend-diff-и
