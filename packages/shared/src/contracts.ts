@@ -110,6 +110,45 @@ export interface PeriodTotals {
   allTimeSec: number;
 }
 
+/**
+ * Pre-computed numeric summary of recent history, shaped in the user's local time zone and
+ * fed to the LLM (and the deterministic fallback) for `daily-insight`. Contains only
+ * aggregates — never raw entries or note text (FR-INSIGHT-04).
+ */
+export interface InsightSummary {
+  /** Resolved IANA zone the days were bucketed in. */
+  timeZone: string;
+  /** The current local day (YYYY-MM-DD) in `timeZone`. */
+  todayDate: string;
+  /** Tracked seconds on the current local day. */
+  todaySec: number;
+  /** Tracked seconds per local day for the last 14 days, oldest first. */
+  days: DayTotal[];
+  /** Mean tracked seconds over the prior 13 days (excludes today), rounded. */
+  avgPriorDaySec: number;
+  /** How many of the prior 13 days had any tracked time. */
+  activeDaysPrior: number;
+  /** Top tags by tracked time over the window (at most 3). */
+  topTags: TagTotal[];
+  /** Total tracked seconds across the 14-day window. */
+  totalWindowSec: number;
+}
+
+/**
+ * A generated (or fallback) daily insight returned to the client. `source` distinguishes
+ * model output from the deterministic fallback (FR-INSIGHT-06).
+ */
+export interface DailyInsight {
+  /** The insight sentence (≤ 200 chars, English, no emojis — FR-INSIGHT-05). */
+  text: string;
+  /** Whether the sentence came from the LLM or the deterministic fallback. */
+  source: 'llm' | 'fallback';
+  /** The local day (YYYY-MM-DD) this insight is for. */
+  localDate: string;
+  /** ISO 8601 timestamp of when it was generated/cached. */
+  createdAt: string;
+}
+
 /** Health/readiness response. */
 export interface HealthStatus {
   status: 'ok';

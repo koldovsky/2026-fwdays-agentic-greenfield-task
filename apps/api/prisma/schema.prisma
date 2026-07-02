@@ -23,6 +23,7 @@ model User {
   refreshTokens RefreshToken[]
   timeEntries  TimeEntry[]
   tags         Tag[]
+  dailyInsights DailyInsight[]
 }
 
 /// A sign-in provider linked to a user. One verified email maps to one User across
@@ -87,5 +88,24 @@ model Tag {
   updatedAt DateTime    @updatedAt
 
   @@unique([userId, name])
+  @@index([userId])
+}
+
+/// The cached daily insight for a user on a given local day (FR-INSIGHT-03, NFR-COST-01).
+/// `localDate` is the user's local `YYYY-MM-DD`; `@@unique([userId, localDate])` enforces the
+/// one-generation-per-day bound. `source` is "llm" or "fallback"; `model` is set only for LLM
+/// output. Regeneration (explicit refresh) upserts the same row.
+model DailyInsight {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  localDate String
+  text      String
+  source    String
+  model     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, localDate])
   @@index([userId])
 }

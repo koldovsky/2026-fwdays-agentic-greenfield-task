@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { InsightModule } from './insight/insight.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TagsModule } from './tags/tags.module';
 import { TimeEntriesModule } from './time-entries/time-entries.module';
@@ -14,6 +15,7 @@ import { TimeEntriesModule } from './time-entries/time-entries.module';
     AuthModule,
     TagsModule,
     TimeEntriesModule,
+    InsightModule,
   ],
   controllers: [AppController],
   providers: [AppService],

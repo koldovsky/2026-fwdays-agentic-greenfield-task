@@ -7,7 +7,9 @@ import { StatBlock } from '../components/StatBlock';
 import { TopTag } from '../components/TopTag';
 import { WeekChart } from '../components/WeekChart';
 import { EmptyState } from '../components/EmptyState';
+import { InsightCard } from '../components/InsightCard';
 import { useStats } from '../hooks/useStats';
+import { useInsight, useRefreshInsight } from '../hooks/useInsight';
 import { useTheme } from '../theme';
 
 type Period = 'week' | 'all';
@@ -21,6 +23,8 @@ const PERIOD_OPTIONS: { value: Period; label: string }[] = [
 export function StatsScreen() {
   const t = useTheme();
   const { weekly, totals, tagTotalsWeek, tagTotalsAll, isLoading, isError } = useStats();
+  const insight = useInsight();
+  const refreshInsight = useRefreshInsight();
   const [period, setPeriod] = useState<Period>('week');
 
   const cardStyle = {
@@ -47,6 +51,17 @@ export function StatsScreen() {
         <Text style={{ color: t.colors.text, fontSize: t.fontSize.largeTitle, fontWeight: t.fontWeight.heavy }}>
           Stats
         </Text>
+      </View>
+
+      {/* Daily insight — always visible (server degrades to a deterministic fallback). */}
+      <View style={{ paddingHorizontal: t.screenGutter, paddingBottom: t.space[4] }}>
+        <InsightCard
+          text={insight.data?.text}
+          isLoading={insight.isLoading}
+          isError={insight.isError}
+          isRefreshing={refreshInsight.isPending}
+          onRefresh={() => refreshInsight.mutate()}
+        />
       </View>
 
       {isLoading ? (

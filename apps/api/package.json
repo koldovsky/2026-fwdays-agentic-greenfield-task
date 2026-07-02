@@ -26,6 +26,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@honeydo/shared": "*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",

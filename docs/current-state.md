@@ -6,6 +6,37 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T21:00Z — Implemented `add-daily-insight` (Phase 5, AI insight)
+
+Built the daily-insight capability end-to-end, shared-first + test-first. Repo `gate` green
+(shared 51 tests incl. 11 new; API 19 tests incl. 5 new) and mobile lint/typecheck green — all
+with **no** Anthropic key (deterministic fallback path). FR-INSIGHT-01→06, NFR-COST-01,
+NFR-OBS-01, TC-STACK-07, TC-PURE-01, TC-TEST-01.
+
+- **Shared (`@honeydo/shared`):** `localDateKeyInTz` (TZ-aware local-day key via `Intl`),
+  `InsightSummary`/`DailyInsight` contracts, and pure `insight.ts` — `buildInsightInput`
+  (14-day window bucketed by local start-day, avg of prior 13, top-3 tags), `fallbackInsight`
+  (deterministic sentence), `sanitizeInsight` (strip emoji, ≤ 200 chars, reject invented
+  figures → `null`). New `insight.test.ts` (11 tests).
+- **API (`@honeydo/api`):** `DailyInsight` model + migration `20260702205032_add_daily_insight`
+  (unique `(userId, localDate)` = one generation/day). `AnthropicService` (SDK wrapper, ~4s
+  abort, disabled when no key), `InsightService` (tz resolve→UTC, shape, cache upsert, sanitize,
+  fallback on disabled/timeout/reject), `InsightController` (`GET /insight?tz=`,
+  `POST /insight/refresh?tz=`, JWT-guarded + user-scoped) wired into `AppModule`.
+  `@anthropic-ai/sdk` added; `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` in `.env.example`.
+- **Mobile (`@honeydo/mobile`):** `api/insight.ts` (+device IANA tz), `useInsight` +
+  `useRefreshInsight` (per-day cached query), `InsightCard` (tokens only, calm loading, quiet
+  retry), mounted at the top of `StatsScreen`.
+
+**State now:** LLM never reaches the client; key absent → fallback everywhere, so dev/CI need
+no key. All automated gates green; migration applied to local DB. Only manual task open is 7.2
+(on-device smoke; optionally set a key to confirm `source:"llm"`).
+
+**Next steps:** run the 7.2 smoke when convenient, then `/opsx-archive add-daily-insight`.
+Phase 6 per the plan is the **home widget** (`docs/capabilities/08-home-widget.md`).
+
+---
+
 ## 2026-07-02T20:20Z — Archived `add-profile-stats` (specs synced)
 
 Synced the `profile-stats` delta and archived the change. `openspec validate --specs` green
