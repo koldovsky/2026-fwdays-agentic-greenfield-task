@@ -1343,23 +1343,21 @@ describe('save-as-dish button + flow', () => {
     const pending: OpenQuestion = { variant: 'saveDish', rowIds: [11, 12], askedAt: new Date() };
     const clarify = makeClarify([[7n, pending]]);
     const food = makeFood();
-    // Classified as `answer` while the saveDish question is pending → resolveAnswer with the name.
-    const { deps } = makeDeps(
-      makeOnboarding(),
-      'answer',
-      food,
-      makeMetrics(),
-      makeQuery(),
-      clarify,
-    );
+    // A saveDish reply is captured VERBATIM as the name — it must NEVER hit the classifier. Mock the
+    // classifier as `log` (what it actually returns for a food-shaped name like "куряче філе на грилі",
+    // since it sees no history): the fix short-circuits before that call, so the name still routes to
+    // resolveAnswer and never falls through to the food parser (regression for the mis-route bug).
+    const { deps } = makeDeps(makeOnboarding(), 'log', food, makeMetrics(), makeQuery(), clarify);
 
-    await handleText({ message: { text: 'протеиновый коктейль' }, chat: { id: 7 }, reply }, deps);
+    await handleText({ message: { text: 'куряче філе на грилі' }, chat: { id: 7 }, reply }, deps);
 
     expect(food.resolveAnswer).toHaveBeenCalledWith(
       7n,
       expect.objectContaining({ variant: 'saveDish', rowIds: [11, 12] }),
-      'протеиновый коктейль',
+      'куряче філе на грилі',
     );
+    expect(food.logFood).not.toHaveBeenCalled(); // never routed to the food parser
+    expect(food.logExpiredEstimate).not.toHaveBeenCalled(); // saveDish is not dropped as an estimate
     expect(clarify.peek(7n)).toBeNull(); // cleared
   });
 });

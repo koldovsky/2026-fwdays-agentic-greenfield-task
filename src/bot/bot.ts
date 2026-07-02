@@ -273,6 +273,18 @@ const resolvePending = async (
   pending: OpenQuestion,
 ): Promise<void> => {
   const text = ctx.message.text;
+  // A "save as dish" reply is a NAME, not a loggable message — capture it VERBATIM and never send it
+  // to the classifier. A name like "куряче філе на грилі" is indistinguishable from a food log to a
+  // context-free classifier (invariant #1: no chat-history context), so classifying it would misroute
+  // the name into the food parser (design D3: the prompt asked for a name; the reply is the answer).
+  if (pending.variant === 'saveDish') {
+    await replyIfConfirmed(
+      ctx.reply.bind(ctx),
+      await deps.food.resolveAnswer(chatId, pending, text),
+    );
+    return;
+  }
+
   const routed = await classifyMessage(deps.anthropic, text, {
     userTz: deps.userTz,
     hasPendingQuestion: true,

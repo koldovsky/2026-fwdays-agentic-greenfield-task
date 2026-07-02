@@ -153,7 +153,8 @@ const saveComposite = async (
   rowIds: number[],
   name: string,
 ): Promise<Confirmation> => {
-  const { result, foodDbId } = await saveDishToCatalog(prisma, userId, rowIds, name);
+  // Trim the raw reply — a name is a display label, so leading/trailing whitespace is never meaningful.
+  const { result, foodDbId } = await saveDishToCatalog(prisma, userId, rowIds, name.trim());
   await enqueueFoodDb(outbox, userId, foodDbId);
 
   return dishSavedReply(result);
