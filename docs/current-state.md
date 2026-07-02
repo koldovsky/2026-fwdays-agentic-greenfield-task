@@ -6,6 +6,28 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T21:15Z — Archived `add-daily-insight` (specs synced)
+
+Synced the `daily-insight` delta and archived the change. `openspec validate --specs` green
+(8/8).
+
+- **Spec sync:** new capability `openspec/specs/daily-insight/spec.md` created from the delta
+  (all 9 requirements verbatim: FR-INSIGHT-01→06, plus authn/scoping and the Stats card;
+  TC-STACK-07, TC-PURE-01, TC-TEST-01, NFR-COST-01, NFR-OBS-01). Gave it a real Purpose (fresh
+  capability, no prior main spec — same as `profile-stats`).
+- **Archive:** `openspec/changes/add-daily-insight/` →
+  `openspec/changes/archive/2026-07-03-add-daily-insight/`.
+- **Warning:** archived with task **7.2** (manual device smoke) still open — code + automated
+  gate are green; only on-device verification (and optional live-key `source:"llm"` check) is
+  outstanding (same posture as `add-tags`/`add-profile-stats`).
+
+**State now:** Phases 1–5 (foundation, time-entries, tags, profile-stats, daily-insight)
+implemented and archived. Next capability per the plan is the **home widget** (Phase 6).
+
+**Next steps:** run the 7.2 smoke when convenient; then `/opsx-propose home-widget`.
+
+---
+
 ## 2026-07-02T21:00Z — Implemented `add-daily-insight` (Phase 5, AI insight)
 
 Built the daily-insight capability end-to-end, shared-first + test-first. Repo `gate` green
