@@ -15,7 +15,8 @@ TC-NATIVE-01/02/03, NFR-WIDGET-01.
 
 - **Build pipeline (`app.json`):** added `@bacons/apple-targets` plugin; App Group
   `group.com.blackflamy.honeydo` entitlement on the app; `NSSupportsLiveActivities: true`; iOS
-  deployment target → **16.2** (via `expo-build-properties`). `@bacons/apple-targets@^4` added to
+  deployment target → **16.4** (via `expo-build-properties`; its floor, ≥ the 16.2 Live Activity
+  display minimum). `@bacons/apple-targets@^4` added to
   `apps/mobile` devDeps.
 - **Extension (`apps/mobile/targets/live-activity/`):** `expo-target.config.js` (widget target +
   App Group), `HoneydoTimerAttributes` (static `entryId`; ContentState `title`/`startedAt`/

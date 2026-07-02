@@ -8,7 +8,7 @@
 module.exports = {
   type: 'widget',
   name: 'HoneydoLiveActivity',
-  deploymentTarget: '16.2',
+  deploymentTarget: '16.4',
   entitlements: {
     'com.apple.security.application-groups': ['group.com.blackflamy.honeydo'],
   },

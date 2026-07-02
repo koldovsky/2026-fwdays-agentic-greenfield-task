@@ -41,7 +41,7 @@
             "buildReactNativeFromSource": true,
             "usePrecompiledModules": false,
             "useFrameworks": "static",
-            "deploymentTarget": "16.2"
+            "deploymentTarget": "16.4"
           }
         }
       ],
