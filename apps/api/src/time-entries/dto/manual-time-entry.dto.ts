@@ -1,4 +1,10 @@
-import { IsISO8601, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsISO8601,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import type { ManualTimeEntry } from '@honeydo/shared';
 
 /**
@@ -15,4 +21,9 @@ export class ManualTimeEntryDto implements ManualTimeEntry {
 
   @IsISO8601()
   stoppedAt!: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[];
 }

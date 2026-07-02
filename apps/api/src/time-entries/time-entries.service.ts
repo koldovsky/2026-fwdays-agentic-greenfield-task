@@ -3,20 +3,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, type TimeEntry as TimeEntryRow } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { TimeEntry } from '@honeydo/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 import type { ManualTimeEntryDto } from './dto/manual-time-entry.dto';
 import type { UpdateTimeEntryDto } from './dto/update-time-entry.dto';
 
+/** Entries are always read/written with their tags attached (FR-TAG-02). */
+const withTags = { tags: true } as const;
+type EntryWithTags = Prisma.TimeEntryGetPayload<{ include: typeof withTags }>;
+
 /** Whole, non-negative seconds between two instants. */
 function durationSeconds(start: Date, stop: Date): number {
   return Math.max(0, Math.floor((stop.getTime() - start.getTime()) / 1000));
 }
 
-/** Map a Prisma row to the framework-free `@honeydo/shared` contract. */
-function toContract(row: TimeEntryRow): TimeEntry {
+/** Map a Prisma row (with tags) to the framework-free `@honeydo/shared` contract. */
+function toContract(row: EntryWithTags): TimeEntry {
   return {
     id: row.id,
     userId: row.userId,
@@ -24,6 +28,12 @@ function toContract(row: TimeEntryRow): TimeEntry {
     startedAt: row.startedAt.toISOString(),
     stoppedAt: row.stoppedAt ? row.stoppedAt.toISOString() : null,
     durationSec: row.durationSec,
+    tags: row.tags.map((t) => ({
+      id: t.id,
+      userId: t.userId,
+      name: t.name,
+      color: t.color,
+    })),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -32,7 +42,7 @@ function toContract(row: TimeEntryRow): TimeEntry {
 /**
  * Time-entries service. Owns the **single-running-entry invariant** (FR-ENTRY-01/03/11):
  * start and continue stop any running entry inside one transaction before creating the
- * new one, so the app, widget, and Live Activity always observe one running entry.
+ * new one. Entries carry their tags; writes assign the user's own tags from `tagIds`.
  */
 @Injectable()
 export class TimeEntriesService {
@@ -43,6 +53,7 @@ export class TimeEntriesService {
     const rows = await this.prisma.timeEntry.findMany({
       where: { userId },
       orderBy: { startedAt: 'desc' },
+      include: withTags,
     });
     return rows.map(toContract);
   }
@@ -51,6 +62,7 @@ export class TimeEntriesService {
   async getRunning(userId: string): Promise<TimeEntry | null> {
     const row = await this.prisma.timeEntry.findFirst({
       where: { userId, stoppedAt: null },
+      include: withTags,
     });
     return row ? toContract(row) : null;
   }
@@ -58,6 +70,7 @@ export class TimeEntriesService {
   /** Start a new running entry, stopping any currently-running one first. */
   async start(userId: string, dto: CreateTimeEntryDto): Promise<TimeEntry> {
     const startedAt = dto.startedAt ? new Date(dto.startedAt) : new Date();
+    const tagRefs = await this.ownedTagRefs(userId, dto.tagIds);
     const row = await this.prisma.$transaction(async (tx) => {
       await this.stopRunning(tx, userId, startedAt);
       return tx.timeEntry.create({
@@ -67,13 +80,15 @@ export class TimeEntriesService {
           startedAt,
           stoppedAt: null,
           durationSec: null,
+          tags: tagRefs ? { connect: tagRefs } : undefined,
         },
+        include: withTags,
       });
     });
     return toContract(row);
   }
 
-  /** Continue a past entry: start a fresh running entry copying its note (FR-ENTRY-08). */
+  /** Continue a past entry: start a fresh running entry copying its note + tags. */
   async continue(userId: string, id: string): Promise<TimeEntry> {
     const source = await this.findOwned(userId, id);
     const startedAt = new Date();
@@ -86,7 +101,9 @@ export class TimeEntriesService {
           startedAt,
           stoppedAt: null,
           durationSec: null,
+          tags: { connect: source.tags.map((t) => ({ id: t.id })) },
         },
+        include: withTags,
       });
     });
     return toContract(row);
@@ -105,6 +122,7 @@ export class TimeEntriesService {
         stoppedAt,
         durationSec: durationSeconds(entry.startedAt, stoppedAt),
       },
+      include: withTags,
     });
     return toContract(row);
   }
@@ -119,6 +137,7 @@ export class TimeEntriesService {
     if (stoppedAt.getTime() <= startedAt.getTime()) {
       throw new BadRequestException('End time must be after start time');
     }
+    const tagRefs = await this.ownedTagRefs(userId, dto.tagIds);
     const row = await this.prisma.timeEntry.create({
       data: {
         userId,
@@ -126,7 +145,9 @@ export class TimeEntriesService {
         startedAt,
         stoppedAt,
         durationSec: durationSeconds(startedAt, stoppedAt),
+        tags: tagRefs ? { connect: tagRefs } : undefined,
       },
+      include: withTags,
     });
     return toContract(row);
   }
@@ -156,6 +177,8 @@ export class TimeEntriesService {
       }
     }
 
+    // `tagIds` omitted → leave tags unchanged; provided (incl. []) → set exactly those.
+    const tagRefs = await this.ownedTagRefs(userId, dto.tagIds);
     const row = await this.prisma.timeEntry.update({
       where: { id },
       data: {
@@ -163,7 +186,9 @@ export class TimeEntriesService {
         startedAt,
         stoppedAt,
         durationSec: stoppedAt ? durationSeconds(startedAt, stoppedAt) : null,
+        tags: tagRefs ? { set: tagRefs } : undefined,
       },
+      include: withTags,
     });
     return toContract(row);
   }
@@ -174,15 +199,34 @@ export class TimeEntriesService {
     await this.prisma.timeEntry.delete({ where: { id } });
   }
 
-  /** Fetch an entry that belongs to the user, or 404 (BC-SCOPE-01). */
-  private async findOwned(userId: string, id: string): Promise<TimeEntryRow> {
+  /** Fetch an entry (with tags) that belongs to the user, or 404 (BC-SCOPE-01). */
+  private async findOwned(userId: string, id: string): Promise<EntryWithTags> {
     const entry = await this.prisma.timeEntry.findFirst({
       where: { id, userId },
+      include: withTags,
     });
     if (!entry) {
       throw new NotFoundException('Time entry not found');
     }
     return entry;
+  }
+
+  /**
+   * Resolve `tagIds` to `{ id }` refs for the user's OWN tags only (foreign ids are
+   * dropped). Returns `undefined` when `tagIds` is omitted (caller leaves tags
+   * unchanged), or `[]` when the list is empty/all-foreign (caller clears them).
+   */
+  private async ownedTagRefs(
+    userId: string,
+    tagIds?: string[],
+  ): Promise<{ id: string }[] | undefined> {
+    if (tagIds === undefined) return undefined;
+    if (tagIds.length === 0) return [];
+    const owned = await this.prisma.tag.findMany({
+      where: { userId, id: { in: tagIds } },
+      select: { id: true },
+    });
+    return owned.map((t) => ({ id: t.id }));
   }
 
   /** Stop the user's running entry (if any) as of `at`, within a transaction. */

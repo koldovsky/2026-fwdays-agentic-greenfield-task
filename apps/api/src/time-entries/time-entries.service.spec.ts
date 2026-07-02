@@ -2,6 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../prisma/prisma.service';
 import { TimeEntriesService } from './time-entries.service';
 
+interface TagRow {
+  id: string;
+  userId: string;
+  name: string;
+  color: string | null;
+}
+
 interface Row {
   id: string;
   userId: string;
@@ -9,16 +16,24 @@ interface Row {
   startedAt: Date;
   stoppedAt: Date | null;
   durationSec: number | null;
+  tags: TagRow[];
   createdAt: Date;
   updatedAt: Date;
 }
 
+interface Relation {
+  connect?: { id: string }[];
+  set?: { id: string }[];
+}
+
 /**
- * Minimal in-memory stand-in for the slice of PrismaClient the service uses, so the
- * single-running invariant and user-scoping are tested without a database.
+ * In-memory stand-in for the slice of PrismaClient the service uses, tag-aware so the
+ * single-running invariant, user-scoping, and tag copying/assignment are testable without
+ * a database. `seedTags` pre-populates the user's tag store.
  */
-function makeFakePrisma() {
+function makeFakePrisma(seedTags: TagRow[] = []) {
   const rows: Row[] = [];
+  const tags: TagRow[] = [...seedTags];
   let seq = 0;
 
   const matches = (row: Row, where: Record<string, unknown> = {}): boolean => {
@@ -41,16 +56,32 @@ function makeFakePrisma() {
     return true;
   };
 
+  const resolveTags = (rel?: Relation): TagRow[] | undefined => {
+    if (!rel) return undefined;
+    const refs = rel.set ?? rel.connect ?? [];
+    return refs
+      .map((r) => tags.find((t) => t.id === r.id))
+      .filter((t): t is TagRow => !!t);
+  };
+
+  const scalars = (data: Record<string, unknown>): Partial<Row> => {
+    const { tags: _t, ...rest } = data;
+    void _t;
+    return rest;
+  };
+
   const client = {
     timeEntry: {
-      create: ({
-        data,
-      }: {
-        data: Omit<Row, 'id' | 'createdAt' | 'updatedAt'>;
-      }) => {
+      create: ({ data }: { data: Record<string, unknown> }) => {
         const now = new Date();
         const row: Row = {
-          ...data,
+          note: '',
+          userId: '',
+          startedAt: now,
+          stoppedAt: null,
+          durationSec: null,
+          ...scalars(data),
+          tags: resolveTags(data.tags as Relation) ?? [],
           id: `e${++seq}`,
           createdAt: now,
           updatedAt: now,
@@ -67,11 +98,13 @@ function makeFakePrisma() {
         data,
       }: {
         where: { id: string };
-        data: Partial<Row>;
+        data: Record<string, unknown>;
       }) => {
         const row = rows.find((r) => r.id === where.id);
         if (!row) throw new Error('not found');
-        Object.assign(row, data, { updatedAt: new Date() });
+        const nextTags = resolveTags(data.tags as Relation);
+        Object.assign(row, scalars(data), { updatedAt: new Date() });
+        if (nextTags) row.tags = nextTags;
         return Promise.resolve(row);
       },
       delete: ({ where }: { where: { id: string } }) => {
@@ -80,13 +113,27 @@ function makeFakePrisma() {
         return Promise.resolve();
       },
     },
+    tag: {
+      findMany: ({
+        where,
+      }: {
+        where: { userId: string; id: { in: string[] } };
+      }) =>
+        Promise.resolve(
+          tags
+            .filter(
+              (t) => t.userId === where.userId && where.id.in.includes(t.id),
+            )
+            .map((t) => ({ id: t.id })),
+        ),
+    },
     $transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(client),
   };
   return { client, rows };
 }
 
-function makeService() {
-  const { client, rows } = makeFakePrisma();
+function makeService(seedTags: TagRow[] = []) {
+  const { client, rows } = makeFakePrisma(seedTags);
   const service = new TimeEntriesService(client as unknown as PrismaService);
   return { service, rows };
 }
@@ -102,7 +149,6 @@ describe('TimeEntriesService', () => {
     );
     expect(running).toHaveLength(1);
     expect(running[0].note).toBe('second');
-    // The previous entry was stopped with a computed duration.
     const stopped = rows.find((r) => r.note === 'first');
     expect(stopped?.stoppedAt).not.toBeNull();
     expect(stopped?.durationSec).not.toBeNull();
@@ -121,6 +167,47 @@ describe('TimeEntriesService', () => {
     expect(cont.note).toBe('design');
     expect(cont.stoppedAt).toBeNull();
     expect(rows.filter((r) => r.stoppedAt === null)).toHaveLength(1);
+  });
+
+  it('continue copies the source entry’s tags (FR-ENTRY-08, FR-TAG-02)', async () => {
+    const designTag: TagRow = {
+      id: 't1',
+      userId: 'u1',
+      name: 'Design',
+      color: null,
+    };
+    const { service } = makeService([designTag]);
+    const source = await service.createManual('u1', {
+      note: 'design',
+      startedAt: '2026-06-01T09:00:00.000Z',
+      stoppedAt: '2026-06-01T10:00:00.000Z',
+      tagIds: ['t1'],
+    });
+    expect(source.tags.map((t) => t.id)).toEqual(['t1']);
+
+    const cont = await service.continue('u1', source.id);
+    expect(cont.tags.map((t) => t.id)).toEqual(['t1']);
+  });
+
+  it('assigns only the user’s own tags; sets and clears on update (FR-TAG-02)', async () => {
+    const mine: TagRow = { id: 't1', userId: 'u1', name: 'Mine', color: null };
+    const foreign: TagRow = {
+      id: 't2',
+      userId: 'u2',
+      name: 'Foreign',
+      color: null,
+    };
+    const { service } = makeService([mine, foreign]);
+
+    const created = await service.start('u1', {
+      note: 'work',
+      tagIds: ['t1', 't2'],
+    });
+    expect(created.tags.map((t) => t.id)).toEqual(['t1']); // foreign dropped
+
+    const stopped = await service.stop('u1', created.id);
+    const cleared = await service.update('u1', stopped.id, { tagIds: [] });
+    expect(cleared.tags).toEqual([]);
   });
 
   it('does not let one user touch another user’s entry (BC-SCOPE-01)', async () => {

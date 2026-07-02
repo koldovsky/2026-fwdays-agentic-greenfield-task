@@ -22,6 +22,7 @@ model User {
   identities   AuthIdentity[]
   refreshTokens RefreshToken[]
   timeEntries  TimeEntry[]
+  tags         Tag[]
 }
 
 /// A sign-in provider linked to a user. One verified email maps to one User across
@@ -65,8 +66,26 @@ model TimeEntry {
   startedAt   DateTime  @default(now())
   stoppedAt   DateTime?
   durationSec Int?
+  tags        Tag[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([userId, startedAt])
+}
+
+/// A user-defined label for grouping/filtering entries (FR-TAG-01). Implicit
+/// many-to-many with TimeEntry: deleting a tag detaches it (removes join rows) and
+/// never deletes entries (FR-TAG-03). Name is unique per user.
+model Tag {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  entries   TimeEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
 }

@@ -21,6 +21,7 @@ function entry(
     startedAt,
     stoppedAt,
     durationSec,
+    tags: [],
     createdAt: startedAt,
     updatedAt: startedAt,
   };

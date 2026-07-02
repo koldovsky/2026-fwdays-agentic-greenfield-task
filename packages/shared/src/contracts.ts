@@ -4,6 +4,28 @@
  * single source of truth for request/response shapes; never duplicate them in an app.
  */
 
+/** A user-defined label for grouping/filtering entries (FR-TAG-01). */
+export interface Tag {
+  id: string;
+  /** Owning user's id (BC-SCOPE-01). */
+  userId: string;
+  name: string;
+  /** Optional hex color for the tag's dot; null for a neutral dot. */
+  color: string | null;
+}
+
+/** Payload to create a tag. */
+export interface CreateTag {
+  name: string;
+  color?: string | null;
+}
+
+/** Payload to edit a tag; every field optional. */
+export interface UpdateTag {
+  name?: string;
+  color?: string | null;
+}
+
 /** A single tracked time entry, owned by one user. `durationSec` is null while running. */
 export interface TimeEntry {
   id: string;
@@ -17,6 +39,8 @@ export interface TimeEntry {
   stoppedAt: string | null;
   /** Elapsed seconds once stopped, or null while running. */
   durationSec: number | null;
+  /** Tags assigned to this entry (FR-TAG-02). */
+  tags: Tag[];
   /** ISO 8601 creation timestamp. */
   createdAt: string;
   /** ISO 8601 last-update timestamp. */
@@ -28,6 +52,8 @@ export interface CreateTimeEntry {
   note: string;
   /** Optional explicit start; defaults to server "now" when omitted. */
   startedAt?: string;
+  /** Ids of the user's tags to assign (FR-TAG-02). */
+  tagIds?: string[];
 }
 
 /** Payload to add a completed manual entry with explicit times (FR-ENTRY-04). */
@@ -37,6 +63,8 @@ export interface ManualTimeEntry {
   startedAt: string;
   /** ISO 8601 stop timestamp; MUST be after `startedAt`. */
   stoppedAt: string;
+  /** Ids of the user's tags to assign (FR-TAG-02). */
+  tagIds?: string[];
 }
 
 /** Payload to edit an existing entry; every field optional (FR-ENTRY-05). */
@@ -46,6 +74,8 @@ export interface UpdateTimeEntry {
   startedAt?: string;
   /** ISO 8601 stop timestamp. */
   stoppedAt?: string;
+  /** Ids of the user's tags to set; omit to leave unchanged, `[]` to clear (FR-TAG-02). */
+  tagIds?: string[];
 }
 
 /** Payload to stop a running timer. */
