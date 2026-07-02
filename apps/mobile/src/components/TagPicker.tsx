@@ -3,6 +3,7 @@ import { Text, TextInput, View } from 'react-native';
 import { Check, Plus } from 'lucide-react-native';
 import { useCreateTag, useTags } from '../hooks/useTags';
 import { tagPalette, useTheme } from '../theme';
+import { ColorPicker } from './ColorPicker';
 import { KEYBOARD_DONE_ID } from './KeyboardDoneAccessory';
 import { PressableScale } from './PressableScale';
 
@@ -146,28 +147,7 @@ export function TagPicker({ value, onChange }: TagPickerProps) {
               backgroundColor: t.colors.surfaceAlt,
             }}
           />
-          <View style={{ flexDirection: 'row', gap: t.space[2], alignItems: 'center' }}>
-            {tagPalette.map((c) => (
-              <PressableScale
-                key={c}
-                onPress={() => setColor(c)}
-                scaleTo={0.85}
-                accessibilityRole="button"
-                accessibilityLabel={`Color ${c}`}
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: t.radius.pill,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 2,
-                  borderColor: color === c ? t.colors.text : 'transparent',
-                }}
-              >
-                <View style={{ width: 18, height: 18, borderRadius: t.radius.pill, backgroundColor: c }} />
-              </PressableScale>
-            ))}
-          </View>
+          <ColorPicker value={color} onChange={setColor} />
           <View style={{ flexDirection: 'row', gap: t.space[2] }}>
             <PressableScale
               onPress={submitNew}

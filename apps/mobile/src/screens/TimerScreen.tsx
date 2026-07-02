@@ -15,6 +15,7 @@ import { EmptyState } from '../components/EmptyState';
 import { EntryFormModal, type EntryFormValues } from '../components/EntryFormModal';
 import { KEYBOARD_DONE_ID } from '../components/KeyboardDoneAccessory';
 import { PressableScale } from '../components/PressableScale';
+import { TagPicker } from '../components/TagPicker';
 import { TimerEntry } from '../components/TimerEntry';
 import { useElapsed } from '../hooks/useElapsed';
 import {
@@ -47,8 +48,20 @@ function isSameLocalDay(iso: string, ref: Date): boolean {
  */
 export function TimerScreen() {
   const t = useTheme();
-  const { data: entries = [], isLoading, refetch, isRefetching } = useEntries();
+  const { data: entries = [], isLoading, refetch } = useEntries();
   const running = useRunningEntry();
+
+  // Local pull state so this screen's spinner is independent of the shared query's
+  // background refetches (e.g. a pull on History shouldn't spin here).
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const start = useStartEntry();
   const stop = useStopEntry();
@@ -58,6 +71,7 @@ export function TimerScreen() {
   const remove = useDeleteEntry();
 
   const [note, setNote] = useState('');
+  const [startTags, setStartTags] = useState<string[]>([]);
   const [editing, setEditing] = useState<TimeEntry | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   // First run shows the empty hero; its CTA reveals the composer (input auto-focused).
@@ -77,7 +91,8 @@ export function TimerScreen() {
       }
       stop.mutate(running.id);
     } else if (note.trim()) {
-      start.mutate({ note: note.trim() });
+      start.mutate({ note: note.trim(), tagIds: startTags });
+      setStartTags([]);
     }
   };
 
@@ -117,15 +132,15 @@ export function TimerScreen() {
         />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: t.screenGutter, gap: t.space[4] }}
+          contentContainerStyle={{ flexGrow: 1, padding: t.screenGutter, gap: t.space[4] }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           alwaysBounceVertical
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={() => void refetch()}
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
               tintColor={t.colors.accent}
             />
           }
@@ -136,6 +151,8 @@ export function TimerScreen() {
             onChangeNote={setNote}
             onToggle={onToggle}
             autoFocus={composing}
+            tagIds={startTags}
+            onChangeTags={setStartTags}
             onBlur={() => {
               // Leaving an empty composer with nothing running collapses back to the hero.
               if (!running && !note.trim()) setComposing(false);
@@ -265,16 +282,20 @@ interface StartControlProps {
   onChangeNote: (note: string) => void;
   onToggle: () => void;
   autoFocus?: boolean;
+  tagIds: string[];
+  onChangeTags: (tagIds: string[]) => void;
   onBlur?: () => void;
 }
 
-/** The start/running control card: note input, live elapsed, and the round toggle. */
+/** The start/running control card: note input, tag picker, live elapsed, and the toggle. */
 function StartControl({
   running,
   note,
   onChangeNote,
   onToggle,
   autoFocus,
+  tagIds,
+  onChangeTags,
   onBlur,
 }: StartControlProps) {
   const t = useTheme();
@@ -309,6 +330,7 @@ function StartControl({
         inputAccessoryViewID={KEYBOARD_DONE_ID}
         style={{ color: t.colors.text, fontSize: t.fontSize.headline, fontWeight: t.fontWeight.semibold }}
       />
+      {!isRunning ? <TagPicker value={tagIds} onChange={onChangeTags} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text
           style={{

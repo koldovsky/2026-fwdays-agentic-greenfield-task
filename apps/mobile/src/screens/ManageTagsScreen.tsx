@@ -3,6 +3,8 @@ import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Check, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import type { Tag } from '@honeydo/shared';
+import { Button } from '../components/Button';
+import { ColorPicker } from '../components/ColorPicker';
 import { KEYBOARD_DONE_ID } from '../components/KeyboardDoneAccessory';
 import { PressableScale } from '../components/PressableScale';
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '../hooks/useTags';
@@ -33,7 +35,7 @@ export function ManageTagsScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
       <ScrollView
-        contentContainerStyle={{ padding: t.screenGutter, gap: t.space[3] }}
+        contentContainerStyle={{ padding: t.screenGutter, gap: t.space[4] }}
         keyboardShouldPersistTaps="handled"
       >
         {editing === 'new' ? (
@@ -44,100 +46,102 @@ export function ManageTagsScreen() {
               createTag.mutate({ name, color }, { onSuccess: () => setEditing(null) })
             }
           />
-        ) : (
-          <PressableScale
-            onPress={() => setEditing('new')}
-            accessibilityRole="button"
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: t.space[2],
-              paddingVertical: t.space[3],
-              borderRadius: t.radius.md,
-              borderWidth: 1,
-              borderStyle: 'dashed',
-              borderColor: t.colors.border,
-            }}
-          >
-            <Plus size={18} color={t.colors.accent} />
-            <Text style={{ color: t.colors.accent, fontSize: t.fontSize.callout, fontWeight: t.fontWeight.bold }}>
-              New tag
-            </Text>
-          </PressableScale>
-        )}
+        ) : null}
 
         {tags.length === 0 && editing !== 'new' ? (
-          <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.callout, textAlign: 'center', marginTop: t.space[6] }}>
+          <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.callout, textAlign: 'center', marginTop: t.space[8] }}>
             No tags yet. Create one to label and filter your entries.
           </Text>
         ) : null}
 
-        {tags.map((tag) =>
-          editing === tag.id ? (
-            <TagEditor
-              key={tag.id}
-              initialName={tag.name}
-              initialColor={tag.color}
-              busy={updateTag.isPending}
-              onCancel={() => setEditing(null)}
-              onSave={(name, color) =>
-                updateTag.mutate(
-                  { id: tag.id, body: { name, color } },
-                  { onSuccess: () => setEditing(null) },
-                )
-              }
-            />
-          ) : (
-            <View
-              key={tag.id}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: t.space[3],
-                paddingVertical: t.space[3],
-                paddingHorizontal: t.space[4],
-                borderRadius: t.radius.md,
-                borderWidth: 1,
-                borderColor: t.colors.border,
-                backgroundColor: t.colors.surface,
-              }}
-            >
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: t.radius.pill,
-                  backgroundColor: tag.color ?? t.colors.textMuted,
-                }}
-              />
-              <Text style={{ flex: 1, color: t.colors.text, fontSize: t.fontSize.body, fontWeight: t.fontWeight.medium }}>
-                {tag.name}
-              </Text>
-              <PressableScale
-                onPress={() => setEditing(tag.id)}
-                scaleTo={0.85}
-                accessibilityRole="button"
-                accessibilityLabel={`Edit ${tag.name}`}
-                hitSlop={8}
-                style={{ padding: t.space[2] }}
-              >
-                <Pencil size={18} color={t.colors.textMuted} />
-              </PressableScale>
-              <PressableScale
-                onPress={() => confirmDelete(tag)}
-                scaleTo={0.85}
-                accessibilityRole="button"
-                accessibilityLabel={`Delete ${tag.name}`}
-                hitSlop={8}
-                style={{ padding: t.space[2] }}
-              >
-                <Trash2 size={18} color={t.colors.danger} />
-              </PressableScale>
-            </View>
-          ),
-        )}
+        {tags.length > 0 ? (
+          <View
+            style={{
+              borderRadius: t.radius.md,
+              borderWidth: 1,
+              borderColor: t.colors.border,
+              backgroundColor: t.colors.surface,
+              overflow: 'hidden',
+            }}
+          >
+            {tags.map((tag, i) =>
+              editing === tag.id ? (
+                <View key={tag.id} style={{ padding: t.space[4] }}>
+                  <TagEditor
+                    initialName={tag.name}
+                    initialColor={tag.color}
+                    busy={updateTag.isPending}
+                    onCancel={() => setEditing(null)}
+                    onSave={(name, color) =>
+                      updateTag.mutate(
+                        { id: tag.id, body: { name, color } },
+                        { onSuccess: () => setEditing(null) },
+                      )
+                    }
+                  />
+                </View>
+              ) : (
+                <View
+                  key={tag.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: t.space[3],
+                    paddingVertical: t.space[3],
+                    paddingHorizontal: t.space[4],
+                    borderTopWidth: i === 0 ? 0 : 1,
+                    borderTopColor: t.colors.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: t.radius.pill,
+                      backgroundColor: tag.color ?? t.colors.textMuted,
+                    }}
+                  />
+                  <Text style={{ flex: 1, color: t.colors.text, fontSize: t.fontSize.body, fontWeight: t.fontWeight.medium }}>
+                    {tag.name}
+                  </Text>
+                  <PressableScale
+                    onPress={() => setEditing(tag.id)}
+                    scaleTo={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${tag.name}`}
+                    hitSlop={8}
+                    style={{ padding: t.space[2] }}
+                  >
+                    <Pencil size={18} color={t.colors.textMuted} />
+                  </PressableScale>
+                  <PressableScale
+                    onPress={() => confirmDelete(tag)}
+                    scaleTo={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete ${tag.name}`}
+                    hitSlop={8}
+                    style={{ padding: t.space[2] }}
+                  >
+                    <Trash2 size={18} color={t.colors.danger} />
+                  </PressableScale>
+                </View>
+              ),
+            )}
+          </View>
+        ) : null}
       </ScrollView>
+
+      {/* New tag lives at the bottom, styled like the Empty State primary action. */}
+      {editing !== 'new' ? (
+        <View style={{ padding: t.screenGutter, paddingTop: t.space[2] }}>
+          <Button
+            onPress={() => setEditing('new')}
+            leadingIcon={<Plus size={20} color={t.colors.onAccent} />}
+          >
+            New tag
+          </Button>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -193,28 +197,7 @@ function TagEditor({ initialName, initialColor, busy, onSave, onCancel }: TagEdi
           backgroundColor: t.colors.surfaceAlt,
         }}
       />
-      <View style={{ flexDirection: 'row', gap: t.space[2], alignItems: 'center' }}>
-        {tagPalette.map((c) => (
-          <PressableScale
-            key={c}
-            onPress={() => setColor(c)}
-            scaleTo={0.85}
-            accessibilityRole="button"
-            accessibilityLabel={`Color ${c}`}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: t.radius.pill,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 2,
-              borderColor: color === c ? t.colors.text : 'transparent',
-            }}
-          >
-            <View style={{ width: 20, height: 20, borderRadius: t.radius.pill, backgroundColor: c }} />
-          </PressableScale>
-        ))}
-      </View>
+      <ColorPicker value={color} onChange={setColor} />
       <View style={{ flexDirection: 'row', gap: t.space[2] }}>
         <PressableScale
           onPress={save}

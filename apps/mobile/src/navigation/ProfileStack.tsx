@@ -29,8 +29,12 @@ export function ProfileStack() {
         options={{
           title: 'Manage tags',
           headerStyle: { backgroundColor: t.colors.bg },
+          headerShadowVisible: false,
           headerTintColor: t.colors.accent,
           headerTitleStyle: { color: t.colors.text },
+          // Just the back chevron — no "ProfileHome" label.
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackTitle: '',
         }}
       />
     </Stack.Navigator>

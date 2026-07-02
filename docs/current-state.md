@@ -6,6 +6,32 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T16:30Z — Tags UI polish (11 review items)
+
+1. Tag selection added to the Timer "What are you working on?" composer (`StartControl` now
+   hosts a `TagPicker`; start passes `tagIds`).
+2. History filter row height constrained (horizontal `ScrollView` `flexGrow:0` + `maxHeight`)
+   — no longer stretches to fill the screen.
+3. Active filter chip now matches design: **solid amber** fill + `on-accent` text/dot.
+4. Pull-refresh spinner is per-screen local state (not the shared query's `isRefetching`), so
+   refreshing History no longer spins Timer.
+5. History refresh spinner is amber (custom `RefreshControl` with `tintColor`), matching Timer.
+6. Pull-to-refresh works from anywhere on the screen (Timer `contentContainerStyle` `flexGrow:1`
+   so the whole area is pannable).
+7–9. Manage Tags redesigned: grouped card list; the **New tag** action moved to a bottom
+   primary `Button` (Empty-State style, `Plus` icon).
+10. Manage Tags back button is now a bare chevron (`headerBackButtonDisplayMode: 'minimal'`) —
+    no "ProfileHome" label.
+11. New reusable `ColorPicker` (preset palette **+ custom hex input**) used by the entry-form
+    `TagPicker` and the Manage Tags editor.
+
+Also fixed a same-millisecond timing flake in the entries tag test.
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. All JS —
+hot-reloads. Committed on `dev`. `add-tags` still at 28/29 (device smoke 7.2 outstanding).
+
+---
+
 ## 2026-07-02T15:30Z — Implemented `add-tags` mobile (groups 4–7; 28/29 tasks)
 
 **Done:** `/opsx:apply add-tags` mobile layer, on top of the shared+API layer from `065018a`.

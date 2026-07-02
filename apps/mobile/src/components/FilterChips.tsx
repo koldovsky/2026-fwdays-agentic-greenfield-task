@@ -31,19 +31,18 @@ export function FilterChips({ tags, selected, onChange }: FilterChipsProps) {
     <PressableScale
       key={key}
       onPress={onPress}
-      scaleTo={0.92}
+      scaleTo={0.95}
       accessibilityRole="button"
       accessibilityState={active ? { selected: true } : {}}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: t.space[2],
-        paddingVertical: t.space[2],
-        paddingHorizontal: t.space[3],
+        gap: 7,
+        height: 34,
+        paddingHorizontal: t.space[4],
         borderRadius: t.radius.pill,
-        borderWidth: 1,
-        borderColor: active ? t.colors.accent : t.colors.border,
-        backgroundColor: active ? t.colors.accentFaint : t.colors.surface,
+        // Design FilterChip: solid amber when selected, soft fill otherwise.
+        backgroundColor: active ? t.colors.accent : t.colors.fillSoft,
       }}
     >
       {dotColor !== undefined ? (
@@ -52,13 +51,13 @@ export function FilterChips({ tags, selected, onChange }: FilterChipsProps) {
             width: 8,
             height: 8,
             borderRadius: t.radius.pill,
-            backgroundColor: dotColor ?? t.colors.textMuted,
+            backgroundColor: active ? t.colors.onAccent : (dotColor ?? t.colors.textMuted),
           }}
         />
       ) : null}
       <Text
         style={{
-          color: active ? t.colors.text : t.colors.textMuted,
+          color: active ? t.colors.onAccent : t.colors.text,
           fontSize: t.fontSize.subhead,
           fontWeight: t.fontWeight.semibold,
         }}
@@ -73,7 +72,13 @@ export function FilterChips({ tags, selected, onChange }: FilterChipsProps) {
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ gap: t.space[2], paddingHorizontal: t.screenGutter, paddingVertical: t.space[2] }}
+      style={{ flexGrow: 0, maxHeight: 34 + t.space[4] }}
+      contentContainerStyle={{
+        gap: t.space[2],
+        paddingHorizontal: t.screenGutter,
+        paddingVertical: t.space[2],
+        alignItems: 'center',
+      }}
     >
       {chip('all', 'All', selected.length === 0, () => onChange([]))}
       {tags.map((tag) =>

@@ -201,6 +201,8 @@ describe('TimeEntriesService', () => {
 
     const created = await service.start('u1', {
       note: 'work',
+      // Explicit past start so stop yields stoppedAt > startedAt (no same-ms flake).
+      startedAt: new Date(Date.now() - 60_000).toISOString(),
       tagIds: ['t1', 't2'],
     });
     expect(created.tags.map((t) => t.id)).toEqual(['t1']); // foreign dropped

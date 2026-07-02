@@ -13,7 +13,19 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('mode:', d['actionContext']['mode']\\); print\\('artifacts:', [\\(a['id'],a['status']\\) for a in d['artifacts']]\\)\")",
       "Bash(python3 -)",
       "Bash(rm -rf /tmp/hxth)",
-      "Bash(perl -0pi -e 's/- \\\\[ \\\\] \\([1-4]\\\\.\\\\d \\)/- [x] $1/g; s/- \\\\[ \\\\] \\(5\\\\.[123] \\)/- [x] $1/g' openspec/changes/add-theming/tasks.md)"
+      "Bash(perl -0pi -e 's/- \\\\[ \\\\] \\([1-4]\\\\.\\\\d \\)/- [x] $1/g; s/- \\\\[ \\\\] \\(5\\\\.[123] \\)/- [x] $1/g' openspec/changes/add-theming/tasks.md)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['instruction']\\); print\\('---TEMPLATE---'\\); print\\(d['template']\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('state:', d.get\\('state'\\)\\); print\\('progress:', d.get\\('progress'\\)\\); print\\('contextFiles:', json.dumps\\(d.get\\('contextFiles'\\), indent=2\\)\\)\")",
+      "Bash(grep -n 'toISOString\\\\|$transaction\\\\|NotFoundException\\\\|BadRequestException' apps/api/src/auth/auth.service.ts)",
+      "Bash(npx eslint *)",
+      "Bash(git commit *)",
+      "Bash(python3 -c \"import sys,json; print\\(json.load\\(sys.stdin\\)['scripts'].get\\('gate'\\)\\)\")",
+      "Bash(python3 -c \"import json;s=json.load\\(open\\('package.json'\\)\\)['scripts'];[print\\(k,'->',v\\) for k,v in s.items\\(\\) if k in \\('api','migrate'\\)]\")",
+      "Bash(python3 -c \"import json;s=json.load\\(open\\('apps/api/package.json'\\)\\)['scripts'];[print\\(k,'->',v\\) for k,v in s.items\\(\\) if 'start' in k or k=='build']\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('schema:', d['schemaName']\\); print\\('mode:', d['actionContext']['mode']\\); print\\('artifacts:', [\\(a['id'],a['status']\\) for a in d['artifacts']]\\); print\\('deltaSpecs:', d['artifactPaths']['specs']['existingOutputPaths']\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d if isinstance\\(d,list\\) else d\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('applyRequires:', d['applyRequires']\\); print\\('artifacts:', [\\(a['id'],a['status']\\) for a in d['artifacts']]\\)\")",
+      "Bash(awk '/### Requirement: Continue a past entry/,/^### Requirement: Entries are user-scoped/' openspec/specs/time-entries/spec.md)"
     ]
   }
 }

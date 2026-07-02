@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import type { TimeEntry } from '@honeydo/shared';
@@ -43,13 +43,23 @@ function dayLabel(dateKey: string): string {
 /** History tab: entries grouped by local day, newest first, with per-day totals. */
 export function HistoryScreen() {
   const t = useTheme();
-  const { data: entries = [], isLoading, refetch, isRefetching } = useEntries();
+  const { data: entries = [], isLoading, refetch } = useEntries();
   const { data: tags = [] } = useTags();
   const continueEntry = useContinueEntry();
   const update = useUpdateEntry();
   const remove = useDeleteEntry();
   const [editing, setEditing] = useState<TimeEntry | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const filtered = filterEntriesByTags(entries, selectedTags);
   const rows: Row[] = [];
@@ -99,8 +109,13 @@ export function HistoryScreen() {
           }
           getItemType={(item) => item.kind}
           contentContainerStyle={{ paddingHorizontal: t.screenGutter, paddingBottom: t.space[8] }}
-          onRefresh={() => void refetch()}
-          refreshing={isRefetching}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              tintColor={t.colors.accent}
+            />
+          }
           renderItem={({ item }) =>
             item.kind === 'header' ? (
               <View
