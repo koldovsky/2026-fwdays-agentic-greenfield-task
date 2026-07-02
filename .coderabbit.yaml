@@ -7,6 +7,15 @@ tone_instructions: "Ментор курсу Agentic Engineering (greenfield). У
 
 reviews:
   profile: "assertive"
+  # Free-plan limit = 150 files/PR; whole-project PR has 300+. Filter generated/process
+  # artifacts (spec archives, lockfile, agent defs) so the code itself gets reviewed.
+  # Evidence of practices stays in the PR description per the instructions below.
+  path_filters:
+    - "!openspec/**"
+    - "!docs/**"
+    - "!.claude/**"
+    - "!package-lock.json"
+    - "!prisma/migrations/**"
   request_changes_workflow: false
   high_level_summary: true
   poem: false
