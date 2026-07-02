@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Plus, Square } from 'lucide-react-native';
@@ -93,7 +100,12 @@ export function TimerScreen() {
         />
       ) : null}
 
-      <Header onAdd={() => setAddOpen(true)} />
+      <Header
+        onAdd={() => {
+          Keyboard.dismiss();
+          setAddOpen(true);
+        }}
+      />
 
       {firstRun ? (
         <EmptyState
@@ -107,6 +119,8 @@ export function TimerScreen() {
         <ScrollView
           contentContainerStyle={{ padding: t.screenGutter, gap: t.space[4] }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          alwaysBounceVertical
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -122,6 +136,10 @@ export function TimerScreen() {
             onChangeNote={setNote}
             onToggle={onToggle}
             autoFocus={composing}
+            onBlur={() => {
+              // Leaving an empty composer with nothing running collapses back to the hero.
+              if (!running && !note.trim()) setComposing(false);
+            }}
           />
 
           {todayStopped.length > 0 ? (
@@ -245,6 +263,7 @@ interface StartControlProps {
   onChangeNote: (note: string) => void;
   onToggle: () => void;
   autoFocus?: boolean;
+  onBlur?: () => void;
 }
 
 /** The start/running control card: note input, live elapsed, and the round toggle. */
@@ -254,13 +273,14 @@ function StartControl({
   onChangeNote,
   onToggle,
   autoFocus,
+  onBlur,
 }: StartControlProps) {
   const t = useTheme();
   const isRunning = !!running;
   const elapsed = useElapsed(running?.startedAt ?? null, isRunning);
   const canStart = isRunning || note.trim().length > 0;
 
-  return (
+  const card = (
     <View
       style={[
         {
@@ -271,24 +291,18 @@ function StartControl({
           padding: t.space[5],
           gap: t.space[4],
         },
-        isRunning
-          ? {
-              // Amber glow while running (design `--shadow-glow`).
-              shadowColor: t.colors.accent,
-              shadowOpacity: 0.45,
-              shadowRadius: 22,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 14,
-            }
-          : t.shadow[2],
+        isRunning ? null : t.shadow[2],
       ]}
     >
       <TextInput
         value={note}
         onChangeText={onChangeNote}
+        onBlur={onBlur}
         placeholder="What are you working on?"
         placeholderTextColor={t.colors.textMuted}
         autoFocus={autoFocus}
+        autoCorrect={false}
+        spellCheck={false}
         returnKeyType="done"
         inputAccessoryViewID={KEYBOARD_DONE_ID}
         style={{ color: t.colors.text, fontSize: t.fontSize.headline, fontWeight: t.fontWeight.semibold }}
@@ -331,6 +345,26 @@ function StartControl({
           )}
         </PressableScale>
       </View>
+    </View>
+  );
+
+  if (!isRunning) return card;
+
+  // Running: an opaque wrapper casts a real amber glow *outside* the card (a translucent
+  // card can't cast a visible shadow itself), matching the design's `--shadow-glow`.
+  return (
+    <View
+      style={{
+        borderRadius: t.radius.lg,
+        backgroundColor: t.colors.bg,
+        shadowColor: t.colors.accent,
+        shadowOpacity: 0.55,
+        shadowRadius: 26,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 16,
+      }}
+    >
+      {card}
     </View>
   );
 }

@@ -122,7 +122,8 @@ export function EntryFormModal({
                 onChangeText={onChange}
                 onBlur={onBlur}
                 placeholder="What did you work on?"
-                autoFocus={!isEdit}
+                autoCorrect={false}
+                spellCheck={false}
                 inputAccessoryViewID={KEYBOARD_DONE_ID}
                 returnKeyType="done"
               />
@@ -134,20 +135,46 @@ export function EntryFormModal({
             </Text>
           ) : null}
 
-          <Controller
-            control={control}
-            name="startedAt"
-            render={({ field: { onChange, value } }) => (
-              <DateTimeField label="Start" value={value} onChange={onChange} />
-            )}
-          />
-          <Controller
-            control={control}
-            name="stoppedAt"
-            render={({ field: { onChange, value } }) => (
-              <DateTimeField label="End" value={value} onChange={onChange} />
-            )}
-          />
+          {/* When — a grouped card of tappable date/time controls (not a text field). */}
+          <View style={{ gap: t.space[2] }}>
+            <Text
+              style={{
+                color: t.colors.textMuted,
+                fontSize: t.fontSize.footnote,
+                fontWeight: t.fontWeight.bold,
+                letterSpacing: 1,
+              }}
+            >
+              WHEN
+            </Text>
+            <View
+              style={{
+                backgroundColor: t.colors.surface,
+                borderWidth: 1,
+                borderColor: t.colors.border,
+                borderRadius: t.radius.md,
+              }}
+            >
+              <Controller
+                control={control}
+                name="startedAt"
+                render={({ field: { onChange, value } }) => (
+                  <DateTimeField label="Start" value={value} onChange={onChange} />
+                )}
+              />
+              <View style={{ height: 1, backgroundColor: t.colors.border, marginLeft: t.space[4] }} />
+              <Controller
+                control={control}
+                name="stoppedAt"
+                render={({ field: { onChange, value } }) => (
+                  <DateTimeField label="End" value={value} onChange={onChange} />
+                )}
+              />
+            </View>
+            <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.caption }}>
+              Tap the date or time to change it.
+            </Text>
+          </View>
           {errors.stoppedAt ? (
             <Text style={{ color: t.colors.danger, fontSize: t.fontSize.footnote }}>
               {errors.stoppedAt.message}
@@ -204,13 +231,9 @@ function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
         minHeight: 52,
         paddingHorizontal: t.space[4],
         paddingVertical: t.space[2],
-        backgroundColor: t.colors.surfaceAlt,
-        borderWidth: 1,
-        borderColor: t.colors.border,
-        borderRadius: t.radius.md,
       }}
     >
-      <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.semibold }}>
+      <Text style={{ color: t.colors.text, fontSize: t.fontSize.body, fontWeight: t.fontWeight.medium }}>
         {label}
       </Text>
 
@@ -219,6 +242,7 @@ function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
           value={value}
           mode="datetime"
           display="compact"
+          accentColor={t.colors.accent}
           themeVariant={t.scheme}
           // Opening the picker popover; drop the keyboard so nothing overlaps.
           onChange={(_e, date) => {
@@ -234,8 +258,16 @@ function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
               setOpen(true);
             }}
             accessibilityRole="button"
+            style={{
+              paddingHorizontal: t.space[3],
+              paddingVertical: t.space[2],
+              borderRadius: t.radius.xs,
+              backgroundColor: t.colors.fillSoft,
+            }}
           >
-            <Text style={{ color: t.colors.text, fontSize: t.fontSize.body }}>{formatted}</Text>
+            <Text style={{ color: t.colors.accent, fontSize: t.fontSize.body, fontWeight: t.fontWeight.semibold }}>
+              {formatted}
+            </Text>
           </Pressable>
           {open ? (
             <DateTimePicker

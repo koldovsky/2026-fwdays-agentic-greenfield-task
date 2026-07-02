@@ -6,6 +6,29 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T13:30Z — Fourth fixes pass (interaction polish)
+
+1. **Pull-to-refresh** now works: Timer `ScrollView` got `alwaysBounceVertical` (short content
+   wouldn't pull before); History `FlashList` uses `onRefresh`/`refreshing` props.
+2. **Running glow**: a translucent card can't cast a visible iOS shadow, so the running Timer card
+   is now wrapped in an opaque glow wrapper that casts the amber shadow **outside** the box.
+3. **Date fields redesigned**: grouped under a `WHEN` card with a divider + "tap the date or time"
+   hint; rows no longer look like text inputs (label + native compact pickers as the obvious
+   controls; accentColor tint).
+4. **Modal timing**: removed the note `autoFocus`, so the keyboard no longer pops before the sheet.
+5. **Tab-switch flash**: `TabNavigator` sets `lazy: false`, `animation: 'none'`, and an opaque
+   `sceneStyle` bg — no more first-switch flash of the previous screen.
+6. **Keyboard flicker**: note inputs (Timer + modal) set `autoCorrect={false}`/`spellCheck={false}`
+   to stop the QuickType/suggestions bar blinking.
+7. **Lingering composer keyboard**: `+` dismisses the keyboard before opening the sheet; the Timer
+   ScrollView dismisses on drag; the composer collapses back to the hero on blur when empty.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. All JS — visible on Fast
+Refresh (only the earlier native deps/migration need the one-time rebuild). Same outstanding items:
+on-device smoke (task 6.2), token-CSS sync, auth-spec name note; then archive.
+
+---
+
 ## 2026-07-02T12:45Z — Third fixes pass + dev-server DX
 
 **Root cause for two reported bugs:** `npm run api` was `nest start` (no watch), so a

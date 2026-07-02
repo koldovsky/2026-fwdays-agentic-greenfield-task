@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import type { TimeEntry } from '@honeydo/shared';
@@ -78,13 +78,8 @@ export function HistoryScreen() {
           }
           getItemType={(item) => item.kind}
           contentContainerStyle={{ paddingHorizontal: t.screenGutter, paddingBottom: t.space[8] }}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={() => void refetch()}
-              tintColor={t.colors.accent}
-            />
-          }
+          onRefresh={() => void refetch()}
+          refreshing={isRefetching}
           renderItem={({ item }) =>
             item.kind === 'header' ? (
               <View
