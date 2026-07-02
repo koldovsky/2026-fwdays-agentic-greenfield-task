@@ -1,7 +1,7 @@
 // Checklist status chip (FR-CHECKLIST-02): maps the 4 checklist statuses
 // met | partial | gap | overclaim-risk to their token colors + Ukrainian labels.
 // Ukrainian-first copy comes from the shared i18n dictionary (NFR-I18N-01).
-import { uk } from "@/shared/lib/i18n";
+import { ua } from "@/shared/lib/i18n";
 import type { ChecklistStatus } from "@/shared/lib/scoring";
 
 export interface StatusPillProps {
@@ -26,7 +26,7 @@ const dotClass: Record<ChecklistStatus, string> = {
 };
 
 export function StatusPill({ status, label }: StatusPillProps) {
-  const text = label ?? uk.checklist.statusLabel[status];
+  const text = label ?? ua.checklist.statusLabel[status];
   return (
     <span
       className={

@@ -43,7 +43,7 @@ const toPriority: Record<Requirement["importance"], "must" | "nice"> = {
   "nice-to-have": "nice",
 };
 
-export function ChecklistPanel({ score, rows, locale = "uk" }: ChecklistPanelProps) {
+export function ChecklistPanel({ score, rows, locale = "ua" }: ChecklistPanelProps) {
   const copy = t(locale);
 
   return (

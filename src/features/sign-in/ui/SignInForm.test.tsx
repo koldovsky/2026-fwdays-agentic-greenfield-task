@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { uk } from "@/shared/lib/i18n";
+import { ua } from "@/shared/lib/i18n";
 
 import { SignInForm } from "./SignInForm";
 
@@ -19,26 +19,26 @@ describe("SignInForm", () => {
 
   it("renders sign-in mode by default with email and password fields", () => {
     render(<SignInForm />);
-    expect(screen.getByRole("heading", { name: uk.auth.signInTitle })).toBeInTheDocument();
-    expect(screen.getByLabelText(uk.auth.emailLabel)).toBeInTheDocument();
-    expect(screen.getByLabelText(uk.auth.passwordLabel)).toBeInTheDocument();
-    expect(screen.queryByLabelText(uk.auth.nameLabel)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: ua.auth.signInTitle })).toBeInTheDocument();
+    expect(screen.getByLabelText(ua.auth.emailLabel)).toBeInTheDocument();
+    expect(screen.getByLabelText(ua.auth.passwordLabel)).toBeInTheDocument();
+    expect(screen.queryByLabelText(ua.auth.nameLabel)).not.toBeInTheDocument();
   });
 
   it("switches to sign-up mode and shows the optional name field", async () => {
     render(<SignInForm />);
-    await userEvent.click(screen.getByRole("button", { name: uk.auth.signUpAction }));
-    expect(screen.getByRole("heading", { name: uk.auth.signUpTitle })).toBeInTheDocument();
-    expect(screen.getByLabelText(uk.auth.nameLabel)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: ua.auth.signUpAction }));
+    expect(screen.getByRole("heading", { name: ua.auth.signUpTitle })).toBeInTheDocument();
+    expect(screen.getByLabelText(ua.auth.nameLabel)).toBeInTheDocument();
   });
 
   it("submits credentials via Auth.js without a page-owned redirect on failure", async () => {
     signInMock.mockResolvedValue({ error: "CredentialsSignin", ok: false });
     render(<SignInForm />);
 
-    await userEvent.type(screen.getByLabelText(uk.auth.emailLabel), "olena@example.com");
-    await userEvent.type(screen.getByLabelText(uk.auth.passwordLabel), "correct-horse");
-    await userEvent.click(screen.getByRole("button", { name: uk.auth.signInAction }));
+    await userEvent.type(screen.getByLabelText(ua.auth.emailLabel), "olena@example.com");
+    await userEvent.type(screen.getByLabelText(ua.auth.passwordLabel), "correct-horse");
+    await userEvent.click(screen.getByRole("button", { name: ua.auth.signInAction }));
 
     expect(signInMock).toHaveBeenCalledWith("credentials", {
       email: "olena@example.com",
@@ -47,7 +47,7 @@ describe("SignInForm", () => {
     });
     // Uniform copy — same for wrong password and unknown email (no enumeration).
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      uk.auth.error.invalidCredentials,
+      ua.auth.error.invalidCredentials,
     );
   });
 });

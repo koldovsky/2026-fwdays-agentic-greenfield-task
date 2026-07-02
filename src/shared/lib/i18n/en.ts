@@ -1,4 +1,4 @@
-// English fallback (NFR-I18N-01) — same keys as uk.
+// English fallback (NFR-I18N-01) — same keys as ua.
 import type { Dictionary } from "./types";
 
 export const en: Dictionary = {

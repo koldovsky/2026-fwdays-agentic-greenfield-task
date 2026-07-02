@@ -29,7 +29,7 @@ const checklistRows: ChecklistPanelRow[] = tailoringFixture.checklist.map((row) 
   rationale: row.item.rationale,
 }));
 
-export function TailorWorkspace({ locale = "uk" }: TailorWorkspaceProps) {
+export function TailorWorkspace({ locale = "ua" }: TailorWorkspaceProps) {
   const copy = t(locale);
 
   // Seed bullet state with the export defaults (grounded in, overclaim-risk out).

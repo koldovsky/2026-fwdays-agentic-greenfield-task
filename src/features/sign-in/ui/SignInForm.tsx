@@ -27,7 +27,7 @@ const fieldClass =
 
 const labelClass = "block text-sm font-semibold text-ink";
 
-export function SignInForm({ locale = "uk", redirectTo = "/tailor" }: SignInFormProps) {
+export function SignInForm({ locale = "ua", redirectTo = "/tailor" }: SignInFormProps) {
   const copy = t(locale);
   const [mode, setMode] = useState<Mode>("sign-in");
   const [error, setError] = useState<AuthErrorCode | null>(null);

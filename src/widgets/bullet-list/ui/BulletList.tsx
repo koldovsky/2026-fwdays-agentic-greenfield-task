@@ -19,7 +19,7 @@ export interface BulletListProps {
   readonly locale?: Locale;
 }
 
-export function BulletList({ bullets, onToggleInclude, locale = "uk" }: BulletListProps) {
+export function BulletList({ bullets, onToggleInclude, locale = "ua" }: BulletListProps) {
   const copy = t(locale).bullets;
 
   return (

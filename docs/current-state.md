@@ -61,14 +61,18 @@
 
 ## Next steps
 
-1. **Commit the sign-in UI work** (uncommitted on `rromanko`).
-2. **`add-agent-loop`** — replaces the `/tailor` stub. Needs `ANTHROPIC_API_KEY`; reuses
-   `shared/lib/llm`; keep user ids out of LLM payloads (NFR-SEC-02).
-3. **`add-payments-emulator`** — needs persistence + auth; export/paywall gate closes
-   add-auth 3.3 when an export surface exists (with `export-resume`).
-4. **`landing-animations`** — implement only after the main-flow items above.
+### Plan (2026-07-02 session: ua rename + app flows)
 
-Also open: `export-resume`, `edit-bullet`, `upload-cv`/`paste-jd` (TC-PARSE-01/02).
+1. ~~Commit sign-in UI work~~ — done (`8c4482e Added auth`, tree clean).
+2. ~~Rename internal locale `uk` → `ua`~~ — done + committed, gates green (lint, 163 tests,
+   build). NOTE kept: ISO 639-1 for Ukrainian is `uk`; `ua` is internal naming only — any
+   future `<html lang>` / `hreflang` for Ukrainian pages must still emit `uk`.
+3. **App flows (no LLM key needed): `edit-bullet` (FR-EDIT-01/02) + `paste-jd` (FR-JD-01)**
+   via openspec-propose → implement in `/tailor` workspace → verify → checker.
+5. **`add-agent-loop`** — still blocked on `ANTHROPIC_API_KEY` (no `.env` in repo).
+6. **`add-payments-emulator`**, then **`landing-animations`**.
+
+Also open: `export-resume`, `upload-cv` (TC-PARSE-01/02).
 
 ## Blockers / open questions
 

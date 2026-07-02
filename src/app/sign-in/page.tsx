@@ -8,7 +8,7 @@ import { SignInView } from "@/views/auth";
 import { TopBar } from "@/widgets/top-bar";
 
 export const metadata: Metadata = {
-  title: t("uk").auth.signInTitle,
+  title: t("ua").auth.signInTitle,
   robots: { index: false, follow: false },
 };
 

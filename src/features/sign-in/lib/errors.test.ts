@@ -3,7 +3,7 @@
 // every code resolves to distinct localized copy in both locales.
 import { describe, expect, it } from "vitest";
 
-import { en, uk } from "@/shared/lib/i18n";
+import { en, ua } from "@/shared/lib/i18n";
 
 import { authErrorMessage, toAuthErrorCode, type AuthErrorCode } from "./errors";
 
@@ -33,7 +33,7 @@ describe("authErrorMessage", () => {
   ];
 
   it("resolves non-empty copy for every code in both locales", () => {
-    for (const dictionary of [uk, en]) {
+    for (const dictionary of [ua, en]) {
       for (const code of codes) {
         expect(authErrorMessage(dictionary, code).length).toBeGreaterThan(0);
       }
@@ -42,6 +42,6 @@ describe("authErrorMessage", () => {
 
   it("keeps the sign-in failure message generic (no account enumeration)", () => {
     // One message for wrong-password and unknown-email alike.
-    expect(authErrorMessage(uk, "invalid_credentials")).toBe(uk.auth.error.invalidCredentials);
+    expect(authErrorMessage(ua, "invalid_credentials")).toBe(ua.auth.error.invalidCredentials);
   });
 });

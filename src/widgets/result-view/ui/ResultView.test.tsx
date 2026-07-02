@@ -6,7 +6,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { uk } from "@/shared/lib/i18n";
+import { ua } from "@/shared/lib/i18n";
 
 import { ResultView } from "./ResultView";
 
@@ -24,7 +24,7 @@ describe("ResultView (FR-SHELL-01/02)", () => {
 
   it("renders the shared frame header from centralized copy", () => {
     render(<ResultView left={<div />} right={<div />} />);
-    expect(screen.getByText(uk.result.title)).toBeInTheDocument();
+    expect(screen.getByText(ua.result.title)).toBeInTheDocument();
   });
 
   it("exposes both columns inside a labelled result region", () => {
@@ -34,7 +34,7 @@ describe("ResultView (FR-SHELL-01/02)", () => {
         right={<div>col-b</div>}
       />,
     );
-    const region = screen.getByRole("region", { name: uk.result.regionLabel });
+    const region = screen.getByRole("region", { name: ua.result.regionLabel });
     expect(region).toBeInTheDocument();
     expect(region).toHaveTextContent("col-a");
     expect(region).toHaveTextContent("col-b");

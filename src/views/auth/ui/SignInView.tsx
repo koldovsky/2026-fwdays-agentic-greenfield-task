@@ -10,7 +10,7 @@ export interface SignInViewProps {
   readonly locale?: Locale;
 }
 
-export function SignInView({ locale = "uk" }: SignInViewProps) {
+export function SignInView({ locale = "ua" }: SignInViewProps) {
   const copy = t(locale);
   return (
     <section className="mx-auto w-full max-w-md">

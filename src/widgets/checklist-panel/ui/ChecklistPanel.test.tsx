@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { Requirement } from "@/entities/requirement";
-import { uk } from "@/shared/lib/i18n";
+import { ua } from "@/shared/lib/i18n";
 
 import { ChecklistPanel, type ChecklistPanelRow } from "./ChecklistPanel";
 
@@ -23,7 +23,7 @@ describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
   it("renders the 0–100 match score in the header", () => {
     render(<ChecklistPanel score={76} rows={rows} />);
     expect(screen.getByText("76")).toBeInTheDocument();
-    expect(screen.getByText(uk.checklist.scoreHeadline)).toBeInTheDocument();
+    expect(screen.getByText(ua.checklist.scoreHeadline)).toBeInTheDocument();
   });
 
   it("renders one row per requirement, in order", () => {
@@ -38,8 +38,8 @@ describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
     // The overclaim-risk row surfaces the dedicated Ukrainian status label,
     // distinct from met/partial — asserted via copy, not CSS classes.
     expect(
-      screen.getByText(uk.checklist.statusLabel["overclaim-risk"]),
+      screen.getByText(ua.checklist.statusLabel["overclaim-risk"]),
     ).toBeInTheDocument();
-    expect(screen.queryByText(uk.checklist.statusLabel.gap)).not.toBeInTheDocument();
+    expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
   });
 });

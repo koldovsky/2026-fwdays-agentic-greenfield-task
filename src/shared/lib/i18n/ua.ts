@@ -1,7 +1,7 @@
 // Ukrainian-first copy (NFR-I18N-01). No emoji, no exclamation points (BC-BRAND-01).
 import type { Dictionary } from "./types";
 
-export const uk: Dictionary = {
+export const ua: Dictionary = {
   app: {
     name: "Vouch",
   },

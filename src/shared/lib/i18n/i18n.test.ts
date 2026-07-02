@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dictionaries, en, t, uk } from "./index";
+import { dictionaries, en, t, ua } from "./index";
 
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/u;
 
@@ -19,20 +19,20 @@ function flattenValues(obj: unknown): string[] {
 }
 
 describe("i18n (NFR-I18N-01, BC-BRAND-01)", () => {
-  it("uk and en have identical key sets (structural parity)", () => {
-    expect(flattenKeys(uk)).toEqual(flattenKeys(en));
+  it("ua and en have identical key sets (structural parity)", () => {
+    expect(flattenKeys(ua)).toEqual(flattenKeys(en));
   });
 
-  it("uk values contain no emoji and no exclamation points (BC-BRAND-01)", () => {
-    for (const value of flattenValues(uk)) {
+  it("ua values contain no emoji and no exclamation points (BC-BRAND-01)", () => {
+    for (const value of flattenValues(ua)) {
       expect(value).not.toMatch(EMOJI);
       expect(value).not.toContain("!");
     }
   });
 
-  it("t() returns uk as the default fallback", () => {
-    expect(t("uk")).toBe(uk);
+  it("t() returns ua as the default fallback", () => {
+    expect(t("ua")).toBe(ua);
     expect(t("en")).toBe(en);
-    expect(dictionaries.uk).toBe(uk);
+    expect(dictionaries.ua).toBe(ua);
   });
 });

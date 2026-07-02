@@ -22,7 +22,7 @@ export interface ResultViewProps {
  * viewports and splits into two columns on wide ones (FR-SHELL-02). Both columns
  * are supplied by the parent via `left` / `right` slots.
  */
-export function ResultView({ left, right, locale = "uk" }: ResultViewProps) {
+export function ResultView({ left, right, locale = "ua" }: ResultViewProps) {
   const copy = t(locale).result;
 
   return (

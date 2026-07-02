@@ -11,7 +11,7 @@ export interface SignOutButtonProps {
   readonly locale?: Locale;
 }
 
-export function SignOutButton({ locale = "uk" }: SignOutButtonProps) {
+export function SignOutButton({ locale = "ua" }: SignOutButtonProps) {
   return (
     <Button
       variant="ghost"

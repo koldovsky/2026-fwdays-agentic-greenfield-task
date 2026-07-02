@@ -19,7 +19,7 @@ export interface TopBarProps {
   readonly locale?: Locale;
 }
 
-export function TopBar({ user = null, locale = "uk" }: TopBarProps) {
+export function TopBar({ user = null, locale = "ua" }: TopBarProps) {
   const copy = t(locale);
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-surface-canvas/80 backdrop-blur-md backdrop-saturate-150">

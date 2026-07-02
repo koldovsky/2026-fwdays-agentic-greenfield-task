@@ -2,7 +2,7 @@
 
 import type { ChecklistStatus } from "../scoring/types";
 
-export type Locale = "uk" | "en";
+export type Locale = "ua" | "en";
 
 export interface Dictionary {
   readonly app: {
