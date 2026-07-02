@@ -14,10 +14,14 @@ export const generateReviewProse = async (
   promptText: string,
 ): Promise<ReviewProse> => {
   if (period === 'daily') {
-    const { data } = await parseStructured(anthropic, dailyProseSchema, promptText);
+    const { data } = await parseStructured(anthropic, dailyProseSchema, promptText, {
+      label: 'review-daily',
+    });
     return { drivers: data.drivers, verdict: data.verdict };
   }
 
-  const { data } = await parseStructured(anthropic, rollupProseSchema, promptText);
+  const { data } = await parseStructured(anthropic, rollupProseSchema, promptText, {
+    label: 'review-rollup',
+  });
   return { whatWorked: data.whatWorked, draggedBack: data.draggedBack, focus: data.focus };
 };

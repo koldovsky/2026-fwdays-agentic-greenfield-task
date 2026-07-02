@@ -1,7 +1,6 @@
 import type { Meal } from '@prisma/client';
-import { round1 } from '../food/scale.js';
 import type { Lang } from '../util/lang.js';
-import { fmt } from '../util/num.js';
+import { fmt, round1 } from '../util/num.js';
 import { FAT_OK_BAND, PROTEIN_HIT_BAND } from './compute.js';
 import type { DailyStats, MonthlyStats, ReviewProse, WeeklyStats } from './types.js';
 

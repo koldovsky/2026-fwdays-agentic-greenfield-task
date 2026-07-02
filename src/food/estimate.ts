@@ -72,7 +72,9 @@ export const estimateFood = async (client: Anthropic, product: string): Promise<
     `sensible basis (per100g for weighable foods; piece, portion, or dish otherwise). Per the ` +
     `precision-first policy, also set \`clarify\` iff a high-leverage calorie-mover is hidden.`;
 
-  const { data } = await parseStructured(client, estimateSchema, userText);
+  const { data } = await parseStructured(client, estimateSchema, userText, {
+    label: 'food-estimate',
+  });
 
   const base: MacroBase = {
     kcal: data.kcal,

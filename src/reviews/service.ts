@@ -3,14 +3,13 @@ import type { BodyMetric } from '@prisma/client';
 import { resolveUserId } from '../db/resolveUser.js';
 import { noopOutbox } from '../notion/outbox.js';
 import type { NotionOutbox } from '../notion/types.js';
-import { round1 } from '../food/scale.js';
 import { priorHistory } from '../metrics/trend.js';
 import { dailyTotalsForRange, sumForDate } from '../query/aggregate.js';
 import type { DayTotalsRow, Targets } from '../query/types.js';
 import { resolveDate } from '../router/date.js';
 import { systemNow, toDbDate } from '../util/date.js';
-import { detectLang } from '../util/lang.js';
-import { nullableNumber } from '../util/num.js';
+import { detectLangOrRu, type Lang } from '../util/lang.js';
+import { nullableNumber, round1 } from '../util/num.js';
 import { dailyFoodMeta, metricsInRange, summarizeMetric } from './aggregate.js';
 import {
   average,
@@ -130,7 +129,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
     userId: number,
     dateIso: string,
     targets: Targets,
-    lang: ReturnType<typeof detectLang>,
+    lang: Lang,
     reviewed: boolean,
   ): Promise<string> => {
     const totals = await sumForDate(client, userId, dateIso);
@@ -166,7 +165,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
     userId: number,
     dateIso: string,
     targets: Targets,
-    lang: ReturnType<typeof detectLang>,
+    lang: Lang,
     reviewed: boolean,
   ): Promise<string> => {
     const { start, end } = weekRange(dateIso);
@@ -208,7 +207,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
     userId: number,
     dateIso: string,
     targets: Targets,
-    lang: ReturnType<typeof detectLang>,
+    lang: Lang,
     reviewed: boolean,
   ): Promise<string> => {
     const { start, end } = monthRange(dateIso);
@@ -268,7 +267,7 @@ export const createReviewsService = (client: ReviewClient, deps: ReviewDeps): Re
 
       const dateIso = opts.date ?? resolveDate('today', profile.tz, now());
       const reviewed = opts.reviewed ?? true;
-      const lang = opts.triggerText ? detectLang(opts.triggerText) : 'ru';
+      const lang = detectLangOrRu(opts.triggerText);
 
       const text = await buildDaily(userId, dateIso, profile.targets, lang, reviewed);
       const rollups: string[] = [];

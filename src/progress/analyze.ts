@@ -45,7 +45,10 @@ export const analyzeProgress = async (
     `only.${captionLine}`;
 
   const images: StructuredImage[] = [{ data: imageBase64, mediaType: TELEGRAM_PHOTO_MEDIA_TYPE }];
-  const { data } = await parseStructured(client, progressSchema, userText, images);
+  const { data } = await parseStructured(client, progressSchema, userText, {
+    images,
+    label: 'progress-analyze',
+  });
 
   return data.observations;
 };

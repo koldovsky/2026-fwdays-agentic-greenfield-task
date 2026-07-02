@@ -2,7 +2,7 @@ import { FoodSource } from '@prisma/client';
 import type { FoodLog } from '@prisma/client';
 import { macroBaseFromRow } from './scale.js';
 import type { CatalogResult, Confirmation } from './types.js';
-import { detectLang, type Lang } from '../util/lang.js';
+import { detectLang, detectLangOrRu, type Lang } from '../util/lang.js';
 import { fmt } from '../util/num.js';
 
 // Build the confirmation (§8.2 step 4). The prose CONTAINS the numbers, so it's assembled in code,
@@ -115,6 +115,6 @@ const CATALOG_SKIPPED: Record<Lang, string> = {
  * invariant #6). Falls back to `ru` only when nothing matched and there is no text to detect from.
  */
 export const catalogReply = (result: CatalogResult): string => {
-  const lang = result.entryName ? detectLang(result.entryName) : 'ru';
+  const lang = detectLangOrRu(result.entryName);
   return result.saved ? CATALOG_SAVED[lang] : CATALOG_SKIPPED[lang];
 };

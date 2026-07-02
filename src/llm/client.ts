@@ -7,4 +7,11 @@ export const MODEL = 'claude-sonnet-4-6';
 // The single Anthropic client. Constructing it makes no network call — the key is read from the
 // validated config (env only, invariant #9). Model calls go through src/llm/structured.ts so the
 // "no agent loop" rule (invariant #5) is enforced in exactly one place.
-export const createAnthropicClient = (apiKey: string): Anthropic => new Anthropic({ apiKey });
+//
+// The retry/timeout posture is explicit (ADR-0023), not left to shifting SDK defaults: `maxRetries`
+// re-sends the SAME single deterministic call on 429/5xx/connection errors with SDK-native
+// exponential backoff honoring `retry-after` — transport resilience, never an agent loop
+// (invariant #5). `timeout` is a hard 60s ceiling on a hung request (the SDK default 10min is
+// absurd against M7's 3s/8s p90 targets), generous over the vision-call tail.
+export const createAnthropicClient = (apiKey: string): Anthropic =>
+  new Anthropic({ apiKey, maxRetries: 3, timeout: 60_000 });

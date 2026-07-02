@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fmt } from '../../src/util/num.js';
+import { fmt, round1 } from '../../src/util/num.js';
 
 // One home for numeric-prose formatting: trim a trailing `.0` so whole grams/units read cleanly.
 // This pins the table that was previously copy-pasted across the food/metrics/query surfaces.
@@ -20,5 +20,14 @@ describe('fmt', () => {
   it('renders negatives correctly for both integer and fractional cases', () => {
     expect(fmt(-5)).toBe('-5');
     expect(fmt(-5.25)).toBe('-5.3');
+  });
+});
+
+describe('round1', () => {
+  it('rounds to one decimal', () => {
+    expect(round1(12.34)).toBe(12.3);
+    expect(round1(12.35)).toBe(12.4);
+    expect(round1(200)).toBe(200);
+    expect(round1(-1.25)).toBe(-1.2); // Math.round half-up on the scaled value
   });
 });

@@ -30,5 +30,6 @@ Source of rationale: [../requirements.md](../requirements.md) and [../prd.md](..
 | [0020](./0020-per-user-local-midnight-review-cron.md) | Per-user local-midnight review cron (hourly global tick) | Accepted |
 | [0021](./0021-ship-change-skill-profile-split.md) | Rename loop runner to `ship-change`; `SKILL.md`+`PROFILE.md` split with named per-phase agents (amends ADR-0012) | Accepted |
 | [0022](./0022-notion-mirror-outbox-poll-worker.md) | Notion mirror via durable outbox + in-process poll worker (builds on ADR-0007) | Accepted (real Notion round-trip is a deploy-time gate) |
+| [0023](./0023-runtime-resilience-crash-restart-bounded-retry.md) | Runtime resilience: crash-and-restart fatal posture + explicit bounded external-API retry | Accepted (live verification is a deploy-time gate) |
 
 **Status values:** Proposed · Accepted · Deprecated · Superseded by ADR-XXXX.

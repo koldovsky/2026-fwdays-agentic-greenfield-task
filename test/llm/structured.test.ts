@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { parseStructured } from '../../src/llm/structured.js';
@@ -7,13 +7,21 @@ const schema = z.object({ intent: z.string() });
 
 const clientReturning = (
   content: unknown,
+  usage: Partial<Anthropic.Usage> = {},
 ): { client: Anthropic; create: ReturnType<typeof vi.fn> } => {
-  const create = vi
-    .fn()
-    .mockResolvedValue({ content, usage: { cache_read_input_tokens: 0 }, stop_reason: 'end_turn' });
+  const fullUsage = {
+    input_tokens: 40,
+    output_tokens: 12,
+    cache_read_input_tokens: 0,
+    cache_creation_input_tokens: 0,
+    ...usage,
+  };
+  const create = vi.fn().mockResolvedValue({ content, usage: fullUsage, stop_reason: 'end_turn' });
   const client = { messages: { create } } as unknown as Anthropic;
   return { client, create };
 };
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('parseStructured', () => {
   it('makes exactly one call with a cached prefix and no deprecated temperature param', async () => {
@@ -43,9 +51,9 @@ describe('parseStructured', () => {
       { type: 'text', text: JSON.stringify({ intent: 'photo' }) },
     ]);
 
-    await parseStructured(client, schema, 'what is on the plate', [
-      { data: 'BASE64BYTES', mediaType: 'image/jpeg' },
-    ]);
+    await parseStructured(client, schema, 'what is on the plate', {
+      images: [{ data: 'BASE64BYTES', mediaType: 'image/jpeg' }],
+    });
 
     expect(create).toHaveBeenCalledTimes(1); // one call, no loop (invariant #5)
     const params = create.mock.calls[0]?.[0] as {
@@ -74,5 +82,36 @@ describe('parseStructured', () => {
 
     const params = create.mock.calls[0]?.[0] as { messages: { content: unknown }[] };
     expect(params.messages[0]?.content).toBe('hello');
+  });
+
+  it('emits exactly one [llm] usage line with the label and a positive cache-read count', async () => {
+    const { client } = clientReturning(
+      [{ type: 'text', text: JSON.stringify({ intent: 'log' }) }],
+      { input_tokens: 128, output_tokens: 30, cache_read_input_tokens: 900 },
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await parseStructured(client, schema, 'hello', { label: 'router-intent' });
+
+    expect(log).toHaveBeenCalledTimes(1);
+    const line = log.mock.calls[0]?.[0] as string;
+    expect(line).toContain('[llm] label=router-intent');
+    expect(line).toContain('in=128');
+    expect(line).toContain('out=30');
+    expect(line).toContain('cacheRead=900');
+    expect(line).toMatch(/ms=\d+/);
+  });
+
+  it('never logs prompt or user content — numbers and label only (invariant #9)', async () => {
+    const { client } = clientReturning([{ type: 'text', text: JSON.stringify({ intent: 'log' }) }]);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const secret = 'весил 82 кг, съел борщ';
+
+    await parseStructured(client, schema, secret, { label: 'food-estimate' });
+
+    const line = log.mock.calls[0]?.[0] as string;
+    expect(line).not.toContain(secret);
+    expect(line).not.toContain('борщ');
+    expect(line).toContain('[llm] label=food-estimate');
   });
 });

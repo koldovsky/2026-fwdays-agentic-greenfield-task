@@ -1,4 +1,7 @@
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot, InlineKeyboard, type BotError } from 'grammy';
+import { autoRetry } from '@grammyjs/auto-retry';
+import { errorMessage } from '../util/error.js';
+import { detectLangOrRu, type Lang } from '../util/lang.js';
 import { isExpired } from '../clarify/store.js';
 import type { OpenQuestion, OutboundQuestion } from '../clarify/types.js';
 import { isProgressCaption } from '../progress/detect.js';
@@ -447,9 +450,46 @@ export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promi
   await respondToAnswer(ctx.reply, await deps.onboarding.submitAnswer(BigInt(ctx.chat.id), value));
 };
 
+// Localized "something went wrong" prose for the error boundary. Prose mirrors the inbound language
+// (invariant #6 — only prose is localized; enums/structure stay English); no inbound text carries no
+// language signal → Russian default (same rule as the caption-less progress photo, design D6).
+const ERROR_REPLY: Record<Lang, string> = {
+  ru: 'Что-то пошло не так. Попробуй ещё раз.',
+  uk: 'Щось пішло не так. Спробуй ще раз.',
+  en: 'Something went wrong. Please try again.',
+};
+
+/** Minimal context surface the error boundary needs — keeps `handleBotError` unit-testable. */
+export interface ErrorContext {
+  message?: { text?: string; caption?: string } | undefined;
+  reply: ReplyFn;
+}
+
+/**
+ * Global update-error boundary (design D1, ADR-0023). Logs the error MESSAGE ONLY (invariant #9 —
+ * never the raw thrown value, stack, or user content), then makes a best-effort language-mirrored
+ * "something went wrong" reply so a failed update is never silently swallowed (the coach contract).
+ * The reply itself is wrapped — Telegram may be the thing that's down — and a failing apology is
+ * logged message-only and never rethrown. The long-poll loop keeps running.
+ */
+export const handleBotError = async (error: unknown, ctx: ErrorContext): Promise<void> => {
+  console.error(`[bot] update handler error: ${errorMessage(error)}`);
+
+  const inbound = ctx.message?.text ?? ctx.message?.caption;
+  try {
+    await ctx.reply(ERROR_REPLY[detectLangOrRu(inbound)]);
+  } catch (replyError) {
+    console.error(`[bot] error-reply failed: ${errorMessage(replyError)}`);
+  }
+};
+
 /** Construct the grammY bot with handlers registered. Does not start polling — see index.ts. */
 export const createBot = (token: string, deps: BotDeps): Bot => {
   const bot = new Bot(token);
+  // Outgoing API resilience (design D5): honor `retry_after` on 429 and retry transient network
+  // failures, bounded so a long flood fails fast into the error boundary instead of blocking polling.
+  bot.api.config.use(autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 10 }));
+  bot.catch((err: BotError) => handleBotError(err.error, err.ctx));
   bot.command('start', (ctx) => handleStart(ctx, deps));
   bot.command('done', (ctx) => handleDone(ctx, deps));
   bot.command('progress', (ctx) => handleProgressCommand(ctx, deps));

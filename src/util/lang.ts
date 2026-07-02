@@ -17,3 +17,15 @@ export const detectLang = (text: string): Lang => {
   }
   return 'en';
 };
+
+/**
+ * `detectLang` with the "no language signal → Russian" default (the caption-less progress-photo
+ * precedent, design D6). One home (rule #12) for the fallback the error boundary, catalog replies,
+ * and scheduler-triggered reviews all need.
+ */
+export const detectLangOrRu = (text: string | null | undefined): Lang => {
+  if (!text || text.trim() === '') {
+    return 'ru';
+  }
+  return detectLang(text);
+};

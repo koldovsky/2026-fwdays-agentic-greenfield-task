@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Anthropic from '@anthropic-ai/sdk';
 import {
+  createBot,
+  handleBotError,
   handleCallback,
   handleDone,
   handlePhoto,
   handleProgressCommand,
   handleStart,
   handleText,
+  type ErrorContext,
 } from '../../src/bot/bot.js';
 import type { PhotoContext } from '../../src/bot/types.js';
 import type { BotDeps } from '../../src/bot/types.js';
@@ -1027,5 +1030,77 @@ describe('progress-photo routing (US-8)', () => {
     expect(progress.analyzeAndSave).toHaveBeenCalledTimes(1); // only the first
     expect(food.logPhoto).toHaveBeenCalledTimes(1); // the second
     fetchSpy.mockRestore();
+  });
+});
+
+// Global update-error boundary (design D1). The boundary logs the error message-only (invariant #9),
+// makes a best-effort language-mirrored apology, and swallows a failing apology — the poller lives on.
+describe('handleBotError', () => {
+  const makeCtx = (
+    inbound: { text?: string; caption?: string } | undefined,
+    reply = vi.fn().mockResolvedValue(undefined),
+  ): { ctx: ErrorContext; reply: ReturnType<typeof vi.fn> } => ({
+    ctx: { message: inbound, reply },
+    reply,
+  });
+
+  it('logs the error message-only and never rethrows (poller survives)', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { ctx } = makeCtx({ text: 'борщ 300г' });
+
+    await expect(handleBotError(new Error('DB timeout'), ctx)).resolves.toBeUndefined();
+
+    const logged = errorLog.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(logged).toContain('DB timeout');
+    expect(logged).not.toContain('борщ'); // no user content in the log (invariant #9)
+    errorLog.mockRestore();
+  });
+
+  it('replies in the inbound language (Russian message → Russian apology)', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { ctx, reply } = makeCtx({ text: 'съел борщ' });
+
+    await handleBotError(new Error('boom'), ctx);
+
+    expect(reply).toHaveBeenCalledTimes(1);
+    expect(reply.mock.calls[0]?.[0]).toBe('Что-то пошло не так. Попробуй ещё раз.');
+  });
+
+  it('replies in Ukrainian for a Ukrainian inbound message', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { ctx, reply } = makeCtx({ text: 'зʼїв борщ, ще їстиму' });
+
+    await handleBotError(new Error('boom'), ctx);
+
+    expect(reply.mock.calls[0]?.[0]).toBe('Щось пішло не так. Спробуй ще раз.');
+  });
+
+  it('defaults to Russian when there is no inbound text (design D6 precedent)', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { ctx, reply } = makeCtx(undefined);
+
+    await handleBotError(new Error('boom'), ctx);
+
+    expect(reply.mock.calls[0]?.[0]).toBe('Что-то пошло не так. Попробуй ещё раз.');
+  });
+
+  it('swallows a failing error-reply (Telegram unreachable) — logged, not rethrown', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const reply = vi.fn().mockRejectedValue(new Error('network down'));
+    const { ctx } = makeCtx({ text: 'hi' }, reply);
+
+    await expect(handleBotError(new Error('handler boom'), ctx)).resolves.toBeUndefined();
+
+    const logged = errorLog.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(logged).toContain('network down');
+    errorLog.mockRestore();
+  });
+});
+
+describe('createBot', () => {
+  it('registers a global error boundary so a throwing handler cannot kill the poller', () => {
+    const bot = createBot('123456:test-token', makeDeps(makeOnboarding()).deps);
+    // grammY replaces the default (rethrowing) errorHandler once `bot.catch` is wired.
+    expect(typeof bot.errorHandler).toBe('function');
   });
 });

@@ -12,6 +12,7 @@
 <!-- shared-tenant-resolve (M3, wave 5, tech debt) landed 2026-07-02: repointed the 3 id-only chat_id→user_id tenant-resolver copies (food/service, progress/service, metrics/service) to the shared home src/db/resolveUser.ts (canonical resolveUserId, extracted by reviews D4); tenant resolution is now single-sourced. query/service left as-is (its resolve is fused into the aggregate fetch, not a standalone id-only copy — kept out of the dedup, recorded in the change design + delta spec). No behavior change; rule #12 sibling of shared-lang/shared-fmt (no ADR — routine dedup). -->
 <!-- notion-mirror (US-10, M7, wave 6) landed 2026-07-02: async best-effort Notion mirror (Postgres stays truth, invariant #1). TWO new tables in one hand-authored migration (20260702120000_notion_mirror) — notion_sync (durable outbox: source_table food_log|food_database|body_metrics|review, source_id, user_id, notion_page_id?, status pending|done|failed|dead, attempts, last_error?, next_attempt_at?, timestamps; index (status,next_attempt_at)) + notion_config (user_id @unique, auth_type env|oauth, credential_ref = the env var NAME never the secret (invariant #9), 4 db ids, enabled). Post-write BEST-EFFORT enqueue: each mirrored write (food create+correction+addToCatalog, metrics, reviews — NOT progress_notes) calls a shared injected outbox.enqueue right after commit; enqueue failure is warn-logged (message only) and NEVER breaks the reply (data already safe in PG). NOT transactional (narrow Pick clients don't expose $transaction; crash-window loses only a mirror job, not data — design D-enqueue). One in-process poll worker (src/notion/worker.ts, setInterval 5s, review-scheduler precedent, invariant #7 — no 2nd process): batch of ≤20 status IN (pending,failed) & next_attempt_at≤now ordered created_at in ONE query (no N+1), sequential ~3 req/s (334ms throttle); per row resolveNotionTarget → mapper → create/update page (idempotent via (source_table,source_id)+stored notion_page_id, so a correction patches not duplicates) → done. On error: attempts++, last_error = message only (invariant #9, 500-char cap), next_attempt_at = min(1s·2^attempts, 1h)+jitter, failed; attempts≥5 → dead (dead-letter). One bad row never aborts the batch. NotionCredentialResolver (src/notion/resolve.ts) = the single OAuth seam: env → new Client({auth: env.NOTION_TOKEN}); absent/disabled/oauth → null skip. Started in index.ts ONLY when NOTION_TOKEN set; worker.stop() awaited in registerShutdown (stop polling, finish in-flight row). noopOutbox default keeps mirror-off a no-op; bot boots with zero NOTION_* set. Added @notionhq/client dep (no new npm script). ZERO LLM calls (no eval suite touched, ADR-0013 skip logged). New src/notion/{types,outbox,mapper,resolve,worker}.ts + src/util/error.ts (errorMessage helper). Deploy-time gates (sandbox has no DATABASE_URL/NOTION_TOKEN): migration apply, real Notion round-trip, mapper property names vs the live workspace. ADR-0022 records outbox+poll-worker (post-write vs transactional, poll vs LISTEN/NOTIFY, in-process vs separate process, per-user env|oauth config). -->
 <!-- food-photo-ask (US-3/US-6, M4, wave 5) landed 2026-07-01: precision-first plate ask — vision flags one hidden high-leverage mover via an optional plate-level `clarify` on the SAME one call (invariant #5); OpenQuestion becomes a discriminated union on `variant` (text | photo), photo variant holds ResolvedFood[] + clarification + meal/date, NO image (invariant #4); logPhoto → LogOutcome; the answer refines the held items via ONE text-only refinePlate call (no re-vision, no chat history — invariants #1/#4) → resolvePlate re-tag fact/estimate → one code-scaled row per item (an added mover comes back as its OWN item so a fact item's calories survive); expiry logs EVERY held item AS-IS preserving each resolved source (fact stays fact — invariant #3, never drops); caption stored as the confirmation language anchor (text only, invariant #4 unbroken); bot handlePhoto gains the ask branch (reuses store + q:<index> UI); tests 233 total -->
+<!-- hardening (M8, wave 7) landed 2026-07-02: runtime resilience (ADR-0023) — closes the LAST backlog change; M8 code-complete, on-box §4 verification deploy-time. (1) bot.catch error boundary (handleBotError) in createBot: logs the error MESSAGE ONLY (invariant #9, new detectLangOrRu in util/lang.ts) + best-effort language-mirrored honest "something went wrong" reply (invariant #6, RU default), a failing apology is logged+swallowed, long-poll keeps running. (2) NEW src/lifecycle.ts: registerFatalHandlers (unhandledRejection/uncaughtException → log message-only + process.exit(1) crash-and-restart — Coolify restarts, long-poll redelivers, PG writes already committed/absent) + registerShutdown MOVED here from index.ts, now stops the review-cron ScheduledTask FIRST then bot/worker/health/prisma (invariant #7); pure builders (buildShutdown/buildFatalHandler) unit-tested with injected targets. (3) @grammyjs/auto-retry NEW DEP wired in createBot (maxRetryAttempts 3, maxDelaySeconds 10) for outgoing Telegram 429/network. (4) Anthropic client explicit maxRetries: 3 + timeout: 60_000 (SDK transport retry re-sends the SAME single call, invariant #5 intact — no agent loop; 60s ceiling vs the SDK's 10-min default). (5) parseStructured emits exactly ONE `[llm] label=… in=… out=… cacheRead=… cacheWrite=… ms=…` usage line per call (7-value LlmLabel union across every call site: router-intent/food-estimate/plate-vision/plate-refine/progress-analyze/review-daily/review-rollup; StructuredOptions {images?,label?} options-object refactor) — the single M5-spend + prompt-cache-hit + M7-latency evidence, numbers/enum only (invariant #9). (6) reviews scheduler outer-sweep guard — a tick can never emit an unhandled rejection. (7) /health now returns 200 application/json {status,rssMb,heapUsedMb,uptimeSec} (was text/plain "ok") — on-box RSS evidence for the 512 MB cap (M6). (8) NEW docs/runbooks/hardening-verification.md (PRD §4 M1–M8 procedure/evidence table; deploy-time remainder = live eval baseline seed + on-box M5/M6/M7/M8 checks). (9) ADR-0023 + README index row. (10) dup-gate: detectLangOrRu → util/lang.ts, round1 → util/num.ts (repointed food/scale, onboarding/calculator, reviews/*, rule #12). 363 tests (+19). Opus reviewer → APPROVE both axes, 1 accepted SUGGESTION (auto-retry wiring untested — needs a live 429, tracked in the runbook). check:evals skipped (no latest.json, key-less); live evals deploy-time (no key). NOTE: the loop found .claude/agents/ship-arch missing (PROFILE names it; fell back to general-purpose) — NOT fixed in this change. -->
 
 
 Living snapshot of where the **whole project** is right now. Read at session start; update at
@@ -64,13 +65,17 @@ baselines (need `ANTHROPIC_API_KEY` + egress).
 | M5 — Body (metrics + progress notes) | 🟡 **metrics** + **progress-photo** landed (metrics: parse → upsert one row/day → like-with-like trend diffs; progress-photo: US-8, one vision call → qualitative prose → text-only progress_notes, image never persisted); body track code-complete |
 | M6 — Reviews (daily + cron + rollups) | 🟡 **reviews** landed (US-9: `/done` + `review_trigger` daily, hourly local-midnight cron fallback ADR-0020, weekly/monthly rollups; numbers in code from SQL SUM/groupBy, one prose call, idempotent, tenant-scoped); live prose eval deploy-time |
 | M7 — Notion mirror | 🟡 **notion-mirror** landed (US-10: durable `notion_sync` outbox + per-user `notion_config`, best-effort post-write enqueue, one in-process ~3 req/s poll worker with backoff→dead-letter, `env`-auth v1 shaped for OAuth, ADR-0022; Notion never blocks the reply, failures never lose data); **deploy-time gates pending** — migration apply, real Notion round-trip, mapper property names vs the live workspace |
-| M8 — Hardening | ⬜ not started |
+| M8 — Hardening | 🟡 **hardening** landed (runtime resilience, ADR-0023: `bot.catch` error boundary, crash-and-restart fatal posture + graceful shutdown in `src/lifecycle.ts` (cron stopped first), `@grammyjs/auto-retry` + explicit Anthropic `maxRetries`/`timeout`, one `[llm]` usage line per call, scheduler outer-guard, `/health` JSON `{rssMb,heapUsedMb,uptimeSec}`); **code-complete — on-box §4 verification is deploy-time** per [docs/runbooks/hardening-verification.md](./runbooks/hardening-verification.md) |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ done
 
 ## Done
 - Product/architecture docs: `docs/prd.md`, `docs/requirements.md`, `docs/review-templates.md`.
-- Decision records: `docs/adr/` (0001–0018). Latest: **ADR-0018** run-backlog model tiering (Opus·high
+- Decision records: `docs/adr/` (0001–0023). Latest: **ADR-0023** runtime resilience (crash-and-restart
+  fatal posture + explicit bounded external-API retry; live verification deploy-time). **ADR-0022** Notion
+  mirror via durable outbox + in-process poll worker. **ADR-0021** `ship-change` rename + `SKILL.md`/`PROFILE.md`
+  split with named per-phase agents (amends ADR-0012). **ADR-0020** per-user local-midnight review cron.
+  **ADR-0019** in-memory ephemeral Open Question store. **ADR-0018** run-backlog model tiering (Opus·high
   for every reasoning/impl loop phase, Haiku only for mechanical steps; amends ADR-0012 — dev-loop only,
   not the bot's Sonnet 4.6 runtime). **ADR-0017** dropped `temperature` from the LLM seam. **ADR-0016**
   DB-backed onboarding state machine (resume-after-restart, no chat state). **ADR-0015** coach persona
@@ -223,6 +228,31 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
   writes across a full `logPhoto` run). 220 tests green (+~23). Live vision-accuracy eval **deferred**
   (needs a labeled image set + key — logged skip, ADR-0013). Interactive plate ask split to
   `food-photo-ask` (invariant #4 discards the image, so the follow-up is a text-only refine).
+- **M8 `hardening`** (wave 7, closes the backlog) — **runtime resilience** (ADR-0023). A `bot.catch`
+  error boundary (`handleBotError`) logs the error **message only** (invariant #9) and makes a
+  best-effort language-mirrored "something went wrong" reply (invariant #6, RU default via the new
+  `detectLangOrRu`) so a failed update is never silently swallowed; a failing apology is logged and
+  swallowed, the long-poll loop keeps running. New `src/lifecycle.ts`: `registerFatalHandlers`
+  (`unhandledRejection`/`uncaughtException` → log message-only + `process.exit(1)` — crash-and-restart:
+  Coolify restarts, long-poll redelivers, PG writes are already committed or absent) + `registerShutdown`
+  **moved here** from `index.ts`, now stopping the review-cron `ScheduledTask` **first**, then
+  bot/worker/health/prisma (invariant #7); pure `buildShutdown`/`buildFatalHandler` unit-tested with
+  injected targets. Outgoing-API resilience: `@grammyjs/auto-retry` (**new dep**, `maxRetryAttempts 3`/
+  `maxDelaySeconds 10`) for Telegram 429/network, plus an explicit Anthropic `maxRetries: 3` +
+  `timeout: 60_000` (SDK transport retry on the **same single call** — invariant #5 intact, no agent
+  loop; a 60s ceiling vs the SDK's 10-min default). `parseStructured` now emits exactly ONE
+  `[llm] label=… in=… out=… cacheRead=… cacheWrite=… ms=…` usage line per call (7-value `LlmLabel`
+  union across every call site; `StructuredOptions {images?, label?}` options-object refactor) — the
+  single M5-spend + prompt-cache-hit + M7-latency evidence, numbers/enum only (invariant #9). The
+  reviews scheduler gained an outer-sweep guard (a tick can never raise an unhandled rejection).
+  `/health` now returns **200 `application/json` `{status, rssMb, heapUsedMb, uptimeSec}`** (was
+  `text/plain "ok"`) — the on-box RSS evidence for the 512 MB cap (M6). Step-7 dup gate: `detectLangOrRu`
+  → `src/util/lang.ts`, `round1` → `src/util/num.ts` (repointed `food/scale`, `onboarding/calculator`,
+  `reviews/*`, rule #12). New `docs/runbooks/hardening-verification.md` (PRD §4 M1–M8 procedure/evidence
+  table). **363 tests** (+19). Opus reviewer → **APPROVE** both axes, 1 accepted SUGGESTION (the
+  `auto-retry` wiring is untested — needs a live 429, tracked in the runbook). `check:evals` skipped
+  (no `latest.json`, key-less); live evals deploy-time. **M8 code-complete — the on-box §4 verification
+  (live eval baseline seed + M5/M6/M7/M8 checks) is deploy-time per the runbook.**
 - Loop tooling: `run-backlog` assigns a **model+effort tier per phase** — **Opus · high for every
   reasoning/implementation/coherence/prose phase** (propose, plan gate, apply-maker, verify, dup/improve,
   review, sync-docs, pre-archive, archive spec-sync) and **Haiku · low** only for pure mechanical steps
@@ -237,6 +267,10 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 - M0/M1 deploy (human): push branch → CI builds + pushes image → flip GHCR package public (path A) →
   Coolify pulls + runs → container `migrate deploy` creates tables → confirm `/start` round-trip +
   `/health` + a DB read/write, idle RSS < 512 MB.
+- M8 verification (deploy-time): seed the live eval baseline (`npm run evals` → `quality/eval-baseline.json`,
+  needs `ANTHROPIC_API_KEY`) + the on-box M5/M6/M7/M8 checks — cost/latency from the `[llm]` logs, RSS from
+  `/health` + `docker stats`, crash-restart redelivery — all enumerated in
+  [docs/runbooks/hardening-verification.md](./runbooks/hardening-verification.md).
 
 Work is sliced into [openspec/backlog.md](../openspec/backlog.md) (17 changes + 1 manual `provision`;
 `shared-tenant-resolve` tech-debt follow-up filed 2026-07-01 by `progress-photo`;
@@ -307,6 +341,12 @@ added `coach-persona` wave 3 on 2026-06-30, `shared-fmt` wave 4 on 2026-07-01), 
     (ADR-0022). Notion never blocks the reply; failures never lose data (Postgres is truth). Added
     `@notionhq/client`. Zero LLM calls. Deploy-time gates: migration apply + real Notion round-trip +
     mapper property names vs the live workspace. Only `hardening` (M8) remains in the backlog.
+20. ✅ **`hardening` (M8, wave 7): code-complete** — runtime resilience (ADR-0023): `bot.catch` error
+    boundary, crash-and-restart fatal posture + graceful shutdown (`src/lifecycle.ts`, review cron stopped
+    first), `@grammyjs/auto-retry` + explicit Anthropic `maxRetries`/`timeout`, one `[llm]` usage line per
+    call, reviews scheduler outer-guard, `/health` JSON `{rssMb,heapUsedMb,uptimeSec}`. 363 tests; Opus
+    reviewer → APPROVE both axes. **Closes the backlog.** On-box §4 verification (eval baseline seed +
+    M5/M6/M7/M8 checks) is deploy-time per `docs/runbooks/hardening-verification.md`.
 
 ## Key decisions (locked)
 - Plain TS, no NestJS (RAM); no agent framework (cost); raw Anthropic API + structured output.

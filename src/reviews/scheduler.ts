@@ -31,39 +31,47 @@ export const sweepReviews = async (
   send: SendFn,
   now: () => Date,
 ): Promise<void> => {
-  const users = await client.user.findMany({
-    select: { id: true, chatId: true, tz: true },
-  });
+  // The whole sweep is wrapped so a failure OUTSIDE the per-user loop (e.g. a transient DB error on
+  // the user-listing query) can never surface as an unhandled rejection from the fire-and-forget
+  // tick — which, given the crash-and-restart posture (ADR-0023), would otherwise crash the process
+  // hourly on a DB blip. Logged message-only (invariant #9); the next tick runs normally.
+  try {
+    const users = await client.user.findMany({
+      select: { id: true, chatId: true, tz: true },
+    });
 
-  for (const user of users) {
-    try {
-      if (localHour(now(), user.tz) !== 0) {
-        continue;
-      }
-      const finishedDay = addDays(localDateString(now(), user.tz), -1);
-      const existing = await client.review.findUnique({
-        where: {
-          userId_period_periodStart: {
-            userId: user.id,
-            period: 'daily',
-            periodStart: toDbDate(finishedDay),
+    for (const user of users) {
+      try {
+        if (localHour(now(), user.tz) !== 0) {
+          continue;
+        }
+        const finishedDay = addDays(localDateString(now(), user.tz), -1);
+        const existing = await client.review.findUnique({
+          where: {
+            userId_period_periodStart: {
+              userId: user.id,
+              period: 'daily',
+              periodStart: toDbDate(finishedDay),
+            },
           },
-        },
-      });
-      if (existing) {
-        continue;
-      }
+        });
+        if (existing) {
+          continue;
+        }
 
-      const result = await service.generateDaily(user.chatId, {
-        date: finishedDay,
-        reviewed: false,
-      });
-      if (result) {
-        await deliverReview((text) => send(user.chatId, text), result);
+        const result = await service.generateDaily(user.chatId, {
+          date: finishedDay,
+          reviewed: false,
+        });
+        if (result) {
+          await deliverReview((text) => send(user.chatId, text), result);
+        }
+      } catch (error) {
+        console.warn(`review sweep failed for user ${user.id}: ${errorMessage(error)}`);
       }
-    } catch (error) {
-      console.warn(`review sweep failed for user ${user.id}: ${errorMessage(error)}`);
     }
+  } catch (error) {
+    console.warn(`review sweep failed: ${errorMessage(error)}`);
   }
 };
 

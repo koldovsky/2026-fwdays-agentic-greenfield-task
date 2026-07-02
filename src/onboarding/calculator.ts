@@ -1,4 +1,5 @@
 import { Activity, Goal, Sex, type TargetInputs, type Targets } from './types.js';
+import { round1 } from '../util/num.js';
 
 // Pure target calculator (US-1): Mifflin–St Jeor BMR → TDEE → goal-adjusted kcal, with a deficit
 // floor. No LLM, no I/O — numbers come from here, never the model.
@@ -25,8 +26,6 @@ const ABSOLUTE_KCAL_FLOOR = 1200;
 const KCAL_PER_G_PROTEIN = 4;
 const KCAL_PER_G_CARB = 4;
 const KCAL_PER_G_FAT = 9;
-
-const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 const mifflinBmr = ({ age, sex, heightCm, weightKg }: TargetInputs): number =>
   10 * weightKg + 6.25 * heightCm - 5 * age + (sex === Sex.MALE ? 5 : -161);

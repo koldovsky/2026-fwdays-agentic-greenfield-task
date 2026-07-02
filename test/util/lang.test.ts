@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectLang } from '../../src/util/lang.js';
+import { detectLang, detectLangOrRu } from '../../src/util/lang.js';
 
 // One home for prose-language detection (invariant #6): Ukrainian-specific letters (іїєґ) win over
 // generic Cyrillic (а-яё), everything else defaults to English. This pins the table that was
@@ -28,5 +28,20 @@ describe('detectLang', () => {
   it('prefers Ukrainian when both Ukrainian and generic Cyrillic letters appear', () => {
     // 'їжа' mixes ї (uk-specific) with а (generic Cyrillic) — uk check runs first.
     expect(detectLang('смачна їжа')).toBe('uk');
+  });
+});
+
+describe('detectLangOrRu', () => {
+  it('defaults to Russian when there is no text to detect from (design D6)', () => {
+    expect(detectLangOrRu(undefined)).toBe('ru');
+    expect(detectLangOrRu(null)).toBe('ru');
+    expect(detectLangOrRu('')).toBe('ru');
+    expect(detectLangOrRu('   ')).toBe('ru');
+  });
+
+  it('delegates to detectLang when text carries a signal', () => {
+    expect(detectLangOrRu('їжа')).toBe('uk');
+    expect(detectLangOrRu('съел борщ')).toBe('ru');
+    expect(detectLangOrRu('chicken breast')).toBe('en');
   });
 });

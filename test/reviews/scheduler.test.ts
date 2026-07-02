@@ -82,6 +82,23 @@ describe('sweepReviews', () => {
     expect(send).toHaveBeenCalledTimes(1); // the second user still got their review
     warn.mockRestore();
   });
+
+  it('a transient failure of the outer user-listing query is caught, not an unhandled rejection', async () => {
+    const client = {
+      user: { findMany: vi.fn().mockRejectedValue(new Error('connection reset')) },
+      review: { findUnique: vi.fn() },
+    } as unknown as ReviewClient;
+    const service: ReviewService = { generateDaily: vi.fn() };
+    const send = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await expect(sweepReviews(service, client, send, () => NOW)).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toContain('connection reset');
+    expect(service.generateDaily).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });
 
 describe('startReviewScheduler', () => {

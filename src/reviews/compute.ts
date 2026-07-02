@@ -1,5 +1,5 @@
 import { addDays } from '../router/date.js';
-import { round1 } from '../food/scale.js';
+import { round1 } from '../util/num.js';
 import type { DayTotalsRow } from '../query/types.js';
 import type { MacroAverages, WeekTrend } from './types.js';
 

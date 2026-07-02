@@ -1,6 +1,7 @@
 import { FoodPer } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import type { MacroBase, ScaledMacros } from './types.js';
+import { round1 } from '../util/num.js';
 
 // Macros land as Prisma Decimal on a fetched row but flow as plain numbers everywhere else — this is
 // the single Decimal→number boundary (kcal is already Int). A FoodDatabase or FoodLog row satisfies it.
@@ -27,9 +28,6 @@ const WEIGHT_OR_VOLUME = new Set<FoodPer>([FoodPer.per100g, FoodPer.per100ml]);
 
 const GRAM_UNITS = new Set(['g', 'gram', 'grams', 'г', 'гр', 'грам', 'грамм', 'граммов', 'грамів']);
 const ML_UNITS = new Set(['ml', 'мл', 'milliliter', 'milliliters', 'мілілітр', 'мілілітрів']);
-
-/** Round grams to 1 decimal (Decimal(7,2) column tolerates it; readable in the confirmation). */
-export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 /** Canonical English unit label stored on the row, derived from the basis (invariant #6). */
 export const unitForPer = (per: FoodPer): string => {

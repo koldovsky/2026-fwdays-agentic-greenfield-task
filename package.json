@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.107.0",
+    "@grammyjs/auto-retry": "^2.0.2",
     "@notionhq/client": "^2.3.0",
     "@prisma/client": "^6.19.3",
     "grammy": "^1.30.0",

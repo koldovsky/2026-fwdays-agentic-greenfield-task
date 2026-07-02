@@ -24,7 +24,7 @@ export const classifyMessage = async (
   opts: ClassifyOptions,
 ): Promise<RoutedMessage> => {
   const schema = makeRouterSchema(opts.hasPendingQuestion ?? false);
-  const { data } = await parseStructured(client, schema, text);
+  const { data } = await parseStructured(client, schema, text, { label: 'router-intent' });
   const date = resolveDate(data.date, opts.userTz, opts.now ?? new Date());
 
   return { ...data, date };

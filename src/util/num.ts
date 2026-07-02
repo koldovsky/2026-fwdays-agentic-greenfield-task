@@ -4,6 +4,12 @@ import type { Prisma } from '@prisma/client';
 export const fmt = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 /**
+ * Round to 1 decimal — the precision gram values carry everywhere (Decimal(7,2) columns tolerate it;
+ * readable in prose). One home (rule #12) for food scaling, target calculation, and review deltas.
+ */
+export const round1 = (n: number): number => Math.round(n * 10) / 10;
+
+/**
  * A nullable Prisma `Decimal` (or number) coerced to `number | null`. One home for the
  * `value === null ? null : Number(value)` boundary idiom (rule #12) — reviews, query targets and
  * the Notion mapper all cross it.

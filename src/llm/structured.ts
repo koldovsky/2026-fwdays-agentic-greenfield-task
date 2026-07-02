@@ -14,6 +14,20 @@ export interface StructuredResult<T> {
   cacheReadTokens: number;
 }
 
+/**
+ * Capability tag for the per-call usage log line — the enum-like label is the ONLY non-numeric
+ * value that may appear in the log (invariant #9: never prompt/output/user content). One string per
+ * LLM call site (design D4); a union so a typo can't slip a raw value into the log.
+ */
+export type LlmLabel =
+  | 'router-intent'
+  | 'food-estimate'
+  | 'plate-vision'
+  | 'plate-refine'
+  | 'progress-analyze'
+  | 'review-daily'
+  | 'review-rollup';
+
 /** An image to stream to a vision call: base64-encoded bytes + its media type (never persisted). */
 export interface StructuredImage {
   data: string;
@@ -41,6 +55,26 @@ const userContent = (
 };
 
 /**
+ * One structured usage line per LLM call (design D4, ADR-0023): capability label + token counts +
+ * wall-clock ms. Numbers and the enum label ONLY — never prompt, model output, or user content
+ * (invariant #9). This single line is simultaneously the M5 spend evidence, the rule-#5 prompt-cache
+ * hit verification (cacheRead > 0 on a warm prefix), and the M7 LLM-leg latency sample.
+ */
+const logUsage = (label: LlmLabel | undefined, usage: Anthropic.Usage, ms: number): void => {
+  console.log(
+    `[llm] label=${label ?? 'unknown'} in=${usage.input_tokens} out=${usage.output_tokens} ` +
+      `cacheRead=${usage.cache_read_input_tokens ?? 0} ` +
+      `cacheWrite=${usage.cache_creation_input_tokens ?? 0} ms=${ms}`,
+  );
+};
+
+/** Optional knobs for a structured call: vision image block(s) + the usage-log capability label. */
+export interface StructuredOptions {
+  images?: StructuredImage[];
+  label?: LlmLabel;
+}
+
+/**
  * THE seam for model calls (invariant #5): exactly one `messages.create` request, structured output
  * (a JSON schema derived from the caller's zod schema), a cached system prefix, and
  * ONLY the current message in `messages` (invariant #1 — no chat history). No tool-call loop. Every
@@ -54,13 +88,14 @@ export const parseStructured = async <T>(
   client: Anthropic,
   schema: z.ZodType<T>,
   userText: string,
-  images?: StructuredImage[],
+  { images, label }: StructuredOptions = {},
 ): Promise<StructuredResult<T>> => {
   // zod-to-json-schema emits `additionalProperties: false` + `required` (what structured outputs
   // needs) plus a top-level `$schema` key the API doesn't accept — strip it.
   const jsonSchema = zodToJsonSchema(schema, { $refStrategy: 'none' }) as Record<string, unknown>;
   delete jsonSchema.$schema;
 
+  const startedAt = Date.now();
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: 1024,
@@ -68,6 +103,7 @@ export const parseStructured = async <T>(
     output_config: { format: { type: 'json_schema', schema: jsonSchema } },
     messages: [{ role: 'user', content: userContent(userText, images) }],
   });
+  logUsage(label, message.usage, Date.now() - startedAt);
 
   const block = message.content.find((b) => b.type === 'text');
   if (block?.type !== 'text' || block.text.trim() === '') {

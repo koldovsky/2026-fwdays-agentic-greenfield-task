@@ -1,5 +1,3 @@
-import type { Server } from 'node:http';
-import type { Bot } from 'grammy';
 import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
 import { clarifyStore } from './clarify/store.js';
@@ -9,7 +7,7 @@ import { createFoodService } from './food/service.js';
 import { createAnthropicClient } from './llm/client.js';
 import { createMetricsService } from './metrics/service.js';
 import { createNotionOutbox, noopOutbox, warnIfIncompleteNotionConfig } from './notion/outbox.js';
-import { startNotionWorker, type NotionWorker } from './notion/worker.js';
+import { startNotionWorker } from './notion/worker.js';
 import type { NotionOutbox } from './notion/types.js';
 import { createOnboardingService } from './onboarding/flow.js';
 import { createProgressService } from './progress/service.js';
@@ -17,6 +15,7 @@ import { progressStore } from './progress/store.js';
 import { createQueryService } from './query/service.js';
 import { createReviewsService } from './reviews/service.js';
 import { startReviewScheduler, type SendFn } from './reviews/scheduler.js';
+import { registerFatalHandlers, registerShutdown } from './lifecycle.js';
 import { systemNow } from './util/date.js';
 import { errorMessage } from './util/error.js';
 
@@ -41,20 +40,8 @@ const loadEnvOrExit = (): Env => {
   }
 };
 
-const registerShutdown = (bot: Bot, health: Server, worker: NotionWorker | null): void => {
-  const shutdown = async (signal: string): Promise<void> => {
-    console.log(`Received ${signal}, shutting down...`);
-    await bot.stop();
-    // Stop polling and let the in-flight mirror row finish before we drop the DB (invariant #7).
-    await worker?.stop();
-    health.close();
-    await prisma.$disconnect();
-  };
-  process.once('SIGINT', () => void shutdown('SIGINT'));
-  process.once('SIGTERM', () => void shutdown('SIGTERM'));
-};
-
 const main = async (): Promise<void> => {
+  registerFatalHandlers();
   const env = loadEnvOrExit();
 
   // DB must be reachable before we serve traffic — the DB is the memory (invariant #1).
@@ -90,12 +77,13 @@ const main = async (): Promise<void> => {
   // In-process Notion mirror worker (US-10; invariant #7 — no second process). Started only when a
   // token is set; its stop() is awaited in shutdown so an in-flight row finishes cleanly.
   const worker = env.NOTION_TOKEN ? startNotionWorker(prisma, env) : null;
-  registerShutdown(bot, health, worker);
 
   // Midnight review fallback (ADR-0020): one hourly node-cron sweep pushes each user's finished-day
-  // review at their local midnight. Started before `bot.start()` (which blocks until shutdown).
+  // review at their local midnight. Started before `bot.start()` (which blocks until shutdown); its
+  // task is captured so graceful shutdown can stop it before teardown (design D6).
   const send: SendFn = (chatId, text) => bot.api.sendMessage(chatId.toString(), text);
-  startReviewScheduler(reviews, prisma, send);
+  const reviewTask = startReviewScheduler(reviews, prisma, send);
+  registerShutdown({ bot, health, worker, reviewTask, disconnect: () => prisma.$disconnect() });
 
   // Long-poll (getUpdates) — no webhook, no public ingress, no TLS (ADR-0014).
   console.log('Starting bot (long-poll)...');

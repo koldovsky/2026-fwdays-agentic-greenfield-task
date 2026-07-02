@@ -79,7 +79,10 @@ export const estimatePlate = async (
     `high-leverage calorie-mover is hidden.${captionLine}`;
 
   const images: StructuredImage[] = [{ data: imageBase64, mediaType: TELEGRAM_PHOTO_MEDIA_TYPE }];
-  const { data } = await parseStructured(client, plateSchema, userText, images);
+  const { data } = await parseStructured(client, plateSchema, userText, {
+    images,
+    label: 'plate-vision',
+  });
 
   return { items: data.items, clarify: data.clarify ?? null };
 };
@@ -119,7 +122,9 @@ export const refinePlate = async (
     '- A PORTION or COOKING-METHOD adjustment (fried/baked/raw, a corrected amount) → adjust the ' +
     `affected existing item in place.\nItems:\n${itemLines}\nThe user's answer: "${answer}".`;
 
-  const { data } = await parseStructured(client, plateSchema, userText); // no images (invariant #4)
+  const { data } = await parseStructured(client, plateSchema, userText, {
+    label: 'plate-refine', // no images (invariant #4)
+  });
 
   return data.items;
 };
