@@ -4,6 +4,7 @@
  * server stays TZ-agnostic and returns a flat list.
  */
 import type { TimeEntry } from './contracts';
+import { localDateKey } from './dates';
 
 /** A day bucket for the History list: local date, its total, and its entries. */
 export interface DayGroup {
@@ -13,15 +14,6 @@ export interface DayGroup {
   totalSec: number;
   /** The day's entries, newest start first. */
   entries: TimeEntry[];
-}
-
-/** Local `YYYY-MM-DD` for an ISO timestamp, using the ambient (device) time zone. */
-function localDateKey(iso: string): string {
-  const d = new Date(iso);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 /**

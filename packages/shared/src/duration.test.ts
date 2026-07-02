@@ -3,6 +3,7 @@ import {
   formatDurationClock,
   formatDurationCompact,
   formatDurationHms,
+  formatHoursShort,
 } from './duration';
 
 describe('formatDurationClock', () => {
@@ -56,5 +57,24 @@ describe('formatDurationCompact', () => {
   it('clamps invalid input to 0s', () => {
     expect(formatDurationCompact(-1)).toBe('0s');
     expect(formatDurationCompact(NaN)).toBe('0s');
+  });
+});
+
+describe('formatHoursShort', () => {
+  it('shows one decimal under 10 hours', () => {
+    expect(formatHoursShort(6 * 3600 + 12 * 60)).toBe('6.2');
+    expect(formatHoursShort(32 * 60)).toBe('0.5');
+  });
+
+  it('shows a whole number at 10h+ or when it rounds even', () => {
+    expect(formatHoursShort(31 * 3600)).toBe('31');
+    expect(formatHoursShort(412 * 3600)).toBe('412');
+    expect(formatHoursShort(6 * 3600)).toBe('6');
+    expect(formatHoursShort(0)).toBe('0');
+  });
+
+  it('clamps invalid input to 0', () => {
+    expect(formatHoursShort(-1)).toBe('0');
+    expect(formatHoursShort(NaN)).toBe('0');
   });
 });

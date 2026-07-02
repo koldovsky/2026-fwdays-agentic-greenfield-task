@@ -44,6 +44,20 @@ export function formatDurationHms(totalSec: number): string {
 }
 
 /**
+ * Decimal-hours readout for the Stats totals (FR-STATS-03). One decimal under 10 hours
+ * ("6.2", "0.5"), a whole number at 10h+ or when it rounds even ("31", "412", "6", "0").
+ * The unit ("h") is rendered separately by the caller.
+ */
+export function formatHoursShort(totalSec: number): string {
+  const s = normalize(totalSec);
+  const hours = s / 3600;
+  const rounded = Math.round(hours * 10) / 10;
+  if (Number.isInteger(rounded)) return String(rounded);
+  if (hours < 10) return rounded.toFixed(1);
+  return String(Math.round(hours));
+}
+
+/**
  * Compact total for summaries. "6h 12m", "32m", "45s". Drops zero leading units
  * and omits seconds once there is at least a minute.
  */

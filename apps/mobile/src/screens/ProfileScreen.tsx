@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronRight, Tag as TagIcon } from 'lucide-react-native';
+import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { PressableScale } from '../components/PressableScale';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -41,12 +42,17 @@ export function ProfileScreen() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
       <View style={{ flex: 1, padding: t.screenGutter, gap: t.space[2] }}>
         <Text style={eyebrow}>PROFILE</Text>
-        <Text style={{ color: t.colors.text, fontSize: t.fontSize.largeTitle, fontWeight: t.fontWeight.heavy }}>
-          {user?.name || user?.email || 'You'}
-        </Text>
-        <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.body, marginTop: t.space[2] }}>
-          {user?.name ? `${user.email} · ` : ''}Signed in with {user?.providers.join(' + ') || 'email'}.
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[4] }}>
+          <Avatar name={user?.name} email={user?.email ?? ''} size={56} />
+          <View style={{ flex: 1, gap: t.space[1] }}>
+            <Text style={{ color: t.colors.text, fontSize: t.fontSize.title2, fontWeight: t.fontWeight.heavy }}>
+              {user?.name || user?.email || 'You'}
+            </Text>
+            <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.subhead }}>
+              {user?.name ? `${user.email} · ` : ''}Signed in with {user?.providers.join(' + ') || 'email'}.
+            </Text>
+          </View>
+        </View>
 
         <View style={{ gap: t.space[3], marginTop: t.space[7] }}>
           <Text style={eyebrow}>APPEARANCE</Text>

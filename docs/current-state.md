@@ -6,6 +6,44 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T20:12Z — Implemented `add-profile-stats` (Stats + Profile identity)
+
+Built Phase 4 `profile-stats` — the review surface — shared-first, client-side aggregation, no
+API/DB work. Full repo `gate` green (shared 40 tests incl. 13 new; API 14) + mobile lint/typecheck.
+
+- **Shared (`@honeydo/shared`)** — new pure, unit-tested aggregation (TC-PURE-01, TC-TEST-01):
+  - `stats.ts`: `weeklyTotals(entries, now)` (last 7 local days, oldest first — FR-STATS-02),
+    `periodTotals` (`today`/`week`/`allTime`, week == chart sum — FR-STATS-03), `tagTotals`
+    (per-tag, counts toward every tag, untagged/running excluded, sorted — FR-STATS-04), plus
+    `entriesOnDay`/`entriesInLastNDays`. All take `now` for determinism; start-day attribution
+    (FR-ENTRY-10); running entries count 0.
+  - `dates.ts`: extracted `localDateKey` (now shared by `groupEntriesByDay` and stats).
+  - Contracts: `TagTotal`, `PeriodTotals` (`DayTotal` already existed). `formatHoursShort` added
+    to `duration.ts`.
+- **Mobile (`@honeydo/mobile`)** — filled the two placeholder tabs:
+  - **Stats** (`StatsScreen`): 3-up totals (Today accent / This week / All time), a
+    `WeekChart` (react-native-svg bars, today highlighted — TC-STACK-06/FR-THEME-03), and a
+    Top-tags card with a Week/All-time `SegmentedControl`. Loading, calm error, and first-run
+    empty states (NFR-OBS-01).
+  - **Profile** (`ProfileScreen`): added an `Avatar` monogram beside name/email/provider
+    (FR-STATS-01).
+  - New: `hooks/useStats.ts` (derives from the existing `useEntries()` cache, `now` captured
+    per mount, memoized — no new query), `components/{Avatar,StatBlock,TopTag,WeekChart}.tsx`.
+    Tokens only.
+
+**Deferred (documented in the change):** server-side pre-aggregated stats endpoints → moved to
+`daily-insight` (needs the user's TZ server-side); Google **profile-photo** avatars → need an
+`auth` `avatarUrl` contract + persistence (ships initials monogram now); daily **goal line** on
+the chart → `streaks`. "This week" is a rolling 7-day window (matches FR-STATS-02).
+
+**State now:** all `add-profile-stats` tasks done except **7.2** (manual device smoke). Change
+not yet archived.
+
+**Next steps:** device smoke (7.2) → then `/opsx-archive` for `add-profile-stats` (sync the
+`profile-stats` delta spec to `openspec/specs/`), then Phase 5 `daily-insight`.
+
+---
+
 ## 2026-07-02T19:50Z — Archived `add-tags`; promoted its specs to main
 
 `/openspec-archive-change add-tags`: all 4 artifacts done, 28/29 tasks (only 7.2 device smoke

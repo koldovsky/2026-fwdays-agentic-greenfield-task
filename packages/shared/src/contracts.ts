@@ -91,6 +91,25 @@ export interface DayTotal {
   totalSec: number;
 }
 
+/** Tracked-time total for a single tag, used by the Stats per-tag breakdown (FR-STATS-04). */
+export interface TagTotal {
+  tagId: string;
+  name: string;
+  /** The tag's dot color, or null for a neutral dot. */
+  color: string | null;
+  totalSec: number;
+}
+
+/** Today / this-week / all-time totals, used by the Stats screen (FR-STATS-03). */
+export interface PeriodTotals {
+  /** Tracked seconds on the current local day. */
+  todaySec: number;
+  /** Tracked seconds over the last 7 local days (matches the weekly chart). */
+  weekSec: number;
+  /** Tracked seconds across all stopped entries. */
+  allTimeSec: number;
+}
+
 /** Health/readiness response. */
 export interface HealthStatus {
   status: 'ok';
