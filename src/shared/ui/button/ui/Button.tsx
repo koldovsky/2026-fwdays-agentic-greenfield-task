@@ -13,6 +13,8 @@ export interface ButtonProps {
   readonly size?: "sm" | "md" | "lg";
   /** Disabled state — prevents click, shows muted style. */
   readonly disabled?: boolean;
+  /** Button behavior in forms; ignored when `href` is set. */
+  readonly type?: "button" | "submit";
   /** Click handler. */
   readonly onClick?: () => void;
   /** When set, render a link (`<a>`) styled as a button instead of a `<button>`. */
@@ -46,6 +48,7 @@ export function Button({
   variant = "primary",
   size = "md",
   disabled = false,
+  type = "button",
   onClick,
   href,
   "aria-label": ariaLabel,
@@ -70,7 +73,7 @@ export function Button({
 
   return (
     <button
-      type="button"
+      type={type}
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
       aria-label={ariaLabel}

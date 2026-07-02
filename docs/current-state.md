@@ -7,65 +7,40 @@
 
 ## Last action
 
-- **Agent-engineering improvements done + verified (2026-07-02).** All four planned items:
-  1. **FSD boundaries now ESLint-enforced** (`eslint.config.mjs`): downward-only layer imports,
-     slice index.ts public-API rule, `shared/lib` framework-free (TC-PURE-01). Verified: lint
-     green on existing code AND catches an injected violation. Limit: only `@/` alias imports
-     checked — relative-path escapes stay checker territory.
-  2. **`.claude/agents/`**: `checker` (fresh-context maker≠checker review, read-only) +
-     `verifier` (build/lint/test + FR/NFR evidence). Both wrap the existing skills.
-  3. **Project permissions** in `.claude/settings.json`: deny `rm -rf`/force-push/hard-reset/
-     `git clean`/`.env*`; allow `yarn build|lint|test`, `openspec validate`, read-only git.
-  4. **`perf-audit` skill built** (was proposed): `.claude/skills/perf-audit/` + Cline mirrors,
-     codifies `docs/perf/log.md` Lighthouse procedure (NFR-PERF-04); registered in AGENTS.md.
-  Gates: lint + build green, 153/153 tests. Nothing committed yet.
-- **Plan-first workflow wired (2026-07-02).** Project `UserPromptSubmit` hook injects plan-first
-  rule (plan in this file before code); `Stop` hook blocks finishing when tree changed but this
-  file wasn't updated. Codified in AGENTS.md. User-level: caveman statusline badge + SessionStart
-  context-check hook in `~/.claude/settings.json`. Live-confirmed: prompt hook fires.
-
-- **Auth.js session + GDPR endpoints done + live-verified (2026-07-02).** TC-STACK-07 decided:
-  **next-auth v5 (5.0.0-beta.31), JWT sessions, Credentials provider** over the existing scrypt
-  service (rationale in `openspec/changes/add-auth/design.md`; Supabase/Clerk rejected — hosted,
-  need external creds).
-  - App-layer wiring (shared/lib stays framework-free): `src/app/auth.ts` (`handlers`, `auth`,
-    `currentUserId()`), `/api/auth/[...nextauth]`, `/api/auth/register` (validation + uniform codes).
-  - **GDPR endpoints (persistence 3.x):** `GET /api/account/export` (user + decrypted CV text +
-    full tailoring history, 401 anon) and `DELETE /api/account` (hard delete, FK cascade, clears
-    session cookie) — thin routes over new framework-free `shared/lib/account` service;
-    `user-repo` gained `deleteById`.
-  - **Live-verified over real HTTP:** `scripts/dev-pglite-server.mjs` (pglite over TCP :5544,
-    migrations on boot; single-connection — stop app before hand-seeding) + `next start`:
-    register 201 → duplicate `email_taken` → weak password 400 → sign-in 302 + JWT cookie →
-    session has user id → export JSON → delete → export 404. Plus pglite integration tests for
-    export (decrypted rawText) + cascade delete. Build/lint green, **153 tests**.
-  - Env: **`AUTH_SECRET` now required at runtime** (added to launch env list below).
-  - Still open in `add-auth`: Google OAuth flow (needs client id/secret), password reset (needs
-    email sender), `features/sign-in` UI + top-bar session state (3.1/3.3), checker-review (4.3).
-- **Perf + environment-audit interlude (2026-07-02).** All previously uncommitted work is now
-  committed (4 commits on `rromanko`: prior-session work, perf, audit fixes, animations spec).
-  No main-flow code touched.
-  - **Landing perf (NFR-PERF-04): targets met.** Lighthouse mobile throttled vs `next start`:
-    LCP 2.64 s → **2.48 s** (target < 2.5 s), TBT 30 → **25 ms** (target < 200 ms), CLS 0.
-    Fixes: Faq rebuilt on native `<details>/<summary>` (drops its client JS), 26 KB
-    favicon.ico → 570 B `icon.svg`, unused `fallow` devDep removed. Font-weight clamping
-    tried + reverted (Google serves identical bytes). Evidence: `docs/perf/baseline.json`,
-    `after.json`, `log.md` (diagnosis, per-fix deltas, remaining headroom: self-hosted subset
-    fonts ≈ −0.2 s; ~147 KB framework JS is the floor). **LCP margin ≈ 20 ms** — re-run the
-    log.md procedure after any landing change.
-  - Fixed pre-existing `next build` breakage (readonly-type errors in
-    `shared/lib/evals/fixtures.ts`). Build, lint, **150 tests** green.
-  - **Agent-environment audit done.** Fixed: marketing-landing FAQ spec synced to the
-    `<details>` implementation; AGENTS.md baseline-spec list + dead `/vouch-design` skill refs
-    (also in DESIGN.md); stale "yarn build broken" note in agent-verify (3 copies).
-    `openspec validate --all --strict` 9/9. Flagged, not built: no hooks / no project
-    permission deny-list, no `.claude/agents/`; proposed a `perf-audit` skill (needs approval).
-  - **`landing-animations` change proposed (SPEC ONLY, 4/4 artifacts valid):** scroll-reveal,
-    hero entrance, CTA micro-interactions; constraints: prefers-reduced-motion off-switch,
-    CLS 0, deps ≤ 3 kb, perf budget must hold. **Priority: after current main-flow task,
-    before any new features.**
+- **Sign-in UI + top-bar session state done, checker-reviewed, live-verified (2026-07-02).**
+  add-auth 3.1 done, 3.3 partial (anonymous side). New slices, all gates green
+  (lint, build, **163 tests**), uncommitted:
+  - `features/sign-in`: `SignInForm` (client; sign-in/sign-up modes, credentials via
+    `next-auth/react`, register via `/api/auth/register`, pure error-map in `lib/errors.ts` —
+    uniform `invalid_credentials`, no enumeration) + `SignOutButton`. Google button lands with
+    2.2 (needs creds).
+  - `widgets/top-bar`: logo + nav (`/#how`, `/#pricing`) + session slot (anon → sign-in/try-free;
+    signed-in → name/email + sign-out). Session arrives as prop from the route (FR-SHELL-01).
+  - `views/auth` + `/sign-in` route (noindex, uk title, signed-in → redirect `/tailor`);
+    `/tailor` now renders TopBar fed from `auth()` but is **NOT gated** (FR-ONBOARD-01);
+    landing Header sign-in href → `/sign-in` (attribute-only; `/` still prerendered static, so
+    NFR-PERF-04 untouched — perf-audit skipped on that rationale). `shared/ui` Button gained
+    `type="submit"`; i18n gained `auth` + `topBar` sections (uk/en parity tested).
+  - **Live HTTP transcript** (pglite :5544 + `next start` :3100): /sign-in 200 anon (uk form) →
+    /tailor 200 anon (no gate, anon CTAs) → register 201 → credentials callback 302 + session
+    cookie → /tailor shows "Olena" + Вийти, no sign-in CTA → /sign-in while authed 307 → /tailor
+    → wrong-password vs unknown-email: byte-identical 302 `error=CredentialsSignin`, no cookie.
+  - Checker subagent findings fixed: `role="group"` on account area (aria-prohibited-attr,
+    NFR-A11Y-01), i18n'd home-link label + /sign-in metadata title, post-register sign-in
+    failure now lands in sign-in mode with uniform error. Tracked, not fixed: landing `Header`
+    vs `top-bar` duplication — fold once the Cyrillic display-font blocker resolves.
 
 ## Prior (done, see git log)
+
+- Agent-engineering hardening (2026-07-02, committed): FSD ESLint boundaries, `.claude/agents/`
+  checker + verifier, project permission deny-list, `perf-audit` skill, plan-first hooks.
+- Auth.js v5 session + GDPR endpoints (2026-07-02, committed): `src/app/auth.ts` (JWT,
+  Credentials over scrypt service), `/api/auth/register`, `GET /api/account/export` +
+  `DELETE /api/account` over `shared/lib/account`; live-verified via pglite :5544 + next start.
+- Landing perf NFR-PERF-04 met (2026-07-02): LCP 2.48 s / TBT 25 ms / CLS 0; evidence + re-run
+  procedure in `docs/perf/log.md`. **LCP margin ≈ 20 ms** — re-audit after any landing change.
+- `landing-animations` change proposed, spec only (4/4 artifacts valid); implement after
+  main-flow items.
 
 - `add-auth` core (2026-07-02): scrypt password + `registerWithPassword`/
   `authenticateWithPassword` over ports, migration `0002_auth.sql`, pglite-verified,
@@ -80,16 +55,17 @@
 
 ## Working on
 
-- **`add-auth` remainder** — sign-in UI (3.1/3.3), Google OAuth (creds), reset email, checker-review.
+- **`add-auth` remainder** — Google OAuth (needs creds), reset email (needs sender),
+  agent-verify sweep (4.1) + final checker-review (4.3; 3.1 diff already checker-reviewed).
   `add-persistence` fully done except checker-review (4.3).
 
 ## Next steps
 
-1. **`features/sign-in` UI** + top-bar session state; sign-in enforced only at export/paywall,
-   one free anonymous tailoring stays (FR-ONBOARD-01).
+1. **Commit the sign-in UI work** (uncommitted on `rromanko`).
 2. **`add-agent-loop`** — replaces the `/tailor` stub. Needs `ANTHROPIC_API_KEY`; reuses
    `shared/lib/llm`; keep user ids out of LLM payloads (NFR-SEC-02).
-3. **`add-payments-emulator`** — needs persistence + auth.
+3. **`add-payments-emulator`** — needs persistence + auth; export/paywall gate closes
+   add-auth 3.3 when an export surface exists (with `export-resume`).
 4. **`landing-animations`** — implement only after the main-flow items above.
 
 Also open: `export-resume`, `edit-bullet`, `upload-cv`/`paste-jd` (TC-PARSE-01/02).

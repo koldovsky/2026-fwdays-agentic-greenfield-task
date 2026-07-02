@@ -12,9 +12,9 @@
 
 ## 3. UI + session boundary
 
-- [ ] 3.1 `features/sign-in` (form + Google button) + top-bar session state (signed-in vs anonymous)
+- [x] 3.1 `features/sign-in` (sign-in/sign-up form) + `widgets/top-bar` session state (signed-in vs anonymous) + `views/auth` at `/sign-in`. Live-verified over HTTP — transcript in docs/current-state.md (anon form → register → sign-in → top bar shows user → signed-in redirect off /sign-in; uniform failure for wrong-password vs unknown-email). Google button lands with 2.2 (needs creds).
 - [x] 3.2 `currentUserId()`/`auth()` usable in route handlers (GDPR endpoints use it); sign-out via Auth.js `/api/auth/signout` + exported `signOut`. Live-verified over HTTP (register→sign-in→session→delete).
-- [ ] 3.3 Enforce sign-in only at export/paywall; keep one free anonymous tailoring (FR-ONBOARD-01)
+- [~] 3.3 Anonymous access preserved + live-verified: `/tailor` is NOT gated (anon 200, full workspace). Export/paywall gate itself lands with `export-resume` — no export surface exists yet (FR-ONBOARD-01)
 - [ ] 3.4 Confirm user IDs never enter LLM payloads (NFR-SEC-02)
 
 ## 4. Verify & review

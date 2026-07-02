@@ -31,4 +31,32 @@ export const en: Dictionary = {
   workspace: {
     lead: "Check the job match and choose which bullets to export.",
   },
+  auth: {
+    signInTitle: "Sign in",
+    signUpTitle: "Create account",
+    lead: "One free tailoring works without an account. Sign in is only needed to export.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    nameLabel: "Name (optional)",
+    signInAction: "Sign in",
+    signUpAction: "Create account",
+    signOutAction: "Sign out",
+    noAccountPrompt: "No account yet?",
+    haveAccountPrompt: "Already have an account?",
+    error: {
+      invalidCredentials: "Sign-in failed. Check your email and password.",
+      emailTaken: "This email is already registered. Try signing in.",
+      invalidEmail: "Enter a valid email address.",
+      weakPassword: "Password must be at least 8 characters.",
+      generic: "Something went wrong. Try again.",
+    },
+  },
+  topBar: {
+    homeLabel: "Vouch home",
+    accountLabel: "Account",
+    signIn: "Sign in",
+    tryFree: "Try free",
+    navFeatures: "Features",
+    navPricing: "Pricing",
+  },
 };

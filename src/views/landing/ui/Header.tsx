@@ -28,7 +28,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button href="/tailor" variant="ghost" size="sm">
+          <Button href="/sign-in" variant="ghost" size="sm">
             Sign in
           </Button>
           <Button href="/tailor" variant="primary" size="sm">
