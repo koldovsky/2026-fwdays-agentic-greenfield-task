@@ -19,7 +19,15 @@ export type Intent = (typeof ALL_INTENTS)[number];
  * `clarify`). `date` is a TOKEN the model proposes (today/yesterday/explicit); the concrete calendar
  * date is resolved in code (src/router/date.ts), never by the model.
  */
-export const makeRouterSchema = (allowAnswer: boolean) => {
+export type RouterSchema = z.ZodObject<{
+  intent: z.ZodEnum<[Intent, ...Intent[]]>;
+  date: z.ZodString;
+  product: z.ZodOptional<z.ZodString>;
+  quantity: z.ZodOptional<z.ZodNumber>;
+  unit: z.ZodOptional<z.ZodString>;
+}>;
+
+export const makeRouterSchema = (allowAnswer: boolean): RouterSchema => {
   const values = (
     allowAnswer ? ALL_INTENTS : ALL_INTENTS.filter((intent) => intent !== 'answer')
   ) as [Intent, ...Intent[]];
@@ -33,4 +41,4 @@ export const makeRouterSchema = (allowAnswer: boolean) => {
   });
 };
 
-export type RouterOutput = z.infer<ReturnType<typeof makeRouterSchema>>;
+export type RouterOutput = z.infer<RouterSchema>;
