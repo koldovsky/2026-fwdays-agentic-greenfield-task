@@ -36,8 +36,20 @@ export function ManageTagsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
-      {/* Custom header: a bare back chevron (no bg/border) + centered title. */}
+      {/* Custom header: a bare back chevron (no bg/border) + centered title. The title
+          is behind and non-interactive so it never steals taps from the back button. */}
       <View style={{ height: 52, justifyContent: 'center' }}>
+        <Text
+          pointerEvents="none"
+          style={{
+            textAlign: 'center',
+            color: t.colors.text,
+            fontSize: t.fontSize.headline,
+            fontWeight: t.fontWeight.bold,
+          }}
+        >
+          Manage tags
+        </Text>
         <PressableScale
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
@@ -48,7 +60,7 @@ export function ManageTagsScreen() {
             left: 0,
             top: 0,
             bottom: 0,
-            width: 64,
+            width: 72,
             paddingLeft: t.space[3],
             alignItems: 'flex-start',
             justifyContent: 'center',
@@ -56,16 +68,6 @@ export function ManageTagsScreen() {
         >
           <ChevronLeft size={28} color={t.colors.text} />
         </PressableScale>
-        <Text
-          style={{
-            textAlign: 'center',
-            color: t.colors.text,
-            fontSize: t.fontSize.headline,
-            fontWeight: t.fontWeight.bold,
-          }}
-        >
-          Manage tags
-        </Text>
       </View>
 
       <ScrollView
