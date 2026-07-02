@@ -338,7 +338,7 @@ describe('createFoodService.logPhoto', () => {
     const rice = created[2]?.data;
     expect(rice?.kcal).toBe(195); // 130 × 150/100 in code
 
-    // Every row carries its OWN numbers; no per-plate total is computed or stored (invariant #2).
+    // No per-plate total is ever stored as a DB ROW — each row carries only its OWN numbers (#2/#8).
     const totalIfSummed = 330 + 250 + 195;
     expect(created.some((r) => r.data.kcal === totalIfSummed)).toBe(false);
 
@@ -347,7 +347,8 @@ describe('createFoodService.logPhoto', () => {
     expect(confirmation?.text).toContain('250');
     expect(confirmation?.text).toContain('195');
     expect(confirmation?.text).toContain('±20');
-    expect(confirmation?.text).not.toContain(String(totalIfSummed));
+    // The plate total is a reply-only additional row, summed in code (not stored) — shown to the user.
+    expect(confirmation?.text).toContain(String(totalIfSummed)); // 775, in the message only
   });
 
   it('CRITICAL: never writes the image bytes anywhere during a full logPhoto run (invariant #4)', async () => {

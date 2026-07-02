@@ -22,6 +22,30 @@ const macroLine = (lang: Lang, row: FoodLog): string => {
 };
 
 const LOGGED_VERB: Record<Lang, string> = { uk: 'Записав', ru: 'Записал', en: 'Logged' };
+const TOTAL_LABEL: Record<Lang, string> = { uk: 'Разом', ru: 'Итого', en: 'Total' };
+
+/**
+ * The plate total, summed IN CODE from the rows just written (invariant #2 — the model never emits a
+ * number; a per-plate total is a code sum of `food_log` rows, distinct from the daily SUM in `query`).
+ * kcal is the Int column; macros come from each row's own basis via `macroBaseFromRow` (no re-scaling).
+ */
+const totalLine = (lang: Lang, rows: FoodLog[]): string => {
+  const kcal = rows.reduce((sum, row) => sum + row.kcal, 0);
+  const totals = rows.reduce(
+    (acc, row) => {
+      const m = macroBaseFromRow(row);
+      return { p: acc.p + m.proteinG, f: acc.f + m.fatG, c: acc.c + m.carbsG };
+    },
+    { p: 0, f: 0, c: 0 },
+  );
+  const p = fmt(totals.p);
+  const f = fmt(totals.f);
+  const c = fmt(totals.c);
+  if (lang === 'en') {
+    return `${TOTAL_LABEL.en} — ${kcal} kcal · P ${p} / F ${f} / C ${c} g`;
+  }
+  return `${TOTAL_LABEL[lang]} — ${kcal} ккал · Б ${p} / Ж ${f} / ${lang === 'uk' ? 'В' : 'У'} ${c} г`;
+};
 const ESTIMATE_NOTE: Record<Lang, string> = {
   uk: ' Це приблизна оцінка (±20–30%).',
   ru: ' Это примерная оценка (±20–30%).',
@@ -76,14 +100,18 @@ export const buildConfirmation = (text: string, row: FoodLog): Confirmation =>
 
 /**
  * Multi-item plate confirmation (food-photo, invariant #2): assembled in code, listing EACH row's
- * own numbers via the same `macroLine` — never a hand-summed plate total (that stays the query
- * capability). One honest estimate note if any row is an `estimate` (invariant #3). Prose language
- * mirrors the caption (default when empty); enum/structural values stay English (invariant #6). No
- * per-item add-to-catalog button in this slice (scope guard) — the plain `Confirmation.text` shape.
+ * own numbers via the same `macroLine`, plus a per-plate TOTAL summed in code from those rows (still
+ * never a model-emitted number, and distinct from the daily SUM in `query`). The total is shown only
+ * for a multi-item plate (a single item's own line already is the total). One honest estimate note if
+ * any row is an `estimate` (invariant #3). Prose language mirrors the caption (default when empty);
+ * enum/structural values stay English (invariant #6). No per-item add-to-catalog button in this slice.
  */
 export const buildPlateConfirmation = (caption: string, rows: FoodLog[]): Confirmation => {
   const lang = detectLang(caption);
   const lines = rows.map((row) => `• ${macroLine(lang, row)}`);
+  if (rows.length > 1) {
+    lines.push(totalLine(lang, rows));
+  }
   const body = `${LOGGED_VERB[lang]}:\n${lines.join('\n')}`;
   const hasEstimate = rows.some((row) => row.source === FoodSource.estimate);
 
