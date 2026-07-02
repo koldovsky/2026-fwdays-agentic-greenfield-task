@@ -11,9 +11,7 @@ structured, prose-only call per review (no agent loop) that is spliced into a de
 template. Reviews follow `docs/review-templates.md`, mirror the user's language in prose while keeping
 DB enums/`period` literals English, are idempotent per `(user_id, period, period_start)`, degrade
 honestly on sparse data, and are strictly tenant-scoped (invariants #1, #2, #5, #6, #8).
-
 ## Requirements
-
 ### Requirement: Manual daily review trigger
 
 The system SHALL generate the acting user's daily review for **today** (user timezone) when the
@@ -37,7 +35,10 @@ day SHALL be marked reviewed (`reviewed_flag = true`).
 The system SHALL run a single scheduled job that, at each user's **local** midnight, generates the
 just-finished day's daily review **if and only if** no daily review already exists for that
 (user, date). Auto-generated reviews SHALL be pushed proactively to the user's chat and stored with
-`reviewed_flag = false`. The sweep SHALL evaluate every user against their own timezone.
+`reviewed_flag = false`. The sweep SHALL evaluate every user against their own timezone. The sweep
+SHALL never produce an unhandled promise rejection: a failure outside the per-user loop (e.g. the
+user listing query) SHALL be caught and logged message-only, and the next hourly tick SHALL run
+normally. The scheduler's cron task SHALL be stopped during graceful shutdown.
 
 #### Scenario: unreviewed day auto-generates at local midnight
 - **WHEN** the scheduler tick fires and a user's local time has just crossed midnight and that user
@@ -54,6 +55,15 @@ just-finished day's daily review **if and only if** no daily review already exis
 - **WHEN** two users in different timezones are swept in the same hourly tick
 - **THEN** each user's review fires only when the finished day has ended in that user's own
   timezone, not the server's
+
+#### Scenario: a transient failure of the sweep's outer query does not crash the process
+- **WHEN** the sweep's user-listing query throws (e.g. a transient DB error) during a tick
+- **THEN** the error is caught and logged message-only, no unhandled rejection escapes, and the
+  next hourly tick proceeds normally
+
+#### Scenario: cron task stops on shutdown
+- **WHEN** the process shuts down gracefully (SIGINT/SIGTERM)
+- **THEN** the review cron task is stopped and no new sweep begins during teardown
 
 ### Requirement: Weekly and monthly rollups
 
@@ -163,3 +173,4 @@ rows, and a review row SHALL never be written for or read from another user.
 - **WHEN** a review is generated for user A while user B has rows in the same period
 - **THEN** only user A's rows contribute to the numbers, and the `reviews` row is written under
   user A's `user_id`
+
