@@ -1,6 +1,6 @@
 import type { CatalogMatch } from '../food/lookup.js';
 import type { ResolvedFood } from '../food/types.js';
-import type { Clarification } from './types.js';
+import { type Clarification, isAskable } from './types.js';
 
 // Ask-vs-log decision (design D1, ADR-0015). PURE code — it reads signals the resolution ALREADY
 // produced (the estimate call's optional `clarify`, and the catalog-match count), never a new LLM
@@ -43,7 +43,7 @@ export const decideAskOrLog = (
   if (candidates.length > 1) {
     return disambiguation(resolved, candidates);
   }
-  if (clarify) {
+  if (isAskable(clarify)) {
     return clarify;
   }
 

@@ -4,7 +4,7 @@ import type { FoodLog } from '@prisma/client';
 import { decideAskOrLog } from '../clarify/decide.js';
 import { buildQuestion } from '../clarify/question.js';
 import { resolveAnswer } from '../clarify/resolve.js';
-import { toClarification } from '../clarify/types.js';
+import { isAskable, toClarification } from '../clarify/types.js';
 import type { LogOutcome, OpenQuestion, PhotoOpenQuestion } from '../clarify/types.js';
 import { resolveUserId } from '../db/resolveUser.js';
 import { noopOutbox } from '../notion/outbox.js';
@@ -195,9 +195,10 @@ export const createFoodService = (
     const meal = inferMeal(now(), userTz);
     const date = resolveDate('today', userTz, now());
 
-    if (clarify) {
+    if (isAskable(clarify)) {
       // Capture the item list + meal/date at ASK time so a boundary-crossing answer/expiry logs the
-      // meal the user ate in. No image is held — it was already discarded (invariant #4).
+      // meal the user ate in. No image is held — it was already discarded (invariant #4). A clarify
+      // with a blank question is NOT askable (would be an empty Telegram send) — fall through to log.
       const clarification = toClarification(clarify);
       const pending: PhotoOpenQuestion = {
         variant: 'photo',

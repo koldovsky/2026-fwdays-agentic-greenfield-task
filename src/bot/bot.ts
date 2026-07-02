@@ -117,6 +117,12 @@ const replyConfirmation = async (reply: ReplyFn, confirmation: Confirmation): Pr
  */
 const askClarify = async (reply: ReplyFn, question: OutboundQuestion): Promise<void> => {
   if (!question.options || question.options.length === 0) {
+    // Defence-in-depth: a blank question with no options would be an empty Telegram send (400). The
+    // ask-vs-log decision (isAskable) already drops a blank-question clarify, so this should be
+    // unreachable — but never crash the update loop on an empty message.
+    if (question.text.trim() === '') {
+      return;
+    }
     await reply(question.text);
     return;
   }

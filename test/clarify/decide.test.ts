@@ -73,6 +73,14 @@ describe('decideAskOrLog', () => {
     expect(decideAskOrLog(resolved, null, [])).toBeNull();
   });
 
+  it('logs (never asks) when the model emits a clarify with a blank question — would be an empty send', () => {
+    // The schema marks `question` required, but the model can still emit "" — asking it would be an
+    // empty Telegram message (400). A blank-question clarify is treated as absent → log the estimate.
+    const blank: Clarification = { kind: 'descriptor', unknown: 'fat%', question: '   ' };
+
+    expect(decideAskOrLog(resolved, blank, [])).toBeNull();
+  });
+
   it('prefers the disambiguation when both a clarify and multiple matches are present', () => {
     const candidates = [match({ id: 1 }), match({ id: 2 })];
 

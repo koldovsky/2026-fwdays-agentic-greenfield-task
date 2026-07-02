@@ -55,6 +55,16 @@ export const toClarification = (raw: RawClarify): Clarification => {
 };
 
 /**
+ * Whether a model-supplied clarify can actually be posed: a required-but-blank `question` (the model
+ * may emit `""` even though the schema marks it required) is NOT askable. Sending it would be an empty
+ * Telegram message (400). Both ask-vs-log decision points treat a blank-question clarify as absent and
+ * log instead — the estimate is the precision-first fallback (invariant #3), never a broken question.
+ */
+export const isAskable = <T extends { question: string }>(
+  clarify: T | null | undefined,
+): clarify is T => clarify != null && clarify.question.trim() !== '';
+
+/**
  * Fields common to every pending Open Question (ADR-0019): what was asked (`clarification`, whose
  * `kind` routes the answer), the meal captured at ASK time (no boundary drift), the target date, and
  * the ask timestamp for the lazy TTL — never any chat transcript (invariant #1).

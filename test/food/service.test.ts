@@ -567,6 +567,25 @@ describe('createFoodService.logPhoto — plate ask', () => {
     expect(outcome?.kind).toBe('logged');
     expect(created).toHaveLength(3); // one row per item, straight through
   });
+
+  it('a clarify with a BLANK question logs the items, never asks (would be an empty Telegram send)', async () => {
+    // The model occasionally emits a clarify whose required `question` is "" — asking it would send an
+    // empty message (Telegram 400). isAskable drops it → the plate logs (estimate is the fallback, #3).
+    const { client, created } = makePhotoFake([]);
+    const anthropic = makePlateAnthropic({
+      items: PLATE.items,
+      clarify: { unknown: 'portion', question: '   ' },
+    });
+
+    const outcome = await createFoodService(client, anthropic, 'Europe/Kyiv', NOON).logPhoto(
+      99n,
+      'plate',
+      ['BASE64'],
+    );
+
+    expect(outcome?.kind).toBe('logged'); // logged, NOT ask
+    expect(created).toHaveLength(3); // one row per item
+  });
 });
 
 describe('createFoodService.resolveAnswer — photo variant', () => {
