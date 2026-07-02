@@ -6,6 +6,38 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T10:25Z — Implemented `add-time-entries-core` (31/32 tasks)
+
+**Done:** `/opsx:apply add-time-entries-core` — the MVP core loop across all three packages,
+in two committed passes.
+- **Shared:** `formatDurationHms` (`h:mm:ss`, guarded) + pure `groupEntriesByDay` (local-day
+  buckets, newest-first, per-day totals, midnight-crossers on their start day); user-scoped
+  `TimeEntry` contract + `ManualTimeEntry`/`UpdateTimeEntry`. FR-ENTRY-07/09/10, TC-PURE-01.
+- **API:** `TimeEntry` gains a `userId` owner (+ migration, `@@index([userId, startedAt])`);
+  `time-entries` module behind `JwtAuthGuard`, `@CurrentUser`-scoped. **Single-running invariant
+  enforced server-side in a transaction** (start & continue stop any running entry first). Full
+  CRUD + stop/manual/continue. FR-ENTRY-01→06/08/11, BC-SCOPE-01.
+- **Mobile:** TanStack Query provider + `api/timeEntries.ts` + `useTimeEntries` hooks (optimistic
+  start/stop/continue/delete with rollback) + `useElapsed` live tick. Functional **Timer** screen
+  (start/running control card, live clock, Today list, add/edit sheet) and **History** screen
+  (FlashList day groups + per-day totals). New primitives: `TimerEntry`, `EntryFormModal`
+  (RHF + Zod, native date-time pickers). NFR-PERF-01/02, TC-STACK-05.
+- New deps (native → need a rebuild): `@shopify/flash-list`, `@react-native-community/datetimepicker`;
+  and JS-only `@tanstack/react-query`.
+
+**State now:** `npm run gate` green (shared 19 tests, api 7 tests incl. invariant + cross-user
+isolation, lint + typecheck + builds all pass). `openspec validate add-time-entries-core --strict`
+passes. 4/4 artifacts, **31/32 tasks** — committed in 2 layers on `dev` (shared+api, then mobile).
+
+**Next steps:** Task 6.2 remains — **manual on-device smoke** (start→stop→manual→edit→delete→
+continue; confirm one running entry + day grouping). Needs a dev-client **rebuild** (`npm run
+ios:device`) since flash-list + datetimepicker are native. After smoke passes, `/opsx:archive
+add-time-entries-core` (promotes `time-entries` spec). Then capability 05 `tags`
+(`/opsx:propose add-tags`) — adds tag assignment + History filter on top of this loop. Still
+deferred: the `accentText` AA token (theming) and the untracked `.claude/settings.json`.
+
+---
+
 ## 2026-06-30T23:30Z — Implemented `add-auth` (33/35 tasks)
 
 **Done:** `/opsx:apply add-auth` — auth capability end to end. Shared: pure `validatePassword`

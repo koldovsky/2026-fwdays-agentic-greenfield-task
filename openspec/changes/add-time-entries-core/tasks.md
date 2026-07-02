@@ -22,28 +22,28 @@
 
 ## 3. Mobile — data layer
 
-- [ ] 3.1 Add `@tanstack/react-query` and `@shopify/flash-list` to `apps/mobile`; install from repo root
-- [ ] 3.2 Wrap the app root in `QueryClientProvider` (inside ThemeProvider) in `App.tsx`
-- [ ] 3.3 Add `src/api/timeEntries.ts` — typed client over the existing authenticated API client (list, running, start, stop, manual, continue, update, delete) using `@honeydo/shared` contracts
-- [ ] 3.4 Add query/mutation hooks `src/hooks/useTimeEntries.ts`: `useEntries`, `useRunningEntry`, and optimistic `useStart/useStop/useContinue` (onMutate snapshot + rollback, onSettled invalidate) (NFR-PERF-01, TC-STACK-05)
-- [ ] 3.5 Add a live-elapsed hook (`useElapsed(startedAt)`) ticking via `setInterval`, formatting with `formatDurationHms`
+- [x] 3.1 Add `@tanstack/react-query` and `@shopify/flash-list` to `apps/mobile`; install from repo root
+- [x] 3.2 Wrap the app root in `QueryClientProvider` (inside ThemeProvider) in `App.tsx`
+- [x] 3.3 Add `src/api/timeEntries.ts` — typed client over the existing authenticated API client (list, running, start, stop, manual, continue, update, delete) using `@honeydo/shared` contracts
+- [x] 3.4 Add query/mutation hooks `src/hooks/useTimeEntries.ts`: `useEntries`, `useRunningEntry`, and optimistic `useStart/useStop/useContinue` (onMutate snapshot + rollback, onSettled invalidate) (NFR-PERF-01, TC-STACK-05)
+- [x] 3.5 Add a live-elapsed hook (`useElapsed(startedAt)`) ticking via `setInterval`, formatting with `formatDurationHms`
 
 ## 4. Mobile — Timer screen
 
-- [ ] 4.1 Build the running state: description + live `h:mm:ss` clock + Stop; token-driven per DESIGN.md (match the timer UI kit reference)
-- [ ] 4.2 Build the idle state: description input + Start; keep the existing empty-state hero when there are no entries at all (FR-SHELL-03)
-- [ ] 4.3 Manual-entry form (RHF + Zod): note + start/end date-time pickers, end-after-start validation; posts to `/time-entries/manual`
-- [ ] 4.4 Edit form reusing the manual form (description + times), wired to `PATCH`; delete action with confirm
-- [ ] 4.5 Continue action from a past entry (from History row / recent) → optimistic start copying the note
+- [x] 4.1 Build the running state: description + live `h:mm:ss` clock + Stop; token-driven per DESIGN.md (match the timer UI kit reference)
+- [x] 4.2 Build the idle state: description input + Start; keep the existing empty-state hero when there are no entries at all (FR-SHELL-03)
+- [x] 4.3 Manual-entry form (RHF + Zod): note + start/end date-time pickers, end-after-start validation; posts to `/time-entries/manual`
+- [x] 4.4 Edit form reusing the manual form (description + times), wired to `PATCH`; delete action with confirm
+- [x] 4.5 Continue action from a past entry (from History row / recent) → optimistic start copying the note
 
 ## 5. Mobile — History screen
 
-- [ ] 5.1 Fetch entries and group with shared `groupEntriesByDay`; render a FlashList of day headers + rows (per-day total in header) (FR-ENTRY-07, NFR-PERF-02)
-- [ ] 5.2 Row shows note + duration (`formatDurationHms`/compact) with tap → edit and a Continue affordance; token-driven styling per DESIGN.md
-- [ ] 5.3 Empty and loading states are calm and token-driven (NFR-OBS-01)
+- [x] 5.1 Fetch entries and group with shared `groupEntriesByDay`; render a FlashList of day headers + rows (per-day total in header) (FR-ENTRY-07, NFR-PERF-02)
+- [x] 5.2 Row shows note + duration (`formatDurationHms`/compact) with tap → edit and a Continue affordance; token-driven styling per DESIGN.md
+- [x] 5.3 Empty and loading states are calm and token-driven (NFR-OBS-01)
 
 ## 6. Verify & document
 
-- [ ] 6.1 Run repo `npm run gate` (lint + typecheck + test + build) green; verify no raw-hex/design-token lint violations in new mobile UI
+- [x] 6.1 Run repo `npm run gate` (lint + typecheck + test + build) green; verify no raw-hex/design-token lint violations in new mobile UI
 - [ ] 6.2 Manual device smoke: start → stop → manual add → edit → delete → continue; confirm single running entry and day grouping
-- [ ] 6.3 Update `docs/current-state.md` (newest-first) with what shipped, FR IDs covered, and next steps; mark requirement statuses if appropriate
+- [x] 6.3 Update `docs/current-state.md` (newest-first) with what shipped, FR IDs covered, and next steps; mark requirement statuses if appropriate
