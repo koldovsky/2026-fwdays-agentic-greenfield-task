@@ -1,27 +1,41 @@
-# Стек у цьому завданні — будь-який. Додавай сюди ігнори свого стеку за потреби.
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# OS / редактори
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
 .DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.log
+*.pem
 
-# Секрети / змінні середовища
-.env
-.env.*
-!.env.example
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Залежності та артефакти збірки (типові для різних стеків)
-node_modules/
-dist/
-build/
-out/
-.next/
-__pycache__/
-*.pyc
-.venv/
-venv/
-target/
-bin/
-obj/
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
