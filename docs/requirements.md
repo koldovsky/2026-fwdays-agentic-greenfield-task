@@ -1,147 +1,118 @@
-# PRD — Weather Explorer / Weekend Trip Planner
+# PRD — Платформа синхронізації конверсій
 
-Last updated: 2026-05-15
+Цей документ є єдиним джерелом правди щодо функціоналу та обмежень платформи. Кожна вимога має свій унікальний ID для відстеження у коді, тестах та документації.
 
-This document is the **single source of truth** for what the product does and
-what constraints govern it. Every requirement has a stable ID. Specs, tests,
-PRs, and recordings reference these IDs to keep traceability intact.
+---
 
-Refer to [docs/product-brief.md](product-brief.md) for narrative context.
+## Конвенція ID
 
-## ID conventions
+| Префікс | Значення | Приклад |
+| :--- | :--- | :--- |
+| `FR-*` | Функціональна вимога | `FR-AUTH-01` — реєстрація користувача через Telegram |
+| `NFR-*` | Нефункціональна вимога | `NFR-PERF-01` — час завантаження кабінету |
+| `TC-*` | Технічне обмеження | `TC-STACK-01` — Next.js 16.2 App Router |
+| `BC-*` | Бізнес / UX обмеження | `BC-BRAND-01` — спокійний тон без знаків оклику |
 
-| Prefix   | Meaning                  | Example                                   |
-| -------- | ------------------------ | ----------------------------------------- |
-| `FR-*`   | Functional Requirement   | `FR-SEARCH-01` — user searches city by name |
-| `NFR-*`  | Non-Functional Requirement | `NFR-PERF-01` — TTFB < 300 ms             |
-| `TC-*`   | Technical Constraint     | `TC-STACK-01` — Next.js 16 App Router     |
-| `BC-*`   | Business / UX Constraint | `BC-PRIVACY-01` — no analytics            |
+---
 
-Status values: `proposed` · `accepted` · `shipped` · `dropped`.
+## Функціональні вимоги
 
-## Functional requirements
+### 1. Реєстрація та авторизація через Telegram
 
-### Shell & navigation
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| FR-AUTH-01 | Безпечна реєстрація користувача заблокована на сайті до авторизації в Telegram-боті для обов'язкового зв'язку. | proposed |
+| FR-AUTH-02 | На сторінці реєстрації генерується QR-код та лінк виду `t.me/bot?start=reg_<temp_token>` для відкриття бота. | proposed |
+| FR-AUTH-03 | При запуску команди `/start` бот послідовно запитує email та адресу сайту (`website_url`) користувача. | proposed |
+| FR-AUTH-04 | Після завершення збору даних бот реєструє користувача в базі даних та надсилає йому одноразове посилання для входу. | proposed |
+| FR-AUTH-05 | Сторінка реєстрації на сайті автоматично перенаправляє користувача до кабінету після підтвердження в боті. | proposed |
+| FR-AUTH-06 | Повторний вхід (авторизація) виконується через Magic Link, що надсилається в Telegram-бот, або через 6-значний одноразовий код, який генерує бот після введення користувачем свого email на сайті. | proposed |
 
-| ID          | Description                                                                                           | Status     |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ---------- |
-| FR-SHELL-01 | Single-page app with a top bar (logo, theme indicator) and a main content area                        | proposed   |
-| FR-SHELL-02 | Layout adapts at 768 px and 1280 px breakpoints; mobile single-column, tablet two-column, desktop three-column | proposed   |
-| FR-SHELL-03 | Empty state on first load: hero copy + city search prominently centered                               | proposed   |
+### 2. Керування підписками та Monobank Acquiring
 
-### Top clock (demo capability `top-clock`)
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| FR-SUB-01 | Підтримка двох тарифних планів: Місячний ($10.99/міс в еквіваленті UAH) та Річний ($120/рік в еквіваленті UAH). | proposed |
+| FR-SUB-02 | Перша оплата тарифу створюється через `POST /api/merchant/invoice/create` з параметром `saveCardData: { saveCard: true }` для токенізації картки. | proposed |
+| FR-SUB-03 | Отриманий у вебхуку токен картки (`cardToken`) та `walletId` зберігаються в базі даних для автоматичних списань. | proposed |
+| FR-SUB-04 | Автоматичне списання ініціюється фоновим процесом (Cron) у день завершення періоду через `POST /api/merchant/wallet/payment` з типом `initiationKind: "merchant"`. | proposed |
+| FR-SUB-05 | У разі неуспішного автоматичного списання система робить ще 2 спроби протягом 48 годин. Якщо оплата не надійшла, підписка переходить у статус `Suspended` (Призупинена). | proposed |
+| FR-SUB-06 | Користувач може тимчасово призупинити підписку (кнопка «Пауза»). Наступні списання вимикаються, токен картки зберігається, послуга працює до кінця сплаченого періоду, після чого переходить у статус `Paused`. | proposed |
+| FR-SUB-07 | При натисканні на «Скасувати підписку» користувачеві виводиться модальне попередження про зупинку передачі конверсій та втрату ефективності реклами. Після підтвердження статус змінюється на `Cancelled`. Токен картки видаляється з гаманця через `DELETE /api/merchant/wallet/card` після закінчення періоду. | proposed |
 
-| ID          | Description                                                                                           | Status     |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ---------- |
-| FR-CLOCK-01 | Header shows a compact accessible local-time clock that updates live while the page is open           | proposed   |
+### 3. REST API прийому конверсій
 
-### City search (capability `city-search`)
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| FR-API-01 | Платформа надає ендпоінт `POST /api/conversions` для отримання детальних записів конверсій з Google Таблиць через Apps Script. | proposed |
+| FR-API-02 | Запити до API автентифікуються за допомогою заголовка `X-API-Key`. | proposed |
+| FR-API-03 | API перевіряє статус підписки користувача. Якщо підписка неактивна (`Suspended`, `Paused` або закінчився сплачений період після скасування), запит відхиляється з кодом помилки `402 Payment Required` або `403 Forbidden`. | proposed |
+| FR-API-04 | Кожний запис конверсії містить поля: `date`, `Conversion Time`, `conversion_name`, `is_ad_conversion` (так/ні), `email`, `Phone`, `Conversion Value`, `order_id`, `ip_address`, `ad_source`, `channel`. | proposed |
+| FR-API-05 | Автоматичне очищення бази даних: детальні записи конверсій, старші за 14 місяців, видаляються раз на добу. | proposed |
 
-| ID           | Description                                                                                              | Status     |
-| ------------ | -------------------------------------------------------------------------------------------------------- | ---------- |
-| FR-SEARCH-01 | User types a free-form city name into a single input; debounced suggestions appear from Open-Meteo geocoding API | proposed   |
-| FR-SEARCH-02 | Each suggestion shows: city name, admin region, country, optional flag emoji                             | proposed   |
-| FR-SEARCH-03 | Selecting a suggestion sets the active location; URL reflects it as `?lat=&lon=&name=`                   | proposed   |
-| FR-SEARCH-04 | Pressing Enter with a single suggestion auto-selects it                                                  | proposed   |
-| FR-SEARCH-05 | If the geocoding API returns zero results, show "Nothing found" inline; no error toast                   | proposed   |
+### 4. Особистий кабінет та Аналітика
 
-### Footer jokes (capability `bottom-jokes`)
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| FR-DASH-01 | Форма в особистому кабінеті для внесення та зберігання доступів користувача: CRM (посилання, логін, пароль), Телефонія (посилання, логін, пароль, REST API ключі). | proposed |
+| FR-DASH-02 | Відображення детальних інструкцій для налаштування доступів до GA4, Google Ads, Google Cloud (права Editor, Project IAM Admin, BigQuery Admin для `auto@acontrol.pro`) та Binotel. | proposed |
+| FR-DASH-03 | Генерація унікального API-ключа та надання готового коду Apps Script для копіювання в Google Таблицю користувача. | proposed |
+| FR-DASH-04 | Вибір періоду аналітики (максимум останні 14 місяців) для побудови звітів. | proposed |
+| FR-DASH-05 | Картки сумарних показників: загальна кількість переданих конверсій, сумарна цінність конверсій, кількість та відсоток рекламних конверсій від загальної кількості. | proposed |
+| FR-DASH-06 | Графік динаміки передачі конверсій за вибраний період (за днями/тижнями). | proposed |
+| FR-DASH-07 | Кругові діаграми розподілу конверсій за рекламними джерелами (Google Ads, Meta Ads, Organic) та за каналами (Вебсайт, Телефонія, Месенджери). | proposed |
+| FR-DASH-08 | Таблиця останніх 100 переданих конверсій з пагінацією та фільтрами за джерелом та каналом. | proposed |
 
-| ID          | Description                                                                                 | Status   |
-| ----------- | ------------------------------------------------------------------------------------------- | -------- |
-| FR-JOKES-01 | Footer area shows deterministic Ukrainian weather-themed jokes without external APIs or tracking | proposed |
+### 5. Telegram-сповіщення
 
-### Forecast (capability `forecast`)
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| FR-NOTIF-01 | Сповіщення адміністратора надсилаються в чат, вказаний в конфігурації `.env`, містять поточну дату та наступний блок даних про клієнта: Ім'я, Сайт, Телефон, Пошта, Час, Нік у Telegram. | proposed |
+| FR-NOTIF-02 | Сповіщення адміністратора про події підписок: «Нова підписка», «Платіж отримано», «Скасування підписки», «Пауза підписки», «Поновлення підписки» (коли клієнт відновлює скасовану або призупинену підписку). | proposed |
+| FR-NOTIF-03 | Джерела даних для повідомлень адміністратора: Телефон, Час та Ім'я беруться безпосередньо з вебхуку Monobank; Пошта, Сайт та Нік у Telegram беруться з бази даних / профілю користувача. | proposed |
+| FR-NOTIF-04 | Сповіщення користувача в особистий чат: Привітання при першому оформленні підписки (з лінком на інструкцію з налаштування). | proposed |
+| FR-NOTIF-05 | Сповіщення користувача про невдале списання та загрозу зупинки сервісу з посиланням на оновлення картки та оплату. | proposed |
+| FR-NOTIF-06 | Сповіщення користувача про фактичне призупинення сервісу передачі конверсій (через паузу, скасування чи тривалу несплату) з посиланням на оплату для швидкого відновлення. | proposed |
 
-| ID             | Description                                                                                                | Status     |
-| -------------- | ---------------------------------------------------------------------------------------------------------- | ---------- |
-| FR-FORECAST-01 | After a location is selected, fetch a 7-day daily forecast from Open-Meteo forecast API                    | proposed   |
-| FR-FORECAST-02 | Render 7 day cards: weekday name, hi / lo °C, weather icon, precipitation probability %, wind speed        | proposed   |
-| FR-FORECAST-03 | Render an hourly temperature line chart for the next 48 h using Recharts                                   | proposed   |
-| FR-FORECAST-04 | Show sunrise + sunset for today as small text under the hourly chart                                       | proposed   |
-| FR-FORECAST-05 | Re-fetch when location changes; cache last successful response in memory until next location switch        | proposed   |
+---
 
-### Map (capability `map`)
+## Нефункціональні вимоги
 
-| ID        | Description                                                                                                  | Status     |
-| --------- | ------------------------------------------------------------------------------------------------------------ | ---------- |
-| FR-MAP-01 | Render an OSM-tiled interactive map (Leaflet via react-leaflet) bounded to the current location              | proposed   |
-| FR-MAP-02 | Show a marker at the current location with a popup naming the city                                           | proposed   |
-| FR-MAP-03 | Clicking on the map updates the active location (reverse-geocoded via Open-Meteo) and re-fetches forecast    | proposed   |
-| FR-MAP-04 | Display "© OpenStreetMap contributors" attribution at the bottom-right; required by OSM Tile Usage Policy    | proposed   |
-| FR-MAP-05 | Map is client-only (`dynamic({ ssr: false })`); SSR placeholder is a skeleton with the same footprint        | proposed   |
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| NFR-PERF-01 | Швидкість відповіді REST API прийому конверсій (`POST /api/conversions`) повинна бути ≤ 200 мс на p95. | proposed |
+| NFR-PERF-02 | Завантаження кабінету користувача та побудова аналітичних звітів з локальної бази даних повинна тривати ≤ 500 мс. | proposed |
+| NFR-COST-01 | Сервіс розрахований на роботу в межах безкоштовних або мінімальних лімітів тарифів (Vercel Serverless, Neon DB / Supabase PostgreSQL Free Tier) для 50-100 користувачів. | proposed |
+| NFR-SEC-01 | Усі збережені паролі CRM та токени API телефонії користувачів у базі даних мають бути зашифровані (наприклад, за допомогою алгоритму AES-256-GCM). | proposed |
+| NFR-I18N-01 | Інтерфейс платформи, база знань та повідомлення бота за замовчуванням реалізуються виключно українською мовою. | proposed |
 
-### Comfort score (capability `comfort-score`)
+---
 
-| ID            | Description                                                                                                              | Status     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| FR-COMFORT-01 | `comfortScore(daily): { value: 0..100; rationale: string }` is a **pure function** in `lib/scoring/comfort.ts`            | proposed   |
-| FR-COMFORT-02 | Inputs: temperature feels-like, precipitation probability, wind, cloud cover, UV index                                   | proposed   |
-| FR-COMFORT-03 | Output rationale is a single sentence in Ukrainian, max 80 chars, no emojis                                              | proposed   |
-| FR-COMFORT-04 | Score for each day is displayed in the day card as a colored badge (green ≥ 70, yellow 40-69, red < 40)                  | proposed   |
-| FR-COMFORT-05 | Score for the upcoming weekend (Sat + Sun avg) is highlighted at the top of the forecast grid                            | proposed   |
+## Технічні обмеження
 
-### Animated background (capability `animated-bg`)
+| ID | Опис | Статус |
+| :--- | :--- | :--- |
+| TC-STACK-01 | Next.js 16 App Router (React 19, TypeScript strict). | accepted |
+| TC-STACK-02 | Tailwind CSS v4 для стилізації, shadcn/ui для базових компонентів кабінету. | accepted |
+| TC-STACK-03 | Drizzle ORM для роботи з PostgreSQL базою даних. | accepted |
+| TC-STACK-04 | Бібліотека Recharts для побудови аналітичних графіків. | accepted |
+| TC-STACK-05 | Інтеграція з Monobank Acquiring API для рекурентних списань за токеном. | accepted |
+| TC-STACK-06 | Використання бібліотеки `node-telegram-bot-api` або власного обробника вебхуків Telegram API в Next.js Route Handlers. | proposed |
 
-| ID         | Description                                                                                                                          | Status     |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| FR-ANIM-01 | Background reflects current condition: day / night gradient, rain particles, snow particles, cloud drift                            | proposed   |
-| FR-ANIM-02 | Daytime vs nighttime is driven by today's sunrise/sunset for the active location, not by user's clock                                | proposed   |
-| FR-ANIM-03 | Animations respect `prefers-reduced-motion`: when set, render static gradient only                                                   | proposed   |
-| FR-ANIM-04 | Background never blocks interaction; pointer-events disabled                                                                         | proposed   |
+---
 
-### Weekend compare (capability `weekend-compare`, optional)
+## Бізнес / UX обмеження
 
-| ID            | Description                                                                                                                                                          | Status     |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| FR-COMPARE-01 | User can pin up to 3 cities; pinned cities appear in a small chip row above the forecast                                                                             | proposed   |
-| FR-COMPARE-02 | A "Compare weekend" toggle switches the view to a 3-column table for Sat / Sun: hi/lo, precip %, comfort score                                                       | proposed   |
-| FR-COMPARE-03 | Each column has a sticky header with the city name and "make active" button                                                                                          | proposed   |
+| ID | Опис | Status |
+| :--- | :--- | :--- |
+| BC-BRAND-01 | Усі текстові повідомлення бота та інтерфейсу мають спокійний, практичний тон без знаків оклику (відповідно до бренд-айдентики). | proposed |
+| BC-PRIVACY-01 | Платформа не використовує сторонні трекери аналітики чи файли cookie для відстеження, крім тих, що необхідні для сесії авторизації. | accepted |
 
-## Non-functional requirements
+---
 
-| ID            | Description                                                                                                            | Status     |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------- |
-| NFR-PERF-01   | Vercel Preview TTFB ≤ 300 ms on p95 for the homepage                                                                   | proposed   |
-| NFR-PERF-02   | Lighthouse Performance ≥ 90 on production URL (mobile + desktop)                                                       | proposed   |
-| NFR-PERF-03   | Initial client JS payload ≤ 200 KB gzipped                                                                             | proposed   |
-| NFR-A11Y-01   | Lighthouse Accessibility ≥ 95; all interactive elements have visible focus styles and accessible names                | proposed   |
-| NFR-A11Y-02   | Color palette meets WCAG AA contrast ratio across both light and dark themes                                          | proposed   |
-| NFR-COST-01   | Zero paid API keys; all third-party data is keyless or free-tier                                                       | proposed   |
-| NFR-OBS-01    | Console is silent at runtime (no warnings, no errors) on a healthy session                                             | proposed   |
-| NFR-DX-01     | `npm run lint && tsc --noEmit && npm test && npm run build` finish in < 60 s on a clean checkout                       | proposed   |
-| NFR-I18N-01   | Product UI strings centralised in `lib/i18n/uk.ts`; English fallback in `en.ts` (no runtime i18n library in MVP)       | proposed   |
+## Поза межами MVP
 
-## Technical constraints
-
-| ID            | Description                                                                                                                            | Status     |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| TC-STACK-01   | Next.js 16.2 App Router; TypeScript strict; React 19.2                                                                                 | accepted   |
-| TC-STACK-02   | Tailwind CSS 4 (PostCSS plugin); shadcn/ui base-nova; class-variance-authority                                                         | accepted   |
-| TC-STACK-03   | Open-Meteo APIs (forecast + geocoding); no other weather provider                                                                      | accepted   |
-| TC-STACK-04   | Leaflet + react-leaflet for maps; OSM raster tiles only                                                                                | accepted   |
-| TC-STACK-05   | Vitest for unit tests on `lib/`; no Playwright in MVP — use `chrome-devtools` MCP for E2E verification recordings                      | proposed   |
-| TC-DEPLOY-01  | Vercel for hosting; preview URL per PR via Git integration                                                                             | proposed   |
-| TC-DATA-01    | All Open-Meteo calls happen from Server Components or Route Handlers when possible; never expose Open-Meteo URLs in the client bundle in a way that suggests they require keys | proposed   |
-| TC-MAP-01     | OSM tiles include attribution; respect Tile Usage Policy (HTTPS, no scraping, valid Referer)                                          | proposed   |
-| TC-PURE-01    | `lib/` is framework-free: no `next/*`, no `react`, no DOM globals — enables 100% unit-testability                                       | proposed   |
-
-## Business / UX constraints
-
-| ID             | Description                                                                                                          | Status     |
-| -------------- | -------------------------------------------------------------------------------------------------------------------- | ---------- |
-| BC-PRIVACY-01  | No analytics, no third-party trackers, no fingerprinting                                                             | accepted   |
-| BC-PRIVACY-02  | Geolocation only via explicit user action (button "Use my location") — never on page load                            | accepted   |
-| BC-PRIVACY-03  | No cookies set by the application code                                                                               | accepted   |
-| BC-BRAND-01    | Visual identity follows DESIGN.md (chosen in Phase 4). UI is Ukrainian-first; tone is calm, practical, no exclamation marks | proposed   |
-| BC-BRAND-02    | Footer credits Open-Meteo and OpenStreetMap with hyperlinks                                                          | proposed   |
-| BC-DEMO-01     | The repo and live URL are the workshop's primary artifacts; every requirement is publicly demonstrable               | accepted   |
-
-## Out of scope (MVP)
-
-- Push notifications, scheduled jobs, background data refresh
-- User accounts, history, favorites persisted server-side
-- Marine / aviation / agriculture weather variables
-- Localisation beyond UA + EN labels
-- Native mobile app
-- Climate / historical analysis beyond 7-day forecast
+*   Пряме керування та налаштування рекламних кампаній Google Ads / Meta Ads з кабінету.
+*   Зберігання історії конверсій понад 14 місяців.
+*   Інтеграція з платіжними системами, крім monobank (LiqPay, WayForPay, Stripe тощо).
+*   Автоматичний парсинг гугл-таблиць без встановлення Apps Script.

@@ -1,134 +1,41 @@
-# Product Brief — Weather Explorer / Weekend Trip Planner
+# Опис продукту — Платформа синхронізації конверсій
 
-> Companion to `docs/requirements.md`. The requirements document is the numbered,
-> traceable source of truth; this brief is the business narrative behind it.
-> Tone throughout the product is Ukrainian-first, calm and practical, with no
-> exclamation marks (BC-BRAND-01).
+## Що це таке
 
-## What this is
+Платформа є рішенням для передачі та синхронізації конверсій з CRM-систем та інших каналів (телефонія, месенджери, вебсайти) до рекламних кабінетів Google Ads та Meta Ads. Продукт орієнтований на автоматизацію збору даних про продажі та дзвінки для точного навчання рекламних алгоритмів. Система працює за передплатою з використанням рекурентних платежів через еквайринг monobank, а взаємодія з користувачами та адміністратором інтегрована з Telegram-ботом.
 
-Weather Explorer is a keyless, privacy-first, Ukrainian-first web app that helps
-a person decide whether — and where — a weekend trip is worth taking based on the
-weather. It pairs an accurate 7-day forecast with per-day comfort scoring, an
-interactive map, and a calm animated background that reflects the sky at the
-chosen place. There are no accounts, no cookies, no trackers, and no paid API
-keys. The whole experience runs on the free, keyless Open-Meteo and OpenStreetMap
-services.
+## Для кого це створено
 
-## Who it is for
+Цільова аудиторія — власники бізнесу, маркетологи та PPC-спеціалісти, які використовують CRM-системи (SalesDrive, KeyCRM, Uspacy, NetHunt тощо), телефонію (зокрема Binotel, Ringostat, unitalk) та торгові майданчики (Prom, Хорошоп) і прагнуть підвищити ефективність реклами шляхом передачі офлайн-конверсій.
 
-The single actor is an **anonymous visitor planning a weekend trip**. There are
-no roles, no sign-in, and no stored profile. The visitor arrives, explores, and
-leaves; nothing about them is persisted server-side and nothing is set in their
-browser by the application. Anyone who can open the live URL is a full user — the
-repo and the live URL are the workshop's primary, publicly demonstrable artifacts
-(BC-DEMO-01).
+## Проблеми, які вирішує платформа
 
-## The pain it addresses
+1. **Складність передачі офлайн-конверсій.** Передача даних про замовлення по телефону чи з месенджерів до Google та Meta зазвичай потребує ручного вивантаження або складних інтеграцій. Платформа спрощує цей процес до копіювання одного скрипта в Google Таблицю і надання необхідних доступів у профілі користувача.
+2. **Втрата зв'язку з клієнтами.** Завдяки обов'язковій авторизації через Telegram-бота, сервіс отримує надійний канал для миттєвого інформування про стан підписки та технічні події.
+3. **Непрозорість роботи реклами.** В особистому кабінеті користувач бачить агреговані та детальні звіти про те, які саме конверсії (з яких каналів та джерел) були успішно синхронізовані.
 
-Deciding whether a weekend away is "weather-worth-it" usually means juggling
-several forecasts across tabs, mentally translating raw numbers (precipitation
-probability, wind, UV) into a sense of how a day will actually feel, and doing
-this separately for each candidate destination. It is slow, and most weather
-sites add accounts, ads, and tracking on top.
+## Клієнтський шлях (End-to-End)
 
-This product reduces that to a single calm screen. A visitor picks a place, sees
-the seven days ahead at a glance, and gets a plain-language comfort read on each
-day — with the upcoming weekend called out first, because that is the decision
-they came to make.
+1. **Реєстрація.** Користувач переходить на сторінку реєстрації на сайті, бачить посилання та QR-код на Telegram-бот. Він запускає бота (`/start`), надсилає свій email та адресу сайту. Після цього сервіс створює акаунт і авторизує користувача на сайті.
+2. **Оформлення підписки.** В особистому кабінеті користувач обирає тарифний план (місячний чи річний) та переходить на платіжну сторінку monobank для прив'язки картки та першої оплати.
+3. **Налаштування доступів.** У кабінеті користувач вносить дані доступів до своїх систем (CRM, телефонія) та отримує інструкції щодо надання прав для акаунта `auto@acontrol.pro` в Google Analytics 4, Google Ads та Google Cloud, а також інструкцію та код Apps Script для своєї Google Таблиці.
+4. **Передача даних.** Apps Script з Google Таблиці користувача за розкладом відправляє дані про конверсії через REST API платформи. Платформа валідує активність підписки та зберігає детальні записи для аналітики.
+5. **Аналіз результатів.** Користувач переглядає графіки та таблиці з деталізацією переданих конверсій за джерелами (Google, Meta, Organic) та каналами (сайт, телефонія, месенджери).
+6. **Керування підпискою.** За необхідності користувач може тимчасово зупинити підписку (пауза) або скасувати її, підтвердивши дію у вікні попередження.
 
-## End-to-end usage
+## Межі MVP та майбутнього розвитку
 
-1. **Land.** On first load the visitor sees a hero with a prominently centered
-   city search (FR-SHELL-03). There is no default city and no geolocation on
-   load; location is only ever read on an explicit "Use my location" action
-   (BC-PRIVACY-02). The header carries a compact live local-time clock and a
-   theme indicator (FR-SHELL-01, FR-CLOCK-01).
-2. **Choose a place.** The visitor types a free-form city name and gets debounced
-   suggestions from Open-Meteo geocoding, each showing city, admin region,
-   country, and an optional flag (FR-SEARCH-01/02). Selecting a suggestion sets
-   the active location and reflects it in the URL as `?lat=&lon=&name=`, so the
-   view is shareable (FR-SEARCH-03). Pressing Enter on a lone suggestion selects
-   it (FR-SEARCH-04). If nothing matches, an inline "Nothing found" appears —
-   never an error toast (FR-SEARCH-05). Alternatively, the visitor clicks
-   anywhere on the map to set the place by reverse-geocoding (FR-MAP-03).
-3. **Read the forecast.** Once a location is active, the app fetches a 7-day
-   daily forecast (FR-FORECAST-01) and renders seven day cards — weekday, hi/lo
-   in °C, weather icon, precipitation probability, wind (FR-FORECAST-02). Below
-   them, an hourly temperature line chart covers the next 48 hours
-   (FR-FORECAST-03), with today's sunrise and sunset noted underneath
-   (FR-FORECAST-04). The last successful response is cached in memory until the
-   location changes (FR-FORECAST-05).
-4. **Read the comfort scores.** Each day carries a 0–100 comfort score as a
-   colored badge — green, yellow, or red — derived from feels-like temperature,
-   precipitation probability, wind, cloud cover, and UV (FR-COMFORT-02/04). The
-   score is computed by a pure, total function and explained in a single short
-   Ukrainian sentence (FR-COMFORT-01/03). The **upcoming weekend** (Saturday +
-   Sunday average, by the location's local dates) is highlighted at the top of
-   the grid — the headline answer to "is it worth going?" (FR-COMFORT-05).
-5. **See it in place.** An interactive OpenStreetMap-tiled map is bounded to the
-   current location, with a marker and a popup naming the city
-   (FR-MAP-01/02). "© OpenStreetMap contributors" attribution is always shown
-   (FR-MAP-04), and the map is client-only with a same-footprint skeleton during
-   SSR (FR-MAP-05).
-6. **Feel the weather.** A calm animated background reflects the current
-   condition for the active place — day or night gradient, rain or snow
-   particles, drifting clouds (FR-ANIM-01). Day versus night follows that
-   location's sunrise and sunset, not the visitor's clock (FR-ANIM-02). It
-   respects `prefers-reduced-motion` by falling back to a static gradient
-   (FR-ANIM-03) and never intercepts clicks (FR-ANIM-04).
-7. **Compare.** The visitor pins up to three cities and switches to a
-   side-by-side weekend comparison — Saturday and Sunday hi/lo, precipitation,
-   and comfort score per city — to pick the best destination. This is the
-   weekend-compare capability, promoted to MVP at scope sign-off (Checkpoint 1).
+**В MVP реалізується:**
+*   Авторизація та реєстрація через Telegram-бот з обов'язковим збором email та сайту.
+*   Еквайринг monobank з рекурентними платежами (тариф $10.99/міс та $120/рік у гривневому еквіваленті), підтримка паузи та скасування з підтвердженням.
+*   Збереження детальних записів конверсій у базу даних за останні 14 місяців.
+*   REST API-ендпоінт для отримання даних з Google Таблиць із перевіркою статусу підписки.
+*   Кабінет користувача з аналітичними віджетами та інтерактивними діаграмами (Recharts).
+*   Telegram-сповіщення для користувачів та детальні сповіщення для адміністратора.
+*   База знань з інструкціями для всіх CRM, телефонії Binotel та Google-сервісів.
 
-## Key workflows in prose
-
-- **Decide on this weekend, one place.** Land, search a city, read the
-  highlighted weekend comfort score and the seven-day cards, glance at the
-  hourly chart and the map, and decide. This is the core loop and the whole MVP
-  supports it.
-- **Set the place by map.** Instead of typing, the visitor clicks the map; the
-  app reverse-geocodes the point, makes it the active location, and re-fetches
-  everything. Useful when the visitor knows roughly where on the map they want to
-  go but not the exact city name.
-- **Share a view.** Because the active location lives in the URL, a visitor can
-  copy the link and send it; the recipient opens the same place with no setup and
-  no account.
-- **Compare destinations.** Pin a handful of candidate cities and compare their
-  weekends side by side, then make one of them active to dive into its full
-  forecast.
-
-## MVP vs Future boundary
-
-**In the MVP:** the shell and responsive layout, the live clock, city search
-(including the opt-in "Use my location" button, FR-SEARCH-06), the deterministic
-Ukrainian footer jokes, the 7-day forecast with the 48-hour hourly chart and
-sunrise/sunset, the comfort score with the weekend highlight, the interactive map
-with click-to-set-location, the condition-driven animated background, and the
-weekend-compare view (pin up to three cities, FR-COMPARE-01/02/03, promoted to
-MVP at Checkpoint 1) — all keyless, all privacy-first.
-
-**Future (deferred):**
-
-- The PRD's explicit **out-of-scope** list, none of which is built:
-  - push notifications, scheduled jobs, background data refresh;
-  - user accounts, history, or favorites persisted server-side;
-  - marine / aviation / agriculture weather variables;
-  - localisation beyond Ukrainian + English labels;
-  - a native mobile app;
-  - climate or historical analysis beyond the 7-day forecast.
-
-## Operating principles
-
-- **Privacy-first.** No analytics, no third-party trackers, no fingerprinting, no
-  application-set cookies; geolocation only on explicit request
-  (BC-PRIVACY-01/02/03).
-- **Keyless and free.** Zero paid API keys; all data is keyless or free-tier
-  (NFR-COST-01). The footer credits Open-Meteo and OpenStreetMap (BC-BRAND-02).
-- **Honest under failure.** No external call or user input produces a generic
-  error page or a silent blank; failures degrade to a calm, visible state, and
-  the runtime console stays silent on a healthy session (NFR-OBS-01).
-- **Ukrainian-first and calm.** UI strings are centralised and Ukrainian-first,
-  the tone is practical, and there are no exclamation marks (NFR-I18N-01,
-  BC-BRAND-01).
+**Поза межами MVP (майбутній розвиток):**
+*   Пряма технічна інтеграція з API CRM-систем безпосередньо з платформи (виконується стороннім рушієм).
+*   Автоматичне створення рекламних конверсій через API Google/Meta (виконується стороннім рушієм).
+*   Багатомовність інтерфейсу (крім української).
+*   Складна фінансова звітність та виставлення інвойсів для юридичних особ.
