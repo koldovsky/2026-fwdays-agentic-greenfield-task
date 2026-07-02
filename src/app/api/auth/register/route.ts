@@ -28,13 +28,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "weak_password" }, { status: 400 });
   }
 
-  const db = getDb();
-  const result = await registerWithPassword(
-    { users: createUserRepo(db), credentials: createCredentialsRepo(db) },
-    { email, password, name: typeof name === "string" && name !== "" ? name : null },
-  );
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 409 });
+  // Infra failures (DB down, env unset) must not leak a raw 500 with a stack:
+  // fail calm with a machine code the sign-in error-map folds to `generic`
+  // (NFR-OBS-01). Details go to the server log only.
+  try {
+    const db = getDb();
+    const result = await registerWithPassword(
+      { users: createUserRepo(db), credentials: createCredentialsRepo(db) },
+      { email, password, name: typeof name === "string" && name !== "" ? name : null },
+    );
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 409 });
+    }
+    return NextResponse.json({ user: result.value }, { status: 201 });
+  } catch (cause) {
+    console.error("[register] unexpected failure", cause);
+    return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
-  return NextResponse.json({ user: result.value }, { status: 201 });
 }

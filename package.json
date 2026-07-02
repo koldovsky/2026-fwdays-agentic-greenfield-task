@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:db": "node scripts/dev-pglite-server.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
