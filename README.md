@@ -1,47 +1,104 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# YouTube Transcription System
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+A modular Python system for generating timestamped transcripts from YouTube videos and live streams.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+## Features
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+- Accepts a YouTube URL and automatically detects live vs regular video
+- Downloads existing subtitles for regular videos when available
+- Falls back to external Speech-to-Text (STT) when subtitles are missing
+- Transcribes live streams around a configurable time window (default: 3 minutes before/after)
+- Splits audio into silence-aware chunks up to 60 seconds
+- Uses OpenAI Whisper API for multilingual STT (no local model hosting)
+- Saves output as `.txt` and `.json` with full metadata
 
-## Що зробити
+## Requirements
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+- Python 3.11+
+- [FFmpeg](https://ffmpeg.org/) (required by `yt-dlp` and `pydub`)
 
-## Як здати
+## Setup
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+```bash
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+copy .env.example .env
+```
 
-## Як оцінюється
+Set `OPENAI_API_KEY` in `.env` for STT fallback and live transcription.
 
-Дивимось на **докази процесу**, а не на стек:
+## Usage
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+```bash
+python -m app.main "https://www.youtube.com/watch?v=VIDEO_ID"
+```
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+Optional parameters:
 
----
+```bash
+python -m app.main "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --timestamp-interval 15 \
+  --live-before 3 \
+  --live-after 3 \
+  --max-chunk-duration 60 \
+  --stt-model whisper-1 \
+  --output-dir output \
+  --save-debug-audio
+```
 
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+Disable silence-based chunking:
+
+```bash
+python -m app.main "URL" --no-silence-detection
+```
+
+## Output
+
+Transcripts are saved to the `output/` directory:
+
+- `{video_id}.txt` — human-readable timestamped transcript
+- `{video_id}.json` — structured output with metadata
+
+JSON includes: `source_url`, `video_id`, `video_type`, `processing_method`, `timestamp_interval_seconds`, `segments`, and `metadata` (STT provider/model or live window settings when applicable).
+
+### Debug audio (STT only)
+
+Enable with `--save-debug-audio` or `SAVE_DEBUG_AUDIO=true`. Chunks are written to:
+
+```text
+output/debug_audio/{video_id}/
+  chunk_000_0.0s-58.4s.wav
+  chunk_001_58.4s-120.0s.wav
+  manifest.json
+```
+
+The manifest lists each chunk index, filename, and start/end/duration in seconds.
+
+## Project Structure
+
+```
+app/
+├── config/settings.py      # Centralized configuration
+├── models/schemas.py       # Data models
+├── services/               # Business logic modules
+├── providers/openai.py
+├── utils/
+├── pipeline.py             # Orchestration layer
+└── main.py                 # CLI entry point
+tests/
+output/
+docs/
+```
+
+## Tests
+
+```bash
+pytest
+```
+
+Tests mock external APIs and do not require real live streams.
+
+## Configuration
+
+All defaults live in `app/config/settings.py` and can be overridden via environment variables or CLI flags. See `.env.example` for available options.
