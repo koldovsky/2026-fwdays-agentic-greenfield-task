@@ -93,7 +93,7 @@ export const handleStart = async (ctx: StartContext, deps: BotDeps): Promise<voi
     return;
   }
   await ctx.reply(WELCOME);
-  await askQuestion(ctx.reply, question);
+  await askQuestion(ctx.reply.bind(ctx), question);
 };
 
 /** Reply with a food confirmation, attaching the add-to-Food-DB button on the estimate path. */
@@ -173,7 +173,7 @@ const dispatch = async (
     return;
   }
   if (routed.intent === 'correction') {
-    await replyIfConfirmed(ctx.reply, await deps.food.correctLast(chatId, text, routed));
+    await replyIfConfirmed(ctx.reply.bind(ctx), await deps.food.correctLast(chatId, text, routed));
     return;
   }
   if (routed.intent === 'review_trigger') {
@@ -194,10 +194,10 @@ const dispatch = async (
   }
   if (outcome.kind === 'ask') {
     deps.clarify.set(chatId, outcome.pending);
-    await askClarify(ctx.reply, outcome.question);
+    await askClarify(ctx.reply.bind(ctx), outcome.question);
     return;
   }
-  await replyConfirmation(ctx.reply, outcome.confirmation);
+  await replyConfirmation(ctx.reply.bind(ctx), outcome.confirmation);
 };
 
 /** Classify a fresh message (no pending Open Question) and dispatch it. `answer` is not selectable. */
@@ -225,7 +225,10 @@ const resolvePending = async (
     hasPendingQuestion: true,
   });
   if (routed.intent === 'answer') {
-    await replyIfConfirmed(ctx.reply, await deps.food.resolveAnswer(chatId, pending, text));
+    await replyIfConfirmed(
+      ctx.reply.bind(ctx),
+      await deps.food.resolveAnswer(chatId, pending, text),
+    );
     return;
   }
 
@@ -247,7 +250,7 @@ export const handleText = async (ctx: TextContext, deps: BotDeps): Promise<void>
   const chatId = BigInt(ctx.chat.id);
 
   if (await deps.onboarding.isOnboarding(chatId)) {
-    await respondToAnswer(ctx.reply, await deps.onboarding.submitAnswer(chatId, text));
+    await respondToAnswer(ctx.reply.bind(ctx), await deps.onboarding.submitAnswer(chatId, text));
     return;
   }
 
@@ -374,10 +377,10 @@ export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<voi
   }
   if (outcome.kind === 'ask') {
     deps.clarify.set(chatId, outcome.pending);
-    await askClarify(ctx.reply, outcome.question);
+    await askClarify(ctx.reply.bind(ctx), outcome.question);
     return;
   }
-  await replyConfirmation(ctx.reply, outcome.confirmation);
+  await replyConfirmation(ctx.reply.bind(ctx), outcome.confirmation);
 };
 
 /** `food:addfdb:<id>` tap — persist the logged estimate to the user's Food DB. */
@@ -416,14 +419,20 @@ const handleClarifyCallback = async (
     return;
   }
   if (isExpired(pending.askedAt, new Date())) {
-    await replyIfConfirmed(ctx.reply, await deps.food.logExpiredEstimate(chatId, pending));
+    await replyIfConfirmed(
+      ctx.reply.bind(ctx),
+      await deps.food.logExpiredEstimate(chatId, pending),
+    );
     return;
   }
   const value = optionValueAt(pending, data.slice(CLARIFY_PREFIX.length));
   if (value === null) {
     return;
   }
-  await replyIfConfirmed(ctx.reply, await deps.food.resolveAnswer(chatId, pending, value));
+  await replyIfConfirmed(
+    ctx.reply.bind(ctx),
+    await deps.food.resolveAnswer(chatId, pending, value),
+  );
 };
 
 /** Inline-keyboard tap. Dispatches by namespace; ignores foreign callback data. */
@@ -447,7 +456,10 @@ export const handleCallback = async (ctx: CallbackContext, deps: BotDeps): Promi
   // `onb:<field>:<value>` — the value (e.g. Europe/Kyiv) has no colon. A stale tap whose value
   // doesn't match the current question re-asks it (no double-advance).
   const value = data.slice(CALLBACK_PREFIX.length).split(':').slice(1).join(':');
-  await respondToAnswer(ctx.reply, await deps.onboarding.submitAnswer(BigInt(ctx.chat.id), value));
+  await respondToAnswer(
+    ctx.reply.bind(ctx),
+    await deps.onboarding.submitAnswer(BigInt(ctx.chat.id), value),
+  );
 };
 
 // Localized "something went wrong" prose for the error boundary. Prose mirrors the inbound language
