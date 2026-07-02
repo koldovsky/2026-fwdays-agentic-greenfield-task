@@ -13,6 +13,7 @@ import {
 } from '../../src/bot/bot.js';
 import type { PhotoContext } from '../../src/bot/types.js';
 import type { BotDeps } from '../../src/bot/types.js';
+import { createMediaGroupBuffer, type Schedule } from '../../src/bot/mediaGroup.js';
 import type { ClarifyStore } from '../../src/clarify/store.js';
 import type { OpenQuestion } from '../../src/clarify/types.js';
 import type { FoodService, ResolvedFood } from '../../src/food/types.js';
@@ -210,6 +211,9 @@ const makeDeps = (
       clarify,
       progress,
       progressArm,
+      // Real buffer with the default (immediate) path for lone photos — the media-group debounce is
+      // exercised directly in test/bot/mediaGroup.test.ts with an injected clock.
+      foodBuffer: createMediaGroupBuffer(),
     },
     create,
     food,
@@ -627,10 +631,10 @@ describe('handlePhoto', () => {
       'https://api.telegram.org/file/botBOT_TOKEN/photos/file_1.jpg',
     );
     const call = (food.logPhoto as ReturnType<typeof vi.fn>).mock.calls[0] as
-      [bigint, string, string] | undefined;
+      [bigint, string, string[]] | undefined;
     expect(call?.[0]).toBe(7n);
     expect(call?.[1]).toBe('куриное филе');
-    expect(call?.[2]).toBe(Buffer.from([1, 2, 3]).toString('base64'));
+    expect(call?.[2]).toEqual([Buffer.from([1, 2, 3]).toString('base64')]); // one-element group
     expect(reply).toHaveBeenCalledWith('Записал:\n• тест — 100 ккал · Б 1 / Ж 1 / У 1 г.');
 
     fetchSpy.mockRestore();
@@ -772,6 +776,110 @@ describe('handlePhoto', () => {
     fetchSpy.mockRestore();
   });
 
+  // A photo ctx that belongs to a Telegram media group (shares media_group_id across its updates).
+  const makeGroupPhotoCtx = (
+    mediaGroupId: string | undefined,
+    caption: string | undefined,
+    reply: ReturnType<typeof vi.fn>,
+  ): PhotoContext => ({
+    message: {
+      photo: [{ file_id: 'small' }, { file_id: 'largest' }],
+      caption,
+      media_group_id: mediaGroupId,
+    },
+    chat: { id: 7 },
+    reply: reply as PhotoContext['reply'],
+    getFile: vi.fn().mockResolvedValue({ file_path: 'photos/file.jpg' }),
+    api: { token: 'BOT_TOKEN' },
+  });
+
+  const flushMicrotasks = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
+
+  it('buffers a media group and flushes ONE logPhoto over all images + the single caption, writing NOTHING to disk (invariants #5/#4)', async () => {
+    // CRITICAL (invariant #4) across the N-image buffered path: clear the fs write spies up front so
+    // the post-flush assertions are genuinely about THIS 3-photo group's download+buffer+flush run.
+    fsWriteFile.mockClear();
+    fsWriteFileSync.mockClear();
+    fsCreateWriteStream.mockClear();
+    fspWriteFile.mockClear();
+
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    // Drive the debounce with an injected clock — no real timers.
+    let tasks: { fn: () => void }[] = [];
+    const schedule: Schedule = (fn) => {
+      const task = { fn };
+      tasks.push(task);
+      return () => {
+        tasks = tasks.filter((t) => t !== task);
+      };
+    };
+    deps.foodBuffer = createMediaGroupBuffer(schedule, 400);
+    // Distinct bytes per photo so the buffered images differ.
+    const bytes = [[1], [2], [3]];
+    let call = 0;
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() =>
+        Promise.resolve(new Response(new Uint8Array(bytes[call++] ?? [0]))),
+      );
+
+    // Three photos of one group; the caption rides only the first.
+    await handlePhoto(makeGroupPhotoCtx('grp', 'protein 25g, 1 tsp sugar', reply), deps);
+    await handlePhoto(makeGroupPhotoCtx('grp', undefined, reply), deps);
+    await handlePhoto(makeGroupPhotoCtx('grp', undefined, reply), deps);
+
+    expect(food.logPhoto).not.toHaveBeenCalled(); // still buffering
+    tasks.forEach((t) => t.fn()); // debounce elapses
+    await flushMicrotasks();
+
+    expect(food.logPhoto).toHaveBeenCalledTimes(1); // ONE log for the whole group
+    const args = (food.logPhoto as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      bigint,
+      string,
+      string[],
+    ];
+    expect(args[0]).toBe(7n);
+    expect(args[1]).toBe('protein 25g, 1 tsp sugar'); // the group's single caption
+    expect(args[2]).toEqual(bytes.map((b) => Buffer.from(b).toString('base64'))); // all three images
+    expect(reply).toHaveBeenCalledTimes(1); // one reply for the group
+
+    // None of the three downloaded images touched any fs write path across the buffered flush.
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('a progress photo NEVER enters the food buffer (routed before buffering, invariant D3)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const food = makeFood();
+    const progress = makeProgress();
+    const { deps } = makeDeps(
+      makeOnboarding(),
+      'query',
+      food,
+      makeMetrics(),
+      makeQuery(),
+      makeClarify(),
+      progress,
+    );
+    const addSpy = vi.spyOn(deps.foodBuffer, 'add');
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3])));
+
+    // Even inside a media group, a progress-captioned photo bypasses the food buffer entirely.
+    await handlePhoto(makeGroupPhotoCtx('grp', 'мой прогресс', reply), deps);
+
+    expect(progress.analyzeAndSave).toHaveBeenCalledTimes(1);
+    expect(addSpy).not.toHaveBeenCalled(); // never buffered
+    expect(food.logPhoto).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it('CRITICAL — writes nothing to disk across the download+log path (invariant #4)', async () => {
     const reply = vi.fn().mockResolvedValue(undefined);
     const food = makeFood();
@@ -787,6 +895,37 @@ describe('handlePhoto', () => {
     expect(fsWriteFileSync).not.toHaveBeenCalled();
     expect(fsCreateWriteStream).not.toHaveBeenCalled();
     expect(fspWriteFile).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('replies a language-mirrored apology when a grouped flush throws (never silently swallowed)', async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    // The detached flush's logPhoto throws — it runs off the update loop so bot.catch can't see it;
+    // flushFoodGroup must own the boundary and still apologize (mirrors the single-photo path).
+    const food = makeFood({ logPhoto: vi.fn().mockRejectedValue(new Error('vision seam down')) });
+    const { deps } = makeDeps(makeOnboarding(), 'query', food);
+    let tasks: { fn: () => void }[] = [];
+    const schedule: Schedule = (fn) => {
+      const task = { fn };
+      tasks.push(task);
+      return () => {
+        tasks = tasks.filter((t) => t !== task);
+      };
+    };
+    deps.foodBuffer = createMediaGroupBuffer(schedule, 400);
+    // A fresh Response per call — a Response body can only be read once.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response(new Uint8Array([1]))));
+
+    await handlePhoto(makeGroupPhotoCtx('grp', 'мой обед', reply), deps);
+    await handlePhoto(makeGroupPhotoCtx('grp', undefined, reply), deps);
+    tasks.forEach((t) => t.fn()); // debounce elapses → the detached flush runs and throws
+    await flushMicrotasks();
+
+    expect(food.logPhoto).toHaveBeenCalledTimes(1);
+    expect(reply).toHaveBeenCalledTimes(1); // the apology, not silence
+    expect(String(reply.mock.calls[0]?.[0])).toContain('не так'); // language-mirrored "went wrong"
     fetchSpy.mockRestore();
   });
 });

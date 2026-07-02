@@ -61,9 +61,10 @@ A grouping of entries, not an entry itself.
 _Avoid_: using "meal" to mean a single Food Entry.
 
 **Source** (**Fact** / **Estimate**):
-The trust tag every Food Entry carries. **Fact** — macros taken from a Food Database match.
-**Estimate** — macros inferred from text or a photo, honest to ±20–30%. The Estimate tag is the
-pressure-release valve that lets the bot log confidently instead of interrogating the user.
+The trust tag every Food Entry carries. **Fact** — macros taken from a Food Database match **or a
+Nutrition Label the user provided**. **Estimate** — macros inferred from text or a photo, honest to
+±20–30%. The Estimate tag is the pressure-release valve that lets the bot log confidently instead of
+interrogating the user.
 _Avoid_: guess, approximation, assumption (the tag value is *estimate*).
 
 ## Body & progress
@@ -79,9 +80,21 @@ measurement and not a body-fat number. The photo that produced it is never store
 _Avoid_: progress report, body-fat reading, assessment.
 
 **Plate Photo**:
-A photo of food, streamed to vision to produce Food Entries, then discarded. Distinct from a
-Progress Photo.
+A photo of a plate of food, identified visually and streamed to vision to produce Food Entries, then
+discarded. Distinct from a Nutrition Label (a printed macro table) and from a Progress Photo.
 _Avoid_: food pic, meal photo.
+
+**Nutrition Label**:
+A photo of a product's printed nutrition-facts / КБЖУ table. Its macros are read as exact numbers, so
+the resulting Food Entry is a **Fact** (not an Estimate), overriding a Food Database match for that
+product. A kind of food photo, distinct from a Plate Photo.
+_Avoid_: nutrition table, КБЖУ photo, packaging shot.
+
+**Media Group**:
+Several photos the user sends as one Telegram message (plates and/or Nutrition Labels), with a single
+caption. It is one logging event → one vision call → one confirmation, never several. A lone photo is
+the degenerate one-photo case.
+_Avoid_: album, batch, gallery, multi-upload.
 
 **Progress Photo**:
 A photo of the user's body, streamed to vision to produce a Progress Note, then discarded. Distinct

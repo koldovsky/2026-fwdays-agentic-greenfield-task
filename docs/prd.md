@@ -93,12 +93,16 @@ Each story is testable; acceptance criteria double as eval/test targets.
   type inferred if absent. Row inserted for the correct date (user TZ). Confirmation **never**
   hand-sums the day — totals come from a SUM query only.
 
-### 6.3 Log food by photo — *"Here's a photo of my plate."*
-- **US-3:** As a user, I send a plate photo and get itemized macros.
-- **Accept:** Image streamed to vision (1 call) → structured items + estimates. Caption naming a
-  Food Database product prefers Food Database macros (fact) over visual estimate. Visual-only items marked
-  `estimate` (±20–30%). Rows inserted; confirmed. **Image discarded immediately — never written
-  to disk/storage.**
+### 6.3 Log food by photo — *"Here's a photo of my plate (or the label)."*
+- **US-3:** As a user, I send a plate photo **or a nutrition-facts / КБЖУ label** (optionally
+  several photos at once) with a caption of what I ate, and get itemized macros.
+- **Accept:** All photos of one message stream to vision in **exactly 1 call** (a Telegram media
+  group buffers to a single call). When a caption is present it is the **authoritative item list** —
+  one item per caption entry, so text-only items with no photo (sugar, black coffee) are **kept, not
+  dropped**. Per item: macros read from a printed label → `source=fact` (label > Food Database >
+  visual precedence, not overridden by a catalog match); a Food Database name match → `fact`; a
+  visual-only guess → `estimate` (±20–30%). Rows inserted; confirmed. **Image(s) discarded
+  immediately — never written to disk/storage.**
 
 ### 6.4 Ask the database — *"How much have I had today?"*
 - **US-4:** As a user, I ask "сколько белка сегодня?" and get the real number.

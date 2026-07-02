@@ -103,9 +103,10 @@ These come straight from the design and are the most common ways to get it wrong
    to the model beyond the ephemeral open-question + reply.
 2. **Totals come from the SUM, never hand-summed.** Daily/period numbers are computed in code
    from `food_log` rows. The LLM writes prose only — never the numbers (prevents drift).
-3. **Tag every food entry `source = fact | estimate`.** Food Database match = fact; otherwise a
-   flagged estimate (±20–30%). Surface estimates honestly; don't interrogate the user over small
-   uncertainty (the estimate tag is the pressure-release valve).
+3. **Tag every food entry `source = fact | estimate`.** Food Database match **or** a nutrition label
+   the user provided = fact (ADR-0024); otherwise a flagged estimate (±20–30%). Surface estimates
+   honestly; don't interrogate the user over small uncertainty (the estimate tag is the
+   pressure-release valve).
 4. **Images are never persisted.** Food and progress photos stream to the model and are discarded
    immediately — never written to disk/storage/DB.
 5. **No agent loop.** Operations are deterministic single LLM calls with structured output /

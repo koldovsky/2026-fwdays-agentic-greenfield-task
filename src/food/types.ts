@@ -59,7 +59,7 @@ export interface FoodService {
    * Log a plate photo (food-photo): one vision call → one row per item → multi-item confirmation, OR
    * defer to a photo-variant Open Question when the vision call flags a hidden high-leverage mover.
    */
-  logPhoto: (chatId: bigint, caption: string, imageBase64: string) => Promise<LogOutcome | null>;
+  logPhoto: (chatId: bigint, caption: string, images: string[]) => Promise<LogOutcome | null>;
   saveToCatalog: (chatId: bigint, foodLogId: number) => Promise<CatalogResult>;
   correctLast: (
     chatId: bigint,

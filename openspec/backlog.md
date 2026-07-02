@@ -2,6 +2,11 @@
 
 *Last updated: 2026-07-02 · Single source of truth for **what work remains and in what order**.*
 
+<!-- 2026-07-02: added wave-8 `photo-label` (US-3, ready) + `text-multi-item` (US-2 follow-up) after the label/caption-driven photo redesign -->
+<!-- 2026-07-02: added wave-8 `shared-estimate-build` — pre-existing resolve.ts estimate-literal dup surfaced by photo-label step-7 dup scan -->
+<!-- 2026-07-02: added wave-8 `progress-media-group` — photo-label review s1: multi-photo progress groups route only the first photo to progress -->
+
+
 This is the **dependency-ordered backlog of OpenSpec changes**. Each row maps **1:1** to a future
 `openspec/changes/<id>/` — the `id` here **is** the change id. The implementation loop reads this
 file to pick the next change, runs it through the gates, and flips its `status`.
@@ -69,6 +74,10 @@ Only after **archive** does the item become `status: done`. If any gate fails, s
 | shared-tenant-resolve | done | agent | 6 | food-text, metrics, query, progress-photo | — | M3 | Extract `resolveUserId` (chat_id → internal user id) to `src/db/` — dedupe 1 named copy (food) + 2 inline (metrics/query) + progress (rule #12, sibling of shared-lang; surfaced by progress-photo step-7/review) |
 | notion-mirror | done | agent | 6 | data, reviews | US-10 | M7 | Notion async best-effort mirror (queue + worker) |
 | hardening | done | agent | 7 | all | — | M8 | Hardening: retries, rate-limit, prompt-cache + memory-cap verification |
+| photo-label | doing | agent | 8 | food-photo, food-photo-ask | US-3 | M4 | Label-aware, caption-driven, multi-photo food logging: a photo may be a nutrition-facts label (printed macros → `fact`), the caption drives the item list (text-only items no longer dropped), a media group → ONE vision call |
+| text-multi-item | todo | agent | 8 | food-text | US-2 | M3 | Multi-item text logging: the router (`makeRouterSchema`) extracts only ONE product per message, so a pure-text "coffee 20g cream + sugar + protein 25g" drops items — extend to a multi-item list (photo path already fixed by `photo-label`) |
+| shared-estimate-build | todo | agent | 8 | photo-label | — | M3 | Extract the estimate-branch `ResolvedFood` literal duplicated verbatim in `resolveForLog`/`resolveFood` (`src/food/resolve.ts`) into ONE non-catalog builder; evaluate folding `photo.ts` `fromItemMacros` into the same home (rule #12; surfaced by `photo-label` step-7 dup scan) |
+| progress-media-group | todo | agent | 8 | photo-label, progress-photo | US-8 | M5 | Route a whole media group to progress if ANY member is a progress photo: `isProgressPhoto` is per-photo, so in a multi-photo group only the captioned/armed first photo routes to progress — members 2..N fall through to the food buffer (review s1 on `photo-label`) |
 
 **Waves** = parallel cohorts. After wave 2, the **food track** (food-text → query/correction/
 clarify/food-photo) and **body track** (metrics → progress-photo) run independently in parallel.
@@ -260,6 +269,34 @@ w/ backoff, never lose data. Feature-flagged per user. Token in env only, never 
 Error handling, retries, rate-limit handling, prompt-caching verification, memory-cap verification
 (bot ≤512 MB, PG ≤256 MB, crypto-bot mysqld never OOM-killed). **Done when all PRD §4 metrics
 (M1–M8) verified.**
+
+### photo-label — M4 · blocked-by: food-photo, food-photo-ask
+Rewrites the photo path so a photo can be a **nutrition-facts label / macro screenshot** (КБЖУ table),
+not only a plate, and so the **caption drives the logged item list**. Label-read macros → `source:
+fact` (printed per-100g/ml scaled by the caption qty — **extends invariant #3** to "Food-DB match OR a
+nutrition label the user provided = fact"; new ADR + AGENTS.md wording). Every caption item is logged
+(label→fact, plate→estimate, text-only→estimate) — text-only items (sugar, black coffee) no longer
+dropped. A multi-photo Telegram **media group** is buffered (`media_group_id` debounce) → **ONE** vision
+call over all images (invariant #5 intact; images never persisted, invariant #4 — fs-spy extended to N
+images). Fixes the real demo where cream/protein/milk labels logged as estimates and the coffee+sugar
+were dropped. US-3. Full artifacts already generated in `openspec/changes/photo-label/`.
+
+### text-multi-item — M3 · blocked-by: food-text
+Follow-up surfaced while designing `photo-label`: the text router (`makeRouterSchema`, `src/router/
+schema.ts`) returns a **single** `{product, quantity, unit}`, so a pure-text message naming several
+foods ("coffee 20g cream + 1 tsp sugar + protein 25g on 250ml milk") logs only one item and drops the
+rest. Extend the router (or a post-router splitter) to a **multi-item** list and fan out one code-scaled
+`food_log` row per item, reusing the food-text resolve/write/confirm pipeline. The **photo/caption path
+is already multi-item** via `photo-label`'s vision call — this closes the same gap for text. US-2.
+
+### shared-estimate-build — M3 · blocked-by: photo-label
+Pre-existing dup surfaced by the `photo-label` step-7 dup scan (**not** introduced by it): `resolveForLog`
+and `resolveFood` (`src/food/resolve.ts`) each build the miss/estimate `ResolvedFood` from the same
+verbatim object literal (`{ name, per, base, qty: reconcileQty(…), unit: unitForPer(per), source:
+estimate, foodDbId: null }`) — 2 copies. Extract one non-catalog `ResolvedFood` builder in `src/food/`
+and have both reuse it; evaluate whether `photo.ts` `fromItemMacros` (the `PlateItem` cousin — different
+inputs, same shape) should fold into the same home or stay domain-local. Small, food-domain, behaviour-
+preserving. rule #12, sibling of `shared-fmt`/`shared-tenant-resolve`.
 
 ---
 

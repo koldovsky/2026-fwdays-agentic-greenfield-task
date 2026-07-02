@@ -3,7 +3,7 @@ import { autoRetry } from '@grammyjs/auto-retry';
 import { errorMessage } from '../util/error.js';
 import { detectLangOrRu, type Lang } from '../util/lang.js';
 import { isExpired } from '../clarify/store.js';
-import type { OpenQuestion, OutboundQuestion } from '../clarify/types.js';
+import type { LogOutcome, OpenQuestion, OutboundQuestion } from '../clarify/types.js';
 import { isProgressCaption } from '../progress/detect.js';
 import { classifyMessage } from '../router/router.js';
 import {
@@ -127,6 +127,28 @@ const askClarify = async (reply: ReplyFn, question: OutboundQuestion): Promise<v
   await reply(question.text, { reply_markup: kb });
 };
 
+/**
+ * Apply a food `LogOutcome` (the single home for both the text-log and photo-flush paths): store the
+ * pending Open Question and pose it, reply with the confirmation, or stay silent when there is nothing
+ * to say (`null`). Shared so ask-vs-log dispatch lives in one place (rule #12).
+ */
+const handleLogOutcome = async (
+  reply: ReplyFn,
+  deps: BotDeps,
+  chatId: bigint,
+  outcome: LogOutcome | null,
+): Promise<void> => {
+  if (!outcome) {
+    return;
+  }
+  if (outcome.kind === 'ask') {
+    deps.clarify.set(chatId, outcome.pending);
+    await askClarify(reply, outcome.question);
+    return;
+  }
+  await replyConfirmation(reply, outcome.confirmation);
+};
+
 /** Map a `q:<index>` tap back to the pending question's stored option value (null if out of range). */
 const optionValueAt = (pending: OpenQuestion, token: string): string | null => {
   const index = Number(token);
@@ -189,15 +211,7 @@ const dispatch = async (
   }
 
   const outcome = await deps.food.logFood(chatId, text, routed);
-  if (!outcome) {
-    return;
-  }
-  if (outcome.kind === 'ask') {
-    deps.clarify.set(chatId, outcome.pending);
-    await askClarify(ctx.reply.bind(ctx), outcome.question);
-    return;
-  }
-  await replyConfirmation(ctx.reply.bind(ctx), outcome.confirmation);
+  await handleLogOutcome(ctx.reply.bind(ctx), deps, chatId, outcome);
 };
 
 /** Classify a fresh message (no pending Open Question) and dispatch it. `answer` is not selectable. */
@@ -337,12 +351,35 @@ const isProgressPhoto = (deps: BotDeps, chatId: bigint, caption: string): boolea
 };
 
 /**
+ * Log one buffered media group (all images + the single caption) and reply exactly once. The grouped
+ * flush runs detached off the update loop (via the buffer's scheduler), so it can't reach `bot.catch`
+ * — it owns its error boundary: on a throw it logs message-only (invariant #9) and makes a best-effort
+ * language-mirrored apology (caption is the only inbound language signal), so a failed group is never
+ * silently swallowed, mirroring the single-photo path.
+ */
+const flushFoodGroup = async (
+  reply: ReplyFn,
+  deps: BotDeps,
+  chatId: bigint,
+  { images, caption }: { images: string[]; caption: string },
+): Promise<void> => {
+  try {
+    const outcome = await deps.food.logPhoto(chatId, caption, images);
+    await handleLogOutcome(reply, deps, chatId, outcome);
+  } catch (error) {
+    console.error(`[bot] media-group flush failed: ${errorMessage(error)}`);
+    await replyApology(reply, caption);
+  }
+};
+
+/**
  * A photo. Onboarding-gated exactly like `handleText` (a photo mid-onboarding is not a log). Then
  * download the bytes to base64 in memory (invariant #4 — never disk) and route: a progress photo
- * (caption keyword or a fresh `/progress` arming flag) goes to the progress service (one vision call →
- * observations reply); anything else stays a food plate via `logPhoto` (unchanged), which may reply
- * with the multi-item confirmation or pose a hidden-mover Open Question. The image lives only in the
- * base64 string and is never persisted (invariant #4).
+ * (caption keyword or a fresh `/progress` arming flag, decided PER PHOTO before buffering) goes to
+ * the progress service (one vision call → observations reply). A food photo is added to the
+ * media-group buffer keyed by `media_group_id`: a lone photo flushes immediately, a media group
+ * flushes once after a short debounce → ONE `logPhoto` over all images (invariant #5) → one reply.
+ * The images live only in the transient base64 strings and are never persisted (invariant #4).
  */
 export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<void> => {
   if (!ctx.chat) {
@@ -355,7 +392,8 @@ export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<voi
   }
 
   const caption = ctx.message.caption ?? '';
-  // Decide the route BEFORE downloading so the arming flag is consumed on every photo (design D3).
+  // Decide the route BEFORE downloading/buffering so the arming flag is consumed on every photo and a
+  // progress photo never enters the food buffer (design D3).
   const progress = isProgressPhoto(deps, chatId, caption);
 
   const imageBase64 = await downloadPhotoBase64(ctx);
@@ -371,16 +409,10 @@ export const handlePhoto = async (ctx: PhotoContext, deps: BotDeps): Promise<voi
     return;
   }
 
-  const outcome = await deps.food.logPhoto(chatId, caption, imageBase64);
-  if (!outcome) {
-    return;
-  }
-  if (outcome.kind === 'ask') {
-    deps.clarify.set(chatId, outcome.pending);
-    await askClarify(ctx.reply.bind(ctx), outcome.question);
-    return;
-  }
-  await replyConfirmation(ctx.reply.bind(ctx), outcome.confirmation);
+  const reply = ctx.reply.bind(ctx);
+  await deps.foodBuffer.add(chatId, ctx.message.media_group_id, imageBase64, caption, (flush) =>
+    flushFoodGroup(reply, deps, chatId, flush),
+  );
 };
 
 /** `food:addfdb:<id>` tap — persist the logged estimate to the user's Food DB. */
@@ -471,6 +503,20 @@ const ERROR_REPLY: Record<Lang, string> = {
   en: 'Something went wrong. Please try again.',
 };
 
+/**
+ * Best-effort language-mirrored "something went wrong" reply (the coach contract): prose mirrors the
+ * inbound language (invariant #6), defaulting to Russian with no signal. The send is wrapped —
+ * Telegram may be what's down — and a failing apology is logged message-only (invariant #9) and never
+ * rethrown. Shared by the update-error boundary and the detached media-group flush (rule #12).
+ */
+const replyApology = async (reply: ReplyFn, inbound: string | undefined): Promise<void> => {
+  try {
+    await reply(ERROR_REPLY[detectLangOrRu(inbound)]);
+  } catch (replyError) {
+    console.error(`[bot] error-reply failed: ${errorMessage(replyError)}`);
+  }
+};
+
 /** Minimal context surface the error boundary needs — keeps `handleBotError` unit-testable. */
 export interface ErrorContext {
   message?: { text?: string; caption?: string } | undefined;
@@ -487,12 +533,7 @@ export interface ErrorContext {
 export const handleBotError = async (error: unknown, ctx: ErrorContext): Promise<void> => {
   console.error(`[bot] update handler error: ${errorMessage(error)}`);
 
-  const inbound = ctx.message?.text ?? ctx.message?.caption;
-  try {
-    await ctx.reply(ERROR_REPLY[detectLangOrRu(inbound)]);
-  } catch (replyError) {
-    console.error(`[bot] error-reply failed: ${errorMessage(replyError)}`);
-  }
+  await replyApology(ctx.reply, ctx.message?.text ?? ctx.message?.caption);
 };
 
 /** Construct the grammY bot with handlers registered. Does not start polling — see index.ts. */

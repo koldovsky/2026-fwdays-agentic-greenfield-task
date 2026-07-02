@@ -1,5 +1,6 @@
 import { type Env, EnvValidationError, loadEnv } from './config/env.js';
 import { createBot } from './bot/bot.js';
+import { mediaGroupBuffer } from './bot/mediaGroup.js';
 import { clarifyStore } from './clarify/store.js';
 import { createHealthServer } from './bot/health.js';
 import { prisma } from './db/client.js';
@@ -73,6 +74,7 @@ const main = async (): Promise<void> => {
     clarify: clarifyStore,
     progress,
     progressArm: progressStore,
+    foodBuffer: mediaGroupBuffer,
   });
   // In-process Notion mirror worker (US-10; invariant #7 — no second process). Started only when a
   // token is set; its stop() is awaited in shutdown so an in-flight row finishes cleanly.

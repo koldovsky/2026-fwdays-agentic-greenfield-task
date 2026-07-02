@@ -246,9 +246,28 @@ const PLATE = {
       fatG: 3.6,
       carbsG: 0,
       qty: 200,
+      fromLabel: false,
     },
-    { name: 'борщ', per: 'dish', kcal: 250, proteinG: 8, fatG: 10, carbsG: 30, qty: 1 },
-    { name: 'рис', per: 'per100g', kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, qty: 150 },
+    {
+      name: 'борщ',
+      per: 'dish',
+      kcal: 250,
+      proteinG: 8,
+      fatG: 10,
+      carbsG: 30,
+      qty: 1,
+      fromLabel: false,
+    },
+    {
+      name: 'рис',
+      per: 'per100g',
+      kcal: 130,
+      proteinG: 2.7,
+      fatG: 0.3,
+      carbsG: 28,
+      qty: 150,
+      fromLabel: false,
+    },
   ],
 };
 
@@ -298,7 +317,7 @@ describe('createFoodService.logPhoto', () => {
     ]);
     const svc = createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON);
 
-    const confirmation = loggedOf(await svc.logPhoto(99n, 'куриное филе, борщ и рис', 'BASE64'));
+    const confirmation = loggedOf(await svc.logPhoto(99n, 'куриное филе, борщ и рис', ['BASE64']));
 
     expect(findMany).toHaveBeenCalledTimes(1); // ONE batched lookup for the whole plate (no N+1)
     expect(created).toHaveLength(3); // one row per item (invariant #8)
@@ -338,7 +357,7 @@ describe('createFoodService.logPhoto', () => {
     const { client } = makePhotoFake([]);
     const svc = createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON);
 
-    await svc.logPhoto(99n, 'plate', 'BASE64BYTES');
+    await svc.logPhoto(99n, 'plate', ['BASE64BYTES']);
 
     expect(fsWriteFile).not.toHaveBeenCalled();
     expect(fsWriteFileSync).not.toHaveBeenCalled();
@@ -355,7 +374,7 @@ describe('createFoodService.logPhoto', () => {
       makePlateAnthropic(),
       'Europe/Kyiv',
       NOON,
-    ).logPhoto(99n, 'plate', 'BASE64');
+    ).logPhoto(99n, 'plate', ['BASE64']);
 
     expect(result).toBeNull();
     expect(created).toHaveLength(0);
@@ -365,10 +384,99 @@ describe('createFoodService.logPhoto', () => {
     const { client, created } = makePhotoFake([]);
     const svc = createFoodService(client, makePlateAnthropic({ items: [] }), 'Europe/Kyiv', NOON);
 
-    const result = await svc.logPhoto(99n, '', 'BASE64');
+    const result = await svc.logPhoto(99n, '', ['BASE64']);
 
     expect(result).toBeNull();
     expect(created).toHaveLength(0);
+  });
+});
+
+// --- Photo-label (label-as-fact + caption-drives + multi-image) -----------------------------------
+
+// A captioned label+text-only plate: a nutrition-label item (protein powder, fromLabel=true, per100g)
+// plus a text-only item with no photo (1 tsp sugar, fromLabel=false).
+const LABEL_PLATE = {
+  items: [
+    {
+      name: 'protein',
+      per: 'per100g',
+      kcal: 380,
+      proteinG: 80,
+      fatG: 5,
+      carbsG: 8,
+      qty: 25,
+      fromLabel: true,
+    },
+    {
+      name: 'сахар',
+      per: 'portion',
+      kcal: 16,
+      proteinG: 0,
+      fatG: 0,
+      carbsG: 4,
+      qty: 1,
+      fromLabel: false,
+    },
+  ],
+};
+
+describe('createFoodService.logPhoto — photo-label', () => {
+  it('writes a fromLabel item as FACT with label macros scaled by qty, not overridden by a Food-DB match', async () => {
+    // The catalog has a stale 'protein' row — a label the user showed must win (precedence label >
+    // Food-DB): the row keeps its printed macros, source fact, no foodDbId (invariant #3 extension).
+    const { client, created } = makePhotoFake([
+      { id: 77, name: 'protein', per: FoodPer.per100g, kcal: 999, proteinG: 1, fatG: 1, carbsG: 1 },
+    ]);
+    const svc = createFoodService(client, makePlateAnthropic(LABEL_PLATE), 'Europe/Kyiv', NOON);
+
+    await svc.logPhoto(99n, 'protein 25g, 1 tsp sugar', ['LABEL_BASE64']);
+
+    const protein = created[0]?.data;
+    expect(protein?.userId).toBe(7); // tenant-scoped (invariant #8)
+    expect(protein?.source).toBe(FoodSource.fact); // label = fact
+    expect(protein?.foodDbId).toBeNull(); // NOT a catalog row — the label's own macros
+    expect(protein?.kcal).toBe(95); // 380 × 25/100 in code (invariant #2), never the 999 catalog row
+    expect(protein?.proteinG).toBe(20); // 80 × 0.25
+  });
+
+  it('caption-drives: a text-only item (no photo, no catalog) is still logged as an estimate — not dropped', async () => {
+    const { client, created } = makePhotoFake([]); // catalog empty → sugar misses
+    const svc = createFoodService(client, makePlateAnthropic(LABEL_PLATE), 'Europe/Kyiv', NOON);
+
+    await svc.logPhoto(99n, 'protein 25g, 1 tsp sugar', ['LABEL_BASE64']);
+
+    expect(created).toHaveLength(2); // both the label item AND the text-only sugar (none omitted)
+    const sugar = created.find((r) => r.data.entryName === 'сахар')?.data;
+    expect(sugar).toBeDefined();
+    expect(sugar?.source).toBe(FoodSource.estimate); // typical macros, honest estimate
+    expect(sugar?.kcal).toBe(16); // portion ×1, its own macros scaled in code
+  });
+
+  it('multi-image group: ONE vision call over all images, one row per caption item, tenant-scoped', async () => {
+    const { client, created } = makePhotoFake([]);
+    const { anthropic, create } = makePlateAnthropicSpy(LABEL_PLATE);
+    const svc = createFoodService(client, anthropic, 'Europe/Kyiv', NOON);
+
+    await svc.logPhoto(99n, 'protein 25g, 1 tsp sugar', ['IMG_A', 'IMG_B', 'IMG_C']);
+
+    expect(create).toHaveBeenCalledTimes(1); // exactly one vision call for the whole group (invariant #5)
+    const sent = create.mock.calls[0]?.[0] as { messages: { content: { type: string }[] }[] };
+    const imageBlocks = sent.messages[0]?.content.filter((b) => b.type === 'image');
+    expect(imageBlocks).toHaveLength(3); // all three images ride the single call
+    expect(created).toHaveLength(2); // one row per caption item
+    expect(created.every((r) => r.data.userId === 7)).toBe(true); // tenant-scoped (invariant #8)
+  });
+
+  it('CRITICAL: writes no image bytes anywhere across a MULTI-image logPhoto run (invariant #4)', async () => {
+    const { client } = makePhotoFake([]);
+    const svc = createFoodService(client, makePlateAnthropic(LABEL_PLATE), 'Europe/Kyiv', NOON);
+
+    await svc.logPhoto(99n, 'protein 25g, 1 tsp sugar', ['IMG_A', 'IMG_B', 'IMG_C']);
+
+    expect(fsWriteFile).not.toHaveBeenCalled();
+    expect(fsWriteFileSync).not.toHaveBeenCalled();
+    expect(fsCreateWriteStream).not.toHaveBeenCalled();
+    expect(fspWriteFile).not.toHaveBeenCalled();
   });
 });
 
@@ -435,7 +543,7 @@ describe('createFoodService.logPhoto — plate ask', () => {
     const outcome = await createFoodService(client, anthropic, 'Europe/Kyiv', NOON).logPhoto(
       99n,
       'салат',
-      'BASE64',
+      ['BASE64'],
     );
 
     expect(outcome?.kind).toBe('ask'); // deferred, not logged
@@ -454,7 +562,7 @@ describe('createFoodService.logPhoto — plate ask', () => {
       makePlateAnthropic(),
       'Europe/Kyiv',
       NOON,
-    ).logPhoto(99n, 'plate', 'BASE64');
+    ).logPhoto(99n, 'plate', ['BASE64']);
 
     expect(outcome?.kind).toBe('logged');
     expect(created).toHaveLength(3); // one row per item, straight through
@@ -466,9 +574,36 @@ describe('createFoodService.resolveAnswer — photo variant', () => {
   // caller's resolvePlate rebuild — the two original items are unchanged, the oil is appended.
   const refined = {
     items: [
-      { name: 'салат', per: 'dish', kcal: 120, proteinG: 4, fatG: 6, carbsG: 12, qty: 1 },
-      { name: 'рис', per: 'per100g', kcal: 130, proteinG: 2.7, fatG: 0.3, carbsG: 28, qty: 150 },
-      { name: 'масло', per: 'portion', kcal: 120, proteinG: 0, fatG: 14, carbsG: 0, qty: 1 },
+      {
+        name: 'салат',
+        per: 'dish',
+        kcal: 120,
+        proteinG: 4,
+        fatG: 6,
+        carbsG: 12,
+        qty: 1,
+        fromLabel: false,
+      },
+      {
+        name: 'рис',
+        per: 'per100g',
+        kcal: 130,
+        proteinG: 2.7,
+        fatG: 0.3,
+        carbsG: 28,
+        qty: 150,
+        fromLabel: false,
+      },
+      {
+        name: 'масло',
+        per: 'portion',
+        kcal: 120,
+        proteinG: 0,
+        fatG: 14,
+        carbsG: 0,
+        qty: 1,
+        fromLabel: false,
+      },
     ],
   };
 
@@ -635,7 +770,7 @@ describe('createFoodService — Notion mirror enqueue (US-10)', () => {
     await createFoodService(client, makePlateAnthropic(), 'Europe/Kyiv', NOON, outbox).logPhoto(
       99n,
       'plate',
-      'BASE64',
+      ['BASE64'],
     );
 
     expect(outbox.enqueue).toHaveBeenCalledTimes(3); // one per item

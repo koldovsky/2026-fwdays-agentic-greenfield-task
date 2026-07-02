@@ -97,7 +97,7 @@ Porting into NestJS later is straightforward if the project grows.
 The bot's operations are deterministic single calls, not autonomous agent loops:
 
 - "Save 200g chicken, 450 kcal" → parse → INSERT (1 call, or 0 if regex handles it)
-- Photo of plate → 1 vision call → structured JSON → INSERT
+- Photo(s) of a plate or nutrition label (a media group buffers to one) → 1 vision call → structured JSON → INSERT
 - "Make today's review" → fetch rows → 1 summarization call → save
 
 An agent loop would multiply token cost 10–50× and make spend unpredictable. Instead:
@@ -254,11 +254,20 @@ ambiguity. Fall back to free text when the answer isn't a small fixed set ("ск
 3. Infer meal type if not given; INSERT into **Food Log** for today (user TZ).
 4. Confirm. **Never hand-sum daily totals in chat** — totals come from a SUM query only.
 
-### 8.3 Log food by photo (plate)
-1. Stream image bytes → Sonnet vision (1 call) → structured items + macro estimates.
-2. Caption naming a Food Database product → prefer Food Database macros (fact) over visual estimate.
-3. Visual-only items marked `estimate` (±20–30%); INSERT; confirm.
-4. **Image discarded immediately** — never written to disk/storage.
+### 8.3 Log food by photo (plate or nutrition label)
+An image may be a **plate to identify visually OR a nutrition-facts / КБЖУ label**; several photos
+in one Telegram **media group** buffer (bot-layer debounce) into a single logging event.
+1. Stream all image bytes of the event → Sonnet vision in **exactly 1 call** (N images, one call) →
+   structured items + macros.
+2. **The caption is the authoritative item list**: one item per caption entry (text-only items with
+   no photo — sugar, black coffee — are kept, not dropped). Precedence **label > Food Database >
+   visual**: macros read from a printed label → `source=fact` (its own label macros, **not**
+   overridden by a catalog match); a Food Database name match → `fact`; a visual/typical guess →
+   `estimate` (±20–30%).
+3. INSERT one row per item; confirm.
+4. **Image(s) discarded immediately** — never written to disk/storage.
+
+See [ADR-0024](./adr/0024-photo-label-as-fact.md) (label = fact, caption-driven, media-group one call).
 
 ### 8.4 Body metrics
 1. Parse ("вес 89.2", "талия 90, грудь 105") → INSERT into **Body Metrics**.

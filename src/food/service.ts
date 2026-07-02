@@ -172,20 +172,21 @@ export const createFoodService = (
     return { kind: 'logged', confirmation: buildConfirmation(text, row) };
   },
 
-  // Photo front door (US-3, §8.3): ONE vision call → itemized macros → either log-immediately (one
-  // code-scaled `food_log` row per item → multi-item confirmation) OR, when the vision call flags a
-  // hidden high-leverage mover (`clarify`, riding the SAME response — invariant #5), hold the resolved
-  // item LIST as a photo-variant Open Question and ask (design D2). The image arrives as base64 and is
-  // never persisted (invariant #4 — enforced upstream + by the fs-spy test). Meal from the user clock,
-  // date = today (user TZ, via the shared resolveDate). Rows go through writeFoodLog, so macros are
-  // scaled in code and tenant-scoped (invariants #2/#8); no per-plate total anywhere.
-  async logPhoto(chatId: bigint, caption: string, imageBase64: string): Promise<LogOutcome | null> {
+  // Photo front door (US-3, §8.3): ONE vision call over ALL supplied images → itemized macros → either
+  // log-immediately (one code-scaled `food_log` row per item → multi-item confirmation) OR, when the
+  // vision call flags a hidden high-leverage mover (`clarify`, riding the SAME response — invariant
+  // #5), hold the resolved item LIST as a photo-variant Open Question and ask (design D2). The caption
+  // is the authoritative item list (label→fact, plate/text-only→estimate). Images arrive as base64 and
+  // are never persisted (invariant #4 — enforced upstream + by the fs-spy test). Meal from the user
+  // clock, date = today (user TZ, via the shared resolveDate). Rows go through writeFoodLog, so macros
+  // are scaled in code and tenant-scoped (invariants #2/#8); no per-plate total anywhere.
+  async logPhoto(chatId: bigint, caption: string, images: string[]): Promise<LogOutcome | null> {
     const userId = await resolveUserId(prisma, chatId);
     if (userId === null) {
       return null;
     }
 
-    const { items, clarify } = await estimatePlate(anthropic, imageBase64, caption);
+    const { items, clarify } = await estimatePlate(anthropic, images, caption);
     if (items.length === 0) {
       return null;
     }

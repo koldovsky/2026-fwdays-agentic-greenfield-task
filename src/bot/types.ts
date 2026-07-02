@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { InlineKeyboard } from 'grammy';
 import type { ClarifyStore } from '../clarify/store.js';
+import type { MediaGroupBuffer } from './mediaGroup.js';
 import type { FoodService } from '../food/types.js';
 import type { MetricsService } from '../metrics/types.js';
 import type { OnboardingService } from '../onboarding/types.js';
@@ -21,6 +22,7 @@ export interface BotDeps {
   clarify: ClarifyStore;
   progress: ProgressService;
   progressArm: ProgressStore;
+  foodBuffer: MediaGroupBuffer;
 }
 
 export type ReplyFn = (text: string, other?: { reply_markup?: InlineKeyboard }) => Promise<unknown>;
@@ -55,7 +57,13 @@ export interface PhotoSize {
  * are fetched into a base64 string in memory and never written to disk (invariant #4).
  */
 export interface PhotoContext {
-  message: { photo: PhotoSize[]; caption?: string | undefined };
+  message: {
+    photo: PhotoSize[];
+    caption?: string | undefined;
+    // A Telegram media group (several photos in one message) shares this id across its updates; the
+    // caption rides one of them. Absent for a lone photo (design D3).
+    media_group_id?: string | undefined;
+  };
   chat?: { id: number } | undefined;
   reply: ReplyFn;
   getFile: () => Promise<{ file_path?: string | undefined }>;
