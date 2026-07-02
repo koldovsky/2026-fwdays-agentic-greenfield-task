@@ -135,6 +135,36 @@ func TestMatchJars_PreservesPlanOrderRegardlessOfJarOrder(t *testing.T) {
 	}
 }
 
+func TestMatchJars_WarningCarriesEntryAmount(t *testing.T) {
+	jars := []monoclient.Jar{
+		jar("Подорожі", "sid-trip-usd", 840),
+		jar("Подушка", "sid-cushion-1", uahCurrencyCode),
+		jar("Подушка", "sid-cushion-2", uahCurrencyCode),
+	}
+
+	tests := []struct {
+		name       string
+		planName   string
+		planAmount int
+	}{
+		{name: "unknown", planName: "Типо", planAmount: 100},
+		{name: "non-UAH-only", planName: "Подорожі", planAmount: 3000},
+		{name: "ambiguous", planName: "Подушка", planAmount: 1500},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, warnings := MatchJars(plan(entry(tt.planName, tt.planAmount)), jars)
+			if len(warnings) != 1 {
+				t.Fatalf("warnings = %v, want exactly one", warnings)
+			}
+			if warnings[0].Amount != tt.planAmount {
+				t.Errorf("Amount = %d, want %d", warnings[0].Amount, tt.planAmount)
+			}
+		})
+	}
+}
+
 func TestMatchJars_MixedScenario(t *testing.T) {
 	p := plan(
 		entry("Заощадження", 5000), // clean UAH match

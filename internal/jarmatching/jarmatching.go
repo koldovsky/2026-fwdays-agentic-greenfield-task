@@ -32,6 +32,7 @@ type Matched struct {
 // Warning describes a plan entry that was skipped instead of matched.
 type Warning struct {
 	Name   string
+	Amount int
 	Reason string
 }
 
@@ -51,6 +52,7 @@ func MatchJars(plan planparsing.Plan, jars []monoclient.Jar) ([]Matched, []Warni
 		if len(titleMatches) == 0 {
 			warnings = append(warnings, Warning{
 				Name:   entry.Name,
+				Amount: entry.Amount,
 				Reason: fmt.Sprintf("%s; available jars: %s", ReasonUnknown, strings.Join(availableNames, ", ")),
 			})
 			continue
@@ -59,7 +61,7 @@ func MatchJars(plan planparsing.Plan, jars []monoclient.Jar) ([]Matched, []Warni
 		uahMatches := filterUAH(titleMatches)
 		switch len(uahMatches) {
 		case 0:
-			warnings = append(warnings, Warning{Name: entry.Name, Reason: ReasonNonUAH})
+			warnings = append(warnings, Warning{Name: entry.Name, Amount: entry.Amount, Reason: ReasonNonUAH})
 		case 1:
 			matched = append(matched, Matched{
 				Name:   entry.Name,
@@ -67,7 +69,7 @@ func MatchJars(plan planparsing.Plan, jars []monoclient.Jar) ([]Matched, []Warni
 				SendID: uahMatches[0].SendID,
 			})
 		default:
-			warnings = append(warnings, Warning{Name: entry.Name, Reason: ReasonAmbiguous})
+			warnings = append(warnings, Warning{Name: entry.Name, Amount: entry.Amount, Reason: ReasonAmbiguous})
 		}
 	}
 
