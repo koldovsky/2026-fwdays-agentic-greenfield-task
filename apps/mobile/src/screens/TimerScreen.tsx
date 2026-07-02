@@ -131,60 +131,72 @@ export function TimerScreen() {
           tip="You can start from your Home Screen too"
         />
       ) : (
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingHorizontal: t.screenGutter,
-            // Extra top room so the running card's amber glow isn't clipped by the scroll edge.
-            paddingTop: t.space[7],
-            paddingBottom: t.screenGutter,
-            gap: t.space[4],
-          }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          alwaysBounceVertical
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => void onRefresh()}
-              tintColor={t.colors.accent}
-            />
-          }
-        >
-          <StartControl
-            running={running}
-            note={note}
-            onChangeNote={setNote}
-            onToggle={onToggle}
-            autoFocus={composing}
-            tagIds={startTags}
-            onChangeTags={setStartTags}
-            onBlur={() => {
-              // Leaving an empty composer with nothing running collapses back to the hero.
-              if (!running && !note.trim()) setComposing(false);
+        <>
+          {/* The composer lives OUTSIDE the ScrollView: a ScrollView clips to its own
+              bounds, so the running card's amber glow was being cut off at the top by the
+              scroll viewport (right under the header). Rendering it in the plain
+              (non-clipping) SafeAreaView column lets the full glow bleed toward the header. */}
+          <View
+            style={{
+              paddingHorizontal: t.screenGutter,
+              paddingTop: t.space[4],
+              paddingBottom: t.space[4],
             }}
-          />
+          >
+            <StartControl
+              running={running}
+              note={note}
+              onChangeNote={setNote}
+              onToggle={onToggle}
+              autoFocus={composing}
+              tagIds={startTags}
+              onChangeTags={setStartTags}
+              onBlur={() => {
+                // Leaving an empty composer with nothing running collapses back to the hero.
+                if (!running && !note.trim()) setComposing(false);
+              }}
+            />
+          </View>
 
-          {todayStopped.length > 0 ? (
-            <View style={{ gap: t.space[3] }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={eyebrow(t)}>TODAY</Text>
-                <Text style={{ color: t.colors.text, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.heavy, fontVariant: ['tabular-nums'] }}>
-                  {formatDurationCompact(todayTotal)}
-                </Text>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingHorizontal: t.screenGutter,
+              paddingBottom: t.screenGutter,
+              gap: t.space[4],
+            }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            alwaysBounceVertical
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => void onRefresh()}
+                tintColor={t.colors.accent}
+              />
+            }
+          >
+            {todayStopped.length > 0 ? (
+              <View style={{ gap: t.space[3] }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={eyebrow(t)}>TODAY</Text>
+                  <Text style={{ color: t.colors.text, fontSize: t.fontSize.subhead, fontWeight: t.fontWeight.heavy, fontVariant: ['tabular-nums'] }}>
+                    {formatDurationCompact(todayTotal)}
+                  </Text>
+                </View>
+                {todayStopped.map((e) => (
+                  <TimerEntry
+                    key={e.id}
+                    entry={e}
+                    onContinue={(entry) => continueEntry.mutate(entry.id)}
+                    onPress={setEditing}
+                  />
+                ))}
               </View>
-              {todayStopped.map((e) => (
-                <TimerEntry
-                  key={e.id}
-                  entry={e}
-                  onContinue={(entry) => continueEntry.mutate(entry.id)}
-                  onPress={setEditing}
-                />
-              ))}
-            </View>
-          ) : null}
-        </ScrollView>
+            ) : null}
+          </ScrollView>
+        </>
       )}
 
       <EntryFormModal

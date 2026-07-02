@@ -6,6 +6,25 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T19:45Z — Timer composer glow no longer clipped by the header
+
+The running/composer card's amber glow was being cut off at the top: `StartControl` lived
+inside the Timer `ScrollView`, which clips to its own bounds (right under the header), so the
+26px-radius shadow got sheared — prior top padding (`ed50ad6`) couldn't fully protect it.
+Moved `StartControl` **out** of the `ScrollView` into the plain (non-clipping) `SafeAreaView`
+column; only the "Today" list scrolls now, and the full glow shows in composing/running/focused
+states. (FR-ENTRY-01 UI)
+
+Also investigated the reported first-tab-switch header flash: the nav config is already hardened
+(`lazy:false`, `detachInactiveScreens:false`, `animation:'none'`, `initialWindowMetrics`) and
+`animation:'none'` applies no opacity interpolation — so a blank→content flash on a **dev-client**
+build is most likely a debug-only first-realization cost (or `FlashList`'s first layout on
+History). Left unchanged pending a release-build check — no code change made.
+
+**State now:** mobile lint + typecheck clean. Committed on `dev`.
+
+---
+
 ## 2026-07-02T17:15Z — Tags UI polish round 2 (6 items)
 
 1. History pull-to-refresh now works anywhere: wrapped the `FlashList` in a `flex:1` view so
