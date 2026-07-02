@@ -12,7 +12,7 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Залежності та артефакти збірки (типові для різних стеків)
+output/
 node_modules/
 dist/
 build/
