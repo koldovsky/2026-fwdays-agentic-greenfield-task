@@ -11,6 +11,7 @@ export const signInSchema = z.object({
 
 /** Sign-up enforces the shared password policy (one source of truth, FR-AUTH-01). */
 export const signUpSchema = z.object({
+  name: z.string().trim().max(80, 'Name is too long').optional(),
   email,
   password: z.string().superRefine((value, ctx) => {
     const result = validatePassword(value);
@@ -23,4 +24,9 @@ export const signUpSchema = z.object({
   }),
 });
 
-export type AuthFormValues = z.infer<typeof signInSchema>;
+/** Union of both forms; `name` is only present in sign-up. */
+export type AuthFormValues = {
+  name?: string;
+  email: string;
+  password: string;
+};

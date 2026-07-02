@@ -3,6 +3,7 @@ import { Play, Square } from 'lucide-react-native';
 import type { TimeEntry } from '@honeydo/shared';
 import { formatDurationHms } from '@honeydo/shared';
 import { useElapsed } from '../hooks/useElapsed';
+import { PressableScale } from './PressableScale';
 import { useTheme } from '../theme';
 
 interface TimerEntryProps {
@@ -71,28 +72,26 @@ export function TimerEntry({ entry, onContinue, onStop, onPress }: TimerEntryPro
         {duration}
       </Text>
 
-      <Pressable
-        onPress={() =>
-          running ? onStop?.(entry) : onContinue?.(entry)
-        }
+      <PressableScale
+        onPress={() => (running ? onStop?.(entry) : onContinue?.(entry))}
+        scaleTo={0.88}
         accessibilityRole="button"
         accessibilityLabel={running ? 'Stop timer' : 'Continue this entry'}
-        style={({ pressed }) => ({
+        style={{
           width: 40,
           height: 40,
           borderRadius: t.radius.pill,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: running ? t.colors.accent : t.colors.fillSoft,
-          transform: [{ scale: pressed ? 0.9 : 1 }],
-        })}
+        }}
       >
         {running ? (
           <Square size={15} color={t.colors.onAccent} fill={t.colors.onAccent} />
         ) : (
           <Play size={17} color={t.colors.accent} fill={t.colors.accent} />
         )}
-      </Pressable>
+      </PressableScale>
     </Pressable>
   );
 }

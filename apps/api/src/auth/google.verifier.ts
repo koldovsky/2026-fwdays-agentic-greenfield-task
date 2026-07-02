@@ -6,6 +6,8 @@ export interface GoogleProfile {
   /** Stable Google account id (the token `sub`). */
   sub: string;
   email: string;
+  /** Display name from the Google profile, if present. */
+  name: string | null;
 }
 
 /**
@@ -34,6 +36,10 @@ export class GoogleVerifier {
     if (!payload?.sub || !payload.email || !payload.email_verified) {
       throw new UnauthorizedException('Google account is not verified.');
     }
-    return { sub: payload.sub, email: payload.email };
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      name: payload.name ?? payload.given_name ?? null,
+    };
   }
 }

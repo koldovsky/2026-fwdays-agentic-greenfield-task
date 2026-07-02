@@ -11,7 +11,7 @@ interface AuthStore {
   /** Restore a session on launch (called once from the app root). */
   init: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string) => Promise<void>;
   signInWithGoogle: (idToken: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -51,7 +51,8 @@ export const useAuthStore = create<AuthStore>((set) => {
     },
 
     signIn: (email, password) => authenticate('/auth/signin', { email, password }),
-    signUp: (email, password) => authenticate('/auth/signup', { email, password }),
+    signUp: (email, password, name) =>
+      authenticate('/auth/signup', { email, password, name: name?.trim() || undefined }),
     signInWithGoogle: (idToken) => authenticate('/auth/google', { idToken }),
 
     signOut: async () => {

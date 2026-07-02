@@ -21,6 +21,7 @@ import { TokenService } from './token.service';
 interface UserWithIdentities {
   id: string;
   email: string;
+  name: string | null;
   passwordHash: string | null;
   identities: { provider: string }[];
 }
@@ -52,6 +53,7 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
+        name: dto.name?.trim() || null,
         passwordHash,
         identities: {
           create: { provider: 'password', providerUserId: dto.email },
@@ -104,10 +106,12 @@ export class AuthService {
       include: { identities: true },
     });
     if (existing) {
-      // Link Google to the existing account rather than creating a duplicate.
+      // Link Google to the existing account rather than creating a duplicate;
+      // backfill the name from Google if the account doesn't have one yet.
       const linked = await this.prisma.user.update({
         where: { id: existing.id },
         data: {
+          name: existing.name ?? profile.name,
           identities: {
             create: { provider: 'google', providerUserId: profile.sub },
           },
@@ -120,6 +124,7 @@ export class AuthService {
     const created = await this.prisma.user.create({
       data: {
         email: profile.email,
+        name: profile.name,
         identities: {
           create: { provider: 'google', providerUserId: profile.sub },
         },
@@ -153,11 +158,13 @@ export class AuthService {
   toAuthUser(user: {
     id: string;
     email: string;
+    name: string | null;
     identities: { provider: string }[];
   }): AuthUser {
     return {
       id: user.id,
       email: user.email,
+      name: user.name,
       providers: user.identities.map((i) => i.provider as AuthProvider),
     };
   }

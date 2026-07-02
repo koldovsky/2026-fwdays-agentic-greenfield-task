@@ -6,6 +6,32 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T11:10Z — Post-review fixes: user name, empty-state CTA, keyboard, motion
+
+**Done:** Feedback pass on the time-entries UI.
+- **User name (spans auth):** added `User.name` (Prisma + migration `user_name`), `AuthUser.name`
+  + `SignUpRequest.name` contracts, Google `id_token` name extraction (name/given_name), name
+  stored on sign-up + Google provision (backfilled on link). Sign-up form gained an optional
+  **Name** field; the Timer header greeting now reads "GOOD MORNING, {first name}". *(Small
+  enhancement to the archived `auth` capability — not yet reflected in `openspec/specs/auth`;
+  formalize if we want the spec to track it.)*
+- **Empty state:** restored the centered "Start your first entry" CTA (I'd wrongly moved it to a
+  top-right `+`; the `+` stays as the manual-add affordance). Tapping the CTA reveals the composer
+  with the note input auto-focused (FR-SHELL-03).
+- **Keyboard:** the add/edit sheet now wraps in `KeyboardAvoidingView` so the keyboard no longer
+  covers the fields.
+- **Motion:** new `PressableScale` (spring scale) replaces instant `pressed` transforms on
+  `Button` and the round Timer/entry controls — presses settle smoothly (design-system calm motion).
+
+**State now:** `npm run gate` green (shared 19, api 7; lint + typecheck + builds pass). Committed
+on `dev`. Still needs the on-device rebuild + smoke (task 6.2) — now also verify the sign-up name
+field, greeting, and the smoother button feel.
+
+**Next steps:** unchanged — on-device smoke, then `/opsx:archive add-time-entries-core`, then
+`/opsx:propose add-tags`.
+
+---
+
 ## 2026-07-02T10:25Z — Implemented `add-time-entries-core` (31/32 tasks)
 
 **Done:** `/opsx:apply add-time-entries-core` — the MVP core loop across all three packages,

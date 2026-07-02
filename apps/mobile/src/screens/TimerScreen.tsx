@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Plus, Square } from 'lucide-react-native';
 import type { TimeEntry } from '@honeydo/shared';
 import { EmptyState } from '../components/EmptyState';
 import { EntryFormModal, type EntryFormValues } from '../components/EntryFormModal';
+import { PressableScale } from '../components/PressableScale';
 import { TimerEntry } from '../components/TimerEntry';
 import { useElapsed } from '../hooks/useElapsed';
 import {
@@ -18,6 +19,7 @@ import {
   useUpdateEntry,
 } from '../hooks/useTimeEntries';
 import { formatDurationCompact } from '@honeydo/shared';
+import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme';
 
 /** True when an ISO timestamp falls on the same local calendar day as `ref`. */
@@ -49,6 +51,8 @@ export function TimerScreen() {
   const [note, setNote] = useState('');
   const [editing, setEditing] = useState<TimeEntry | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  // First run shows the empty hero; its CTA reveals the composer (input auto-focused).
+  const [composing, setComposing] = useState(false);
 
   // Seed the input from the running entry (or clear it) when the running entry changes.
   const runningId = running?.id;
@@ -73,7 +77,8 @@ export function TimerScreen() {
     (e) => e.stoppedAt !== null && isSameLocalDay(e.startedAt, now),
   );
   const todayTotal = todayStopped.reduce((sum, e) => sum + (e.durationSec ?? 0), 0);
-  const firstRun = !isLoading && entries.length === 0 && !running;
+  const firstRun =
+    !isLoading && entries.length === 0 && !running && !composing;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
@@ -82,7 +87,9 @@ export function TimerScreen() {
       {firstRun ? (
         <EmptyState
           title="Your hive is empty"
-          description="Type what you're working on, then tap play. Stop it when you switch. That's the whole thing."
+          description="Start a timer with a quick note about what you're doing. Stop it when you switch. That's the whole thing."
+          actionLabel="Start your first entry"
+          onAction={() => setComposing(true)}
           tip="You can start from your Home Screen too"
         />
       ) : (
@@ -96,6 +103,7 @@ export function TimerScreen() {
             note={note}
             onChangeNote={setNote}
             onToggle={onToggle}
+            autoFocus={composing}
           />
 
           {todayStopped.length > 0 ? (
@@ -164,9 +172,14 @@ const eyebrow = (t: ReturnType<typeof useTheme>) =>
 
 function Header({ onAdd }: { onAdd: () => void }) {
   const t = useTheme();
+  const user = useAuthStore((s) => s.user);
+  const firstName = user?.name?.trim().split(/\s+/)[0];
   const hour = new Date().getHours();
-  const greeting =
+  const timeGreeting =
     hour < 12 ? 'GOOD MORNING' : hour < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING';
+  const greeting = firstName
+    ? `${timeGreeting}, ${firstName.toUpperCase()}`
+    : timeGreeting;
   return (
     <View
       style={{
@@ -186,12 +199,12 @@ function Header({ onAdd }: { onAdd: () => void }) {
           Today
         </Text>
       </View>
-      <Pressable
+      <PressableScale
         onPress={onAdd}
         accessibilityRole="button"
         accessibilityLabel="Add a manual entry"
         hitSlop={8}
-        style={({ pressed }) => ({
+        style={{
           width: 40,
           height: 40,
           borderRadius: t.radius.pill,
@@ -200,11 +213,10 @@ function Header({ onAdd }: { onAdd: () => void }) {
           backgroundColor: t.colors.surfaceAlt,
           borderWidth: 1,
           borderColor: t.colors.border,
-          opacity: pressed ? 0.7 : 1,
-        })}
+        }}
       >
         <Plus size={20} color={t.colors.accent} />
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -214,10 +226,17 @@ interface StartControlProps {
   note: string;
   onChangeNote: (note: string) => void;
   onToggle: () => void;
+  autoFocus?: boolean;
 }
 
 /** The start/running control card: note input, live elapsed, and the round toggle. */
-function StartControl({ running, note, onChangeNote, onToggle }: StartControlProps) {
+function StartControl({
+  running,
+  note,
+  onChangeNote,
+  onToggle,
+  autoFocus,
+}: StartControlProps) {
   const t = useTheme();
   const isRunning = !!running;
   const elapsed = useElapsed(running?.startedAt ?? null, isRunning);
@@ -242,6 +261,7 @@ function StartControl({ running, note, onChangeNote, onToggle }: StartControlPro
         onChangeText={onChangeNote}
         placeholder="What are you working on?"
         placeholderTextColor={t.colors.textMuted}
+        autoFocus={autoFocus}
         style={{ color: t.colors.text, fontSize: t.fontSize.headline, fontWeight: t.fontWeight.semibold }}
       />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -256,21 +276,21 @@ function StartControl({ running, note, onChangeNote, onToggle }: StartControlPro
         >
           {elapsed}
         </Text>
-        <Pressable
+        <PressableScale
           onPress={onToggle}
           disabled={!canStart}
+          scaleTo={0.9}
           accessibilityRole="button"
           accessibilityLabel={isRunning ? 'Stop' : 'Start'}
-          style={({ pressed }) => [
+          style={[
             {
               width: 64,
               height: 64,
               borderRadius: t.radius.pill,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: isRunning ? t.colors.accent : t.colors.accent,
+              backgroundColor: t.colors.accent,
               opacity: canStart ? 1 : 0.4,
-              transform: [{ scale: pressed ? 0.92 : 1 }],
             },
             t.shadow[3],
           ]}
@@ -280,7 +300,7 @@ function StartControl({ running, note, onChangeNote, onToggle }: StartControlPro
           ) : (
             <Play size={28} color={t.colors.onAccent} fill={t.colors.onAccent} />
           )}
-        </Pressable>
+        </PressableScale>
       </View>
     </View>
   );

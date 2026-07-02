@@ -9,6 +9,8 @@ export type AuthProvider = 'password' | 'google';
 export interface AuthUser {
   id: string;
   email: string;
+  /** Display name (from Google or the sign-up form); null when unknown. */
+  name: string | null;
   /** Sign-in providers linked to this account. */
   providers: AuthProvider[];
 }
@@ -28,6 +30,8 @@ export interface AuthSession {
 export interface SignUpRequest {
   email: string;
   password: string;
+  /** Optional display name. */
+  name?: string;
 }
 
 export interface SignInRequest {

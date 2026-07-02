@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { useTheme } from '../theme';
 
 type Variant = 'primary' | 'secondary';
@@ -37,10 +38,10 @@ export function Button({
   const fg = isPrimary ? t.colors.onAccent : t.colors.text;
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
+      style={[
         {
           flexDirection: 'row',
           alignItems: 'center',
@@ -52,7 +53,6 @@ export function Button({
           borderWidth: 1,
           borderColor: isPrimary ? 'transparent' : t.colors.border,
           opacity: disabled ? 0.45 : 1,
-          transform: [{ scale: pressed ? 0.96 : 1 }],
         },
         isPrimary ? t.shadow[2] : null,
       ]}
@@ -67,6 +67,6 @@ export function Button({
           </Text>
         </>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }

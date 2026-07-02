@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Hexagon, Lock, Mail } from 'lucide-react-native';
+import { Hexagon, Lock, Mail, User } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ApiError } from '../api/client';
@@ -32,13 +32,13 @@ export function AuthScreen() {
     formState: { errors, isSubmitting },
   } = useForm<AuthFormValues>({
     resolver: standardSchemaResolver(mode === 'signup' ? signUpSchema : signInSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { name: '', email: '', password: '' },
   });
 
   const onSubmit = async (values: AuthFormValues) => {
     setServerError(null);
     try {
-      if (mode === 'signup') await signUp(values.email.trim(), values.password);
+      if (mode === 'signup') await signUp(values.email.trim(), values.password, values.name);
       else await signIn(values.email.trim(), values.password);
     } catch (e) {
       setServerError(
@@ -50,7 +50,7 @@ export function AuthScreen() {
   const toggleMode = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin');
     setServerError(null);
-    reset({ email: '', password: '' });
+    reset({ name: '', email: '', password: '' });
   };
 
   return (
@@ -111,6 +111,29 @@ export function AuthScreen() {
         </View>
 
         {/* Fields */}
+        {mode === 'signup' ? (
+          <>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Name"
+                  leadingIcon={<User size={18} color={t.colors.textMuted} />}
+                  value={value ?? ''}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="What should we call you?"
+                  autoCapitalize="words"
+                  autoComplete="name"
+                  textContentType="name"
+                />
+              )}
+            />
+            <ErrorSlot t={t} message={errors.name?.message} />
+          </>
+        ) : null}
+
         <Controller
           control={control}
           name="email"
