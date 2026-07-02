@@ -17,8 +17,10 @@ them. Tags also unblock the per-tag breakdown in `profile-stats` later.
   every entry response includes its `tags`.
 - **Mobile (`@honeydo/mobile`)** — tag create + assign UI in the entry form (a tag picker,
   create-on-the-fly), colored tag dots on entry rows (already in the `TimerEntry`
-  reference), and the **filter chip row** on History (filter by one or more tags,
-  client-side over the fetched entries). A small tags query/store.
+  reference), the **filter chip row** on History (filter by one or more tags, client-side
+  over the fetched entries), and a **Manage Tags** screen reached from the Profile
+  "Manage tags" row (list, rename, recolor, delete) — per the Profile design reference. A
+  small tags query/store.
 - **Continue now copies tags** (FR-ENTRY-08): the earlier `time-entries` spec hedged
   "once tags exist" — this change makes continue copy the source entry's tags.
 
@@ -42,6 +44,7 @@ them. Tags also unblock the per-tag breakdown in `profile-stats` later.
 - **API:** new `apps/api/src/tags/` module; `time-entries` service/DTOs updated to accept
   `tagIds` and to `include: { tags: true }` on every entry read/write; continue copies tags.
 - **Mobile:** tag picker + create in `EntryFormModal`, tag dots on `TimerEntry`, a
-  `FilterChips` row + filter state on `HistoryScreen`, a `useTags` hook/query.
+  `FilterChips` row + filter state on `HistoryScreen`, a **Manage Tags** screen + a Profile
+  stack so the "Manage tags" row can push to it, a `useTags` hook/query.
 - **Out of scope (deferred):** per-tag time analytics (`profile-stats`); projects/clients.
   Server-side tag filtering (History filters client-side over already-fetched entries).

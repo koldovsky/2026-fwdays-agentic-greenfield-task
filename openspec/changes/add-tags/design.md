@@ -64,6 +64,17 @@ A `useTags` query (`['tags']`) plus create/rename/delete mutations that invalida
 the entries key (since entries embed tags). The entry form's tag picker reads `useTags` and
 can create a tag inline (optimistic add, then invalidate).
 
+### 6. Manage Tags is a pushed screen under a Profile stack
+
+The Profile tab currently renders `ProfileScreen` directly. To support the design's
+"Manage tags" row (a settings row with a chevron → push), wrap the Profile tab in a small
+native-stack (`ProfileScreen` → `ManageTagsScreen`). The Manage Tags screen lists the
+user's tags with a colored dot and offers rename, recolor, delete (delete detaches per
+FR-TAG-03) and create — reusing the same `useTags` mutations as the inline picker.
+*Alternative:* present Manage Tags as a full-screen modal from Profile — simpler but loses
+the native push/back the design implies; a stack is the right call and is cheap for one
+extra screen.
+
 ## Risks / Trade-offs
 
 - **Deleting a tag mid-edit** → the entries query is invalidated on tag delete so rows drop
@@ -82,11 +93,12 @@ can create a tag inline (optimistic add, then invalidate).
 2. Shared contracts + pure `filterEntriesByTags` (test-first); build shared.
 3. API tags module + entry service/DTO updates (`tagIds`, `include tags`, continue copies
    tags); tests for detach-on-delete, uniqueness, cross-user, continue-copies-tags.
-4. Mobile: `useTags`, tag picker in the entry form, dots on rows, History filter chips.
+4. Mobile: `useTags`, tag picker in the entry form, dots on rows, History filter chips,
+   the Profile stack + Manage Tags screen.
 Rollback: revert migration + module; entries keep working (tags are additive).
 
 ## Open Questions
 
-- Inline tag creation from the picker vs. a separate manage screen? Decision: inline create
-  in the picker for MVP (fastest path); a "Manage tags" screen can come with `profile-stats`
-  (the Profile reference already lists a "Manage tags" row).
+- None outstanding. Tag management ships **both** ways: inline create in the entry-form
+  picker (fastest assignment path) and a dedicated **Manage Tags** screen from Profile
+  (list/rename/recolor/delete), matching the Profile design reference.

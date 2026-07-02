@@ -35,8 +35,15 @@
 - [ ] 5.2 Apply `filterEntriesByTags` to the entries before grouping; empty selection shows all (FR-TAG-04)
 - [ ] 5.3 Empty-filter-result state is calm (e.g. "No entries with these tags")
 
-## 6. Verify & document
+## 6. Mobile — Manage Tags (from Profile)
 
-- [ ] 6.1 `npm run gate` green + mobile lint/typecheck; no raw-hex/token violations in new UI
-- [ ] 6.2 Manual device smoke: create tag → assign on new + manual entry → see dots → filter History → rename tag → delete tag (entries survive) → continue copies tags
-- [ ] 6.3 Update `docs/current-state.md` (newest-first) with what shipped + FR IDs; mark statuses
+- [ ] 6.1 Wrap the Profile tab in a native-stack (`ProfileStack`: `Profile` → `ManageTags`), headers styled to the theme; keep the tab bar
+- [ ] 6.2 Add the "Manage tags" settings row on `ProfileScreen` (tag icon + chevron) that pushes to Manage Tags (matches the Profile design reference)
+- [ ] 6.3 `ManageTagsScreen`: list the user's tags (colored dot + name) with rename, recolor (preset palette), and delete (confirm) via `useTags` mutations; a "New tag" affordance; token-driven, calm empty state
+- [ ] 6.4 Deleting a tag here detaches it from entries and refreshes the entries list (FR-TAG-03); no entry is removed
+
+## 7. Verify & document
+
+- [ ] 7.1 `npm run gate` green + mobile lint/typecheck; no raw-hex/token violations in new UI
+- [ ] 7.2 Manual device smoke: create tag → assign on new + manual entry → see dots → filter History → rename/recolor tag → delete tag from Manage Tags (entries survive) → continue copies tags
+- [ ] 7.3 Update `docs/current-state.md` (newest-first) with what shipped + FR IDs; mark statuses
