@@ -138,7 +138,8 @@ describe('resolveAnswer — descriptor kind (≤1 LLM call)', () => {
     expect(confirmation.text).toContain('±20'); // estimate surfaced honestly
     // Language mirrors the ORIGINAL product ('творог'), not the answer '5%' (which detects as en) —
     // invariant #6. Before the fix this said 'Logged:' for a Russian user.
-    expect(confirmation.text.startsWith('Записал')).toBe(true);
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    expect(confirmation.text.startsWith('Записав')).toBe(true);
   });
 
   it('does NOT rescale a bare number answering a fat% question (no 5 → 5 g misroute)', async () => {
@@ -179,7 +180,8 @@ describe('resolveAnswer — disambiguation kind (select by id, zero estimate cal
 
     expect(create).not.toHaveBeenCalled(); // Food-DB select = fact, no estimate call (invariant #5)
     // Confirmation mirrors the original product's language, not the numeric id answer (invariant #6).
-    expect(confirmation.text.startsWith('Записал')).toBe(true);
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    expect(confirmation.text.startsWith('Записав')).toBe(true);
     // Real select-by-id: the query is scoped by the chosen id AND the tenant (catalogWhere nests the
     // caller's `{id}` filter alongside the own+global OR under AND) — not a wildcard that masks the bug.
     const where = findFirst.mock.calls[0]?.[0] as { where: { AND?: { id?: number }[] } };

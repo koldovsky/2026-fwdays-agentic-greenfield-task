@@ -267,7 +267,8 @@ describe('correctLast — tenancy (invariant #8)', () => {
 
 describe('correctLast — language mirroring (invariant #6)', () => {
   const cases: { lang: string; text: string; verb: string }[] = [
-    { lang: 'ru', text: 'нет, 150г', verb: 'Исправил' },
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    { lang: 'ru', text: 'нет, 150г', verb: 'Виправив' },
     { lang: 'uk', text: 'ні, 150г курячого філе', verb: 'Виправив' },
     { lang: 'en', text: 'no, 150g', verb: 'Corrected' },
   ];

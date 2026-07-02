@@ -50,7 +50,8 @@ describe('buildQuestion', () => {
     const uk = buildQuestion(disambiguation, 'записав сир їв');
     const en = buildQuestion(disambiguation, 'logged cottage cheese');
 
-    expect(ru.text).toContain('Какой именно');
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    expect(ru.text).toContain('Який саме');
     expect(uk.text).toContain('Який саме');
     expect(en.text).toContain('Which');
     // Choice values stay the (English-structured) catalog row ids regardless of prose language.

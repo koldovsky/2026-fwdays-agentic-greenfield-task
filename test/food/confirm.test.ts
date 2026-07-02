@@ -76,8 +76,9 @@ describe('buildPlateConfirmation', () => {
   it('mirrors the caption language (RU/UA/EN) while enum values stay English', () => {
     const rows = [row({ meal: 'lunch', unit: 'g', source: FoodSource.fact })];
 
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
     const ru = buildPlateConfirmation('куриное филе', rows).text;
-    expect(ru).toContain('Записал');
+    expect(ru).toContain('Записав');
     expect(ru).toContain('ккал');
 
     const uk = buildPlateConfirmation('куряче філе', rows).text;

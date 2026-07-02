@@ -58,7 +58,8 @@ describe('analyzeProgress', () => {
     expect(text).toContain("caption's language"); // mirror rule (invariant #6)
   });
 
-  it('defaults to Russian in the prompt when there is no caption (design D6)', async () => {
+  // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+  it('defaults to Ukrainian in the prompt when there is no caption (design D6)', async () => {
     const { client, create } = makeAnthropic();
 
     await analyzeProgress(client, 'BASE64', '');
@@ -68,6 +69,6 @@ describe('analyzeProgress', () => {
     };
     const text = (params.messages[0]?.content.find((b) => b.type === 'text') as { text: string })
       .text;
-    expect(text).toContain('respond in Russian'); // no caption → Russian default, not detectLang
+    expect(text).toContain('respond in Ukrainian'); // no caption → Ukrainian default, not detectLang
   });
 });

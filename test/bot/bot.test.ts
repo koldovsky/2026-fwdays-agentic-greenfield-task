@@ -1195,14 +1195,17 @@ describe('handleBotError', () => {
     errorLog.mockRestore();
   });
 
-  it('replies in the inbound language (Russian message → Russian apology)', async () => {
+  // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): any Cyrillic — Russian included —
+  // is forced to Ukrainian so the bot never replies in Russian. A Russian inbound therefore gets the
+  // Ukrainian apology, not the Russian one. Restore the Russian expectation when the hack is removed.
+  it('replies in Ukrainian for any Cyrillic inbound (demo hack — was Russian)', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { ctx, reply } = makeCtx({ text: 'съел борщ' });
 
     await handleBotError(new Error('boom'), ctx);
 
     expect(reply).toHaveBeenCalledTimes(1);
-    expect(reply.mock.calls[0]?.[0]).toBe('Что-то пошло не так. Попробуй ещё раз.');
+    expect(reply.mock.calls[0]?.[0]).toBe('Щось пішло не так. Спробуй ще раз.');
   });
 
   it('replies in Ukrainian for a Ukrainian inbound message', async () => {
@@ -1214,13 +1217,15 @@ describe('handleBotError', () => {
     expect(reply.mock.calls[0]?.[0]).toBe('Щось пішло не так. Спробуй ще раз.');
   });
 
-  it('defaults to Russian when there is no inbound text (design D6 precedent)', async () => {
+  // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): the no-signal default is Ukrainian,
+  // not Russian (design D6 precedent). Restore the Russian expectation when the hack is removed.
+  it('defaults to Ukrainian when there is no inbound text (demo hack — was Russian)', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { ctx, reply } = makeCtx(undefined);
 
     await handleBotError(new Error('boom'), ctx);
 
-    expect(reply.mock.calls[0]?.[0]).toBe('Что-то пошло не так. Попробуй ещё раз.');
+    expect(reply.mock.calls[0]?.[0]).toBe('Щось пішло не так. Спробуй ще раз.');
   });
 
   it('swallows a failing error-reply (Telegram unreachable) — logged, not rethrown', async () => {

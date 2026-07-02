@@ -105,14 +105,15 @@ describe('createReviewsService.generateDaily — numbers from the SUM (invariant
       generateProse: spy,
     }).generateDaily(11n, { date: WED, triggerText: 'готово на сегодня' });
 
-    expect(result?.text).toContain('Калории: 1234 / 1600');
-    expect(result?.text).toContain('Белок: 100 / 120');
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    expect(result?.text).toContain('Калорії: 1234 / 1600');
+    expect(result?.text).toContain('Білок: 100 / 120');
     // Fat 60 > 50 × 1.1 → over flag from code, protein 100 < 120 × 0.9 → under flag from code.
-    expect(result?.text).toContain('⚠️ перебор');
-    expect(result?.text).toContain('⚠️ недобор');
+    expect(result?.text).toContain('⚠️ перебір');
+    expect(result?.text).toContain('⚠️ недобір');
     // The prose numbers never leak into a numeric slot — they only appear in their own prose lines.
-    expect(result?.text).toContain('Калории: 1234');
-    expect(result?.text).not.toMatch(/Калории: (?!1234)/u);
+    expect(result?.text).toContain('Калорії: 1234');
+    expect(result?.text).not.toMatch(/Калорії: (?!1234)/u);
   });
 
   it('makes EXACTLY one prose call per daily review (invariant #5)', async () => {
@@ -140,9 +141,10 @@ describe('createReviewsService.generateDaily — numbers from the SUM (invariant
       generateProse: spy,
     }).generateDaily(11n, { date: WED });
 
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
     expect(spy).not.toHaveBeenCalled();
-    expect(result?.text).not.toContain('Калории:');
-    expect(result?.text).toContain('ничего не записано');
+    expect(result?.text).not.toContain('Калорії:');
+    expect(result?.text).toContain('нічого не записано');
     expect(upserts).toHaveLength(1); // still persisted (the empty-day nudge is a review)
   });
 
@@ -282,7 +284,8 @@ describe('createReviewsService.generateDaily — rollups (D6)', () => {
     expect(periods).toContain('weekly');
     // The weekly is delivered alongside the daily, not just persisted (M1 fix): it rides in `rollups`.
     expect(result?.rollups).toHaveLength(1);
-    expect(result?.rollups[0]).toContain('Ревью недели');
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+    expect(result?.rollups[0]).toContain('Огляд тижня');
     const weekly = upserts.find((u) => u.where.userId_period_periodStart.period === 'weekly');
     expect(weekly?.where.userId_period_periodStart.periodStart).toEqual(
       new Date('2026-06-22T00:00:00.000Z'),

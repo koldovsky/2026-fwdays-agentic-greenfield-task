@@ -95,7 +95,8 @@ describe('createMetricsService.logMetric', () => {
     expect(created[0]?.data.date).toEqual(new Date('2026-06-29T00:00:00.000Z'));
   });
 
-  it('confirms code-built values + signed deltas vs the prior, mirroring Russian prose', async () => {
+  // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+  it('confirms code-built values + signed deltas vs the prior, mirroring Ukrainian prose', async () => {
     const history = [
       { id: 2, userId: 7, date: new Date('2026-06-22T00:00:00.000Z'), weightKg: 90 },
     ];
@@ -105,8 +106,8 @@ describe('createMetricsService.logMetric', () => {
       date: '2026-06-30',
     });
 
-    expect(confirmation?.text).toContain('Записал'); // ru voice
-    expect(confirmation?.text).toContain('Вес');
+    expect(confirmation?.text).toContain('Записав'); // uk voice
+    expect(confirmation?.text).toContain('Вага');
     expect(confirmation?.text).toContain('89.2');
     expect(confirmation?.text).toContain('↓0.8'); // signed delta from code
     expect(confirmation?.text).toContain('2026-06-22'); // since the prior entry

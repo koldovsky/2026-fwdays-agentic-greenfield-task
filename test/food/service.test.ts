@@ -669,8 +669,10 @@ describe('createFoodService.resolveAnswer — photo variant', () => {
     expect(oil?.kcal).toBe(120);
     expect(created[0]?.data.meal).toBe(Meal.lunch); // from the ask event, not re-inferred
     expect(created[0]?.data.date).toEqual(new Date('2026-06-29T00:00:00.000Z')); // captured date
-    expect(confirmation?.text).toContain('195'); // per-row numbers, prose in Russian
-    expect(confirmation?.text.startsWith('Записал')).toBe(true); // language from the stored caption
+    expect(confirmation?.text).toContain('195'); // per-row numbers, prose localized from the caption
+    // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): any Cyrillic caption — Russian
+    // included — is forced to Ukrainian, so the label is 'Записав' (uk), not 'Записал' (ru).
+    expect(confirmation?.text.startsWith('Записав')).toBe(true); // language from the stored caption
   });
 
   it('CRITICAL: the photo refine writes no image bytes anywhere (invariant #4)', async () => {

@@ -71,10 +71,11 @@ describe('buildAnswer', () => {
     expect(answer.text).toContain('180');
   });
 
-  it('mirrors Russian prose while keeping numbers and structure consistent', () => {
+  // TEMPORAL DEMO HACK (drop with the hack in src/util/lang.ts): Cyrillic is forced to Ukrainian; expect uk prose.
+  it('mirrors Russian-input prose as Ukrainian while keeping numbers and structure consistent', () => {
     const answer = buildAnswer('сколько калорий?', totals(), NO_TARGETS, ['kcal']);
 
-    expect(answer.text).toMatch(/Калории/);
+    expect(answer.text).toMatch(/Калорії/);
   });
 
   it('mirrors Ukrainian prose', () => {
