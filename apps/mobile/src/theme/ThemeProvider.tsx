@@ -13,6 +13,7 @@ import React, {
   useState,
 } from 'react';
 import { useColorScheme } from 'react-native';
+import * as SystemUI from 'expo-system-ui';
 import {
   type AppearancePreference,
   loadPreference,
@@ -107,6 +108,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       : preference;
 
   const theme = useMemo(() => buildTheme(scheme), [scheme]);
+
+  // Paint the NATIVE root view behind React with the theme bg, so tab/screen
+  // transitions never flash the default (white) window background.
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(theme.colors.bg);
+  }, [theme.colors.bg]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, scheme, preference, setPreference }),
