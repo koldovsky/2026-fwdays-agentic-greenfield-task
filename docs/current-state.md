@@ -6,6 +6,26 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T17:15Z — Tags UI polish round 2 (6 items)
+
+1. History pull-to-refresh now works anywhere: wrapped the `FlashList` in a `flex:1` view so
+   it fills below the filter chips (was sized to content).
+2. `ColorPicker` reworked — dropped the hex input for a **draggable hue slider** (rainbow
+   `LinearGradient` + `PanResponder`, HSL→hex) alongside the preset swatches; no hex typing.
+3. Same `flex:1` wrap fixes the filter-then-All overlap where the first entry hid under the chips.
+4. Profile "Manage tags" restyled to the design SettingRow: grouped card, larger row, icon in a
+   colored (blue `tagPalette[2]`) rounded square with a white (`onColor`) glyph.
+5. Reduced the Manage Tags "New tag" bottom margin.
+6. Manage Tags back control is now a custom bare `ChevronLeft` (`headerLeft`) — no button
+   background/border/label.
+
+New token `onColor` (white on saturated chips, both schemes).
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. All JS.
+Committed on `dev`. `add-tags` still 28/29 (device smoke).
+
+---
+
 ## 2026-07-02T16:30Z — Tags UI polish (11 review items)
 
 1. Tag selection added to the Timer "What are you working on?" composer (`StartControl` now

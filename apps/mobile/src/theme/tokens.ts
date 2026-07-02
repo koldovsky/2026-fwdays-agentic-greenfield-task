@@ -34,6 +34,8 @@ export interface Palette {
   successSoft: string;
   danger: string;
   onAccent: string;
+  /** White-ish content on a saturated color chip/badge (both schemes). */
+  onColor: string;
 }
 
 const dark: Palette = {
@@ -50,6 +52,7 @@ const dark: Palette = {
   successSoft: '#243023',
   danger: '#E07A5F',
   onAccent: '#2A1B05',
+  onColor: '#FFFFFF',
 };
 
 const light: Palette = {
@@ -66,6 +69,7 @@ const light: Palette = {
   successSoft: '#E3F1DE',
   danger: '#C0492E',
   onAccent: '#2A1B05',
+  onColor: '#FFFFFF',
 };
 
 /** Semantic color palettes. Default scheme is `dark` (see DESIGN.md). */

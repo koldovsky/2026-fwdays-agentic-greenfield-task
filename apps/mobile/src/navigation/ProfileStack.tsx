@@ -1,4 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ChevronLeft } from 'lucide-react-native';
+import { PressableScale } from '../components/PressableScale';
 import { ManageTagsScreen } from '../screens/ManageTagsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { useTheme } from '../theme';
@@ -26,16 +28,24 @@ export function ProfileStack() {
       <Stack.Screen
         name="ManageTags"
         component={ManageTagsScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Manage tags',
           headerStyle: { backgroundColor: t.colors.bg },
           headerShadowVisible: false,
-          headerTintColor: t.colors.accent,
           headerTitleStyle: { color: t.colors.text },
-          // Just the back chevron — no "ProfileHome" label.
-          headerBackButtonDisplayMode: 'minimal',
-          headerBackTitle: '',
-        }}
+          // A bare chevron back — no default button chrome, label, or border.
+          headerLeft: () => (
+            <PressableScale
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              hitSlop={12}
+              style={{ paddingRight: t.space[3], paddingVertical: t.space[1] }}
+            >
+              <ChevronLeft size={26} color={t.colors.accent} />
+            </PressableScale>
+          ),
+        })}
       />
     </Stack.Navigator>
   );

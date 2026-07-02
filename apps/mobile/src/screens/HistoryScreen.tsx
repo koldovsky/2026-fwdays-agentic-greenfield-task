@@ -102,6 +102,7 @@ export function HistoryScreen() {
           </Text>
         </View>
       ) : (
+        <View style={{ flex: 1 }}>
         <FlashList
           data={rows}
           keyExtractor={(item) =>
@@ -145,6 +146,7 @@ export function HistoryScreen() {
             )
           }
         />
+        </View>
       )}
 
       <EntryFormModal

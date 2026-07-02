@@ -133,7 +133,7 @@ export function ManageTagsScreen() {
 
       {/* New tag lives at the bottom, styled like the Empty State primary action. */}
       {editing !== 'new' ? (
-        <View style={{ padding: t.screenGutter, paddingTop: t.space[2] }}>
+        <View style={{ paddingHorizontal: t.screenGutter, paddingTop: t.space[2], paddingBottom: t.space[1] }}>
           <Button
             onPress={() => setEditing('new')}
             leadingIcon={<Plus size={20} color={t.colors.onAccent} />}

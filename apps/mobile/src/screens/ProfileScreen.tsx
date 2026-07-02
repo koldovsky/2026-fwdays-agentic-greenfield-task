@@ -8,7 +8,12 @@ import { PressableScale } from '../components/PressableScale';
 import { SegmentedControl } from '../components/SegmentedControl';
 import type { ProfileStackParamList } from '../navigation/ProfileStack';
 import { useAuthStore } from '../store/authStore';
-import { type AppearancePreference, useTheme, useThemeControls } from '../theme';
+import {
+  type AppearancePreference,
+  tagPalette,
+  useTheme,
+  useThemeControls,
+} from '../theme';
 
 const APPEARANCE_OPTIONS: { value: AppearancePreference; label: string }[] = [
   { value: 'light', label: 'Light' },
@@ -54,27 +59,44 @@ export function ProfileScreen() {
 
         <View style={{ gap: t.space[3], marginTop: t.space[6] }}>
           <Text style={eyebrow}>TAGS</Text>
-          <PressableScale
-            onPress={() => navigation.navigate('ManageTags')}
-            accessibilityRole="button"
+          <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: t.space[3],
-              paddingVertical: t.space[3],
-              paddingHorizontal: t.space[4],
               borderRadius: t.radius.md,
               borderWidth: 1,
               borderColor: t.colors.border,
               backgroundColor: t.colors.surface,
+              overflow: 'hidden',
             }}
           >
-            <TagIcon size={18} color={t.colors.accent} />
-            <Text style={{ flex: 1, color: t.colors.text, fontSize: t.fontSize.body, fontWeight: t.fontWeight.medium }}>
-              Manage tags
-            </Text>
-            <ChevronRight size={18} color={t.colors.textMuted} />
-          </PressableScale>
+            <PressableScale
+              onPress={() => navigation.navigate('ManageTags')}
+              accessibilityRole="button"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: t.space[3],
+                paddingVertical: t.space[3],
+                paddingHorizontal: t.space[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: t.radius.xs,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: tagPalette[2],
+                }}
+              >
+                <TagIcon size={17} color={t.colors.onColor} />
+              </View>
+              <Text style={{ flex: 1, color: t.colors.text, fontSize: t.fontSize.callout, fontWeight: t.fontWeight.medium }}>
+                Manage tags
+              </Text>
+              <ChevronRight size={18} color={t.colors.textMuted} />
+            </PressableScale>
+          </View>
         </View>
 
         <View style={{ flex: 1 }} />
