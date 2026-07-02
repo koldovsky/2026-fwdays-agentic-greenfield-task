@@ -63,6 +63,11 @@ export function createUserRepo(db: Queryable) {
       const { rows } = await db.query<UserRow>(`SELECT ${COLS} FROM users WHERE id = $1`, [id]);
       return rows.length > 0 ? toUser(rows[0]) : null;
     },
+
+    /** Hard delete; children (cv_profiles, tailorings, credentials, …) go via ON DELETE CASCADE (NFR-GDPR-02). */
+    async deleteById(id: string): Promise<void> {
+      await db.query(`DELETE FROM users WHERE id = $1`, [id]);
+    },
   };
 }
 

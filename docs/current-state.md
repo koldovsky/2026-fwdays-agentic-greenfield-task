@@ -7,6 +7,24 @@
 
 ## Last action
 
+- **Auth.js session + GDPR endpoints done + live-verified (2026-07-02).** TC-STACK-07 decided:
+  **next-auth v5 (5.0.0-beta.31), JWT sessions, Credentials provider** over the existing scrypt
+  service (rationale in `openspec/changes/add-auth/design.md`; Supabase/Clerk rejected — hosted,
+  need external creds).
+  - App-layer wiring (shared/lib stays framework-free): `src/app/auth.ts` (`handlers`, `auth`,
+    `currentUserId()`), `/api/auth/[...nextauth]`, `/api/auth/register` (validation + uniform codes).
+  - **GDPR endpoints (persistence 3.x):** `GET /api/account/export` (user + decrypted CV text +
+    full tailoring history, 401 anon) and `DELETE /api/account` (hard delete, FK cascade, clears
+    session cookie) — thin routes over new framework-free `shared/lib/account` service;
+    `user-repo` gained `deleteById`.
+  - **Live-verified over real HTTP:** `scripts/dev-pglite-server.mjs` (pglite over TCP :5544,
+    migrations on boot; single-connection — stop app before hand-seeding) + `next start`:
+    register 201 → duplicate `email_taken` → weak password 400 → sign-in 302 + JWT cookie →
+    session has user id → export JSON → delete → export 404. Plus pglite integration tests for
+    export (decrypted rawText) + cascade delete. Build/lint green, **153 tests**.
+  - Env: **`AUTH_SECRET` now required at runtime** (added to launch env list below).
+  - Still open in `add-auth`: Google OAuth flow (needs client id/secret), password reset (needs
+    email sender), `features/sign-in` UI + top-bar session state (3.1/3.3), checker-review (4.3).
 - **Perf + environment-audit interlude (2026-07-02).** All previously uncommitted work is now
   committed (4 commits on `rromanko`: prior-session work, perf, audit fixes, animations spec).
   No main-flow code touched.
@@ -45,20 +63,17 @@
 
 ## Working on
 
-- **Main flow: `add-persistence` + `add-auth` remainder** — unchanged; pick up in a fresh session.
+- **`add-auth` remainder** — sign-in UI (3.1/3.3), Google OAuth (creds), reset email, checker-review.
+  `add-persistence` fully done except checker-review (4.3).
 
 ## Next steps
 
-1. **Decide the Auth.js library / session strategy** (next-auth v5 vs lucia vs custom HMAC).
-   Gates the session helper, `src/app/api/auth/**`, and the GDPR endpoints
-   (`GET /api/account/export`, `DELETE /api/account`). Register/authenticate + repos exist —
-   only the session/HTTP wrapper is new.
-2. **`features/sign-in` UI** + top-bar session state; sign-in enforced only at export/paywall,
+1. **`features/sign-in` UI** + top-bar session state; sign-in enforced only at export/paywall,
    one free anonymous tailoring stays (FR-ONBOARD-01).
-3. **`add-agent-loop`** — replaces the `/tailor` stub. Needs `ANTHROPIC_API_KEY`; reuses
+2. **`add-agent-loop`** — replaces the `/tailor` stub. Needs `ANTHROPIC_API_KEY`; reuses
    `shared/lib/llm`; keep user ids out of LLM payloads (NFR-SEC-02).
-4. **`add-payments-emulator`** — needs persistence + auth.
-5. **`landing-animations`** — implement only after the main-flow items above.
+3. **`add-payments-emulator`** — needs persistence + auth.
+4. **`landing-animations`** — implement only after the main-flow items above.
 
 Also open: `export-resume`, `edit-bullet`, `upload-cv`/`paste-jd` (TC-PARSE-01/02).
 
@@ -67,9 +82,9 @@ Also open: `export-resume`, `edit-bullet`, `upload-cv`/`paste-jd` (TC-PARSE-01/0
 - **Ukrainian-first vs display font** — Bricolage Grotesque has no Cyrillic subset; landing
   shipped English. Resolve before i18n (NFR-I18N-01 / BC-BRAND-01 tension).
 - **Env before launch:** `NEXT_PUBLIC_SITE_URL` (SEO defaults to `https://vouch.app`),
-  `DATABASE_URL`, `CV_ENCRYPTION_KEY` (64 hex or base64 → 32 bytes).
-- **Auth.js / session strategy undecided** (`TC-STACK-07`); Google OAuth needs client
-  id/secret; reset flow needs an email sender. Merchant-of-record (`TC-STACK-06`) undecided.
+  `DATABASE_URL`, `CV_ENCRYPTION_KEY` (64 hex or base64 → 32 bytes), `AUTH_SECRET` (32+ bytes).
+- Google OAuth needs client id/secret; password reset needs an email sender (Auth.js/session
+  decided — see `add-auth/design.md`). Merchant-of-record (`TC-STACK-06`) undecided.
 - `add-agent-loop` needs LLM SDK choice + `ANTHROPIC_API_KEY`; BullMQ/Redis not stood up.
 - Agent-env gaps needing a human: project `.claude/settings.json` with permission deny-list +
   format/test hooks absent; `perf-audit` skill proposed, awaiting approval; caveman statusline

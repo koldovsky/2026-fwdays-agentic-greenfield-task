@@ -12,8 +12,8 @@
 
 ## 3. GDPR endpoints
 
-- [ ] 3.1 `GET /api/account/export` → JSON of CV profile + tailoring history (NFR-GDPR-01)
-- [ ] 3.2 `DELETE /api/account` → hard delete with cascade, propagation ≤ 24h (NFR-GDPR-02)
+- [x] 3.1 `GET /api/account/export` → JSON of user + CV profiles (decrypted rawText) + full tailoring history via `shared/lib/account` (NFR-GDPR-01); 401 anonymous. pglite integration test + live HTTP run.
+- [x] 3.2 `DELETE /api/account` → hard delete, FK cascade to all children, session cookie cleared (NFR-GDPR-02, immediate). pglite integration test + live HTTP run.
 
 ## 4. Verify & review
 
