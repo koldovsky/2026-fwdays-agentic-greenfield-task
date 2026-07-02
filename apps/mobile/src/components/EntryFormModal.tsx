@@ -90,10 +90,10 @@ export function EntryFormModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: t.colors.fillSoft }}
+        style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: t.colors.scrim }}
       >
         <View
           style={{

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Plus, Square } from 'lucide-react-native';
 import type { TimeEntry } from '@honeydo/shared';
 import { EmptyState } from '../components/EmptyState';
@@ -83,6 +84,15 @@ export function TimerScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
+      {/* First-run only: the same warm amber hero glow as the auth screen. */}
+      {firstRun ? (
+        <LinearGradient
+          colors={[t.colors.accentSoft, 'transparent']}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }}
+          pointerEvents="none"
+        />
+      ) : null}
+
       <Header onAdd={() => setAddOpen(true)} />
 
       {firstRun ? (
@@ -261,7 +271,16 @@ function StartControl({
           padding: t.space[5],
           gap: t.space[4],
         },
-        isRunning ? t.shadow[3] : t.shadow[2],
+        isRunning
+          ? {
+              // Amber glow while running (design `--shadow-glow`).
+              shadowColor: t.colors.accent,
+              shadowOpacity: 0.45,
+              shadowRadius: 22,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 14,
+            }
+          : t.shadow[2],
       ]}
     >
       <TextInput

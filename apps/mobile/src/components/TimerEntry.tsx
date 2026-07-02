@@ -44,7 +44,15 @@ export function TimerEntry({ entry, onContinue, onStop, onPress }: TimerEntryPro
           borderRadius: t.radius.md,
           opacity: pressed && onPress ? 0.85 : 1,
         },
-        running ? t.shadow[2] : t.shadow[1],
+        running
+          ? {
+              shadowColor: t.colors.accent,
+              shadowOpacity: 0.35,
+              shadowRadius: 14,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 8,
+            }
+          : t.shadow[1],
       ]}
     >
       <View style={{ flex: 1, minWidth: 0, gap: t.space[1] }}>

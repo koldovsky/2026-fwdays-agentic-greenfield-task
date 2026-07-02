@@ -6,6 +6,31 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T12:45Z — Third fixes pass + dev-server DX
+
+**Root cause for two reported bugs:** `npm run api` was `nest start` (no watch), so a
+long-running dev server served **stale** code — hence "property name should not exist" on sign-up
+and Google names never saving (old server had neither the `name` DTO nor the extraction). Fixed by
+pointing `npm run api` → `start:dev` (**watch**); added `api:once` for the non-watch variant. The
+name code itself was already correct; **restart the API** to pick it up.
+
+**Also done (UI):**
+- Empty-state (first run) now shows the same top **amber gradient** as the auth screen; normal
+  (non-empty) Timer/History keep a plain background.
+- Add/edit sheet: switched `animationType` slide→**fade** with a warm **`scrim`** token, so the dim
+  no longer "rises" as ugly grey.
+- Running timer card + running history row now cast the **amber glow** (design `--shadow-glow`),
+  not the neutral dark shadow.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. New tokens (`danger`,
+`scrim`) still not mirrored to `.agents/skills/honeydo-design/tokens/`; auth `name` still not in
+`openspec/specs/auth`. On-device rebuild + smoke (task 6.2) still outstanding — and **restart the
+local API** before retesting sign-up / Google name.
+
+**Next steps:** restart API + on-device smoke, then `/opsx:archive add-time-entries-core`.
+
+---
+
 ## 2026-07-02T12:00Z — Second fixes pass: destructive Sign out, picker UX, refresh, keyboard
 
 **Done:** Seven small feedback items.

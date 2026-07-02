@@ -78,6 +78,8 @@ export function derivedFills(p: Palette) {
     runningGlowSoft: withAlpha(p.accent, 0.18),
     fillFaint: withAlpha(p.text, 0.06),
     fillSoft: withAlpha(p.text, 0.1),
+    // Warm dark dim behind modals/sheets (matches the design's phone-shadow tone).
+    scrim: 'rgba(20, 12, 0, 0.5)',
     accentFaint: withAlpha(p.accent, 0.14),
     accentSoft: withAlpha(p.accent, 0.22),
   };
