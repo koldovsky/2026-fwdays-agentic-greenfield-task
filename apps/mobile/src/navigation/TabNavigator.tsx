@@ -13,11 +13,15 @@ export function TabNavigator() {
   const t = useTheme();
   return (
     <Tab.Navigator
+      // Keep inactive tabs mounted AND attached so switching doesn't blank a frame
+      // (the blink) while a screen re-attaches.
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
-        // Pre-mount every tab and give the scene an opaque bg so the first switch
-        // doesn't flash the previous screen while a tab lazily mounts.
+        // Pre-mount every tab, don't freeze it, and give the scene an opaque bg so the
+        // switch is instant with no flash of the previous screen.
         lazy: false,
+        freezeOnBlur: false,
         animation: 'none',
         sceneStyle: { backgroundColor: t.colors.bg },
       }}
