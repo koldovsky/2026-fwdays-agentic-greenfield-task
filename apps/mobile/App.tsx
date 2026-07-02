@@ -5,7 +5,10 @@ import {
   type Theme as NavTheme,
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
 import { KeyboardDoneAccessory } from './src/components/KeyboardDoneAccessory';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
@@ -33,7 +36,9 @@ function NavRoot() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
+    // initialMetrics provides safe-area insets synchronously on first render, so a
+    // freshly focused tab doesn't jump from 0 → real inset the first time it shows.
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <NavRoot />

@@ -132,7 +132,14 @@ export function TimerScreen() {
         />
       ) : (
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, padding: t.screenGutter, gap: t.space[4] }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: t.screenGutter,
+            // Extra top room so the running card's amber glow isn't clipped by the scroll edge.
+            paddingTop: t.space[7],
+            paddingBottom: t.screenGutter,
+            gap: t.space[4],
+          }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           alwaysBounceVertical
