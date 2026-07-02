@@ -17,6 +17,7 @@ import { useTheme } from '../theme';
 import { Button } from './Button';
 import { Input } from './Input';
 import { KEYBOARD_DONE_ID } from './KeyboardDoneAccessory';
+import { TagPicker } from './TagPicker';
 import { TextLink } from './TextLink';
 
 const entrySchema = z
@@ -30,7 +31,9 @@ const entrySchema = z
     path: ['stoppedAt'],
   });
 
-export type EntryFormValues = z.infer<typeof entrySchema>;
+type RhfValues = z.infer<typeof entrySchema>;
+/** What the form submits: the validated fields plus the selected tag ids. */
+export type EntryFormValues = RhfValues & { tagIds: string[] };
 
 interface EntryFormModalProps {
   visible: boolean;
@@ -42,7 +45,7 @@ interface EntryFormModalProps {
 }
 
 /** A sensible default window for a new manual entry: the last hour. */
-function defaultValues(entry?: TimeEntry | null): EntryFormValues {
+function defaultValues(entry?: TimeEntry | null): RhfValues {
   if (entry) {
     return {
       note: entry.note,
@@ -74,18 +77,24 @@ export function EntryFormModal({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<EntryFormValues>({
+  } = useForm<RhfValues>({
     resolver: standardSchemaResolver(entrySchema),
     defaultValues: defaultValues(entry),
   });
 
+  // Tags aren't RHF-controlled; keep them in local state seeded from the entry.
+  const [tagIds, setTagIds] = useState<string[]>([]);
+
   // Clear/seed the form each time the sheet opens (fresh add, or the edited entry).
   useEffect(() => {
-    if (visible) reset(defaultValues(entry));
+    if (visible) {
+      reset(defaultValues(entry));
+      setTagIds(entry?.tags.map((tag) => tag.id) ?? []);
+    }
   }, [visible, entry, reset]);
 
-  const submit = async (values: EntryFormValues) => {
-    await onSubmit(values);
+  const submit = async (values: RhfValues) => {
+    await onSubmit({ ...values, tagIds });
     onClose();
   };
 
@@ -180,6 +189,8 @@ export function EntryFormModal({
               {errors.stoppedAt.message}
             </Text>
           ) : null}
+
+          <TagPicker value={tagIds} onChange={setTagIds} />
 
           <Button onPress={() => void handleSubmit(submit)()} loading={isSubmitting}>
             {isEdit ? 'Save changes' : 'Add entry'}

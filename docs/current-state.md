@@ -6,6 +6,32 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-02T15:30Z — Implemented `add-tags` mobile (groups 4–7; 28/29 tasks)
+
+**Done:** `/opsx:apply add-tags` mobile layer, on top of the shared+API layer from `065018a`.
+- **Data:** `api/tags.ts` + `useTags` (list/create/update/delete; delete optimistic, invalidates
+  tags + entries). Entry mutations now send `tagIds`; optimistic running entry carries `tags: []`.
+- **Assign:** `TagPicker` (multi-select chips + inline create with a preset color palette) wired
+  into `EntryFormModal` (seeds from the entry, submits `tagIds`); colored tag dots on `TimerEntry`
+  rows. (FR-TAG-01/02)
+- **Filter:** `FilterChips` row on History ("All" + per-tag), `filterEntriesByTags` before
+  grouping, calm "no entries with these tags" state. (FR-TAG-04)
+- **Manage Tags:** Profile tab wrapped in a `ProfileStack` (Profile → ManageTags); a "Manage tags"
+  row on Profile pushes to `ManageTagsScreen` (list, rename, recolor, delete-with-confirm, create;
+  delete detaches via the API and refreshes entries). (FR-TAG-03) Profile now shows the user's name.
+- New tag color palette centralized as `tagPalette` in `tokens.ts` (no raw hex in components).
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. **No new
+native deps** — all hot-reloads (restart the API for the schema change if needed). 28/29 tasks;
+only 7.2 (device smoke) remains.
+
+**Next steps:** device smoke (create/assign/filter/rename/recolor/delete + continue-copies-tags),
+then `/opsx:archive add-tags`. Then capability 06 `profile-stats` (`/opsx:propose add-profile-stats`)
+— weekly chart + totals + per-tag breakdown. Small debts still open: `danger`/`scrim` token CSS
+sync, auth `name` in `openspec/specs/auth`.
+
+---
+
 ## 2026-07-02T14:00Z — Archived `add-time-entries-core` (capability 04 complete)
 
 **Done:** On-device smoke passed ("all good"); marked task 6.2 done (**32/32**) and ran

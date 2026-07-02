@@ -66,6 +66,25 @@ export function TimerEntry({ entry, onContinue, onStop, onPress }: TimerEntryPro
         >
           {entry.note}
         </Text>
+        {entry.tags.length > 0 ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: t.space[2] }}>
+            {entry.tags.map((tag) => (
+              <View key={tag.id} style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
+                <View
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: t.radius.pill,
+                    backgroundColor: tag.color ?? t.colors.textMuted,
+                  }}
+                />
+                <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.footnote }}>
+                  {tag.name}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <Text

@@ -52,6 +52,7 @@ function optimisticRunning(note: string, now: string): TimeEntry {
     startedAt: now,
     stoppedAt: null,
     durationSec: null,
+    tags: [],
     createdAt: now,
     updatedAt: now,
   };

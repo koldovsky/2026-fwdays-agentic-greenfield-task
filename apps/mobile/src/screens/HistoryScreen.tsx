@@ -3,9 +3,15 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import type { TimeEntry } from '@honeydo/shared';
-import { formatDurationCompact, groupEntriesByDay } from '@honeydo/shared';
+import {
+  filterEntriesByTags,
+  formatDurationCompact,
+  groupEntriesByDay,
+} from '@honeydo/shared';
 import { EntryFormModal, type EntryFormValues } from '../components/EntryFormModal';
+import { FilterChips } from '../components/FilterChips';
 import { TimerEntry } from '../components/TimerEntry';
+import { useTags } from '../hooks/useTags';
 import {
   useContinueEntry,
   useDeleteEntry,
@@ -38,16 +44,20 @@ function dayLabel(dateKey: string): string {
 export function HistoryScreen() {
   const t = useTheme();
   const { data: entries = [], isLoading, refetch, isRefetching } = useEntries();
+  const { data: tags = [] } = useTags();
   const continueEntry = useContinueEntry();
   const update = useUpdateEntry();
   const remove = useDeleteEntry();
   const [editing, setEditing] = useState<TimeEntry | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  const filtered = filterEntriesByTags(entries, selectedTags);
   const rows: Row[] = [];
-  for (const group of groupEntriesByDay(entries)) {
+  for (const group of groupEntriesByDay(filtered)) {
     rows.push({ kind: 'header', date: group.date, totalSec: group.totalSec });
     for (const entry of group.entries) rows.push({ kind: 'entry', entry });
   }
+  const filteringToEmpty = entries.length > 0 && rows.length === 0;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
@@ -57,17 +67,28 @@ export function HistoryScreen() {
         </Text>
       </View>
 
+      <FilterChips tags={tags} selected={selectedTags} onChange={setSelectedTags} />
+
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={t.colors.accent} />
         </View>
-      ) : rows.length === 0 ? (
+      ) : entries.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: t.space[7] }}>
           <Text style={{ color: t.colors.text, fontSize: t.fontSize.title2, fontWeight: t.fontWeight.heavy, textAlign: 'center' }}>
             No entries yet
           </Text>
           <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.callout, textAlign: 'center', marginTop: t.space[2] }}>
             Track something on the Timer tab and your days will fill in here.
+          </Text>
+        </View>
+      ) : filteringToEmpty ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: t.space[7] }}>
+          <Text style={{ color: t.colors.text, fontSize: t.fontSize.title2, fontWeight: t.fontWeight.heavy, textAlign: 'center' }}>
+            No entries with these tags
+          </Text>
+          <Text style={{ color: t.colors.textMuted, fontSize: t.fontSize.callout, textAlign: 'center', marginTop: t.space[2] }}>
+            Try a different tag, or tap All to clear the filter.
           </Text>
         </View>
       ) : (
@@ -123,6 +144,7 @@ export function HistoryScreen() {
               note: v.note,
               startedAt: v.startedAt.toISOString(),
               stoppedAt: v.stoppedAt.toISOString(),
+              tagIds: v.tagIds,
             },
           });
         }}

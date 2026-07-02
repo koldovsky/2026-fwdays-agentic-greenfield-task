@@ -167,3 +167,16 @@ export const layout = {
   navHeight: 52,
   contentMax: 430,
 } as const;
+
+/**
+ * Preset palette for tag dots (stored as data on each tag, not a theme token — the same
+ * hex in both schemes). Centralized here so components never inline raw hex.
+ */
+export const tagPalette = [
+  '#F5A300', // amber
+  '#7BC57F', // green
+  '#5B8DEF', // blue
+  '#9B6A9E', // purple
+  '#E07A5F', // terracotta
+  '#4FB0A5', // teal
+] as const;

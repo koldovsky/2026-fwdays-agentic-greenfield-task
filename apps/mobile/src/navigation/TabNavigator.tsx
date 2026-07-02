@@ -1,9 +1,9 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HistoryScreen } from '../screens/HistoryScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TimerScreen } from '../screens/TimerScreen';
 import { useTheme } from '../theme';
+import { ProfileStack } from './ProfileStack';
 import { TabBar } from './TabBar';
 
 const Tab = createBottomTabNavigator();
@@ -26,7 +26,7 @@ export function TabNavigator() {
       <Tab.Screen name="Timer" component={TimerScreen} options={{ title: 'Timer' }} />
       <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
       <Tab.Screen name="Stats" component={StatsScreen} options={{ title: 'Stats' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="Profile" component={ProfileStack} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 }

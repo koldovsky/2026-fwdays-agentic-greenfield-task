@@ -171,6 +171,7 @@ export function TimerScreen() {
             note: v.note,
             startedAt: v.startedAt.toISOString(),
             stoppedAt: v.stoppedAt.toISOString(),
+            tagIds: v.tagIds,
           });
         }}
       />
@@ -186,6 +187,7 @@ export function TimerScreen() {
               note: v.note,
               startedAt: v.startedAt.toISOString(),
               stoppedAt: v.stoppedAt.toISOString(),
+              tagIds: v.tagIds,
             },
           });
         }}
