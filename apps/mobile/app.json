@@ -11,7 +11,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.blackflamy.honeydo"
+      "bundleIdentifier": "com.blackflamy.honeydo",
+      "infoPlist": {
+        "NSSupportsLiveActivities": true
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.blackflamy.honeydo"]
+      }
     },
     "android": {
       "package": "com.blackflamy.honeydo",
@@ -34,10 +40,12 @@
           "ios": {
             "buildReactNativeFromSource": true,
             "usePrecompiledModules": false,
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "deploymentTarget": "16.2"
           }
         }
       ],
+      "@bacons/apple-targets",
       [
         "@react-native-google-signin/google-signin",
         {

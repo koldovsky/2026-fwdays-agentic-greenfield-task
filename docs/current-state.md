@@ -6,6 +6,45 @@ See AGENTS.md → "Read first — project docs" for the format.
 
 ---
 
+## 2026-07-03T00:25Z — Implemented `add-live-activity` (Phase 6, source scaffold)
+
+Built the first **native iOS extension** — an ActivityKit Live Activity for the running timer —
+as committable source. Mobile `lint` + `typecheck` green; the native side is **not** covered by
+the repo `gate` and is verified by prebuild + an on-device Xcode build (iOS 16.2+). FR-LIVE-01→05,
+TC-NATIVE-01/02/03, NFR-WIDGET-01.
+
+- **Build pipeline (`app.json`):** added `@bacons/apple-targets` plugin; App Group
+  `group.com.blackflamy.honeydo` entitlement on the app; `NSSupportsLiveActivities: true`; iOS
+  deployment target → **16.2** (via `expo-build-properties`). `@bacons/apple-targets@^4` added to
+  `apps/mobile` devDeps.
+- **Extension (`apps/mobile/targets/live-activity/`):** `expo-target.config.js` (widget target +
+  App Group), `HoneydoTimerAttributes` (static `entryId`; ContentState `title`/`startedAt`/
+  `isRunning`), `LiveActivity.swift` (WidgetBundle + Lock Screen + Dynamic Island compact/expanded/
+  minimal, elapsed via `Text(timerInterval:)` — no push/poll), `StopTimerIntent.swift`
+  (`LiveActivityIntent`, iOS 17+ in-place; 16.2 degrades to a `honeydo://` deep-link).
+- **Native module (`apps/mobile/modules/honeydo-live-activity/`):** Expo module `HoneydoLiveActivity`
+  — `start`/`update`/`end` over ActivityKit, observes the `honeydo.timer.stopRequested` Darwin
+  notification → emits `onStopRequested`, and reads/writes the App Group (`currentActivity`,
+  `pendingStop`). Attributes struct duplicated here (must stay in sync with the extension copy).
+- **JS (`apps/mobile/src`):** typed, no-op-safe bridge `native/liveActivity.ts`
+  (`requireOptionalNativeModule`); `hooks/useLiveActivitySync.ts` binds the activity to
+  `useRunningEntry()` (start/update/end), routes a Live-Activity Stop back through the existing
+  `useStopEntry` mutation (server stays authority, TC-NATIVE-03), and reconciles on foreground
+  (pending App-Group stop + re-sync). Mounted once as `<LiveActivityBridge />` inside the query
+  provider in `App.tsx`.
+
+**State now:** all JS + native **source** is in place and JS gates are green; nothing native has
+been compiled/run here. `ios/`/`android/` are CNG-gitignored, so the tracked truth is `app.json` +
+`targets/` + `modules/`. Open tasks are **1.4** (`npm run prebuild` on a Mac) and **6.2** (Dev
+Client device/simulator smoke). Interactive Stop is effectively iOS 17+; 16.2 shows the activity
+and deep-links to stop. Needs an Apple Developer account for the App Group; can't run in Expo Go.
+
+**Next steps:** on a Mac — `npm run prebuild`, open Xcode, add the App Group capability (dev team),
+build a Dev Client, run the 6.2 smoke. This change also stands up the App Group + prebuild pipeline
+that **home-widget** will reuse. Then `/opsx-archive add-live-activity`.
+
+---
+
 ## 2026-07-02T21:15Z — Archived `add-daily-insight` (specs synced)
 
 Synced the `daily-insight` delta and archived the change. `openspec validate --specs` green

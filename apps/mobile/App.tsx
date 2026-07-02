@@ -10,6 +10,7 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import { KeyboardDoneAccessory } from './src/components/KeyboardDoneAccessory';
+import { useLiveActivitySync } from './src/hooks/useLiveActivitySync';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
 
@@ -34,6 +35,13 @@ function NavRoot() {
   );
 }
 
+// Mirrors the single running entry into the iOS Live Activity (no-op elsewhere). Lives
+// inside the query provider so it reads the same entries cache; renders nothing.
+function LiveActivityBridge() {
+  useLiveActivitySync();
+  return null;
+}
+
 export default function App() {
   return (
     // initialMetrics provides safe-area insets synchronously on first render, so a
@@ -42,6 +50,7 @@ export default function App() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <NavRoot />
+          <LiveActivityBridge />
           <KeyboardDoneAccessory />
         </QueryClientProvider>
       </ThemeProvider>

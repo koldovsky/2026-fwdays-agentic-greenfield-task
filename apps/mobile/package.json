@@ -30,6 +30,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@bacons/apple-targets": "^4.0.7",
     "@types/react": "~19.2.2",
     "eslint": "^9.18.0",
     "typescript": "~6.0.3",

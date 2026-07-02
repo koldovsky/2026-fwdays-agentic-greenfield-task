@@ -1,6 +1,6 @@
 # Capability: live-activity / Dynamic Island (iOS)
 
-- **Order:** 09 · **Phase:** 6 · **OpenSpec change:** `add-live-activity` · **Status:** not started
+- **Order:** 09 · **Phase:** 6 · **OpenSpec change:** `add-live-activity` · **Status:** in progress (source scaffolded; pending prebuild + on-device verification)
 - **Depends on:** time-entries · **Blocks:** — (pairs with home-widget via shared App Group)
 - **Packages:** `apps/mobile` (native extension)
 
