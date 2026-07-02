@@ -35,7 +35,7 @@ export const analyzeProgress = async (
 ): Promise<string> => {
   const captionLine =
     caption.trim() === ''
-      ? ' There is no caption — respond in Russian.'
+      ? ' There is no caption — respond in Ukrainian.' // TEMPORAL DEMO HACK (drop after demo): was Russian.
       : ` The user's caption: "${caption}". Respond in the caption's language.`;
   const userText =
     'This is a body progress photo from a user on a cut. Describe what is visibly changing in ' +

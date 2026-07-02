@@ -13,10 +13,11 @@ describe('detectLang', () => {
     expect(detectLang('ЇЖА')).toBe('uk'); // case-insensitive
   });
 
-  it('detects Russian via Cyrillic without Ukrainian letters', () => {
-    expect(detectLang('вес 89.2')).toBe('ru');
-    expect(detectLang('сколько белка сегодня')).toBe('ru');
-    expect(detectLang('ЁЖ')).toBe('ru'); // ё is Russian Cyrillic
+  // TEMPORAL DEMO HACK (drop after demo): generic Cyrillic now maps to 'uk', not 'ru'.
+  it('maps generic Cyrillic to Ukrainian (demo: never reply in Russian)', () => {
+    expect(detectLang('вес 89.2')).toBe('uk');
+    expect(detectLang('сколько белка сегодня')).toBe('uk');
+    expect(detectLang('ЁЖ')).toBe('uk');
   });
 
   it('defaults to English for Latin, digits, and empty input', () => {
@@ -32,16 +33,17 @@ describe('detectLang', () => {
 });
 
 describe('detectLangOrRu', () => {
-  it('defaults to Russian when there is no text to detect from (design D6)', () => {
-    expect(detectLangOrRu(undefined)).toBe('ru');
-    expect(detectLangOrRu(null)).toBe('ru');
-    expect(detectLangOrRu('')).toBe('ru');
-    expect(detectLangOrRu('   ')).toBe('ru');
+  // TEMPORAL DEMO HACK (drop after demo): no-signal default is 'uk', not 'ru'.
+  it('defaults to Ukrainian when there is no text to detect from', () => {
+    expect(detectLangOrRu(undefined)).toBe('uk');
+    expect(detectLangOrRu(null)).toBe('uk');
+    expect(detectLangOrRu('')).toBe('uk');
+    expect(detectLangOrRu('   ')).toBe('uk');
   });
 
   it('delegates to detectLang when text carries a signal', () => {
     expect(detectLangOrRu('їжа')).toBe('uk');
-    expect(detectLangOrRu('съел борщ')).toBe('ru');
+    expect(detectLangOrRu('съел борщ')).toBe('uk'); // demo: generic Cyrillic -> uk
     expect(detectLangOrRu('chicken breast')).toBe('en');
   });
 });

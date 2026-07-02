@@ -13,7 +13,8 @@ const langLine = (lang: Lang): string => {
   if (lang === 'en') {
     return 'Write in English.';
   }
-  return 'Пиши по-русски.';
+  // TEMPORAL DEMO HACK (drop after demo): cron/no-signal reviews in Ukrainian, not Russian.
+  return 'Пиши українською.';
 };
 
 const targetOf = (value: number | null): string => (value === null ? 'no target' : String(value));

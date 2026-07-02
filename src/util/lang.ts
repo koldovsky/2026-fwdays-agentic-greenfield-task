@@ -12,8 +12,10 @@ export const detectLang = (text: string): Lang => {
   if (UK_CHARS.test(text)) {
     return 'uk';
   }
+  // TEMPORAL DEMO HACK (drop after demo): force any Cyrillic to Ukrainian so the bot never
+  // replies in Russian. Original: `return 'ru'`.
   if (CYRILLIC.test(text)) {
-    return 'ru';
+    return 'uk';
   }
   return 'en';
 };
@@ -25,7 +27,8 @@ export const detectLang = (text: string): Lang => {
  */
 export const detectLangOrRu = (text: string | null | undefined): Lang => {
   if (!text || text.trim() === '') {
-    return 'ru';
+    // TEMPORAL DEMO HACK (drop after demo): no-signal default is Ukrainian, not Russian.
+    return 'uk';
   }
   return detectLang(text);
 };
