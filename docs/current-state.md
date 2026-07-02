@@ -7,6 +7,23 @@
 
 ## Last action
 
+- **Agent-engineering improvements done + verified (2026-07-02).** All four planned items:
+  1. **FSD boundaries now ESLint-enforced** (`eslint.config.mjs`): downward-only layer imports,
+     slice index.ts public-API rule, `shared/lib` framework-free (TC-PURE-01). Verified: lint
+     green on existing code AND catches an injected violation. Limit: only `@/` alias imports
+     checked — relative-path escapes stay checker territory.
+  2. **`.claude/agents/`**: `checker` (fresh-context maker≠checker review, read-only) +
+     `verifier` (build/lint/test + FR/NFR evidence). Both wrap the existing skills.
+  3. **Project permissions** in `.claude/settings.json`: deny `rm -rf`/force-push/hard-reset/
+     `git clean`/`.env*`; allow `yarn build|lint|test`, `openspec validate`, read-only git.
+  4. **`perf-audit` skill built** (was proposed): `.claude/skills/perf-audit/` + Cline mirrors,
+     codifies `docs/perf/log.md` Lighthouse procedure (NFR-PERF-04); registered in AGENTS.md.
+  Gates: lint + build green, 153/153 tests. Nothing committed yet.
+- **Plan-first workflow wired (2026-07-02).** Project `UserPromptSubmit` hook injects plan-first
+  rule (plan in this file before code); `Stop` hook blocks finishing when tree changed but this
+  file wasn't updated. Codified in AGENTS.md. User-level: caveman statusline badge + SessionStart
+  context-check hook in `~/.claude/settings.json`. Live-confirmed: prompt hook fires.
+
 - **Auth.js session + GDPR endpoints done + live-verified (2026-07-02).** TC-STACK-07 decided:
   **next-auth v5 (5.0.0-beta.31), JWT sessions, Credentials provider** over the existing scrypt
   service (rationale in `openspec/changes/add-auth/design.md`; Supabase/Clerk rejected — hosted,
@@ -86,6 +103,5 @@ Also open: `export-resume`, `edit-bullet`, `upload-cv`/`paste-jd` (TC-PARSE-01/0
 - Google OAuth needs client id/secret; password reset needs an email sender (Auth.js/session
   decided — see `add-auth/design.md`). Merchant-of-record (`TC-STACK-06`) undecided.
 - `add-agent-loop` needs LLM SDK choice + `ANTHROPIC_API_KEY`; BullMQ/Redis not stood up.
-- Agent-env gaps needing a human: project `.claude/settings.json` with permission deny-list +
-  format/test hooks absent; `perf-audit` skill proposed, awaiting approval; caveman statusline
-  badge still unapplied (self-modification block).
+- Agent-env: deny-list, subagents, FSD lint, `perf-audit` all done 2026-07-02. Remaining gap:
+  no auto-format hook (repo has no prettier config — adding one is a human call).

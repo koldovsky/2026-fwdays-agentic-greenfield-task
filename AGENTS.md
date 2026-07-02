@@ -28,6 +28,22 @@ It must always answer:
 - **Next steps** — the concrete next actions for whoever picks up.
 - **Blockers / open questions** — anything unresolved.
 
+### Plan-first workflow (enforced by hooks)
+
+`docs/current-state.md` doubles as the **persistent plan** — plan mode with memory between
+sessions. For any non-trivial task:
+
+1. **Plan before code.** Write the plan into `docs/current-state.md` first — concrete numbered
+   steps under **Next steps** (or a `### Plan` subsection under **Working on**), citing
+   requirement IDs.
+2. **Execute against the plan.** Follow the written steps; update them as they complete or the
+   approach changes — the file must reflect the *current* plan, not the original one.
+3. **Close the loop.** Before finishing, refresh Last action / Working on / Next steps / Blockers.
+
+Enforcement (`.claude/settings.json` + `.claude/hooks/`): a `UserPromptSubmit` hook injects this
+rule each turn; a `Stop` hook blocks finishing when the working tree changed but
+`docs/current-state.md` was not updated.
+
 ## Skills (Agentic Engineering)
 
 Project skills live in `.claude/skills/` (Claude Code) and `.cline/skills/` + `.clinerules/workflows/` (Cline). Reach for them by default:
@@ -37,7 +53,12 @@ Project skills live in `.claude/skills/` (Claude Code) and `.cline/skills/` + `.
 - **fsd-scaffold** — scaffold an FSD slice at the right layer with the import-rule guardrails. *(architecture)*
 - **honesty-eval** — evals for the two-pass grounding + overclaim detection. *(evals)*
 - **sync-current-state** — read/update `docs/current-state.md` handoff. *(loop continuity)*
+- **perf-audit** — Lighthouse audit vs the NFR-PERF-04 mobile budget; run after any landing/font/global-CSS change (LCP margin ≈ 20 ms). *(performance)*
 - **openspec-\*** — spec-driven change workflow (propose/apply/archive/sync/explore). *(SDD)*
+
+Subagents (Claude Code, `.claude/agents/`): **checker** (fresh-context maker≠checker diff review, read-only) and **verifier** (fresh-context build/lint/test + FR/NFR evidence gate). Prefer them over running the corresponding skill in the maker's own context.
+
+Guardrails wired into tooling: the FSD downward-only import rule, slice public-API rule, and `shared/lib` framework-free rule (TC-PURE-01) are **enforced by ESLint** (`eslint.config.mjs`) — `yarn lint` fails on violations.
 
 ## Spec-Driven Development (SDD)
 
