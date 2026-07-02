@@ -3,17 +3,24 @@ import { z } from 'zod';
 // Single source for runtime configuration. Secrets are read from the environment ONLY
 // (invariant #9) — never from the repo or the database. Required vars must be present for the
 // bot to boot; NOTION_* stay optional until the M7 mirror (the bot must boot without them).
+// Optional secret: a blank env line (`NOTION_TOKEN=`) sets an empty string, not `undefined`, so a
+// plain `.min(1).optional()` would reject it and break boot. Treat "" as absent (mirror off).
+const optionalSecret = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string().min(1).optional(),
+);
+
 const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   // Required so a misconfigured deploy fails fast, even though `pipe` makes no LLM call yet.
   ANTHROPIC_API_KEY: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
-  NOTION_TOKEN: z.string().min(1).optional(),
-  NOTION_DB_FOODLOG_ID: z.string().min(1).optional(),
-  NOTION_DB_REVIEWS_ID: z.string().min(1).optional(),
-  NOTION_DB_METRICS_ID: z.string().min(1).optional(),
-  NOTION_DB_FOODDB_ID: z.string().min(1).optional(),
+  NOTION_TOKEN: optionalSecret,
+  NOTION_DB_FOODLOG_ID: optionalSecret,
+  NOTION_DB_REVIEWS_ID: optionalSecret,
+  NOTION_DB_METRICS_ID: optionalSecret,
+  NOTION_DB_FOODDB_ID: optionalSecret,
   TZ: z.string().min(1).default('Europe/Kyiv'),
 });
 

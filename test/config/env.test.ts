@@ -35,6 +35,23 @@ describe('loadEnv', () => {
     expect(env.TELEGRAM_BOT_TOKEN).toBe('token');
   });
 
+  it('treats a blank NOTION_* line as absent (mirror off), not a validation error', () => {
+    const env = loadEnv({
+      ...validEnv,
+      NOTION_TOKEN: '',
+      NOTION_DB_FOODLOG_ID: '',
+      NOTION_DB_REVIEWS_ID: '',
+      NOTION_DB_METRICS_ID: '',
+      NOTION_DB_FOODDB_ID: '',
+    });
+    expect(env.NOTION_TOKEN).toBeUndefined();
+    expect(env.NOTION_DB_FOODLOG_ID).toBeUndefined();
+  });
+
+  it('keeps a populated NOTION_TOKEN', () => {
+    expect(loadEnv({ ...validEnv, NOTION_TOKEN: 'secret_x' }).NOTION_TOKEN).toBe('secret_x');
+  });
+
   it('returns a frozen config object', () => {
     expect(Object.isFrozen(loadEnv(validEnv))).toBe(true);
   });

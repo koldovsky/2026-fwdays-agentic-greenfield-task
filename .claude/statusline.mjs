@@ -52,8 +52,10 @@ const readStdin = () => {
   }
 };
 
-// Context window per model: the [1m] variants get 1M, everything else the standard 200k.
-const contextWindow = (modelId = '') => (/1m/i.test(modelId) ? 1_000_000 : 200_000);
+// Context window per model: [1m] variants and the Claude 5 family (fable/mythos) get 1M,
+// everything else the standard 200k.
+const contextWindow = (modelId = '') =>
+  /1m|fable|mythos/i.test(modelId) ? 1_000_000 : 200_000;
 
 // Walk the transcript from the end; return the most recent assistant usage block.
 const lastUsage = (transcriptPath) => {
