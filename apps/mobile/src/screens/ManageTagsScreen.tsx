@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Check, ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import type { Tag } from '@honeydo/shared';
 import { Button } from '../components/Button';
 import { ColorPicker } from '../components/ColorPicker';
@@ -13,6 +14,7 @@ import { tagPalette, useTheme } from '../theme';
 /** Manage Tags: list the user's tags with rename, recolor, delete, and create (FR-TAG-01/03). */
 export function ManageTagsScreen() {
   const t = useTheme();
+  const navigation = useNavigation();
   const { data: tags = [] } = useTags();
   const createTag = useCreateTag();
   const updateTag = useUpdateTag();
@@ -33,7 +35,38 @@ export function ManageTagsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
+    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
+      {/* Custom header: a bare back chevron (no bg/border) + centered title. */}
+      <View style={{ height: 48, justifyContent: 'center', paddingHorizontal: t.space[2] }}>
+        <PressableScale
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={12}
+          style={{
+            position: 'absolute',
+            left: t.space[2],
+            top: 0,
+            bottom: 0,
+            width: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ChevronLeft size={28} color={t.colors.text} />
+        </PressableScale>
+        <Text
+          style={{
+            textAlign: 'center',
+            color: t.colors.text,
+            fontSize: t.fontSize.headline,
+            fontWeight: t.fontWeight.bold,
+          }}
+        >
+          Manage tags
+        </Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={{ padding: t.screenGutter, gap: t.space[4] }}
         keyboardShouldPersistTaps="handled"
