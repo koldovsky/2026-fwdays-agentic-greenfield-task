@@ -1,0 +1,57 @@
+{
+  "generatedBy": "scripts/check-trajectory.mjs",
+  "slices": [
+    {
+      "slice": "2026-07-02-add-dashboard-shell",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-add-foundation-auth-persistence",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-add-ledger-integration",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-add-manufacturing",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-add-master-data",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-add-procurement-receiving",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-02-switch-uah-active-navigation",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [],
+      "processComplete": true
+    }
+  ],
+  "overlaps": [],
+  "failures": [],
+  "warnings": []
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "userId": "usr_001",
+    "username": "test",
+    "passwordHash": "test",
+    "fullName": "Адміністратор тестової системи",
+    "role": "Адміністратор",
+    "isActive": true
+  },
+  {
+    "userId": "usr_002",
+    "username": "operator1",
+    "passwordHash": "securepass123",
+    "fullName": "Керівник складської зміни",
+    "role": "Працівник",
+    "isActive": true
+  }
+]

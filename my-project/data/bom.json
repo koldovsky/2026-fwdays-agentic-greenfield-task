@@ -1,0 +1,17 @@
+[
+  {
+    "bomId": "bom_401",
+    "productId": "prd_301",
+    "version": "1.0",
+    "materials": [
+      {
+        "materialId": "mat_201",
+        "quantityRequired": 1.5
+      },
+      {
+        "materialId": "mat_202",
+        "quantityRequired": 0.25
+      }
+    ]
+  }
+]

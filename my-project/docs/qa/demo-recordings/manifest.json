@@ -1,0 +1,19 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "forgeflow-product-tour",
+      "title": "ForgeFlow procurement and manufacturing tour",
+      "proof": "FR-1, FR-2, FR-8, FR-9, FR-10, FR-11, FR-13, FR-20, FR-29, FR-30, FR-35",
+      "video": "docs/qa/demo-recordings/forgeflow-product-tour.webm",
+      "screenshot": "docs/qa/demo-recordings/forgeflow-product-tour.png",
+      "explainer": "docs/qa/demo-recordings/forgeflow-product-tour.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Settled 1280x800 still inspected: navigation, heading, audit table, quantities, reasons, documents, and actor labels are visible without clipping."
+      }
+    }
+  ]
+}

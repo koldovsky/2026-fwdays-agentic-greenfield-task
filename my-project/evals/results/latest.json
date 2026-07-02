@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-07-02T14:18:41Z",
+  "threshold": 70,
+  "reviewMode": "retrospective-self-assessment",
+  "independentJudge": false,
+  "dimensions": {
+    "decision-clarity": 95,
+    "error-clarity": 95,
+    "status-clarity": 95
+  },
+  "cases": [
+    { "id": "eval-procurement-excess-receipt", "dimension": "error-clarity", "trace": ["FR-21", "NFR-3", "NFR-7"], "capability": "procurement-receiving", "score": 95, "pass": true, "judges": 1, "notes": "Specific Ukrainian message includes the remaining quantity 50 and no internal detail." },
+    { "id": "eval-procurement-invalid-reference", "dimension": "error-clarity", "trace": ["FR-18", "FR-39", "NFR-3"], "capability": "procurement-receiving", "score": 95, "pass": true, "judges": 1, "notes": "Message names the invalid supplier reference and gives a corrective instruction." },
+    { "id": "eval-manufacturing-quality-hold", "dimension": "decision-clarity", "trace": ["FR-31", "FR-34", "NFR-3", "NFR-7"], "capability": "manufacturing", "score": 95, "pass": true, "judges": 1, "notes": "Message names the blocking material and its localized quality-hold state." },
+    { "id": "eval-manufacturing-shortage", "dimension": "decision-clarity", "trace": ["FR-31", "FR-34", "NFR-3"], "capability": "manufacturing", "score": 95, "pass": true, "judges": 1, "notes": "Message identifies the material and exact 14.00 kg shortage." },
+    { "id": "eval-dashboard-critical-stock-label", "dimension": "status-clarity", "trace": ["FR-11", "FR-12", "NFR-7", "NFR-10"], "capability": "dashboard-shell", "score": 95, "pass": true, "judges": 1, "notes": "Zero stock produces a visible Ukrainian critical-state label independent of color." },
+    { "id": "eval-master-data-invalid-rating", "dimension": "error-clarity", "trace": ["FR-14", "NFR-3", "NFR-7"], "capability": "master-data", "score": 95, "pass": true, "judges": 1, "notes": "Message names rating and states the accepted 0–5 range." }
+  ],
+  "limitations": [
+    "Scores were assigned in the implementation session and are not an independent eval-judge verdict.",
+    "Executable outputs and rubric structure are deterministic and covered by tests; qualitative scores must be replaced by a fresh-agent eval-suite run."
+  ]
+}

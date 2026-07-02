@@ -1,0 +1,70 @@
+[
+  {
+    "poId": "po_501",
+    "poNumber": "ЗМ-2026-0001",
+    "supplierId": "sup_101",
+    "status": "Отримано",
+    "items": [
+      {
+        "materialId": "mat_201",
+        "quantityOrdered": 100,
+        "unitPrice": 12.5,
+        "quantityReceived": 100
+      }
+    ],
+    "totalCost": 1250,
+    "createdDate": "2026-03-01T08:30:00Z",
+    "receivedDate": "2026-03-06T14:15:00Z"
+  },
+  {
+    "poId": "po_502",
+    "poNumber": "ЗМ-2026-0002",
+    "supplierId": "sup_102",
+    "status": "Замовлено",
+    "items": [
+      {
+        "materialId": "mat_202",
+        "quantityOrdered": 50,
+        "unitPrice": 25,
+        "quantityReceived": 0
+      }
+    ],
+    "totalCost": 1250,
+    "createdDate": "2026-03-08T10:00:00Z",
+    "receivedDate": null
+  },
+  {
+    "poId": "po_1782903597586_jxh5q",
+    "poNumber": "ЗМ-2026-0003",
+    "supplierId": "sup_102",
+    "status": "Замовлено",
+    "items": [
+      {
+        "materialId": "mat_202",
+        "quantityOrdered": 4,
+        "unitPrice": 5,
+        "quantityReceived": 0
+      }
+    ],
+    "totalCost": 20,
+    "createdDate": "2026-07-01T10:59:57.586Z",
+    "receivedDate": null
+  },
+  {
+    "poId": "po_1782932695108_tcmoh",
+    "poNumber": "ЗМ-2026-0004",
+    "supplierId": "sup_101",
+    "status": "Отримано",
+    "items": [
+      {
+        "materialId": "mat_203",
+        "quantityOrdered": 55,
+        "unitPrice": 90,
+        "quantityReceived": 55
+      }
+    ],
+    "totalCost": 4950,
+    "createdDate": "2026-07-01T19:04:55.108Z",
+    "receivedDate": "2026-07-01T19:05:07.733Z"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "materialId": "mat_201",
+    "materialName": "Загартований сталевий прут 20 мм",
+    "sku": "RM-ST-20MM",
+    "category": "Метали",
+    "quantityInStock": 150,
+    "unitOfMeasure": "кг",
+    "unitPrice": 12.5,
+    "reorderLevel": 50,
+    "stockType": "unrestricted",
+    "supplierId": "sup_101"
+  },
+  {
+    "materialId": "mat_202",
+    "materialName": "Промислова поліуретанова смола",
+    "sku": "RM-PL-RESIN",
+    "category": "Полімери",
+    "quantityInStock": 45,
+    "unitOfMeasure": "л",
+    "unitPrice": 25,
+    "reorderLevel": 60,
+    "stockType": "quality_inspection",
+    "supplierId": "sup_102"
+  },
+  {
+    "materialId": "mat_203",
+    "materialName": "Антикорозійне структурне покриття",
+    "sku": "RM-CH-COAT",
+    "category": "Хімічні матеріали",
+    "quantityInStock": 67,
+    "unitOfMeasure": "л",
+    "unitPrice": 18,
+    "reorderLevel": 20,
+    "stockType": "quality_inspection",
+    "supplierId": "sup_102"
+  }
+]

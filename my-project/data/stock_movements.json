@@ -1,0 +1,46 @@
+[
+  {
+    "movementId": "mvt_601",
+    "timestamp": "2026-03-06T14:20:00Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_201",
+    "quantity": 100,
+    "direction": "IN",
+    "reason": "Надходження за замовленням",
+    "associatedDocId": "po_501",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_602",
+    "timestamp": "2026-03-09T09:15:00Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_201",
+    "quantity": -1.5,
+    "direction": "OUT",
+    "reason": "Списання у виробництво",
+    "associatedDocId": "bom_401",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_603",
+    "timestamp": "2026-03-09T09:15:00Z",
+    "itemType": "FINISHED_GOOD",
+    "itemId": "prd_301",
+    "quantity": 1,
+    "direction": "IN",
+    "reason": "Завершення виробничого замовлення",
+    "associatedDocId": "bom_401",
+    "userId": "usr_001"
+  },
+  {
+    "movementId": "mvt_1782932707733_guz1m",
+    "timestamp": "2026-07-01T19:05:07.733Z",
+    "itemType": "RAW_MATERIAL",
+    "itemId": "mat_203",
+    "quantity": 55,
+    "direction": "IN",
+    "reason": "Надходження за замовленням",
+    "associatedDocId": "po_1782932695108_tcmoh",
+    "userId": "usr_001"
+  }
+]

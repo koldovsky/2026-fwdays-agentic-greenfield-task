@@ -1,0 +1,20 @@
+[
+  {
+    "supplierId": "sup_101",
+    "companyName": "Сталь-Пром Україна",
+    "contactName": "Сара Дженкінс",
+    "email": "procurement@apexsteel.com",
+    "phone": "+380 44 555 01 01",
+    "leadTimeDays": 5,
+    "rating": 4.8
+  },
+  {
+    "supplierId": "sup_102",
+    "companyName": "Полімерні Системи",
+    "contactName": "Михайло Чанг",
+    "email": "orders@polysynth.com",
+    "phone": "+380 44 555 01 02",
+    "leadTimeDays": 7,
+    "rating": 4.2
+  }
+]

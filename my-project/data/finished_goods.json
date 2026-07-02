@@ -1,0 +1,13 @@
+[
+  {
+    "productId": "prd_301",
+    "productName": "Посилений сталевий кронштейн",
+    "sku": "FG-ST-HDB",
+    "category": "Конструкційні вироби",
+    "quantityInStock": 80,
+    "unitOfMeasure": "шт",
+    "unitPrice": 45,
+    "reorderLevel": 20,
+    "bomId": "bom_401"
+  }
+]

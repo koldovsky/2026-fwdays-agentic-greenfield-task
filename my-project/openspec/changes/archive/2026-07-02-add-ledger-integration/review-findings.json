@@ -1,0 +1,11 @@
+{
+  "clean": true,
+  "reviewedAt": "2026-07-02T14:25:00Z",
+  "scope": "add-ledger-integration",
+  "mode": "retrospective-self-audit",
+  "confirmedFindings": [],
+  "limitations": [
+    "The ledger extraction has observed red-green evidence; the wider slice is retrospective.",
+    "This self-audit does not satisfy independent maker-checker review."
+  ]
+}

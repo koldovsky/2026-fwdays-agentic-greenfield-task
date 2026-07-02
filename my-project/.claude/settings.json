@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const f=JSON.parse(require('fs').readFileSync(0,'utf8')).tool_input.file_path; if(/\\\\.(ts|tsx|js|jsx|mjs)$/.test(f)&&!/node_modules/.test(f)){const{execSync}=require('child_process');try{execSync('npx eslint --no-warn-ignored '+JSON.stringify(f),{stdio:'pipe'})}catch(e){console.error('eslint: '+(e.stdout||'')+(e.stderr||''));process.exit(2)}}\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
