@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+import { siteDescription, siteName, siteUrl } from "@/shared/config";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -15,9 +16,29 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Vouch — Honest Resume Tailor",
-  description:
-    "Vouch rewrites your CV to fit a job description while grounding every claim in your real experience.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Vouch — Honest Resume Tailor",
+    template: "%s — Vouch",
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  authors: [{ name: siteName }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  openGraph: {
+    siteName,
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vouch — Honest Resume Tailor",
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({

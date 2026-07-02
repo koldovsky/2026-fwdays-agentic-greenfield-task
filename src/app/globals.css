@@ -121,3 +121,30 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
 }
+
+/* Smooth in-page anchor scroll; disabled under reduced-motion below. */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Visible keyboard focus on every interactive element (NFR-A11Y-01):
+ * brand-wash halo + brand ring, applied only for keyboard/AT focus. */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--color-brand-wash),
+    0 0 0 4px var(--color-brand);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
