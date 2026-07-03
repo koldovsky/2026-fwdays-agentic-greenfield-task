@@ -28,6 +28,8 @@ type kubeFile struct {
 	Contexts       []struct {
 		Name    string `yaml:"name"`
 		Context struct {
+			Cluster   string `yaml:"cluster"`
+			User      string `yaml:"user"`
 			Namespace string `yaml:"namespace"`
 		} `yaml:"context"`
 	} `yaml:"contexts"`

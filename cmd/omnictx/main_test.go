@@ -138,10 +138,12 @@ contexts:
   - name: kind-1
     context:
       cluster: kind-1
+      user: kind-1-user
       namespace: payments
   - name: kind-2
     context:
       cluster: kind-2
+      user: kind-2-user
       namespace: staging
 `
 
@@ -205,8 +207,41 @@ func TestRunKubeList(t *testing.T) {
 	if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("exit code = %d, want 0 (stderr: %s)", code, stderr.String())
 	}
-	if want := "* kind-1\n  kind-2\n"; stdout.String() != want {
-		t.Errorf("list output = %q, want %q", stdout.String(), want)
+
+	lines := strings.Split(strings.TrimRight(stdout.String(), "\n"), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("want header + 2 rows, got %d lines:\n%s", len(lines), stdout.String())
+	}
+	// Header with all columns in order.
+	for _, col := range []string{"CURRENT", "NAME", "CLUSTER", "AUTHINFO", "NAMESPACE"} {
+		if !strings.Contains(lines[0], col) {
+			t.Errorf("header missing %q: %q", col, lines[0])
+		}
+	}
+	// kind-1 is current: its row starts with the * marker, kind-2's does not.
+	if !strings.HasPrefix(lines[1], "*") || !strings.Contains(lines[1], "kind-1") {
+		t.Errorf("current row = %q, want kind-1 marked with *", lines[1])
+	}
+	if strings.HasPrefix(lines[2], "*") || !strings.Contains(lines[2], "kind-2") {
+		t.Errorf("row = %q, want unmarked kind-2", lines[2])
+	}
+	// Cluster, user, and namespace columns are populated from the kubeconfig.
+	for _, want := range []string{"kind-2", "kind-2-user", "staging"} {
+		if !strings.Contains(lines[2], want) {
+			t.Errorf("kind-2 row missing %q: %q", want, lines[2])
+		}
+	}
+}
+
+func TestRunKubeListEmptyStaysQuiet(t *testing.T) {
+	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing"))
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code = %d, want 0", code)
+	}
+	if stdout.String() != "" {
+		t.Errorf("no contexts must print nothing (not even a header), got %q", stdout.String())
 	}
 }
 
@@ -230,8 +265,15 @@ contexts:
 	if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("exit code = %d, want 0", code)
 	}
-	if want := "* kind-1\n  list\n"; stdout.String() != want {
-		t.Errorf("list output = %q, want %q", stdout.String(), want)
+	lines := strings.Split(strings.TrimRight(stdout.String(), "\n"), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("want header + 2 rows, got %d lines:\n%s", len(lines), stdout.String())
+	}
+	if !strings.HasPrefix(lines[1], "*") || !strings.Contains(lines[1], "kind-1") {
+		t.Errorf("current row = %q, want kind-1 marked with *", lines[1])
+	}
+	if !strings.Contains(lines[2], "list") || !strings.Contains(lines[2], "sneaky") {
+		t.Errorf("row = %q, want the context named list with its cluster", lines[2])
 	}
 	if data, _ := os.ReadFile(path); string(data) != cfg {
 		t.Errorf("kubeconfig must not be modified by the list form:\n%s", data)

@@ -82,9 +82,14 @@ rejected with a usage error (exit 2) — nothing is written.
 ### Switching the kube-context
 
 ```bash
-omnictx kube list         # all contexts across $KUBECONFIG files, current marked *
 omnictx kube prod-cluster # switch (rewrites current-context in kubeconfig)
 omnictx kube              # print the current context
+omnictx kube list         # all contexts across $KUBECONFIG files:
+```
+```
+CURRENT   NAME     CLUSTER   AUTHINFO      NAMESPACE
+          kind-1   kind-1    kind-1-user   payments
+*         kind-2   kind-2    kind-2-user   staging
 ```
 
 This is the one place omnictx writes to a file it does not own, and it is
@@ -126,7 +131,7 @@ omnictx cloud                 # show the effective active-cloud selection
 omnictx cloud aws             # persist: pin AWS as the active cloud
 omnictx cloud none            # persist: kube-only (no cloud slot)
 omnictx kube                  # show the current kube-context
-omnictx kube list             # list available contexts (current marked with *)
+omnictx kube list             # kubectl-style table of contexts (current marked *)
 omnictx kube prod-cluster     # switch the current kube-context
 ```
 

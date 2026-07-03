@@ -9,11 +9,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Contexts returns every context name found across the kubeconfig file list,
-// deduplicated, in file-then-definition order. Broken or missing files are
-// skipped, mirroring Read.
-func Contexts(lookup LookupEnv, home string) []string {
-	var names []string
+// ContextEntry is one context as listed by `kube list`: the name plus the
+// cluster/user/namespace columns of the kubectl get-contexts table. Fields
+// absent from the kubeconfig are empty strings.
+type ContextEntry struct {
+	Name      string
+	Cluster   string
+	AuthInfo  string
+	Namespace string
+}
+
+// Contexts returns every context found across the kubeconfig file list,
+// deduplicated by name (first definition wins), in file-then-definition
+// order. Broken or missing files are skipped, mirroring Read.
+func Contexts(lookup LookupEnv, home string) []ContextEntry {
+	var entries []ContextEntry
 	seen := map[string]bool{}
 	for _, f := range resolveFiles(lookup, home) {
 		kf, ok := parseFile(f)
@@ -25,10 +35,15 @@ func Contexts(lookup LookupEnv, home string) []string {
 				continue
 			}
 			seen[c.Name] = true
-			names = append(names, c.Name)
+			entries = append(entries, ContextEntry{
+				Name:      c.Name,
+				Cluster:   c.Context.Cluster,
+				AuthInfo:  c.Context.User,
+				Namespace: c.Context.Namespace,
+			})
 		}
 	}
-	return names
+	return entries
 }
 
 // writeTarget picks the file that owns current-context: the first file in the

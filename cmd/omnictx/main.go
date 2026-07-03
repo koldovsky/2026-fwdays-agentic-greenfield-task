@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 
 	"omnictx/internal/aws"
 	"omnictx/internal/azure"
@@ -338,24 +339,18 @@ func runKube(args []string, stdout, stderr io.Writer) int {
 	}
 
 	if args[0] == "list" {
-		current := kube.Read(os.LookupEnv, home).Context
-		for _, name := range kube.Contexts(os.LookupEnv, home) {
-			marker := "  "
-			if name == current {
-				marker = "* "
-			}
-			_, _ = fmt.Fprintln(stdout, marker+name)
-		}
+		printKubeTable(stdout, kube.Contexts(os.LookupEnv, home), kube.Read(os.LookupEnv, home).Context)
 		return 0
 	}
 
 	target := args[0]
-	names := kube.Contexts(os.LookupEnv, home)
+	entries := kube.Contexts(os.LookupEnv, home)
+	names := make([]string, len(entries))
 	found := false
-	for _, n := range names {
-		if n == target {
+	for i, e := range entries {
+		names[i] = e.Name
+		if e.Name == target {
 			found = true
-			break
 		}
 	}
 	if !found {
@@ -372,6 +367,25 @@ func runKube(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// printKubeTable renders `kube list` as a kubectl-get-contexts-style table.
+// The header appears only when there is at least one context, so the
+// no-contexts case stays quiet (empty output, exit 0).
+func printKubeTable(stdout io.Writer, entries []kube.ContextEntry, current string) {
+	if len(entries) == 0 {
+		return
+	}
+	w := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+	_, _ = fmt.Fprintln(w, "CURRENT\tNAME\tCLUSTER\tAUTHINFO\tNAMESPACE")
+	for _, e := range entries {
+		marker := ""
+		if e.Name == current {
+			marker = "*"
+		}
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", marker, e.Name, e.Cluster, e.AuthInfo, e.Namespace)
+	}
+	_ = w.Flush()
 }
 
 // cloudProviders is the priority-ordered provider list used for `auto` detection

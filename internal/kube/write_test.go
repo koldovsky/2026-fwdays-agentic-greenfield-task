@@ -57,15 +57,25 @@ func TestContexts(t *testing.T) {
 	b := filepath.Join(dir, "kubeconfig_b.yaml")
 	broken := filepath.Join(dir, "kubeconfig_broken.yaml")
 
+	dev := ContextEntry{Name: "dev", Cluster: "dev-cluster", AuthInfo: "dev-user", Namespace: "payments"}
+
 	tests := []struct {
 		name  string
 		files []string
-		want  []string
+		want  []ContextEntry
 	}{
-		{"single file", []string{single}, []string{"dev"}},
-		{"multi-file keeps file-then-definition order", []string{a, b}, []string{"solo-a", "team-a", "team-b"}},
-		{"duplicates across files are dropped", []string{single, single}, []string{"dev"}},
-		{"broken file is skipped", []string{broken, single}, []string{"dev"}},
+		{"single file with full entry", []string{single}, []ContextEntry{dev}},
+		{
+			"multi-file keeps file-then-definition order",
+			[]string{a, b},
+			[]ContextEntry{
+				{Name: "solo-a", Cluster: "solo-a-cluster", AuthInfo: "solo-a-user", Namespace: "alpha"},
+				{Name: "team-a", Cluster: "team-a-cluster", AuthInfo: "team-a-user", Namespace: "gamma"},
+				{Name: "team-b", Cluster: "team-b-cluster", AuthInfo: "team-b-user", Namespace: "delta"},
+			},
+		},
+		{"duplicates across files are dropped", []string{single, single}, []ContextEntry{dev}},
+		{"broken file is skipped", []string{broken, single}, []ContextEntry{dev}},
 		{"missing file yields nothing", []string{filepath.Join(dir, "does_not_exist.yaml")}, nil},
 	}
 	for _, tt := range tests {
@@ -75,6 +85,17 @@ func TestContexts(t *testing.T) {
 				t.Errorf("Contexts() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// Fields absent from the kubeconfig stay empty (blank table cells later).
+func TestContextsMissingFields(t *testing.T) {
+	path := writeTemp(t, noCurrentConfig) // kind-1 has a cluster but no user/namespace
+
+	got := Contexts(kubeconfigEnv(path), "/nonexistent-home")
+	want := []ContextEntry{{Name: "kind-1", Cluster: "kind-1"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Contexts() = %v, want %v", got, want)
 	}
 }
 
