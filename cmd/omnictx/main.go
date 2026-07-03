@@ -49,6 +49,8 @@ func main() {
 			os.Exit(runToggle())
 		case "cloud":
 			os.Exit(runCloud(args[1:], os.Stdout, os.Stderr))
+		case "kube":
+			os.Exit(runKube(args[1:], os.Stdout, os.Stderr))
 		}
 	}
 
@@ -133,9 +135,16 @@ Usage:
 Subcommands:
   init <bash|zsh>   shell integration (add to ~/.bashrc / ~/.zshrc)
   on / off          persist enabled: true/false to config file (affects all future shells)
-  cloud [azure|aws|gcp|auto|none]
-                    persist the active cloud to config file; without an argument
-                    prints the effective value (OMNICTX_CLOUD overrides per-session)
+  cloud [azure|aws|gcp|auto|none|on|off]
+                    persist the active cloud to config file; off hides the slot,
+                    on returns to auto-detect; without an argument prints the
+                    effective value (OMNICTX_CLOUD overrides per-session)
+  kube [<context>|list|on|off]
+                    switch the current kube-context (rewrites current-context in
+                    kubeconfig); no argument prints the current one, "list" shows
+                    all available contexts; on/off toggle the kube segment in the
+                    config file and never touch kubeconfig (OMNICTX_KUBE overrides
+                    per-session)
 
 Flags:
   --version                   print version and exit
@@ -197,7 +206,9 @@ func setConfigKey(path, key, value string) error {
 	lines := strings.Split(string(data), "\n")
 	replaced := false
 	for i, l := range lines {
-		if strings.HasPrefix(strings.TrimSpace(l), prefix) {
+		// Column-0 prefix only: an indented "key:" belongs to a nested block
+		// (e.g. colors.kube), and replacing it would corrupt the YAML.
+		if strings.HasPrefix(l, prefix) {
 			lines[i] = newLine
 			replaced = true
 			break
@@ -246,7 +257,7 @@ func runToggle() int {
 	return 0
 }
 
-const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none]"
+const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none|on|off]"
 
 // runCloud handles `omnictx cloud [value]`. With no argument it prints the
 // effective selection (env > config > default). With one argument it persists
@@ -267,6 +278,14 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 	}
 
 	v := strings.ToLower(strings.TrimSpace(args[0]))
+	// on/off are display-toggle aliases: off hides the slot, on returns to
+	// auto-detect (a previous provider pin is not remembered).
+	switch v {
+	case "on":
+		v = config.CloudAuto
+	case "off":
+		v = config.CloudNone
+	}
 	switch v {
 	case "azure", "aws", "gcp", config.CloudAuto, config.CloudNone:
 	default:
@@ -275,6 +294,80 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 	}
 
 	if err := setConfigKey(globalConfigPath(), "cloud", v); err != nil {
+		_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+const kubeUsage = "usage: omnictx kube [<context>|list|on|off]"
+
+// runKube handles `omnictx kube [<context>|list|on|off]`. No argument prints
+// the current context; the reserved words (contexts with those literal names
+// are not switchable here) come first: `list` prints all contexts with the
+// current one marked, `on`/`off` persist the kube display toggle to omnictx's
+// own config and never touch a kubeconfig. Any other argument validates
+// against the parsed kubeconfigs and then rewrites current-context via
+// kube.WriteContext. That switch is the only code path in omnictx that writes
+// to a file it does not own — render mode never does.
+func runKube(args []string, stdout, stderr io.Writer) int {
+	home, _ := os.UserHomeDir()
+
+	if len(args) == 0 {
+		if ctx := kube.Read(os.LookupEnv, home).Context; ctx != "" {
+			_, _ = fmt.Fprintln(stdout, ctx)
+		}
+		return 0
+	}
+	if len(args) > 1 {
+		_, _ = fmt.Fprintln(stderr, kubeUsage)
+		return 2
+	}
+
+	switch args[0] {
+	case "on", "off":
+		val := "true"
+		if args[0] == "off" {
+			val = "false"
+		}
+		if err := setConfigKey(globalConfigPath(), "kube", val); err != nil {
+			_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
+	if args[0] == "list" {
+		current := kube.Read(os.LookupEnv, home).Context
+		for _, name := range kube.Contexts(os.LookupEnv, home) {
+			marker := "  "
+			if name == current {
+				marker = "* "
+			}
+			_, _ = fmt.Fprintln(stdout, marker+name)
+		}
+		return 0
+	}
+
+	target := args[0]
+	names := kube.Contexts(os.LookupEnv, home)
+	found := false
+	for _, n := range names {
+		if n == target {
+			found = true
+			break
+		}
+	}
+	if !found {
+		available := "(none found)"
+		if len(names) > 0 {
+			available = strings.Join(names, ", ")
+		}
+		_, _ = fmt.Fprintf(stderr, "omnictx: unknown context %q\navailable contexts: %s\n%s\n", target, available, kubeUsage)
+		return 2
+	}
+
+	if err := kube.WriteContext(os.LookupEnv, home, target); err != nil {
 		_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
 		return 1
 	}
@@ -294,7 +387,9 @@ func gather(cfg config.Config, home string) render.Data {
 	for _, s := range cfg.Segments {
 		switch s {
 		case config.SegmentKube:
-			needKube = true
+			// The kube display toggle (config `kube:` / OMNICTX_KUBE) gates the
+			// segment on top of the segments list; namespace follows kube.
+			needKube = cfg.Kube
 		case config.SegmentCloud:
 			needCloud = true
 		}

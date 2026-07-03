@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"omnictx/internal/config"
 )
 
 func TestParseRenderArgsUnsetFlagsAreNil(t *testing.T) {
@@ -101,12 +103,172 @@ func TestUsageListsCloudSubcommand(t *testing.T) {
 	out := sb.String()
 
 	for _, want := range []string{
-		"cloud [azure|aws|gcp|auto|none]",
+		"cloud [azure|aws|gcp|auto|none|on|off]",
 		"OMNICTX_CLOUD", // the per-session override is worth calling out
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("usage missing %q\n---\n%s", want, out)
 		}
+	}
+}
+
+// The kube subcommand must be listed under Subcommands.
+func TestUsageListsKubeSubcommand(t *testing.T) {
+	var sb strings.Builder
+	printUsage(&sb)
+	out := sb.String()
+
+	for _, want := range []string{
+		"kube [<context>|list|on|off]",
+		"kubeconfig",
+		"OMNICTX_KUBE", // the per-session override is worth calling out
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("usage missing %q\n---\n%s", want, out)
+		}
+	}
+}
+
+// kindKubeconfig has two contexts (kind-1 current) — the fixture for runKube.
+const kindKubeconfig = `# test kubeconfig
+apiVersion: v1
+kind: Config
+current-context: kind-1
+contexts:
+  - name: kind-1
+    context:
+      cluster: kind-1
+      namespace: payments
+  - name: kind-2
+    context:
+      cluster: kind-2
+      namespace: staging
+`
+
+// kubeTestConfig writes a kubeconfig fixture and points KUBECONFIG at it.
+func kubeTestConfig(t *testing.T, content string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "config")
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KUBECONFIG", path)
+	return path
+}
+
+func TestRunKubeSwitch(t *testing.T) {
+	path := kubeTestConfig(t, kindKubeconfig)
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"kind-2"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %s)", code, stderr.String())
+	}
+
+	// Exactly one line changed, comments preserved.
+	data, _ := os.ReadFile(path)
+	want := strings.Replace(kindKubeconfig, "current-context: kind-1", "current-context: kind-2", 1)
+	if string(data) != want {
+		t.Errorf("kubeconfig after switch:\n%s\nwant:\n%s", data, want)
+	}
+
+	// The switch is visible to the read path (and therefore to render).
+	stdout.Reset()
+	if code := runKube(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("read-back exit code = %d", code)
+	}
+	if stdout.String() != "kind-2\n" {
+		t.Errorf("read-back = %q, want %q", stdout.String(), "kind-2\n")
+	}
+}
+
+func TestRunKubeUnknownContext(t *testing.T) {
+	path := kubeTestConfig(t, kindKubeconfig)
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"kind-3"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	for _, want := range []string{"kind-1", "kind-2", `"kind-3"`} {
+		if !strings.Contains(stderr.String(), want) {
+			t.Errorf("stderr missing %q:\n%s", want, stderr.String())
+		}
+	}
+	if data, _ := os.ReadFile(path); string(data) != kindKubeconfig {
+		t.Errorf("kubeconfig must not be modified on a usage error:\n%s", data)
+	}
+}
+
+func TestRunKubeList(t *testing.T) {
+	kubeTestConfig(t, kindKubeconfig)
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %s)", code, stderr.String())
+	}
+	if want := "* kind-1\n  kind-2\n"; stdout.String() != want {
+		t.Errorf("list output = %q, want %q", stdout.String(), want)
+	}
+}
+
+// `list` is reserved: even a context literally named "list" is listed, not
+// switched to, and nothing is written.
+func TestRunKubeListIsReserved(t *testing.T) {
+	cfg := `apiVersion: v1
+kind: Config
+current-context: kind-1
+contexts:
+  - name: kind-1
+    context:
+      cluster: kind-1
+  - name: list
+    context:
+      cluster: sneaky
+`
+	path := kubeTestConfig(t, cfg)
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code = %d, want 0", code)
+	}
+	if want := "* kind-1\n  list\n"; stdout.String() != want {
+		t.Errorf("list output = %q, want %q", stdout.String(), want)
+	}
+	if data, _ := os.ReadFile(path); string(data) != cfg {
+		t.Errorf("kubeconfig must not be modified by the list form:\n%s", data)
+	}
+}
+
+func TestRunKubeNoArg(t *testing.T) {
+	t.Run("prints current context", func(t *testing.T) {
+		kubeTestConfig(t, kindKubeconfig)
+		var stdout, stderr strings.Builder
+		if code := runKube(nil, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+		if stdout.String() != "kind-1\n" {
+			t.Errorf("stdout = %q, want %q", stdout.String(), "kind-1\n")
+		}
+	})
+	t.Run("quiet when no kubeconfig", func(t *testing.T) {
+		t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing"))
+		var stdout, stderr strings.Builder
+		if code := runKube(nil, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+		if stdout.String() != "" {
+			t.Errorf("stdout = %q, want empty", stdout.String())
+		}
+	})
+}
+
+func TestRunKubeTooManyArgs(t *testing.T) {
+	kubeTestConfig(t, kindKubeconfig)
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"kind-1", "kind-2"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "usage:") {
+		t.Errorf("stderr should show usage:\n%s", stderr.String())
 	}
 }
 
@@ -262,3 +424,140 @@ func TestRunCloudReadBack(t *testing.T) {
 	}
 }
 
+
+func TestRunCloudOnOffAliases(t *testing.T) {
+	t.Run("off persists none, on persists auto", func(t *testing.T) {
+		path := cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+
+		if code := runCloud([]string{"off"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("cloud off: exit %d (stderr: %s)", code, stderr.String())
+		}
+		if data, _ := os.ReadFile(path); !strings.Contains(string(data), "cloud: none") {
+			t.Errorf("after off, config should contain cloud: none:\n%s", data)
+		}
+
+		if code := runCloud([]string{"on"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("cloud on: exit %d (stderr: %s)", code, stderr.String())
+		}
+		if data, _ := os.ReadFile(path); !strings.Contains(string(data), "cloud: auto") {
+			t.Errorf("after on, config should contain cloud: auto:\n%s", data)
+		}
+	})
+
+	t.Run("off then on loses a provider pin (documented)", func(t *testing.T) {
+		path := cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+
+		for _, arg := range []string{"aws", "off", "on"} {
+			if code := runCloud([]string{arg}, &stdout, &stderr); code != 0 {
+				t.Fatalf("cloud %s: exit %d", arg, code)
+			}
+		}
+		data, _ := os.ReadFile(path)
+		if !strings.Contains(string(data), "cloud: auto") || strings.Contains(string(data), "cloud: aws") {
+			t.Errorf("after aws->off->on, want cloud: auto (pin not remembered):\n%s", data)
+		}
+	})
+}
+
+func TestRunKubeOnOffToggle(t *testing.T) {
+	kubeconfigPath := kubeTestConfig(t, kindKubeconfig)
+	cfgPath := filepath.Join(t.TempDir(), "config.yaml")
+	t.Setenv("OMNICTX_CONFIG", cfgPath)
+	orig := "# keep me\nenabled: true\n"
+	if err := os.WriteFile(cfgPath, []byte(orig), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"off"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("kube off: exit %d (stderr: %s)", code, stderr.String())
+	}
+	data, _ := os.ReadFile(cfgPath)
+	for _, want := range []string{"kube: false", "# keep me", "enabled: true"} {
+		if !strings.Contains(string(data), want) {
+			t.Errorf("config missing %q after kube off:\n%s", want, data)
+		}
+	}
+	// The toggle must never touch the kubeconfig.
+	if kc, _ := os.ReadFile(kubeconfigPath); string(kc) != kindKubeconfig {
+		t.Errorf("kubeconfig modified by kube off:\n%s", kc)
+	}
+
+	if code := runKube([]string{"on"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("kube on: exit %d (stderr: %s)", code, stderr.String())
+	}
+	if data, _ := os.ReadFile(cfgPath); !strings.Contains(string(data), "kube: true") {
+		t.Errorf("config missing kube: true after kube on:\n%s", data)
+	}
+}
+
+// Even a context literally named "off" is not switchable: the toggle wins and
+// the kubeconfig stays byte-identical.
+func TestRunKubeOffReservedOverContextName(t *testing.T) {
+	cfg := `apiVersion: v1
+kind: Config
+current-context: kind-1
+contexts:
+  - name: kind-1
+    context:
+      cluster: kind-1
+  - name: "off"
+    context:
+      cluster: sneaky
+`
+	kubeconfigPath := kubeTestConfig(t, cfg)
+	t.Setenv("OMNICTX_CONFIG", filepath.Join(t.TempDir(), "config.yaml"))
+
+	var stdout, stderr strings.Builder
+	if code := runKube([]string{"off"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("kube off: exit %d", code)
+	}
+	if kc, _ := os.ReadFile(kubeconfigPath); string(kc) != cfg {
+		t.Errorf("kubeconfig must stay byte-identical:\n%s", kc)
+	}
+}
+
+func TestGatherSkipsKubeWhenDisabled(t *testing.T) {
+	kubeTestConfig(t, kindKubeconfig)
+
+	cfg := config.Defaults()
+	cfg.Cloud = config.CloudNone
+
+	cfg.Kube = false
+	if data := gather(cfg, "/nonexistent-home"); data.Kube != "" || data.Namespace != "" {
+		t.Errorf("kube disabled: gather = %+v, want empty kube/namespace", data)
+	}
+
+	cfg.Kube = true
+	if data := gather(cfg, "/nonexistent-home"); data.Kube != "kind-1" || data.Namespace != "payments" {
+		t.Errorf("kube enabled: gather = %+v, want kind-1/payments", data)
+	}
+}
+
+// Regression: setConfigKey must never match a nested key (colors.kube broke
+// the user's YAML when `kube off` replaced "  kube: cyan" inside colors).
+func TestSetConfigKeyIgnoresNestedKeys(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	orig := "enabled: true\ncolors:\n  cloud: blue\n  kube: cyan\n  namespace: dim\n"
+	if err := os.WriteFile(path, []byte(orig), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := setConfigKey(path, "kube", "false"); err != nil {
+		t.Fatalf("setConfigKey: %v", err)
+	}
+
+	data, _ := os.ReadFile(path)
+	got := string(data)
+	for _, want := range []string{"kube: false", "  kube: cyan", "  namespace: dim", "  cloud: blue"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("config missing %q after update:\n%s", want, got)
+		}
+	}
+	// The top-level key must sit at column 0 and the nested block stay intact.
+	if !strings.HasPrefix(got, "kube: false\n") {
+		t.Errorf("new key should be prepended at top level:\n%s", got)
+	}
+}

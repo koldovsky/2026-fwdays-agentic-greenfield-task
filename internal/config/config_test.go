@@ -1,8 +1,10 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -150,5 +152,70 @@ func TestShellOnlyFromFlagOrEnvNotFile(t *testing.T) {
 	cfg, _ = Resolve(Flags{}, envFunc(map[string]string{"OMNICTX_SHELL": "zsh"}), "/home")
 	if cfg.Shell != ShellZsh {
 		t.Errorf("shell = %q, want zsh from env", cfg.Shell)
+	}
+}
+
+func TestKubeToggleResolution(t *testing.T) {
+	kubeFile := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(kubeFile, []byte("kube: false\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name string
+		env  map[string]string
+		want bool
+	}{
+		{"default is true", nil, true},
+		{"file kube: false wins over default", map[string]string{"OMNICTX_CONFIG": kubeFile}, false},
+		{"env off wins over default", map[string]string{"OMNICTX_KUBE": "off"}, false},
+		{"env on overrides file false", map[string]string{"OMNICTX_CONFIG": kubeFile, "OMNICTX_KUBE": "on"}, true},
+		{"invalid env is ignored, file wins", map[string]string{"OMNICTX_CONFIG": kubeFile, "OMNICTX_KUBE": "banana"}, false},
+		{"invalid env is ignored, default wins", map[string]string{"OMNICTX_KUBE": "banana"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, _ := Resolve(Flags{}, envFunc(tt.env), "/home")
+			if cfg.Kube != tt.want {
+				t.Errorf("Kube = %v, want %v", cfg.Kube, tt.want)
+			}
+		})
+	}
+}
+
+// All boolean env vars accept on/off (any case) on top of ParseBool forms.
+func TestBoolEnvsAcceptOnOff(t *testing.T) {
+	tests := []struct {
+		name  string
+		env   map[string]string
+		check func(Config) bool
+	}{
+		{"OMNICTX_ENABLED=off", map[string]string{"OMNICTX_ENABLED": "off"}, func(c Config) bool { return !c.Enabled }},
+		{"OMNICTX_ENABLED=ON", map[string]string{"OMNICTX_ENABLED": "ON"}, func(c Config) bool { return c.Enabled }},
+		{"OMNICTX_ICONS=Off", map[string]string{"OMNICTX_ICONS": "Off"}, func(c Config) bool { return !c.Icons }},
+		{"OMNICTX_ICONS=on", map[string]string{"OMNICTX_ICONS": "on"}, func(c Config) bool { return c.Icons }},
+		{"OMNICTX_KUBE=OFF", map[string]string{"OMNICTX_KUBE": "OFF"}, func(c Config) bool { return !c.Kube }},
+		{"ParseBool forms still work", map[string]string{"OMNICTX_KUBE": "false"}, func(c Config) bool { return !c.Kube }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, _ := Resolve(Flags{}, envFunc(tt.env), "/home")
+			if !tt.check(cfg) {
+				t.Errorf("%s not applied: %+v", tt.name, cfg)
+			}
+		})
+	}
+}
+
+func TestInvalidBoolEnvLeavesDebugNote(t *testing.T) {
+	_, debug := Resolve(Flags{}, envFunc(map[string]string{"OMNICTX_KUBE": "banana"}), "/home")
+	found := false
+	for _, d := range debug {
+		if strings.Contains(d, "OMNICTX_KUBE") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected a debug note about OMNICTX_KUBE, got %v", debug)
 	}
 }

@@ -120,6 +120,20 @@ omnictx on    # writes enabled: true  to config — restores default behaviour
 
 Session-only: `export OMNICTX_ENABLED=false` (not persisted).
 
+### 4.7 Kube-context switching (later scope extension)
+
+`omnictx kube <context>` switches the kubeconfig `current-context`;
+`omnictx kube` prints the current one; `omnictx kube list` lists all contexts
+(current marked, `list` reserved). This is the only write to a file omnictx does
+not own, and only on an explicit user command — render mode stays read-only.
+Safety: the context must exist in the parsed kubeconfigs (else exit 2, no
+write), the edit is a single-line surgery preserving all other bytes, the write
+is atomic (same-dir temp + rename, permissions preserved), and an unparsable
+target is refused (exit 1). Multi-file `$KUBECONFIG`: the first file that sets
+`current-context` is updated, else the first file (mirrors the read rule and
+kubectl). Namespace switching is out of scope (nested YAML edit in a foreign
+file).
+
 Implementation: subcommands in the binary that read the config path
 (`OMNICTX_CONFIG` > `~/.config/omnictx/config.yaml`), update only the `enabled:`
 line in the YAML (preserving comments and other keys), and create the file/dir if

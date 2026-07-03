@@ -47,14 +47,24 @@ than once in the same shell — and defines no functions beyond the prompt hook.
 ### Daily use — toggles (no rc edits)
 
 ```bash
-omnictx off      # persist enabled: false — all future shells start quiet
-omnictx on       # persist enabled: true  — restore the segment
-omnictx toggle   # flip the persisted state
+omnictx off        # persist enabled: false — all future shells start quiet
+omnictx on         # persist enabled: true  — restore the segment
+omnictx toggle     # flip the persisted state
+omnictx cloud off  # hide just the cloud slot (alias for cloud none)
+omnictx cloud on   # show it again (alias for cloud auto — re-pin if you had one)
+omnictx kube off   # hide just the kube segment (namespace goes with it)
+omnictx kube on    # show it again
 ```
 
-These write the `enabled:` key of the config file, so the change survives new
-shells. For the current session only, use `export OMNICTX_ENABLED=false` — the
-env var overrides the config until unset.
+The commands persist to the config file, so the change survives new shells. For
+the **current session only**, use env vars — they override the config until
+unset, and all boolean ones accept `on`/`off` as well as `true`/`false`:
+
+| Segment | Persistent (command) | Session-only (env) |
+|---|---|---|
+| everything | `omnictx on/off/toggle` | `export OMNICTX_ENABLED=off` |
+| cloud slot | `omnictx cloud on/off` | `export OMNICTX_CLOUD=none` / `unset` |
+| kube (+namespace) | `omnictx kube on/off` | `export OMNICTX_KUBE=off` |
 
 ### Switching the displayed cloud
 
@@ -68,6 +78,23 @@ The value is written to the `cloud:` key of the config file (comments and other
 keys are preserved). For a session-only override use `export OMNICTX_CLOUD=<v>`,
 which takes precedence over the persisted value until unset. An invalid value is
 rejected with a usage error (exit 2) — nothing is written.
+
+### Switching the kube-context
+
+```bash
+omnictx kube list         # all contexts across $KUBECONFIG files, current marked *
+omnictx kube prod-cluster # switch (rewrites current-context in kubeconfig)
+omnictx kube              # print the current context
+```
+
+This is the one place omnictx writes to a file it does not own, and it is
+deliberately careful: the target context must exist (otherwise a usage error and
+exit 2, nothing written), only the `current-context:` line changes — comments
+and formatting are preserved byte-for-byte — and the write is atomic (temp file
++ rename, permissions kept). An unreadable or unparsable kubeconfig is never
+touched. With a multi-file `$KUBECONFIG`, the file that already sets
+`current-context` is updated (else the first file), matching kubectl. `list` is
+a reserved word. Namespace switching is out of scope — use kubectl/kubens.
 
 ### Manual integration (advanced)
 
@@ -98,6 +125,9 @@ omnictx on|off|toggle         # persist the enabled state to the config file
 omnictx cloud                 # show the effective active-cloud selection
 omnictx cloud aws             # persist: pin AWS as the active cloud
 omnictx cloud none            # persist: kube-only (no cloud slot)
+omnictx kube                  # show the current kube-context
+omnictx kube list             # list available contexts (current marked with *)
+omnictx kube prod-cluster     # switch the current kube-context
 ```
 
 `--shell` is the **only** render-mode flag. Everything else is controlled via
@@ -140,6 +170,7 @@ with this precedence (the only render-mode flag is `--shell`):
 |---|---|---|---|
 | `segments` | `OMNICTX_SEGMENTS` | `cloud,kube,namespace` | which segments, in what order |
 | `cloud` / `omnictx cloud <v>` | `OMNICTX_CLOUD` | `auto` | active cloud: `azure\|aws\|gcp\|auto\|none` |
+| `kube` / `omnictx kube on\|off` | `OMNICTX_KUBE` | `true` | show the kube segment (namespace follows) |
 | `icons` | `OMNICTX_ICONS` | `true` | icons vs ASCII labels |
 | `separator` | `OMNICTX_SEPARATOR` | `" "` | separator between segments |
 | `enabled` / `omnictx on\|off\|toggle` | `OMNICTX_ENABLED` | `true` | master on/off |
@@ -159,6 +190,7 @@ breaks the prompt.
 ```yaml
 enabled: true
 cloud: auto                          # azure | aws | gcp | auto | none
+kube: true                           # show the kube segment (omnictx kube on/off)
 segments: [cloud, kube, namespace]   # order matters
 icons: true
 separator: " "

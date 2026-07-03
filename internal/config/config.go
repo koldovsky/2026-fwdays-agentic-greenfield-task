@@ -44,6 +44,7 @@ type Config struct {
 	Enabled   bool
 	Segments  []string
 	Cloud     string // active cloud: azure|aws|gcp|auto|none
+	Kube      bool   // kube-segment display toggle (namespace follows kube)
 	Icons     bool
 	Separator string
 	Shell     string
@@ -66,6 +67,7 @@ type fileConfig struct {
 	Enabled   *bool             `yaml:"enabled"`
 	Segments  []string          `yaml:"segments"`
 	Cloud     *string           `yaml:"cloud"`
+	Kube      *bool             `yaml:"kube"`
 	Icons     *bool             `yaml:"icons"`
 	Separator *string           `yaml:"separator"`
 	Colors    map[string]string `yaml:"colors"`
@@ -77,6 +79,7 @@ func Defaults() Config {
 		Enabled:   true,
 		Segments:  []string{SegmentCloud, SegmentKube, SegmentNamespace},
 		Cloud:     CloudAuto,
+		Kube:      true,
 		Icons:     true,
 		Separator: " ",
 		Shell:     ShellNone,
@@ -152,6 +155,9 @@ func applyFile(cfg *Config, fc fileConfig) {
 	if fc.Cloud != nil {
 		cfg.Cloud = *fc.Cloud
 	}
+	if fc.Kube != nil {
+		cfg.Kube = *fc.Kube
+	}
 	if fc.Icons != nil {
 		cfg.Icons = *fc.Icons
 	}
@@ -166,27 +172,43 @@ func applyFile(cfg *Config, fc fileConfig) {
 	}
 }
 
-func applyEnv(cfg *Config, lookupEnv LookupEnv, debug *[]string) {
-	if v, ok := lookupEnv("OMNICTX_ENABLED"); ok {
-		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
-			cfg.Enabled = b
-		} else {
-			*debug = append(*debug, fmt.Sprintf("env: invalid OMNICTX_ENABLED=%q", v))
-		}
+// parseBool parses a boolean env value. On top of the strconv.ParseBool forms
+// it accepts on/off (case-insensitive) — matching the on/off subcommand verbs.
+func parseBool(v string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "on":
+		return true, nil
+	case "off":
+		return false, nil
+	default:
+		return strconv.ParseBool(strings.TrimSpace(v))
 	}
+}
+
+// applyBoolEnv applies one boolean env var to dst; an invalid value is ignored
+// (the lower layer wins) with a debug note.
+func applyBoolEnv(lookupEnv LookupEnv, name string, dst *bool, debug *[]string) {
+	v, ok := lookupEnv(name)
+	if !ok {
+		return
+	}
+	if b, err := parseBool(v); err == nil {
+		*dst = b
+	} else {
+		*debug = append(*debug, fmt.Sprintf("env: invalid %s=%q", name, v))
+	}
+}
+
+func applyEnv(cfg *Config, lookupEnv LookupEnv, debug *[]string) {
+	applyBoolEnv(lookupEnv, "OMNICTX_ENABLED", &cfg.Enabled, debug)
 	if v, ok := lookupEnv("OMNICTX_SEGMENTS"); ok {
 		cfg.Segments = splitSegments(v)
 	}
 	if v, ok := lookupEnv("OMNICTX_CLOUD"); ok && v != "" {
 		cfg.Cloud = v
 	}
-	if v, ok := lookupEnv("OMNICTX_ICONS"); ok {
-		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
-			cfg.Icons = b
-		} else {
-			*debug = append(*debug, fmt.Sprintf("env: invalid OMNICTX_ICONS=%q", v))
-		}
-	}
+	applyBoolEnv(lookupEnv, "OMNICTX_KUBE", &cfg.Kube, debug)
+	applyBoolEnv(lookupEnv, "OMNICTX_ICONS", &cfg.Icons, debug)
 	if v, ok := lookupEnv("OMNICTX_SEPARATOR"); ok {
 		cfg.Separator = v
 	}

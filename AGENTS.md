@@ -29,19 +29,30 @@ No panics in production (top-level recover in main).
   Only flag exposed in render mode: `--shell <bash|zsh|none>` (supplied by `init`,
   not persisted in config). All other settings via env vars or config file.
   Subcommands: `init <bash|zsh>`, `on` / `off` (persist enabled state to config),
-  `cloud [azure|aws|gcp|auto|none]` (persist active cloud to config; no argument
-  prints the effective value; invalid value → usage error, exit 2).
+  `cloud [azure|aws|gcp|auto|none|on|off]` (persist active cloud to config; `on`/`off`
+  alias `auto`/`none` — a pin is not remembered across off/on; no argument prints
+  the effective value; invalid value → usage error, exit 2),
+  `kube [<context>|list|on|off]` (switch current-context in kubeconfig / print
+  current / list all / toggle the kube segment via config key `kube:`; reserved
+  words list|on|off; unknown context → exit 2, unparsable target → exit 1).
 - internal/cloud — Provider interface + active-cloud Select (azure|aws|gcp|auto|none).
 - internal/azure — Azure provider: active subscription from azureProfile.json (UTF-8 BOM).
 - internal/aws — AWS provider: profile (+region) from ~/.aws/config (offline; no STS).
 - internal/gcp — GCP provider: active-config project from ~/.config/gcloud (offline).
 - internal/ini — tiny stdlib INI reader shared by aws/gcp (no new dependency).
 - internal/kube — current-context + namespace from kubeconfig ($KUBECONFIG-aware).
+  Also the ONLY write path to a foreign file: `kube <context>` rewrites the
+  current-context line (parse-before-write, single-line surgery, atomic rename;
+  target = first $KUBECONFIG file with current-context, else first). Writes happen
+  only on explicit user command — render mode never writes anything.
 - internal/render — format, ANSI colors, bash (\[ \]) / zsh (%{ %}) escaping; the
   cloud slot is provider-driven (label from the active provider, color colors["cloud"]
   with optional per-provider colors[key] override).
 - internal/config — merge flags + env + YAML config file → struct
   (precedence: flag > env > config > default). Config: ~/.config/omnictx/config.yaml.
+  Boolean env vars (OMNICTX_ENABLED / OMNICTX_ICONS / OMNICTX_KUBE) accept on/off
+  on top of ParseBool forms. `kube: true|false` (default true) gates the kube
+  segment on top of the segments list; OMNICTX_KUBE is the session override.
 - internal/shellinit — `init bash|zsh` code generation (go:embed templates).
   Output must be idempotent. No shell functions defined (omnion/omnioff removed).
 - testdata — fixtures and golden files.
