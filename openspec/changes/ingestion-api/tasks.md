@@ -17,7 +17,7 @@
 
 ## 5. Очищення застарілих конверсій
 
-- [ ] 5.1 Створити `app/api/conversions/cleanup/route.ts` з обробником `GET`, який: (1) перевіряє `Authorization: Bearer <CRON_SECRET>` з `process.env.CRON_SECRET`; (2) видаляє записи з `conversions`, де `conversionTime` старший за 14 місяців; (3) повертає `{ deleted: N }`.
+- [ ] 5.1 Створити `app/api/conversions/cleanup/route.ts` з обробником `GET`, який: (1) перевіряє наявність `process.env.CRON_SECRET` (якщо відсутня — повертає `500` з логом помилки конфігурації); (2) перевіряє `Authorization: Bearer <CRON_SECRET>` (якщо відсутній або невалідний — повертає `401`); (3) видаляє записи з `conversions`, де `conversionTime < NOW() - INTERVAL '14 months'`, пакетами по `LIMIT 10000` до завершення; (4) повертає `{ deleted: N }`.
 - [ ] 5.2 Додати конфігурацію Vercel Cron у `vercel.json`: `{ "crons": [{ "path": "/api/conversions/cleanup", "schedule": "0 3 * * *" }] }`.
 - [ ] 5.3 Додати `CRON_SECRET` до `.env.example`.
 
@@ -25,3 +25,14 @@
 
 - [ ] 6.1 Перевірити компіляцію TypeScript (`tsc --noEmit`) та лінтинг (`npm run lint`) без помилок.
 - [ ] 6.2 Перевірити збірку проекту (`npm run build`) без помилок.
+
+## 7. Ручне приймальне тестування (Definition of Done)
+
+- [ ] 7.1 `POST /api/conversions` з валідним `X-API-Key` та масивом з 1 запису → відповідь `200 { "status": "ok", "inserted": 1 }`.
+- [ ] 7.2 `POST /api/conversions` без заголовка `X-API-Key` → відповідь `401 { "error": "Missing X-API-Key header" }`.
+- [ ] 7.3 `POST /api/conversions` з невалідним `X-API-Key` → відповідь `401 { "error": "Invalid API key" }`.
+- [ ] 7.4 `POST /api/conversions` з валідним ключем, але неактивною підпискою (`paused`) → відповідь `402 { "error": "Subscription is paused. Please resume your subscription." }`.
+- [ ] 7.5 `POST /api/conversions` з масивом > 500 записів → відповідь `400 { "error": "conversions array must contain at least 1 and at most 500 items" }`.
+- [ ] 7.6 `POST /api/conversions` з невалідним записом (відсутнє `conversionName`) → відповідь `400 { "error": "Validation failed", "details": [...] }`, жоден запис не збережено.
+- [ ] 7.7 `GET /api/conversions/cleanup` без заголовка `Authorization` → відповідь `401 Unauthorized`.
+- [ ] 7.8 `GET /api/conversions/cleanup` з коректним `Authorization: Bearer <CRON_SECRET>` → відповідь `200 { "deleted": N }`.

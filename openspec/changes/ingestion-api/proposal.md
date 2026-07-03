@@ -21,7 +21,7 @@ _(немає змін у вимогах існуючих спеків)_
 
 ## Impact
 
-- **Нові файли**: `app/api/conversions/route.ts` (API handler), `scripts/cleanup-conversions.ts` (Cron-скрипт очищення).
+- **Нові файли**: `app/api/conversions/route.ts` (API handler), `app/api/conversions/cleanup/route.ts` (Cron-ендпоінт очищення), `vercel.json` (конфігурація Vercel Cron).
 - **Існуючі залежності**: таблиці `users` (поле `api_key_hash` для автентифікації), `subscriptions` (перевірка статусу), `conversions` (запис даних) — все вже реалізовано у `core-database`.
 - **Зовнішні системи**: Google Apps Script (клієнт API), Vercel Cron (планувальник очищення).
 - **API контракт**: `POST /api/conversions` стає публічним ендпоінтом, що використовується зовнішніми Apps Script.
