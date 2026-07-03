@@ -68,210 +68,283 @@
   "links": [
     {
       "id": "FR-INTAKE-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-05",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-06",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-07",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/dashboard/spec.md",
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-INTAKE-08",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-05",
-      "specs": [],
+      "specs": [
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-FAQ-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-FAQ-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-KB-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-KB-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/dashboard/spec.md",
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-KB-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-KB-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-06",
-      "specs": [],
+      "specs": [
+        "openspec/specs/kb-learning/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SLOT-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SLOT-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SLOT-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-SLOT-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-HITL-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/dashboard/spec.md",
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-HITL-02",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-HITL-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/dashboard/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-HITL-04",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/intake/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-GUARD-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/dashboard/spec.md",
+        "openspec/specs/slots/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-DASH-01",
-      "specs": [],
+      "specs": [
+        "openspec/specs/booking-hitl/spec.md",
+        "openspec/specs/dashboard/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
     },
     {
       "id": "FR-DASH-03",
-      "specs": [],
+      "specs": [
+        "openspec/specs/dashboard/spec.md"
+      ],
       "planned": null,
       "tests": [],
       "recordings": []
@@ -279,126 +352,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-07 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-INTAKE-08 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-FAQ-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-FAQ-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-KB-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-KB-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-KB-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-KB-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SLOT-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SLOT-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SLOT-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-SLOT-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-HITL-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-HITL-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-HITL-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-HITL-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-DASH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-DASH-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
     {
       "check": "plan-ownership",
       "msg": "docs/mvp-capability-plan.md not found - ownership check skipped (expected before Phase 3; mandatory at --release)"

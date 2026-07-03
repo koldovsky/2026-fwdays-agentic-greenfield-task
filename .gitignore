@@ -28,3 +28,4 @@ obj/
 coverage/
 **/raw/
 *.db
+secrets/

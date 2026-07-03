@@ -19,5 +19,21 @@
     "check:recordings": "node scripts/check-recordings.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
     "gate:status": "node scripts/gate-status.mjs"
+  },
+  "workspaces": [
+    "lib",
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.0",
+    "eslint": "^10.6.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
   }
 }

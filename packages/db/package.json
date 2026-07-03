@@ -1,0 +1,14 @@
+{
+  "name": "@kamerton/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SQLite access module (better-sqlite3, TC-DATA-01): leads, requests, bookings, questions",
+  "main": "src/index.ts",
+  "dependencies": {
+    "better-sqlite3": "^12.6.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
+  }
+}

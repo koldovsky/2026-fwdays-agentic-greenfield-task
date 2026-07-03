@@ -1,0 +1,8 @@
+{
+  "name": "@kamerton/lib",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-free pure core (TC-PURE-01): slot grid, free-slot subtraction, rankSlots(), age validation, booking state machine",
+  "main": "src/index.ts"
+}
