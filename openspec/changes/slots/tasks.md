@@ -72,21 +72,21 @@
 
 ## 3. Domain logic — implement to green
 
-- [ ] 3.1 Implement `lib/src/slots/grid.ts` (deterministic Mon–Fri
+- [x] 3.1 Implement `lib/src/slots/grid.ts` (deterministic Mon–Fri
       10:00–19:00-start grid generator, 14-day horizon) to pass 2.1–2.2.
-- [ ] 3.2 Implement `lib/src/slots/subtract.ts` (half-open interval
+- [x] 3.2 Implement `lib/src/slots/subtract.ts` (half-open interval
       subtraction, the single shared disqualification predicate per
       design.md Decision 4, reused by the hold-collision check in 4.x) to
       pass 2.3–2.5.
-- [ ] 3.3 Implement `lib/src/slots/rank.ts` (`rankSlots()`, pure,
+- [x] 3.3 Implement `lib/src/slots/rank.ts` (`rankSlots()`, pure,
       lexicographic fit → compactness → earlier-date per design.md
       Decision 5) to pass 2.6–2.9.
-- [ ] 3.4 Implement `lib/src/slots/widen.ts` (Step 1/2/3 widening
+- [x] 3.4 Implement `lib/src/slots/widen.ts` (Step 1/2/3 widening
       algorithm, composes grid + subtract + rank) to pass 2.10–2.12.
-- [ ] 3.5 Implement `lib/src/slots/timezone.ts` (Europe/Kyiv ↔ RFC3339 UTC
+- [x] 3.5 Implement `lib/src/slots/timezone.ts` (Europe/Kyiv ↔ RFC3339 UTC
       conversion helpers used only by the adapter boundary, not by grid/
       rank/widen internals) to pass 2.13.
-- [ ] 3.6 Run `npm run test:run` and confirm 2.1–2.13 are now green with no
+- [x] 3.6 Run `npm run test:run` and confirm 2.1–2.13 are now green with no
       regressions in existing suites.
 
 ## 4. Services and adapter — calendar port + spike

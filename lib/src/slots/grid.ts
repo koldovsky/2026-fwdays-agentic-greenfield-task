@@ -27,10 +27,58 @@ export interface Slot {
  *              per the baseline spec's Conventions — explicit argument, never
  *              an implicit "today").
  */
+/** Fixed-width, zero-padded hour starts, 10:00 through 19:00 inclusive
+ * (BC-SCHEDULE-01). Kept as the single source of the grid's hour bounds. */
+const HOUR_STARTS = [
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+];
+
+/**
+ * Weekday of a "YYYY-MM-DD" calendar date, 0 = Sunday .. 6 = Saturday.
+ * Calendar-date arithmetic only — a calendar date's weekday does not depend
+ * on a timezone, so parsing it as UTC midnight is safe and stays
+ * timezone-library-free (TC-PURE-01, Decision 3).
+ */
+function weekdayOf(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+/** Zero-padded "YYYY-MM-DD" for a UTC-midnight-anchored calendar date. */
+function toDateStr(utcMidnight: Date): string {
+  const y = utcMidnight.getUTCFullYear();
+  const m = String(utcMidnight.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(utcMidnight.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function generateGrid(from: string, days: number): Slot[] {
-  void from;
-  void days;
-  throw new Error(
-    "Not implemented: generateGrid (red — implemented in tasks.md section 3)",
-  );
+  const [y, m, d] = from.split("-").map(Number) as [number, number, number];
+  const baseMillis = Date.UTC(y, m - 1, d);
+  const slots: Slot[] = [];
+
+  for (let i = 0; i < days; i++) {
+    const dayDate = new Date(baseMillis + i * 24 * 60 * 60 * 1000);
+    const dateStr = toDateStr(dayDate);
+    const dow = weekdayOf(dateStr);
+    if (dow === 0 || dow === 6) {
+      continue; // Sunday / Saturday — never in the grid (BC-SCHEDULE-01).
+    }
+
+    for (const start of HOUR_STARTS) {
+      const startHour = Number(start.slice(0, 2));
+      const end = `${String(startHour + 1).padStart(2, "0")}:00`;
+      slots.push({ start: `${dateStr}T${start}`, end: `${dateStr}T${end}` });
+    }
+  }
+
+  return slots;
 }

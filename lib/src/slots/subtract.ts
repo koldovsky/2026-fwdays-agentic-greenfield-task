@@ -25,10 +25,17 @@ export interface BusyInterval {
  * Touching boundaries do NOT overlap. Subtraction only ever removes slots
  * from `slots`, never adds (FR-GUARD-03).
  */
+/**
+ * Half-open overlap test shared by proposal-time subtraction and the
+ * hold-collision re-check (design.md Decision 4) — one predicate, reused,
+ * never re-derived. Fixed-width "YYYY-MM-DDTHH:mm" strings compare
+ * lexicographically in the same order as chronologically, so plain string
+ * comparison is exact — no Date parsing needed to stay pure and fast.
+ */
+export function overlaps(slot: Slot, busy: BusyInterval): boolean {
+  return slot.start < busy.end && busy.start < slot.end;
+}
+
 export function subtractBusy(slots: Slot[], busy: BusyInterval[]): Slot[] {
-  void slots;
-  void busy;
-  throw new Error(
-    "Not implemented: subtractBusy (red — implemented in tasks.md section 3)",
-  );
+  return slots.filter((slot) => !busy.some((b) => overlaps(slot, b)));
 }
