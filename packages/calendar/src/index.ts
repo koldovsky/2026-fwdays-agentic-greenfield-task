@@ -6,12 +6,9 @@
 // DEMO Google Calendar via a service-account JWT (google-auth-library, a
 // transitive dependency of `googleapis` — see `npm ls google-auth-library`).
 //
-// Stub only for now — task 1.1 (this slice's section 1) just wires the
-// workspace and its `googleapis` dependency. The actual implementation
-// (freeBusy / createTentative / upgradeToConfirmed / deleteEvent, mapping
-// SDK GaxiosErrors to CalendarAuthError/CalendarTimeoutError/CalendarApiError)
-// lands in task 4.3, after the spike (design.md Decision 1) and after
-// lib/src/slots/calendar-port.ts exists (task 4.1). Do not import this
-// package from lib/ or from anywhere until then.
+// Task 4.3: `GoogleCalendarPort` is the production adapter — see
+// `./google-calendar.ts` for freeBusy / createTentative / upgradeToConfirmed
+// / deleteEvent and the SDK-error-to-CalendarPort-error-class mapping.
 
-export {};
+export { GoogleCalendarPort, mapCalendarError } from "./google-calendar.ts";
+export type { GoogleCalendarPortOptions } from "./google-calendar.ts";
