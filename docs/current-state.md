@@ -7,47 +7,57 @@
 
 ## Last action
 
-- **Checker-review workflow (`wf_69f19f45-2c5`) results folded in + its one real finding fixed
-  and committed (`764ec36`).** `add-security-hardening` had a confirmed TOCTOU race: the
-  rate-limit/usage-counter gate was check-then-record-*after*-the-LLM-call, so concurrent
-  requests from the same IP/account all read "under the limit" and all got charged — reproduced
-  live (5 concurrent anon POSTs → 5 successes with `ANON_TAILORING_LIMIT=1`), adversarially
-  re-verified (CONFIRMED). Fixed with atomic reserve/release (`reserveHit`/`releaseHit` in-memory,
-  `usage_counters` `WHERE`-guarded upsert in Postgres) wired through `/api/tailor`,
-  `/api/auth/register`, `/api/cv/parse`; also fixed a `/checkout` raw-throw-on-tampered-token gap
-  and a `BillingPortal` test ambiguity. `add-upload-cv` and `add-payments-emulator` both
-  **shipped clean (0 blockers)** in the same review. Verified: lint clean, build clean,
-  **66 files / 402 tests**, including a new pglite concurrency test proving `reserve()` caps
-  admissions under real parallel requests.
-- **`add-resume-wizard` backend increment launched** (Workflow `wf_01e54ecb-cd1`, background,
-  ~9–14 agents): loop split (`runAnalysisPhase`/`runGenerationPhase`), the
-  `entities/clarifying-question` skill (2.1–2.4), evidence tagging/`BC-HONESTY-03`
-  (`EvidenceSource`, `confirmedAnswers`, `evidenceKind`, prompts/parse/loop wiring,
-  `BulletList` UI + i18n + bullets spec delta), and the two new `/api/tailor/analyze` +
-  `/api/tailor/generate` routes — then a verify + independent checker gate. **Deliberately
-  scoped OUT of this run:** tasks 1.7 (`views/tailor-workspace` wizard state machine UI) and 2.5
-  (`features/clarify-tailoring` UI) — the actual UX rework is large/novel enough (replaces the
-  one-shot `TailoringForm`→result flow with a 2-request analyze/confirm/clarify/generate flow,
-  touches `TailorWorkspace.test.tsx`/`.paywall.test.tsx`/`.upload.test.tsx`) to deserve its own
-  focused pass once the backend is verified solid, not blind fan-out. **Real gaps I found and
-  resolved in the agent prompts (design.md didn't cover these):** (a) `runTailoringLoop`'s
-  one-shot composition must swallow the new `analysis` event so `/api/tailor`'s wire contract
-  stays byte-identical; (b) moving `score` earlier means `loop.test.ts`'s literal skills-order
-  assertion AND `trajectory.ts`'s `orderOk` rank table both need updating in lockstep (design.md
-  flagged the rank table but not the test); (c) design.md's `runGenerationPhase` signature
-  omits `jobDescription`, which `buildGenerationPrompt` actually requires; (d) budget-gating
-  split: `/generate` is the NFR-COST-02 gate (mirrors today's charge-on-result), `/analyze` gets
-  only a light per-IP anti-abuse cap, no lifetime-budget consumption; (e) `deriveClarifyingQuestions`
-  must be called+traced inside `runAnalysisPhase` per tasks.md 2.4, and its output added to the
-  `analysis` event payload — design.md's stated event shape didn't list it. **Check
-  `/workflows` or resume via the script path in the tool result for status** — do not assume
-  clean until its checker's `ship`/`blockers` result is read and, if fixes were needed, the
-  final `finalReview` is inspected.
-- Prior session context (still accurate, condensed): `BC-HONESTY-03` policy checkpoint
-  **RESOLVED** — self-attested wizard answers are grounding evidence, tagged `user-confirmed`,
-  visually distinct from CV evidence; `BC-HONESTY-01` unchanged. The 5-thread plan (header fix,
-  security hardening, upload-cv, payments-emulator, wizard spec) landed in commit `7df9915`.
-  `add-agent-loop` (increment 1 + tasks 3.3/3.4) is done, reviewed, shipped.
+- **`add-resume-wizard` backend increment committed (`996d0ba`).** Implements tasks.md sections
+  1 (minus 1.7), 2 (minus 2.5), 3 in full: `runTailoringLoop` split into `runAnalysisPhase`
+  (parse-cv → extract-requirements → score → derive-clarifying-questions) +
+  `runGenerationPhase` (generate-bullet → ground-bullet*), each independently `STEP_CAP`-bounded;
+  new `POST /api/tailor/analyze` (light per-IP anti-abuse cap only) + `POST /api/tailor/generate`
+  (the real `NFR-COST-02` budget gate, atomic reserve/release); `entities/clarifying-question`
+  (`deriveClarifyingQuestions` — pure, template-based, no LLM, input narrowed to
+  `partial`/`gap` rows' `{text, keywords, importance, status}` only); `BC-HONESTY-03` evidence
+  tagging (`Bullet.source: EvidenceSource` = `cv` | `user-confirmed`, `confirmedAnswers` pool
+  threaded through both prompts as a distinct labeled block, `BulletList` renders both kinds
+  with distinct labels, same badge color). `/api/tailor`'s one-shot NDJSON contract is untouched
+  (the composed loop swallows the intermediate `analysis` event).
+  - Built via Workflow `wf_01e54ecb-cd1` (14 agents across Foundations → Loop split →
+    Routes+UI → Verify → Checker → Fix blockers; hit the session rate cap once mid-run, resumed
+    cleanly from cache after reset).
+  - **Independent checker review caught 2 real honesty bugs, both fixed + re-verified clean
+    (final `ship: true`, 0 blockers):** (1) a grounding verdict tagged `user-confirmed` whose
+    evidence text didn't byte-match a real confirmed answer was silently relabeled as
+    CV-sourced — i.e. a paraphrase could render as fabricated "from your CV" text; fixed to
+    require an exact byte-match or the bullet downgrades to `overclaim-risk` with no source.
+    (2) `trajectory.ts`'s `GROUNDING_ALLOWED` set didn't include the new `confirmedAnswers`
+    context key, so the honesty eval (`gradeTrajectory`) false-flagged every legitimate
+    confirmed-answer-grounded run as a grounding-isolation violation; fixed by widening the
+    allow-list (JD/requirements/generation transcript are still excluded — isolation widens,
+    never loosens).
+  - **Three design.md gaps I found and resolved while writing the implementation prompts**
+    (worth knowing if touching this code): `runGenerationPhase`'s input needs `jobDescription`
+    (design.md's stated signature omitted it, but `buildGenerationPrompt` requires it); the
+    `analysis` event payload needs `clarifyingQuestions` (also not in design.md's stated shape,
+    but tasks.md 2.4 requires tracing+surfacing them); moving `score` earlier required updating
+    BOTH `trajectory.ts`'s rank table AND `loop.test.ts`'s literal skills-order assertion
+    (design.md flagged only the former).
+  - **Independently re-verified this session** (not just trusted the workflow's own report):
+    `yarn lint` clean, `yarn build` clean (both new routes present as dynamic `ƒ` routes),
+    `yarn test` **69 files / 441 tests, all green** (up from 66/402 baseline). Live NDJSON
+    smoke-tested against `next start`: calm coded failures on both new routes (never a raw 500),
+    `/analyze`'s anti-abuse cap trips independently of `/generate`'s lifetime budget, failed
+    `/generate` reservations correctly refund (fired interleaved failing requests across
+    `/api/tailor` and `/api/tailor/generate` from the same IP — shared `ANON_TAILORING_LIMIT`
+    key never falsely tripped). `openspec/changes/add-resume-wizard/tasks.md` checkboxes synced
+    to match (1.1–1.6, 2.1–2.4, 3.1–3.13 checked; 1.7, 2.5, 3.14, sections 4–5 still open).
+- **Checker-review workflow (`wf_69f19f45-2c5`) results folded in + fixed, committed (`764ec36`).**
+  `add-security-hardening` had a confirmed TOCTOU race: rate-limit/usage-counter gate was
+  check-then-record-*after*-the-LLM-call, so concurrent requests all read "under the limit" and
+  all got charged (reproduced live: 5 concurrent anon POSTs → 5 successes with limit=1). Fixed
+  with atomic reserve/release, wired through `/api/tailor`, `/api/auth/register`,
+  `/api/cv/parse`. `add-upload-cv` and `add-payments-emulator` both shipped clean (0 blockers)
+  in the same review.
+- `BC-HONESTY-03` policy checkpoint **RESOLVED** (2026-07-03, user-approved default):
+  self-attested wizard answers are grounding evidence, tagged `user-confirmed`, visually
+  distinct from CV evidence; `BC-HONESTY-01` unchanged.
 
 ## Prior (done, see git log)
 
@@ -68,33 +78,33 @@
 
 ## Working on
 
-- **`add-resume-wizard`** — backend increment in flight (see Last action, `wf_01e54ecb-cd1`).
-  Next: read its result, fold in checker findings, THEN plan+implement the UI increment (tasks
-  1.7 wizard state machine + 2.5 clarify-tailoring feature) as its own focused pass.
+- **`add-resume-wizard`** — backend increment (sections 1–3, minus UI) done + committed. Next
+  increment: tasks 1.7 + 2.5, the wizard UI/state machine.
 - `add-auth` remainder: password reset email (needs a sender). Google OAuth (`FR-AUTH-02`)
   DEFERRED per user 2026-07-03 — credentials-only for now.
 
 ## Next steps
 
-1. **Read the `wf_01e54ecb-cd1` workflow result** (journal.jsonl in its transcript dir, or
-   resume via its script path) — confirm verify gate green and checker `ship: true` (or that
-   confirmed blockers were fixed and re-checked clean). Commit the increment.
-2. Plan + implement `add-resume-wizard` tasks 1.7 + 2.5 (the wizard UI/state machine) as a
-   separate, carefully-scoped pass — this rewrites `TailorWorkspace`'s core flow and its existing
-   test suite, worth designing deliberately rather than fanning out blind.
-3. Then section 4 (export: `ExportDocument` model, clipboard/PDF/DOCX, new deps
-   `@react-pdf/renderer` + `docx`) — note: no Cyrillic-complete font file is bundled in the repo
-   yet; npm registry + fonts.gstatic.com are both reachable from this sandbox (verified), so
-   sourcing one at implementation time (e.g. a `@fontsource/*` package or a fetched static
-   TTF/WOFF) is viable — check `@react-pdf/renderer`'s actual supported font formats
-   (TTF/WOFF, verify WOFF2 support empirically, don't assume) before picking a package.
-4. Then section 5 (honesty-evals for the wizard, final agent-verify + checker-review, sync
-   `specs/wizard/spec.md` + the `specs/bullets/spec.md` delta into baseline, archive the change).
-5. Re-run `perf-audit` on a machine with Chrome (blocked in this sandbox) — CSP headers landed
+1. **Plan + implement `add-resume-wizard` tasks 1.7 + 2.5** (wizard UI/state machine) as its own
+   focused pass, not blind fan-out — replaces the one-shot `TailoringForm`→result flow in
+   `views/tailor-workspace` with a multi-step `analyze | confirm | clarify | generate | export |
+   failed` flow (`FR-WIZARD-05` labels) calling the now-live `/api/tailor/analyze` +
+   `/api/tailor/generate` routes and rendering `clarifyingQuestions` via a new
+   `features/clarify-tailoring` slice. Touches `TailorWorkspace.test.tsx` /
+   `.paywall.test.tsx` / `.upload.test.tsx` — read them closely before rewriting the flow.
+2. Then section 4 (export: `ExportDocument` model, clipboard/PDF/DOCX, new deps
+   `@react-pdf/renderer` + `docx`) — no Cyrillic-complete font file is bundled in the repo yet;
+   npm registry + fonts.gstatic.com are both reachable from this sandbox (verified), so sourcing
+   one at implementation time is viable — check `@react-pdf/renderer`'s actual supported font
+   formats (TTF/WOFF; verify WOFF2 support empirically, don't assume) before picking a package.
+3. Then section 5 (honesty-evals for the wizard, final agent-verify + checker-review, sync
+   `specs/wizard/spec.md` + the already-landed `specs/bullets/spec.md` delta into baseline,
+   archive the change).
+4. Re-run `perf-audit` on a machine with Chrome (blocked in this sandbox) — CSP headers landed
    since the last audit and could plausibly move the ~20 ms LCP margin.
-6. Longer-tail, not blocking: `paste-jd` as its own slice, BullMQ worker, `add-agent-loop`
+5. Longer-tail, not blocking: `paste-jd` as its own slice, BullMQ worker, `add-agent-loop`
    4.2/4.3 + archive, FR-TAILOR-02 step-event rendering in the UI (see Blockers).
-7. **User action pending:** create `.env.local` (`AUTH_SECRET`, `DATABASE_URL`,
+6. **User action pending:** create `.env.local` (`AUTH_SECRET`, `DATABASE_URL`,
    `CV_ENCRYPTION_KEY` — see `docs/dev-setup.md`) then `yarn dev:db` + restart `yarn dev`.
 
 ## Blockers / open questions
