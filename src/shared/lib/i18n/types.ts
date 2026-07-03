@@ -47,8 +47,6 @@ export interface Dictionary {
     readonly jdLabel: string;
     /** Shown before the first tailoring run. */
     readonly emptyState: string;
-    /** Export CTA on a finished result — the paywall gate point (FR-PAYWALL-01). */
-    readonly exportAction: string;
   };
   readonly uploadCv: {
     /** Main dropzone label (FR-CV-01). */

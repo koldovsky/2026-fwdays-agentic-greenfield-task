@@ -35,19 +35,19 @@
 
 ## 4. Export
 
-- [ ] 4.1 `ExportDocument` format-agnostic model (header, exportable bullets in order, footer line) — single source of truth for all three formats (design.md §4)
-- [ ] 4.2 `features/export-resume` (new slice): builds `ExportDocument` from a `Tailoring`/`Bullet[]`, applies the free-tier footer default (FR-EXPORT-04) pending real entitlement wiring
-- [ ] 4.3 Clipboard copy (FR-EXPORT-01): plain-text renderer of `ExportDocument`, client-side, `navigator.clipboard.writeText`
-- [ ] 4.4 Add `@react-pdf/renderer` dependency; `POST /api/export/pdf` route handler; register a Cyrillic-complete static font (e.g. Inter/PT Sans) independent of the web UI's Bricolage Grotesque (design.md §4, resolves the Cyrillic gap for this surface only)
-- [ ] 4.5 Add `docx` dependency; `POST /api/export/docx` route handler; named cross-platform font (e.g. Calibri) — no glyph-embedding step needed for this format
-- [ ] 4.6 Vet both new dependencies' bundle size / cold-start impact against the existing Node route budget (design.md Risks) before wiring into the UI
-- [ ] 4.7 `widgets/wizard-stepper`: the Export step's UI (copy / PDF / DOCX actions), composed into `views/tailor-workspace`
+- [x] 4.1 `ExportDocument` format-agnostic model (header, exportable bullets in order, footer line) — single source of truth for all three formats (design.md §4)
+- [x] 4.2 `features/export-resume` (new slice): builds `ExportDocument` from a `Tailoring`/`Bullet[]`, applies the free-tier footer default (FR-EXPORT-04) pending real entitlement wiring
+- [x] 4.3 Clipboard copy (FR-EXPORT-01): plain-text renderer of `ExportDocument`, client-side, `navigator.clipboard.writeText`
+- [x] 4.4 Add `@react-pdf/renderer` dependency; `POST /api/export/pdf` route handler; register a Cyrillic-complete static font (e.g. Inter/PT Sans) independent of the web UI's Bricolage Grotesque (design.md §4, resolves the Cyrillic gap for this surface only) — now also server-side entitlement-gated (FR-PAYWALL-01, fixed 2026-07-04)
+- [x] 4.5 Add `docx` dependency; `POST /api/export/docx` route handler; named cross-platform font (e.g. Calibri) — no glyph-embedding step needed for this format — now also server-side entitlement-gated (FR-PAYWALL-01, fixed 2026-07-04)
+- [x] 4.6 Vet both new dependencies' bundle size / cold-start impact against the existing Node route budget (design.md Risks) before wiring into the UI — Node runtime confirmed on both routes, server-only deps never reach the client bundle, on-disk footprint (~20 MB combined, pure JS) well within Vercel Node limits
+- [x] 4.7 `widgets/export-stepper`: the Export step's UI (copy / PDF / DOCX actions), composed into `views/tailor-workspace`
 
 ## 5. Evals, verify & review
 
-- [ ] 5.1 honesty-eval: confirmed-answer evidence is independently re-verified by grounding, never trusted from generation's claim alone (BC-HONESTY-03, mirrors the existing CV-evidence guarantee)
-- [ ] 5.2 honesty-eval: `deriveClarifyingQuestions` never receives CV text, JD text, or unrelated requirements — assert on the function's input type, not just behavior
-- [ ] 5.3 agent-verify: build/tsc/lint/tests; evidence for FR-WIZARD-01..05, FR-EXPORT-01..04, BC-HONESTY-03
+- [x] 5.1 honesty-eval: confirmed-answer evidence is independently re-verified by grounding, never trusted from generation's claim alone (BC-HONESTY-03, mirrors the existing CV-evidence guarantee) — `loop.ts`'s `buildEvidenceSource` byte-matches; `loop.test.ts:239-322`
+- [x] 5.2 honesty-eval: `deriveClarifyingQuestions` never receives CV text, JD text, or unrelated requirements — assert on the function's input type, not just behavior — `derive.ts`'s narrow `ClarifyingQuestionSourceRow` type + `derive.test.ts:101-120` (runtime shape + `@ts-expect-error` compile-time proof)
+- [x] 5.3 agent-verify: build/tsc/lint/tests; evidence for FR-WIZARD-01..05, FR-EXPORT-01..04, BC-HONESTY-03 — `yarn lint`/`yarn build`/`yarn test` all clean, 84 files / 507 tests green
 - [ ] 5.4 agent-verify: exported PDF/DOCX round-trip check — Ukrainian text renders correctly, footer present/absent matches entitlement default
-- [ ] 5.5 Independent checker-review vs PRD + DESIGN.md (no new brand hues, no new icon library) + FSD import rules (new slices import only downward, only through barrels)
+- [x] 5.5 Independent checker-review vs PRD + DESIGN.md (no new brand hues, no new icon library) + FSD import rules (new slices import only downward, only through barrels) — found + fixed 1 blocker (missing server-side entitlement check on export routes), 0 blockers on final pass, ship:true
 - [ ] 5.6 Sync `specs/wizard/spec.md` (new) and the `specs/bullets/spec.md` MODIFIED delta into baseline on archive (`openspec-archive-change`)

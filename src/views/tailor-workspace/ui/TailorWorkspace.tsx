@@ -37,9 +37,9 @@ import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 import { BulletList } from "@/widgets/bullet-list";
 import { ChecklistPanel, type ChecklistPanelRow } from "@/widgets/checklist-panel";
+import { ExportStepper } from "@/widgets/export-stepper";
 import { Paywall, type PaywallReason } from "@/widgets/paywall";
 import { ResultView } from "@/widgets/result-view";
-import { buildExportText } from "../lib/export-text";
 import { toConfirmedAnswers } from "../lib/confirmed-answers";
 import { WizardSteps, type WizardStep } from "./WizardSteps";
 
@@ -53,25 +53,9 @@ export interface TailorWorkspaceProps {
    * Resolved by the route from the subscription state — never client-derived.
    */
   readonly paid?: boolean;
-  /** Export seam — injectable in tests; defaults to a plain-text download. */
-  readonly onExport?: (text: string) => void;
 }
 
-/** Default export: download the included bullets as a plain-text file. */
-function downloadTextFile(text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "vouch-resume.txt";
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-export function TailorWorkspace({
-  locale = "ua",
-  paid = false,
-  onExport = downloadTextFile,
-}: TailorWorkspaceProps) {
+export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspaceProps) {
   const copy = t(locale);
   const [phase, setPhase] = useState<WizardPhase>("analyze");
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -167,15 +151,6 @@ export function TailorWorkspace({
     );
   };
 
-  const handleExport = () => {
-    // The gate, not the limit: entitlement was resolved server-side.
-    if (!paid) {
-      setPaywall("export");
-      return;
-    }
-    onExport(buildExportText(bullets));
-  };
-
   const startOver = () => {
     setAnalysis(null);
     setResult(null);
@@ -263,12 +238,13 @@ export function TailorWorkspace({
               <BulletList bullets={bullets} onToggleInclude={handleToggleInclude} locale={locale} />
             }
           />
-          <div className="flex items-center gap-3">
-            <Button label={copy.workspace.exportAction} size="md" onClick={handleExport} />
-            <Button variant="ghost" size="md" onClick={startOver}>
-              {copy.wizard.startOverAction}
-            </Button>
-          </div>
+          <ExportStepper
+            bullets={bullets}
+            paid={paid}
+            locale={locale}
+            onPaywall={() => setPaywall("export")}
+            onStartOver={startOver}
+          />
         </div>
       )}
 

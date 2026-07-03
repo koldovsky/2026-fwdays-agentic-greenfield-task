@@ -35,7 +35,6 @@ export const ua: Dictionary = {
     cvLabel: "Текст резюме",
     jdLabel: "Опис вакансії",
     emptyState: "Тут з'явиться результат після адаптації резюме.",
-    exportAction: "Експортувати результат",
   },
   uploadCv: {
     dropLabel: "Перетягніть сюди файл резюме",

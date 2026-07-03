@@ -3,9 +3,44 @@
 > Live handoff between agent sessions. Read first, update before finishing.
 > Keep short — overwrite stale content, don't append endlessly.
 
-**Updated:** 2026-07-03
+**Updated:** 2026-07-04
 
 ## Last action
+
+- **Closed out `add-resume-wizard` §4 Export + most of §5 (2026-07-04, `export-wiring3`
+  worktree).** Built via Workflow `wf_778dafb4-995` (Wire → Tests+Vet → Verify → Checker →
+  Fix), plus a manual final-checker confirmation pass and small cleanup after.
+  - **4.7 wired**: `ExportStepper` (already built, previously orphaned) composed into
+    `TailorWorkspace.tsx`'s export phase, replacing the old plain-text-only
+    `handleExport`/`downloadTextFile`/`onExport`; dead `lib/export-text.ts`(+test) deleted;
+    new `widgets/export-stepper/index.ts` FSD barrel added (was missing).
+  - **Checker found + this session fixed a real blocker**: `/api/export/pdf` +
+    `/api/export/docx` had **zero server-side entitlement check** (`FR-PAYWALL-01`) — any
+    anonymous/free caller could POST directly with an arbitrary `ExportDocument` body and get
+    a full, footer-free export, bypassing the client-only gate in `ExportStepper.tsx`. Fixed:
+    both routes now resolve `currentUserId()` + check `hasPaidAccess(subscription, now)` (same
+    pattern as `/api/tailor/generate`'s budget gate), returning `402 payment_required` before
+    any render; broken-session/unreadable-subscription degrade to "not paid," never a raw 500
+    (`NFR-OBS-01`). 6 tests each added (`route.test.ts` × 2).
+  - **Final checker re-pass (separate agent, after the fix): `ship: true`, 0 blockers** —
+    confirmed the gate runs before render, tests genuinely exercise anon/free/broken-session/
+    unreadable-subscription/paid/malformed-body paths, no FSD violations, FR-EXPORT-04 footer
+    trust boundary is sound now that only paid callers can reach the renderer at all.
+  - **4.6** bundle/cold-start vet done: both routes confirmed Node runtime (not Edge), API
+    route handlers never ship to the client bundle, ~20 MB combined on-disk footprint
+    (pure JS, no native bindings) — no risk flagged.
+  - **5.1/5.2** honesty-eval coverage confirmed already satisfied by prior-session work (no new
+    tests needed): `loop.ts`'s `buildEvidenceSource` byte-match (`loop.test.ts:239-322`);
+    `derive.ts`'s narrow `ClarifyingQuestionSourceRow` type + `@ts-expect-error` compile-time
+    proof (`derive.test.ts:101-120`).
+  - **Minor cleanup**: removed the now-dead `workspace.exportAction` i18n key (ua/en/types) —
+    orphaned once `TailorWorkspace.tsx` dropped its single export button.
+  - tasks.md ticked: 4.1–4.7, 5.1–5.3, 5.5. Verified: `yarn lint` clean, `yarn build` clean
+    (both export routes still dynamic `ƒ`), `yarn test` = **84 files / 507 tests green**.
+  - **Still open**: 3.14 (deferred, flagged, not a blocker), 5.4 (PDF/DOCX round-trip Cyrillic
+    render check — needs manual visual inspection of a rendered file, not just tests), 5.6
+    (sync `specs/wizard/spec.md` + `specs/bullets/spec.md` delta into baseline, archive) — do
+    **not** archive the change while 3.14/5.4/5.6 are open.
 
 - **Fixed `POST /api/tailor` "request sent, no response, no error" (2026-07-03).** Root cause:
   `claude.ts` sent `thinking: {type:"adaptive"}` with **no `effort`** → Opus 4.8 defaults to
@@ -122,65 +157,27 @@ Verified after fixes: `yarn lint` clean, `yarn build` clean (`/account/profile` 
 
 ## Working on
 
-- **`add-resume-wizard` — wizard UI/state machine (tasks 1.7 + 2.5) DONE + verified, NOT yet committed
-  (2026-07-03).** Front half of the wizard built on the live analyze/generate routes. **Scope was 1.7 +
-  2.5 only**; section 4 (PDF/DOCX export, `@react-pdf/renderer` + `docx` + Cyrillic fonts) stays the
-  NEXT increment — the `export` state reuses the existing paywall-gated clipboard/text export.
-  - `views/tailor-workspace` now owns a 6-state machine (`analyze | confirm | clarify | generate |
-    export | failed`; `ui/WizardSteps.tsx` stepper, FR-WIZARD-05; `lib/confirmed-answers.ts` pure
-    answered→ConfirmedAnswerEvidence). Confirm is client-only — no LLM call before explicit confirm
-    (FR-WIZARD-01). Generate `rate_limited` → paywall + back to confirm; analyze's per-IP cap surfaces
-    inline in AnalyzeForm (NOT the paywall — distinct `analyze:ip:` vs `tailor:ip:` namespaces).
-  - `features/clarify-tailoring` (new): `ClarifyingQuestions` — answer/skip/decline, never blocks
-    (FR-WIZARD-03); only answered questions become evidence (FR-WIZARD-04, BC-HONESTY-03).
-  - `features/run-tailoring`: shared `api/read-ndjson.ts` (stream-tailoring refactored onto it),
-    `streamAnalyze`/`streamGenerate` clients, `AnalyzeForm`, exported `AnalysisResult`. One-shot
-    `/api/tailor` + TailoringForm kept intact.
-  - i18n `wizard` section (ua+en). Built via understand-workflow `wf_3e3b5f06-981`.
-  - **Verified:** lint clean, build clean, **474 tests / 79 files green**. **verifier: PASS** (every
-    FR/NFR/BC backed by a named test). **checker: ship, 0 blockers**; its 1 actionable minor fixed
-    (WizardSteps now drops the clarify dot when there are no questions, so a skipped clarify isn't
-    shown as completed — FR-WIZARD-05). Remaining minor (no cancel/back mid-`generate`) is accepted
-    for this increment — folds into the existing FR-TAILOR-02 step-streaming follow-up.
-  - **Not done (still open in tasks.md):** 1.7/2.5 checkboxes to tick; section 4 (export deps/routes);
-    section 5 (wizard honesty-evals, sync `specs/wizard/spec.md` + `specs/bullets/spec.md` delta into
-    baseline, archive). Live E2E still needs `ANTHROPIC_API_KEY`.
+- **`add-resume-wizard`** — sections 1–4 DONE, section 5 mostly done (5.1–5.3/5.5 closed this
+  pass, see Last action). Remaining before archive: 5.4 (PDF/DOCX round-trip Cyrillic visual
+  check), 5.6 (spec sync + archive), 3.14 (deferred, non-blocking). **Whole change still NOT
+  committed** — everything since `16c67ad` (this session's wiring + paywall fix + cleanup) is
+  uncommitted in the `export-wiring3` worktree.
 - `add-auth` remainder: password reset email (needs a sender). Google OAuth (`FR-AUTH-02`)
   DEFERRED per user 2026-07-03 — credentials-only for now.
+- Also uncommitted from a prior session (still pending, see git status): the `POST /api/tailor`
+  adaptive-thinking-effort fix, the usage-counter FK-violation degrade fix, and the account-menu/
+  profile-page work — check `git status`/`git log` before assuming these landed; the handoff doc
+  had drifted from actual commits once already this project (see Last action).
 
 ## Next steps
 
-0. **Two user-reported `POST /api/tailor` failures, both diagnosed + fixed (2026-07-03):**
-   - First report (~17ms failure) was `ANTHROPIC_API_KEY` unset — expected fail-honest behavior
-     per `docs/dev-setup.md`, not a bug; agents can't touch `.env*`, user action to set it.
-   - Added server-side `console.error` logging (client NDJSON contract unchanged) to the outer
-     catch of `/api/tailor`, `/api/tailor/analyze`, `/api/tailor/generate` — previously every
-     failure cause was indistinguishable in the console (committed `1e42f19`).
-   - That logging then surfaced a SECOND, real bug: `usage_counters_user_id_fkey` violation —
-     a stale JWT session (Auth.js is stateless-JWT, never re-checks the DB, `src/app/auth.ts`)
-     resolved a `userId` no longer present in `users` (dev pglite resets on `yarn dev:db`
-     restart; the equivalent prod scenario is a deleted account with a lingering session
-     cookie). `usage-counter-repo.ts`'s `reserve()` now catches Postgres `23503`
-     (foreign_key_violation) and returns `false` (not granted → the existing calm
-     `rate_limited` path) instead of letting the raw DB error propagate — mirrors the same
-     file's existing "unreadable subscription degrades to the stricter free gate" pattern.
-     Added 2 unit tests (FK-violation → `false`, other errors still throw). **Not yet
-     committed this pass** — verify (lint/build/test) before committing.
-1. **Plan + implement `add-resume-wizard` tasks 1.7 + 2.5** (wizard UI/state machine) as its own
-   focused pass, not blind fan-out — replaces the one-shot `TailoringForm`→result flow in
-   `views/tailor-workspace` with a multi-step `analyze | confirm | clarify | generate | export |
-   failed` flow (`FR-WIZARD-05` labels) calling the now-live `/api/tailor/analyze` +
-   `/api/tailor/generate` routes and rendering `clarifyingQuestions` via a new
-   `features/clarify-tailoring` slice. Touches `TailorWorkspace.test.tsx` /
-   `.paywall.test.tsx` / `.upload.test.tsx` — read them closely before rewriting the flow.
-2. Then section 4 (export: `ExportDocument` model, clipboard/PDF/DOCX, new deps
-   `@react-pdf/renderer` + `docx`) — no Cyrillic-complete font file is bundled in the repo yet;
-   npm registry + fonts.gstatic.com are both reachable from this sandbox (verified), so sourcing
-   one at implementation time is viable — check `@react-pdf/renderer`'s actual supported font
-   formats (TTF/WOFF; verify WOFF2 support empirically, don't assume) before picking a package.
-3. Then section 5 (honesty-evals for the wizard, final agent-verify + checker-review, sync
-   `specs/wizard/spec.md` + the already-landed `specs/bullets/spec.md` delta into baseline,
-   archive the change).
+1. **Commit + push this session's export work**, open a draft PR.
+2. **5.4** — manually render a PDF and DOCX export (a paid-tier fixture with Ukrainian text) and
+   visually confirm Cyrillic glyphs render correctly in both, and the free-tier footer is present/
+   absent matching entitlement.
+3. **5.6** — once 5.4 is done and 3.14 is either done or explicitly accepted as deferred, sync
+   `specs/wizard/spec.md` (new) + the `specs/bullets/spec.md` MODIFIED delta into baseline and
+   archive `add-resume-wizard` (`openspec-archive-change`).
 4. Re-run `perf-audit` on a machine with Chrome (blocked in this sandbox) — CSP headers landed
    since the last audit and could plausibly move the ~20 ms LCP margin.
 5. Longer-tail, not blocking: `paste-jd` as its own slice, BullMQ worker, `add-agent-loop`

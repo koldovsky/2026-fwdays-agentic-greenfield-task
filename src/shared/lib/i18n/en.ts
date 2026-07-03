@@ -35,7 +35,6 @@ export const en: Dictionary = {
     cvLabel: "Résumé text",
     jdLabel: "Job description",
     emptyState: "Your result will appear here after tailoring.",
-    exportAction: "Export result",
   },
   uploadCv: {
     dropLabel: "Drag your resume file here",

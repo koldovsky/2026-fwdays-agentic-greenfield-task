@@ -1,15 +1,17 @@
 // Paywall composition in the wizard (FR-PAYWALL-01, NFR-COST-02): the view opens
 // widgets/paywall at the two gated points — export without a paid entitlement,
-// and a `rate_limited` GENERATION run — and a paid user exports without seeing
-// it. run-tailoring is mocked: AnalyzeForm fires a scripted analysis and
-// streamGenerate is a scripted async generator (the real budget limit lives
-// server-side; the client only relays the rate_limited event).
+// and a `rate_limited` GENERATION run — and a paid user reaches export without
+// seeing it. run-tailoring and widgets/export-stepper are both mocked: this
+// test drives the view's own control flow (does the paywall open / stay
+// closed / stay gated), not ExportStepper's copy/PDF/DOCX internals — those
+// are covered by the widget's own test.
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
 import type { AnalysisResult, TailoringRunResult } from "@/features/run-tailoring";
+import type { ExportStepperProps } from "@/widgets/export-stepper";
 
 import { TailorWorkspace } from "./TailorWorkspace";
 
@@ -41,6 +43,22 @@ vi.mock("@/features/run-tailoring", () => ({
   streamGenerate: streamGenerateMock,
 }));
 
+// Fake ExportStepper: exposes just enough surface (an export trigger that
+// respects the injected paid/onPaywall props) to drive TailorWorkspace's
+// paywall composition, without exercising the real copy/PDF/DOCX buttons.
+vi.mock("@/widgets/export-stepper", () => ({
+  ExportStepper: ({ paid, onPaywall }: ExportStepperProps) => (
+    <button
+      type="button"
+      onClick={() => {
+        if (!paid) onPaywall();
+      }}
+    >
+      fake export
+    </button>
+  ),
+}));
+
 function scriptedGen(events: readonly unknown[]) {
   return () =>
     (async function* () {
@@ -66,37 +84,29 @@ async function reachExport() {
   await userEvent.click(screen.getByRole("button", { name: "fake analyze" }));
   await userEvent.click(screen.getByRole("button", { name: ua.wizard.confirmAction }));
   // Export step is reached once generation streams its result.
-  await screen.findByRole("button", { name: ua.workspace.exportAction });
+  await screen.findByRole("button", { name: "fake export" });
 }
 
 describe("TailorWorkspace paywall (FR-PAYWALL-01)", () => {
-  it("intercepts export for a non-paid user — paywall opens, nothing exports", async () => {
+  it("intercepts export for a non-paid user — paywall opens", async () => {
     streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
-    const onExport = vi.fn();
-    render(<TailorWorkspace paid={false} onExport={onExport} />);
+    render(<TailorWorkspace paid={false} />);
 
     await reachExport();
-    await userEvent.click(screen.getByRole("button", { name: ua.workspace.exportAction }));
+    await userEvent.click(screen.getByRole("button", { name: "fake export" }));
 
     expect(paywallRegion()).toBeInTheDocument();
     expect(screen.getByText(ua.paywall.exportLead)).toBeInTheDocument();
-    expect(onExport).not.toHaveBeenCalled();
   });
 
-  it("lets a paid user export — included bullets only, no paywall (FR-PAYWALL-03)", async () => {
+  it("does not open the paywall for a paid user at export (FR-PAYWALL-03)", async () => {
     streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
-    const onExport = vi.fn();
-    render(<TailorWorkspace paid onExport={onExport} />);
+    render(<TailorWorkspace paid />);
 
     await reachExport();
-    await userEvent.click(screen.getByRole("button", { name: ua.workspace.exportAction }));
+    await userEvent.click(screen.getByRole("button", { name: "fake export" }));
 
     expect(paywallRegion()).not.toBeInTheDocument();
-    expect(onExport).toHaveBeenCalledTimes(1);
-    const exported = onExport.mock.calls[0][0] as string;
-    expect(exported).toContain("Shipped a React platform.");
-    // Excluded overclaim-risk bullet never reaches the export (BC-HONESTY-02).
-    expect(exported).not.toContain("12-person");
   });
 
   it("opens the paywall when the server rate-limits a generation run (NFR-COST-02)", async () => {
@@ -112,16 +122,14 @@ describe("TailorWorkspace paywall (FR-PAYWALL-01)", () => {
 
   it("dismiss closes the panel and the gated action stays gated", async () => {
     streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
-    const onExport = vi.fn();
-    render(<TailorWorkspace paid={false} onExport={onExport} />);
+    render(<TailorWorkspace paid={false} />);
 
     await reachExport();
-    await userEvent.click(screen.getByRole("button", { name: ua.workspace.exportAction }));
+    await userEvent.click(screen.getByRole("button", { name: "fake export" }));
     expect(paywallRegion()).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: ua.paywall.dismissAction }));
 
     expect(paywallRegion()).not.toBeInTheDocument();
-    expect(onExport).not.toHaveBeenCalled();
   });
 });
