@@ -47,11 +47,13 @@ Key aliases: surfaces (`--bg`, `--surface`, `--surface-raised`, `--surface-hover
 text (`--text`, `--text-secondary`, `--text-muted`, `--text-on-brand`), brand
 (`--brand`, `--brand-hover`, `--brand-soft`, `--accent`), borders (`--border`,
 `--border-strong`), and the signature **status** roles —
-`--status-{pending,confirmed,declined}-{bg,fg,solid}`:
+`--status-{pending,confirmed,declined,cancelled}-{bg,fg,solid}`:
 
 - `pending` — warm amber: a request waiting for the teacher, never alarming;
 - `confirmed` — deep green: the only state a human can produce (`FR-GUARD-01`);
-- `declined` — muted rose: quiet, respectful, no red-alert theatrics.
+- `declined` — muted rose: quiet, respectful, no red-alert theatrics;
+- `cancelled` — quiet slate: the lead withdrew before a decision
+  (`FR-INTAKE-07`); neutral, never blamed.
 
 Spacing is a 4px grid (`--space-1…10`); radii are `--radius-{sm,md,lg,pill}`
 (inputs/buttons 12px, cards 16px, the request card 20px, status badges pill).
@@ -67,7 +69,7 @@ utilities stay theme-aware:
 ```
 
 Available: `bg-/text-/border-` for `bg`, `surface*`, `brand*`, `accent`, `text*`,
-`border*`, `status-{pending,confirmed,declined}`; `font-sans`/`font-mono`;
+`border*`, `status-{pending,confirmed,declined,cancelled}`; `font-sans`/`font-mono`;
 `rounded-{md,lg,xl}`. Anything not bridged — use `var(--token)` directly.
 
 ---
@@ -130,7 +132,8 @@ working example (pending queue + one live conversation).
 Icons come from **Lucide** at a calm **1.75 stroke** via `lucide-react`. The
 `Icon` component wraps it; pass a name (`<Button iconLeft="check">`). Booking
 statuses must go through **`StatusBadge`** — the single source of truth mapping
-`pending/confirmed/declined` to icon + colour. Icons inherit `currentColor`.
+`pending/confirmed/declined/cancelled` to icon + colour. Icons inherit
+`currentColor`.
 
 ---
 
@@ -151,7 +154,9 @@ These rules bind **both** surfaces and are embedded into the agent's prompt.
 - **Curiosity, not an interrogation.** The get-to-know questions (goal, tastes,
   dream song) sound like a friendly chat, never a form: "Яку пісню ви б
   залюбки заспівали?", not "Вкажіть репертуарні вподобання". Skipping is always
-  fine — "можемо з'ясувати це вже на занятті".
+  fine — "можемо з'ясувати це вже на занятті". Never assessment: no grading or
+  level-check language — "давай перевіримо твій рівень" is banned. (These are
+  the rubric anchors for the FR-INTAKE-03..05 evals, BC-BRAND-01.)
 - **Every goal is a good goal.** Karaoke, the stage, or quietly beating
   shyness — the agent mirrors the lead's words back with respect and never
   ranks ambitions ("для караоке — чудова ціль", full stop, no "лише").

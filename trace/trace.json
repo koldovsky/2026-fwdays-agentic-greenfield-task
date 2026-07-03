@@ -7,28 +7,36 @@
     "FR-INTAKE-04": "MVP",
     "FR-INTAKE-05": "MVP",
     "FR-INTAKE-06": "MVP",
+    "FR-INTAKE-07": "MVP",
+    "FR-INTAKE-08": "MVP",
+    "FR-GUARD-04": "MVP",
+    "FR-GUARD-05": "MVP",
     "FR-FAQ-01": "MVP",
     "FR-FAQ-02": "MVP",
     "FR-KB-01": "MVP",
     "FR-KB-02": "MVP",
     "FR-KB-03": "MVP",
+    "FR-KB-04": "MVP",
+    "FR-KB-05": "Future",
+    "FR-GUARD-02": "MVP",
+    "FR-GUARD-06": "MVP",
     "FR-SLOT-01": "MVP",
     "FR-SLOT-02": "MVP",
+    "FR-SLOT-03": "MVP",
+    "FR-GUARD-03": "MVP",
     "FR-HITL-01": "MVP",
     "FR-HITL-02": "MVP",
-    "FR-DASH-01": "MVP",
-    "FR-DASH-02": "MVP",
-    "FR-GROUP-01": "MVP",
+    "FR-HITL-03": "MVP",
     "FR-GUARD-01": "MVP",
-    "FR-GUARD-02": "MVP",
-    "FR-GUARD-03": "MVP",
-    "FR-GUARD-04": "MVP",
-    "FR-GUARD-05": "MVP",
-    "FR-GUARD-06": "MVP",
+    "FR-DASH-01": "MVP",
+    "FR-DASH-02": "Future",
+    "FR-GROUP-01": "Future",
     "NFR-LOCAL-01": "MVP",
     "NFR-SEC-01": "MVP",
     "NFR-UX-01": "MVP",
     "NFR-PRIV-01": "MVP",
+    "NFR-PRIV-02": "MVP",
+    "NFR-REL-01": "MVP",
     "NFR-DX-01": "MVP",
     "TC-STACK-01": "MVP",
     "TC-STACK-02": "MVP",
@@ -41,10 +49,12 @@
     "BC-SCOPE-01": "MVP",
     "BC-SCOPE-02": "MVP",
     "BC-AGE-01": "MVP",
+    "BC-AGE-02": "MVP",
     "BC-FORMAT-01": "MVP",
     "BC-SCHEDULE-01": "MVP",
     "BC-PRICE-01": "MVP",
     "BC-LESSON-01": "MVP",
+    "BC-LANG-01": "MVP",
     "BC-BRAND-01": "MVP",
     "BC-DEMO-01": "MVP"
   },
@@ -92,6 +102,34 @@
       "recordings": []
     },
     {
+      "id": "FR-INTAKE-07",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-INTAKE-08",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GUARD-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GUARD-05",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
       "id": "FR-FAQ-01",
       "specs": [],
       "planned": null,
@@ -127,6 +165,27 @@
       "recordings": []
     },
     {
+      "id": "FR-KB-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GUARD-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GUARD-06",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
       "id": "FR-SLOT-01",
       "specs": [],
       "planned": null,
@@ -135,6 +194,20 @@
     },
     {
       "id": "FR-SLOT-02",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SLOT-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-GUARD-03",
       "specs": [],
       "planned": null,
       "tests": [],
@@ -155,21 +228,7 @@
       "recordings": []
     },
     {
-      "id": "FR-DASH-01",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-DASH-02",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-GROUP-01",
+      "id": "FR-HITL-03",
       "specs": [],
       "planned": null,
       "tests": [],
@@ -183,35 +242,7 @@
       "recordings": []
     },
     {
-      "id": "FR-GUARD-02",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-GUARD-03",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-GUARD-04",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-GUARD-05",
-      "specs": [],
-      "planned": null,
-      "tests": [],
-      "recordings": []
-    },
-    {
-      "id": "FR-GUARD-06",
+      "id": "FR-DASH-01",
       "specs": [],
       "planned": null,
       "tests": [],
@@ -246,6 +277,22 @@
     },
     {
       "check": "spec-mention",
+      "msg": "FR-INTAKE-07 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-INTAKE-08 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GUARD-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GUARD-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
       "msg": "FR-FAQ-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
@@ -266,11 +313,31 @@
     },
     {
       "check": "spec-mention",
+      "msg": "FR-KB-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GUARD-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GUARD-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
       "msg": "FR-SLOT-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "spec-mention",
       "msg": "FR-SLOT-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-SLOT-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-GUARD-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "spec-mention",
@@ -282,15 +349,7 @@
     },
     {
       "check": "spec-mention",
-      "msg": "FR-DASH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-DASH-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GROUP-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+      "msg": "FR-HITL-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "spec-mention",
@@ -298,23 +357,7 @@
     },
     {
       "check": "spec-mention",
-      "msg": "FR-GUARD-02 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-05 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
-    },
-    {
-      "check": "spec-mention",
-      "msg": "FR-GUARD-06 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+      "msg": "FR-DASH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "plan-ownership",
@@ -346,6 +389,22 @@
     },
     {
       "check": "test-trace",
+      "msg": "FR-INTAKE-07 has no test annotated \"@trace FR-INTAKE-07\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-INTAKE-08 has no test annotated \"@trace FR-INTAKE-08\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GUARD-04 has no test annotated \"@trace FR-GUARD-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GUARD-05 has no test annotated \"@trace FR-GUARD-05\""
+    },
+    {
+      "check": "test-trace",
       "msg": "FR-FAQ-01 has no test annotated \"@trace FR-FAQ-01\""
     },
     {
@@ -366,11 +425,31 @@
     },
     {
       "check": "test-trace",
+      "msg": "FR-KB-04 has no test annotated \"@trace FR-KB-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GUARD-02 has no test annotated \"@trace FR-GUARD-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GUARD-06 has no test annotated \"@trace FR-GUARD-06\""
+    },
+    {
+      "check": "test-trace",
       "msg": "FR-SLOT-01 has no test annotated \"@trace FR-SLOT-01\""
     },
     {
       "check": "test-trace",
       "msg": "FR-SLOT-02 has no test annotated \"@trace FR-SLOT-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SLOT-03 has no test annotated \"@trace FR-SLOT-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-GUARD-03 has no test annotated \"@trace FR-GUARD-03\""
     },
     {
       "check": "test-trace",
@@ -382,15 +461,7 @@
     },
     {
       "check": "test-trace",
-      "msg": "FR-DASH-01 has no test annotated \"@trace FR-DASH-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DASH-02 has no test annotated \"@trace FR-DASH-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GROUP-01 has no test annotated \"@trace FR-GROUP-01\""
+      "msg": "FR-HITL-03 has no test annotated \"@trace FR-HITL-03\""
     },
     {
       "check": "test-trace",
@@ -398,23 +469,7 @@
     },
     {
       "check": "test-trace",
-      "msg": "FR-GUARD-02 has no test annotated \"@trace FR-GUARD-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-03 has no test annotated \"@trace FR-GUARD-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-04 has no test annotated \"@trace FR-GUARD-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-05 has no test annotated \"@trace FR-GUARD-05\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-06 has no test annotated \"@trace FR-GUARD-06\""
+      "msg": "FR-DASH-01 has no test annotated \"@trace FR-DASH-01\""
     },
     {
       "check": "recording-evidence",
@@ -442,6 +497,22 @@
     },
     {
       "check": "recording-evidence",
+      "msg": "FR-INTAKE-07 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-INTAKE-08 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GUARD-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GUARD-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
       "msg": "FR-FAQ-01 is not referenced by any recording manifest under docs/qa/"
     },
     {
@@ -462,11 +533,31 @@
     },
     {
       "check": "recording-evidence",
+      "msg": "FR-KB-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GUARD-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GUARD-06 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
       "msg": "FR-SLOT-01 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",
       "msg": "FR-SLOT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SLOT-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-GUARD-03 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",
@@ -478,15 +569,7 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-DASH-01 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-DASH-02 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-GROUP-01 is not referenced by any recording manifest under docs/qa/"
+      "msg": "FR-HITL-03 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",
@@ -494,23 +577,7 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-GUARD-02 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-GUARD-03 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-GUARD-04 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-GUARD-05 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-GUARD-06 is not referenced by any recording manifest under docs/qa/"
+      "msg": "FR-DASH-01 is not referenced by any recording manifest under docs/qa/"
     }
   ]
 }

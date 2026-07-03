@@ -14,10 +14,14 @@ tunnels, no cloud DB.
 - `DESIGN.md` — visual identity + agent voice rules (BC-BRAND-01).
 - `docs/adr/ADR-0001-architecture.md` — local-first architecture, AG-UI transport, guardrails-in-code.
 
-## Capabilities (MVP)
+## Capabilities
 
-`intake` · `kb-learning` · `slots` · `booking-hitl` · `dashboard` ·
-`groups` (optional) · `guardrails`.
+MVP: `intake` · `kb-learning` · `slots` · `booking-hitl` · `dashboard`.
+Future: `groups` (waitlist included). Guardrail FRs are owned by their
+implementing capabilities (FR-GUARD-01→booking-hitl, -02/-06→kb-learning,
+-03→slots, -04/-05→intake); the guardrails **eval suite** is cross-cutting
+(`evals/cases/fr-guard-*.yaml`). The Question inbox belongs to `kb-learning`,
+not `dashboard`.
 
 ## Non-negotiables (guardrails live in code, not the prompt)
 

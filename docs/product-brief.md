@@ -39,11 +39,13 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
 
 ## End-to-end usage
 
-1. **Write.** A lead messages the bot. The agent greets them and answers factual
-   questions strictly from `knowledge/school.md` (FR-FAQ-01); anything the base
-   cannot answer is flagged for the administrator instead of improvised
-   (FR-FAQ-02, BC-PRICE-01) — and every question, answered or not, is logged for
-   the knowledge-base loop (FR-KB-01).
+1. **Write.** A lead messages the bot. The agent greets them — with a one-line
+   notice that messages are processed via the Anthropic API (NFR-PRIV-02) — and
+   answers factual questions strictly from `knowledge/school.md` (FR-FAQ-01);
+   anything the base cannot answer is flagged for the administrator instead of
+   improvised (FR-FAQ-02, BC-PRICE-01), every question, answered or not, is
+   logged for the knowledge-base loop (FR-KB-01), and when the teacher later
+   answers, the bot brings that answer back to this lead (FR-KB-04).
 2. **Qualify.** The agent collects the student's name, age, preferred format, and
    preferred weekday/time range (FR-INTAKE-01), validating age and scope before
    going any further (FR-INTAKE-02): under-4s get a kind "come back at 4"
@@ -70,9 +72,11 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
 6. **Decide.** The `pending` request — first-lesson brief included — shows
    Confirm / Propose another time / Decline. Nothing reaches the lead until she
    acts (FR-HITL-01, FR-GUARD-01). Next to the queue sits the **Question inbox**:
-   unanswered lead questions, deduplicated and ordered by frequency (FR-KB-02);
-   answering one appends it to the knowledge base for every future lead
-   (FR-KB-03) — and only she can do that, never the agent (FR-GUARD-06).
+   a plain newest-first list of unanswered lead questions (FR-KB-02; dedup and
+   frequency counters are Future, FR-KB-05); answering one appends it to the
+   knowledge base for every future lead (FR-KB-03) and sends the answer back to
+   the lead who asked (FR-KB-04) — and only she can do that, never the agent
+   (FR-GUARD-06).
 7. **Close the loop.** Her decision travels back through the bot: a confirmation
    with the date and time, or a counter-offer, lands in the lead's Telegram
    within a second (FR-HITL-02).
@@ -96,21 +100,34 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
   that playlist and a no-audience warm-up — because the brief told her exactly
   that before she confirmed the slot (FR-INTAKE-03/04/05/06, BC-LESSON-01).
 - **The growing FAQ.** Three different parents ask whether lessons continue over
-  school holidays. The Question inbox shows it once, with a ×3 counter; the
-  teacher types the answer one time, and the fourth parent gets it instantly from
-  the bot (FR-KB-01/02/03, FR-GUARD-06).
+  school holidays. Each question lands in the Question inbox (a plain list in
+  MVP; the ×3 dedup counter is Future, FR-KB-05); the teacher types the answer
+  once — the bot delivers it back to everyone who asked (FR-KB-04), and the
+  fourth parent gets it instantly from the knowledge base (FR-KB-01/02/03,
+  FR-GUARD-06).
+- **The change of plans.** A parent in `awaiting_admin` writes "sorry, Tuesday
+  no longer works" — the bot releases the held slot, updates the request
+  (FR-INTAKE-07), and offers new times; months later the same parent books a
+  trial for a sibling, and a fresh request starts without touching the first
+  child's profile (FR-INTAKE-08).
 
 ## MVP vs Future boundary
 
 **In the MVP:** the full single-flow loop above — intake with the get-to-know
-questions and the first-lesson brief, FAQ from the knowledge base with the
-question log, deterministic slots, the `pending` hold, the live AG-UI dashboard
-with human-in-the-loop decisions and the Question inbox, and the Telegram
-close-out — plus the guardrail eval suite (`npm run evals`) and the unit-tested
-pure `lib/` (TC-TEST-01/02, TC-PURE-01). Group matching (FR-GROUP-01), the
-raw-events developer panel (FR-DASH-02), and inbox deduplication-by-similarity
-(the "×3 counter" in FR-KB-02; a plain list ships first) are Should-priority:
-they ship if time allows and are cut first.
+questions and the first-lesson brief, amendments and cancellation before the
+decision (FR-INTAKE-07), returning leads (FR-INTAKE-08), FAQ from the knowledge
+base with the question log and the answer delivered back to whoever asked
+(FR-KB-04), deterministic slots with the widen-the-window fallback (FR-SLOT-03),
+the `pending` hold, the live AG-UI dashboard with human-in-the-loop decisions
+and the plain-list Question inbox, the Telegram close-out, honest degradation on
+API failures (NFR-REL-01), and the privacy notice (NFR-PRIV-02) — plus the
+guardrail eval suite (`npm run evals`) and the unit-tested pure `lib/`
+(TC-TEST-01/02, TC-PURE-01).
+
+**Future (the `Phase` column in requirements.md is authoritative):** group
+matching and the waitlist (FR-GROUP-01), the raw-events developer panel
+(FR-DASH-02), and inbox deduplication with frequency counters (FR-KB-05) —
+promoted only after the MVP loop is green.
 
 **Future (deferred):** the PRD's explicit out-of-scope list, none of which is
 built — payments, reminders, rescheduling of confirmed lessons, calendar

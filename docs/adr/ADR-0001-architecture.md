@@ -48,25 +48,40 @@ human-in-the-loop.
    `bookings.status → 'confirmed'` transition exists **only** in the dashboard's
    admin handler — the agent's tool set physically contains no such operation
    (FR-GUARD-01). `lib/` is framework-free and fully unit-testable (TC-PURE-01).
-4. **SQLite as the only store** (TC-DATA-01): `leads` (extended with the intake
-   profile — `goal_tag`, `goal_text`, `tastes`, `dream_song`, `experience`,
-   `comfort`, compiled into the first-lesson brief, FR-INTAKE-03..06), `slots`,
-   `bookings` (with `decided_by`/`decided_at` as audit evidence for FR-GUARD-01),
-   `groups`, and `questions` (`lead_id`, `text`, `answer_source: kb|unanswered`,
-   `status`, `admin_answer`, `answered_at`) feeding the Question inbox
-   (FR-KB-01/02). The `.db` file is gitignored (NFR-PRIV-01).
+4. **SQLite as the only store** (TC-DATA-01): `leads` (identity only — Telegram
+   handle, contact), `requests` carrying the intake profile — `goal_tag`,
+   `goal_text`, `tastes`, `dream_song`, `experience`, `comfort`, compiled into
+   the first-lesson brief (FR-INTAKE-03..06) — so a returning lead's new request
+   never overwrites an earlier one (FR-INTAKE-08), `slots`, `bookings` with
+   `status ∈ {pending, confirmed, declined, cancelled}` and
+   `decided_by`/`decided_at` as audit evidence for FR-GUARD-01, and `questions`
+   (`lead_id`, `text`, `answer_source: kb|unanswered`, `status`, `admin_answer`,
+   `answered_at`) feeding the Question inbox (FR-KB-01/02). `groups` and
+   `waitlist` arrive with the Future `groups` capability. The `.db` file is
+   gitignored (NFR-PRIV-01).
 5. **The knowledge base has exactly two write paths, both human.** The teacher
    edits `knowledge/school.md` directly, or answers a question in the dashboard's
-   Question inbox — that handler appends an entry to the file and marks the
-   question `answered` (FR-KB-03). The agent's `log_question` tool only inserts
-   into `questions`; no agent tool can touch `knowledge/school.md` (FR-GUARD-06) —
+   Question inbox — that handler appends an entry to the file, marks the
+   question `answered`, and hands the answer to the bot, which sends it to the
+   originating lead (FR-KB-03/04). Question logging is deterministic, not
+   model-discretionary: `answer_faq` itself inserts the `questions` row with
+   `answer_source='kb'`, and `log_question` inserts `unanswered` rows
+   (FR-KB-01). No agent tool can touch `knowledge/school.md` (FR-GUARD-06) —
    the same maker ≠ checker shape as the booking confirmation.
 6. **Conversation state machine** per chat:
    `greeting → qualifying → profiling → collecting → proposing → awaiting_admin → done`
-   (`profiling` = the get-to-know questions: goal, tastes, experience,
-   FR-INTAKE-03..05), with exits to `soft_decline` (age < 4), the scope
-   explanation (BC-SCOPE-01/02), and off-topic steering (FR-GUARD-05). Every
-   change streams as a `STATE_DELTA`.
+   with explicit field ownership: `qualifying` = name, age, format (validated
+   in code before advancing, FR-INTAKE-02); `profiling` = the get-to-know
+   questions (goal, tastes, experience, FR-INTAKE-03..05); `collecting` =
+   preferred weekdays and time range. Exits and detours are distinct:
+   `soft_decline` (age < 4) is **terminal**; the scope explanation
+   (BC-SCOPE-01/02) and off-topic steering (FR-GUARD-05) are **resumable
+   detours** that return to the prior state. Admin decisions drive
+   `awaiting_admin → done` (confirm / decline) or back to `proposing`
+   (propose another time, FR-HITL-03); the lead may amend or cancel any time
+   before the decision (`cancelled`, FR-INTAKE-07); a new message after a
+   terminal state opens a new request (FR-INTAKE-08). Every change streams as
+   a `STATE_DELTA`.
 7. **Secrets:** untracked `.env` (carrying only `TELEGRAM_BOT_TOKEN`) +
    committed `.env.example`; a gitleaks pre-commit hook blocks token leaks
    (TC-SEC-01). Anthropic auth resolves from the developer's local **user
@@ -88,6 +103,8 @@ human-in-the-loop.
 - **Easier:** demoing (everything on one machine), securing (no attack surface),
   testing (pure `lib/`, deterministic slots), and explaining maker ≠ checker —
   the human approval is an architectural fact, not a convention.
-- **Harder / accepted:** the machine must be on for the bot to answer; two leads
-  wanting the same slot are serialized through `pending` and resolved by the
-  human; group matching logic stays simple (±2 years) until real data says otherwise.
+- **Harder / accepted:** the machine must be on for the bot to answer; a
+  `pending` hold excludes the slot from other leads' offers (no race by
+  construction, FR-SLOT-01/02) at the cost that an abandoned hold blocks the
+  slot until the administrator resolves it; group matching stays simple
+  (±2 years per member) and ships as a Future capability.
