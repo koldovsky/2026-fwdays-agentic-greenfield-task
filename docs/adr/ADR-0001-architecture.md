@@ -56,8 +56,11 @@ human-in-the-loop.
    `status ∈ {pending, confirmed, declined, cancelled}` and
    `decided_by`/`decided_at` as audit evidence for FR-GUARD-01, and `questions`
    (`lead_id`, `text`, `answer_source: kb|unanswered`, `status`, `admin_answer`,
-   `answered_at`) feeding the Question inbox (FR-KB-01/02). `groups` and
-   `waitlist` arrive with the Future `groups` capability. The `.db` file is
+   `answered_at`, `delivery_status: pending|delivered|failed`) feeding the
+   Question inbox (FR-KB-01/02) and the FR-KB-04 answer-delivery retry.
+   *Amended 2026-07-04 (Phase 2): `delivery_status` added to support FR-KB-04
+   answer-delivery retry.* `groups` and `waitlist` arrive with the Future
+   `groups` capability. The `.db` file is
    gitignored (NFR-PRIV-01).
 5. **The knowledge base has exactly two write paths, both human.** The teacher
    edits `knowledge/school.md` directly, or answers a question in the dashboard's

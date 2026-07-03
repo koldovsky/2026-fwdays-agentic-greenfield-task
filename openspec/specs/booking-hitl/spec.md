@@ -30,11 +30,12 @@ SHALL be available only while the request is `pending`.
 - **WHEN** the administrator views its request card
 - **THEN** none of the three decision actions is actionable for that request
 
-#### Scenario: Decision actions absent while a proposal awaits the lead
+#### Scenario: Decision actions absent once superseded by a re-proposal
 
-- **GIVEN** a booking request in state `proposing` (non-pending, non-terminal — slot proposal awaits the lead's answer)
-- **WHEN** the administrator views its request card
-- **THEN** none of the three decision actions is actionable for that request
+- **GIVEN** the administrator previously clicked Propose another time on this booking, so its `bookings.status` is `cancelled` (superseded) while the lead's *conversation* state (a separate state machine, ADR-0001 §6) has returned to `proposing` with the admin's slots offered
+- **WHEN** the administrator views that booking's card
+- **THEN** none of the three decision actions is actionable for it — it is terminal (`cancelled`)
+- **AND** a decision surface reappears only once the lead picks one of the offered slots and a new booking moves to `pending`
 
 ### Requirement: Lead notification after admin decision
 
@@ -81,10 +82,19 @@ neither.
 Admin decisions SHALL drive the booking state machine (FR-HITL-03), and the
 transitions SHALL be implemented as pure functions in `lib/` (TC-PURE-01):
 Confirm → `confirmed`; Decline → `declined` with the held slot released;
-Propose another time → hold released and the booking returned to `proposing`
-with the administrator's suggested slot(s) attached. A lead message arriving
+Propose another time → the booking transitions to `cancelled` (superseded by
+the re-proposal — distinct from a lead-initiated cancellation, but the same
+`bookings.status` value) with the held slot released, while the lead's
+*conversation* state returns to `proposing` with the administrator's
+suggested slot(s) offered as the new proposal; a new `pending` booking is
+created only once the lead picks one of those slots. A lead message arriving
 after a terminal state starts a new request per FR-INTAKE-08 (owned by the
 `intake` capability; cross-referenced here, not re-specified).
+
+Note: `bookings.status` is a strict four-value enum {pending, confirmed,
+declined, cancelled} (TC-DATA-01, ADR-0001 §4) — it is a separate state
+machine from the per-chat *conversation* state, whose states include
+`proposing` (ADR-0001 §6); `proposing` is never a `bookings.status` value.
 
 #### Scenario: Confirm transitions the booking to confirmed
 
@@ -100,12 +110,14 @@ after a terminal state starts a new request per FR-INTAKE-08 (owned by the
 - **THEN** the booking state becomes `declined`
 - **AND** the held slot is released and appears as free in subsequent slot offers
 
-#### Scenario: Propose another time returns the booking to proposing
+#### Scenario: Propose another time supersedes the booking and reopens the conversation
 
 - **GIVEN** a booking in state `pending` holding a slot
 - **WHEN** the administrator proposes another time with selected slot(s)
-- **THEN** the hold on the original slot is released
-- **AND** the booking state becomes `proposing` with the administrator's suggested slot(s) stored as the active proposal
+- **THEN** the hold on the original slot is released and the booking's `bookings.status` becomes `cancelled` (superseded by the re-proposal)
+- **AND** the tentative calendar event for that hold is deleted (FR-HITL-04)
+- **AND** the lead's conversation state (ADR-0001 §6) returns to `proposing`, with the administrator's suggested slot(s) offered as the new proposal
+- **AND** no `bookings.status` value outside {pending, confirmed, declined, cancelled} is ever introduced
 
 #### Scenario: Decision on a request no longer pending is rejected
 

@@ -9,12 +9,13 @@ live request card, the queue of `pending` requests (FR-DASH-01), and the
 week's schedule rendered as a concert-hall map (FR-DASH-03). All real-time
 data arrives as AG-UI events over SSE (TC-PROTO-01, ADR-0001 §2).
 
-This capability owns the conversation and queue surfaces only. It does NOT
-own: the Question inbox (owned by `kb-learning`, FR-KB-02/03), the admin
-decision state transitions and their side effects (owned by `booking-hitl`,
-FR-HITL-01..04 — this spec covers only *rendering* the DecisionBar), the raw
-AG-UI developer panel (FR-DASH-02 — Future, intentionally unsupported in MVP),
-and lead-facing seat picking (`web-booking`, FR-WEB-01 — Future).
+This capability owns the conversation and queue surfaces, and the "Delete
+lead" admin action (NFR-PRIV-02). It does NOT own: the Question inbox (owned
+by `kb-learning`, FR-KB-02/03), the admin decision state transitions and
+their side effects (owned by `booking-hitl`, FR-HITL-01..04 — this spec
+covers only *rendering* the DecisionBar), the raw AG-UI developer panel
+(FR-DASH-02 — Future, intentionally unsupported in MVP), and lead-facing seat
+picking (`web-booking`, FR-WEB-01 — Future).
 
 ## Requirements
 
@@ -78,10 +79,15 @@ NOT poll the database for data that these events carry.
 ### Requirement: Live conversation view with streamed agent text
 
 The dashboard SHALL show active conversations with the agent's replies
-streamed as they are produced (FR-DASH-01, NFR-UX-01): `TEXT_MESSAGE_*`
-events append text to the conversation's `ChatStream` incrementally, so the
-teacher sees the reply forming token-by-token rather than only after the run
-completes.
+streamed as they are produced (FR-DASH-01): `TEXT_MESSAGE_*` events append
+text to the conversation's `ChatStream` incrementally, so the teacher sees
+the reply forming token-by-token rather than only after the run completes.
+This is a dashboard-rendering concern only: the p90 ≤ 5 s bot-latency target
+of NFR-UX-01 (time from a Telegram update to the bot's first visible
+reaction) is owned by the `intake` capability, which sends `sendChatAction`
+before the dashboard ever receives a `RUN_STARTED` event; this requirement
+governs how the reply is displayed once streaming starts, not how quickly it
+starts.
 
 #### Scenario: Agent reply streams into the conversation view
 
@@ -154,8 +160,9 @@ lead notifications are owned by `booking-hitl` (FR-HITL-01..04).
 #### Scenario: Decided request leaves the pending queue
 
 - **GIVEN** a request is in the pending queue
-- **WHEN** the administrator decides it (any of the three actions) and the
-  resulting state update event arrives on the stream
+- **WHEN** the administrator (the teacher — the same single person per
+  NFR-LOCAL-01) decides it (any of the three actions) and the resulting state
+  update event arrives on the stream
 - **THEN** the request is removed from the pending queue without a page
   reload
 
@@ -238,7 +245,7 @@ DecisionBar.
 
 - **GIVEN** the current week has at least one booking in each of the states
   `pending`, `confirmed`, and `cancelled`
-- **WHEN** the teacher opens the dashboard
+- **WHEN** the administrator opens the dashboard
 - **THEN** the HallMap shows exactly five rows (Mon–Fri) and, per row, one
   seat per hourly slot start from 10:00 through 19:00
 - **AND** each seat's color matches its booking status via the
@@ -248,15 +255,15 @@ DecisionBar.
 #### Scenario: Clicking a pending seat opens the request card
 
 - **GIVEN** the HallMap shows a `pending` seat
-- **WHEN** the teacher clicks that seat
+- **WHEN** the administrator clicks that seat
 - **THEN** the corresponding request card opens, showing the collected fields
   and first-lesson brief, with the DecisionBar rendered
 
 #### Scenario: Clicking a free seat does not open a request card
 
 - **GIVEN** the HallMap shows a free seat
-- **WHEN** the teacher clicks it
-- **THEN** no request card opens and no error is shown (teacher-side seat
+- **WHEN** the administrator clicks it
+- **THEN** no request card opens and no error is shown (administrator-side seat
   booking is not supported in MVP; lead-side picking is Future, FR-WEB-01)
 
 #### Scenario: HallMap reflects state changes in real time
@@ -268,7 +275,7 @@ DecisionBar.
 
 #### Scenario: Weekend days are never shown
 
-- **GIVEN** the teacher opens the dashboard on any day of the week
+- **GIVEN** the administrator opens the dashboard on any day of the week
 - **WHEN** the HallMap renders
 - **THEN** Saturday and Sunday rows are absent (BC-SCHEDULE-01)
 
@@ -312,14 +319,14 @@ region, a spinner that never resolves, or an error — when there is no data.
 #### Scenario: No active conversations
 
 - **GIVEN** no lead is currently talking to the bot
-- **WHEN** the teacher opens the dashboard
+- **WHEN** the administrator opens the dashboard
 - **THEN** the conversation area shows an explicit empty state (e.g. "Поки що
   тихо — розмов немає") instead of a blank panel or an error
 
 #### Scenario: No pending requests
 
 - **GIVEN** there are zero `pending` requests
-- **WHEN** the teacher opens the dashboard
+- **WHEN** the administrator opens the dashboard
 - **THEN** the queue area shows an explicit empty state and a pending count
   of 0, not a blank panel
 
@@ -345,6 +352,42 @@ machine).
 - **THEN** the dashboard is served
 - **AND** the server is not reachable from another machine on the network
   (it does not listen on `0.0.0.0`)
+
+### Requirement: Delete-lead admin action
+
+The dashboard SHALL offer a **Delete lead** action on the lead's card (or its
+request card) that lets the administrator remove a lead's data on request
+(NFR-PRIV-02). The action SHALL require an explicit confirmation step before
+any deletion occurs — a single click SHALL NOT delete data. On confirmation
+the server SHALL perform a cascade delete of the lead row together with all
+of its `requests` and `bookings` rows; if any of those bookings is `pending`
+with a tentative event in the DEMO Google Calendar, that tentative event
+SHALL be deleted as part of the same action (consistent with the calendar
+cleanup `booking-hitl` performs on Decline/cancel). The lead-facing promise
+that "a lead's record ... is deletable on request via an admin action"
+(NFR-PRIV-02, owned narratively by `intake`) is fulfilled by this action.
+
+#### Scenario: Confirming delete removes the lead and cascades
+
+- **GIVEN** a lead's card is open, and the lead has one or more `requests` and `bookings` rows, including a `pending` booking with a tentative calendar event
+- **WHEN** the administrator clicks Delete lead and confirms the action in the confirmation step
+- **THEN** the lead row, all of its `requests` rows, and all of its `bookings` rows are deleted from the database
+- **AND** the tentative calendar event for the `pending` booking is deleted from the DEMO Google Calendar
+- **AND** the lead's card and any of its entries in the queue or HallMap are removed from the dashboard without a page reload
+
+#### Scenario: Aborting the confirmation step keeps the data intact
+
+- **GIVEN** the administrator clicks Delete lead and the confirmation step appears
+- **WHEN** the administrator dismisses or cancels the confirmation instead of confirming
+- **THEN** no deletion occurs — the lead, its requests, its bookings, and any tentative calendar event are all unchanged
+- **AND** the dashboard shows the lead exactly as before
+
+#### Scenario: Deletion failure surfaces an inline error, not a raw 500
+
+- **GIVEN** the administrator confirms Delete lead
+- **WHEN** the cascade delete or the calendar-event delete fails partway (e.g. a database or calendar API error)
+- **THEN** the dashboard surfaces a deterministic inline error naming the failure, never a raw 500 page
+- **AND** the administrator can retry the deletion
 
 ## Exclusions (intentional, MVP)
 

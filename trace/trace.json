@@ -334,7 +334,8 @@
       "id": "FR-DASH-01",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/dashboard/spec.md"
+        "openspec/specs/dashboard/spec.md",
+        "openspec/specs/intake/spec.md"
       ],
       "planned": null,
       "tests": [],

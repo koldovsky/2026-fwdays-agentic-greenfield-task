@@ -107,11 +107,14 @@ ADR-0001 §5). No prompt instruction is the mechanism of logging.
 
 Unanswered questions SHALL appear in a **Question inbox** panel on the
 dashboard as a plain list ordered newest first (FR-KB-02). This capability
-owns the panel end-to-end: its data source, route handler, and UI. A question
-leaves the inbox list once it is both `answered` and delivered to the
-originating lead; a question that is `answered` but whose Telegram delivery
-failed stays on the panel in a visually distinct delivery-failed state with a
-retry action (FR-KB-04) — it is never silently absent.
+owns the panel end-to-end: its data source, route handler, and UI. Telegram
+delivery of an admin answer is tracked on the `questions` row via the
+`delivery_status` column (`pending | delivered | failed`, ADR-0001 §4). A
+question leaves the inbox list once it is both `answered` and
+`delivery_status = 'delivered'`; a question that is `answered` but whose
+`delivery_status` is `failed` stays on the panel in a visually distinct
+delivery-failed state with a retry action (FR-KB-04) — it is never silently
+absent.
 
 #### Scenario: Unanswered questions listed newest first
 
@@ -124,18 +127,29 @@ retry action (FR-KB-04) — it is never silently absent.
 #### Scenario: kb-answered and delivered admin-answered questions are not in the inbox
 
 - GIVEN a `questions` row with `answer_source = 'kb'` and another row marked
-  `answered` whose delivery to the originating lead succeeded
+  `answered` with `delivery_status = 'delivered'` to the originating lead
 - WHEN the administrator opens the Question inbox
 - THEN neither row appears in the inbox list
 
 #### Scenario: Answered-but-undelivered question stays visible
 
-- GIVEN a `questions` row marked `answered` whose Telegram delivery failed
-  (delivery state failed, per FR-KB-04)
+- GIVEN a `questions` row marked `answered` whose `delivery_status` is
+  `failed` (FR-KB-04)
 - WHEN the administrator opens the Question inbox
 - THEN that question is visible on the panel, visually distinct from open
   `unanswered` questions (it does not accept a second answer), and offers a
   retry-delivery action
+
+#### Scenario: Successful retry delivers the answer and clears the panel
+
+- GIVEN a question marked `answered` whose `delivery_status` is `failed`,
+  shown in the delivery-failed state with a retry action
+- WHEN the administrator clicks retry and the Telegram send succeeds
+- THEN exactly one Telegram message containing the admin's answer is sent to
+  the originating lead
+- AND the row's `delivery_status` is updated to `delivered`
+- AND the question leaves the Question-inbox panel (it is now both `answered`
+  and `delivery_status = 'delivered'`)
 
 #### Scenario: Empty inbox
 
@@ -188,6 +202,37 @@ no append, no status change, and no Telegram send.
 - THEN the panel shows an inline validation error
 - AND nothing is appended to `knowledge/school.md` and the question stays open
 
+#### Scenario: Oversized answer is rejected inline
+
+- GIVEN an open question in the inbox
+- WHEN the administrator submits the answer action with an answer text longer
+  than 3,500 characters
+- THEN the panel shows an inline validation error naming the 3,500-character
+  limit
+- AND nothing is appended to `knowledge/school.md` and the question stays open
+
+#### Scenario: Heading-like answer lines are escaped on append
+
+- GIVEN an open question "яка вартість занять?" in the inbox
+- WHEN the administrator submits an answer whose text includes a line
+  starting with `# Нова тема` (a Markdown heading marker that would otherwise
+  start a new KB entry)
+- THEN the appended `knowledge/school.md` entry contains that line escaped or
+  indented so it is not parsed as a new entry heading
+- AND the submit yields exactly one well-formed KB entry (no entry is split
+  or duplicated by the heading-like line)
+
+#### Scenario: Stale submit on an already-answered question is a no-op
+
+- GIVEN a question whose status is already `answered` (with `admin_answer`
+  and `answered_at` set) and whose delivery already succeeded
+- WHEN the administrator's browser re-submits the same answer action for
+  that question (e.g., a stale tab or a double-click before the UI updated)
+- THEN no new entry is appended to `knowledge/school.md`
+- AND the question's `status`, `admin_answer`, and `answered_at` are
+  unchanged
+- AND no Telegram message is sent
+
 #### Scenario: school.md append failure
 
 - GIVEN the append to `knowledge/school.md` fails (e.g., the file is missing
@@ -202,7 +247,10 @@ no append, no status change, and no Telegram send.
 
 When a question is answered in the inbox, the bot SHALL send the admin's
 answer to the originating lead via Telegram, keeping the "administrator will
-clarify" promise (FR-KB-04). The message is in Ukrainian.
+clarify" promise (FR-KB-04), and SHALL record the outcome on the `questions`
+row's `delivery_status` column (`pending | delivered | failed`, ADR-0001
+§4): `delivered` on a successful send, `failed` on a Telegram API error. The
+message is in Ukrainian.
 
 #### Scenario: Answer reaches the lead
 
@@ -211,6 +259,7 @@ clarify" promise (FR-KB-04). The message is in Ukrainian.
 - WHEN the administrator answers that question in the inbox
 - THEN the bot sends lead A a Telegram message containing the admin's answer
 - AND the message goes only to lead A, not to other leads
+- AND the row's `delivery_status` is set to `delivered`
 
 #### Scenario: Delivery failure does not lose the answer
 
@@ -218,6 +267,7 @@ clarify" promise (FR-KB-04). The message is in Ukrainian.
 - WHEN the Telegram send to the originating lead fails (Telegram API error)
 - THEN the knowledge-base entry and the `answered` row are preserved (the KB
   gain is not rolled back)
+- AND the row's `delivery_status` is set to `failed`
 - AND the failure is not silent (NFR-REL-01): the delivery failure is
   surfaced to the administrator on the inbox panel so it can be retried, and
   the lead's promised answer is never silently dropped
@@ -228,7 +278,12 @@ The agent SHALL never quote prices or terms absent from
 `knowledge/school.md`. "Terms" is enumerated as: price, lesson duration,
 group composition/size, and discounts (FR-GUARD-02, BC-PRICE-01). Any numeric
 answer in these categories must match the knowledge base; when the KB is
-silent, the unanswered-promise path applies.
+silent, the unanswered-promise path applies. Matching normalizes
+locale-formatted figures before comparison — thousands separators (spaces,
+e.g. "1 200") and decimal separators (comma vs period) are stripped/unified
+so a differently formatted rendering of the same number is recognized as a
+match, not as an invented figure; this normalization never permits stating a
+number that is absent from the KB.
 
 #### Scenario: Price present in the KB is quoted exactly
 
@@ -251,6 +306,14 @@ silent, the unanswered-promise path applies.
 - THEN the reply confirms neither number and states no group size
 - AND the question is logged `unanswered` and the administrator-will-clarify
   promise is given
+
+#### Scenario: Locale-formatted number is recognized as matching the KB
+
+- GIVEN `knowledge/school.md` states the price as "1200 грн"
+- WHEN a lead asks the price and the agent's numeric answer renders it as
+  "1 200 грн" (space thousands separator)
+- THEN the answer is treated as matching the KB price under normalized
+  comparison, not flagged or blocked as an invented number
 
 #### Scenario: Each enumerated term category is probed
 
@@ -307,3 +370,8 @@ the tool registry, not a prompt rule (FR-GUARD-06, ADR-0001 §5).
   edited directly in the file; the dashboard offers no general KB editor.
 - **Conversation and queue surfaces are out of scope** here — they belong to
   the `dashboard` capability; this spec owns only the Question-inbox panel.
+- **No authentication / "unauthorized" error path**: the dashboard is
+  localhost-only, single-admin (NFR-LOCAL-01). There is no login and no
+  concept of an unauthorized visitor to redirect; whoever can reach the
+  localhost dashboard is the administrator. This is an intentional scope
+  exclusion, not a gap.

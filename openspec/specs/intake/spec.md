@@ -29,6 +29,32 @@ Intentionally out of scope for this capability in MVP (not bugs):
 
 ## Requirements
 
+### Requirement: Immediate typing acknowledgement (bot responsiveness)
+
+The bot SHALL send a Telegram `sendChatAction` (typing) call immediately on
+any lead message, before the agent begins processing that message, so the
+lead sees the bot is alive while a reply is composed — the conversation
+layer owns bot responsiveness end-to-end. Measured from the bot receiving
+the Telegram update to its first visible reaction (`sendChatAction` or
+`sendMessage`, whichever comes first), the p90 latency SHALL be ≤ 5 seconds
+(NFR-UX-01). This is a conversation-layer (bot) guarantee, not a dashboard
+concern — the dashboard's streamed `ChatStream` display (`dashboard`
+capability, FR-DASH-01) is a separate, downstream rendering of the same run
+and does not own this latency budget.
+
+#### Scenario: Typing indicator appears before the reply, then the reply follows
+
+- **GIVEN** a lead sends a message to the bot
+- **WHEN** processing that message (agent reasoning, tool calls, or KB lookup) takes longer than an instant
+- **THEN** a Telegram typing indicator (`sendChatAction`) appears immediately, before the agent's reply text is ready
+- **AND** the reply itself is sent once processing completes, without the typing indicator having been skipped
+
+#### Scenario: p90 first-reaction latency is within budget
+
+- **GIVEN** the eval-suite integration run logs the timestamp of each incoming Telegram update and of the bot's first `sendChatAction`/`sendMessage` call in response
+- **WHEN** latencies across the run are aggregated
+- **THEN** the p90 time from update to first visible reaction is ≤ 5 seconds (NFR-UX-01)
+
 ### Requirement: Core field collection
 
 The agent SHALL collect, in conversation, the student's name, age, and format
@@ -375,7 +401,10 @@ FR-INTAKE-03..05 conversation turns)
 
 The bot's greeting SHALL carry a one-line notice that messages are processed
 via the Anthropic API, and a lead's record (with its questions and bookings)
-SHALL be deletable on request via an admin action. (NFR-PRIV-02)
+SHALL be deletable on request via an admin action. (NFR-PRIV-02) The delete
+action itself — the confirmation step and the cascade delete — is owned by
+the `dashboard` capability ("Delete-lead admin action"); this requirement
+only owns the lead-facing promise and the greeting notice.
 
 #### Scenario: Greeting carries the processing notice
 
