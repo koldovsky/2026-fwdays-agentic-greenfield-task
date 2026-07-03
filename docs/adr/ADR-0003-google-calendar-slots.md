@@ -43,7 +43,11 @@ must never gain a write path that commits the school to anything
    Calendar API becomes the third allowed outbound connection.
 6. **Pure core, thin adapter.** `lib/` stays free of the Google SDK; all
    calendar I/O goes through one adapter interface (TC-PURE-01), so grid,
-   subtraction, and ranking are unit-testable with fixture busy-lists.
+   subtraction, and ranking are unit-testable with fixture busy-lists. The
+   adapter's transport is chosen by a time-boxed spike at implementation:
+   a Google Calendar **MCP server** consumed by the backend (the backend is
+   the MCP client — the model never gets raw calendar tools) or the googleapis
+   SDK as fallback; the interface makes the transports swappable.
 
 ## Alternatives considered
 

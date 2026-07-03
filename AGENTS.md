@@ -118,6 +118,7 @@ clarity, empty-state usability, copy tone — scored 0-100 against a rubric.
 ## Environment notes
 
 - macOS (darwin), zsh; Node ≥ 20. Monorepo: packages/bot (grammY, long polling) · packages/agent (Claude API thin tool-loop) · apps/dashboard (Next.js + CopilotKit/AG-UI over SSE).
-- Database: SQLite via better-sqlite3 — single local file, gitignored (TC-DATA-01, NFR-PRIV-01). Slots pre-generated Mon–Fri 10:00–19:00 starts, 60-min step (FR-GUARD-03).
-- Email: sandbox senders (e.g. `resend.dev`) deliver only to the provider
-  account owner — verify a real domain before UAT.
+- Database: SQLite via better-sqlite3 — single local file, gitignored (TC-DATA-01, NFR-PRIV-01). Schedule source of truth is the DEMO Google Calendar: free slots = deterministic Mon–Fri grid minus calendar busy, ranked by pure `rankSlots()` (FR-GUARD-03, FR-SLOT-04, ADR-0003).
+- Agent model: `claude-sonnet-5` (TC-STACK-02); Anthropic auth via the developer's local user token — never introduce an API key into the repo or `.env` (NFR-SEC-01).
+- MCP in the dev process: use the **chrome-devtools MCP** for E2E dashboard verification and demo-proof recordings (TC-TEST-03); use **context7** (`ctx7` CLI) for current grammY / AG-UI / googleapis docs before writing integration code.
+- MCP in the product: the calendar adapter may consume a Google Calendar MCP server (backend as MCP client — the model never gets raw calendar tools); spike decides vs googleapis SDK (TC-CAL-01, ADR-0003 §6).
