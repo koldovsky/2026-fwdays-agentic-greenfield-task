@@ -30,3 +30,8 @@ export {
   type CredentialsRepo,
   type EmailCredential,
 } from "./credentials-repo";
+export {
+  createUsageCounterRepo,
+  type UsageCounterRepo,
+  type UsageCounterRecord,
+} from "./usage-counter-repo";

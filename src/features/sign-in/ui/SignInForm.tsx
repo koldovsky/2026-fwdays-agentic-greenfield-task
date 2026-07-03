@@ -45,6 +45,10 @@ export function SignInForm({ locale = "ua", redirectTo = "/tailor" }: SignInForm
     const password = String(form.get("password") ?? "");
     const name = String(form.get("name") ?? "").trim();
 
+    // Honeypot (NFR-SEC-04), sign-up mode only: a filled value means a
+    // scripted submitter — silently no-op, never reveal detection.
+    if (mode === "sign-up" && String(form.get("website") ?? "") !== "") return;
+
     setPending(true);
     setError(null);
     try {

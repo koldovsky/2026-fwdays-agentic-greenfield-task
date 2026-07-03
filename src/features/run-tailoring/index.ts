@@ -10,3 +10,4 @@ export type {
   TailoringRunInput,
   TailoringRunResult,
 } from "./model/types";
+export { TailoringForm, type TailoringFormProps } from "./ui/TailoringForm";

@@ -9,7 +9,7 @@ import type { SkillName } from "@/shared/lib/evals";
 /** Visible progress states, queued → processing → done | failed (FR-TAILOR-01). */
 export type TailorRunPhase = "queued" | "processing" | "done" | "failed";
 
-export type TailorErrorCode = "failed" | "empty_input";
+export type TailorErrorCode = "failed" | "empty_input" | "rate_limited";
 
 /** The final artifact of a successful run (FR-CHECKLIST-*, FR-BULLETS-*). */
 export interface TailoringRunResult {

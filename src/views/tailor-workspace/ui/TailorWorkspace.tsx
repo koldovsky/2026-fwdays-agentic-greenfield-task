@@ -1,48 +1,41 @@
 "use client";
 
 // tailor-workspace view — route-level composition (FR-SHELL-01/02). Owns the
-// local bullet state (include-in-export toggles), seeded from the stub Tailoring
-// fixture via the entity export-default rule (applyExportDefaults / BC-HONESTY-02).
+// run result + local bullet state (include-in-export toggles). The
+// export-default rule (applyExportDefaults / BC-HONESTY-02 — grounded in,
+// overclaim-risk out) is applied ONCE, inside runTailoringLoop
+// (features/run-tailoring/lib/loop.ts), so `next.bullets` already carries the
+// correct defaults; this view just seeds local toggle state from them rather
+// than re-deriving it, keeping the loop the single owner of the invariant.
 // It composes the two child widgets (checklist-panel + bullet-list) into the
 // layout-only result-view widget through its `left` / `right` slots — so no
 // widget imports another widget; the composition happens here at the view layer.
 import { useMemo, useState } from "react";
 
-import { applyExportDefaults, type Bullet } from "@/entities/bullet";
+import type { Bullet } from "@/entities/bullet";
+import { TailoringForm, type TailoringRunResult } from "@/features/run-tailoring";
 import { t } from "@/shared/lib/i18n";
 import type { Locale } from "@/shared/lib/i18n";
 import { BulletList } from "@/widgets/bullet-list";
 import { ChecklistPanel, type ChecklistPanelRow } from "@/widgets/checklist-panel";
 import { ResultView } from "@/widgets/result-view";
 
-import { tailoringFixture } from "../lib/fixture";
-
 export interface TailorWorkspaceProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
 }
 
-/** Map the scored fixture checklist onto the checklist-panel row shape. */
-const checklistRows: ChecklistPanelRow[] = tailoringFixture.checklist.map((row) => ({
-  requirement: row.requirement,
-  status: row.item.status,
-  rationale: row.item.rationale,
-}));
-
 export function TailorWorkspace({ locale = "ua" }: TailorWorkspaceProps) {
   const copy = t(locale);
+  const [result, setResult] = useState<TailoringRunResult | null>(null);
+  const [bullets, setBullets] = useState<Bullet[]>([]);
 
-  // Seed bullet state with the export defaults (grounded in, overclaim-risk out).
-  const [bullets, setBullets] = useState<Bullet[]>(() =>
-    applyExportDefaults(
-      tailoringFixture.bullets.map((bullet) => ({
-        id: bullet.id,
-        text: bullet.text,
-        grounding: bullet.grounding,
-        includedInExport: bullet.includedInExport,
-      })),
-    ),
-  );
+  const handleResult = (next: TailoringRunResult) => {
+    setResult(next);
+    // next.bullets already has export defaults applied by the loop
+    // (BC-HONESTY-02) — copy (not re-derive) into local, mutable toggle state.
+    setBullets([...next.bullets]);
+  };
 
   const handleToggleInclude = (id: string) => {
     setBullets((prev) =>
@@ -52,11 +45,16 @@ export function TailorWorkspace({ locale = "ua" }: TailorWorkspaceProps) {
     );
   };
 
-  const checklist = useMemo(
-    () => (
-      <ChecklistPanel score={tailoringFixture.matchScore} rows={checklistRows} locale={locale} />
-    ),
-    [locale],
+  const checklistRows: ChecklistPanelRow[] = useMemo(
+    () =>
+      result === null
+        ? []
+        : result.checklist.map((row) => ({
+            requirement: row.requirement,
+            status: row.item.status,
+            rationale: row.item.rationale,
+          })),
+    [result],
   );
 
   return (
@@ -65,11 +63,23 @@ export function TailorWorkspace({ locale = "ua" }: TailorWorkspaceProps) {
         {copy.workspace.lead}
       </p>
 
-      <ResultView
-        locale={locale}
-        left={checklist}
-        right={<BulletList bullets={bullets} onToggleInclude={handleToggleInclude} locale={locale} />}
-      />
+      <TailoringForm locale={locale} onResult={handleResult} />
+
+      {result === null ? (
+        <p className="font-body text-base text-ink-soft leading-normal mt-8 max-w-2xl">
+          {copy.workspace.emptyState}
+        </p>
+      ) : (
+        <div className="mt-8">
+          <ResultView
+            locale={locale}
+            left={<ChecklistPanel score={result.matchScore} rows={checklistRows} locale={locale} />}
+            right={
+              <BulletList bullets={bullets} onToggleInclude={handleToggleInclude} locale={locale} />
+            }
+          />
+        </div>
+      )}
     </main>
   );
 }

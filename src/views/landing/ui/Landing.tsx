@@ -1,12 +1,12 @@
 // Public marketing landing (views/landing) — server-rendered composition of all
 // sections in order (FR-SALES-01/02/03, FR-SHELL-03). No tailoring job or data
 // request runs on load; the FAQ is the only interactive piece.
+import { TopBarSession } from "@/widgets/top-bar";
 import { BeforeAfter } from "./BeforeAfter";
 import { ChecklistPreview } from "./ChecklistPreview";
 import { Faq } from "./Faq";
 import { FinalCta } from "./FinalCta";
 import { Footer } from "./Footer";
-import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { HowItWorks } from "./HowItWorks";
 import { Pillars } from "./Pillars";
@@ -17,7 +17,7 @@ export function Landing() {
   return (
     <>
       <StructuredData />
-      <Header />
+      <TopBarSession />
       <main id="top">
         <Hero />
         <Pillars />

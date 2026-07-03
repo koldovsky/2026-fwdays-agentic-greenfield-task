@@ -1,6 +1,6 @@
 # PRD — CV-Agent / Honest Resume Tailor
 
-Last updated: 2026-06-25
+Last updated: 2026-07-03
 
 This document is the **single source of truth** for what the product does and
 what constraints govern it. Every requirement has a stable ID. Specs, tests,
@@ -90,6 +90,16 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | FR-EDIT-01  | User can edit any generated bullet inline in the result view; edits are local until the user explicitly saves   | proposed |
 | FR-EDIT-02  | Editing a bullet removes its grounding indicator and marks it as «відредаговано вручну»                         | proposed |
 
+### Guided tailoring wizard (capability `wizard`)
+
+| ID            | Description                                                                                                                          | Status   |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| FR-WIZARD-01  | After JD + CV are submitted, the system shows the match score and checklist first and pauses; bullet rewriting starts only on the user's explicit confirmation | proposed |
+| FR-WIZARD-02  | Before generating bullets, the system asks up to a bounded number of targeted clarifying questions about requirements scored `partial` or `gap`, derived from those requirements' keywords | proposed |
+| FR-WIZARD-03  | Each clarifying question can be answered, skipped, or declined; unanswered questions never block proceeding to generation             | proposed |
+| FR-WIZARD-04  | A confirmed clarifying-question answer becomes additional grounding evidence for bullet generation, visually tagged as user-confirmed (distinct from CV-sourced evidence) | proposed |
+| FR-WIZARD-05  | The flow is presented as a visible linear sequence (Analyze → Confirm → Clarify → Generate → Export) so the user always knows the current step | proposed |
+
 ### Export (capability `export`)
 
 | ID            | Description                                                                                                            | Status   |
@@ -143,6 +153,8 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | NFR-I18N-01  | Product UI strings centralised in `lib/i18n/uk.ts`; English fallback in `en.ts`; no runtime i18n library in MVP           | proposed |
 | NFR-SEC-01   | CV text stored encrypted at rest (AES-256 or provider-native); never logged in plaintext                                   | proposed |
 | NFR-SEC-02   | CV data is never sent to the LLM provider with identifying metadata; user ID is not included in LLM request payloads       | proposed |
+| NFR-SEC-03   | Public endpoints (auth, tailor) set standard security headers on every response (CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`) | proposed |
+| NFR-SEC-04   | Public unauthenticated endpoints (register, tailor) are rate-limited per IP and carry a lightweight bot-resistance check (honeypot field); requests failing either are rejected calmly and never processed | proposed |
 | NFR-GDPR-01  | Users can export all their stored data (CV profile + tailoring history) as JSON on request                                 | proposed |
 | NFR-GDPR-02  | Users can permanently delete their account and all associated data; deletion propagates within 24 h                        | proposed |
 
@@ -174,6 +186,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | BC-HONESTY-02   | Overclaim-risk bullets are excluded from export by default and cannot be silently re-included; user must acknowledge the risk explicitly  | accepted |
 | BC-PRIVACY-01   | No analytics scripts, no third-party trackers, no fingerprinting on any page                                                             | accepted |
 | BC-PRIVACY-02   | CV text is PII; it is encrypted at rest, never used for model training, and deletable on request (see NFR-SEC-01, NFR-GDPR-02)           | accepted |
+| BC-HONESTY-03   | User-confirmed answers to wizard clarifying questions (`FR-WIZARD-02/03/04`) are self-attested evidence, distinct from CV-sourced evidence; both are legitimate grounding sources for generation, but the UI always discloses which is which — this does not loosen `BC-HONESTY-01`, it defines a second honest evidence source | proposed |
 | BC-BRAND-01     | UI is Ukrainian-first; tone is calm, direct, and practical — the product never overstates the candidate's experience                     | proposed |
 | BC-BRAND-02     | Footer credits Anthropic API usage with a hyperlink; does not imply endorsement                                                          | proposed |
 | BC-DEMO-01      | The repo and live URL are the primary publicly demonstrable artifacts; every FR must be exercisable on the live URL                      | accepted |

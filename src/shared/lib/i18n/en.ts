@@ -32,6 +32,7 @@ export const en: Dictionary = {
     lead: "Check the job match and choose which bullets to export.",
     cvLabel: "Résumé text",
     jdLabel: "Job description",
+    emptyState: "Your result will appear here after tailoring.",
   },
   tailorRun: {
     queued: "Queued",
@@ -39,6 +40,7 @@ export const en: Dictionary = {
     done: "Done",
     failed: "We could not tailor your résumé. Try again — this attempt was not counted.",
     emptyInput: "Add your résumé text and the job description.",
+    rateLimited: "You have reached the free tailoring limit. Sign in or upgrade to continue.",
   },
   auth: {
     signInTitle: "Sign in",

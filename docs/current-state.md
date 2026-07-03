@@ -3,162 +3,182 @@
 > Live handoff between agent sessions. Read first, update before finishing.
 > Keep short — overwrite stale content, don't append endlessly.
 
-**Updated:** 2026-07-02
+**Updated:** 2026-07-03
 
 ## Last action
 
-- **`add-agent-loop` increment 1 shipped — the loop is now proven with a fake provider (2026-07-03).**
-  4 new files: `shared/lib/llm/testing/fake-provider.ts` (+ test), `features/run-tailoring/index.ts`
-  (slice public API), `features/run-tailoring/lib/loop.test.ts`. Gates: lint clean, build + tsc
-  pass, **179 tests**. Verifier: all gates + FR/NFR evidence PASS. Checker: **ship, 0 blockers**
-  (mutation-tested the honesty invariants — a real JD/requirement leak trips the isolation assert,
-  so the tests aren't tautological). Both flagged NFR-SEC-02 as enforced-but-not-positively-tested
-  → **fixed**: added a payload-scan case (no out-of-band user id reaches any LLM payload) + a
-  TC-PURE-01 trace-level assert (parse-cv/score record no `llmPayload`). Covers add-agent-loop
-  2.1/2.3/2.4/3.1/3.2 + 4.1 (`gradeTrajectory` run over the REAL run). Loop + provider port +
-  Claude/ChatGPT adapters were already coded but orphaned; this made them proven and importable.
-  **Uncommitted** (5 files incl. current-state) — see clean-commit note in Next steps.
-- **Dev-env unblock diagnosis + `review-task` reviewer skill installed (2026-07-02).**
-  - **Sign-in/sign-up 500 is NOT a code bug.** `register/route.ts` already hardened
-    (catches infra throws → calm `500 {error:"server_error"}`, no stack to client, NFR-OBS-01);
-    `route.test.ts` proves the calm-500 path; `auth.ts` needs `AUTH_SECRET`; `docs/dev-setup.md`
-    documents all env + a self-serve `.env.local` one-shot. Root cause = **missing `.env.local`**
-    (`AUTH_SECRET` + `DATABASE_URL`), a **human action** (agent deny-listed from `.env*`). The
-    reported stack pointed at `route.ts:31` (now a comment) → user was on a **stale dev build**;
-    fix = create `.env.local` → `yarn dev:db` (terminal A) → restart `yarn dev` (terminal B).
-  - **Docker already answered:** `add-docker-dev-env` is complete (proposal+design+tasks+
-    `specs/dev-environment/spec.md`, 5 reqs w/ WHEN-THEN + PRD IDs, security posture). Spec-only;
-    implement when `add-agent-loop` graduates to BullMQ/Redis (TC-STACK-04). Web stays on Vercel.
-  - **Installed `review-task` skill** (generic clean-context reviewer: 7 targets, 13 dimensions,
-    confidence ≥80, devil's-advocate pass) at **both** `.claude/skills/review-task/` (committed)
-    and `~/.claude/skills/review-task/` (user-global), **adapted to Claude Code** (`AskUserQuestion`,
-    `general-purpose`/`Explore` subagent types, `{SKILL_DIR}` path placeholder, wired to Vouch
-    docs). Complements the Vouch-specific `checker` subagent. Independent reviewer: **APPROVE**,
-    0 findings (fidelity/adaptation/refs/consistency all confidence 100; byte-identical copies).
-  - Loaded full agent operating model (settings/hooks/agents/commands/skills/openspec) via a
-    6-reader workflow — Stop-hook + deny-list + maker≠checker + SDD gates all catalogued.
+- **`add-agent-loop` task 3.4 reviewed + fixed up (2026-07-03).** Task 3.4 (tailor-workspace
+  wired to the real `/api/tailor` loop) went through `verifier` (PASS: lint/build/full vitest —
+  35 files, 192 tests — all green) and `checker` (**SHIP, 0 blockers**, 3 notes). Fixed the one
+  actionable note: `TailorWorkspace.tsx` was calling `applyExportDefaults(next.bullets)` again
+  even though `loop.ts` (features/run-tailoring/lib/loop.ts:202) already applies it before
+  yielding the `result` event — duplicate ownership of the BC-HONESTY-02 invariant. Resolved by
+  making the **loop** the single owner (its own `loop.test.ts` already asserts
+  `includedInExport` on the raw result, so that's the real contract) and simplifying the view to
+  `setBullets([...next.bullets])` — a plain mutable copy, no re-derivation. (`next.bullets` is
+  `readonly Bullet[]`; the naive non-spread assignment failed `tsc` in `next build` — fixed with
+  the spread.) Re-ran lint + build + full vitest after the fix: all green, `TailorWorkspace.test.tsx`
+  unchanged and still passing (its scripted result already carries loop-shaped defaults). The
+  other two checker notes were left alone: (a) FR-TAILOR-02 step-granularity gap — the loop only
+  emits `status`/`step`/one final `result`, no token-level streaming, and `TailoringForm` doesn't
+  render `step` events — pre-existing from task 3.3, checker explicitly didn't count it against
+  3.4; real gap, tracked below, not a 3.4 blocker. (b) the then-current-state.md self-disclosure
+  "Vitest suite NOT run this session" — stale now that verifier/checker/this pass all ran the
+  full suite; corrected here.
+- **Independent re-verification of task 3.4 fix pass (2026-07-03, fresh-context verifier).** Confirmed the maker's claims with real command output: `yarn lint` clean (0 errors), `yarn build` green (TS + Next build, `/api/tailor` + `/tailor` routes present), `yarn test` **35 files / 192 tests passed**. Live-smoke-tested `next start`: `GET /tailor` → 200 with CV/JD form fields present; `POST /api/tailor` with empty cv/jd → NDJSON `queued` → `error:empty_input` → `status:failed`, HTTP 200 (no raw 500, NFR-OBS-01). No new issues found beyond the pre-existing FR-TAILOR-02 step-granularity gap already logged below.
+- Prior (committed): increment 1 — fake provider + loop honesty tests, 179 tests, checker-shipped
+  (`b67ff52`); task 3.3 — `/api/tailor` NDJSON route (`60ed991`). Dev-env unblock diagnosis +
+  `review-task` skill install also done 2026-07-02 (uncommitted, see Next steps).
 
 ## Prior (done, see git log)
 
-- Agent-engineering hardening (2026-07-02, committed): FSD ESLint boundaries, `.claude/agents/`
-  checker + verifier, project permission deny-list, `perf-audit` skill, plan-first hooks.
-- Auth.js v5 session + GDPR endpoints (2026-07-02, committed): `src/app/auth.ts` (JWT,
-  Credentials over scrypt service), `/api/auth/register`, `GET /api/account/export` +
-  `DELETE /api/account` over `shared/lib/account`; live-verified via pglite :5544 + next start.
-- Landing perf NFR-PERF-04 met (2026-07-02): LCP 2.48 s / TBT 25 ms / CLS 0; evidence + re-run
-  procedure in `docs/perf/log.md`. **LCP margin ≈ 20 ms** — re-audit after any landing change.
-- `landing-animations` change proposed, spec only (4/4 artifacts valid); implement after
-  main-flow items.
-
-- `add-auth` core (2026-07-02): scrypt password + `registerWithPassword`/
-  `authenticateWithPassword` over ports, migration `0002_auth.sql`, pglite-verified,
-  no account enumeration. Open: Auth.js/session decision, Google OAuth, reset email, sign-in UI.
-- `add-persistence` (2026-07-02): pg + raw SQL over `Queryable` port, AES-256-GCM CV at rest
-  (`shared/lib/crypto`), cv-profile/tailoring repos, forward-only migrations, pglite-verified.
-  Open: GDPR endpoints (need session helper) + checker-review.
-- `add-landing-page` shipped + ARCHIVED: `views/landing` at `/`, full SEO, English copy
-  (display font lacks Cyrillic — see blockers).
-- Foundation P0–P4: Vitest, pure `shared/lib` scoring/i18n/llm prompt core, `shared/ui` kit,
-  entities, widgets, `views/tailor-workspace` at `/tailor` (stub fixture). SDD baseline specs.
+- Agent-engineering hardening: FSD ESLint boundaries, `.claude/agents/` checker + verifier,
+  permission deny-list, `perf-audit` skill, plan-first hooks, `review-task` reviewer skill.
+- Auth.js v5 session + GDPR endpoints: `src/app/auth.ts`, `/api/auth/register`,
+  `GET /api/account/export` + `DELETE /api/account`; live-verified via pglite + next start.
+- Landing perf NFR-PERF-04 met: LCP 2.48 s / TBT 25 ms / CLS 0 (`docs/perf/log.md`). **LCP margin
+  ≈ 20 ms** — re-audit after any landing change. `landing-animations` proposed, spec only.
+- `add-auth` core: scrypt password over ports, migration `0002_auth.sql`, no account enumeration.
+- `add-persistence`: pg + raw SQL over `Queryable` port, AES-256-GCM CV at rest, cv-profile/
+  tailoring repos, forward-only migrations, pglite-verified. Open: checker-review (4.3).
+- `add-landing-page` shipped + ARCHIVED. Foundation P0–P4: Vitest, pure `shared/lib` scoring/i18n/
+  llm prompt core, `shared/ui` kit, entities, widgets, SDD baseline specs.
+- Docker: `add-docker-dev-env` spec complete (compose PG16+Redis7); implement once
+  `add-agent-loop` needs BullMQ/Redis. Web stays on Vercel.
 
 ## Working on
 
-- **`add-agent-loop` — increment 1 DONE** (verifier PASS + checker ship, 0 blockers; 179 tests).
-  **Increment 2 IN PROGRESS** — inline `/api/tailor` NDJSON streaming route (task 3.3). Next 16
-  API read from bundled docs: `src/app/api/tailor/route.ts` POST → `ReadableStream` + `TextEncoder`,
-  `Content-Type: application/x-ndjson`, `runtime="nodejs"` + `maxDuration` (skip `dynamic`/
-  `fetchCache` — removed under Cache Components; POST stream is inherently dynamic). Resolve
-  provider INSIDE the stream (`resolveLlmProvider` throws on missing key) → missing key = calm
-  `error` event, never a raw 500 (NFR-OBS-01). Coerce missing cv/jd → "" so the loop emits
-  `empty_input`. `route.test.ts` mocks `resolveLlmProvider` (spread importOriginal, override only
-  that fn) to inject the fake — no `?fake=1` prod backdoor. 4 cases: NDJSON happy stream + headers;
-  calm error on provider-resolve failure; 400 invalid_body; empty_input. FR-TAILOR-01/02,
-  NFR-PERF-01/02, NFR-OBS-01.
-- **`add-auth` remainder** — password reset email (needs a sender). **Google OAuth (FR-AUTH-02)
-  DEFERRED per user 2026-07-03 — credentials (email+pass) is the only auth for now; not blocking.**
-  `add-persistence` done except checker-review (4.3).
+- **`add-agent-loop`** — increment 1 + tasks 3.3 + 3.4 all DONE and reviewed (verifier PASS,
+  checker SHIP/0 blockers, the one actionable note fixed this pass). Gates green: lint, build,
+  full vitest (35 files / 192 tests).
+- `add-auth` remainder: password reset email (needs a sender). Google OAuth (FR-AUTH-02) DEFERRED
+  per user 2026-07-03 — credentials-only for now, not blocking.
+- **NEW — 5-thread user request (2026-07-03): session-aware header fix, security hardening,
+  drag&drop CV upload, plans/subscriptions page, guided multistep wizard.** See Plan below.
+  PRD updated first (spec-before-code): added `FR-WIZARD-01..05` (new capability `wizard`),
+  `NFR-SEC-03/04` (headers + bot/rate-limit), `BC-HONESTY-03` (self-attested wizard answers are
+  a second honest evidence source, doesn't loosen `BC-HONESTY-01`).
+
+### Plan (2026-07-03: header fix + security + upload-cv + billing + wizard)
+
+User asked, in priority order (security explicitly prioritized): (1) landing header still shows
+"sign in" after sign-in, (2) drag&drop PDF CV upload, (3) separate plans/subscriptions page,
+(4) basic bot/attack hardening — **prioritize**, check existing plans first, (5) multistep guided
+wizard (JD+CV → score/feedback → confirm → clarifying Q&A → generate → export pdf/docx).
+
+**Findings from investigation:**
+- Header bug root cause: `views/landing/ui/Header.tsx` is a hand-duplicated, session-blind
+  header (hardcoded "Sign in" / "Try free", no `user` prop) — separate from `widgets/top-bar`'s
+  `TopBar`, which already does this correctly but only gets a session on pages that resolve it
+  server-side (`/tailor`). Landing (`src/app/page.tsx`) is intentionally static/prerendered for
+  `NFR-PERF-04` (LCP margin ≈ 20 ms, see Blockers) — do NOT make it read session server-side
+  (would force dynamic rendering). Fix: client-side session island.
+- Billing/plans: **already fully speced**, zero new spec work needed —
+  `openspec/changes/add-payments-emulator/` has proposal+design+tasks+spec, all `WHEN/THEN`,
+  covering FR-PAYWALL-01/02/03 + FR-BILLING-01/02/03 + TC-STACK-06 via a provider-port + emulator
+  adapter (webhook is sole subscription writer, real MoR is a drop-in swap later). Just unbuilt.
+- Security: `NFR-COST-02` (rate limiting) already proposed but **not implemented anywhere** —
+  grepped `usage-counter`/`rateLimit` usage in `src/app|features|shared` outside tests: zero
+  hits. No `middleware.ts`, no security headers in `next.config.ts`. Bot/basic-attack mitigation
+  wasn't in the PRD at all before this session — added `NFR-SEC-03/04` above.
+- Upload-cv: `FR-CV-01/03` + `TC-PARSE-01/02` already exist in the PRD (status `proposed`,
+  library "TBD") — no new PRD IDs needed, just a new OpenSpec change + implementation.
+- Wizard: genuinely new capability, biggest surface, changes the honest-pipeline shape (adds a
+  pause + a new clarifying-question evidence source). New `FR-WIZARD-*` + `BC-HONESTY-03` added
+  above. **Spec + design only this pass — do not implement without a checkpoint** (the
+  self-attested-evidence policy is a brand-trust call worth the user reading before code, see
+  Blockers).
+
+**Scope for this pass** (priority order, security first per user):
+1. **Landing header fix** (bug fix, no new spec) — implement now.
+2. **`add-security-hardening`** (NEW OpenSpec change, `NFR-SEC-03/04` + enforce `NFR-COST-02`) —
+   spec + implement now.
+3. **`add-upload-cv`** (NEW OpenSpec change, `FR-CV-01/03`, `TC-PARSE-01/02`) — spec + implement
+   now (PDF via `pdf-parse`, DOCX via `mammoth`).
+4. **`add-payments-emulator`** (spec already complete) — implement per its existing `tasks.md`
+   now (provider port, emulator adapter, checkout, webhook, paywall, billing portal).
+5. **`add-resume-wizard`** (NEW OpenSpec change) — spec + design only. Flag the
+   `BC-HONESTY-03` policy call to the user before building.
+
+**File-level steps:**
+
+1. Header fix:
+   - `src/app/providers.tsx` (NEW, client): wraps children in next-auth/react `SessionProvider`.
+   - `src/app/layout.tsx`: wrap `{children}` in `<Providers>`.
+   - `src/widgets/top-bar/ui/TopBarSession.tsx` (NEW, client): calls `useSession()`, renders the
+     existing presentational `TopBar` with the resolved user (loading state ≈ anon state, no
+     layout shift). Export from `widgets/top-bar` barrel.
+   - `src/views/landing/ui/Header.tsx`: delete; `Landing.tsx` renders `<TopBarSession />`
+     instead (dedupes header markup with `TopBar`, matches `FR-SHELL-01`). Footer keeps
+     `navLinks` from `lib/content.ts` (still used there).
+   - Re-run `perf-audit` after (landing markup changed, `NFR-PERF-04` margin is thin).
+2. `openspec/changes/add-security-hardening/` (proposal, design, tasks, `specs/security/spec.md`
+   mirroring the `add-payments-emulator` format) +:
+   - `next.config.ts`: `headers()` — CSP, `X-Frame-Options`, `X-Content-Type-Options`,
+     `Referrer-Policy`, `Permissions-Policy` on all routes (`NFR-SEC-03`).
+   - `shared/lib/rate-limit` (NEW, pure + injectable clock/store, `TC-PURE-01`): sliding-window
+     per-IP counter port; in-memory adapter for dev/single-instance (note: needs Redis for
+     multi-instance prod, ties to the already-speced `add-docker-dev-env` Redis).
+   - Wire `usage-counter` (already exists, unused) + the new rate-limiter into
+     `POST /api/tailor` and `POST /api/auth/register`: enforce `NFR-COST-02` (2 lifetime / user,
+     1 per IP per 24h anon) and `NFR-SEC-04`; failures are calm `429`-style NDJSON/JSON errors,
+     never a raw exception (`NFR-OBS-01`).
+   - Honeypot hidden field on `TailoringForm` + `SignInForm` sign-up mode; silently drop (fake
+     success path, never reveal detection) submissions with it filled.
+3. `openspec/changes/add-upload-cv/` (proposal/design/tasks/spec) +:
+   - `pdf-parse` + `mammoth` deps.
+   - `shared/lib/parse-document` (NEW, server-only IO — if this breaks the `TC-PURE-01`
+     "no Node/DOM IO" convention other `shared/lib` modules follow, isolate it in its own
+     segment/test convention rather than forcing purity onto real file parsing; decide at
+     implementation time).
+   - `features/upload-cv` (NEW slice): drag&drop dropzone UI + `POST /api/cv/parse` route handler
+     (extracts text server-side, client never sees raw binary, `TC-PARSE-01/02`) feeding the
+     existing CV textarea in `TailoringForm` (`FR-CV-01` alongside existing `FR-CV-02` paste).
+4. `add-payments-emulator`: implement per its own `tasks.md` 1.1–4.3 (already written, cited
+   above) — provider port, emulator adapter + `/checkout`, webhook (sole subscriptions writer),
+   `widgets/paywall` + `features/upgrade`, `widgets/billing-portal`, a `views/account-billing`
+   page (the literal "separate page for plans & subscriptions").
+5. `openspec/changes/add-resume-wizard/` (NEW, spec + design ONLY, no code this pass):
+   proposal.md, design.md (state machine: analyze → confirm → clarify → generate → export;
+   clarifying questions derived from `partial`/`gap` checklist rows' keywords; answers feed
+   generation as a second tagged evidence source per `BC-HONESTY-03`), tasks.md,
+   `specs/wizard/spec.md` (`WHEN/THEN` per `FR-WIZARD-01..05`, plus finally implementing
+   `FR-EXPORT-01..04` as the wizard's terminal step — PDF/DOCX libs TBD in the design doc).
+6. Gates per implemented thread (1–4): lint, build, full vitest. verifier + checker subagents.
+   `perf-audit` after the header fix specifically.
 
 ## Next steps
 
-### Plan (2026-07-03: add-agent-loop increment 1 — prove the loop, no API key)
-
-Map (workflow) found the loop already coded but orphaned + untested. Increment 1 = the fake
-provider + slice public API + honesty test suite the whole change assumes. Files:
-1. `src/shared/lib/llm/testing/fake-provider.ts` — scriptable `LlmProvider` double; classifies
-   pass by system prompt (`EXTRACTION/GENERATION/GROUNDING_SYSTEM_PROMPT`), returns parseable
-   JSON, records every call (for leak scans), supports `throwOn` (fail-honest). Pure, in
-   `shared/lib` (TC-PURE-01); deep-import allowed cross-slice (shared = segments).
-2. `src/shared/lib/llm/testing/fake-provider.test.ts` — fake satisfies the port; classify +
-   throwOn + stream≡complete.
-3. `src/features/run-tailoring/index.ts` — slice public API (`runTailoringLoop`, `LoopDeps`,
-   event/result types) — closes the FSD no-public-API gap.
-4. `src/features/run-tailoring/lib/loop.test.ts` — 5 cases: happy path; **context isolation**
-   (grounding payload contains CV sentinel, NOT jd/requirement sentinels; assert on fake calls
-   AND on RunTrace ground-bullet `contextKeys`⊆{bullet,cvText}); overclaim excluded from export;
-   fail-honest (throw ×3 → calm error, no result, `terminated:"failed"`); score determinism +
-   zero LLM calls in score. Reuse existing `gradeTrajectory(trace)` against the REAL run (4.1).
-STATUS: **increment 1 DONE** — gates green (lint/build/179 tests), verifier PASS, checker ship
-(0 blockers), both NFR-SEC-02 + TC-PURE-01 findings fixed.
-Then increments 2-8: `/api/tailor` NDJSON route (3.3) → wire `views/tailor-workspace` + persist
-(3.4) → `paste-jd`/`upload-cv` (NEW specs) → `edit-bullet`/`toggle-overclaim` (NEW spec) →
-`export-resume`+paywall (NEW spec) → BullMQ worker → add-agent-loop 4.2/4.3 + archive.
-
-**Clean-commit note (checker):** working tree bundles 3 distinct bodies of work — commit as 3
-logical commits so history + maker≠checker boundary stay clean: (1) dev-env hardening
-(register try/catch, `dev:db`, `docs/dev-setup.md`, `add-docker-dev-env` spec); (2) `review-task`
-skill install; (3) add-agent-loop increment 1 (the 5 files above). Awaiting user go to commit.
-
-### Plan (2026-07-02 session: dev-env unblock + docker spec)
-
-Trigger: local dev sign-in/sign-up broken — `[auth][error] MissingSecret` +
-`Error: DATABASE_URL is not set` on `POST /api/auth/register` (raw 500). Root
-cause: no `.env.local`; also register route lacks a calm failure path
-(NFR-OBS-01). User also asked: evaluate Docker, plan as future spec.
-
-1. ~~Harden `POST /api/auth/register`~~ — **done** (calm 500 `server_error`, no stack,
-   NFR-OBS-01/FR-AUTH-01) + `route.test.ts` (uncommitted).
-2. ~~Dev DX~~ — **done**: `dev:db` script + `docs/dev-setup.md` env table + `.env.local`
-   one-shot (uncommitted).
-3. ~~Docker decision → `add-docker-dev-env`~~ — **done**: spec-only change complete
-   (compose PG16+Redis7, worker Dockerfile later, web on Vercel; TC-STACK-04/05, TC-DEPLOY-01).
-   Implement after `add-agent-loop` needs Redis.
-4. Gates: `openspec validate` **not runnable — CLI absent here** (see Blockers); structure
-   conforms manually. verifier + checker subagents = maker≠checker (checker on skill install
-   in flight).
-5. **User action, still pending (agent cannot do):** create `.env.local` with `AUTH_SECRET`
-   (`openssl rand -base64 32`), `DATABASE_URL=postgres://vouch@127.0.0.1:5544/postgres`,
-   `CV_ENCRYPTION_KEY` (`openssl rand -hex 32`); then `yarn dev:db` + restart `yarn dev`.
-
-### Plan (2026-07-02 earlier: ua rename + app flows)
-
-1. ~~Commit sign-in UI work~~ — done (`8c4482e Added auth`, tree clean).
-2. ~~Rename internal locale `uk` → `ua`~~ — done + committed, gates green (lint, 163 tests,
-   build). NOTE kept: ISO 639-1 for Ukrainian is `uk`; `ua` is internal naming only — any
-   future `<html lang>` / `hreflang` for Ukrainian pages must still emit `uk`.
-3. **Implement `add-agent-loop`** (proposal + tasks already in `openspec/changes/`):
-   provider port (1.1–1.2), skill registry (2.1–2.4, grounding context-isolated),
-   bounded loop + retry (3.1–3.2), inline route-handler MVP + workspace wiring (3.3–3.4).
-   Fake LLM provider in tests — `ANTHROPIC_API_KEY` only blocks live E2E, not code.
-4. honesty-eval (4.1) → agent-verify (4.2) → checker-review (4.3).
-5. Then `edit-bullet` (FR-EDIT-01/02) + `paste-jd` (FR-JD-01) surfaces,
-   `add-payments-emulator`, `landing-animations`.
-
-Also open: `export-resume`, `upload-cv` (TC-PARSE-01/02).
+1. Execute the plan above, threads 1–4, via parallel implementation + independent verify/review.
+2. Author `add-resume-wizard` spec package; present the `BC-HONESTY-03` evidence-policy call to
+   the user before writing any wizard code.
+3. **Commit as separate logical commits** (tree bundles several sessions' work, still uncommitted
+   from before this session too): (a) dev-env hardening, (b) `review-task` skill install,
+   (c) add-agent-loop increment 1, (d) add-agent-loop task 3.4, (e) this session's threads,
+   each as their own commit. Awaiting user go to commit.
+4. Then: `paste-jd` as its own slice (currently folded into `run-tailoring`'s `TailoringForm`),
+   `edit-bullet`/`toggle-overclaim` (NEW spec), BullMQ worker, add-agent-loop 4.2/4.3 + archive.
+5. **User action pending:** create `.env.local` (`AUTH_SECRET`, `DATABASE_URL`,
+   `CV_ENCRYPTION_KEY` — see `docs/dev-setup.md`) then `yarn dev:db` + restart `yarn dev`.
 
 ## Blockers / open questions
 
+- **`BC-HONESTY-03` policy checkpoint (2026-07-03):** the resume wizard's clarifying-Q&A step
+  (`FR-WIZARD-02/03/04`) needs user-confirmed answers to count as grounding evidence alongside
+  CV text, or the wizard can't do anything the current one-shot flow doesn't. Default written
+  into the PRD/spec: self-attested answers ARE honest evidence, always tagged distinctly from
+  CV-sourced evidence in the UI. This is a brand-trust call (Vouch's differentiator is honesty)
+  — confirm this default with the user before implementing `add-resume-wizard` code.
+- **FR-TAILOR-02 step granularity** — `runTailoringLoop` only emits `status`/`step`/one final
+  `result`, no token-level streaming, and `TailoringForm` doesn't render the `step` events it does
+  get. Checker flagged this as pre-existing (from task 3.3) and not a 3.4 blocker, but it's a real
+  gap vs the "streams progress" reading of FR-TAILOR-02 — worth a small follow-up increment
+  (render `step` events in the form) before calling the loop UX complete.
+- **`openspec` CLI not installed** (not a dep, not on PATH) — cannot run `openspec validate`;
+  changes checked structurally by hand meanwhile.
 - **Ukrainian-first vs display font** — Bricolage Grotesque has no Cyrillic subset; landing
-  shipped English. Resolve before i18n (NFR-I18N-01 / BC-BRAND-01 tension).
-- **Env before launch:** `NEXT_PUBLIC_SITE_URL` (SEO defaults to `https://vouch.app`),
-  `DATABASE_URL`, `CV_ENCRYPTION_KEY` (64 hex or base64 → 32 bytes), `AUTH_SECRET` (32+ bytes).
-- **Google OAuth (FR-AUTH-02) deferred** per user 2026-07-03 (credentials-only for now) — no
-  longer a blocker. Password reset still needs an email sender. Merchant-of-record
-  (`TC-STACK-06`) undecided.
-- `add-agent-loop` needs LLM SDK choice + `ANTHROPIC_API_KEY`; BullMQ/Redis not stood up.
-- Agent-env: deny-list, subagents, FSD lint, `perf-audit` all done 2026-07-02. Remaining gap:
-  no auto-format hook (repo has no prettier config — adding one is a human call).
-- **`openspec` CLI not installed** (not a dep, not on PATH, `npx openspec` fails) — cannot run
-  `openspec validate`/`--strict` despite the allow-list entries. Add it (dev dep or global) to
-  restore mechanical spec validation; changes were checked structurally by hand meanwhile.
-- **`review-task` skill** now available (both project + user-global). Invoke on explicit review
-  requests; it spawns a fresh Task subagent. Use the Vouch `checker` for PRD/FSD/DESIGN audits.
+  shipped English. Resolve before wider i18n rollout (NFR-I18N-01 / BC-BRAND-01 tension).
+- Env before launch: `NEXT_PUBLIC_SITE_URL`, `DATABASE_URL`, `CV_ENCRYPTION_KEY`, `AUTH_SECRET`.
+- `add-agent-loop` needs an `ANTHROPIC_API_KEY` for live E2E only (code path is fully
+  fake-provider tested without one); BullMQ/Redis not stood up yet.
+- Merchant-of-record (`TC-STACK-06`) undecided. No auto-format hook (no prettier config yet).

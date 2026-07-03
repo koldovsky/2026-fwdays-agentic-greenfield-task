@@ -41,6 +41,8 @@ export interface Dictionary {
     readonly cvLabel: string;
     /** JD textarea label (FR-JD-01). */
     readonly jdLabel: string;
+    /** Shown before the first tailoring run. */
+    readonly emptyState: string;
   };
   readonly tailorRun: {
     /** Visible progress states (FR-TAILOR-01): queued → processing → done. */
@@ -51,6 +53,8 @@ export interface Dictionary {
     readonly failed: string;
     /** Shown when the form is submitted without both texts. */
     readonly emptyInput: string;
+    /** Shown when the free-tier or per-IP tailoring limit is reached (NFR-COST-02). */
+    readonly rateLimited: string;
   };
   readonly auth: {
     /** Sign-in page title (FR-AUTH-01). */
