@@ -134,12 +134,14 @@ export function fakeGeneration(
   return JSON.stringify({ bullets });
 }
 
-/** Build a grounding response: `{"verdicts":[{bulletId,label,evidence?}]}`. */
+/** Build a grounding response: `{"verdicts":[{bulletId,label,evidence?,evidenceKind?}]}`. */
 export function fakeGrounding(
   verdicts: readonly {
     bulletId: string;
     label: GroundingLabel;
     evidence?: string;
+    /** Which evidence lane backed the verdict (BC-HONESTY-03); omit for "cv". */
+    evidenceKind?: "cv" | "user-confirmed";
   }[],
 ): string {
   return JSON.stringify({ verdicts });

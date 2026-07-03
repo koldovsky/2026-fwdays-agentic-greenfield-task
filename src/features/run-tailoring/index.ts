@@ -2,7 +2,16 @@
 // loop (add-agent-loop). Other layers (the /api/tailor route, the workspace
 // view) import ONLY this barrel, never the internal lib/ or model/ files (FSD
 // slice public-API rule, docs/system-design.md §5.4).
-export { runTailoringLoop, STEP_CAP, type LoopDeps } from "./lib/loop";
+export {
+  runAnalysisPhase,
+  runGenerationPhase,
+  runTailoringLoop,
+  STEP_CAP,
+  type AnalysisEvent,
+  type GenerationEvent,
+  type GenerationPhaseInput,
+  type LoopDeps,
+} from "./lib/loop";
 export type {
   TailorErrorCode,
   TailorRunEvent,

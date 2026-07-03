@@ -22,6 +22,8 @@ export const ua: Dictionary = {
     includeInExport: "Додати в експорт",
     excludedFromExport: "Виключено з експорту",
     source: "Джерело",
+    sourceCv: "З резюме",
+    sourceUserConfirmed: "Підтверджено користувачем",
   },
   result: {
     regionLabel: "Результат адаптації",

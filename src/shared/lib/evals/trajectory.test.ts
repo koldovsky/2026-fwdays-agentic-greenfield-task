@@ -2,13 +2,24 @@
 // adversarial run trips the invariant it violates (grounding isolation, order,
 // bounded retries, fail-honest termination, no user id in payload).
 import { describe, expect, it } from "vitest";
-import { adversarialTraces, goldenTrace } from "./fixtures";
+import { adversarialTraces, goldenTrace, goldenTraceWithConfirmedAnswers } from "./fixtures";
 import { runSuite } from "./runner";
 import { gradeTrajectory } from "./trajectory";
 
 describe("gradeTrajectory — golden", () => {
   it("passes every check", () => {
     const grade = gradeTrajectory(goldenTrace);
+    expect(grade.passed).toBe(true);
+    expect(grade.score).toBe(1);
+  });
+
+  // Regression for BC-HONESTY-03: grounding a bullet in a wizard confirmed
+  // answer is a legitimate second evidence lane, not a leak — the isolation
+  // guarantee widens to allow "confirmedAnswers", it doesn't loosen
+  // (add-resume-wizard design.md §1/§3).
+  it("passes every check when a bullet is grounded via a confirmed answer", () => {
+    const grade = gradeTrajectory(goldenTraceWithConfirmedAnswers);
+    expect(grade.checks.find((c) => c.id === "grounding-isolation")).toMatchObject({ ok: true });
     expect(grade.passed).toBe(true);
     expect(grade.score).toBe(1);
   });

@@ -9,6 +9,16 @@
  */
 export type BulletGroundingStatus = "grounded" | "overclaim-risk";
 
+/**
+ * Which evidence pool grounds a bullet (BC-HONESTY-03): a CV sentence, or a
+ * user-confirmed answer to a wizard clarifying question. Both are honest
+ * evidence — the union tags *which* pool, so the UI can always show which is
+ * which and never silently merge them.
+ */
+export type EvidenceSource =
+  | { readonly kind: "cv"; readonly sentence: string }
+  | { readonly kind: "user-confirmed"; readonly question: string; readonly answer: string };
+
 export interface Bullet {
   readonly id: string;
   /** The tailored bullet text. */
@@ -16,10 +26,10 @@ export interface Bullet {
   /** Grounding verdict from the grounding pass (FR-BULLETS-01). */
   readonly grounding: BulletGroundingStatus;
   /**
-   * The source CV sentence that grounds this bullet, when `grounded`
-   * (FR-BULLETS-01). Absent for `overclaim-risk` bullets.
+   * The evidence that grounds this bullet, when `grounded` (FR-BULLETS-01,
+   * BC-HONESTY-03). Absent for `overclaim-risk` bullets.
    */
-  readonly sourceSentence?: string;
+  readonly source?: EvidenceSource;
   /**
    * Whether this bullet is included in the exported résumé. Overclaim-risk
    * bullets default to excluded and must be re-included with an explicit

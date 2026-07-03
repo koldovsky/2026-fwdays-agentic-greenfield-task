@@ -19,6 +19,7 @@ export { createClaudeProvider, DEFAULT_CLAUDE_MODEL } from "./claude";
 export { createChatGptProvider, DEFAULT_CHATGPT_MODEL } from "./chatgpt";
 export { resolveLlmProvider } from "./factory";
 export type {
+  ConfirmedAnswerEvidence,
   ExtractionInput,
   ExtractionResult,
   GeneratedBullet,

@@ -108,3 +108,61 @@ describe("parseGroundingResponse (FR-BULLETS-03, FR-BULLETS-01, BC-HONESTY-01)",
     expect(res.ok).toBe(false);
   });
 });
+
+describe("parseGroundingResponse evidenceKind (BC-HONESTY-03)", () => {
+  it("parses evidenceKind cv", () => {
+    const res = parseGroundingResponse(
+      '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"Писав бекенд","evidenceKind":"cv"}]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verdicts[0]).toEqual({
+      bulletId: "b1",
+      label: "grounded",
+      evidence: "Писав бекенд",
+      evidenceKind: "cv",
+    });
+  });
+
+  it("parses evidenceKind user-confirmed", () => {
+    const res = parseGroundingResponse(
+      '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"Відповідь кандидата","evidenceKind":"user-confirmed"}]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verdicts[0]).toEqual({
+      bulletId: "b1",
+      label: "grounded",
+      evidence: "Відповідь кандидата",
+      evidenceKind: "user-confirmed",
+    });
+  });
+
+  it("defaults an absent evidenceKind to cv (omitted from the verdict, per types.ts contract)", () => {
+    const res = parseGroundingResponse(
+      '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"Писав бекенд"}]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verdicts[0]).toEqual({
+      bulletId: "b1",
+      label: "grounded",
+      evidence: "Писав бекенд",
+    });
+    expect(res.value.verdicts[0].evidenceKind).toBeUndefined();
+  });
+
+  it("defaults an invalid/garbage evidenceKind to cv (never throws, never over-trusts)", () => {
+    const res = parseGroundingResponse(
+      '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"Писав бекенд","evidenceKind":"telepathy"}]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.verdicts[0]).toEqual({
+      bulletId: "b1",
+      label: "grounded",
+      evidence: "Писав бекенд",
+    });
+    expect(res.value.verdicts[0].evidenceKind).toBeUndefined();
+  });
+});

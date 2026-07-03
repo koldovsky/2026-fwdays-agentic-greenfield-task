@@ -18,6 +18,9 @@ const GROUNDING_LABELS: readonly GroundingLabel[] = [
   "overclaim-risk",
 ];
 
+const EVIDENCE_KINDS = ["cv", "user-confirmed"] as const;
+type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+
 function fail<T>(error: string): ParseResult<T> {
   return { ok: false, error };
 }
@@ -168,10 +171,19 @@ function normalizeLabel(value: unknown): GroundingLabel | undefined {
   return GROUNDING_LABELS.find((l) => l === label);
 }
 
+function normalizeEvidenceKind(value: unknown): EvidenceKind | undefined {
+  const kind = asString(value)?.trim().toLowerCase();
+  return EVIDENCE_KINDS.find((k) => k === kind);
+}
+
 /**
  * Parse the grounding response into typed verdicts. An unknown label maps
  * conservatively to `overclaim-risk` (honest default). Malformed JSON, a
  * missing `verdicts` array, or entries without a `bulletId` yield a typed error.
+ * `evidenceKind` (BC-HONESTY-03) is tolerant like every other field here: an
+ * absent or unrecognized value is left out of the verdict rather than forced,
+ * since `GroundingVerdict`'s own contract (types.ts) already treats an absent
+ * `evidenceKind` as "cv" — this keeps pre-BC-HONESTY-03 fixtures byte-equal.
  */
 export function parseGroundingResponse(
   raw: string,
@@ -198,10 +210,16 @@ export function parseGroundingResponse(
     const label = normalizeLabel(entry["label"]) ?? "overclaim-risk";
     const evidence =
       label === "grounded" ? asString(entry["evidence"])?.trim() : undefined;
+    const evidenceKind = evidence
+      ? normalizeEvidenceKind(entry["evidenceKind"])
+      : undefined;
 
-    verdicts.push(
-      evidence ? { bulletId, label, evidence } : { bulletId, label },
-    );
+    verdicts.push({
+      bulletId,
+      label,
+      ...(evidence ? { evidence } : {}),
+      ...(evidenceKind ? { evidenceKind } : {}),
+    });
   }
 
   return ok({ verdicts });

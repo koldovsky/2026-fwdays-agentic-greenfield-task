@@ -4,6 +4,7 @@
 // JD, or the ranked requirements (BC-HONESTY-01 / FR-BULLETS-03).
 
 import type {
+  ConfirmedAnswerEvidence,
   ExtractionInput,
   GenerationInput,
   GroundingInput,
@@ -25,6 +26,10 @@ export const GENERATION_SYSTEM_PROMPT = [
   "яких немає в тексті резюме кандидата (BC-HONESTY-01).",
   "Кожен пункт має спиратися лише на речення з резюме.",
   "Переформулюй наявний досвід під вимоги вакансії — не додавай нового.",
+  // Second evidence lane (BC-HONESTY-03): only appears in the user message
+  // when the wizard collected answers — instruction stays constant either way.
+  "Якщо надано підтверджені відповіді кандидата на уточнювальні запитання,",
+  "став їх нарівні з реченнями резюме як законне джерело для пункта.",
   "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
   '{"bullets":[{"id":"b1","text":"...","sourceSentence":"..."}]}',
   'де "sourceSentence" — це точне речення з резюме, на яке спирається пункт.',
@@ -37,13 +42,18 @@ export const GENERATION_SYSTEM_PROMPT = [
  */
 export const GROUNDING_SYSTEM_PROMPT = [
   "Ти — суворий перевіряч достовірності. Ти НЕ бачив, як писалися ці пункти.",
-  "Твоє єдине джерело істини — речення з резюме кандидата, наведені нижче.",
-  "Для кожного пункту визнач, чи він повністю підтверджується цими реченнями.",
-  'Якщо підтверджується — познач "grounded" і вкажи точне речення-доказ.',
+  "Твої єдині джерела істини — речення з резюме кандидата та, якщо наведені",
+  "нижче, підтверджені відповіді кандидата на уточнювальні запитання.",
+  "Для кожного пункту визнач, чи він повністю підтверджується цими джерелами.",
+  'Якщо підтверджується — познач "grounded" і вкажи точний доказ.',
+  // evidenceKind is optional in the response (BC-HONESTY-03) — absent parses
+  // as "cv" (parse.ts), matching the tolerant house style of this parser.
+  'Якщо доказ — речення з резюме, познач evidenceKind як "cv";',
+  'якщо доказ — підтверджена відповідь кандидата, познач evidenceKind як "user-confirmed".',
   'Якщо є будь-яке твердження без прямого підтвердження — познач "overclaim-risk".',
-  "Не роби припущень і не додавай нічого поза наведеними реченнями.",
+  "Не роби припущень і не додавай нічого поза наведеними джерелами.",
   "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
-  '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"..."}]}',
+  '{"verdicts":[{"bulletId":"b1","label":"grounded","evidence":"...","evidenceKind":"cv"}]}',
 ].join("\n");
 
 /**
@@ -87,6 +97,30 @@ function formatBullets(bullets: GroundingInput["bullets"]): string {
   return bullets.map((b) => `[${b.id}] ${b.text}`).join("\n");
 }
 
+function formatConfirmedAnswers(
+  confirmedAnswers: readonly ConfirmedAnswerEvidence[],
+): string {
+  return confirmedAnswers
+    .map((c, i) => `${i + 1}. Питання: ${c.question}\n   Відповідь: ${c.answer}`)
+    .join("\n");
+}
+
+/**
+ * A second, clearly labeled evidence block (BC-HONESTY-03) — never merged
+ * into the CV sentences list. Empty when `confirmedAnswers` is absent/empty
+ * so the baseline prompt output stays byte-for-byte unchanged.
+ */
+function formatConfirmedAnswersBlock(
+  confirmedAnswers: readonly ConfirmedAnswerEvidence[] | undefined,
+): readonly string[] {
+  if (!confirmedAnswers || confirmedAnswers.length === 0) return [];
+  return [
+    "",
+    "## Підтверджені відповіді кандидата",
+    formatConfirmedAnswers(confirmedAnswers),
+  ];
+}
+
 // --- Pass 0: extraction prompt ---------------------------------------------
 
 /**
@@ -113,10 +147,12 @@ export function buildExtractionPrompt(input: ExtractionInput): Prompt {
 
 /**
  * Build the generation prompt (pass 1). Includes the JD, the ranked
- * requirements, and the candidate's CV skills + sentences (FR-TAILOR-02).
+ * requirements, the candidate's CV skills + sentences (FR-TAILOR-02), and —
+ * if the wizard collected any — confirmed answers as a second, clearly
+ * labeled evidence lane (BC-HONESTY-03).
  */
 export function buildGenerationPrompt(input: GenerationInput): Prompt {
-  const { cvProfile, requirements, jobDescription } = input;
+  const { cvProfile, requirements, jobDescription, confirmedAnswers } = input;
 
   const userContent = [
     "## Опис вакансії",
@@ -132,6 +168,7 @@ export function buildGenerationPrompt(input: GenerationInput): Prompt {
     "",
     "## Речення з резюме кандидата",
     formatSentences(cvProfile.sentences),
+    ...formatConfirmedAnswersBlock(confirmedAnswers),
     "",
     "Переформулюй досвід кандидата у пункти, адаптовані під вимоги вакансії.",
   ].join("\n");
@@ -147,16 +184,19 @@ export function buildGenerationPrompt(input: GenerationInput): Prompt {
 // --- Pass 2: grounding prompt ---------------------------------------------
 
 /**
- * Build the grounding prompt (pass 2). Receives ONLY the generated bullets and
- * the raw CV sentences — never the generation prompt, the JD, or the ranked
- * requirements (BC-HONESTY-01 / FR-BULLETS-03).
+ * Build the grounding prompt (pass 2). Receives ONLY the generated bullets,
+ * the raw CV sentences, and — if the wizard collected any — confirmed answers
+ * as a second, clearly labeled evidence lane (BC-HONESTY-03). Never the
+ * generation prompt, the JD, or the ranked requirements (BC-HONESTY-01 /
+ * FR-BULLETS-03) — the isolation widens, it never loosens.
  */
 export function buildGroundingPrompt(input: GroundingInput): Prompt {
-  const { bullets, cvSentences } = input;
+  const { bullets, cvSentences, confirmedAnswers } = input;
 
   const userContent = [
     "## Речення з резюме кандидата (єдине джерело істини)",
     formatSentences(cvSentences),
+    ...formatConfirmedAnswersBlock(confirmedAnswers),
     "",
     "## Пункти для перевірки",
     formatBullets(bullets),

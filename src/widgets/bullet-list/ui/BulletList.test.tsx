@@ -5,7 +5,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { applyExportDefaults, type Bullet } from "@/entities/bullet";
+import { t } from "@/shared/lib/i18n";
 import { BulletList } from "./BulletList";
+
+const copy = t("ua").bullets;
 
 // Seeded via the entity export-default rule, so state matches real usage.
 const bullets: Bullet[] = applyExportDefaults([
@@ -13,7 +16,7 @@ const bullets: Bullet[] = applyExportDefaults([
     id: "b1",
     text: "Led migration of the billing service to Postgres.",
     grounding: "grounded",
-    sourceSentence: "Migrated billing to Postgres over two quarters.",
+    source: { kind: "cv", sentence: "Migrated billing to Postgres over two quarters." },
     includedInExport: false,
   },
   {
@@ -32,11 +35,35 @@ describe("BulletList", () => {
     expect(screen.getByText(bullets[1].text)).toBeInTheDocument();
   });
 
-  it("shows a grounded badge for grounded bullets and an overclaim badge for overclaim-risk", () => {
+  it("shows a CV-sourced badge for grounded bullets and an overclaim badge for overclaim-risk", () => {
     render(<BulletList bullets={bullets} onToggleInclude={vi.fn()} />);
-    // grounded -> "Підтверджено"; overclaim-risk badge -> "Немає підтверджень · …".
-    expect(screen.getByText("Підтверджено")).toBeInTheDocument();
+    // Label appears twice: on the GroundingBadge and on the source line beneath it.
+    expect(screen.getAllByText(copy.sourceCv).length).toBeGreaterThan(0);
     expect(screen.getByText(/немає підтверджень/i)).toBeInTheDocument();
+  });
+
+  it("labels a user-confirmed-evidence bullet distinctly from a CV-sourced one (BC-HONESTY-03)", () => {
+    const wizardBullets: Bullet[] = applyExportDefaults([
+      ...bullets,
+      {
+        id: "b3",
+        text: "Mentored junior engineers on system design.",
+        grounding: "grounded",
+        source: {
+          kind: "user-confirmed",
+          question: "Чи є у вас практичний досвід з менторства",
+          answer: "Так, менторив трьох джуніорів протягом року.",
+        },
+        includedInExport: false,
+      },
+    ]);
+
+    render(<BulletList bullets={wizardBullets} onToggleInclude={vi.fn()} />);
+
+    expect(copy.sourceUserConfirmed).not.toBe(copy.sourceCv);
+    // Each label appears twice: once on the GroundingBadge, once on the source line beneath it.
+    expect(screen.getAllByText(copy.sourceCv)).toHaveLength(2);
+    expect(screen.getAllByText(copy.sourceUserConfirmed)).toHaveLength(2);
   });
 
   it("marks an overclaim-risk bullet as excluded from export by default", () => {

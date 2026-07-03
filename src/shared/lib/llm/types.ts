@@ -30,6 +30,16 @@ export interface ExtractionResult {
   readonly requirements: readonly Requirement[];
 }
 
+/**
+ * A wizard clarifying question the user confirmed with a free-text answer.
+ * Self-attested, not CV-sourced — a second, distinctly-tagged evidence lane
+ * (BC-HONESTY-03), never merged with `cvSentences`.
+ */
+export interface ConfirmedAnswerEvidence {
+  readonly question: string;
+  readonly answer: string;
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {
@@ -38,6 +48,8 @@ export interface GenerationInput {
   readonly requirements: readonly Requirement[];
   /** Raw job-description text pasted by the user. */
   readonly jobDescription: string;
+  /** Confirmed wizard answers, alongside (never instead of) the CV (BC-HONESTY-03). */
+  readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
 }
 
 export interface GeneratedBullet {
@@ -61,13 +73,16 @@ export interface GenerationResult {
 export type GroundingLabel = "grounded" | "overclaim-risk";
 
 /**
- * Input to the grounding pass. Deliberately carries ONLY the generated bullets
- * and the candidate's own raw CV sentences — never the generation prompt, the
- * JD, or the ranked requirements (BC-HONESTY-01 / FR-BULLETS-03).
+ * Input to the grounding pass. Deliberately carries ONLY the generated bullets,
+ * the candidate's own raw CV sentences, and — per BC-HONESTY-03 — confirmed
+ * wizard answers as a second named evidence lane. Never the generation prompt,
+ * the JD, or the ranked requirements (BC-HONESTY-01 / FR-BULLETS-03).
  */
 export interface GroundingInput {
   readonly bullets: readonly GeneratedBullet[];
   readonly cvSentences: readonly string[];
+  /** Alongside, never instead of, `cvSentences` (BC-HONESTY-03). */
+  readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
 }
 
 export interface GroundingVerdict {
@@ -75,6 +90,11 @@ export interface GroundingVerdict {
   readonly label: GroundingLabel;
   /** The exact CV sentence that supports the bullet when grounded. */
   readonly evidence?: string;
+  /**
+   * Which evidence lane backs `evidence` (BC-HONESTY-03). Absent means "cv" —
+   * tolerant default for responses/fixtures that predate this field.
+   */
+  readonly evidenceKind?: "cv" | "user-confirmed";
 }
 
 export interface GroundingResult {

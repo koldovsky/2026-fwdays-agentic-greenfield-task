@@ -7,8 +7,15 @@ import type { Check, Grade, RunTrace, SkillName } from "./types";
 /** ≤ 2 retries per step ⇒ ≤ 3 total attempts (FR-TAILOR-03). */
 export const MAX_ATTEMPTS = 3;
 
-/** Context keys the grounding pass is allowed to see — nothing from generation/JD. */
-const GROUNDING_ALLOWED = new Set(["bullet", "cvText"]);
+/**
+ * Context keys the grounding pass is allowed to see — nothing from
+ * generation/JD. `confirmedAnswers` is a second legitimate evidence lane
+ * (BC-HONESTY-03, add-resume-wizard design.md §1/§3): the isolation
+ * guarantee widens to include the wizard's self-attested answers, it
+ * doesn't loosen — still never the JD, requirements, or generation
+ * transcript.
+ */
+const GROUNDING_ALLOWED = new Set(["bullet", "cvText", "confirmedAnswers"]);
 
 function grade(checks: Check[]): Grade {
   const passed = checks.every((c) => c.ok);
@@ -16,14 +23,23 @@ function grade(checks: Check[]): Grade {
   return { passed, checks, score };
 }
 
-/** Valid skill order: parse-cv, extract-requirements, then generate/ground pairs, score. */
+/**
+ * Valid skill order: parse-cv, extract-requirements, then score and
+ * derive-clarifying-questions (order between the two doesn't matter for
+ * honesty grading — both are pure, cvProfile/requirements-derived steps),
+ * then generate/ground pairs. Score moved ahead of generation
+ * (add-resume-wizard design.md §1): it only ever depended on requirements +
+ * cvProfile, never on generated bullets, so the wizard can show the
+ * checklist before any bullet exists.
+ */
 function orderOk(skills: readonly SkillName[]): boolean {
   const rank: Record<SkillName, number> = {
     "parse-cv": 0,
     "extract-requirements": 1,
-    "generate-bullet": 2,
-    "ground-bullet": 2,
-    score: 3,
+    score: 2,
+    "derive-clarifying-questions": 2,
+    "generate-bullet": 3,
+    "ground-bullet": 3,
   };
   if (skills[0] !== "parse-cv") return false;
   if (skills.length > 1 && skills[1] !== "extract-requirements") return false;
@@ -88,10 +104,12 @@ export function gradeTrajectory(trace: RunTrace): Grade {
     detail: `steps=${trace.steps.length} cap=${trace.stepCap}`,
   });
 
-  // A completed run ends on scoring.
+  // A completed run ends on grounding — score now runs before generation
+  // (add-resume-wizard design.md §1), so the terminal skill of a successful
+  // run moved from "score" to the last bullet's "ground-bullet" alongside it.
   checks.push({
-    id: "score-terminal",
-    ok: trace.terminated !== "done" || skills[skills.length - 1] === "score",
+    id: "grounding-terminal",
+    ok: trace.terminated !== "done" || skills[skills.length - 1] === "ground-bullet",
     detail: `last=${skills[skills.length - 1] ?? "none"}`,
   });
 

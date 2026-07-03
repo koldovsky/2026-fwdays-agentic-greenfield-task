@@ -21,7 +21,13 @@ import {
 import { describe, expect, it } from "vitest";
 
 import type { TailorRunEvent, TailoringRunInput, TailoringRunResult } from "../model/types";
-import { runTailoringLoop, type LoopDeps } from "./loop";
+import {
+  runGenerationPhase,
+  runTailoringLoop,
+  type GenerationEvent,
+  type GenerationPhaseInput,
+  type LoopDeps,
+} from "./loop";
 
 // --- Fixtures with unique sentinels so leaks are unambiguous ----------------
 const CV_TEXT = [
@@ -72,12 +78,16 @@ describe("runTailoringLoop", () => {
     const { events, trace } = await drive({ llm: provider }, INPUT);
 
     const skills = trace.steps.map((s) => s.skill);
+    // Score (and deriving clarifying questions) now runs right after
+    // extraction, ahead of generation/grounding (add-resume-wizard
+    // design.md §1) — score never depended on generated bullets.
     expect(skills).toEqual([
       "parse-cv",
       "extract-requirements",
+      "score",
+      "derive-clarifying-questions",
       "generate-bullet",
       "ground-bullet",
-      "score",
     ]);
     expect(trace.terminated).toBe("done");
     expect(events.at(-1)).toEqual({ type: "status", phase: "done" });
@@ -138,7 +148,7 @@ describe("runTailoringLoop", () => {
       grounding: "overclaim-risk",
       includedInExport: false,
     });
-    expect(result?.bullets[0].sourceSentence).toBeUndefined();
+    expect(result?.bullets[0].source).toBeUndefined();
     // Nothing overclaimed ends up in the export selection.
     expect(exportBullets(result?.bullets ?? [])).toHaveLength(0);
   });
@@ -208,5 +218,106 @@ describe("runTailoringLoop", () => {
     for (const step of trace.steps) {
       if (step.llmPayload !== undefined) expect(step.llmPayload).not.toContain(USER_ID);
     }
+  });
+});
+
+async function driveGeneration(
+  deps: LoopDeps,
+  input: GenerationPhaseInput,
+): Promise<{ events: GenerationEvent[]; trace: RunTrace }> {
+  const gen = runGenerationPhase(deps, input);
+  const events: GenerationEvent[] = [];
+  let step = await gen.next();
+  while (!step.done) {
+    events.push(step.value);
+    step = await gen.next();
+  }
+  return { events, trace: step.value };
+}
+
+describe("runGenerationPhase — confirmed-answer evidence (BC-HONESTY-03)", () => {
+  it("tags a bullet grounded in a confirmed wizard answer, distinct from CV evidence", async () => {
+    const QUESTION =
+      "Вимога: REQSENTINEL React досвід. Чи є у вас практичний досвід з react? Розкажіть коротко про конкретний випадок";
+    const ANSWER =
+      "ANSWERSENTINEL: будував платіжний віджет на React для попереднього роботодавця";
+    const confirmedAnswers = [{ question: QUESTION, answer: ANSWER }];
+
+    const provider = createFakeProvider({
+      generation: fakeGeneration([
+        { id: "b1", text: "Розробив платіжний віджет на React." },
+      ]),
+      grounding: fakeGrounding([
+        { bulletId: "b1", label: "grounded", evidence: ANSWER, evidenceKind: "user-confirmed" },
+      ]),
+    });
+
+    const { events, trace } = await driveGeneration(
+      { llm: provider },
+      {
+        cvProfile: { skills: [], sentences: [] },
+        requirements: [],
+        jobDescription: JD_TEXT,
+        confirmedAnswers,
+        checklist: [],
+        matchScore: 0,
+      },
+    );
+
+    const resultEvent = events.find((e) => e.type === "result");
+    expect(resultEvent?.type).toBe("result");
+    const bullet = resultEvent?.type === "result" ? resultEvent.result.bullets[0] : undefined;
+    expect(bullet).toMatchObject({ grounding: "grounded", includedInExport: true });
+    expect(bullet?.source).toEqual({ kind: "user-confirmed", question: QUESTION, answer: ANSWER });
+
+    // The recorded trace names "confirmedAnswers" in the ground-bullet step's
+    // contextKeys, and gradeTrajectory must recognize this as the legitimate
+    // widened isolation lane (BC-HONESTY-03), not a leak.
+    const groundStep = trace.steps.find((s) => s.skill === "ground-bullet");
+    expect(groundStep?.contextKeys).toContain("confirmedAnswers");
+    const grade = gradeTrajectory(trace);
+    expect(grade.checks.find((c) => c.id === "grounding-isolation")).toMatchObject({ ok: true });
+  });
+
+  it("never mislabels an unverifiable user-confirmed claim as CV-sourced (BC-HONESTY-03 regression)", async () => {
+    // Regression for loop.ts:283 — a "grounded"/"user-confirmed" verdict whose
+    // evidence text is a paraphrase (not a byte-match) of the stored answer
+    // must NOT fall back to `{ kind: "cv", sentence: evidence }`: that would
+    // show fabricated "from your CV" text against an empty CV. It must fail
+    // honest instead — downgraded to overclaim-risk, no source at all.
+    const QUESTION = "Чи маєте ви досвід менторства?";
+    const ANSWER = "Так, менторив трьох джуніорів протягом року.";
+    const confirmedAnswers = [{ question: QUESTION, answer: ANSWER }];
+    const PARAPHRASED_EVIDENCE = "Кандидат згадує досвід менторства кількох джуніорів.";
+
+    const provider = createFakeProvider({
+      generation: fakeGeneration([{ id: "b1", text: "Менторив джуніор-розробників." }]),
+      grounding: fakeGrounding([
+        {
+          bulletId: "b1",
+          label: "grounded",
+          evidence: PARAPHRASED_EVIDENCE,
+          evidenceKind: "user-confirmed",
+        },
+      ]),
+    });
+
+    const { events } = await driveGeneration(
+      { llm: provider },
+      {
+        cvProfile: { skills: [], sentences: [] }, // empty CV — nothing to source from
+        requirements: [],
+        jobDescription: JD_TEXT,
+        confirmedAnswers,
+        checklist: [],
+        matchScore: 0,
+      },
+    );
+
+    const resultEvent = events.find((e) => e.type === "result");
+    expect(resultEvent?.type).toBe("result");
+    const bullet = resultEvent?.type === "result" ? resultEvent.result.bullets[0] : undefined;
+    expect(bullet?.grounding).toBe("overclaim-risk");
+    expect(bullet?.source).toBeUndefined();
   });
 });

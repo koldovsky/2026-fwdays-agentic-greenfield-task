@@ -11,7 +11,7 @@ const grounded: Bullet = {
   id: "g",
   text: "Led migration to TypeScript.",
   grounding: "grounded",
-  sourceSentence: "Migrated the codebase to TypeScript.",
+  source: { kind: "cv", sentence: "Migrated the codebase to TypeScript." },
   includedInExport: false,
 };
 

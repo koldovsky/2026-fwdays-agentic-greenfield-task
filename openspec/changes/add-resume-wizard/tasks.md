@@ -1,36 +1,36 @@
 ## 1. Loop split (analyze / generate phases)
 
-- [ ] 1.1 Extract `runAnalysisPhase(deps, input)` from `loop.ts`: `parse-cv → extract-requirements → score`, reordering `score` earlier (pure, behavior-preserving per `design.md` §1); terminal `{ type: "analysis"; checklist; matchScore; cvProfile; requirements }` event
-- [ ] 1.2 Extract `runGenerationPhase(deps, { cvProfile, requirements, confirmedAnswers })`: `generate-bullet → ground-bullet*`, terminal `{ type: "result"; result }` event
-- [ ] 1.3 Reimplement `runTailoringLoop` as both phases run back-to-back with `confirmedAnswers: []`; assert the existing `loop.test.ts` suite (35 files / 192 tests baseline) still passes unchanged
-- [ ] 1.4 Fix `shared/lib/evals/trajectory.ts`'s `orderOk` rank table for the reordered `score` step (design.md Risks — easy to miss, breaks honesty-eval silently if skipped)
-- [ ] 1.5 `POST /api/tailor/analyze` route handler (NDJSON, same streaming/error-handling shape as `src/app/api/tailor/route.ts`)
-- [ ] 1.6 `POST /api/tailor/generate` route handler (NDJSON, body `{ cvProfile, requirements, confirmedAnswers }`)
+- [x] 1.1 Extract `runAnalysisPhase(deps, input)` from `loop.ts`: `parse-cv → extract-requirements → score`, reordering `score` earlier (pure, behavior-preserving per `design.md` §1); terminal `{ type: "analysis"; checklist; matchScore; cvProfile; requirements }` event — plus `clarifyingQuestions` on the payload (gap in design.md, see 2.4)
+- [x] 1.2 Extract `runGenerationPhase(deps, { cvProfile, requirements, confirmedAnswers })`: `generate-bullet → ground-bullet*`, terminal `{ type: "result"; result }` event — input also carries `jobDescription` (gap in design.md's stated signature, `buildGenerationPrompt` requires it)
+- [x] 1.3 Reimplement `runTailoringLoop` as both phases run back-to-back with `confirmedAnswers: []`; existing `loop.test.ts` suite passes, with its skills-order assertion updated for `score` now landing between `extract-requirements` and `generate-bullet` (see 1.4) — the composed one-shot loop swallows the intermediate `analysis` event so `/api/tailor`'s wire contract stays unchanged
+- [x] 1.4 Fix `shared/lib/evals/trajectory.ts`'s `orderOk` rank table for the reordered `score` step (design.md Risks — easy to miss, breaks honesty-eval silently if skipped)
+- [x] 1.5 `POST /api/tailor/analyze` route handler (NDJSON, same streaming/error-handling shape as `src/app/api/tailor/route.ts`)
+- [x] 1.6 `POST /api/tailor/generate` route handler (NDJSON, body `{ cvProfile, requirements, confirmedAnswers, checklist, matchScore }` — checklist/matchScore added beyond the task's original body list because `runGenerationPhase`'s actual `GenerationPhaseInput` requires them, design.md §1)
 - [ ] 1.7 `views/tailor-workspace` owns the wizard state machine (`analyze | confirm | clarify | generate | export | failed`, FR-WIZARD-05 labels); confirm step is a client-only transition, no server call
 
 ## 2. Clarifying-question skill
 
-- [ ] 2.1 Scaffold `entities/clarifying-question` (fsd-scaffold skill): `ClarifyingQuestion`, `ClarifyingAnswer` (`answered | skipped | declined`) types
-- [ ] 2.2 `deriveClarifyingQuestions(rows, opts?)` — pure, deterministic, template-based; input narrowed to `{ requirement.text, requirement.keywords, item.status }` for `partial`/`gap` rows only (FR-WIZARD-02); bounded by `MAX_CLARIFYING_QUESTIONS`, prioritized gap-before-partial, must-have-before-nice-to-have
-- [ ] 2.3 Unit tests: bound enforcement, priority ordering, no-weak-requirements-means-no-questions, no access to unrelated row data
-- [ ] 2.4 Add `derive-clarifying-questions` to `shared/lib/evals`'s `SkillName` union + trace it in the loop the same way `parse-cv`/`score` are traced today (deterministic, no `llmPayload`)
+- [x] 2.1 Scaffold `entities/clarifying-question` (fsd-scaffold skill): `ClarifyingQuestion`, `ClarifyingAnswer` (`answered | skipped | declined`) types
+- [x] 2.2 `deriveClarifyingQuestions(rows, opts?)` — pure, deterministic, template-based; input narrowed to `{ requirement.text, requirement.keywords, item.status }` for `partial`/`gap` rows only (FR-WIZARD-02); bounded by `MAX_CLARIFYING_QUESTIONS`, prioritized gap-before-partial, must-have-before-nice-to-have
+- [x] 2.3 Unit tests: bound enforcement, priority ordering, no-weak-requirements-means-no-questions, no access to unrelated row data
+- [x] 2.4 Add `derive-clarifying-questions` to `shared/lib/evals`'s `SkillName` union + trace it in the loop the same way `parse-cv`/`score` are traced today (deterministic, no `llmPayload`) — wired into `runAnalysisPhase`, output added to the `analysis` event (gap in design.md's stated event shape)
 - [ ] 2.5 `features/clarify-tailoring` (new slice): UI for answer / skip / decline per question (FR-WIZARD-03), feeds confirmed answers into the generate-phase request
 
 ## 3. Evidence tagging (BC-HONESTY-03)
 
-- [ ] 3.1 `entities/bullet/model/types.ts`: `EvidenceSource` discriminated union (`cv` | `user-confirmed`), `Bullet.sourceSentence` → `Bullet.source` (design.md §3)
-- [ ] 3.2 `sourceLabel(source, locale)` helper in `entities/bullet/lib/`; export from the barrel
-- [ ] 3.3 Update `entities/bullet/lib/export.test.ts` fixtures to the new shape
-- [ ] 3.4 `shared/lib/llm/types.ts`: `GroundingInput`/`GenerationInput` gain optional `confirmedAnswers?: readonly ConfirmedAnswerEvidence[]`; `GroundingVerdict` gains `evidenceKind?: "cv" | "user-confirmed"`
-- [ ] 3.5 `shared/lib/llm/prompts.ts`: both prompt builders serialize the confirmed-answers pool as a distinct, labeled block (never merged with CV sentences or the JD/requirements the isolated pass must not see)
-- [ ] 3.6 `shared/lib/llm/parse.ts`: `parseGroundingResponse` tolerantly reads `evidenceKind`, defaulting absent → `"cv"` (backward compat with existing fixtures)
-- [ ] 3.7 Update `shared/lib/llm/prompts.test.ts` + `parse.test.ts` with confirmed-answer cases, incl. the absent-field default
-- [ ] 3.8 `features/run-tailoring/lib/loop.ts` (`runGenerationPhase`): assemble `bullet.source` from `verdict.evidenceKind`; pass `confirmedAnswers` into both prompt builders' ctx
-- [ ] 3.9 Update `features/run-tailoring/lib/loop.test.ts` fixtures/assertions (`sourceSentence` → `source`); add a confirmed-answer-grounds-a-bullet case
-- [ ] 3.10 `widgets/bullet-list/ui/BulletList.tsx`: read `bullet.source`; render the user-confirmed label via the existing `GroundingBadge` `label` override — no new status color (design.md §3)
-- [ ] 3.11 Update `widgets/bullet-list/ui/BulletList.test.tsx`: fixtures + a case asserting the user-confirmed label renders distinctly from the CV-sourced one
-- [ ] 3.12 `shared/lib/i18n/{types.ts,ua.ts,en.ts}`: add `bullets.sourceCv` / `bullets.sourceUserConfirmed` keys (both locales, `i18n.test.ts` enforces identical key sets)
-- [ ] 3.13 Author a `specs/bullets/spec.md` MODIFIED delta for the widened grounding-indicator requirement (evidence now has two source kinds) — do not silently redefine the baseline without a delta
+- [x] 3.1 `entities/bullet/model/types.ts`: `EvidenceSource` discriminated union (`cv` | `user-confirmed`), `Bullet.sourceSentence` → `Bullet.source` (design.md §3)
+- [x] 3.2 `sourceLabel(source, locale)` helper in `entities/bullet/lib/`; export from the barrel
+- [x] 3.3 Update `entities/bullet/lib/export.test.ts` fixtures to the new shape
+- [x] 3.4 `shared/lib/llm/types.ts`: `GroundingInput`/`GenerationInput` gain optional `confirmedAnswers?: readonly ConfirmedAnswerEvidence[]`; `GroundingVerdict` gains `evidenceKind?: "cv" | "user-confirmed"`
+- [x] 3.5 `shared/lib/llm/prompts.ts`: both prompt builders serialize the confirmed-answers pool as a distinct, labeled block (never merged with CV sentences or the JD/requirements the isolated pass must not see)
+- [x] 3.6 `shared/lib/llm/parse.ts`: `parseGroundingResponse` tolerantly reads `evidenceKind`, defaulting absent → `"cv"` (backward compat with existing fixtures)
+- [x] 3.7 Update `shared/lib/llm/prompts.test.ts` + `parse.test.ts` with confirmed-answer cases, incl. the absent-field default
+- [x] 3.8 `features/run-tailoring/lib/loop.ts` (`runGenerationPhase`): assemble `bullet.source` from `verdict.evidenceKind`; pass `confirmedAnswers` into both prompt builders' ctx — fixed post-checker-review to only tag `user-confirmed` on an exact byte-match against the confirmed-answers pool, else the bullet is `overclaim-risk` with no source (BC-HONESTY-03 regression: a paraphrased claim must never render as fabricated "from your CV" text)
+- [x] 3.9 Update `features/run-tailoring/lib/loop.test.ts` fixtures/assertions (`sourceSentence` → `source`); add a confirmed-answer-grounds-a-bullet case, plus a regression case for the no-byte-match fix above
+- [x] 3.10 `widgets/bullet-list/ui/BulletList.tsx`: read `bullet.source`; render the user-confirmed label via the existing `GroundingBadge` `label` override — no new status color (design.md §3)
+- [x] 3.11 Update `widgets/bullet-list/ui/BulletList.test.tsx`: fixtures + a case asserting the user-confirmed label renders distinctly from the CV-sourced one
+- [x] 3.12 `shared/lib/i18n/{types.ts,ua.ts,en.ts}`: add `bullets.sourceCv` / `bullets.sourceUserConfirmed` keys (both locales, `i18n.test.ts` enforces identical key sets) — already present from task 3.2's `sourceLabel` helper work, verified this pass
+- [x] 3.13 Author a `specs/bullets/spec.md` MODIFIED delta for the widened grounding-indicator requirement (evidence now has two source kinds) — do not silently redefine the baseline without a delta
 - [ ] 3.14 (Lower priority, flag only) `entities/tailoring/model/types.ts`'s `TailoringBullet` mirror gains the same `source` shape when next touched by persistence work
 
 ## 4. Export

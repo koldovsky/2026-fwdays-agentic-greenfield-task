@@ -25,6 +25,10 @@ export interface Dictionary {
     readonly excludedFromExport: string;
     /** Prefix for the grounding source sentence (FR-BULLETS-01). */
     readonly source: string;
+    /** Evidence-pool label when a bullet is grounded in a CV sentence (BC-HONESTY-03). */
+    readonly sourceCv: string;
+    /** Evidence-pool label when a bullet is grounded in a confirmed wizard answer (BC-HONESTY-03). */
+    readonly sourceUserConfirmed: string;
   };
   readonly result: {
     /** Accessible region label for the two-column result view (FR-SHELL-02). */

@@ -86,7 +86,12 @@ export const adversarialOutputs: ReadonlyArray<{
 
 // --- trajectory fixtures --------------------------------------------------
 
-/** A well-formed run — passes all trajectory checks. */
+/**
+ * A well-formed run — passes all trajectory checks. Step order matches the
+ * post-add-resume-wizard pipeline (design.md §1): score and
+ * derive-clarifying-questions run right after extraction, ahead of
+ * generation/grounding.
+ */
 export const goldenTrace: RunTrace = {
   stepCap: 20,
   terminated: "done",
@@ -94,11 +99,12 @@ export const goldenTrace: RunTrace = {
   steps: [
     { skill: "parse-cv", attempts: 1, contextKeys: ["cvText"] },
     { skill: "extract-requirements", attempts: 1, contextKeys: ["jd"], llmPayload: "requirements from jd" },
+    { skill: "score", attempts: 1, contextKeys: ["checklist"] },
+    { skill: "derive-clarifying-questions", attempts: 1, contextKeys: ["checklist"] },
     { skill: "generate-bullet", attempts: 1, contextKeys: ["cvText", "jd", "requirements"], llmPayload: "generate for req 1" },
     { skill: "ground-bullet", attempts: 2, contextKeys: ["bullet", "cvText"], llmPayload: "ground bullet vs cv" },
     { skill: "generate-bullet", attempts: 1, contextKeys: ["cvText", "jd", "requirements"] },
     { skill: "ground-bullet", attempts: 1, contextKeys: ["bullet", "cvText"] },
-    { skill: "score", attempts: 1, contextKeys: ["checklist"] },
   ],
 };
 
@@ -116,6 +122,22 @@ function mutateTrace(fn: (t: { -readonly [K in keyof RunTrace]: RunTrace[K] }) =
   fn(mutable);
   return mutable;
 }
+
+/**
+ * A well-formed run that grounds one bullet in a wizard confirmed answer
+ * (BC-HONESTY-03) instead of CV text — the isolation guarantee widens to
+ * allow `confirmedAnswers`, it doesn't loosen (add-resume-wizard
+ * design.md §1/§3). Passes all trajectory checks, proving
+ * `grounding-isolation` doesn't false-flag this legitimate case.
+ */
+export const goldenTraceWithConfirmedAnswers: RunTrace = mutateTrace((t) => {
+  t.steps = replaceStep(t.steps, 5, {
+    skill: "ground-bullet",
+    attempts: 1,
+    contextKeys: ["bullet", "cvText", "confirmedAnswers"],
+    llmPayload: "ground bullet vs cv + confirmed answers",
+  });
+});
 
 export const adversarialTraces: ReadonlyArray<{
   readonly name: string;

@@ -6,6 +6,7 @@
 // view owns state and passes `bullets` + `onToggleInclude`.
 
 import type { Bullet } from "@/entities/bullet";
+import { sourceLabel } from "@/entities/bullet";
 import { GroundingBadge } from "@/shared/ui";
 import { t } from "@/shared/lib/i18n";
 import type { Locale } from "@/shared/lib/i18n";
@@ -27,6 +28,10 @@ export function BulletList({ bullets, onToggleInclude, locale = "ua" }: BulletLi
       {bullets.map((bullet) => {
         const isOverclaim = bullet.grounding === "overclaim-risk";
         const toggleId = `bullet-include-${bullet.id}`;
+        // BC-HONESTY-03: CV evidence and confirmed wizard answers are both
+        // honest, but must never look the same — the badge label itself
+        // names the evidence pool (design.md §3, "No new badge color").
+        const evidenceLabel = sourceLabel(bullet.source, locale);
 
         return (
           <li
@@ -35,17 +40,19 @@ export function BulletList({ bullets, onToggleInclude, locale = "ua" }: BulletLi
           >
             <p className="font-body text-base text-ink leading-normal m-0">{bullet.text}</p>
 
-            {bullet.sourceSentence !== undefined ? (
+            {bullet.source !== undefined ? (
               <p className="font-body text-sm text-ink-soft leading-snug m-0">
                 <span className="font-mono text-xs uppercase tracking-eyebrow text-ink-muted">
-                  {copy.source}
+                  {evidenceLabel}
                 </span>{" "}
-                {bullet.sourceSentence}
+                {bullet.source.kind === "cv"
+                  ? bullet.source.sentence
+                  : `${bullet.source.question} — ${bullet.source.answer}`}
               </p>
             ) : null}
 
             <div className="flex items-center justify-between gap-3">
-              <GroundingBadge status={isOverclaim ? "overclaim" : "met"} />
+              <GroundingBadge status={isOverclaim ? "overclaim" : "met"} label={evidenceLabel} />
 
               <label htmlFor={toggleId} className="inline-flex items-center gap-2 cursor-pointer">
                 <input

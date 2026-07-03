@@ -22,6 +22,8 @@ export const en: Dictionary = {
     includeInExport: "Include in export",
     excludedFromExport: "Excluded from export",
     source: "Source",
+    sourceCv: "From your CV",
+    sourceUserConfirmed: "Confirmed by you",
   },
   result: {
     regionLabel: "Tailoring result",
