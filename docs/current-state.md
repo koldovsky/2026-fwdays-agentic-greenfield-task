@@ -85,16 +85,22 @@
 
 ## Next steps
 
-0. **User-reported: `POST /api/tailor` returns calm `{"error":"failed"}` in ~17ms.** Diagnosed:
-   this is `getAnthropicApiKey()` (`shared/config/env.ts`) throwing synchronously because
-   `ANTHROPIC_API_KEY` isn't set in `.env.local` — 17ms is way too fast to be a real LLM attempt,
-   matches the documented pre-existing blocker (`docs/dev-setup.md`). NOT a code bug — agents
-   cannot read/write `.env*` (deny-list), so the user must add the key themselves and restart
-   `yarn dev`. Real gap found alongside it: none of `/api/tailor`, `/api/tailor/analyze`,
-   `/api/tailor/generate`'s outer catch blocks log the caught error server-side — every failure
-   (missing key, malformed model output, network error) is indistinguishable in the console.
-   Fixing: add `console.error` (server-side only, client NDJSON contract unchanged) to each
-   route's outer catch. NFR-OBS-01 covers hiding failures from *end users*, not from operators.
+0. **Two user-reported `POST /api/tailor` failures, both diagnosed + fixed (2026-07-03):**
+   - First report (~17ms failure) was `ANTHROPIC_API_KEY` unset — expected fail-honest behavior
+     per `docs/dev-setup.md`, not a bug; agents can't touch `.env*`, user action to set it.
+   - Added server-side `console.error` logging (client NDJSON contract unchanged) to the outer
+     catch of `/api/tailor`, `/api/tailor/analyze`, `/api/tailor/generate` — previously every
+     failure cause was indistinguishable in the console (committed `1e42f19`).
+   - That logging then surfaced a SECOND, real bug: `usage_counters_user_id_fkey` violation —
+     a stale JWT session (Auth.js is stateless-JWT, never re-checks the DB, `src/app/auth.ts`)
+     resolved a `userId` no longer present in `users` (dev pglite resets on `yarn dev:db`
+     restart; the equivalent prod scenario is a deleted account with a lingering session
+     cookie). `usage-counter-repo.ts`'s `reserve()` now catches Postgres `23503`
+     (foreign_key_violation) and returns `false` (not granted → the existing calm
+     `rate_limited` path) instead of letting the raw DB error propagate — mirrors the same
+     file's existing "unreadable subscription degrades to the stricter free gate" pattern.
+     Added 2 unit tests (FK-violation → `false`, other errors still throw). **Not yet
+     committed this pass** — verify (lint/build/test) before committing.
 1. **Plan + implement `add-resume-wizard` tasks 1.7 + 2.5** (wizard UI/state machine) as its own
    focused pass, not blind fan-out — replaces the one-shot `TailoringForm`→result flow in
    `views/tailor-workspace` with a multi-step `analyze | confirm | clarify | generate | export |

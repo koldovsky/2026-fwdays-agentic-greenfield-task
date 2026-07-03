@@ -12,14 +12,26 @@ interface Call {
 class FakeDb implements Queryable {
   readonly calls: Call[] = [];
   private readonly responses: unknown[][] = [];
+  private error: unknown;
 
   enqueue(rows: unknown[]): this {
     this.responses.push(rows);
     return this;
   }
 
+  /** Next `query` call rejects with this instead of returning a response. */
+  throwNext(error: unknown): this {
+    this.error = error;
+    return this;
+  }
+
   async query<Row>(sql: string, params?: readonly unknown[]): Promise<QueryResult<Row>> {
     this.calls.push({ sql, params });
+    if (this.error !== undefined) {
+      const error = this.error;
+      this.error = undefined;
+      throw error;
+    }
     return { rows: (this.responses.shift() ?? []) as Row[] };
   }
 }
@@ -71,6 +83,21 @@ describe("createUsageCounterRepo.reserve", () => {
     const db = new FakeDb().enqueue([]);
     const granted = await createUsageCounterRepo(db).reserve("u1", 2);
     expect(granted).toBe(false);
+  });
+
+  it("reports not granted (not a raw throw) when the user id has no matching row in users — a stale session outliving the account", async () => {
+    const db = new FakeDb().throwNext({
+      code: "23503",
+      constraint: "usage_counters_user_id_fkey",
+      message: 'insert or update on table "usage_counters" violates foreign key constraint',
+    });
+    const granted = await createUsageCounterRepo(db).reserve("deleted-user", 2);
+    expect(granted).toBe(false);
+  });
+
+  it("still throws a non-foreign-key-violation error (e.g. a connection failure)", async () => {
+    const db = new FakeDb().throwNext(new Error("connection refused"));
+    await expect(createUsageCounterRepo(db).reserve("u1", 2)).rejects.toThrow("connection refused");
   });
 });
 

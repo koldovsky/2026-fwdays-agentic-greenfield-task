@@ -12,6 +12,17 @@ interface CounterRow {
   readonly tailorings_used: number;
 }
 
+/** Postgres foreign_key_violation (23503) — the pg driver attaches `code` to
+ * the thrown error, not a typed class, so this is a runtime shape check. */
+function isForeignKeyViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "23503"
+  );
+}
+
 /** Build a usage-counter repository over a {@link Queryable}. */
 export function createUsageCounterRepo(db: Queryable) {
   return {
@@ -53,18 +64,35 @@ export function createUsageCounterRepo(db: Queryable) {
      * Roll back a granted reservation with `release` if the attempt it
      * gated turns out not to count (FR-TAILOR-03: failed runs never
      * consume budget).
+     *
+     * A session can outlive the user row it names — a stateless JWT
+     * (src/app/auth.ts) is never re-checked against the DB, so a stale
+     * cookie from before an account deletion (or, in dev, before a pglite
+     * restart wipes the in-memory DB — docs/dev-setup.md) still resolves a
+     * user id that `users` no longer has a row for. The INSERT's foreign
+     * key then rejects the write with a raw `23503` — degrade that to "not
+     * granted" (the caller's existing `rate_limited` calm-failure path)
+     * rather than let a DB constraint violation surface as an opaque
+     * generic failure; this mirrors the same-file `subscription.get()`
+     * lookup already degrading an unreadable account to the stricter free
+     * gate one level up (src/app/api/tailor/route.ts).
      */
     async reserve(userId: string, limit: number): Promise<boolean> {
-      const { rows } = await db.query<CounterRow>(
-        `INSERT INTO usage_counters (user_id, tailorings_used)
-         VALUES ($1, 1)
-         ON CONFLICT (user_id)
-         DO UPDATE SET tailorings_used = usage_counters.tailorings_used + 1
-         WHERE usage_counters.tailorings_used < $2
-         RETURNING tailorings_used`,
-        [userId, limit],
-      );
-      return rows.length > 0;
+      try {
+        const { rows } = await db.query<CounterRow>(
+          `INSERT INTO usage_counters (user_id, tailorings_used)
+           VALUES ($1, 1)
+           ON CONFLICT (user_id)
+           DO UPDATE SET tailorings_used = usage_counters.tailorings_used + 1
+           WHERE usage_counters.tailorings_used < $2
+           RETURNING tailorings_used`,
+          [userId, limit],
+        );
+        return rows.length > 0;
+      } catch (error) {
+        if (isForeignKeyViolation(error)) return false;
+        throw error;
+      }
     },
 
     /** Undo a reservation made by `reserve`. Floors at 0 — a no-op if the
