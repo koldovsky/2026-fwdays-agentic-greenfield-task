@@ -30,7 +30,10 @@
     "FR-GUARD-01": "MVP",
     "FR-DASH-01": "MVP",
     "FR-DASH-02": "Future",
+    "FR-DASH-03": "MVP",
     "FR-GROUP-01": "Future",
+    "FR-WEB-01": "Future",
+    "FR-WEB-02": "Future",
     "NFR-LOCAL-01": "MVP",
     "NFR-SEC-01": "MVP",
     "NFR-UX-01": "MVP",
@@ -247,6 +250,13 @@
       "planned": null,
       "tests": [],
       "recordings": []
+    },
+    {
+      "id": "FR-DASH-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
     }
   ],
   "failures": [],
@@ -358,6 +368,10 @@
     {
       "check": "spec-mention",
       "msg": "FR-DASH-01 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-DASH-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "plan-ownership",
@@ -472,6 +486,10 @@
       "msg": "FR-DASH-01 has no test annotated \"@trace FR-DASH-01\""
     },
     {
+      "check": "test-trace",
+      "msg": "FR-DASH-03 has no test annotated \"@trace FR-DASH-03\""
+    },
+    {
       "check": "recording-evidence",
       "msg": "FR-INTAKE-01 is not referenced by any recording manifest under docs/qa/"
     },
@@ -578,6 +596,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-DASH-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-DASH-03 is not referenced by any recording manifest under docs/qa/"
     }
   ]
 }

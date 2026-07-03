@@ -107,6 +107,7 @@ Owns the conversation and queue surfaces; the Question inbox belongs to
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------ | ----- | ------------ | -------- |
 | FR-DASH-01 | The dashboard shows in real time: active conversations (streamed agent text), request state (collected fields), and the queue of `pending` requests | MVP | integration | proposed |
 | FR-DASH-02 | A developer panel shows raw AG-UI events (agent transparency for the demo)                                                    | Future | integration | proposed |
+| FR-DASH-03 | The week's schedule renders as a **concert-hall map** (`HallMap`, DESIGN.md): days are rows, slots are seats, colored by the status tokens (free / `pending` / `confirmed` / `cancelled`); clicking a `pending` seat opens its request card with the DecisionBar | MVP | integration | proposed |
 
 ### Groups (capability `groups`)
 
@@ -116,6 +117,18 @@ is green, together with its `waitlist` table (TC-DATA-01).
 | ID          | Description                                                                                                              | Phase | Verification | Status   |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ----- | ------------ | -------- |
 | FR-GROUP-01 | For the group format, the agent offers an existing group with free seats where \|student age − each member's age\| ≤ 2 years, or adds the lead to a "new group" waitlist; a group join flows through the same `pending`/HITL decision | Future | integration | proposed |
+
+### Web booking (capability `web-booking`)
+
+The second lead-facing channel — **Future**, captured now so the architecture
+stays channel-agnostic (the agent core is already transport-independent,
+ADR-0001). Runs on localhost like everything else; publishing it — and a
+Telegram Mini App reusing the same page — is a post-MVP decision.
+
+| ID        | Description                                                                                                              | Phase | Verification | Status   |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- | ----- | ------------ | -------- |
+| FR-WEB-01 | A lead-facing web page where a visitor picks a trial slot on the concert-hall seat map (`HallMap`, DESIGN.md) and talks to the **same agent** (CopilotKit chat); a picked seat follows the same `pending` → HITL loop (FR-HITL-01..03) and the same guardrails | Future | integration + eval | proposed |
+| FR-WEB-02 | Lead identity is channel-agnostic: a lead exists without a Telegram handle; requests link to a lead via `(channel, channel_id)` | Future | unit + integration | proposed |
 
 ### Guardrails — cross-cutting eval suite
 
@@ -188,3 +201,4 @@ TC-PURE-01).
 - Group matching and the waitlist (`groups` capability, FR-GROUP-01) — Future
 - Question-inbox deduplication and frequency counters (FR-KB-05) — Future
 - The raw-events developer panel (FR-DASH-02) — Future
+- The lead-facing web channel with the concert-hall seat picker (`web-booking`, FR-WEB-01/02) — Future; a Telegram Mini App is a possible packaging of the same page after publication

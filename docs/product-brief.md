@@ -67,8 +67,11 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
    not from the model (FR-SLOT-01, FR-GUARD-03, BC-SCHEDULE-01). The chosen slot
    is soft-held as `pending` (FR-SLOT-02).
 5. **Watch it live.** On the dashboard, the teacher sees the conversation stream
-   and the request card fill in field by field over AG-UI events (FR-DASH-01);
-   a developer panel exposes the raw event feed for the curious (FR-DASH-02).
+   and the request card fill in field by field over AG-UI events (FR-DASH-01).
+   The week's schedule renders as a **concert hall**: days are rows, hour slots
+   are seats — free, held (amber), confirmed (green) — and clicking a held seat
+   opens its request card (FR-DASH-03). A developer panel with the raw event
+   feed is Future (FR-DASH-02).
 6. **Decide.** The `pending` request — first-lesson brief included — shows
    Confirm / Propose another time / Decline. Nothing reaches the lead until she
    acts (FR-HITL-01, FR-GUARD-01). Next to the queue sits the **Question inbox**:
@@ -118,16 +121,19 @@ questions and the first-lesson brief, amendments and cancellation before the
 decision (FR-INTAKE-07), returning leads (FR-INTAKE-08), FAQ from the knowledge
 base with the question log and the answer delivered back to whoever asked
 (FR-KB-04), deterministic slots with the widen-the-window fallback (FR-SLOT-03),
-the `pending` hold, the live AG-UI dashboard with human-in-the-loop decisions
-and the plain-list Question inbox, the Telegram close-out, honest degradation on
-API failures (NFR-REL-01), and the privacy notice (NFR-PRIV-02) — plus the
-guardrail eval suite (`npm run evals`) and the unit-tested pure `lib/`
-(TC-TEST-01/02, TC-PURE-01).
+the `pending` hold, the live AG-UI dashboard with human-in-the-loop decisions,
+the concert-hall schedule view (FR-DASH-03), the plain-list Question inbox, the
+Telegram close-out, honest degradation on API failures (NFR-REL-01), and the
+privacy notice (NFR-PRIV-02) — plus the guardrail eval suite (`npm run evals`)
+and the unit-tested pure `lib/` (TC-TEST-01/02, TC-PURE-01).
 
 **Future (the `Phase` column in requirements.md is authoritative):** group
 matching and the waitlist (FR-GROUP-01), the raw-events developer panel
-(FR-DASH-02), and inbox deduplication with frequency counters (FR-KB-05) —
-promoted only after the MVP loop is green.
+(FR-DASH-02), inbox deduplication with frequency counters (FR-KB-05), and the
+lead-facing **web-booking** channel — the same concert-hall seat map as a
+lead-side picker plus the same agent in a CopilotKit chat (FR-WEB-01/02),
+publishable (or packaged as a Telegram Mini App) once the school wants it
+public — promoted only after the MVP loop is green.
 
 **Future (deferred):** the PRD's explicit out-of-scope list, none of which is
 built — payments, reminders, rescheduling of confirmed lessons, calendar

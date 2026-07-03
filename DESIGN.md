@@ -121,7 +121,12 @@ text with a typing shimmer), `DecisionBar` (Confirm / Propose another time /
 Decline — the only place `confirmed` can be born), `QuestionInbox` (unanswered
 lead questions with a frequency counter and a one-action answer field — the only
 place the knowledge base can grow, `FR-KB-02/03`), `EventLog` (the raw AG-UI
-feed behind a collapsed panel, `FR-DASH-02`).
+feed behind a collapsed panel, `FR-DASH-02`), `HallMap` (the signature view —
+the week's schedule as a **concert hall**: days are rows, hour slots are seats,
+each seat colored by the status tokens; a free seat is a quiet outline, a
+`pending` seat glows amber and opens the request card with the DecisionBar,
+`FR-DASH-03`; the Future `web-booking` channel reuses this same component for
+lead-side seat picking, `FR-WEB-01`).
 
 They are client components styled entirely with the tokens above, so they
 recolour with the theme automatically. `apps/dashboard/app/page.tsx` is a small
@@ -169,6 +174,23 @@ These rules bind **both** surfaces and are embedded into the agent's prompt.
   tracking on the dashboard, e.g. "ОЧІКУЮТЬ · 3".
 - **The agent never speaks for the teacher.** Decisions are relayed as facts
   ("Підтверджено: вівторок, 17:00"), not as the bot's own generosity.
+
+### Telegram — musicality lives in language and structure
+
+Telegram renders no custom UI, so the musical identity is carried by words and
+inline keyboards, inside the rules above (one sanctioned emoji, no pressure):
+
+- **Tuning-fork language.** The greeting opens with the tuning metaphor —
+  "Налаштуємось?" — and the intake arc reads as настроювання → розспівка →
+  виступ, never as form-filling.
+- **Slot chips are tickets.** Slots come as inline-keyboard buttons, one per
+  slot, mono-styled: "пн · 17:00". Never a typed-out numbered list when a
+  keyboard fits.
+- **Buttons are words, not emoji.** Goal options are plain text ("Караоке з
+  друзями", "Сцена", "Впевненість", "Для себе") — the 🎵 stays reserved for
+  the final confirmation.
+- **The privacy line sits in the greeting** (NFR-PRIV-02): one calm sentence,
+  not a wall of legal text.
 
 ---
 

@@ -17,7 +17,8 @@ tunnels, no cloud DB.
 ## Capabilities
 
 MVP: `intake` · `kb-learning` · `slots` · `booking-hitl` · `dashboard`.
-Future: `groups` (waitlist included). Guardrail FRs are owned by their
+Future: `groups` (waitlist included) · `web-booking` (lead-facing concert-hall
+seat picker + the same agent over CopilotKit). Guardrail FRs are owned by their
 implementing capabilities (FR-GUARD-01→booking-hitl, -02/-06→kb-learning,
 -03→slots, -04/-05→intake); the guardrails **eval suite** is cross-cutting
 (`evals/cases/fr-guard-*.yaml`). The Question inbox belongs to `kb-learning`,
