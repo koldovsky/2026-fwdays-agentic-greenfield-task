@@ -1,6 +1,3 @@
-<!-- Homework — Agentic Engineering: Greenfield.
-     Fill in every section. Any stack. -->
-
 ## Author
 Dmytro Tarasenko
 
