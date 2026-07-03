@@ -78,7 +78,11 @@ export async function POST(request: Request): Promise<Response> {
         for await (const event of runAnalysisPhase({ llm }, input)) {
           send(event);
         }
-      } catch {
+      } catch (error) {
+        // Server-side only — the client always gets the same calm coded
+        // event regardless of cause (NFR-OBS-01 protects the end user, not
+        // the operator debugging a report of "it just says failed").
+        console.error("[api/tailor/analyze] run failed", error);
         send({ type: "error", code: "failed" });
         send({ type: "status", phase: "failed" });
       } finally {

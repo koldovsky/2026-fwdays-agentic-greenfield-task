@@ -85,6 +85,16 @@
 
 ## Next steps
 
+0. **User-reported: `POST /api/tailor` returns calm `{"error":"failed"}` in ~17ms.** Diagnosed:
+   this is `getAnthropicApiKey()` (`shared/config/env.ts`) throwing synchronously because
+   `ANTHROPIC_API_KEY` isn't set in `.env.local` — 17ms is way too fast to be a real LLM attempt,
+   matches the documented pre-existing blocker (`docs/dev-setup.md`). NOT a code bug — agents
+   cannot read/write `.env*` (deny-list), so the user must add the key themselves and restart
+   `yarn dev`. Real gap found alongside it: none of `/api/tailor`, `/api/tailor/analyze`,
+   `/api/tailor/generate`'s outer catch blocks log the caught error server-side — every failure
+   (missing key, malformed model output, network error) is indistinguishable in the console.
+   Fixing: add `console.error` (server-side only, client NDJSON contract unchanged) to each
+   route's outer catch. NFR-OBS-01 covers hiding failures from *end users*, not from operators.
 1. **Plan + implement `add-resume-wizard` tasks 1.7 + 2.5** (wizard UI/state machine) as its own
    focused pass, not blind fan-out — replaces the one-shot `TailoringForm`→result flow in
    `views/tailor-workspace` with a multi-step `analyze | confirm | clarify | generate | export |

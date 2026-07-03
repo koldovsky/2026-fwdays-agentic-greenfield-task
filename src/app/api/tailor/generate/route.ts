@@ -196,7 +196,11 @@ export async function POST(request: Request): Promise<Response> {
           // never produced a result must refund it (FR-TAILOR-03).
           await releaseReservation();
         }
-      } catch {
+      } catch (error) {
+        // Server-side only — the client always gets the same calm coded
+        // event regardless of cause (NFR-OBS-01 protects the end user, not
+        // the operator debugging a report of "it just says failed").
+        console.error("[api/tailor/generate] run failed", error);
         if (releaseReservation) {
           try {
             await releaseReservation();
