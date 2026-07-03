@@ -47,7 +47,7 @@ Deliberately skipped: Project Factory plugin (token cost), GenUI (web-only), emu
 
 1. Fork + clone the homework repo; create the work branch `serhiy-pop/traffic-sign-scanner`. Enable CodeRabbit on the fork.
 2. `dotnet new maui` template project at `src/TrafficTrafficSignScanner.App/` (project name: `traffic-sign-scanner`, .NET namespaces/projects use `TrafficTrafficSignScanner.*`).
-3. Copy in the model assets: `model.onnx`, `labels.txt` (into `Resources/Raw/`), and the existing labeled test photos into `evals/dataset/` (agents will write `expected.json` beside them).
+3. Copy in the model assets: `model.onnx`, `labels.txt` (into `Resources/Raw/`), and the eval photos into `evals/dataset/<label>/` — one folder per class named exactly as in `labels.txt` (`stop-sign/`, `no-entry/`, `parking-prohibited/`) plus `negative/` (no target sign, incl. other red signs). 10–15 images per class + 8–10 negatives, kebab-case names `<label>-NN.jpg`, max side ~1600px. Prefer photos not used for Custom Vision training where possible. Agents will generate `expected.json` beside them (folder = expected label; `negative/` = zero detections).
 4. Copy the selected Ortinau skills (folders with `SKILL.md`) from [davidortinau/maui-skills](https://github.com/davidortinau/maui-skills) into `.claude/skills/`: `maui-current-apis` (always-on API guardrail), `maui-media-picker`, `maui-file-handling`, `maui-permissions`, `maui-data-binding`, `maui-dependency-injection`, `maui-shell-navigation`, `maui-unit-testing`, `maui-app-lifecycle`, `maui-performance`.
 5. Open the fork as a new Cursor workspace; copy this plan into the repo as `docs/plan/bootstrap-plan.md` ("the agent forgets; the repo doesn't").
 
