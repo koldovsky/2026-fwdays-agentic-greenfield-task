@@ -6,8 +6,10 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-04, ~01:20 (Europe/Kyiv)
-- **Current phase:** **Phase 2 DONE (G2 passed)** — Phase 3 capability plan next
+- **Date and time:** 2026-07-04, ~02:05 (Europe/Kyiv)
+- **Current phase:** **Phase 4 — slice S1 `slots` red→green DONE** (sections
+  1/4/5/6 of its tasks.md remain; section 4 spike is BLOCKED on the user
+  creating the DEMO calendar + service account)
 - **Active change:** none (baseline specs, not a change folder)
 - **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
   sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),
@@ -25,13 +27,25 @@
   amended into ADR-0001 §4, actor unified to "administrator").
   Gate: `openspec validate --all --strict` 5/5; check-traceability 30 FRs,
   0 failures, 0 spec-mention warnings.
-- **Next task:** **Phase 3** — draft `docs/mvp-capability-plan.md` (slice
-  DAG; every MVP FR owned by exactly one slice — the format the
-  `check-traceability` plan-ownership rule parses; first slice = `slots`
-  per the signed decision), then **G3 = human sign-off of the plan**.
-  After G3: Phase 4a change folder for `slots`, tests-first red→green.
-  Model economy: subagent fan-outs on sonnet; Fable only for main-loop
-  judgment (user directive).
+  **Phase 3** plan drafted (`c33ffad`) and **G3 SIGNED** (`85cf863`):
+  5 slices, DAG S1 slots → S2 intake → S3 dashboard → {S4 booking-hitl ∥
+  S5 kb-learning}; all 30 MVP FRs owned exactly once. **Phase 4 S1
+  `slots`**: change folder (`7cd81c1` — proposal, design with CalendarPort
+  googleapis-vs-MCP spike criteria, 44-task test-first tasks.md);
+  check-traceability `@trace` regex fixed for categorized ids (`fe86ac1`);
+  RED — 20 tests in 5 files + typed throwing stubs (`0266c48`; first
+  commit attempt correctly blocked by the tsc pre-commit gate, fixed by
+  typing, not weakening); GREEN — domain modules implemented (`5d13658`),
+  20/20 pass, tests byte-identical, the compactness tie-break test caught
+  a real implementer bug pre-review.
+- **Next task:** `slots` tasks.md remaining sections: 1 (bookings schema
+  seed), **4 (CalendarPort + googleapis-vs-MCP spike — BLOCKED: needs the
+  user to create the DEMO Google Calendar, a service account, share the
+  calendar with it, and put the JSON key path + calendar id in `.env`)**,
+  5 (NFR-REL-01 failure paths + real-calendar integration smoke), 6
+  (validation cadence; archive only after real smoke). Then slice S2
+  `intake`. Model economy: subagent fan-outs on sonnet; Fable only for
+  main-loop judgment (user directive).
 
 ## Source Of Truth
 
