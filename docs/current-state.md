@@ -122,8 +122,29 @@ Verified after fixes: `yarn lint` clean, `yarn build` clean (`/account/profile` 
 
 ## Working on
 
-- **`add-resume-wizard`** — backend increment (sections 1–3, minus UI) done + committed. Next
-  increment: tasks 1.7 + 2.5, the wizard UI/state machine.
+- **`add-resume-wizard` — wizard UI/state machine (tasks 1.7 + 2.5) DONE + verified, NOT yet committed
+  (2026-07-03).** Front half of the wizard built on the live analyze/generate routes. **Scope was 1.7 +
+  2.5 only**; section 4 (PDF/DOCX export, `@react-pdf/renderer` + `docx` + Cyrillic fonts) stays the
+  NEXT increment — the `export` state reuses the existing paywall-gated clipboard/text export.
+  - `views/tailor-workspace` now owns a 6-state machine (`analyze | confirm | clarify | generate |
+    export | failed`; `ui/WizardSteps.tsx` stepper, FR-WIZARD-05; `lib/confirmed-answers.ts` pure
+    answered→ConfirmedAnswerEvidence). Confirm is client-only — no LLM call before explicit confirm
+    (FR-WIZARD-01). Generate `rate_limited` → paywall + back to confirm; analyze's per-IP cap surfaces
+    inline in AnalyzeForm (NOT the paywall — distinct `analyze:ip:` vs `tailor:ip:` namespaces).
+  - `features/clarify-tailoring` (new): `ClarifyingQuestions` — answer/skip/decline, never blocks
+    (FR-WIZARD-03); only answered questions become evidence (FR-WIZARD-04, BC-HONESTY-03).
+  - `features/run-tailoring`: shared `api/read-ndjson.ts` (stream-tailoring refactored onto it),
+    `streamAnalyze`/`streamGenerate` clients, `AnalyzeForm`, exported `AnalysisResult`. One-shot
+    `/api/tailor` + TailoringForm kept intact.
+  - i18n `wizard` section (ua+en). Built via understand-workflow `wf_3e3b5f06-981`.
+  - **Verified:** lint clean, build clean, **474 tests / 79 files green**. **verifier: PASS** (every
+    FR/NFR/BC backed by a named test). **checker: ship, 0 blockers**; its 1 actionable minor fixed
+    (WizardSteps now drops the clarify dot when there are no questions, so a skipped clarify isn't
+    shown as completed — FR-WIZARD-05). Remaining minor (no cancel/back mid-`generate`) is accepted
+    for this increment — folds into the existing FR-TAILOR-02 step-streaming follow-up.
+  - **Not done (still open in tasks.md):** 1.7/2.5 checkboxes to tick; section 4 (export deps/routes);
+    section 5 (wizard honesty-evals, sync `specs/wizard/spec.md` + `specs/bullets/spec.md` delta into
+    baseline, archive). Live E2E still needs `ANTHROPIC_API_KEY`.
 - `add-auth` remainder: password reset email (needs a sender). Google OAuth (`FR-AUTH-02`)
   DEFERRED per user 2026-07-03 — credentials-only for now.
 

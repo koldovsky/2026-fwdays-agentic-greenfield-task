@@ -1,19 +1,24 @@
-// Render test for the tailor-workspace view (jsdom project), FR-SHELL-01/02 +
-// FR-BULLETS-02 / BC-HONESTY-02. `TailoringForm` is mocked with a fake control
-// that fires a scripted result on click — this keeps the workspace test
-// focused on workspace behavior (empty state, rendering a result, toggling an
-// overclaim bullet) rather than re-testing the form's streaming logic (that's
-// TailoringForm.test.tsx's job).
+// Render test for the tailor-workspace wizard (jsdom), FR-WIZARD-01/05 +
+// FR-BULLETS-02 / BC-HONESTY-02. `@/features/run-tailoring` is mocked: AnalyzeForm
+// is a fake trigger that fires a scripted analysis, and streamGenerate is a
+// scripted async generator — so this test drives the view's state machine
+// (analyze → confirm → generate → export) without the real streaming logic
+// (that lives in the feature's own tests).
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
-import type { TailoringRunResult } from "@/features/run-tailoring";
+import type { AnalysisResult, TailoringRunResult } from "@/features/run-tailoring";
 
 import { TailorWorkspace } from "./TailorWorkspace";
 
-const SCRIPTED_RESULT: TailoringRunResult = {
+const SCRIPTED_ANALYSIS: AnalysisResult = {
+  matchScore: 68,
+  cvProfile: { skills: [], sentences: [] },
+  requirements: [
+    { id: "req-react", text: "5+ years of commercial React experience", importance: "must-have", keywords: ["react"] },
+  ],
   checklist: [
     {
       requirement: {
@@ -24,16 +29,12 @@ const SCRIPTED_RESULT: TailoringRunResult = {
       },
       item: { status: "met", rationale: "The résumé confirms six years of React in production." },
     },
-    {
-      requirement: {
-        id: "req-graphql",
-        text: "GraphQL knowledge",
-        importance: "nice-to-have",
-        keywords: ["graphql"],
-      },
-      item: { status: "gap", rationale: "No mention of GraphQL in the résumé." },
-    },
   ],
+  clarifyingQuestions: [],
+};
+
+const SCRIPTED_RESULT: TailoringRunResult = {
+  checklist: SCRIPTED_ANALYSIS.checklist,
   bullets: [
     {
       id: "blt-platform",
@@ -51,42 +52,73 @@ const SCRIPTED_RESULT: TailoringRunResult = {
   matchScore: 68,
 };
 
+const streamGenerateMock = vi.hoisted(() => vi.fn());
+
 vi.mock("@/features/run-tailoring", () => ({
-  TailoringForm: ({ onResult }: { onResult: (result: TailoringRunResult) => void }) => (
-    <button type="button" onClick={() => onResult(SCRIPTED_RESULT)}>
-      fake tailor trigger
+  AnalyzeForm: ({ onAnalysis }: { onAnalysis: (a: AnalysisResult, jd: string) => void }) => (
+    <button type="button" onClick={() => onAnalysis(SCRIPTED_ANALYSIS, "jd text")}>
+      fake analyze
     </button>
   ),
+  streamGenerate: streamGenerateMock,
 }));
+
+/** Async generator of scripted generation events, one macrotask apart. */
+function scriptedGen(events: readonly unknown[]) {
+  return () =>
+    (async function* () {
+      for (const event of events) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        yield event;
+      }
+    })();
+}
+
+const RESULT_EVENTS = [
+  { type: "result", result: SCRIPTED_RESULT },
+  { type: "status", phase: "done" },
+];
 
 const overclaimBullet = SCRIPTED_RESULT.bullets.find((b) => b.grounding === "overclaim-risk")!;
 
-async function triggerResult() {
-  await userEvent.click(screen.getByRole("button", { name: "fake tailor trigger" }));
+async function analyze() {
+  await userEvent.click(screen.getByRole("button", { name: "fake analyze" }));
+}
+async function proceed() {
+  await userEvent.click(screen.getByRole("button", { name: ua.wizard.confirmAction }));
 }
 
-describe("TailorWorkspace (FR-SHELL-01/02)", () => {
-  it("renders the empty state before any result", () => {
+describe("TailorWorkspace wizard (FR-WIZARD-01/05)", () => {
+  it("renders the analyze intro before any analysis", () => {
     render(<TailorWorkspace />);
     expect(screen.getByText(ua.workspace.emptyState)).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: ua.result.regionLabel })).not.toBeInTheDocument();
   });
 
-  it("renders the checklist score and bullets once a result arrives", async () => {
+  it("shows the match score at confirm before any bullet is generated (FR-WIZARD-01)", async () => {
+    streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
     render(<TailorWorkspace />);
 
-    await triggerResult();
+    await analyze();
 
-    expect(screen.getByText(String(SCRIPTED_RESULT.matchScore))).toBeInTheDocument();
-    expect(screen.getByText(overclaimBullet.text)).toBeInTheDocument();
-    expect(screen.queryByText(ua.workspace.emptyState)).not.toBeInTheDocument();
+    // Confirm step: score + checklist shown, paused — no bullets yet.
+    expect(screen.getByText(String(SCRIPTED_ANALYSIS.matchScore))).toBeInTheDocument();
+    expect(screen.queryByText(overclaimBullet.text)).not.toBeInTheDocument();
+
+    await proceed();
+
+    // Generation completed → export step shows the bullets.
+    expect(await screen.findByText(overclaimBullet.text)).toBeInTheDocument();
   });
 
-  it("toggling an overclaim-risk bullet updates its included state", async () => {
+  it("toggling an overclaim-risk bullet at export updates its included state", async () => {
+    streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
     render(<TailorWorkspace />);
-    await triggerResult();
 
-    const row = screen.getByText(overclaimBullet.text).closest("li") as HTMLElement;
+    await analyze();
+    await proceed();
+
+    const row = (await screen.findByText(overclaimBullet.text)).closest("li") as HTMLElement;
     const toggle = within(row).getByRole("checkbox");
 
     // Seeded excluded by default (BC-HONESTY-02).
@@ -94,7 +126,6 @@ describe("TailorWorkspace (FR-SHELL-01/02)", () => {
 
     await userEvent.click(toggle);
 
-    // State flip re-renders the bullet as included.
     expect(within(row).getByRole("checkbox")).toBeChecked();
   });
 });

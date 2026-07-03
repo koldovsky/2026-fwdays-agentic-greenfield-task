@@ -8,6 +8,7 @@ export {
   runTailoringLoop,
   STEP_CAP,
   type AnalysisEvent,
+  type AnalysisResult,
   type GenerationEvent,
   type GenerationPhaseInput,
   type LoopDeps,
@@ -20,3 +21,7 @@ export type {
   TailoringRunResult,
 } from "./model/types";
 export { TailoringForm, type TailoringFormProps } from "./ui/TailoringForm";
+export { AnalyzeForm, type AnalyzeFormProps } from "./ui/AnalyzeForm";
+// Wizard-phase stream clients (the view orchestrates analyze → generate).
+export { streamAnalyze } from "./api/stream-analyze";
+export { streamGenerate } from "./api/stream-generate";

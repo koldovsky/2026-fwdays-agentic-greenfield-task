@@ -6,7 +6,7 @@
 - [x] 1.4 Fix `shared/lib/evals/trajectory.ts`'s `orderOk` rank table for the reordered `score` step (design.md Risks — easy to miss, breaks honesty-eval silently if skipped)
 - [x] 1.5 `POST /api/tailor/analyze` route handler (NDJSON, same streaming/error-handling shape as `src/app/api/tailor/route.ts`)
 - [x] 1.6 `POST /api/tailor/generate` route handler (NDJSON, body `{ cvProfile, requirements, confirmedAnswers, checklist, matchScore }` — checklist/matchScore added beyond the task's original body list because `runGenerationPhase`'s actual `GenerationPhaseInput` requires them, design.md §1)
-- [ ] 1.7 `views/tailor-workspace` owns the wizard state machine (`analyze | confirm | clarify | generate | export | failed`, FR-WIZARD-05 labels); confirm step is a client-only transition, no server call
+- [x] 1.7 `views/tailor-workspace` owns the wizard state machine (`analyze | confirm | clarify | generate | export | failed`, FR-WIZARD-05 labels); confirm step is a client-only transition, no server call
 
 ## 2. Clarifying-question skill
 
@@ -14,7 +14,7 @@
 - [x] 2.2 `deriveClarifyingQuestions(rows, opts?)` — pure, deterministic, template-based; input narrowed to `{ requirement.text, requirement.keywords, item.status }` for `partial`/`gap` rows only (FR-WIZARD-02); bounded by `MAX_CLARIFYING_QUESTIONS`, prioritized gap-before-partial, must-have-before-nice-to-have
 - [x] 2.3 Unit tests: bound enforcement, priority ordering, no-weak-requirements-means-no-questions, no access to unrelated row data
 - [x] 2.4 Add `derive-clarifying-questions` to `shared/lib/evals`'s `SkillName` union + trace it in the loop the same way `parse-cv`/`score` are traced today (deterministic, no `llmPayload`) — wired into `runAnalysisPhase`, output added to the `analysis` event (gap in design.md's stated event shape)
-- [ ] 2.5 `features/clarify-tailoring` (new slice): UI for answer / skip / decline per question (FR-WIZARD-03), feeds confirmed answers into the generate-phase request
+- [x] 2.5 `features/clarify-tailoring` (new slice): UI for answer / skip / decline per question (FR-WIZARD-03), feeds confirmed answers into the generate-phase request
 
 ## 3. Evidence tagging (BC-HONESTY-03)
 

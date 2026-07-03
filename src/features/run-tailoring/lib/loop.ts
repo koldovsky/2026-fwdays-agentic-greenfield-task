@@ -140,6 +140,14 @@ export type AnalysisEvent =
   | { readonly type: "error"; readonly code: TailorErrorCode };
 
 /**
+ * The payload of the terminal `analysis` event, without its `type` tag — what
+ * the wizard's analyze step hands to the view, and (minus clarifyingQuestions)
+ * what the view echoes back to /api/tailor/generate. Kept in sync with the
+ * `analysis` AnalysisEvent member by construction.
+ */
+export type AnalysisResult = Omit<Extract<AnalysisEvent, { type: "analysis" }>, "type">;
+
+/**
  * Run the analysis half of a tailoring: parse the CV, extract JD
  * requirements, score the checklist, and derive clarifying questions. Yields
  * progress events ending in a single terminal `analysis` event — that event

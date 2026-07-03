@@ -1,34 +1,49 @@
 "use client";
 
-// tailor-workspace view — route-level composition (FR-SHELL-01/02). Owns the
-// run result + local bullet state (include-in-export toggles). The
-// export-default rule (applyExportDefaults / BC-HONESTY-02 — grounded in,
-// overclaim-risk out) is applied ONCE, inside runTailoringLoop
-// (features/run-tailoring/lib/loop.ts), so `next.bullets` already carries the
-// correct defaults; this view just seeds local toggle state from them rather
-// than re-deriving it, keeping the loop the single owner of the invariant.
-// It composes the two child widgets (checklist-panel + bullet-list) into the
-// layout-only result-view widget through its `left` / `right` slots — so no
-// widget imports another widget; the composition happens here at the view layer.
+// tailor-workspace view — owns the resume-tailoring WIZARD state machine
+// (add-resume-wizard task 1.7, FR-WIZARD-01/05): analyze → confirm → clarify →
+// generate → export, plus a terminal failed state. The confirm step is a
+// client-only transition (no server call) — the user sees the match score +
+// checklist and explicitly chooses to proceed before any bullet is generated
+// (FR-WIZARD-01). The paused state (analysis result + confirmed answers) is
+// held here in React state between the two HTTP calls (/api/tailor/analyze then
+// /api/tailor/generate).
 //
-// Paywall composition (add-payments-emulator task 2.1, FR-PAYWALL-01): the
-// view opens widgets/paywall at the two gated points — the export CTA (when
-// the server-resolved entitlement is not paid) and a `rate_limited` run
-// (signalled by the form; the limit itself lives server-side, NFR-COST-02).
-// No limit or entitlement logic is duplicated here.
+// Honesty + export invariants are unchanged from the one-shot flow: the loop
+// applies applyExportDefaults server-side (BC-HONESTY-02 — grounded in,
+// overclaim-risk out), so this view seeds local toggle state from
+// result.bullets rather than re-deriving it. Widget composition (checklist-panel
+// + bullet-list into result-view's slots) stays at the view layer; no widget
+// imports another widget.
+//
+// Paywall (FR-PAYWALL-01) is opened at two points, exactly as before: the
+// export CTA when the server-resolved entitlement is not paid, and a
+// `rate_limited` GENERATION run (the NFR-COST-02 budget gate lives server-side;
+// the analyze step's separate anti-abuse cap is surfaced inline by AnalyzeForm,
+// never here). No limit or entitlement logic is duplicated in this view.
 import { useMemo, useState } from "react";
 
 import type { Bullet } from "@/entities/bullet";
-import { TailoringForm, type TailoringRunResult } from "@/features/run-tailoring";
+import { ClarifyingQuestions } from "@/features/clarify-tailoring";
+import {
+  AnalyzeForm,
+  streamGenerate,
+  type AnalysisResult,
+  type TailoringRunResult,
+} from "@/features/run-tailoring";
 import { UploadCvDropzone } from "@/features/upload-cv";
-import { t } from "@/shared/lib/i18n";
-import type { Locale } from "@/shared/lib/i18n";
+import type { ConfirmedAnswerEvidence } from "@/shared/lib/llm";
+import { t, type Locale } from "@/shared/lib/i18n";
+import { Button } from "@/shared/ui";
 import { BulletList } from "@/widgets/bullet-list";
 import { ChecklistPanel, type ChecklistPanelRow } from "@/widgets/checklist-panel";
 import { Paywall, type PaywallReason } from "@/widgets/paywall";
 import { ResultView } from "@/widgets/result-view";
-import { Button } from "@/shared/ui";
 import { buildExportText } from "../lib/export-text";
+import { toConfirmedAnswers } from "../lib/confirmed-answers";
+import { WizardSteps, type WizardStep } from "./WizardSteps";
+
+type WizardPhase = WizardStep | "failed";
 
 export interface TailorWorkspaceProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
@@ -58,22 +73,90 @@ export function TailorWorkspace({
   onExport = downloadTextFile,
 }: TailorWorkspaceProps) {
   const copy = t(locale);
+  const [phase, setPhase] = useState<WizardPhase>("analyze");
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [jdText, setJdText] = useState("");
+  const [cvText, setCvText] = useState("");
   const [result, setResult] = useState<TailoringRunResult | null>(null);
   const [bullets, setBullets] = useState<Bullet[]>([]);
-  // Which gated action opened the paywall, if any (FR-PAYWALL-01).
   const [paywall, setPaywall] = useState<PaywallReason | null>(null);
-  // CV text is lifted here (add-upload-cv task 4.2) so the dropzone's
-  // extracted text lands in the form's editable textarea for review before
-  // tailoring — upload never bypasses review (FR-CV-01, FR-CV-03 confirm
-  // half); a re-upload simply replaces it.
-  const [cvText, setCvText] = useState("");
 
-  const handleResult = (next: TailoringRunResult) => {
-    setResult(next);
-    // next.bullets already has export defaults applied by the loop
-    // (BC-HONESTY-02) — copy (not re-derive) into local, mutable toggle state.
-    setBullets([...next.bullets]);
+  const checklistRows: ChecklistPanelRow[] = useMemo(
+    () =>
+      analysis === null
+        ? []
+        : analysis.checklist.map((row) => ({
+            requirement: row.requirement,
+            status: row.item.status,
+            rationale: row.item.rationale,
+          })),
+    [analysis],
+  );
+
+  const handleAnalysis = (next: AnalysisResult, jd: string) => {
+    setAnalysis(next);
+    setJdText(jd);
     setPaywall(null);
+    setPhase("confirm");
+  };
+
+  const handleConfirm = () => {
+    if (analysis === null) return;
+    // Client-only transition (FR-WIZARD-01): branch to clarify only if there are
+    // questions; otherwise go straight to generation with no confirmed answers.
+    if (analysis.clarifyingQuestions.length > 0) {
+      setPhase("clarify");
+    } else {
+      void startGenerate([]);
+    }
+  };
+
+  async function startGenerate(confirmedAnswers: readonly ConfirmedAnswerEvidence[]) {
+    if (analysis === null) return;
+    setPhase("generate");
+    // A healthy run ends in a terminal `result` or `error`; a stream that closes
+    // without one surfaces a calm failure rather than hanging (NFR-OBS-01).
+    let sawTerminal = false;
+    try {
+      for await (const event of streamGenerate({
+        cvProfile: analysis.cvProfile,
+        requirements: analysis.requirements,
+        jobDescription: jdText,
+        confirmedAnswers,
+        checklist: analysis.checklist,
+        matchScore: analysis.matchScore,
+      })) {
+        if (event.type === "error") {
+          sawTerminal = true;
+          if (event.code === "rate_limited") {
+            // The NFR-COST-02 budget gate — return to confirm and open the
+            // paywall above it (FR-PAYWALL-01); nothing was generated.
+            setPaywall("tailoring-limit");
+            setPhase("confirm");
+          } else {
+            setPhase("failed");
+          }
+          continue;
+        }
+        if (event.type === "result") {
+          sawTerminal = true;
+          setResult(event.result);
+          // result.bullets already carries export defaults (BC-HONESTY-02) —
+          // copy, don't re-derive, into local toggle state.
+          setBullets([...event.result.bullets]);
+          setPaywall(null);
+          setPhase("export");
+        }
+      }
+      if (!sawTerminal) setPhase("failed");
+    } catch {
+      setPhase("failed");
+    }
+  }
+
+  const handleClarifySubmit = (answers: Parameters<typeof toConfirmedAnswers>[1]) => {
+    if (analysis === null) return;
+    void startGenerate(toConfirmedAnswers(analysis.clarifyingQuestions, answers));
   };
 
   const handleToggleInclude = (id: string) => {
@@ -93,17 +176,14 @@ export function TailorWorkspace({
     onExport(buildExportText(bullets));
   };
 
-  const checklistRows: ChecklistPanelRow[] = useMemo(
-    () =>
-      result === null
-        ? []
-        : result.checklist.map((row) => ({
-            requirement: row.requirement,
-            status: row.item.status,
-            rationale: row.item.rationale,
-          })),
-    [result],
-  );
+  const startOver = () => {
+    setAnalysis(null);
+    setResult(null);
+    setBullets([]);
+    setJdText("");
+    setPaywall(null);
+    setPhase("analyze");
+  };
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -111,24 +191,71 @@ export function TailorWorkspace({
         {copy.workspace.lead}
       </p>
 
-      <div className="mb-6">
-        <UploadCvDropzone locale={locale} onExtracted={setCvText} />
-      </div>
+      {phase !== "failed" && (
+        <WizardSteps
+          current={phase}
+          // Before analysis, clarify is still part of the planned sequence;
+          // after it, drop the step when there are no questions to ask.
+          includeClarify={analysis === null || analysis.clarifyingQuestions.length > 0}
+          locale={locale}
+        />
+      )}
 
-      <TailoringForm
-        locale={locale}
-        onResult={handleResult}
-        cvText={cvText}
-        onCvTextChange={setCvText}
-        onRateLimited={() => setPaywall("tailoring-limit")}
-      />
+      {phase === "analyze" && (
+        <>
+          <div className="mb-6">
+            <UploadCvDropzone locale={locale} onExtracted={setCvText} />
+          </div>
+          <AnalyzeForm
+            locale={locale}
+            onAnalysis={handleAnalysis}
+            cvText={cvText}
+            onCvTextChange={setCvText}
+          />
+          <p className="font-body text-base text-ink-soft leading-normal mt-8 max-w-2xl">
+            {copy.workspace.emptyState}
+          </p>
+        </>
+      )}
 
-      {result === null ? (
-        <p className="font-body text-base text-ink-soft leading-normal mt-8 max-w-2xl">
-          {copy.workspace.emptyState}
+      {phase === "confirm" && analysis !== null && (
+        <div className="flex flex-col gap-6">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight text-ink">
+              {copy.wizard.confirmHeading}
+            </h2>
+            <p className="mt-2 max-w-2xl font-body text-base text-ink-soft">
+              {copy.wizard.confirmLead}
+            </p>
+          </div>
+          <ChecklistPanel score={analysis.matchScore} rows={checklistRows} locale={locale} />
+          <div className="flex items-center gap-3">
+            <Button size="md" onClick={handleConfirm}>
+              {copy.wizard.confirmAction}
+            </Button>
+            <Button variant="ghost" size="md" onClick={startOver}>
+              {copy.wizard.startOverAction}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {phase === "clarify" && analysis !== null && (
+        <ClarifyingQuestions
+          questions={analysis.clarifyingQuestions}
+          onSubmit={handleClarifySubmit}
+          locale={locale}
+        />
+      )}
+
+      {phase === "generate" && (
+        <p role="status" className="font-body text-base text-ink-soft">
+          {copy.wizard.generating}
         </p>
-      ) : (
-        <div className="mt-8">
+      )}
+
+      {phase === "export" && result !== null && (
+        <div className="flex flex-col gap-6">
           <ResultView
             locale={locale}
             left={<ChecklistPanel score={result.matchScore} rows={checklistRows} locale={locale} />}
@@ -136,8 +263,24 @@ export function TailorWorkspace({
               <BulletList bullets={bullets} onToggleInclude={handleToggleInclude} locale={locale} />
             }
           />
-          <div className="mt-6">
+          <div className="flex items-center gap-3">
             <Button label={copy.workspace.exportAction} size="md" onClick={handleExport} />
+            <Button variant="ghost" size="md" onClick={startOver}>
+              {copy.wizard.startOverAction}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {phase === "failed" && (
+        <div className="flex flex-col gap-4">
+          <p role="alert" className="font-body text-base text-gap-text">
+            {copy.tailorRun.failed}
+          </p>
+          <div>
+            <Button size="md" onClick={startOver}>
+              {copy.wizard.startOverAction}
+            </Button>
           </div>
         </div>
       )}

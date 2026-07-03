@@ -240,4 +240,35 @@ export interface Dictionary {
     /** Calm failure copy (NFR-OBS-01). */
     readonly deleteError: string;
   };
+  /** Resume-tailoring wizard (FR-WIZARD-01/02/03/05). */
+  readonly wizard: {
+    /** Submit CTA on the analyze step (CV + JD → analysis). */
+    readonly analyzeAction: string;
+    /** Step-indicator labels (FR-WIZARD-05). */
+    readonly stepsLabel: string;
+    readonly stepAnalyze: string;
+    readonly stepConfirm: string;
+    readonly stepClarify: string;
+    readonly stepGenerate: string;
+    readonly stepExport: string;
+    /** Confirm step: review score + checklist, then proceed (FR-WIZARD-01). */
+    readonly confirmHeading: string;
+    readonly confirmLead: string;
+    readonly confirmAction: string;
+    /** Clarify step (FR-WIZARD-02/03). */
+    readonly clarifyRegionLabel: string;
+    readonly clarifyHeading: string;
+    readonly clarifyLead: string;
+    readonly answerPlaceholder: string;
+    readonly skipAction: string;
+    readonly declineAction: string;
+    readonly skippedLabel: string;
+    readonly declinedLabel: string;
+    /** Proceed-to-generation CTA (never blocks, FR-WIZARD-03). */
+    readonly clarifySubmitAction: string;
+    /** Shown while the generation phase streams. */
+    readonly generating: string;
+    /** Reset the wizard back to the analyze step. */
+    readonly startOverAction: string;
+  };
 }
