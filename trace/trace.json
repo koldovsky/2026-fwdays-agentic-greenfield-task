@@ -265,7 +265,11 @@
         "lib/src/slots/hold.test.ts",
         "lib/src/slots/hold.test.ts",
         "lib/src/slots/hold.test.ts",
-        "lib/src/slots/hold.test.ts"
+        "lib/src/slots/hold.test.ts",
+        "lib/src/slots/propose.test.ts",
+        "lib/src/slots/propose.test.ts",
+        "lib/src/slots/propose.test.ts",
+        "lib/src/slots/propose.test.ts"
       ],
       "recordings": []
     },
