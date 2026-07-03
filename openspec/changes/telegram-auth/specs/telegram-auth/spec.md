@@ -33,7 +33,7 @@ The system SHALL prevent users from registering directly on the website without 
 - **AND** it SHALL render a clickable link and a corresponding QR code pointing to `https://t.me/<bot_username>?start=reg_<token>`.
 
 ### Requirement: Bot Sequential Data Collection and Registration
-The Telegram bot SHALL process the `/start` command containing a registration token prefix (`reg_`). It SHALL sequentially collect the user's email and website URL, validate their formats, register the user in the database, and send a one-time login link.
+The Telegram bot SHALL process the `/start` command containing a registration token prefix (`reg_`). It SHALL sequentially collect the user's email and website URL, validate their formats, register the user in the database, and send a one-time login link. The bot Route Handler SHALL also validate that the incoming update is authenticated with the configured `TELEGRAM_BOT_WEBHOOK_SECRET` token.
 
 #### Scenario: Sequential registration in the bot
 - **WHEN** a Telegram user sends `/start reg_<token>` to the bot
@@ -41,19 +41,24 @@ The Telegram bot SHALL process the `/start` command containing a registration to
 - **AND** the bot SHALL respond with a message asking for the email: "Будь ласка, введіть вашу електронну адресу (email)"
 - **WHEN** the user provides an email, the bot SHALL validate its format.
 - **AND** if valid, the bot SHALL store it temporarily and ask for the website URL: "Будь ласка, введіть адресу вашого сайту (website URL)"
+- **AND** if invalid, the bot SHALL respond with a validation error: "Введена адреса електронної пошти некоректна. Будь ласка, введіть вашу електронну адресу (email) ще раз"
 - **WHEN** the user provides a website URL, the bot SHALL validate its format.
 - **AND** if valid, the bot SHALL insert a new user in the `users` table using the collected data and their Telegram user ID.
+- **AND** if invalid, the bot SHALL respond with a validation error: "Введена адреса сайту некоректна. Будь ласка, введіть адресу вашого сайту (website URL) ще раз"
 - **AND** it SHALL generate a secure random 32-byte API key, store its SHA-256 hash in `users.api_key_hash`, and mark the registration token as completed in `pending_registrations`.
 - **AND** the bot SHALL generate a magic link token and send a login message: "Реєстрацію завершено. Ось ваше посилання для входу: <magic_link_url>"
+- **WHEN** the user sends `/cancel` at any stage of the registration process
+- **THEN** the bot SHALL abort the registration session, clear any pending registration state in the database, and respond with a confirmation message: "Реєстрацію скасовано. Ви можете почати знову, перейшовши за посиланням з сайту"
 
 ### Requirement: Automatic Registration Redirect
 The registration page on the website SHALL detect when the user completes registration via the Telegram bot and automatically redirect them to the personal dashboard.
 
 #### Scenario: Redirect after successful bot interaction
 - **WHEN** the `/register` page polls the registration status endpoint `/api/auth/poll-registration?token=<token>`
-- **THEN** the system SHALL check if the token in `pending_registrations` is marked as completed.
+- **THEN** the system SHALL check if the token in `pending_registrations` exists, is marked as completed, and is not yet expired.
 - **AND** if completed, the system SHALL create a session in the `sessions` table for the registered user.
 - **AND** it SHALL set a secure, HTTP-only, SameSite=Lax cookie with the session token.
+- **AND** the system SHALL delete or invalidate the temporary token from the `pending_registrations` table immediately to prevent reuse.
 - **AND** the endpoint response SHALL signal success, causing the website to redirect the user to `/dashboard`.
 
 ### Requirement: Authentication via Magic Link
@@ -66,14 +71,17 @@ The system SHALL support bezparolny (passwordless) login via a Magic Link sent t
 - **THEN** the system SHALL validate the token, ensure it is not expired and not marked as used, set `is_used` to true, create a session in `sessions` table, set the session cookie, and redirect the user to `/dashboard`.
 
 ### Requirement: Authentication via 6-Digit OTP Code
-The system SHALL support authentication via a 6-digit one-time code generated and sent by the bot after the user enters their email on the login page.
+The system SHALL support authentication via a 6-digit one-time code generated and sent by the bot after the user enters their email on the login page. The OTP verification endpoint `/api/auth/otp` SHALL be rate-limited, and the OTP code SHALL be invalidated after 3 incorrect verification attempts.
 
 #### Scenario: OTP code generation and login
 - **WHEN** a user enters their email on the `/login` page
 - **THEN** the system SHALL verify if a user with this email exists in the database.
 - **AND** if the user exists, the system SHALL generate a random 6-digit numeric code, store it in the database with a 5-minute expiration, and send the code to the user's Telegram bot: "Ваш одноразовий код для входу: <6-digit_code>"
-- **WHEN** the user enters the correct 6-digit code on the `/login` page within 5 minutes
-- **THEN** the system SHALL validate the code, create a session in the `sessions` table, set the session cookie, and redirect the user to `/dashboard`.
+- **AND** to prevent user enumeration, the login page response SHALL always display a generic confirmation in Ukrainian: "Якщо вказана адреса зареєстрована, ми надіслали одноразовий код у ваш Telegram-бот" regardless of whether the user exists. If the user does not exist, no code is generated or sent.
+- **WHEN** the user enters a 6-digit code on the `/login` page within 5 minutes
+- **THEN** the system SHALL validate the code.
+- **AND** if the code matches and has not exceeded 3 incorrect verification attempts, the system SHALL create a session in the `sessions` table, set the session cookie, mark the code as used, and redirect the user to `/dashboard`.
+- **AND** if the code does not match, the system SHALL increment the failure counter, and if it reaches 3 attempts, the code SHALL be immediately marked as invalid/used.
 
 ### Requirement: Brand Tone and Localization Constraints
 All bot replies, user interface elements, messages, and validation errors SHALL be written in Ukrainian. They MUST adhere to a calm, practical tone and contain NO exclamation marks.
@@ -85,11 +93,12 @@ All bot replies, user interface elements, messages, and validation errors SHALL 
 
 ## Definition of Done (DoD)
 1. Next.js pages `/register` and `/login` are implemented using the project's styling and design tokens.
-2. Route handler for Telegram webhook (`/api/telegram/webhook`) is implemented and verified.
-3. Database migrations for the new `pending_registrations` table are generated and applied.
-4. Telegram bot correctly guides the user through sequential email and URL collection, registers them, and sends a magic link.
-5. The `/register` page auto-redirects the user to `/dashboard` upon successful registration.
-6. Magic Link and 6-digit OTP code authentication flows are implemented and successfully log users in.
+2. Route handler for Telegram webhook (`/api/telegram/webhook`) is implemented, validates `X-Telegram-Bot-Api-Secret-Token` against the environment configuration, and is verified.
+3. Database migrations for the new `pending_registrations` and `otp_codes` tables are generated and applied.
+4. Telegram bot correctly guides the user through sequential email and URL collection (handling validation errors and `/cancel`), registers them, and sends a magic link.
+5. The `/register` page auto-redirects the user to `/dashboard` upon successful registration, and the temporary token is immediately invalidated.
+6. Magic Link and 6-digit OTP code authentication flows (with 3-attempt invalidation, rate limiting, and generic success user enumeration protection) are implemented and successfully log users in.
 7. Session cookies are secure, HTTP-only, and SameSite=Lax.
 8. Every message, UI text, validation error, and bot response is in Ukrainian and contains no exclamation marks.
-9. All tests pass and the codebase is free of linting and typescript compilation errors.
+9. An automated or hook-based database cleanup mechanism is implemented to prune expired `pending_registrations` and `otp_codes` records.
+10. All tests pass and the codebase is free of linting and typescript compilation errors.
