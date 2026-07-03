@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -927,5 +928,100 @@ func TestRunCloudUseInvalidVerb(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "usage:") {
 		t.Errorf("stderr should show usage:\n%s", stderr.String())
+	}
+}
+
+func TestInteractiveWarnings(t *testing.T) {
+	t.Run("broken omnictx config: cloud read-back warns and still answers", func(t *testing.T) {
+		path := cloudTestConfig(t)
+		if err := os.WriteFile(path, []byte("{ broken: [ yaml"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr strings.Builder
+		if code := runCloud(nil, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+		if stdout.String() != "auto\n" {
+			t.Errorf("stdout = %q, want auto fallback", stdout.String())
+		}
+		if !strings.Contains(stderr.String(), "omnictx: warning:") {
+			t.Errorf("stderr should warn about the broken config:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("broken azureProfile: list warns, exits 0, stdout empty", func(t *testing.T) {
+		azureUseEnv(t, "azureProfile_broken.json")
+		cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"azure", "list"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+		if stdout.String() != "" {
+			t.Errorf("stdout = %q, want empty", stdout.String())
+		}
+		if !strings.Contains(stderr.String(), "omnictx: warning:") || !strings.Contains(stderr.String(), "azureProfile.json") {
+			t.Errorf("stderr should warn about azureProfile.json:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("kube list: broken file warned, readable one still listed", func(t *testing.T) {
+		good := filepath.Join(t.TempDir(), "good")
+		if err := os.WriteFile(good, []byte(kindKubeconfig), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		broken := filepath.Join("..", "..", "testdata", "kubeconfig_broken.yaml")
+		t.Setenv("KUBECONFIG", broken+string(os.PathListSeparator)+good)
+
+		var stdout, stderr strings.Builder
+		if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d, want 0", code)
+		}
+		if !strings.Contains(stdout.String(), "kind-1") {
+			t.Errorf("readable contexts must still be listed:\n%s", stdout.String())
+		}
+		if !strings.Contains(stderr.String(), "kubeconfig_broken.yaml") {
+			t.Errorf("stderr should name the broken file:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("healthy sources produce no warnings", func(t *testing.T) {
+		kubeTestConfig(t, kindKubeconfig)
+		cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runKube([]string{"list"}, &stdout, &stderr); code != 0 || stderr.String() != "" {
+			t.Errorf("kube list: code=%d stderr=%q, want 0 and empty", code, stderr.String())
+		}
+		stdout.Reset()
+		stderr.Reset()
+		if code := runCloud(nil, &stdout, &stderr); code != 0 || stderr.String() != "" {
+			t.Errorf("cloud: code=%d stderr=%q, want 0 and empty", code, stderr.String())
+		}
+	})
+}
+
+// The render path must stay absolutely silent on stderr even when every
+// source is broken — the core invariant is untouched by interactive warnings.
+func TestRenderStaysSilentOnBrokenSources(t *testing.T) {
+	cfgPath := cloudTestConfig(t)
+	if err := os.WriteFile(cfgPath, []byte("{ broken: [ yaml"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	azureUseEnv(t, "azureProfile_broken.json")
+	t.Setenv("KUBECONFIG", filepath.Join("..", "..", "testdata", "kubeconfig_broken.yaml"))
+
+	// Capture both std streams around the real render path.
+	oldOut, oldErr := os.Stdout, os.Stderr
+	rOut, wOut, _ := os.Pipe()
+	rErr, wErr, _ := os.Pipe()
+	os.Stdout, os.Stderr = wOut, wErr
+	runRender(nil)
+	_ = wOut.Close()
+	_ = wErr.Close()
+	os.Stdout, os.Stderr = oldOut, oldErr
+
+	errOut, _ := io.ReadAll(rErr)
+	_, _ = io.ReadAll(rOut)
+	if len(errOut) != 0 {
+		t.Errorf("render wrote to stderr: %q", errOut)
 	}
 }

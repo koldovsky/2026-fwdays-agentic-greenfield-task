@@ -46,6 +46,25 @@ func Contexts(lookup LookupEnv, home string) []ContextEntry {
 	return entries
 }
 
+// Check probes the kubeconfig file list for problems worth telling an
+// interactive user about: files that exist but cannot be parsed. Missing
+// files are a normal state and produce no warning. Render mode never calls
+// this — the prompt stays silent by design.
+func Check(lookup LookupEnv, home string) []string {
+	var problems []string
+	for _, f := range resolveFiles(lookup, home) {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			continue
+		}
+		var kf kubeFile
+		if err := yaml.Unmarshal(data, &kf); err != nil {
+			problems = append(problems, fmt.Sprintf("%s is unparsable: %v", f, err))
+		}
+	}
+	return problems
+}
+
 // writeTarget picks the file that owns current-context: the first file in the
 // list that sets a non-empty value, else the first file. This mirrors both the
 // Read merge rule and kubectl's behavior, so a switch is always visible to the

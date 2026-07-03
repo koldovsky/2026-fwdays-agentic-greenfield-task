@@ -284,7 +284,8 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 	home, _ := os.UserHomeDir()
 
 	if len(args) == 0 {
-		cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		cfg, notes := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		warnAll(stderr, notes)
 		_, _ = fmt.Fprintln(stdout, cfg.Cloud)
 		return 0
 	}
@@ -305,6 +306,9 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 			_, _ = fmt.Fprintln(stderr, cloudUsage)
 			return 2
 		case provider == "azure" || provider == "aws" || provider == "gcp":
+			if provider == "azure" {
+				warnAll(stderr, azure.Check(os.LookupEnv, home))
+			}
 			printCloudList(stdout, provider, home)
 			return 0
 		default:
@@ -316,8 +320,12 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 	if strings.ToLower(strings.TrimSpace(args[0])) == "list" {
 		// Bare `cloud list`: the effective provider, selected exactly like
 		// render does; none selected -> quiet, exit 0.
-		cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		cfg, notes := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		warnAll(stderr, notes)
 		if active, ok := cloud.Select(cloudProviders(), cfg.Cloud, os.LookupEnv, home); ok {
+			if active.Key() == "azure" {
+				warnAll(stderr, azure.Check(os.LookupEnv, home))
+			}
 			printCloudList(stdout, active.Key(), home)
 		}
 		return 0
@@ -384,6 +392,7 @@ func runKube(args []string, stdout, stderr io.Writer) int {
 	}
 
 	if args[0] == "list" {
+		warnAll(stderr, kube.Check(os.LookupEnv, home))
 		printKubeTable(stdout, kube.Contexts(os.LookupEnv, home), kube.Read(os.LookupEnv, home).Context)
 		return 0
 	}
@@ -430,7 +439,8 @@ func runCloudUse(args []string, home string, _, stderr io.Writer) int {
 		return 2
 	}
 
-	cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+	cfg, notes := config.Resolve(config.Flags{}, os.LookupEnv, home)
+	warnAll(stderr, notes)
 	if canon := cfg.Aliases[provider][account]; canon != "" {
 		account = canon
 	}
@@ -466,6 +476,15 @@ func runCloudUse(args []string, home string, _, stderr io.Writer) int {
 	default:
 		_, _ = fmt.Fprintln(stderr, cloudUsage)
 		return 2
+	}
+}
+
+// warnAll prints interactive-mode warnings to stderr. Render never calls it:
+// the prompt stays silent about broken sources by design, but a human typing
+// a subcommand deserves to know why their config is being ignored.
+func warnAll(stderr io.Writer, notes []string) {
+	for _, n := range notes {
+		_, _ = fmt.Fprintf(stderr, "omnictx: warning: %s\n", n)
 	}
 }
 

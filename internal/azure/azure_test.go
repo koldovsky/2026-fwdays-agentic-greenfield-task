@@ -237,3 +237,26 @@ func TestUse(t *testing.T) {
 		}
 	})
 }
+
+func TestCheck(t *testing.T) {
+	t.Run("broken file yields one warning naming the path", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_broken.json")
+		got := Check(envFunc(map[string]string{"AZURE_CONFIG_DIR": dir}), "/h")
+		if len(got) != 1 || !strings.Contains(got[0], "azureProfile.json") {
+			t.Errorf("Check() = %v, want one warning naming the file", got)
+		}
+	})
+	t.Run("healthy and BOM files are quiet", func(t *testing.T) {
+		for _, f := range []string{"azureProfile_default.json", "azureProfile_bom.json"} {
+			dir := withProfile(t, f)
+			if got := Check(envFunc(map[string]string{"AZURE_CONFIG_DIR": dir}), "/h"); got != nil {
+				t.Errorf("%s: Check() = %v, want nil", f, got)
+			}
+		}
+	})
+	t.Run("missing file is normal, no warning", func(t *testing.T) {
+		if got := Check(envFunc(map[string]string{"AZURE_CONFIG_DIR": t.TempDir()}), "/h"); got != nil {
+			t.Errorf("Check() = %v, want nil", got)
+		}
+	})
+}

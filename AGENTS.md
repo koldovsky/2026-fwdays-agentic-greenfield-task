@@ -2,13 +2,17 @@
 
 ## What this is
 `omnictx` is a Go CLI that prints a prompt segment with the active **cloud**
-(Azure / AWS / GCP — exactly one) and the current **kube-context** + namespace.
-It reads local config files directly, without kubectl/az/aws/gcloud and without
-network access.
+(Azure / AWS / GCP — exactly one) and the current **kube-context** + namespace,
+and can also **switch** them (kube-context, gcloud configuration, Azure
+subscription). It works on local config files directly, without
+kubectl/az/aws/gcloud and without network access — including the switches.
 
 ## Core invariant
-The utility NEVER breaks the prompt line. Any error → skip the segment and exit 0.
-No panics in production (top-level recover in main).
+RENDER MODE NEVER breaks the prompt line and never writes anything: any error →
+skip the segment and exit 0. No panics in production (top-level recover in main).
+Writes to foreign files (kubeconfig, active_config, azureProfile.json) happen
+ONLY in explicit interactive subcommands, which do the opposite: validate
+strictly, warn on stderr, and fail loudly with non-zero exit codes.
 
 ## Stack and dependencies
 - Go (current stable version, pinned in go.mod).

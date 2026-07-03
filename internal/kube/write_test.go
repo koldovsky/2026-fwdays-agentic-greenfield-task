@@ -204,3 +204,26 @@ func TestWriteContextPreservesPermissions(t *testing.T) {
 		t.Errorf("permissions = %o, want 0600", perm)
 	}
 }
+
+func TestCheck(t *testing.T) {
+	dir := fixtures(t)
+	broken := filepath.Join(dir, "kubeconfig_broken.yaml")
+	single := filepath.Join(dir, "kubeconfig_single.yaml")
+
+	t.Run("broken among readable is named", func(t *testing.T) {
+		got := Check(kubeconfigEnv(broken, single), "/nonexistent-home")
+		if len(got) != 1 || !strings.Contains(got[0], "kubeconfig_broken.yaml") {
+			t.Errorf("Check() = %v, want one warning naming the broken file", got)
+		}
+	})
+	t.Run("healthy files are quiet", func(t *testing.T) {
+		if got := Check(kubeconfigEnv(single), "/nonexistent-home"); got != nil {
+			t.Errorf("Check() = %v, want nil", got)
+		}
+	})
+	t.Run("missing file is normal, no warning", func(t *testing.T) {
+		if got := Check(kubeconfigEnv(filepath.Join(dir, "nope.yaml")), "/nonexistent-home"); got != nil {
+			t.Errorf("Check() = %v, want nil", got)
+		}
+	})
+}

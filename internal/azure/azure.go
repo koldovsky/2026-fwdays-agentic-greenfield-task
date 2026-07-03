@@ -94,6 +94,23 @@ func Subscriptions(lookupEnv LookupEnv, home string) []Subscription {
 	return p.Subscriptions
 }
 
+// Check probes azureProfile.json for problems worth telling an interactive
+// user about: a file that exists but cannot be parsed. A missing file is a
+// normal state (not logged in) and produces no warning. Render mode never
+// calls this — the prompt stays silent by design.
+func Check(lookupEnv LookupEnv, home string) []string {
+	path := resolvePath(lookupEnv, home)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var p profile
+	if err := json.Unmarshal(bytes.TrimPrefix(data, utf8BOM), &p); err != nil {
+		return []string{fmt.Sprintf("%s is unparsable: %v", path, err)}
+	}
+	return nil
+}
+
 // UnknownAccountError reports a `use` target that matches no subscription.
 type UnknownAccountError struct {
 	Target    string

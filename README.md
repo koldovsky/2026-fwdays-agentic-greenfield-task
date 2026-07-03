@@ -1,19 +1,23 @@
 # omnictx
 
 A tiny, fast Go binary that prints a shell-prompt segment showing your active
-**cloud** (Azure, AWS, or GCP — exactly one), **kube-context**, and **namespace**.
+**cloud** (Azure, AWS, or GCP — exactly one), **kube-context**, and
+**namespace** — and lets you **switch** them (kube-context, gcloud
+configuration, Azure subscription) without leaving the prompt.
 
 ```
 ☁ prod-subscription ⎈ prod-cluster:payments
 ```
 
-It reads local config files **directly** — no `kubectl`/`az`/`aws`/`gcloud`, no
-network calls — so it fits comfortably inside the prompt-render budget (cold start
-+ render < 10 ms).
+It works on local config files **directly** — no `kubectl`/`az`/`aws`/`gcloud`,
+no network calls, even when switching — so rendering fits comfortably inside
+the prompt budget (cold start + render < 10 ms).
 
-**Core invariant:** `omnictx` never breaks your prompt. Any error (missing file,
-broken YAML/JSON/INI, not logged in) silently skips the affected segment and
-exits 0.
+**Core invariant:** rendering never breaks your prompt and never writes
+anything. Any error (missing file, broken YAML/JSON/INI, not logged in)
+silently skips the affected segment and exits 0. Writes happen only in
+explicit commands (`kube <ctx>`, `cloud <p> use`, toggles), which do the
+opposite: validate strictly and fail loudly.
 
 **One active cloud.** The cloud slot shows a single provider, chosen by `cloud:`
 (`azure`/`aws`/`gcp`/`auto`/`none`). `auto` (default) picks the one whose local
@@ -99,7 +103,7 @@ write, never touch an unparsable file):
 ```bash
 omnictx cloud gcp use work           # writes <gcloud>/active_config
 omnictx cloud azure use "My Sub"     # flips isDefault in azureProfile.json
-omnictx cloud azure use e01c2626-... # by id — required when names collide
+omnictx cloud azure use 11111111-2222-3333-4444-555555555555 # by id — for name collisions
 ```
 
 A successful `use` also pins that provider as the displayed cloud (persists
@@ -273,6 +277,22 @@ aliases:                             # short names for `omnictx cloud <p> use <a
   (`<gcloud>` = `CLOUDSDK_CONFIG` or `~/.config/gcloud`); project =
   `CLOUDSDK_CORE_PROJECT` > `GOOGLE_CLOUD_PROJECT` > `[core] project` in
   `<gcloud>/configurations/config_<name>`. Shows the project.
+
+---
+
+## Troubleshooting
+
+The prompt segment (render mode) never prints errors — a broken source is just
+skipped, by design. If a segment silently disappears, run the equivalent
+interactive command instead, which **does** warn on stderr:
+
+```bash
+omnictx cloud            # warns if the omnictx config itself is broken
+omnictx cloud azure list # warns if azureProfile.json exists but won't parse
+omnictx kube list        # warns about any $KUBECONFIG file that won't parse
+```
+
+Warnings never change the exit code or stdout — they just point at the file to fix.
 
 ---
 
