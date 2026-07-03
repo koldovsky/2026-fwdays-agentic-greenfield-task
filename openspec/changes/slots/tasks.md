@@ -17,57 +17,57 @@
 
 ## 2. Domain logic — write failing unit tests FIRST (red), from the spec
 
-- [ ] 2.1 `lib/src/slots/grid.test.ts`: grid generation bounds — every slot
+- [x] 2.1 `lib/src/slots/grid.test.ts`: grid generation bounds — every slot
       60 minutes, Mon–Fri only, starts 10:00–19:00 inclusive Europe/Kyiv,
       no Saturday/Sunday, across the 14-day proposal horizon
       (`@trace FR-SLOT-01`, `@trace FR-GUARD-03`, BC-SCHEDULE-01). Confirm
       the test suite fails (no implementation exists yet).
-- [ ] 2.2 `lib/src/slots/grid.test.ts`: calendar data cannot add slots
+- [x] 2.2 `lib/src/slots/grid.test.ts`: calendar data cannot add slots
       outside the grid — a fixture free interval on a Sunday (or outside
       10:00–19:00) never appears in the computed result
       (`@trace FR-GUARD-03`). Confirm red.
-- [ ] 2.3 `lib/src/slots/subtract.test.ts`: half-open overlap subtraction —
+- [x] 2.3 `lib/src/slots/subtract.test.ts`: half-open overlap subtraction —
       busy 11:30–13:30 removes the 11:00/12:00/13:00 starts and keeps
       10:00 and 14:00+ (`@trace FR-SLOT-01`). Confirm red.
-- [ ] 2.4 `lib/src/slots/subtract.test.ts`: boundary-touching edge cases —
+- [x] 2.4 `lib/src/slots/subtract.test.ts`: boundary-touching edge cases —
       a slot ending exactly at `busy.start` and a slot starting exactly at
       `busy.end` both remain free; a busy interval fully inside a slot
       still disqualifies it (`@trace FR-SLOT-01`). Confirm red.
-- [ ] 2.5 `lib/src/slots/subtract.test.ts`: other leads' `pending` holds
+- [x] 2.5 `lib/src/slots/subtract.test.ts`: other leads' `pending` holds
       (including their tentative-event intervals) are excluded from the
       free-slot result the same way calendar busy intervals are
       (`@trace FR-SLOT-01`). Confirm red.
-- [ ] 2.6 `lib/src/slots/rank.test.ts`: preference fit dominates —
+- [x] 2.6 `lib/src/slots/rank.test.ts`: preference fit dominates —
       Monday-morning preference ranks a Monday 10:00 slot above a Friday
       10:00 slot (`@trace FR-SLOT-04`). Confirm red.
-- [ ] 2.7 `lib/src/slots/rank.test.ts`: teacher-compactness tie-break — an
+- [x] 2.7 `lib/src/slots/rank.test.ts`: teacher-compactness tie-break — an
       adjacent-to-busy slot ranks above an isolated-gap slot when
       preference fit is equal (`@trace FR-SLOT-04`). Confirm red.
-- [ ] 2.8 `lib/src/slots/rank.test.ts`: earlier-date tie-break — equal fit
+- [x] 2.8 `lib/src/slots/rank.test.ts`: earlier-date tie-break — equal fit
       and compactness resolve by earlier date (`@trace FR-SLOT-04`).
       Confirm red.
-- [ ] 2.9 `lib/src/slots/rank.test.ts`: purity/determinism — same inputs
+- [x] 2.9 `lib/src/slots/rank.test.ts`: purity/determinism — same inputs
       called repeatedly in-process yield an identical ordering; assert (by
       construction, e.g. a fake global `fetch`/`Date.now` that throws if
       invoked) that `rankSlots()` performs no I/O (`@trace FR-SLOT-04`).
       Confirm red.
-- [ ] 2.10 `lib/src/slots/widen.test.ts`: Step 1 (time widening) — one
+- [x] 2.10 `lib/src/slots/widen.test.ts`: Step 1 (time widening) — one
       matching slot triggers a ±60-minute window extension, clipped to the
       grid, same weekdays (`@trace FR-SLOT-03`). Confirm red.
-- [ ] 2.11 `lib/src/slots/widen.test.ts`: Step 2 (day widening) — zero
+- [x] 2.11 `lib/src/slots/widen.test.ts`: Step 2 (day widening) — zero
       matches after Step 1 adds Mon–Fri-adjacent weekdays, correctly
       excluding non-adjacent days (Monday→Tuesday only, Friday→Thursday
       only, mid-week→both neighbors) (`@trace FR-SLOT-03`). Confirm red.
-- [ ] 2.12 `lib/src/slots/widen.test.ts`: Step 3 (full grid fallback) and
+- [x] 2.12 `lib/src/slots/widen.test.ts`: Step 3 (full grid fallback) and
       the true-zero case — calendar fully busy across the entire 14-day
       horizon yields an explicit "no free times" outcome rather than an
       empty/silent result (`@trace FR-SLOT-03`). Confirm red.
-- [ ] 2.13 `lib/src/slots/timezone.test.ts`: Europe/Kyiv wall-clock ↔
+- [x] 2.13 `lib/src/slots/timezone.test.ts`: Europe/Kyiv wall-clock ↔
       RFC3339 UTC conversion, including a DST-transition-day fixture (the
       wall-clock grid starts stay fixed while the UTC offset shifts)
       (`@trace FR-SLOT-01`, per the baseline spec's Conventions section).
       Confirm red.
-- [ ] 2.14 Run `npm run test:run` and confirm every test added in 2.1–2.13
+- [x] 2.14 Run `npm run test:run` and confirm every test added in 2.1–2.13
       fails (red) before writing any implementation.
 
 ## 3. Domain logic — implement to green
