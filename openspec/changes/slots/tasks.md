@@ -104,15 +104,15 @@
       (service-account JWT auth per TC-CAL-01) against the real DEMO
       calendar: `freeBusy`, `createTentative`, `upgradeToConfirmed`,
       `deleteEvent`, mapping SDK errors to the three error classes.
-- [ ] 4.4 Time-box the MCP-server alternative per design.md's spike
+- [x] 4.4 Time-box the MCP-server alternative per design.md's spike
       procedure: attempt the same four methods through a Google Calendar
       MCP server consumed as an MCP client from the backend (never expose
       calendar tools to the model), scored against the same four criteria.
-- [ ] 4.5 Record the spike verdict (with actual latency/auth/error-surface
+- [x] 4.5 Record the spike verdict (with actual latency/auth/error-surface
       observations) in `design.md`'s "Spike verdict" subsection, replacing
       the placeholder — apply the tie-break default (googleapis) if the
       comparison doesn't produce a clear winner within the time box.
-- [ ] 4.6 Wire the chosen adapter as the production `CalendarPort` and
+- [x] 4.6 Wire the chosen adapter as the production `CalendarPort` and
       confirm `npm run test:run` still passes with no `lib/` code importing
       the Google SDK or an MCP client directly (TC-PURE-01 boundary check).
 

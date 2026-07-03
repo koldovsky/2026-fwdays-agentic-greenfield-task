@@ -1,0 +1,45 @@
+Spike run (openspec/changes/slots tasks.md 4.4), 2026-07-04, real invocation
+against @cocal/google-calendar-mcp v2.6.2 (nspady/google-calendar-mcp),
+GOOGLE_APPLICATION_CREDENTIALS pointed at the repo's real service-account
+JSON (path only shown, contents never printed):
+
+$ node packages/calendar/spike-mcp/client.mjs
+[spike] repoRoot: /Users/oleksandrkostylev/Workspace/fwdays/2026-fwdays-agentic-greenfield-task
+[spike] credsPath (service-account, wrong shape for this server): .../secrets/fwdays-2026-crash-course-b237d5522adc.json
+Failed to start server: Error loading OAuth keys: OAuth credentials not found. Please provide credentials using one of these methods:
+
+1. Environment variable:
+   Set GOOGLE_OAUTH_CREDENTIALS to the path of your credentials file:
+   export GOOGLE_OAUTH_CREDENTIALS="/path/to/gcp-oauth.keys.json"
+
+2. Default file path:
+   Place your gcp-oauth.keys.json file in the package root directory.
+
+Token storage:
+- Tokens are saved to: ~/.config/google-calendar-mcp/tokens.json
+- To use a custom token location, set GOOGLE_CALENDAR_MCP_TOKEN_PATH environment variable
+
+To get OAuth credentials:
+1. Go to the Google Cloud Console (https://console.cloud.google.com/)
+2. Create or select a project
+3. Enable the Google Calendar API
+4. Create OAuth 2.0 credentials
+5. Download the credentials file as gcp-oauth.keys.json
+
+Original error: Invalid credentials file format. Expected either "installed" object or direct client_id/client_secret fields.
+[spike] connect/listTools FAILED after 951ms -> MCP error -32000: Connection closed
+exit code: 0
+
+Interpretation: the server validates the OAuth-keys file shape at process
+startup and refuses to serve ANY MCP request (not even listTools()) when
+given our service-account JSON — it explicitly names "installed" (OAuth
+Desktop-app client secret) as the only accepted shape. No free/busy,
+insert, or delete call was reachable. This is a real measured auth-failure,
+not a documentation inference: 951ms wall time from spawn to connection
+being closed by the server.
+
+Dependency footprint measured: `npm install` in this spike package (MCP SDK
+client + @cocal/google-calendar-mcp server) pulled ~169 packages, ~240MB in
+node_modules — comparable to or heavier than the googleapis baseline
+(~149 packages), plus a standalone server process to keep alive locally
+(vs. one in-process SDK call for googleapis).

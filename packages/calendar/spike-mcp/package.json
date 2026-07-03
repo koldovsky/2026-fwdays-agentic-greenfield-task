@@ -1,0 +1,14 @@
+{
+  "name": "calendar-spike-mcp",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Time-boxed spike (slots 4.4): evaluate a Google Calendar MCP server as the CalendarPort transport, vs the googleapis baseline. Not wired into the workspace build.",
+  "type": "module",
+  "scripts": {
+    "spike": "node client.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@cocal/google-calendar-mcp": "^2.6.2"
+  }
+}

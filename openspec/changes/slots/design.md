@@ -83,8 +83,33 @@ win on a tie), and document the MCP server as the explored alternative in
 this file rather than leaving the interface unimplemented. The interface
 already makes the choice swappable later without touching `lib/` call sites.
 
-**Spike verdict:** *(to be filled in by tasks.md 4.x before this change is
-archived — not decided yet as of this proposal)*.
+**Spike verdict (2026-07-04, tasks 4.3+4.4): googleapis SDK wins — and not
+by tie-break.**
+
+- **googleapis (measured live against the DEMO calendar):** service-account
+  JWT works headless first try once the calendar is shared; freeBusy warm
+  ~170–220ms / cold ~1s, `events.insert` ~3.2s, `events.delete` ~212ms;
+  `GaxiosError`s carry HTTP status and map cleanly onto the three-class
+  taxonomy; ~149 packages, in-process. One hardening finding: `freebusy.query`
+  can return HTTP 200 with a per-calendar `errors:[{reason:"notFound"}]` and
+  empty `busy` — the adapter now raises `CalendarAuthError` instead of
+  silently reading it as "free" (NFR-REL-01).
+- **MCP (`@cocal/google-calendar-mcp`, measured attempt — evidence in
+  `packages/calendar/spike-mcp/run-log.txt`):** disqualified on criterion 1.
+  The server validates the credentials file before serving any request and
+  rejects service-account JSON outright ("Expected either 'installed' object
+  or direct client_id/client_secret") — 951ms from spawn to connection
+  closed; both credible candidates support only interactive OAuth
+  desktop-app flows (browser consent, 7-day test-mode token expiry), which a
+  headless local-first backend cannot clear on restart. Also heavier
+  (~169 packages + ~240MB + a standalone server process) and its errors are
+  prose, not typed — a poor fit for the NFR-REL-01 taxonomy.
+
+The in-product MCP demo bonus is therefore not realizable without switching
+the whole slice to per-teacher OAuth (out of scope); the homework's MCP
+evidence remains chrome-devtools + context7 in the dev process. The
+`CalendarPort` interface keeps the choice swappable if a service-account-
+capable MCP server appears later.
 
 ### Decision 2: `bookings` table lands now, minimal, without a `requests` FK
 
