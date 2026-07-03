@@ -111,9 +111,12 @@ formats. Implements FR-EXPORT-03.
 ### Requirement: Free-tier export footer
 The system SHALL append a footer line ("Адаптовано за допомогою CV-Agent") to
 every export produced by a free-tier or anonymous user, across all export
-formats; paid-user exports SHALL be clean. Until plan/entitlement checking is
-available, the system SHALL default to showing the footer. Implements
-FR-EXPORT-04.
+formats; paid-user exports SHALL be clean. Entitlement is resolved
+server-side (never client-derived); the PDF and DOCX routes SHALL reject a
+non-paid caller outright (`FR-PAYWALL-01`) rather than rely on the client to
+withhold the request. When entitlement cannot be determined, the system
+SHALL default to the stricter free-tier behavior — footer shown, export
+gated. Implements FR-EXPORT-04.
 
 #### Scenario: Free or anonymous export carries the footer
 - **WHEN** a free-tier or anonymous user exports the tailored résumé in any format

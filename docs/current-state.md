@@ -7,6 +7,25 @@
 
 ## Last action
 
+- **`add-resume-wizard` fully closed out + ARCHIVED (2026-07-04, `export-wiring3` worktree,
+  same session as the export-wiring work below).** After the export wiring pass, added task 5.4:
+  automated Cyrillic PDF/DOCX round-trip tests (`resume-pdf.test.ts`, `resume-docx.test.ts`) —
+  render a Ukrainian fixture, re-extract with `pdf-parse`/`mammoth`, assert the glyphs and
+  footer-present/absent state survive — stronger than a one-off manual visual check since it's a
+  regression test. Then task 5.6: fixed a stale line in the wizard delta spec (footer
+  requirement said "until entitlement checking is available" — that's now real, reworded to
+  describe the actual server-side `FR-PAYWALL-01` gate), merged `specs/wizard/spec.md` (new
+  capability) and the `specs/bullets/spec.md` MODIFIED delta into baseline
+  (`openspec validate --specs` — 6/6 pass), archived the change to
+  `openspec/changes/archive/2026-07-04-add-resume-wizard/`. Proceeded past the 2 remaining
+  incomplete tasks.md checkboxes (3.14 — explicitly flagged low-priority/deferred since the
+  session that wrote it; 5.6 — the archive step itself, self-resolving) rather than blocking on
+  them, consistent with the plan written before this pass. tasks.md itself now lives frozen in
+  the archive directory. Re-verified after: `yarn lint`/`yarn build`/`yarn test` all clean, 86
+  files / 511 tests green.
+  - **Note for next session:** `openspec` CLI turned out to be installed after all — the
+    "not installed" blocker below was stale; drop it if still true next time you check.
+
 - **Closed out `add-resume-wizard` §4 Export + most of §5 (2026-07-04, `export-wiring3`
   worktree).** Built via Workflow `wf_778dafb4-995` (Wire → Tests+Vet → Verify → Checker →
   Fix), plus a manual final-checker confirmation pass and small cleanup after.
@@ -37,10 +56,7 @@
     orphaned once `TailorWorkspace.tsx` dropped its single export button.
   - tasks.md ticked: 4.1–4.7, 5.1–5.3, 5.5. Verified: `yarn lint` clean, `yarn build` clean
     (both export routes still dynamic `ƒ`), `yarn test` = **84 files / 507 tests green**.
-  - **Still open**: 3.14 (deferred, flagged, not a blocker), 5.4 (PDF/DOCX round-trip Cyrillic
-    render check — needs manual visual inspection of a rendered file, not just tests), 5.6
-    (sync `specs/wizard/spec.md` + `specs/bullets/spec.md` delta into baseline, archive) — do
-    **not** archive the change while 3.14/5.4/5.6 are open.
+  - 5.4/5.6 closed in the very next entry above (same session) — see it for the archive.
 
 - **Fixed `POST /api/tailor` "request sent, no response, no error" (2026-07-03).** Root cause:
   `claude.ts` sent `thinking: {type:"adaptive"}` with **no `effort`** → Opus 4.8 defaults to
@@ -157,32 +173,30 @@ Verified after fixes: `yarn lint` clean, `yarn build` clean (`/account/profile` 
 
 ## Working on
 
-- **`add-resume-wizard`** — sections 1–4 DONE, section 5 mostly done (5.1–5.3/5.5 closed this
-  pass, see Last action). Remaining before archive: 5.4 (PDF/DOCX round-trip Cyrillic visual
-  check), 5.6 (spec sync + archive), 3.14 (deferred, non-blocking). **Whole change still NOT
-  committed** — everything since `16c67ad` (this session's wiring + paywall fix + cleanup) is
-  uncommitted in the `export-wiring3` worktree.
+- **`add-resume-wizard` — DONE, ARCHIVED** (`openspec/changes/archive/2026-07-04-add-resume-wizard/`).
+  Nothing left open on this change except 3.14 (deferred, flagged, non-blocking — carried into
+  `entities/tailoring/model/types.ts` as a known gap for whenever persistence work next touches
+  that type). Commit `f454e53` (ExportStepper wiring + paywall-bypass fix) is already pushed on
+  `worktree-export-wiring3`; this session's follow-on (5.4 round-trip tests + 5.6 spec
+  sync/archive) is **not yet committed** — commit + push it next.
 - `add-auth` remainder: password reset email (needs a sender). Google OAuth (`FR-AUTH-02`)
   DEFERRED per user 2026-07-03 — credentials-only for now.
-- Also uncommitted from a prior session (still pending, see git status): the `POST /api/tailor`
-  adaptive-thinking-effort fix, the usage-counter FK-violation degrade fix, and the account-menu/
-  profile-page work — check `git status`/`git log` before assuming these landed; the handoff doc
-  had drifted from actual commits once already this project (see Last action).
+- Also uncommitted from a prior session (still pending, see `git status`/`git log` before
+  assuming these landed — the handoff doc had drifted from actual commits once already this
+  project, see the export-wiring entry above for how that was caught): the `POST /api/tailor`
+  adaptive-thinking-effort fix, the usage-counter FK-violation degrade fix, and the
+  account-menu/profile-page work.
 
 ## Next steps
 
-1. **Commit + push this session's export work**, open a draft PR.
-2. **5.4** — manually render a PDF and DOCX export (a paid-tier fixture with Ukrainian text) and
-   visually confirm Cyrillic glyphs render correctly in both, and the free-tier footer is present/
-   absent matching entitlement.
-3. **5.6** — once 5.4 is done and 3.14 is either done or explicitly accepted as deferred, sync
-   `specs/wizard/spec.md` (new) + the `specs/bullets/spec.md` MODIFIED delta into baseline and
-   archive `add-resume-wizard` (`openspec-archive-change`).
-4. Re-run `perf-audit` on a machine with Chrome (blocked in this sandbox) — CSP headers landed
+1. **Commit + push this session's 5.4/5.6 work** (round-trip tests + archived spec), open/update
+   the draft PR (`worktree-export-wiring3` → `vouch`; `gh` CLI wasn't available in this sandbox
+   to auto-create it — a compare URL was printed when the branch was pushed).
+2. Re-run `perf-audit` on a machine with Chrome (blocked in this sandbox) — CSP headers landed
    since the last audit and could plausibly move the ~20 ms LCP margin.
-5. Longer-tail, not blocking: `paste-jd` as its own slice, BullMQ worker, `add-agent-loop`
+3. Longer-tail, not blocking: `paste-jd` as its own slice, BullMQ worker, `add-agent-loop`
    4.2/4.3 + archive, FR-TAILOR-02 step-event rendering in the UI (see Blockers).
-6. **User action pending:** create `.env.local` (`AUTH_SECRET`, `DATABASE_URL`,
+4. **User action pending:** create `.env.local` (`AUTH_SECRET`, `DATABASE_URL`,
    `CV_ENCRYPTION_KEY` — see `docs/dev-setup.md`) then `yarn dev:db` + restart `yarn dev`.
 
 ## Blockers / open questions
@@ -190,8 +204,6 @@ Verified after fixes: `yarn lint` clean, `yarn build` clean (`/account/profile` 
 - **FR-TAILOR-02 step granularity** — the loop only emits `status`/`step`/one final `result`, no
   token-level streaming, and the current one-shot `TailoringForm` doesn't render `step` events.
   Real gap vs. "streams progress", not a blocker for any specific task — small follow-up.
-- **`openspec` CLI not installed** — cannot run `openspec validate`; changes checked structurally
-  by hand.
 - **Ukrainian-first vs display font** — Bricolage Grotesque has no Cyrillic subset; landing
   shipped English. The wizard's PDF export sidesteps this with its own bundled Cyrillic font
   (design.md §4), but the web UI question is still open before wider i18n rollout.
