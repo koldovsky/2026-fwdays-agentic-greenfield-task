@@ -1,0 +1,78 @@
+{
+  "generatedBy": "scripts/check-trajectory.mjs",
+  "slices": [
+    {
+      "slice": "2026-07-03-add-app-shell",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-comparison",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-filtering",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-program-data",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-program-detail",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-recommendations",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-score-input",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-scoring-engine",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-shortlist",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-07-03-add-state-persistence",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [],
+      "processComplete": true
+    }
+  ],
+  "overlaps": [],
+  "failures": [],
+  "warnings": []
+}

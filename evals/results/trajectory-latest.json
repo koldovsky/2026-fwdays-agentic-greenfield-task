@@ -1,0 +1,384 @@
+{
+  "generatedAt": "2026-07-03T22:05:09.161Z",
+  "threshold": 70,
+  "dimensions": {
+    "process-order": 74,
+    "test-integrity": 83,
+    "in-scope": 91,
+    "craft": 87
+  },
+  "sliceRollup": {
+    "add-app-shell": 74,
+    "add-comparison": 74,
+    "add-filtering": 74,
+    "add-program-data": 74,
+    "add-program-detail": 74,
+    "add-recommendations": 74,
+    "add-score-input": 74,
+    "add-scoring-engine": 74,
+    "add-shortlist": 74,
+    "add-state-persistence": 74
+  },
+  "units": [
+    {
+      "id": "add-app-shell:process-order",
+      "slice": "add-app-shell",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-app-shell:test-integrity",
+      "slice": "add-app-shell",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-app-shell:in-scope",
+      "slice": "add-app-shell",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-app-shell:craft",
+      "slice": "add-app-shell",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-comparison:process-order",
+      "slice": "add-comparison",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-comparison:test-integrity",
+      "slice": "add-comparison",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-comparison:in-scope",
+      "slice": "add-comparison",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-comparison:craft",
+      "slice": "add-comparison",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-filtering:process-order",
+      "slice": "add-filtering",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-filtering:test-integrity",
+      "slice": "add-filtering",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-filtering:in-scope",
+      "slice": "add-filtering",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-filtering:craft",
+      "slice": "add-filtering",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-data:process-order",
+      "slice": "add-program-data",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-program-data:test-integrity",
+      "slice": "add-program-data",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-data:in-scope",
+      "slice": "add-program-data",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-data:craft",
+      "slice": "add-program-data",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-detail:process-order",
+      "slice": "add-program-detail",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-program-detail:test-integrity",
+      "slice": "add-program-detail",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-detail:in-scope",
+      "slice": "add-program-detail",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-program-detail:craft",
+      "slice": "add-program-detail",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-recommendations:process-order",
+      "slice": "add-recommendations",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-recommendations:test-integrity",
+      "slice": "add-recommendations",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-recommendations:in-scope",
+      "slice": "add-recommendations",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-recommendations:craft",
+      "slice": "add-recommendations",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-score-input:process-order",
+      "slice": "add-score-input",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-score-input:test-integrity",
+      "slice": "add-score-input",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-score-input:in-scope",
+      "slice": "add-score-input",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-score-input:craft",
+      "slice": "add-score-input",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-scoring-engine:process-order",
+      "slice": "add-scoring-engine",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-scoring-engine:test-integrity",
+      "slice": "add-scoring-engine",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-scoring-engine:in-scope",
+      "slice": "add-scoring-engine",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-scoring-engine:craft",
+      "slice": "add-scoring-engine",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-shortlist:process-order",
+      "slice": "add-shortlist",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-shortlist:test-integrity",
+      "slice": "add-shortlist",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-shortlist:in-scope",
+      "slice": "add-shortlist",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-shortlist:craft",
+      "slice": "add-shortlist",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-state-persistence:process-order",
+      "slice": "add-state-persistence",
+      "dimension": "process-order",
+      "score": 74,
+      "pass": true,
+      "judges": 2,
+      "notes": "Batch implementation before per-slice review artifacts; retrofitted review-findings.json. Tests exist and track specs, but red-first ordering is not provable from git."
+    },
+    {
+      "id": "add-state-persistence:test-integrity",
+      "slice": "add-state-persistence",
+      "dimension": "test-integrity",
+      "score": 83,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-state-persistence:in-scope",
+      "slice": "add-state-persistence",
+      "dimension": "in-scope",
+      "score": 91,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    },
+    {
+      "id": "add-state-persistence:craft",
+      "slice": "add-state-persistence",
+      "dimension": "craft",
+      "score": 87,
+      "pass": true,
+      "judges": 2,
+      "notes": "Spec scenarios covered by unit/component tests and eval cases; review evidence present (retrofitted where noted)."
+    }
+  ]
+}

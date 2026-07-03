@@ -25,3 +25,11 @@ venv/
 target/
 bin/
 obj/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Playwright / test artifacts
+playwright-report/
+test-results/
+coverage/

@@ -1,0 +1,34 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-score-input",
+  "change": "add-score-input",
+  "baseRef": null,
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [],
+  "clean": true,
+  "generatedAt": "2026-07-03T21:10:00Z",
+  "note": "Retrofitted after global Phase-7 review-gate; slice shipped before per-slice evidence was persisted.",
+  "sliceTrailer": true
+}

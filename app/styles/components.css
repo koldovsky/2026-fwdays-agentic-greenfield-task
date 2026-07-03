@@ -1,0 +1,253 @@
+/* ============================================================
+   Prokhidnyi — Components
+   Vendored from docs/design-system/components.css (source of truth).
+   Ready-made component classes. Requires tokens.css (+ typography/base).
+   ============================================================ */
+
+/* ---------- Buttons ---------- */
+.pk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: 700 15px var(--pk-font-text);
+  padding: 14px 20px;
+  border-radius: var(--pk-radius-input);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter var(--pk-dur) var(--pk-ease), background var(--pk-dur) var(--pk-ease);
+}
+.pk-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pk-btn--primary { background: var(--pk-action); color: #fff; }
+.pk-btn--primary:hover { filter: brightness(1.06); }
+
+.pk-btn--dark { background: var(--pk-navy-900); color: #fff; }
+.pk-btn--dark:hover { filter: brightness(1.25); }
+
+.pk-btn--secondary {
+  background: var(--pk-surface);
+  color: var(--pk-slate-600);
+  border-color: var(--pk-border-2);
+}
+.pk-btn--secondary:hover { border-color: var(--pk-slate-400); }
+
+.pk-btn--sm { font-size: 13px; padding: 10px 14px; }
+
+/* Square icon button (save / compare) */
+.pk-icon-btn {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border: none; border-radius: var(--pk-radius-sm);
+  background: #f1efe7; color: var(--pk-slate-300);
+  font-size: 15px; cursor: pointer;
+  transition: background var(--pk-dur) var(--pk-ease), color var(--pk-dur) var(--pk-ease);
+}
+.pk-icon-btn:hover { background: #e8e4d9; }
+.pk-icon-btn--active-star   { background: #fdf3e3; color: var(--pk-real); }
+.pk-icon-btn--active-compare{ background: var(--pk-action-bg); color: var(--pk-action); }
+
+/* ---------- Cards ---------- */
+.pk-card {
+  background: var(--pk-surface);
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-card);
+  padding: var(--pk-space-5);
+}
+.pk-card--hover { transition: box-shadow var(--pk-dur) var(--pk-ease); }
+.pk-card--hover:hover { box-shadow: var(--pk-shadow-card); }
+.pk-card__footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--pk-divider-2);
+}
+
+/* ---------- Category pill (traffic-light) ---------- */
+.pk-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 700 9.5px var(--pk-font-text);
+  letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: var(--pk-radius-pill);
+}
+.pk-pill--safe  { color: var(--pk-safe-text);  background: var(--pk-safe-bg); }
+.pk-pill--real  { color: var(--pk-real-text);  background: var(--pk-real-bg); }
+.pk-pill--dream { color: var(--pk-dream-text); background: var(--pk-dream-bg); }
+.pk-pill__dot { width: 8px; height: 8px; border-radius: 50%; }
+.pk-pill--safe  .pk-pill__dot { background: var(--pk-safe); }
+.pk-pill--real  .pk-pill__dot { background: var(--pk-real); }
+.pk-pill--dream .pk-pill__dot { background: var(--pk-dream); }
+
+/* ---------- Application status badge ---------- */
+.pk-status {
+  display: inline-block;
+  font: 700 9.5px var(--pk-font-text);
+  letter-spacing: .04em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: var(--pk-radius-pill);
+  border: 1px solid transparent; cursor: pointer;
+}
+.pk-status--saved     { color: var(--pk-slate-600); background: var(--pk-divider); }
+.pk-status--submitted { color: var(--pk-slate-600); background: #e7e3d7; }
+.pk-status--review    { color: var(--pk-action);    background: var(--pk-action-bg); }
+.pk-status--recommend { color: var(--pk-safe-text); background: var(--pk-safe-bg); }
+.pk-status--enrolled  { color: #fff;                background: var(--pk-safe); }
+
+/* ---------- Chance ring (donut) ---------- */
+/* Usage: <div class="pk-ring pk-ring--real" style="--pk-pct:54%">
+            <span class="pk-ring__val">54%</span></div>            */
+.pk-ring {
+  flex: none;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+}
+.pk-ring--safe  { background: conic-gradient(var(--pk-safe)  var(--pk-pct), var(--pk-safe-lite)  0); }
+.pk-ring--real  { background: conic-gradient(var(--pk-real)  var(--pk-pct), var(--pk-real-lite)  0); }
+.pk-ring--dream { background: conic-gradient(var(--pk-dream) var(--pk-pct), var(--pk-dream-lite) 0); }
+.pk-ring__val {
+  width: 72%; height: 72%;
+  border-radius: 50%; background: #fff;
+  display: grid; place-items: center;
+  font: 700 11px var(--pk-font-display);
+}
+.pk-ring--safe  .pk-ring__val { color: var(--pk-safe-text); }
+.pk-ring--real  .pk-ring__val { color: var(--pk-real-text); }
+.pk-ring--dream .pk-ring__val { color: var(--pk-dream-text); }
+.pk-ring--lg { width: 74px; height: 74px; }
+.pk-ring--lg .pk-ring__val { font-size: 17px; }
+
+/* ---------- Toggle chip (fields / cities / subject) ---------- */
+.pk-chip {
+  display: inline-block;
+  font: 600 13px var(--pk-font-text);
+  padding: 9px 14px; border-radius: var(--pk-radius-pill);
+  background: var(--pk-surface); color: var(--pk-slate-600);
+  border: 1px solid var(--pk-border-2); cursor: pointer;
+  transition: all var(--pk-dur) var(--pk-ease);
+}
+.pk-chip:hover { border-color: var(--pk-slate-400); }
+.pk-chip[aria-pressed="true"],
+.pk-chip--active {
+  background: var(--pk-navy-900); color: #fff; border-color: var(--pk-navy-900);
+}
+
+/* ---------- Filter tab (pill) ---------- */
+.pk-tab {
+  flex: none;
+  font: 600 12.5px var(--pk-font-text);
+  padding: 8px 14px; border-radius: var(--pk-radius-pill);
+  background: var(--pk-surface); color: var(--pk-slate-600);
+  border: 1px solid var(--pk-border-2); cursor: pointer;
+}
+.pk-tab--active { background: var(--pk-navy-900); color: #fff; border-color: var(--pk-navy-900); }
+
+/* ---------- Segmented control ---------- */
+.pk-segment {
+  display: inline-flex; gap: 6px;
+  background: #efece4; border: 1px solid var(--pk-border-2);
+  border-radius: 14px; padding: 5px;
+}
+.pk-segment__item {
+  font: 700 14px var(--pk-font-text);
+  padding: 11px 20px; border-radius: 11px;
+  border: none; background: transparent; color: var(--pk-slate-400);
+  cursor: pointer;
+}
+.pk-segment__item--active {
+  background: var(--pk-surface); color: var(--pk-navy-900);
+  box-shadow: 0 1px 4px rgba(13,27,42,.1);
+}
+
+/* ---------- Toggle row (benefit) ---------- */
+.pk-toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--pk-surface);
+  border: 1.5px solid var(--pk-border);
+  border-radius: 16px; padding: 14px 16px; cursor: pointer;
+}
+.pk-toggle-row--on { border-color: var(--pk-action); }
+.pk-toggle-row__box {
+  flex: none; width: 26px; height: 26px;
+  border-radius: 8px; display: grid; place-items: center;
+  font: 700 14px var(--pk-font-text); color: #fff;
+  background: var(--pk-border-2);
+}
+.pk-toggle-row--on .pk-toggle-row__box { background: var(--pk-action); }
+
+/* ---------- Gradient panel (profile / metric) ---------- */
+.pk-gradient-panel {
+  background: var(--pk-grad-navy);
+  border-radius: var(--pk-radius-card);
+  padding: 22px; color: #fff;
+}
+.pk-gradient-panel .pk-metric { font: 700 38px var(--pk-font-display); line-height: 1; }
+.pk-gradient-panel .pk-metric-label { font: 500 12px var(--pk-font-text); color: #9fb4c8; }
+.pk-gradient-panel .pk-metric-accent { color: var(--pk-mint); }
+
+/* ---------- Table (comparison) ---------- */
+.pk-table {
+  width: 100%; border-collapse: collapse;
+  background: var(--pk-surface);
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-card); overflow: hidden;
+  font: 600 13px var(--pk-font-text);
+}
+.pk-table thead th {
+  background: var(--pk-navy-800); color: #fff;
+  text-align: left; padding: 12px 14px;
+  font: 700 12px var(--pk-font-text);
+}
+.pk-table thead th + th,
+.pk-table tbody td + td { border-left: 1px solid var(--pk-divider-2); }
+.pk-table tbody tr { border-bottom: 1px solid var(--pk-divider-2); }
+.pk-table tbody tr:last-child { border-bottom: none; }
+.pk-table tbody td { padding: 12px 14px; color: var(--pk-navy-900); }
+.pk-table td.pk-cell-label { color: var(--pk-slate-400); }
+
+/* ---------- Deadline / warning banner ---------- */
+.pk-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--pk-warn-bg);
+  border: 1px solid var(--pk-warn-brd);
+  border-radius: 14px; padding: 13px 15px;
+}
+.pk-banner__num { font: 700 20px var(--pk-font-display); color: var(--pk-warn-accent); }
+.pk-banner__text { font: 600 13px var(--pk-font-text); line-height: 1.4; color: var(--pk-warn-text); }
+
+/* ---------- Empty state ---------- */
+.pk-empty {
+  background: var(--pk-surface);
+  border: 1px dashed #d8d2c4;
+  border-radius: var(--pk-radius-card);
+  padding: 50px 30px; text-align: center; color: var(--pk-slate-300);
+}
+.pk-empty__title { font: 700 15px var(--pk-font-text); color: var(--pk-slate-600); }
+.pk-empty__text { font: 500 13px var(--pk-font-text); line-height: 1.6; margin-top: 7px; }
+
+/* ---------- Modal ---------- */
+.pk-modal-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(13,27,42,.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.pk-modal {
+  background: var(--pk-bg-screen);
+  border-radius: var(--pk-radius-lg);
+  width: 540px; max-width: 100%; max-height: 90vh; overflow-y: auto;
+  padding: 28px 30px; position: relative;
+  box-shadow: var(--pk-shadow-modal);
+}
+.pk-modal__close {
+  position: absolute; top: 18px; right: 20px;
+  width: 32px; height: 32px; border-radius: var(--pk-radius-sm);
+  background: var(--pk-divider); display: grid; place-items: center;
+  cursor: pointer; font: 600 16px var(--pk-font-text); color: var(--pk-slate-600);
+  border: none;
+}
+
+/* ---------- Bar chart (cutoff-score history) ---------- */
+.pk-bars { display: flex; align-items: flex-end; gap: 12px; height: 64px; }
+.pk-bars__col { flex: 1; text-align: center; }
+.pk-bars__bar { border-radius: 5px 5px 0 0; background: #dfe6ee; }
+.pk-bars__bar--hl { background: var(--pk-real); }
+.pk-bars__label { font: 600 10px var(--pk-font-text); color: var(--pk-slate-300); margin-top: 6px; }

@@ -1,0 +1,80 @@
+/* ============================================================
+   Prokhidnyi — Typography
+   Font loading + type classes. Requires tokens.css.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* Display headings — Unbounded */
+.pk-h1 {
+  font-family: var(--pk-font-display);
+  font-weight: 700;
+  font-size: var(--pk-text-h1);
+  line-height: var(--pk-lh-h1);
+  letter-spacing: var(--pk-ls-h1);
+  color: var(--pk-navy-900);
+  margin: 0;
+  text-wrap: balance;
+}
+.pk-h2 {
+  font-family: var(--pk-font-display);
+  font-weight: 600;
+  font-size: var(--pk-text-h2);
+  line-height: var(--pk-lh-h2);
+  letter-spacing: var(--pk-ls-h2);
+  color: var(--pk-navy-900);
+  margin: 0;
+}
+.pk-h3 {
+  font-family: var(--pk-font-text);
+  font-weight: 700;
+  font-size: var(--pk-text-h3);
+  line-height: var(--pk-lh-h3);
+  color: var(--pk-navy-900);
+  margin: 0;
+}
+
+/* Large numeral / metric — Unbounded */
+.pk-numeral {
+  font-family: var(--pk-font-display);
+  font-weight: 700;
+  font-size: var(--pk-text-num);
+  line-height: 1;
+  color: var(--pk-navy-900);
+}
+
+/* Body */
+.pk-body {
+  font-family: var(--pk-font-text);
+  font-weight: 500;
+  font-size: var(--pk-text-body);
+  line-height: var(--pk-lh-body);
+  color: var(--pk-slate-600);
+  margin: 0;
+}
+.pk-text-sm {
+  font-family: var(--pk-font-text);
+  font-weight: 500;
+  font-size: var(--pk-text-sm);
+  line-height: var(--pk-lh-sm);
+  color: var(--pk-slate-400);
+}
+
+/* Uppercase label (over-line) */
+.pk-label {
+  font-family: var(--pk-font-text);
+  font-weight: 700;
+  font-size: var(--pk-text-label);
+  letter-spacing: var(--pk-ls-label);
+  text-transform: uppercase;
+  color: var(--pk-slate-500);
+}
+
+/* Text color utilities */
+.pk-fg-navy   { color: var(--pk-navy-900); }
+.pk-fg-slate  { color: var(--pk-slate-600); }
+.pk-fg-muted  { color: var(--pk-slate-400); }
+.pk-fg-safe   { color: var(--pk-safe-text); }
+.pk-fg-real   { color: var(--pk-real-text); }
+.pk-fg-dream  { color: var(--pk-dream-text); }
+.pk-fg-action { color: var(--pk-action); }

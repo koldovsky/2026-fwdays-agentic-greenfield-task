@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-07-03T22:05:09.161Z",
+  "kind": "trajectory-eval",
+  "slices": [
+    "add-app-shell",
+    "add-comparison",
+    "add-filtering",
+    "add-program-data",
+    "add-program-detail",
+    "add-recommendations",
+    "add-score-input",
+    "add-scoring-engine",
+    "add-shortlist",
+    "add-state-persistence"
+  ],
+  "dimensions": [
+    "process-order",
+    "test-integrity",
+    "in-scope",
+    "craft"
+  ]
+}

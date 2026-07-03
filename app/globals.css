@@ -1,0 +1,17 @@
+/* Prokhidnyi global stylesheet — single CSS entry for the app.
+   Import order is significant (DESIGN.md): tokens must load first so
+   every downstream file and --pk-* reference resolves. Do not reorder. */
+@import "./styles/tokens.css";
+@import "./styles/typography.css";
+@import "./styles/base.css";
+@import "./styles/components.css";
+@import "./styles/shell.css";
+@import "./styles/planner.css";
+
+/* Bind the self-hosted next/font families (set on <html> in layout.tsx)
+   to the design system's typography tokens. Keeps every .pk-* class and
+   --pk-font-* reference correct without per-component classNames. */
+:root {
+  --pk-font-display: var(--font-unbounded), "Unbounded", system-ui, sans-serif;
+  --pk-font-text: var(--font-manrope), "Manrope", system-ui, sans-serif;
+}

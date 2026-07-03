@@ -1,0 +1,105 @@
+/* ============================================================
+   Prokhidnyi — App shell layout
+   Frame-only layout for the responsive Ukrainian shell every UI
+   slice renders inside. Uses --pk-* tokens exclusively (TC-STACK-01).
+   ============================================================ */
+
+/* Full-height column: header, deadline banner, content, footer */
+.pk-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Centered, max-width content container */
+.pk-container {
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding-inline: var(--pk-space-6);
+}
+
+/* ---------- Header / navigation ---------- */
+.pk-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--pk-surface);
+  border-bottom: 1px solid var(--pk-border);
+}
+.pk-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pk-space-4);
+  min-height: 64px;
+  padding-block: var(--pk-space-3);
+}
+.pk-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pk-space-2);
+  min-height: 44px;
+  font: 700 20px var(--pk-font-display);
+  color: var(--pk-navy-900);
+}
+.pk-brand:hover { text-decoration: none; }
+.pk-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--pk-space-1);
+  flex-wrap: wrap;
+}
+/* Nav items — ≥ 44px hit area (NFR-RESP-01) */
+.pk-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--pk-space-3);
+  border-radius: var(--pk-radius-pill);
+  font: 600 14px var(--pk-font-text);
+  color: var(--pk-slate-600);
+}
+.pk-nav__link:hover { background: var(--pk-bg-screen); text-decoration: none; }
+.pk-nav__link--active { color: var(--pk-action); background: var(--pk-action-bg); }
+
+/* ---------- Deadline banner slot (BC-DEADLINE-01) ---------- */
+.pk-deadline-slot { padding-block: var(--pk-space-4) 0; }
+
+/* ---------- Main content ---------- */
+.pk-main {
+  flex: 1;
+  padding-block: var(--pk-space-6) var(--pk-space-8);
+}
+
+/* ---------- Disclaimer surface (BC-HONESTY-01, passive) ---------- */
+.pk-disclaimer {
+  background: var(--pk-bg-screen);
+  border-top: 1px solid var(--pk-border);
+}
+.pk-disclaimer__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pk-space-3);
+  padding-block: var(--pk-space-5);
+}
+.pk-disclaimer__mark {
+  flex: none;
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-action-bg);
+  color: var(--pk-action);
+  font: 700 14px var(--pk-font-text);
+}
+
+/* ---------- Responsive: phone-sized window (NFR-RESP-01) ---------- */
+@media (max-width: 640px) {
+  .pk-container { padding-inline: var(--pk-space-4); }
+  .pk-header__inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--pk-space-2);
+  }
+  .pk-nav { justify-content: flex-start; overflow-x: auto; }
+}

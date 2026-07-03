@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f3f1ec;font-family:'Manrope',system-ui,sans-serif;color:#0d1b2a;-webkit-font-smoothing:antialiased}
+  ::selection{background:#bfe3cf}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+</helmet>
+
+<div style="max-width:1180px;margin:0 auto;padding:0 28px 120px">
+
+  <!-- ===================== HERO ===================== -->
+  <section style="background:linear-gradient(160deg,#0b1f38 0%,#102a43 55%,#0e2b46 100%);border-radius:0 0 32px 32px;margin:0 -28px;padding:64px 56px 76px;color:#fff;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-60px;right:-40px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(63,221,151,.28),transparent 65%)"></div>
+    <div style="position:absolute;bottom:-90px;left:30%;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(47,109,246,.22),transparent 68%)"></div>
+    <div style="position:relative;max-width:760px">
+      <div style="display:inline-flex;align-items:center;gap:8px;font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#7fe3b0;background:rgba(63,221,151,.12);border:1px solid rgba(63,221,151,.32);padding:7px 14px;border-radius:100px">Концепт продукту · v1</div>
+      <h1 style="font-family:'Unbounded';font-weight:700;font-size:62px;line-height:1.02;letter-spacing:-.02em;margin:26px 0 0">Куди я<br>точно вступлю?</h1>
+      <p style="font-size:20px;line-height:1.55;color:#c4d2e0;max-width:620px;margin:24px 0 0;font-weight:500">Застосунок для абітурієнтів, що приймає бали НМТ і пільги та чесно показує, де реальні шанси на бюджет. Excel, який сам себе рахує, сортує й радить.</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:38px">
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'Unbounded';font-weight:700;font-size:30px;color:#fff">5</span><span style="font:500 13px 'Manrope';color:#90a4ba">ключових екранів</span></div>
+        <div style="width:1px;background:rgba(255,255,255,.14);margin:2px 18px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'Unbounded';font-weight:700;font-size:30px;color:#fff">4</span><span style="font:500 13px 'Manrope';color:#90a4ba">варіанти головного</span></div>
+        <div style="width:1px;background:rgba(255,255,255,.14);margin:2px 18px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'Unbounded';font-weight:700;font-size:30px;color:#fff">2024+</span><span style="font:500 13px 'Manrope';color:#90a4ba">модель НМТ</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STORY / PROBLEM ===================== -->
+  <section style="margin-top:64px">
+    <div style="display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:start">
+      <div>
+        <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">З чого все почалось</div>
+        <h2 style="font-family:'Unbounded';font-weight:600;font-size:34px;line-height:1.12;letter-spacing:-.01em;margin:14px 0 0">Низький бал — це не вирок,<br>а задача на аналіз</h2>
+        <p style="font-size:17px;line-height:1.65;color:#3c4a5a;margin:20px 0 0">Коли мій брат вступав із невисоким балом НМТ, ми витратили вечори на Excel: вписували бали, копіювали минулорічні прохідні, рахували коефіцієнти й вгадували, куди він реально пройде. Склали короткий список з оцінкою шансів — і все, що ми нарахували, збулось.</p>
+        <p style="font-size:17px;line-height:1.65;color:#3c4a5a;margin:16px 0 0">Проблема не в тому, що Excel поганий. Проблема в тому, що <b style="color:#0d1b2a">кожна родина рахує це з нуля</b>, вручну, під тиском дедлайнів і без впевненості, що формула правильна.</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e2d8;border-radius:20px;padding:28px 30px;box-shadow:0 1px 0 rgba(0,0,0,.02)">
+        <div style="font:700 13px 'Manrope';color:#e0533d;letter-spacing:.04em;text-transform:uppercase">Болі Excel-підходу</div>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:18px">
+          <div style="display:flex;gap:13px"><span style="flex:none;width:26px;height:26px;border-radius:8px;background:#fdeceaff;color:#e0533d;display:grid;place-items:center;font:700 14px 'Manrope'">1</span><span style="font-size:15px;line-height:1.5;color:#3c4a5a"><b style="color:#0d1b2a">Ручні дані.</b> Прохідні бали гуглиш по сайтах ВНЗ і вставляєш руками.</span></div>
+          <div style="display:flex;gap:13px"><span style="flex:none;width:26px;height:26px;border-radius:8px;background:#fdeceaff;color:#e0533d;display:grid;place-items:center;font:700 14px 'Manrope'">2</span><span style="font-size:15px;line-height:1.5;color:#3c4a5a"><b style="color:#0d1b2a">Коефіцієнти.</b> У кожної спеціальності свої ваги предметів — легко помилитись.</span></div>
+          <div style="display:flex;gap:13px"><span style="flex:none;width:26px;height:26px;border-radius:8px;background:#fdeceaff;color:#e0533d;display:grid;place-items:center;font:700 14px 'Manrope'">3</span><span style="font-size:15px;line-height:1.5;color:#3c4a5a"><b style="color:#0d1b2a">Пільги.</b> Жодна таблиця не підкаже, як вони змінюють твою позицію.</span></div>
+          <div style="display:flex;gap:13px"><span style="flex:none;width:26px;height:26px;border-radius:8px;background:#fdeceaff;color:#e0533d;display:grid;place-items:center;font:700 14px 'Manrope'">4</span><span style="font-size:15px;line-height:1.5;color:#3c4a5a"><b style="color:#0d1b2a">Інтуїція.</b> «Шанси» — це відчуття, а не число. Страшно і непевно.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ASSUMPTIONS ===================== -->
+  <section style="margin-top:64px;background:#fff;border:1px solid #e6e2d8;border-radius:24px;padding:40px 44px">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">Рішення за вас · припущення</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:28px;letter-spacing:-.01em;margin:12px 0 28px">Що я зафіксував перед дизайном</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+      <div>
+        <div style="font:700 14px 'Manrope';color:#0d1b2a">Хто користувач</div>
+        <p style="font-size:14.5px;line-height:1.6;color:#5a6678;margin:8px 0 0">Абітурієнт 17–18 років як головна особа, але кожен екран спокійний і зрозумілий батькам, що дивляться разом. Тон — впевнений друг, не бюрократія.</p>
+      </div>
+      <div>
+        <div style="font:700 14px 'Manrope';color:#0d1b2a">Як показуємо шанси</div>
+        <p style="font-size:14.5px;line-height:1.6;color:#5a6678;margin:8px 0 0">Світлофор + відсоток + контекст: твій конкурсний бал проти минулорічного прохідного та орієнтовна позиція в рейтингу. Чесно, без обіцянок.</p>
+      </div>
+      <div>
+        <div style="font:700 14px 'Manrope';color:#0d1b2a">Серце продукту</div>
+        <p style="font-size:14.5px;line-height:1.6;color:#5a6678;margin:8px 0 0">Не каталог ВНЗ, а персональний короткий список «куди подаватись» з категоріями ризику — мрія, реально, надійно.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VISUAL SYSTEM ===================== -->
+  <section style="margin-top:64px">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">Візуальна система</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:28px;letter-spacing:-.01em;margin:12px 0 28px">Мова інтерфейсу</h2>
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px">
+      <div style="background:#fff;border:1px solid #e6e2d8;border-radius:20px;padding:28px 30px">
+        <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4">Палітра</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:16px">
+          <div style="flex:1;min-width:90px"><div style="height:58px;border-radius:12px;background:#102a43"></div><div style="font:600 12px 'Manrope';margin-top:8px">Navy</div><div style="font:500 11px 'Manrope';color:#9aa6b4">#102A43</div></div>
+          <div style="flex:1;min-width:90px"><div style="height:58px;border-radius:12px;background:#1f9d57"></div><div style="font:600 12px 'Manrope';margin-top:8px">Високі шанси</div><div style="font:500 11px 'Manrope';color:#9aa6b4">#1F9D57</div></div>
+          <div style="flex:1;min-width:90px"><div style="height:58px;border-radius:12px;background:#e8a33d"></div><div style="font:600 12px 'Manrope';margin-top:8px">Середні</div><div style="font:500 11px 'Manrope';color:#9aa6b4">#E8A33D</div></div>
+          <div style="flex:1;min-width:90px"><div style="height:58px;border-radius:12px;background:#e0533d"></div><div style="font:600 12px 'Manrope';margin-top:8px">Ризик</div><div style="font:500 11px 'Manrope';color:#9aa6b4">#E0533D</div></div>
+          <div style="flex:1;min-width:90px"><div style="height:58px;border-radius:12px;background:#2f6df6"></div><div style="font:600 12px 'Manrope';margin-top:8px">Дія</div><div style="font:500 11px 'Manrope';color:#9aa6b4">#2F6DF6</div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e2d8;border-radius:20px;padding:28px 30px">
+        <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4">Шрифти</div>
+        <div style="font-family:'Unbounded';font-weight:700;font-size:30px;margin-top:14px;letter-spacing:-.01em">Unbounded</div>
+        <div style="font:500 13px 'Manrope';color:#9aa6b4">Заголовки · український дисплейний шрифт</div>
+        <div style="height:1px;background:#eceadf;margin:18px 0"></div>
+        <div style="font-family:'Manrope';font-weight:600;font-size:22px">Manrope · текст і дані</div>
+        <p style="font:500 14px/1.55 'Manrope';color:#5a6678;margin:8px 0 0">Спокійний гротеск з повною кирилицею. Цифри читаються в таблицях і картках шансів.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FLOW ===================== -->
+  <section style="margin-top:64px">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">Як це працює</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:28px;letter-spacing:-.01em;margin:12px 0 28px">Флоу від балів до списку подачі</h2>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;background:#fff;border:1px solid #e6e2d8;border-radius:20px;overflow:hidden">
+      <div style="padding:26px 22px;border-right:1px solid #eceadf">
+        <div style="width:34px;height:34px;border-radius:10px;background:#0d1b2a;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:600;font-size:15px">1</div>
+        <div style="font:700 15px 'Manrope';margin-top:16px">Бали НМТ</div>
+        <p style="font:500 13.5px/1.55 'Manrope';color:#5a6678;margin:7px 0 0">Вводиш результати предметів. Одне поле — один предмет.</p>
+      </div>
+      <div style="padding:26px 22px;border-right:1px solid #eceadf">
+        <div style="width:34px;height:34px;border-radius:10px;background:#0d1b2a;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:600;font-size:15px">2</div>
+        <div style="font:700 15px 'Manrope';margin-top:16px">Пільги</div>
+        <p style="font:500 13.5px/1.55 'Manrope';color:#5a6678;margin:7px 0 0">Сільський коефіцієнт, пільгові квоти, особливі умови.</p>
+      </div>
+      <div style="padding:26px 22px;border-right:1px solid #eceadf">
+        <div style="width:34px;height:34px;border-radius:10px;background:#0d1b2a;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:600;font-size:15px">3</div>
+        <div style="font:700 15px 'Manrope';margin-top:16px">Інтереси</div>
+        <p style="font:500 13.5px/1.55 'Manrope';color:#5a6678;margin:7px 0 0">Напрями, міста, бюджет/контракт, форма навчання.</p>
+      </div>
+      <div style="padding:26px 22px;border-right:1px solid #eceadf;background:#f0f7f3">
+        <div style="width:34px;height:34px;border-radius:10px;background:#1f9d57;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:600;font-size:15px">4</div>
+        <div style="font:700 15px 'Manrope';margin-top:16px;color:#11633a">Розрахунок</div>
+        <p style="font:500 13.5px/1.55 'Manrope';color:#3f6b54;margin:7px 0 0">Конкурсний бал + шанси на кожну спеціальність. Автоматично.</p>
+      </div>
+      <div style="padding:26px 22px">
+        <div style="width:34px;height:34px;border-radius:10px;background:#2f6df6;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:600;font-size:15px">5</div>
+        <div style="font:700 15px 'Manrope';margin-top:16px">Список подачі</div>
+        <p style="font:500 13.5px/1.55 'Manrope';color:#5a6678;margin:7px 0 0">Зберігаєш, порівнюєш, відстежуєш статуси заяв.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SCREENS ===================== -->
+  <section style="margin-top:72px">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">Ключові екрани</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:28px;letter-spacing:-.01em;margin:12px 0 6px">Інтерфейс мобільного веба</h2>
+    <p style="font-size:16px;line-height:1.6;color:#5a6678;margin:0 0 36px;max-width:640px">Один потік: ввів бали → отримав чесний список. Нижче — п'ять екранів, що замінюють Excel.</p>
+
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <!-- SCREEN 1: INPUT -->
+      <div style="display:flex;flex-direction:column;gap:14px;width:300px">
+        <div style="background:#0d1b2a;border-radius:42px;padding:9px;box-shadow:0 24px 50px -18px rgba(13,27,42,.5)">
+          <div style="background:#f7f6f2;border-radius:34px;height:632px;overflow:hidden;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font:600 13px 'Manrope'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:9px;border:1.5px solid #0d1b2a;border-radius:2px;display:inline-block"></span></span></div>
+            <div style="padding:8px 22px 0">
+              <div style="font:600 12px 'Manrope';color:#9aa6b4">Крок 1 з 3</div>
+              <div style="font-family:'Unbounded';font-weight:600;font-size:22px;letter-spacing:-.01em;margin-top:4px">Твої бали НМТ</div>
+            </div>
+            <div style="padding:18px 22px;display:flex;flex-direction:column;gap:13px">
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14px 'Manrope'">Українська мова</span><span style="font-family:'Unbounded';font-weight:600;font-size:18px">152</span></div>
+                <div style="height:6px;border-radius:4px;background:#eceadf;margin-top:9px;overflow:hidden"><div style="width:76%;height:100%;background:#1f9d57"></div></div>
+              </div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14px 'Manrope'">Математика</span><span style="font-family:'Unbounded';font-weight:600;font-size:18px">138</span></div>
+                <div style="height:6px;border-radius:4px;background:#eceadf;margin-top:9px;overflow:hidden"><div style="width:69%;height:100%;background:#e8a33d"></div></div>
+              </div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14px 'Manrope'">Історія України</span><span style="font-family:'Unbounded';font-weight:600;font-size:18px">145</span></div>
+                <div style="height:6px;border-radius:4px;background:#eceadf;margin-top:9px;overflow:hidden"><div style="width:72%;height:100%;background:#1f9d57"></div></div>
+              </div>
+              <div style="background:#fff;border:1px dashed #c7d0db;border-radius:16px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px 'Manrope';color:#2f6df6">+ Предмет на вибір</span><span style="font:600 13px 'Manrope';color:#9aa6b4">Англ · 161</span></div>
+            </div>
+            <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 22px 22px;background:linear-gradient(180deg,rgba(247,246,242,0),#f7f6f2 38%)">
+              <button style="width:100%;border:none;background:#2f6df6;color:#fff;font:700 15px 'Manrope';padding:15px;border-radius:14px;cursor:pointer">Далі — пільги</button>
+            </div>
+          </div>
+        </div>
+        <div style="font:700 13px 'Manrope';color:#0d1b2a">1 · Введення балів</div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696;margin-top:-8px">Чотири поля замість десятка стовпців. Прогрес-бар одразу показує, де бал сильний.</div>
+      </div>
+
+      <!-- SCREEN 2: RECOMMENDATIONS LIST -->
+      <div style="display:flex;flex-direction:column;gap:14px;width:300px">
+        <div style="background:#0d1b2a;border-radius:42px;padding:9px;box-shadow:0 24px 50px -18px rgba(13,27,42,.5)">
+          <div style="background:#f7f6f2;border-radius:34px;height:632px;overflow:hidden;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font:600 13px 'Manrope'"><span>9:41</span><span><span style="width:16px;height:9px;border:1.5px solid #0d1b2a;border-radius:2px;display:inline-block"></span></span></div>
+            <div style="padding:6px 18px 0">
+              <div style="background:linear-gradient(135deg,#102a43,#163a5c);border-radius:18px;padding:16px 18px;color:#fff;display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font:500 12px 'Manrope';color:#9fb4c8">Твій конкурсний бал</div><div style="font-family:'Unbounded';font-weight:700;font-size:30px;line-height:1.1">149.2</div></div>
+                <div style="text-align:right"><div style="font:500 11px 'Manrope';color:#9fb4c8">з пільгою +0.02</div><div style="font:700 13px 'Manrope';color:#7fe3b0">12 збігів</div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;padding:14px 18px 4px;overflow:hidden">
+              <span style="font:600 12px 'Manrope';background:#0d1b2a;color:#fff;padding:7px 13px;border-radius:100px">Усі</span>
+              <span style="font:600 12px 'Manrope';background:#fff;border:1px solid #e3ddd0;color:#5a6678;padding:7px 13px;border-radius:100px">Реально</span>
+              <span style="font:600 12px 'Manrope';background:#fff;border:1px solid #e3ddd0;color:#5a6678;padding:7px 13px;border-radius:100px">Надійно</span>
+            </div>
+            <div style="padding:8px 18px 18px;display:flex;flex-direction:column;gap:11px;overflow-y:auto;height:430px">
+              <div style="font:700 11px 'Manrope';letter-spacing:.08em;text-transform:uppercase;color:#e0533d;margin-top:2px">Мрія · 18–35%</div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:14px 15px">
+                <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font:700 14px 'Manrope';line-height:1.25">КНУ ім. Шевченка</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">Журналістика · Київ · бюджет</div></div><div style="flex:none;text-align:center"><div style="width:42px;height:42px;border-radius:50%;background:conic-gradient(#e0533d 28%,#f1ddd9 0);display:grid;place-items:center"><span style="font-family:'Unbounded';font-weight:600;font-size:12px;color:#e0533d">28%</span></div></div></div>
+                <div style="display:flex;justify-content:space-between;font:600 11px 'Manrope';color:#9aa6b4;margin-top:10px;border-top:1px solid #f0ede4;padding-top:9px"><span>Прохідний торік <b style="color:#e0533d">158.4</b></span><span>Твій 149.2</span></div>
+              </div>
+              <div style="font:700 11px 'Manrope';letter-spacing:.08em;text-transform:uppercase;color:#e8a33d;margin-top:6px">Реально · 40–65%</div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:14px 15px">
+                <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font:700 14px 'Manrope';line-height:1.25">НаУКМА</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">Філологія · Київ · бюджет</div></div><div style="flex:none;text-align:center"><div style="width:42px;height:42px;border-radius:50%;background:conic-gradient(#e8a33d 54%,#f5e9d3 0);display:grid;place-items:center"><span style="font-family:'Unbounded';font-weight:600;font-size:12px;color:#c98520">54%</span></div></div></div>
+                <div style="display:flex;justify-content:space-between;font:600 11px 'Manrope';color:#9aa6b4;margin-top:10px;border-top:1px solid #f0ede4;padding-top:9px"><span>Прохідний торік <b style="color:#c98520">148.1</b></span><span>Твій 149.2</span></div>
+              </div>
+              <div style="font:700 11px 'Manrope';letter-spacing:.08em;text-transform:uppercase;color:#1f9d57;margin-top:6px">Надійно · 80%+</div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:14px 15px">
+                <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font:700 14px 'Manrope';line-height:1.25">ЛНУ ім. Франка</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">Соціологія · Львів · бюджет</div></div><div style="flex:none;text-align:center"><div style="width:42px;height:42px;border-radius:50%;background:conic-gradient(#1f9d57 88%,#d6efe0 0);display:grid;place-items:center"><span style="font-family:'Unbounded';font-weight:600;font-size:12px;color:#1f9d57">88%</span></div></div></div>
+                <div style="display:flex;justify-content:space-between;font:600 11px 'Manrope';color:#9aa6b4;margin-top:10px;border-top:1px solid #f0ede4;padding-top:9px"><span>Прохідний торік <b style="color:#1f9d57">141.0</b></span><span>Твій 149.2</span></div>
+              </div>
+            </div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:62px;background:#fff;border-top:1px solid #eceadf;display:flex;justify-content:space-around;align-items:center;font:600 10px 'Manrope';color:#9aa6b4">
+              <span style="color:#2f6df6;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#2f6df6"></span>Список</span>
+              <span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#cdd4dd"></span>Порівняти</span>
+              <span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#cdd4dd"></span>Збережені</span>
+            </div>
+          </div>
+        </div>
+        <div style="font:700 13px 'Manrope';color:#0d1b2a">2 · Рекомендації</div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696;margin-top:-8px">Серце застосунку. Список згруповано за ризиком: мрія, реально, надійно — як радили б знайомі.</div>
+      </div>
+
+      <!-- SCREEN 3: DETAIL / CHANCE BREAKDOWN -->
+      <div style="display:flex;flex-direction:column;gap:14px;width:300px">
+        <div style="background:#0d1b2a;border-radius:42px;padding:9px;box-shadow:0 24px 50px -18px rgba(13,27,42,.5)">
+          <div style="background:#f7f6f2;border-radius:34px;height:632px;overflow:hidden;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font:600 13px 'Manrope'"><span>9:41</span><span><span style="width:16px;height:9px;border:1.5px solid #0d1b2a;border-radius:2px;display:inline-block"></span></span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 20px 0"><span style="font:600 20px 'Manrope';color:#0d1b2a">‹</span><span style="font:600 13px 'Manrope';color:#7a8696">До списку</span></div>
+            <div style="padding:14px 20px 0">
+              <div style="font-family:'Unbounded';font-weight:600;font-size:19px;letter-spacing:-.01em;line-height:1.2">НаУКМА · Філологія</div>
+              <div style="font:500 12.5px 'Manrope';color:#7a8696;margin-top:3px">Київ · денна · бюджет</div>
+            </div>
+            <div style="padding:16px 20px 0">
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;padding:18px;display:flex;align-items:center;gap:16px">
+                <div style="width:74px;height:74px;border-radius:50%;background:conic-gradient(#e8a33d 54%,#f5e9d3 0);display:grid;place-items:center;flex:none"><div style="width:54px;height:54px;border-radius:50%;background:#fff;display:grid;place-items:center"><span style="font-family:'Unbounded';font-weight:700;font-size:18px;color:#c98520">54%</span></div></div>
+                <div><div style="font:700 13px 'Manrope';color:#c98520">Реальний шанс</div><p style="font:500 12px/1.5 'Manrope';color:#5a6678;margin:5px 0 0">Твій бал трохи вищий за торішній прохідний. Подавай у пріоритеті 1–2.</p></div>
+              </div>
+            </div>
+            <div style="padding:16px 20px 0">
+              <div style="font:700 11px 'Manrope';letter-spacing:.07em;text-transform:uppercase;color:#9aa6b4">Як склався твій бал</div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:14px;margin-top:9px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;font:600 12.5px 'Manrope';border-bottom:1px solid #f2efe7"><span style="color:#5a6678">Укр. мова ×0.35</span><span>53.2</span></div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;font:600 12.5px 'Manrope';border-bottom:1px solid #f2efe7"><span style="color:#5a6678">Англ. ×0.30</span><span>48.3</span></div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;font:600 12.5px 'Manrope';border-bottom:1px solid #f2efe7"><span style="color:#5a6678">Історія ×0.25</span><span>36.3</span></div>
+                <div style="display:flex;justify-content:space-between;padding:11px 14px;font:700 13px 'Manrope';background:#f7f6f2"><span>Конкурсний бал</span><span style="color:#1f9d57">149.2</span></div>
+              </div>
+            </div>
+            <div style="padding:14px 20px 0">
+              <div style="font:700 11px 'Manrope';letter-spacing:.07em;text-transform:uppercase;color:#9aa6b4;margin-bottom:9px">Прохідний бал за роки</div>
+              <div style="display:flex;align-items:flex-end;gap:12px;height:56px">
+                <div style="flex:1;text-align:center"><div style="height:38px;background:#dfe6ee;border-radius:5px 5px 0 0"></div><div style="font:600 10px 'Manrope';color:#9aa6b4;margin-top:5px">'22 · 151</div></div>
+                <div style="flex:1;text-align:center"><div style="height:46px;background:#dfe6ee;border-radius:5px 5px 0 0"></div><div style="font:600 10px 'Manrope';color:#9aa6b4;margin-top:5px">'23 · 153</div></div>
+                <div style="flex:1;text-align:center"><div style="height:32px;background:#e8a33d;border-radius:5px 5px 0 0"></div><div style="font:600 10px 'Manrope';color:#c98520;margin-top:5px">'24 · 148</div></div>
+              </div>
+            </div>
+            <div style="position:absolute;left:0;right:0;bottom:0;padding:14px 20px 22px;background:linear-gradient(180deg,rgba(247,246,242,0),#f7f6f2 38%)">
+              <button style="width:100%;border:none;background:#0d1b2a;color:#fff;font:700 14px 'Manrope';padding:14px;border-radius:14px;cursor:pointer">★ Додати в мій список</button>
+            </div>
+          </div>
+        </div>
+        <div style="font:700 13px 'Manrope';color:#0d1b2a">3 · Деталь спеціальності</div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696;margin-top:-8px">Прозора математика: видно кожен коефіцієнт і динаміку прохідного балу. Жодної магії.</div>
+      </div>
+
+      <!-- SCREEN 4: COMPARE (EXCEL KILLER) -->
+      <div style="display:flex;flex-direction:column;gap:14px;width:300px">
+        <div style="background:#0d1b2a;border-radius:42px;padding:9px;box-shadow:0 24px 50px -18px rgba(13,27,42,.5)">
+          <div style="background:#f7f6f2;border-radius:34px;height:632px;overflow:hidden;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font:600 13px 'Manrope'"><span>9:41</span><span><span style="width:16px;height:9px;border:1.5px solid #0d1b2a;border-radius:2px;display:inline-block"></span></span></div>
+            <div style="padding:8px 20px 0"><div style="font-family:'Unbounded';font-weight:600;font-size:21px;letter-spacing:-.01em">Порівняння</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">3 варіанти поруч</div></div>
+            <div style="padding:16px 16px 0">
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;overflow:hidden;font:600 11.5px 'Manrope'">
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;background:#102a43;color:#fff">
+                  <div style="padding:11px 10px;font:700 10.5px 'Manrope'"> </div>
+                  <div style="padding:11px 8px;border-left:1px solid rgba(255,255,255,.12);line-height:1.2">НаУКМА<br><span style="font-weight:500;color:#9fb4c8;font-size:9.5px">Філологія</span></div>
+                  <div style="padding:11px 8px;border-left:1px solid rgba(255,255,255,.12);line-height:1.2">КНУ<br><span style="font-weight:500;color:#9fb4c8;font-size:9.5px">Журналіст.</span></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;border-bottom:1px solid #f2efe7"><div style="padding:11px 10px;color:#7a8696">Шанс</div><div style="padding:11px 8px;border-left:1px solid #f2efe7;color:#c98520;font-weight:700">54%</div><div style="padding:11px 8px;border-left:1px solid #f2efe7;color:#e0533d;font-weight:700">28%</div></div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;border-bottom:1px solid #f2efe7"><div style="padding:11px 10px;color:#7a8696">Прохідний '24</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">148.1</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">158.4</div></div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;border-bottom:1px solid #f2efe7"><div style="padding:11px 10px;color:#7a8696">Бюджетних</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">45</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">30</div></div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;border-bottom:1px solid #f2efe7"><div style="padding:11px 10px;color:#7a8696">Контракт/рік</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">52 тис</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">68 тис</div></div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;border-bottom:1px solid #f2efe7"><div style="padding:11px 10px;color:#7a8696">Місто</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">Київ</div><div style="padding:11px 8px;border-left:1px solid #f2efe7">Київ</div></div>
+                <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr"><div style="padding:11px 10px;color:#7a8696">Гуртожиток</div><div style="padding:11px 8px;border-left:1px solid #f2efe7;color:#1f9d57">так</div><div style="padding:11px 8px;border-left:1px solid #f2efe7;color:#1f9d57">так</div></div>
+              </div>
+              <div style="margin-top:14px;background:#f0f7f3;border:1px solid #cde8d8;border-radius:14px;padding:13px 15px"><div style="font:700 12px 'Manrope';color:#11633a">Порада застосунку</div><p style="font:500 12px/1.5 'Manrope';color:#3f6b54;margin:5px 0 0">НаУКМА — найкращий баланс шансу й вартості. Постав пріоритетом 1.</p></div>
+            </div>
+          </div>
+        </div>
+        <div style="font:700 13px 'Manrope';color:#0d1b2a">4 · Порівняння</div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696;margin-top:-8px">Прямий нащадок Excel — але рядки рахуються самі, а внизу є людська порада, а не лише цифри.</div>
+      </div>
+
+      <!-- SCREEN 5: TRACKING -->
+      <div style="display:flex;flex-direction:column;gap:14px;width:300px">
+        <div style="background:#0d1b2a;border-radius:42px;padding:9px;box-shadow:0 24px 50px -18px rgba(13,27,42,.5)">
+          <div style="background:#f7f6f2;border-radius:34px;height:632px;overflow:hidden;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px 6px;font:600 13px 'Manrope'"><span>9:41</span><span><span style="width:16px;height:9px;border:1.5px solid #0d1b2a;border-radius:2px;display:inline-block"></span></span></div>
+            <div style="padding:8px 20px 0"><div style="font-family:'Unbounded';font-weight:600;font-size:21px;letter-spacing:-.01em">Мої заяви</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">5 у списку · 1 рекомендовано</div></div>
+            <div style="margin:14px 20px 0;background:#fff5ec;border:1px solid #f6dcbd;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="font-family:'Unbounded';font-weight:700;font-size:16px;color:#c98520">3</span><span style="font:600 12px/1.4 'Manrope';color:#8a5a18">дні до дедлайну подачі пріоритетів</span></div>
+            <div style="padding:14px 20px 0;display:flex;flex-direction:column;gap:11px">
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 14px 'Manrope'">НаУКМА · Філологія</span><span style="font:700 10px 'Manrope';color:#11633a;background:#dff0e6;padding:4px 9px;border-radius:100px">РЕКОМЕНДОВАНО</span></div>
+                <div style="font:500 12px 'Manrope';color:#7a8696;margin-top:6px">Пріоритет 1 · шанс був 54%</div>
+              </div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 14px 'Manrope'">КНУ · Журналістика</span><span style="font:700 10px 'Manrope';color:#2f6df6;background:#e4edff;padding:4px 9px;border-radius:100px">РОЗГЛЯД</span></div>
+                <div style="font:500 12px 'Manrope';color:#7a8696;margin-top:6px">Пріоритет 2 · шанс 28%</div>
+              </div>
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:13px 15px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 14px 'Manrope'">ЛНУ · Соціологія</span><span style="font:700 10px 'Manrope';color:#5a6678;background:#eceadf;padding:4px 9px;border-radius:100px">ПОДАНО</span></div>
+                <div style="font:500 12px 'Manrope';color:#7a8696;margin-top:6px">Пріоритет 3 · шанс 88%</div>
+              </div>
+            </div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:62px;background:#fff;border-top:1px solid #eceadf;display:flex;justify-content:space-around;align-items:center;font:600 10px 'Manrope';color:#9aa6b4">
+              <span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#cdd4dd"></span>Список</span>
+              <span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#cdd4dd"></span>Порівняти</span>
+              <span style="color:#2f6df6;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:18px;height:18px;border-radius:5px;background:#2f6df6"></span>Збережені</span>
+            </div>
+          </div>
+        </div>
+        <div style="font:700 13px 'Manrope';color:#0d1b2a">5 · Відстеження</div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696;margin-top:-8px">Після подачі застосунок не зникає: статуси заяв і нагадування про дедлайни в одному місці.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== VARIATIONS ===================== -->
+  <section style="margin-top:80px">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#2f6df6">Розвилка · оберіть напрям</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:28px;letter-spacing:-.01em;margin:12px 0 6px">4 варіанти, як показувати «шанс»</h2>
+    <p style="font-size:16px;line-height:1.6;color:#5a6678;margin:0 0 32px;max-width:660px">Одна й та сама спеціальність (НаУКМА · Філологія, 54%) у чотирьох мовах подачі. Скажіть, який ближче — або змішаємо.</p>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
+
+      <!-- 1a -->
+      <div id="1a" style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px">
+        <div style="display:flex;align-items:center;gap:9px"><span style="font:700 11px 'Manrope';background:#0d1b2a;color:#fff;padding:4px 9px;border-radius:6px">1a</span><span style="font:600 13px 'Manrope'">Світлофор + донат</span></div>
+        <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;padding:16px;flex:1">
+          <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font:700 15px 'Manrope'">НаУКМА</div><div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px">Філологія · Київ</div></div><div style="width:50px;height:50px;border-radius:50%;background:conic-gradient(#e8a33d 54%,#f5e9d3 0);display:grid;place-items:center"><span style="font-family:'Unbounded';font-weight:600;font-size:13px;color:#c98520">54%</span></div></div>
+          <div style="margin-top:14px;display:inline-flex;align-items:center;gap:7px;background:#fdf3e3;padding:6px 11px;border-radius:100px"><span style="width:9px;height:9px;border-radius:50%;background:#e8a33d"></span><span style="font:700 11px 'Manrope';color:#c98520">Реальний шанс</span></div>
+        </div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696">Знайоме й сканується миттєво. Колір = вердикт, відсоток = деталь. Безпечний дефолт.</div>
+      </div>
+
+      <!-- 1b -->
+      <div id="1b" style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px">
+        <div style="display:flex;align-items:center;gap:9px"><span style="font:700 11px 'Manrope';background:#0d1b2a;color:#fff;padding:4px 9px;border-radius:6px">1b</span><span style="font:600 13px 'Manrope'">Шкала з позицією</span></div>
+        <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;padding:16px;flex:1">
+          <div style="font:700 15px 'Manrope'">НаУКМА · Філологія</div>
+          <div style="font:500 12px 'Manrope';color:#7a8696;margin-top:2px;margin-bottom:18px">Київ · бюджет</div>
+          <div style="position:relative;height:8px;border-radius:5px;background:linear-gradient(90deg,#e0533d,#e8a33d,#1f9d57)">
+            <div style="position:absolute;left:58%;top:-7px;width:3px;height:22px;background:#0d1b2a;border-radius:2px"></div>
+            <div style="position:absolute;left:50%;top:14px;width:1px;height:8px;background:#9aa6b4"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font:600 10.5px 'Manrope';color:#9aa6b4;margin-top:13px"><span>прохідний 148</span><span style="color:#0d1b2a">ти 149.2</span></div>
+        </div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696">Найчесніше: видно, наскільки ти вище/нижче порогу. Добре для тривожних — це про факт, не обіцянку.</div>
+      </div>
+
+      <!-- 1c -->
+      <div id="1c" style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px">
+        <div style="display:flex;align-items:center;gap:9px"><span style="font:700 11px 'Manrope';background:#0d1b2a;color:#fff;padding:4px 9px;border-radius:6px">1c</span><span style="font:600 13px 'Manrope'">Цифра-герой</span></div>
+        <div style="background:#102a43;border:1px solid #102a43;border-radius:18px;padding:18px;flex:1;color:#fff">
+          <div style="font:600 12px 'Manrope';color:#9fb4c8">НаУКМА · Філологія</div>
+          <div style="font-family:'Unbounded';font-weight:700;font-size:46px;line-height:1;margin-top:8px">54<span style="font-size:24px">%</span></div>
+          <div style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(127,227,176,.16);padding:5px 11px;border-radius:100px"><span style="font:700 12px 'Manrope';color:#7fe3b0">+1.1 над прохідним</span></div>
+        </div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696">Мінімалізм і драйв. Один великий показник + дельта. Підходить молодшій аудиторії, ефектно в списку.</div>
+      </div>
+
+      <!-- 1d -->
+      <div id="1d" style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px">
+        <div style="display:flex;align-items:center;gap:9px"><span style="font:700 11px 'Manrope';background:#0d1b2a;color:#fff;padding:4px 9px;border-radius:6px">1d</span><span style="font:600 13px 'Manrope'">Порада людиною</span></div>
+        <div style="background:#f0f7f3;border:1px solid #cde8d8;border-radius:18px;padding:16px;flex:1">
+          <div style="font:700 15px 'Manrope'">НаУКМА · Філологія</div>
+          <div style="font-family:'Unbounded';font-weight:600;font-size:17px;color:#11633a;margin-top:12px;line-height:1.25">«Подавай у пріоритеті 1–2»</div>
+          <p style="font:500 12.5px/1.55 'Manrope';color:#3f6b54;margin:9px 0 0">Твій бал трохи вищий за торішній поріг. Реалістично, але не гарантовано.</p>
+        </div>
+        <div style="font:500 13px/1.5 'Manrope';color:#7a8696">Замінює таблицю розмовою. Той самий вердикт, що ви давали брату, але словами. Цифри — у деталі.</div>
+      </div>
+
+    </div>
+
+    <p style="margin:30px 0 0;font:500 13.5px/1.6 'Manrope';color:#7a8696;max-width:680px">Спробуйте далі: «зроби список на варіанті <a href="#1b" style="font:700 12px 'Manrope';background:#eceadf;color:#0d1b2a;padding:2px 7px;border-radius:5px;text-decoration:none">1b</a>», «змішай <a href="#1c" style="font:700 12px 'Manrope';background:#eceadf;color:#0d1b2a;padding:2px 7px;border-radius:5px;text-decoration:none">1c</a> з порадою з <a href="#1d" style="font:700 12px 'Manrope';background:#eceadf;color:#0d1b2a;padding:2px 7px;border-radius:5px;text-decoration:none">1d</a>», або «покажи десктопну версію списку».</p>
+  </section>
+
+  <!-- ===================== NEXT STEPS ===================== -->
+  <section style="margin-top:72px;background:#0d1b2a;border-radius:24px;padding:42px 46px;color:#fff">
+    <div style="font:600 12px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#7fe3b0">Наступні кроки</div>
+    <h2 style="font-family:'Unbounded';font-weight:600;font-size:26px;letter-spacing:-.01em;margin:12px 0 24px">Куди рухаємось далі</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px">
+      <div><div style="font:700 14px 'Manrope';color:#7fe3b0">1 · Дані</div><p style="font:500 14px/1.6 'Manrope';color:#c4d2e0;margin:8px 0 0">Підключити офіційні прохідні бали та коефіцієнти спеціальностей замість прикладів.</p></div>
+      <div><div style="font:700 14px 'Manrope';color:#7fe3b0">2 · Модель шансів</div><p style="font:500 14px/1.6 'Manrope';color:#c4d2e0;margin:8px 0 0">Уточнити формулу % з урахуванням кількості місць, пільгових квот і динаміки років.</p></div>
+      <div><div style="font:700 14px 'Manrope';color:#7fe3b0">3 · Десктоп</div><p style="font:500 14px/1.6 'Manrope';color:#c4d2e0;margin:8px 0 0">Зробити широку версію списку й порівняння — для тих, хто звик планувати за столом.</p></div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+</body>
+</html>

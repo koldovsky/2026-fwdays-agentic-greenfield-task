@@ -1,0 +1,92 @@
+/* ============================================================
+   Prokhidnyi — Design Tokens
+   Single source of truth for color, type, space, shape.
+   Load first. Framework-agnostic CSS custom properties.
+   ============================================================ */
+
+:root {
+  /* ---------- Color: brand / neutrals ---------- */
+  --pk-navy-900: #0d1b2a;   /* primary text, dark buttons, logo */
+  --pk-navy-800: #102a43;   /* gradient panels, table headers */
+  --pk-navy-700: #19426a;   /* second gradient stop */
+  --pk-ink:      #1d2733;   /* document body text */
+  --pk-slate-600:#3c4a5a;   /* primary body text */
+  --pk-slate-500:#4a5765;   /* body alt. */
+  --pk-slate-400:#586574;   /* secondary text, captions (WCAG AA on white) */
+  --pk-slate-300:#6b7684;   /* placeholders, small labels (WCAG AA) */
+
+  /* ---------- Color: backgrounds & surfaces ---------- */
+  --pk-bg-app:    #e9e6df;  /* app background */
+  --pk-bg-screen: #f7f6f2;  /* working areas */
+  --pk-surface:   #ffffff;  /* cards, panels, fields */
+  --pk-border:    #e9e5db;  /* card & field borders */
+  --pk-border-2:  #e3ddcf;  /* chip border / slider track */
+  --pk-divider:   #eceadf;  /* dividers */
+  --pk-divider-2: #f0ede4;  /* thin dividers inside cards */
+
+  /* ---------- Semantic: chance traffic-light ---------- */
+  --pk-safe:       #1f9d57;  /* Safe ≥75% */
+  --pk-safe-text:  #11633a;
+  --pk-safe-bg:    #e1f1e8;
+  --pk-safe-lite:  #dcefe4;
+
+  --pk-real:       #e8a33d;  /* Realistic 40–74% */
+  --pk-real-text:  #7a5610;
+  --pk-real-bg:    #fbedd6;
+  --pk-real-lite:  #f6e7cf;
+
+  --pk-dream:      #e0533d;  /* Reach <40% */
+  --pk-dream-text: #b53d29;
+  --pk-dream-bg:   #fbe3de;
+  --pk-dream-lite: #f6ddd7;
+
+  /* ---------- Accents ---------- */
+  --pk-action:    #1d54c7;  /* primary action, active tabs, links (AA on action-bg) */
+  --pk-action-bg: #e4edff;
+  --pk-mint:      #7fe3b0;  /* positive on dark background */
+  --pk-warn-bg:   #fff5ec;  /* deadline banner */
+  --pk-warn-brd:  #f6dcbd;
+  --pk-warn-text: #8a5a18;
+  --pk-warn-accent:#c98520;
+
+  /* ---------- Typography ---------- */
+  --pk-font-display: 'Unbounded', system-ui, sans-serif;  /* headings, numerals */
+  --pk-font-text:    'Manrope', system-ui, sans-serif;    /* everything else */
+
+  /* type scale (desktop) */
+  --pk-text-h1:   38px;   --pk-lh-h1:   1.08;   --pk-ls-h1:   -.02em;
+  --pk-text-h2:   21px;   --pk-lh-h2:   1.15;   --pk-ls-h2:   -.01em;
+  --pk-text-h3:   16px;   --pk-lh-h3:   1.25;
+  --pk-text-num:  28px;                          /* large numeral */
+  --pk-text-body: 15px;   --pk-lh-body: 1.65;
+  --pk-text-sm:   13px;   --pk-lh-sm:   1.55;
+  --pk-text-label:11px;   --pk-ls-label:.06em;   /* uppercase label */
+
+  /* ---------- Space (4px step) ---------- */
+  --pk-space-1: 4px;
+  --pk-space-2: 8px;
+  --pk-space-3: 12px;
+  --pk-space-4: 16px;
+  --pk-space-5: 20px;
+  --pk-space-6: 24px;
+  --pk-space-8: 32px;
+
+  /* ---------- Shape ---------- */
+  --pk-radius-card:  18px;   /* cards, panels */
+  --pk-radius-lg:    24px;   /* modals, hero */
+  --pk-radius-input: 13px;   /* buttons, fields */
+  --pk-radius-pill:  100px;  /* pills, chips, tabs */
+  --pk-radius-sm:    9px;    /* small square elements */
+
+  /* ---------- Shadows ---------- */
+  --pk-shadow-card:  0 10px 30px -12px rgba(13,27,42,.25);  /* card hover */
+  --pk-shadow-modal: 0 24px 60px -20px rgba(13,27,42,.4);
+  --pk-shadow-pop:   0 8px 24px -10px rgba(13,27,42,.3);
+
+  /* ---------- Gradients ---------- */
+  --pk-grad-navy: linear-gradient(135deg, #102a43, #19426a);
+
+  /* ---------- Motion ---------- */
+  --pk-ease: cubic-bezier(.4, 0, .2, 1);
+  --pk-dur:  .15s;
+}

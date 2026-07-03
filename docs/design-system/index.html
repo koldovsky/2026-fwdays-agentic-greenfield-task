@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prokhidnyi — Design System</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="typography.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  body { background: var(--pk-bg-app); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 28px 120px; }
+  .gallery-hero { background: var(--pk-grad-navy); border-radius: 24px; padding: 44px 46px; color:#fff; margin-bottom: 44px; position: relative; overflow: hidden; }
+  .gallery-hero::after { content:""; position:absolute; top:-60px; right:-40px; width:280px; height:280px; border-radius:50%; background: radial-gradient(circle at 30% 30%, rgba(63,221,151,.28), transparent 65%); }
+  .sec { margin-top: 56px; }
+  .sec > h2 { margin-bottom: 6px; }
+  .sec > .lead { max-width: 620px; margin-bottom: 22px; }
+  .panel { background: var(--pk-surface); border: 1px solid var(--pk-border); border-radius: 18px; padding: 28px 30px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+  .swatch__chip { height: 56px; border-radius: 12px; border: 1px solid rgba(0,0,0,.05); }
+  .swatch__name { font: 600 12px var(--pk-font-text); margin-top: 8px; color: var(--pk-navy-900); }
+  .swatch__hex { font: 500 11px var(--pk-font-text); color: var(--pk-slate-400); }
+  .anno { font: 600 11px var(--pk-font-text); letter-spacing:.06em; text-transform: uppercase; color: var(--pk-slate-300); margin-bottom: 12px; }
+  code.tag { font: 600 12px ui-monospace, monospace; background: #f1efe7; color: var(--pk-slate-600); padding: 2px 7px; border-radius: 5px; }
+  .toc { display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
+  .toc a { font:600 12.5px var(--pk-font-text); background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.22); color:#fff; padding:7px 13px; border-radius:100px; }
+  .toc a:hover { background:rgba(255,255,255,.2); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="gallery-hero">
+    <div class="pk-label" style="color:#7fe3b0;position:relative">Design System · v1.0</div>
+    <h1 class="pk-h1" style="color:#fff;font-size:44px;margin-top:14px;position:relative">Prokhidnyi</h1>
+    <p class="pk-body" style="color:#c4d2e0;max-width:560px;margin-top:14px;position:relative">Living design system for the university-admissions app. Tokens and components in vanilla CSS — drop into any web project.</p>
+    <nav class="toc">
+      <a href="#color">Color</a>
+      <a href="#type">Typography</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#pills">Pills & statuses</a>
+      <a href="#ring">Chance ring</a>
+      <a href="#chips">Chips & tabs</a>
+      <a href="#forms">Forms</a>
+      <a href="#cards">Cards</a>
+      <a href="#panels">Panels</a>
+      <a href="#table">Table</a>
+      <a href="#states">States</a>
+    </nav>
+  </header>
+
+  <!-- COLOR -->
+  <section class="sec" id="color">
+    <h2 class="pk-h2">Color</h2>
+    <p class="pk-body lead">Navy is the frame and text. The traffic-light (green / amber / red) encodes chance. Blue is action.</p>
+    <div class="panel">
+      <div class="anno">Brand / neutrals</div>
+      <div class="swatch-grid">
+        <div><div class="swatch__chip" style="background:var(--pk-navy-900)"></div><div class="swatch__name">navy-900</div><div class="swatch__hex">#0D1B2A</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-navy-800)"></div><div class="swatch__name">navy-800</div><div class="swatch__hex">#102A43</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-slate-600)"></div><div class="swatch__name">slate-600</div><div class="swatch__hex">#3C4A5A</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-slate-400)"></div><div class="swatch__name">slate-400</div><div class="swatch__hex">#7A8696</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-bg-app);border-color:#ddd"></div><div class="swatch__name">bg-app</div><div class="swatch__hex">#E9E6DF</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-surface);border-color:#ddd"></div><div class="swatch__name">surface</div><div class="swatch__hex">#FFFFFF</div></div>
+      </div>
+      <div class="anno" style="margin-top:26px">Chance traffic-light</div>
+      <div class="swatch-grid">
+        <div><div class="swatch__chip" style="background:var(--pk-safe)"></div><div class="swatch__name">safe · Safe</div><div class="swatch__hex">#1F9D57</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-real)"></div><div class="swatch__name">real · Realistic</div><div class="swatch__hex">#E8A33D</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-dream)"></div><div class="swatch__name">dream · Reach</div><div class="swatch__hex">#E0533D</div></div>
+        <div><div class="swatch__chip" style="background:var(--pk-action)"></div><div class="swatch__name">action</div><div class="swatch__hex">#2F6DF6</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section class="sec" id="type">
+    <h2 class="pk-h2">Typography</h2>
+    <p class="pk-body lead">Unbounded — headings and numerals. Manrope — text and data.</p>
+    <div class="panel">
+      <div class="pk-h1">Where will I get in?</div>
+      <div class="swatch__hex" style="margin-top:4px">.pk-h1 · Unbounded 700 · 38px</div>
+      <div class="pk-h2" style="margin-top:22px">Recommendations by risk</div>
+      <div class="swatch__hex" style="margin-top:4px">.pk-h2 · Unbounded 600 · 21px</div>
+      <div class="pk-numeral" style="margin-top:22px">149.2</div>
+      <div class="swatch__hex" style="margin-top:4px">.pk-numeral · Unbounded 700</div>
+      <p class="pk-body" style="margin-top:22px">Your score is slightly above last year's cutoff. Apply as priority 1–2 — realistic, but not guaranteed.</p>
+      <div class="swatch__hex" style="margin-top:4px">.pk-body · Manrope 500 · 15px</div>
+      <div class="pk-label" style="margin-top:22px">Step 1 of 3</div>
+      <div class="swatch__hex" style="margin-top:4px">.pk-label · Manrope 700 uppercase · 11px</div>
+    </div>
+  </section>
+
+  <!-- BUTTONS -->
+  <section class="sec" id="buttons">
+    <h2 class="pk-h2">Buttons</h2>
+    <p class="pk-body lead">Blue is the primary action, dark is the key content action, outline is secondary. Plus square icon buttons.</p>
+    <div class="panel">
+      <div class="row">
+        <button class="pk-btn pk-btn--primary">Show results</button>
+        <button class="pk-btn pk-btn--dark">★ Add to list</button>
+        <button class="pk-btn pk-btn--secondary">Cancel</button>
+        <button class="pk-btn pk-btn--primary pk-btn--sm">Next</button>
+        <button class="pk-icon-btn">⇄</button>
+        <button class="pk-icon-btn pk-icon-btn--active-star">★</button>
+        <button class="pk-icon-btn pk-icon-btn--active-compare">⇄</button>
+      </div>
+      <div class="anno" style="margin-top:18px"><code class="tag">.pk-btn--primary</code> <code class="tag">.pk-btn--dark</code> <code class="tag">.pk-btn--secondary</code> <code class="tag">.pk-icon-btn</code></div>
+    </div>
+  </section>
+
+  <!-- PILLS -->
+  <section class="sec" id="pills">
+    <h2 class="pk-h2">Pills & statuses</h2>
+    <p class="pk-body lead">Risk category (traffic-light) and application status across all five stages.</p>
+    <div class="panel">
+      <div class="anno">Risk category</div>
+      <div class="row">
+        <span class="pk-pill pk-pill--dream"><span class="pk-pill__dot"></span>Reach</span>
+        <span class="pk-pill pk-pill--real"><span class="pk-pill__dot"></span>Realistic</span>
+        <span class="pk-pill pk-pill--safe"><span class="pk-pill__dot"></span>Safe</span>
+      </div>
+      <div class="anno" style="margin-top:22px">Application status</div>
+      <div class="row">
+        <span class="pk-status pk-status--saved">Saved</span>
+        <span class="pk-status pk-status--submitted">Submitted</span>
+        <span class="pk-status pk-status--review">Under review</span>
+        <span class="pk-status pk-status--recommend">Recommended</span>
+        <span class="pk-status pk-status--enrolled">Enrolled</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- RING -->
+  <section class="sec" id="ring">
+    <h2 class="pk-h2">Chance ring</h2>
+    <p class="pk-body lead">Conic gradient [category color × %] with a white center. The percentage is set via <code class="tag">--pk-pct</code>.</p>
+    <div class="panel">
+      <div class="row" style="gap:32px">
+        <div class="pk-ring pk-ring--dream" style="--pk-pct:28%"><span class="pk-ring__val">28%</span></div>
+        <div class="pk-ring pk-ring--real" style="--pk-pct:54%"><span class="pk-ring__val">54%</span></div>
+        <div class="pk-ring pk-ring--safe" style="--pk-pct:88%"><span class="pk-ring__val">88%</span></div>
+        <div class="pk-ring pk-ring--lg pk-ring--real" style="--pk-pct:54%"><span class="pk-ring__val">54%</span></div>
+      </div>
+      <div class="anno" style="margin-top:18px"><code class="tag">&lt;div class="pk-ring pk-ring--real" style="--pk-pct:54%"&gt;&lt;span class="pk-ring__val"&gt;54%&lt;/span&gt;&lt;/div&gt;</code></div>
+    </div>
+  </section>
+
+  <!-- CHIPS / TABS -->
+  <section class="sec" id="chips">
+    <h2 class="pk-h2">Chips, tabs, segment</h2>
+    <p class="pk-body lead">Toggle chips (fields/cities/subject), filter tabs, and the section segmented control.</p>
+    <div class="panel">
+      <div class="anno">Toggle chips</div>
+      <div class="row">
+        <span class="pk-chip pk-chip--active">Journalism</span>
+        <span class="pk-chip">Law</span>
+        <span class="pk-chip">Computer Science</span>
+        <span class="pk-chip pk-chip--active">Kyiv</span>
+        <span class="pk-chip">Lviv</span>
+      </div>
+      <div class="anno" style="margin-top:22px">Filter tabs</div>
+      <div class="row">
+        <span class="pk-tab pk-tab--active">All</span>
+        <span class="pk-tab">Safe</span>
+        <span class="pk-tab">Realistic</span>
+        <span class="pk-tab">Reach</span>
+      </div>
+      <div class="anno" style="margin-top:22px">Segmented control</div>
+      <div class="pk-segment">
+        <button class="pk-segment__item pk-segment__item--active">Recommendations</button>
+        <button class="pk-segment__item">Compare · 2</button>
+        <button class="pk-segment__item">Saved · 3</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMS -->
+  <section class="sec" id="forms">
+    <h2 class="pk-h2">Forms</h2>
+    <p class="pk-body lead">Score slider, text field, and benefit toggle row.</p>
+    <div class="panel" style="max-width:520px">
+      <div class="pk-h3">Ukrainian language</div>
+      <input class="pk-range" type="range" min="100" max="200" value="152" style="margin:12px 0 22px">
+      <input class="pk-input" type="text" placeholder="Search a university…" style="margin-bottom:22px">
+      <label class="pk-toggle-row pk-toggle-row--on">
+        <span><span style="font:600 14px var(--pk-font-text)">Rural coefficient</span><br><span class="pk-text-sm">×1.02 to the score for a rural school</span></span>
+        <span class="pk-toggle-row__box">✓</span>
+      </label>
+      <label class="pk-toggle-row" style="margin-top:10px">
+        <span><span style="font:600 14px var(--pk-font-text)">Preferential quota</span><br><span class="pk-text-sm">separate competition for eligible categories</span></span>
+        <span class="pk-toggle-row__box"></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- CARDS -->
+  <section class="sec" id="cards">
+    <h2 class="pk-h2">Recommendation card</h2>
+    <p class="pk-body lead">The main repeated block: university, program, chance ring, footer with actions.</p>
+    <div class="grid">
+      <div class="pk-card pk-card--hover">
+        <div style="display:flex;justify-content:space-between;gap:12px">
+          <div>
+            <div class="pk-h3">NaUKMA</div>
+            <div class="pk-text-sm" style="margin-top:2px">Philology · Kyiv</div>
+            <span class="pk-pill pk-pill--real" style="margin-top:9px"><span class="pk-pill__dot"></span>Realistic</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div class="pk-ring pk-ring--real" style="--pk-pct:54%"><span class="pk-ring__val">54%</span></div>
+            <div style="font:600 9px var(--pk-font-text);color:var(--pk-slate-300)">48–61%</div>
+          </div>
+        </div>
+        <div class="pk-card__footer">
+          <span style="font:600 11.5px var(--pk-font-text);color:var(--pk-slate-300)">Cutoff '24 <b style="color:var(--pk-slate-600)">148.1</b></span>
+          <div class="row" style="gap:8px">
+            <button class="pk-icon-btn pk-icon-btn--active-compare">⇄</button>
+            <button class="pk-icon-btn">☆</button>
+          </div>
+        </div>
+      </div>
+      <div class="pk-card pk-card--hover">
+        <div style="display:flex;justify-content:space-between;gap:12px">
+          <div>
+            <div class="pk-h3">KNU (Shevchenko)</div>
+            <div class="pk-text-sm" style="margin-top:2px">Journalism · Kyiv</div>
+            <span class="pk-pill pk-pill--dream" style="margin-top:9px"><span class="pk-pill__dot"></span>Reach</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div class="pk-ring pk-ring--dream" style="--pk-pct:28%"><span class="pk-ring__val">28%</span></div>
+            <div style="font:600 9px var(--pk-font-text);color:var(--pk-slate-300)">21–36%</div>
+          </div>
+        </div>
+        <div class="pk-card__footer">
+          <span style="font:600 11.5px var(--pk-font-text);color:var(--pk-slate-300)">Cutoff '24 <b style="color:var(--pk-slate-600)">158.4</b></span>
+          <div class="row" style="gap:8px">
+            <button class="pk-icon-btn">⇄</button>
+            <button class="pk-icon-btn pk-icon-btn--active-star">★</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANELS -->
+  <section class="sec" id="panels">
+    <h2 class="pk-h2">Gradient panel</h2>
+    <p class="pk-body lead">Profile/metric on the navy gradient with a mint accent.</p>
+    <div class="pk-gradient-panel" style="max-width:340px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div class="pk-metric-label">Average NMT score</div><div class="pk-metric">149</div></div>
+        <div style="text-align:right"><div class="pk-metric-accent" style="font:700 22px var(--pk-font-display)">12</div><div class="pk-metric-label">matches</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLE -->
+  <section class="sec" id="table">
+    <h2 class="pk-h2">Comparison table</h2>
+    <p class="pk-body lead">The Excel replacement: 2–3 options side by side in readable rows.</p>
+    <table class="pk-table" style="max-width:560px">
+      <thead><tr><th></th><th>NaUKMA</th><th>KNU</th></tr></thead>
+      <tbody>
+        <tr><td class="pk-cell-label">Chance</td><td style="color:var(--pk-real-text);font-weight:700">54%</td><td style="color:var(--pk-dream-text);font-weight:700">28%</td></tr>
+        <tr><td class="pk-cell-label">Cutoff '24</td><td>148.1</td><td>158.4</td></tr>
+        <tr><td class="pk-cell-label">State-funded seats</td><td>45</td><td>30</td></tr>
+        <tr><td class="pk-cell-label">Tuition/year</td><td>52k</td><td>68k</td></tr>
+        <tr><td class="pk-cell-label">Dormitory</td><td style="color:var(--pk-safe)">yes</td><td style="color:var(--pk-safe)">yes</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- STATES -->
+  <section class="sec" id="states">
+    <h2 class="pk-h2">Banner, empty state, chart</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+      <div class="pk-banner"><span class="pk-banner__num">3</span><span class="pk-banner__text">days until the priority submission deadline</span></div>
+      <div class="pk-empty" style="padding:32px 24px"><div class="pk-empty__title">Nothing in this category</div><div class="pk-empty__text">Try another filter or adjust your scores.</div></div>
+      <div class="pk-card">
+        <div class="pk-label" style="margin-bottom:10px">Cutoff by year</div>
+        <div class="pk-bars">
+          <div class="pk-bars__col"><div class="pk-bars__bar" style="height:38px"></div><div class="pk-bars__label">'22 · 151</div></div>
+          <div class="pk-bars__col"><div class="pk-bars__bar" style="height:46px"></div><div class="pk-bars__label">'23 · 153</div></div>
+          <div class="pk-bars__col"><div class="pk-bars__bar pk-bars__bar--hl" style="height:32px"></div><div class="pk-bars__label" style="color:var(--pk-real-text)">'24 · 148</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top:64px;padding-top:20px;border-top:1px solid var(--pk-border-2);text-align:center">
+    <span class="pk-text-sm">Prokhidnyi · Design System v1.0 · tokens · typography · base · components</span>
+  </footer>
+
+</div>
+</body>
+</html>

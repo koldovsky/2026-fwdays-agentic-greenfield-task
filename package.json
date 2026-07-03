@@ -1,0 +1,48 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:run": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "echo 'no integration tests yet — add in Phase 5' && exit 0",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "qa:verify": "node scripts/qa-verify.mjs",
+    "qa:record-vision": "node scripts/record-vision-stills.mjs",
+    "qa:trajectory-eval": "node scripts/run-trajectory-eval.mjs",
+    "check:trace": "node scripts/check-traceability.mjs",
+    "check:coverage": "node scripts/check-coverage-ratchet.mjs",
+    "check:eval": "node scripts/check-eval-ratchet.mjs",
+    "check:trajectory": "node scripts/check-trajectory.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "gate:status": "node scripts/gate-status.mjs"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "^1.5.0",
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.61.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}

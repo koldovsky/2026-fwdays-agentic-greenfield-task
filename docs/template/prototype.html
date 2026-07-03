@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#e9e6df;font-family:'Manrope',system-ui,sans-serif;color:#0d1b2a;-webkit-font-smoothing:antialiased}
+  ::selection{background:#bfe3cf}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:5px;background:#e3ddcf;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #2f6df6;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #2f6df6;cursor:pointer}
+  .scroll::-webkit-scrollbar{width:0;display:none}
+  .scroll{scrollbar-width:none}
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:32px 20px 60px">
+
+  <div style="max-width:1240px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:11px;background:#0d1b2a;color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:700;font-size:17px">У</div>
+        <div><div style="font-family:'Unbounded';font-weight:600;font-size:19px;letter-spacing:-.01em">Універ</div><div style="font:500 12px 'Manrope';color:#7a8696">куди я точно вступлю</div></div>
+      </div>
+      <div style="font:500 13px 'Manrope';color:#7a8696">Сесія 2024 · бюджет</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start">
+
+      <!-- PROFILE PANEL -->
+      <div style="position:sticky;top:24px;display:flex;flex-direction:column;gap:16px">
+        <div style="background:linear-gradient(135deg,#102a43,#19426a);border-radius:20px;padding:22px;color:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end">
+            <div><div style="font:500 12px 'Manrope';color:#9fb4c8">Середній бал НМТ</div><div style="font-family:'Unbounded';font-weight:700;font-size:38px;line-height:1">{{ avgBal }}</div></div>
+            <div style="text-align:right"><div style="font:700 22px 'Unbounded';color:#7fe3b0">{{ recsCount }}</div><div style="font:500 11px 'Manrope';color:#9fb4c8">збігів</div></div>
+          </div>
+          <div style="margin-top:14px;font:500 12px 'Manrope';color:#9fb4c8">Бонус пільг: <b style="color:#fff">{{ bonusLabel }}</b></div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e9e5db;border-radius:20px;padding:22px">
+          <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4">Бали НМТ</div>
+          <div style="font:600 11px 'Manrope';color:#9aa6b4;margin:11px 0 8px">Четвертий предмет</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ choiceChips }}" as="ch" hint-placeholder-count="6"><span onClick="{{ ch.set }}" style="{{ ch.style }}">{{ ch.label }}</span></sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;margin-top:16px">
+            <sc-for list="{{ scoreRows }}" as="row" hint-placeholder-count="4">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 13.5px 'Manrope'">{{ row.label }}</span><span style="font-family:'Unbounded';font-weight:600;font-size:16px">{{ row.value }}</span></div>
+                <input type="range" min="100" max="200" value="{{ row.value }}" onInput="{{ row.set }}" style="width:100%;margin-top:9px">
+              </div>
+            </sc-for>
+          </div>
+          <div style="height:1px;background:#eceadf;margin:20px 0 18px"></div>
+          <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4;margin-bottom:13px">Пільги</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ benefits }}" as="b" hint-placeholder-count="3">
+              <div onClick="{{ b.toggle }}" style="{{ b.rowStyle }}">
+                <div><div style="font:600 13.5px 'Manrope'">{{ b.label }}</div><div style="font:500 11.5px/1.4 'Manrope';color:#7a8696;margin-top:2px">{{ b.desc }}</div></div>
+                <div style="{{ b.boxStyle }}">{{ b.check }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #e9e5db;border-radius:20px;padding:22px">
+          <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4">Напрями</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+            <sc-for list="{{ fieldChips }}" as="f" hint-placeholder-count="8"><span onClick="{{ f.toggle }}" style="{{ f.style }}">{{ f.label }}</span></sc-for>
+          </div>
+          <div style="font:700 12px 'Manrope';letter-spacing:.06em;text-transform:uppercase;color:#9aa6b4;margin-top:18px">Міста</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+            <sc-for list="{{ cityChips }}" as="c" hint-placeholder-count="6"><span onClick="{{ c.toggle }}" style="{{ c.style }}">{{ c.label }}</span></sc-for>
+          </div>
+        </div>
+        <div style="font:500 11.5px/1.5 'Manrope';color:#9aa6b4;text-align:center;padding:0 8px">Рухай слайдери — рекомендації й шанси перераховуються миттєво.</div>
+      </div>
+
+      <!-- MAIN -->
+      <div>
+        <div style="display:flex;gap:6px;background:#efece4;border:1px solid #e3ddcf;border-radius:14px;padding:5px;width:fit-content;margin-bottom:18px">
+          <sc-for list="{{ webTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
+        </div>
+
+        <!-- RECS -->
+        <sc-if value="{{ webTabRecs }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <sc-for list="{{ filterTabs }}" as="t" hint-placeholder-count="4"><span onClick="{{ t.select }}" style="{{ t.style }}">{{ t.label }}</span></sc-for>
+          </div>
+          <sc-if value="{{ cardsEmpty }}" hint-placeholder-val="{{ true }}"><div style="background:#fff;border:1px dashed #d8d2c4;border-radius:18px;padding:50px 30px;text-align:center;color:#9aa6b4;max-width:760px;margin-bottom:16px"><div style="font:700 15px 'Manrope';color:#5a6678">У цій категорії порожньо</div><p style="font:500 13px/1.6 'Manrope';margin:7px 0 0">Спробуй інший фільтр або зміни бали зліва — рекомендації оновляться.</p></div></sc-if>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px">
+            <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+              <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;padding:18px;transition:box-shadow .15s" style-hover="box-shadow:0 10px 30px -12px rgba(13,27,42,.25)">
+                <div onClick="{{ c.open }}" style="cursor:pointer;display:flex;justify-content:space-between;gap:12px">
+                  <div><div style="font:700 16px 'Manrope';line-height:1.25">{{ c.uni }}</div><div style="font:500 13px 'Manrope';color:#7a8696;margin-top:3px">{{ c.spec }} · {{ c.city }}</div><span style="{{ c.catPill }}">{{ c.cat }}</span></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:none"><div style="{{ c.donutStyle }}"><span style="{{ c.donutText }}">{{ c.chancePct }}</span></div><div style="font:600 9px 'Manrope';color:#9aa6b4;white-space:nowrap">{{ c.band }}</div></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;border-top:1px solid #f0ede4;padding-top:12px">
+                  <span style="font:600 11.5px 'Manrope';color:#9aa6b4">Прохідний '24 <b style="color:#5a6678">{{ c.pass }}</b> · ти <b style="color:#5a6678">{{ c.comp }}</b></span>
+                  <div style="display:flex;gap:8px">
+                    <span onClick="{{ c.compareToggle }}" style="{{ c.cmpBtn }}">⇄</span>
+                    <span onClick="{{ c.save }}" style="{{ c.saveBtn }}">{{ c.saveIcon }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- COMPARE -->
+        <sc-if value="{{ webTabCompare }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ compareReady }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;overflow:hidden;max-width:760px">
+              <div style="{{ compareHeadStyle }}">
+                <div style="padding:16px 16px"></div>
+                <sc-for list="{{ compareCols }}" as="col" hint-placeholder-count="2"><div style="padding:16px 14px;border-left:1px solid rgba(255,255,255,.12);color:#fff;line-height:1.25;font:700 14px 'Manrope'">{{ col.uni }}<br><span style="font-weight:500;color:#9fb4c8;font-size:12px">{{ col.spec }}</span></div></sc-for>
+              </div>
+              <sc-for list="{{ compareTable }}" as="r" hint-placeholder-count="6">
+                <div style="{{ r.rowStyle }}">
+                  <div style="padding:14px 16px;color:#7a8696;font:600 13px 'Manrope'">{{ r.label }}</div>
+                  <sc-for list="{{ r.cells }}" as="cell" hint-placeholder-count="2"><div style="{{ cell.style }}">{{ cell.v }}</div></sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px;background:#f0f7f3;border:1px solid #cde8d8;border-radius:14px;padding:16px 18px;max-width:760px"><div style="font:700 13px 'Manrope';color:#11633a">Порада застосунку</div><p style="font:500 13.5px/1.55 'Manrope';color:#3f6b54;margin:6px 0 0">{{ compareAdvice }}</p></div>
+          </sc-if>
+          <sc-if value="{{ compareEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fff;border:1px dashed #d8d2c4;border-radius:18px;padding:70px 30px;text-align:center;color:#9aa6b4;max-width:760px"><div style="font:700 16px 'Manrope';color:#5a6678">Поки порівнювати нема що</div><p style="font:500 13.5px/1.6 'Manrope';margin:8px 0 0">Додай 2–3 варіанти кнопкою ⇄ на картках рекомендацій.</p></div>
+          </sc-if>
+        </sc-if>
+
+        <!-- SAVED -->
+        <sc-if value="{{ webTabSaved }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ savedAny }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fff5ec;border:1px solid #f6dcbd;border-radius:14px;padding:14px 18px;display:flex;gap:12px;align-items:center;max-width:760px;margin-bottom:16px"><span style="font-family:'Unbounded';font-weight:700;font-size:20px;color:#c98520">3</span><span style="font:600 13.5px 'Manrope';color:#8a5a18">дні до дедлайну подачі пріоритетів</span></div>
+            <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+              <sc-for list="{{ savedRows }}" as="s" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid #e9e5db;border-radius:16px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px">
+                  <div onClick="{{ s.open }}" style="cursor:pointer"><div style="font:700 15px 'Manrope'">{{ s.uni }}</div><div style="font:500 13px 'Manrope';color:#7a8696;margin-top:2px">{{ s.spec }} · {{ s.city }} · шанс <b style="{{ s.chanceColor }}">{{ s.chancePct }}</b></div></div>
+                  <div style="display:flex;align-items:center;gap:14px">
+                    <span onClick="{{ s.advance }}" style="{{ s.statusStyle }}">{{ s.status }}</span>
+                    <span onClick="{{ s.remove }}" style="font:600 12px 'Manrope';color:#e0533d;cursor:pointer">✕</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font:500 12px 'Manrope';color:#9aa6b4;margin-top:12px">Клікни на статус, щоб провести заяву по етапах: Збережено → Подано → Розглядається → Рекомендовано → Зараховано.</div>
+          </sc-if>
+          <sc-if value="{{ savedNone }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fff;border:1px dashed #d8d2c4;border-radius:18px;padding:70px 30px;text-align:center;color:#9aa6b4;max-width:760px"><div style="font:700 16px 'Manrope';color:#5a6678">Список порожній</div><p style="font:500 13.5px/1.6 'Manrope';margin:8px 0 0">Додавай варіанти зірочкою ★ — і відстежуй статуси заяв тут.</p></div>
+          </sc-if>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEB MODAL -->
+  <sc-if value="{{ webModalOpen }}" hint-placeholder-val="{{ true }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:60;background:rgba(13,27,42,.45);display:flex;align-items:center;justify-content:center;padding:24px">
+    <div style="background:#f7f6f2;border-radius:24px;width:540px;max-width:100%;max-height:90vh;overflow-y:auto;padding:28px 30px;position:relative" class="scroll">
+      <div onClick="{{ closeModal }}" style="position:absolute;top:18px;right:20px;width:32px;height:32px;border-radius:9px;background:#eceadf;display:grid;place-items:center;cursor:pointer;font:600 16px 'Manrope';color:#5a6678">✕</div>
+      <div style="font-family:'Unbounded';font-weight:600;font-size:23px;letter-spacing:-.01em;line-height:1.15;padding-right:40px">{{ detUni }}</div>
+      <div style="font:500 13.5px 'Manrope';color:#7a8696;margin-top:4px">{{ detSpec }} · {{ detCity }} · {{ detType }}</div>
+      <div style="background:#fff;border:1px solid #e9e5db;border-radius:18px;padding:20px;display:flex;align-items:center;gap:18px;margin-top:18px">
+        <div style="{{ detDonut }}"><div style="width:54px;height:54px;border-radius:50%;background:#fff;display:grid;place-items:center"><span style="{{ detDonutText }}">{{ detChance }}</span></div></div>
+        <div><div style="{{ detCatLabel }}">{{ detCat }}</div><p style="font:500 13px/1.55 'Manrope';color:#5a6678;margin:5px 0 0">{{ detAdvice }}</p></div>
+      </div>
+      <div style="font:700 11px 'Manrope';letter-spacing:.07em;text-transform:uppercase;color:#9aa6b4;margin:20px 0 9px">Як склався твій бал</div>
+      <div style="background:#fff;border:1px solid #e9e5db;border-radius:14px;overflow:hidden">
+        <sc-for list="{{ detBreakdown }}" as="b" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;padding:12px 16px;font:600 13px 'Manrope';border-bottom:1px solid #f2efe7"><span style="color:#5a6678">{{ b.label }}</span><span>{{ b.val }}</span></div></sc-for>
+        <div style="display:flex;justify-content:space-between;padding:13px 16px;font:700 14px 'Manrope';background:#f7f6f2"><span>Конкурсний бал</span><span style="color:#1f9d57">{{ detComp }}</span></div>
+      </div>
+      <div style="font:700 11px 'Manrope';letter-spacing:.07em;text-transform:uppercase;color:#9aa6b4;margin:20px 0 11px">Прохідний бал за роки</div>
+      <div style="display:flex;align-items:flex-end;gap:14px;height:70px">
+        <sc-for list="{{ detYears }}" as="y" hint-placeholder-count="3"><div style="flex:1;text-align:center"><div style="{{ y.barStyle }}"></div><div style="font:600 11px 'Manrope';margin-top:7px;{{ y.labelColor }}">{{ y.label }}</div></div></sc-for>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button onClick="{{ detCompareToggle }}" style="{{ detCmpBtn }}">⇄ Порівняти</button>
+        <button onClick="{{ detSave }}" style="{{ detSaveBtn }}">{{ detSaveLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    scores: { ukr: 152, math: 138, hist: 145, eng: 161 },
+    benefit: { village: false, quota: false, orphan: false },
+    fields: [],
+    cities: [],
+    filter: 'all',
+    compare: [],
+    saved: {},
+    webModal: null,
+    webTab: 'recs',
+    choiceSubj: 'Англійська',
+  };
+
+  SUBJ = { ukr: 'Укр. мова', math: 'Математика', hist: 'Історія', eng: 'Англ. мова' };
+  STATUSES = ['Збережено', 'Подано', 'Розглядається', 'Рекомендовано', 'Зараховано'];
+  STATUS_COLOR = {
+    'Збережено': ['#5a6678', '#eceadf'],
+    'Подано': ['#5a6678', '#e7e3d7'],
+    'Розглядається': ['#2f6df6', '#e4edff'],
+    'Рекомендовано': ['#11633a', '#dff0e6'],
+    'Зараховано': ['#fff', '#1f9d57'],
+  };
+
+  UNIS = [
+    { id: 'knu-j',  uni: 'КНУ ім. Шевченка', spec: 'Журналістика',      field: 'Журналістика',     city: 'Київ',        c: { ukr: .35, eng: .30, hist: .25, math: .10 }, p22: 155, p23: 159, p24: 158.4, budget: 30,  contract: '68 тис', dorm: true },
+    { id: 'kma-f',  uni: 'НаУКМА',            spec: 'Філологія',         field: 'Філологія',        city: 'Київ',        c: { ukr: .35, eng: .30, hist: .25, math: .10 }, p22: 151, p23: 153, p24: 148.1, budget: 45,  contract: '52 тис', dorm: true },
+    { id: 'knu-l',  uni: 'КНУ ім. Шевченка', spec: 'Право',             field: 'Право',            city: 'Київ',        c: { ukr: .30, hist: .35, eng: .20, math: .15 }, p22: 163, p23: 167, p24: 165.0, budget: 60,  contract: '75 тис', dorm: true },
+    { id: 'lnu-s',  uni: 'ЛНУ ім. Франка',   spec: 'Соціологія',        field: 'Соціологія',       city: 'Львів',       c: { ukr: .30, hist: .30, eng: .20, math: .20 }, p22: 139, p23: 143, p24: 141.0, budget: 35,  contract: '38 тис', dorm: true },
+    { id: 'kpi-cs', uni: 'КПІ ім. Сікорського', spec: 'Комп. науки',    field: 'Комп. науки',      city: 'Київ',        c: { math: .45, eng: .25, ukr: .20, hist: .10 }, p22: 168, p23: 172, p24: 170.0, budget: 120, contract: '60 тис', dorm: true },
+    { id: 'hnu-p',  uni: 'ХНУ ім. Каразіна', spec: 'Психологія',        field: 'Психологія',       city: 'Харків',      c: { ukr: .30, hist: .25, eng: .25, math: .20 }, p22: 138, p23: 141, p24: 139.0, budget: 40,  contract: '36 тис', dorm: true },
+    { id: 'uku-j',  uni: 'УКУ',              spec: 'Журналістика',      field: 'Журналістика',     city: 'Львів',       c: { ukr: .35, eng: .30, hist: .25, math: .10 }, p22: 149, p23: 151, p24: 150.0, budget: 25,  contract: '80 тис', dorm: true },
+    { id: 'onu-ir', uni: 'ОНУ ім. Мечникова', spec: 'Міжнар. відносини', field: 'Міжнар. відносини', city: 'Одеса',     c: { eng: .35, ukr: .25, hist: .25, math: .15 }, p22: 150, p23: 153, p24: 152.0, budget: 28,  contract: '55 тис', dorm: true },
+    { id: 'lnu-e',  uni: 'ЛНУ ім. Франка',   spec: 'Філологія (англ.)', field: 'Філологія',        city: 'Львів',       c: { eng: .40, ukr: .30, hist: .15, math: .15 }, p22: 145, p23: 147, p24: 146.0, budget: 50,  contract: '50 тис', dorm: true },
+    { id: 'vnu-j',  uni: 'ВНУ ім. Лесі Українки', spec: 'Журналістика', field: 'Журналістика',     city: 'Луцьк',       c: { ukr: .35, eng: .30, hist: .25, math: .10 }, p22: 130, p23: 133, p24: 132.0, budget: 32,  contract: '30 тис', dorm: true },
+    { id: 'sumdu-m',uni: 'СумДУ',            spec: 'Менеджмент',        field: 'Менеджмент',       city: 'Суми',        c: { math: .30, ukr: .30, eng: .25, hist: .15 }, p22: 126, p23: 129, p24: 128.0, budget: 40,  contract: '32 тис', dorm: true },
+  ];
+
+  // який четвертий предмет НМТ приймає спеціальність
+  F4 = {
+    'knu-j': ['Англійська', 'Німецька'], 'kma-f': ['Англійська', 'Німецька'], 'uku-j': ['Англійська', 'Німецька'],
+    'onu-ir': ['Англійська', 'Німецька'], 'lnu-e': ['Англійська', 'Німецька'], 'vnu-j': ['Англійська', 'Німецька'],
+    'knu-l': ['Англійська', 'Біологія', 'Хімія', 'Фізика', 'Географія'], 'lnu-s': ['Англійська', 'Біологія', 'Хімія', 'Фізика', 'Географія'],
+    'hnu-p': ['Англійська', 'Біологія', 'Хімія', 'Фізика', 'Географія'], 'sumdu-m': ['Англійська', 'Біологія', 'Хімія', 'Фізика', 'Географія'],
+    'kpi-cs': ['Англійська', 'Фізика', 'Хімія', 'Біологія', 'Географія'],
+  };
+
+  // ---- helpers ----
+  bonus() {
+    const b = this.state.benefit;
+    return (b.village ? 0.02 : 0) + (b.quota ? 0.04 : 0) + (b.orphan ? 0.02 : 0);
+  }
+  setScore(k, v) {
+    v = Math.max(100, Math.min(200, Math.round(v) || 100));
+    this.setState(s => ({ scores: { ...s.scores, [k]: v } }));
+  }
+  catOf(ch) {
+    if (ch >= 75) return { name: 'Надійно', color: '#1f9d57', bg: '#e1f1e8', text: '#11633a', lite: '#dcefe4' };
+    if (ch >= 40) return { name: 'Реально', color: '#e8a33d', text: '#b07d1f', bg: '#fbedd6', lite: '#f6e7cf' };
+    return { name: 'Мрія', color: '#e0533d', text: '#b53d29', bg: '#fbe3de', lite: '#f6ddd7' };
+  }
+  raw(u) {
+    const s = this.state.scores;
+    return s.ukr * (u.c.ukr || 0) + s.math * (u.c.math || 0) + s.hist * (u.c.hist || 0) + s.eng * (u.c.eng || 0);
+  }
+  comp(u) { return Math.min(200, this.raw(u) * (1 + this.bonus())); }
+  logistic(x, k) { return Math.max(2, Math.min(98, Math.round(100 / (1 + Math.exp(-x / k))))); }
+  vol(u) {
+    const a = [u.p22, u.p23, u.p24], m = (a[0] + a[1] + a[2]) / 3;
+    const v = Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / 3);
+    return Math.max(1.6, v);
+  }
+  band(u) {
+    const diff = this.comp(u) - u.p24, v = this.vol(u);
+    const k = 3.0 + Math.min(1.4, u.budget / 90); // більше місць → пологіша крива конкурсу
+    const ch = this.logistic(diff, k);
+    const lo = this.logistic(diff - v, k), hi = this.logistic(diff + v, k);
+    return { ch, lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
+  }
+  chance(u) { return this.band(u).ch; }
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem('univ_proto_v1');
+      if (raw) {
+        const d = JSON.parse(raw);
+        this.setState(s => ({
+          scores: { ...s.scores, ...(d.scores || {}) },
+          benefit: { ...s.benefit, ...(d.benefit || {}) },
+          fields: d.fields || s.fields, cities: d.cities || s.cities,
+          saved: d.saved || s.saved, compare: d.compare || s.compare,
+          choiceSubj: d.choiceSubj || s.choiceSubj,
+        }));
+      }
+    } catch (e) {}
+  }
+  componentDidUpdate() {
+    try {
+      const s = this.state;
+      localStorage.setItem('univ_proto_v1', JSON.stringify({
+        scores: s.scores, benefit: s.benefit, fields: s.fields, cities: s.cities,
+        saved: s.saved, compare: s.compare, choiceSubj: s.choiceSubj,
+      }));
+    } catch (e) {}
+  }
+
+  buildMatched() {
+    const f = this.state.fields, ct = this.state.cities, cs = this.state.choiceSubj;
+    let arr = this.UNIS.filter(u =>
+      (f.length === 0 || f.includes(u.field)) &&
+      (ct.length === 0 || ct.includes(u.city)));
+    return arr.map(u => {
+      const fits = (this.F4[u.id] || ['Англійська']).includes(cs);
+      const b = this.band(u);
+      const ch = fits ? b.ch : -1;
+      const cat = fits ? this.catOf(b.ch) : { name: 'Інший предмет НМТ', color: '#9aa6b4', bg: '#eceadf', text: '#7a8696', lite: '#e6e3da' };
+      const ring = fits ? b.ch : 0;
+      const comp = this.comp(u);
+      const saved = !!this.state.saved[u.id];
+      const inCmp = this.state.compare.includes(u.id);
+      return {
+        id: u.id, uni: u.uni, spec: u.spec, city: u.city, field: u.field, type: 'бюджет',
+        budget: u.budget, contract: u.contract, dorm: u.dorm,
+        chance: ch, chancePct: fits ? b.ch + '%' : '—', cat: cat.name, _cat: cat, fits,
+        band: fits ? b.lo + '–' + b.hi + '%' : 'не підходить',
+        comp: comp.toFixed(1), pass: u.p24.toFixed(1),
+        catColor: 'color:' + cat.color,
+        catPill: "display:inline-block;margin-top:9px;font:700 9.5px 'Manrope';letter-spacing:.05em;text-transform:uppercase;color:" + cat.text + ";background:" + cat.bg + ";padding:4px 9px;border-radius:100px",
+        donutStyle: 'flex:none;width:48px;height:48px;border-radius:50%;background:conic-gradient(' + cat.color + ' ' + ring + '%,' + cat.lite + ' 0);display:grid;place-items:center',
+        donutText: "width:35px;height:35px;border-radius:50%;background:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:700;font-size:11px;color:" + cat.color,
+        saved, inCmp,
+        saveIcon: saved ? '★' : '☆',
+        saveBtn: 'width:32px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;font-size:15px;background:' + (saved ? '#fdf3e3' : '#f1efe7') + ';color:' + (saved ? '#e8a33d' : '#9aa6b4'),
+        cmpBtn: 'width:32px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;font-size:14px;background:' + (inCmp ? '#e4edff' : '#f1efe7') + ';color:' + (inCmp ? '#2f6df6' : '#9aa6b4'),
+        open: () => this.setState({ webModal: u.id }),
+        save: (e) => { if (e) e.stopPropagation(); this.toggleSave(u.id); },
+        compareToggle: (e) => { if (e) e.stopPropagation(); this.toggleCompare(u.id); },
+        _u: u,
+      };
+    }).sort((a, b) => b.chance - a.chance);
+  }
+
+  openDetail(id) { this.setState({ webModal: id }); }
+  toggleSave(id) {
+    this.setState(s => {
+      const sv = { ...s.saved };
+      if (sv[id]) { delete sv[id]; }
+      else { sv[id] = { status: 'Збережено', pr: Object.keys(sv).length + 1 }; }
+      return { saved: sv };
+    });
+  }
+  toggleCompare(id) {
+    this.setState(s => {
+      let c = s.compare.slice();
+      if (c.includes(id)) c = c.filter(x => x !== id);
+      else if (c.length < 3) c.push(id);
+      return { compare: c };
+    });
+  }
+  advanceStatus(id) {
+    this.setState(s => {
+      const sv = { ...s.saved }; if (!sv[id]) return {};
+      const i = this.STATUSES.indexOf(sv[id].status);
+      sv[id] = { ...sv[id], status: this.STATUSES[(i + 1) % this.STATUSES.length] };
+      return { saved: sv };
+    });
+  }
+
+  detailVals(id) {
+    const u = this.UNIS.find(x => x.id === id);
+    if (!u) return {};
+    const ch = this.chance(u), cat = this.catOf(ch), comp = this.comp(u), s = this.state.scores, cs = this.state.choiceSubj;
+    const bd = [];
+    ['ukr', 'eng', 'hist', 'math'].forEach(k => {
+      if (u.c[k]) bd.push({ label: (k === 'eng' ? cs : this.SUBJ[k]) + ' ×' + u.c[k], val: (s[k] * u.c[k]).toFixed(1) });
+    });
+    const bn = this.bonus();
+    if (bn > 0) bd.push({ label: 'Пільга ×' + (1 + bn).toFixed(2), val: '+' + (this.raw(u) * bn).toFixed(1) });
+    const b = this.band(u);
+    const base = ch >= 75 ? 'Надійний вибір. Постав як запасний пріоритет, щоб точно вступити.'
+      : ch >= 40 ? 'Реально вступити. Подавай у пріоритеті 1–2.'
+        : 'Складно, але спробувати варто одним із пріоритетів — раптом конкурс просяде.';
+    const advice = base + ' Діапазон з урахуванням коливань прохідного: ' + b.lo + '–' + b.hi + '%. Бюджетних місць: ' + u.budget + '.';
+    const yr = (label, val, hl) => ({
+      label: "'" + label + ' · ' + val.toFixed(0),
+      barStyle: 'height:' + (Math.round((val - 120) / 55 * 42) + 12) + 'px;border-radius:5px 5px 0 0;background:' + (hl ? cat.color : '#dfe6ee'),
+      labelColor: 'color:' + (hl ? cat.text : '#9aa6b4'),
+    });
+    const saved = !!this.state.saved[u.id], inCmp = this.state.compare.includes(u.id);
+    return {
+      detUni: u.uni, detSpec: u.spec, detCity: u.city, detType: 'бюджет',
+      detChance: ch + '%', detCat: cat.name, detComp: comp.toFixed(1), detAdvice: advice,
+      detDonut: 'flex:none;width:74px;height:74px;border-radius:50%;background:conic-gradient(' + cat.color + ' ' + ch + '%,' + cat.lite + ' 0);display:grid;place-items:center',
+      detDonutText: "font-family:'Unbounded';font-weight:700;font-size:17px;color:" + cat.color,
+      detCatLabel: "font:700 13px 'Manrope';color:" + cat.text,
+      detBreakdown: bd,
+      detYears: [yr('22', u.p22, false), yr('23', u.p23, false), yr('24', u.p24, true)],
+      detSave: () => this.toggleSave(u.id),
+      detCompareToggle: () => this.toggleCompare(u.id),
+      detSaveLabel: saved ? '★ У списку' : '★ Додати в список',
+      detSaveBtn: 'flex:1;border:none;font:700 14px \'Manrope\';padding:14px;border-radius:13px;cursor:pointer;background:' + (saved ? '#0d1b2a' : '#0d1b2a') + ';color:#fff',
+      detCmpBtn: 'flex:none;border:1px solid ' + (inCmp ? '#2f6df6' : '#d8d2c4') + ';background:' + (inCmp ? '#e4edff' : '#fff') + ';color:' + (inCmp ? '#2f6df6' : '#5a6678') + ';font:700 13px \'Manrope\';padding:14px 16px;border-radius:13px;cursor:pointer',
+    };
+  }
+
+  compareVals() {
+    const cols = this.state.compare.map(id => this.buildMatched().find(c => c.id === id) || this.UNIS.filter(u => u.id === id).map(u => this._asCard(u))[0]).filter(Boolean);
+    const all = this.buildMatched();
+    const colCards = this.state.compare.map(id => all.find(c => c.id === id)).filter(Boolean);
+    const ready = colCards.length >= 2;
+    const n = colCards.length;
+    const headStyle = 'display:grid;grid-template-columns:1.15fr repeat(' + n + ',1fr);background:#102a43';
+    const rowGrid = 'display:grid;grid-template-columns:1.15fr repeat(' + n + ',1fr);border-bottom:1px solid #f2efe7';
+    const defs = [
+      { label: 'Шанс', get: c => ({ v: c.chancePct, color: c._cat.color, bold: true }) },
+      { label: "Прохідний '24", get: c => ({ v: c.pass }) },
+      { label: 'Твій бал', get: c => ({ v: c.comp }) },
+      { label: 'Бюджетних', get: c => ({ v: c.budget }) },
+      { label: 'Контракт/рік', get: c => ({ v: c.contract }) },
+      { label: 'Місто', get: c => ({ v: c.city }) },
+      { label: 'Гуртожиток', get: c => ({ v: c.dorm ? 'так' : 'ні', color: c.dorm ? '#1f9d57' : '#9aa6b4' }) },
+    ];
+    const table = defs.map((d, i) => ({
+      label: d.label,
+      rowStyle: i === defs.length - 1 ? rowGrid.replace(';border-bottom:1px solid #f2efe7', '') : rowGrid,
+      cells: colCards.map(c => {
+        const o = d.get(c);
+        return { v: o.v, style: 'padding:11px 8px;border-left:1px solid #f2efe7;font:' + (o.bold ? 700 : 600) + ' 12px \'Manrope\';color:' + (o.color || '#0d1b2a') };
+      }),
+    }));
+    let advice = '';
+    if (ready) {
+      const best = colCards.slice().sort((a, b) => b.chance - a.chance)[0];
+      advice = best.uni + ' (' + best.spec + ') — найвищий шанс серед обраних (' + best.chancePct + '). Розглянь як пріоритет 1.';
+    }
+    return {
+      compareReady: ready, compareEmpty: !ready,
+      compareCols: colCards.map(c => ({ uni: c.uni, spec: c.spec })),
+      compareTable: table, compareHeadStyle: headStyle, compareAdvice: advice,
+      compareSub: ready ? colCards.length + ' варіанти поруч' : 'додай варіанти кнопкою ⇄',
+    };
+  }
+
+  renderVals() {
+    const st = this.state;
+    const sc = st.scores;
+    const mk = (k, label) => ({
+      key: k, label, value: sc[k],
+      set: (e) => this.setScore(k, +e.target.value),
+    });
+    const scoreRows = [mk('ukr', 'Українська мова'), mk('math', 'Математика'), mk('hist', 'Історія України'), mk('eng', st.choiceSubj)];
+
+    const B = st.benefit;
+    const bmk = (k, label, desc) => ({
+      key: k, label, desc, check: B[k] ? '✓' : '',
+      toggle: () => this.setState(s => ({ benefit: { ...s.benefit, [k]: !s.benefit[k] } })),
+      rowStyle: 'display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;background:#fff;border:1.5px solid ' + (B[k] ? '#2f6df6' : '#e9e5db') + ';border-radius:16px;padding:14px 16px',
+      boxStyle: 'flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 14px \'Manrope\';color:#fff;background:' + (B[k] ? '#2f6df6' : '#e3ddcf'),
+    });
+    const benefits = [
+      bmk('village', 'Сільський коефіцієнт', '×1.02 до балу за сільську школу'),
+      bmk('quota', 'Пільгова квота', 'окремий конкурс для пільгових категорій'),
+      bmk('orphan', 'Особливі умови', 'діти-сироти, ВПО, статус УБД у родині'),
+    ];
+    const bn = this.bonus();
+    const bonusLabel = bn > 0 ? '+' + (bn * 100).toFixed(0) + '%' : 'немає';
+
+    const allFields = [...new Set(this.UNIS.map(u => u.field))];
+    const allCities = [...new Set(this.UNIS.map(u => u.city))];
+    const chipStyle = (on) => 'cursor:pointer;font:600 13px \'Manrope\';padding:9px 14px;border-radius:100px;background:' + (on ? '#0d1b2a' : '#fff') + ';color:' + (on ? '#fff' : '#5a6678') + ';border:1px solid ' + (on ? '#0d1b2a' : '#e3ddcf');
+    const CHOICES = ['Англійська', 'Біологія', 'Фізика', 'Хімія', 'Географія', 'Німецька'];
+    const choiceChips = CHOICES.map(x => ({ label: x, style: chipStyle(st.choiceSubj === x), set: () => this.setState({ choiceSubj: x }) }));
+    const fieldChips = allFields.map(f => ({ label: f, style: chipStyle(st.fields.includes(f)), toggle: () => this.setState(s => ({ fields: s.fields.includes(f) ? s.fields.filter(x => x !== f) : [...s.fields, f] })) }));
+    const cityChips = allCities.map(c => ({ label: c, style: chipStyle(st.cities.includes(c)), toggle: () => this.setState(s => ({ cities: s.cities.includes(c) ? s.cities.filter(x => x !== c) : [...s.cities, c] })) }));
+
+    // results
+    const matched = this.buildMatched();
+    const tabKey = st.filter;
+    const tabPred = { all: () => true, safe: c => c.chance >= 75, real: c => c.chance >= 40 && c.chance < 75, dream: c => c.chance < 40 };
+    const cards = matched.filter(tabPred[tabKey]);
+    const fitCount = matched.filter(c => c.fits).length;
+    const filterDefs = [['all', 'Усі'], ['safe', 'Надійно'], ['real', 'Реально'], ['dream', 'Мрія']];
+    const filterTabs = filterDefs.map(([k, label]) => ({
+      label, select: () => this.setState({ filter: k }),
+      style: 'cursor:pointer;flex:none;font:600 12.5px \'Manrope\';padding:8px 14px;border-radius:100px;background:' + (tabKey === k ? '#0d1b2a' : '#fff') + ';color:' + (tabKey === k ? '#fff' : '#5a6678') + ';border:1px solid ' + (tabKey === k ? '#0d1b2a' : '#e3ddcf'),
+    }));
+
+    const avg = (sc.ukr + sc.math + sc.hist + sc.eng) / 4;
+
+    // saved
+    const savedIds = Object.keys(st.saved).sort((a, b) => st.saved[a].pr - st.saved[b].pr);
+    const savedRows = savedIds.map(id => {
+      const c = matched.find(x => x.id === id) || this._asCard(this.UNIS.find(u => u.id === id));
+      const stt = st.saved[id].status;
+      const [col, bg] = this.STATUS_COLOR[stt];
+      return {
+        id, uni: c.uni, spec: c.spec, city: c.city, chancePct: c.chancePct, pass: c.pass,
+        chanceColor: 'color:' + c._cat.color,
+        status: stt,
+        statusStyle: 'cursor:pointer;font:700 9.5px \'Manrope\';letter-spacing:.04em;text-transform:uppercase;color:' + col + ';background:' + bg + ';padding:5px 10px;border-radius:100px;border:1px solid ' + bg,
+        advance: () => this.advanceStatus(id),
+        remove: () => this.toggleSave(id),
+        open: () => this.setState({ webModal: id }),
+      };
+    });
+
+    return {
+      scoreRows, benefits, bonusLabel, fieldChips, cityChips,
+
+      avgBal: avg.toFixed(0), recsCount: fitCount,
+      filterTabs, cards, cardsEmpty: cards.length === 0, choiceChips,
+
+      savedRows, savedAny: savedIds.length > 0, savedNone: savedIds.length === 0,
+      savedSub: savedIds.length + ' у списку',
+
+      // web
+      webTab: st.webTab,
+      webTabRecs: st.webTab === 'recs', webTabCompare: st.webTab === 'compare', webTabSaved: st.webTab === 'saved',
+      webTabs: [['recs', 'Рекомендації'], ['compare', 'Порівняння · ' + st.compare.length], ['saved', 'Збережені · ' + savedIds.length]].map(([k, label]) => ({
+        label, go: () => this.setState({ webTab: k }),
+        style: 'cursor:pointer;font:700 14px \'Manrope\';padding:11px 20px;border-radius:11px;border:none;background:' + (st.webTab === k ? '#fff' : 'transparent') + ';color:' + (st.webTab === k ? '#0d1b2a' : '#7a8696') + ';box-shadow:' + (st.webTab === k ? '0 1px 4px rgba(13,27,42,.1)' : 'none'),
+      })),
+      webModalOpen: !!st.webModal,
+      closeModal: () => this.setState({ webModal: null }),
+
+      ...this.detailVals(st.webModal),
+      ...this.compareVals(),
+    };
+  }
+
+  _asCard(u) {
+    const ch = this.chance(u), cat = this.catOf(ch);
+    return { id: u.id, uni: u.uni, spec: u.spec, city: u.city, chancePct: ch + '%', pass: u.p24.toFixed(1), comp: this.comp(u).toFixed(1), budget: u.budget, contract: u.contract, dorm: u.dorm, chance: ch, _cat: cat };
+  }
+}
+</script>
+</body>
+</html>

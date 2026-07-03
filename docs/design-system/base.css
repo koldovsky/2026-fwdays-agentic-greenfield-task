@@ -1,0 +1,80 @@
+/* ============================================================
+   Prokhidnyi — Base
+   Resets, body, form elements. Requires tokens.css.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--pk-bg-app);
+  font-family: var(--pk-font-text);
+  color: var(--pk-navy-900);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: #bfe3cf; }
+
+a { color: var(--pk-action); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; display: block; }
+
+button { font-family: inherit; }
+
+/* Visually hidden, still accessible to screen readers */
+.pk-sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* Hidden scrollbar (horizontal tab/chip strips) */
+.pk-scroll::-webkit-scrollbar { height: 0; width: 0; display: none; }
+.pk-scroll { scrollbar-width: none; }
+
+/* ---------- Range slider (NMT score) ---------- */
+.pk-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  background: var(--pk-border-2);
+  outline: none;
+}
+.pk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--pk-action);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.pk-range::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--pk-action);
+  cursor: pointer;
+}
+
+/* ---------- Text input / number ---------- */
+.pk-input {
+  width: 100%;
+  font: 600 14px var(--pk-font-text);
+  color: var(--pk-navy-900);
+  background: var(--pk-surface);
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-input);
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color var(--pk-dur) var(--pk-ease);
+}
+.pk-input:focus { border-color: var(--pk-action); }
+.pk-input::placeholder { color: var(--pk-slate-300); font-weight: 500; }

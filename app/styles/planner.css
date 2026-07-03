@@ -1,0 +1,49 @@
+/* ============================================================
+   Prokhidnyi — Planner layout
+   App-owned layout for the main planner screen (sidebar + results).
+   Uses --pk-* tokens only (TC-STACK-01); responsive down to phone
+   width (NFR-RESP-01).
+   ============================================================ */
+
+/* Two-column grid: sticky profile/input sidebar + results main. */
+.pk-planner {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--pk-space-6);
+  align-items: start;
+}
+
+.pk-planner__sidebar {
+  position: sticky;
+  top: calc(64px + var(--pk-space-4));
+  display: flex;
+  flex-direction: column;
+  gap: var(--pk-space-4);
+}
+
+.pk-planner__hint {
+  font: 500 11.5px/1.5 var(--pk-font-text);
+  color: var(--pk-slate-400);
+  text-align: center;
+  padding-inline: var(--pk-space-2);
+}
+
+.pk-planner__main {
+  min-width: 0; /* let the grid track shrink so tables/cards can scroll */
+}
+
+.pk-planner__toolbar {
+  margin-bottom: var(--pk-space-5);
+}
+
+/* Phone-sized window: stack the sidebar above the results, drop sticky. */
+@media (max-width: 860px) {
+  .pk-planner {
+    grid-template-columns: 1fr;
+    gap: var(--pk-space-5);
+  }
+  .pk-planner__sidebar {
+    position: static;
+    top: auto;
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "generatedBy": "scripts/check-traceability.mjs",
+  "requirements": {
+    "FR-INPUT-01": "MVP",
+    "FR-INPUT-02": "MVP",
+    "FR-INPUT-03": "MVP",
+    "FR-FILTER-01": "MVP",
+    "FR-FILTER-02": "MVP",
+    "FR-SCORE-01": "MVP",
+    "FR-SCORE-02": "MVP",
+    "FR-SCORE-03": "MVP",
+    "FR-DETAIL-01": "MVP",
+    "FR-COMPARE-01": "MVP",
+    "FR-LIST-01": "MVP",
+    "FR-LIST-02": "MVP",
+    "FR-LIST-03": "Future",
+    "FR-STATE-01": "MVP",
+    "FR-UX-01": "MVP",
+    "FR-SEARCH-01": "Future",
+    "NFR-PERF-01": "MVP",
+    "NFR-RESP-01": "MVP",
+    "NFR-A11Y-01": "MVP",
+    "NFR-PRIV-01": "MVP",
+    "NFR-SYNC-01": "Future",
+    "TC-PLATFORM-01": "MVP",
+    "TC-STACK-01": "MVP",
+    "TC-STORAGE-01": "MVP",
+    "TC-DATA-01": "MVP",
+    "BC-HONESTY-01": "MVP",
+    "BC-PRIVACY-01": "MVP",
+    "BC-LANG-01": "MVP",
+    "BC-DEADLINE-01": "Future"
+  },
+  "links": [
+    {
+      "id": "FR-INPUT-01",
+      "specs": [
+        "openspec/specs/score-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/scoring.test.ts",
+        "evals/cases/a11y.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-INPUT-02",
+      "specs": [
+        "openspec/specs/score-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/scoring.test.ts",
+        "evals/cases/a11y.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-INPUT-03",
+      "specs": [
+        "openspec/specs/score-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/scoring.test.ts",
+        "evals/cases/transparency.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-FILTER-01",
+      "specs": [
+        "openspec/specs/filtering/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/recommend.test.ts"
+      ]
+    },
+    {
+      "id": "FR-FILTER-02",
+      "specs": [
+        "openspec/specs/filtering/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/recommend.test.ts"
+      ]
+    },
+    {
+      "id": "FR-SCORE-01",
+      "specs": [
+        "openspec/specs/scoring-engine/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/scoring.test.ts"
+      ]
+    },
+    {
+      "id": "FR-SCORE-02",
+      "specs": [
+        "openspec/specs/recommendations/spec.md",
+        "openspec/specs/scoring-engine/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/scoring.test.ts",
+        "evals/cases/format.eval.ts",
+        "evals/cases/honesty.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-SCORE-03",
+      "specs": [
+        "openspec/specs/recommendations/spec.md",
+        "openspec/specs/scoring-engine/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/recommend.test.ts",
+        "tests/unit/scoring.test.ts",
+        "evals/cases/a11y.eval.ts",
+        "evals/cases/advice.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-DETAIL-01",
+      "specs": [
+        "openspec/specs/program-detail/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/recommend.test.ts",
+        "evals/cases/advice.eval.ts",
+        "evals/cases/transparency.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-COMPARE-01",
+      "specs": [
+        "openspec/specs/comparison/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/recommend.test.ts",
+        "tests/unit/storage.test.ts",
+        "evals/cases/advice.eval.ts",
+        "evals/cases/ux.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-LIST-01",
+      "specs": [
+        "openspec/specs/shortlist/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/storage.test.ts",
+        "evals/cases/ux.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-LIST-02",
+      "specs": [
+        "openspec/specs/shortlist/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/status.test.ts",
+        "evals/cases/a11y.eval.ts"
+      ]
+    },
+    {
+      "id": "FR-STATE-01",
+      "specs": [
+        "openspec/specs/score-input/spec.md",
+        "openspec/specs/shortlist/spec.md",
+        "openspec/specs/state-persistence/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "tests/unit/storage.test.ts"
+      ]
+    },
+    {
+      "id": "FR-UX-01",
+      "specs": [
+        "openspec/specs/filtering/spec.md",
+        "openspec/specs/recommendations/spec.md",
+        "openspec/specs/shortlist/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "evals/cases/ux.eval.ts"
+      ]
+    }
+  ],
+  "failures": [],
+  "warnings": []
+}

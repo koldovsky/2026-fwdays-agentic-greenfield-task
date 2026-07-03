@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-07-04T01:11:00.000Z",
+  "kind": "vision-stills",
+  "clips": [
+    {
+      "id": "recommendations-home",
+      "proof": "FR-SCORE-02, FR-SCORE-03, FR-UX-01",
+      "requirement": "Recommendations grid shows program cards with chance %, uncertainty band, and text category pills (not color-only); global honesty disclaimer visible in shell.",
+      "screenshot": "docs/qa/vision-stills/recommendations-home.png",
+      "explainer": "recommendations-home.md",
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Cards show chance %, lo–hi band, and text category pills; shell disclaimer visible."
+      }
+    },
+    {
+      "id": "program-detail",
+      "proof": "FR-DETAIL-01, BC-HONESTY-01",
+      "requirement": "Detail modal shows competitive score breakdown, cutoff history bars, category advice, and uncertainty band text.",
+      "screenshot": "docs/qa/vision-stills/program-detail.png",
+      "explainer": "program-detail.md",
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Breakdown, cutoff bars, advice, «Діапазон невизначеності» line, and honesty disclaimer in modal."
+      }
+    },
+    {
+      "id": "comparison-table",
+      "proof": "FR-COMPARE-01, NFR-A11Y-01",
+      "requirement": "Comparison table lists 2+ programs with chance % and text category label; advice names a priority-1 pick.",
+      "screenshot": "docs/qa/vision-stills/comparison-table.png",
+      "explainer": "comparison-table.md",
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Two-program table with text category labels and priority-1 advice."
+      }
+    }
+  ]
+}

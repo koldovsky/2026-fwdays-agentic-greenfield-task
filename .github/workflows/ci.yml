@@ -1,0 +1,86 @@
+# CI — the loop nobody can skip. Mirrors local gates deterministically.
+name: ci
+
+on:
+  push:
+    branches: [main, master, submission]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check-trajectory greps full git history for Slice: trailers.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # --- static, fast, deterministic ---
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Traceability chain (and freshness of generated report)
+        run: |
+          node scripts/check-traceability.mjs --check-fresh
+          node scripts/check-traceability.mjs ${{ github.ref_name == 'main' || github.ref_name == 'master' && '--release' || '' }}
+      - name: Trajectory process audit (and freshness)
+        run: |
+          node scripts/check-trajectory.mjs --check-fresh
+          node scripts/check-trajectory.mjs ${{ github.ref_name == 'main' || github.ref_name == 'master' && '--release' || '' }}
+      - name: OpenSpec strict validation
+        run: npx openspec validate --all --strict
+      - name: Dependency audit (fail on high+)
+        run: npm audit --audit-level=high
+
+      # --- test battery ---
+      - name: Unit tests + coverage
+        run: npm run test:coverage
+      - name: Coverage ratchet
+        run: node scripts/check-coverage-ratchet.mjs
+      - name: Eval ratchet
+        run: node scripts/check-eval-ratchet.mjs
+      - name: DB integration tests
+        run: npm run test:integration
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      # --- production build + a11y ---
+      - name: Accessibility (axe)
+        run: node scripts/run-with-server.mjs node scripts/check-a11y.mjs
+
+      - name: Build
+        run: npm run build
+
+      # --- evidence ---
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-evidence
+          path: |
+            docs/qa/traceability-report.md
+            docs/qa/trajectory-report.md
+            docs/qa/automated-verification-latest.md
+            trace/trace.json
+            coverage/coverage-summary.json
+            playwright-report/
+          if-no-files-found: ignore
