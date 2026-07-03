@@ -1,6 +1,6 @@
 # ADR-0001: Local-first architecture — long polling, AG-UI transport, guardrails in code
 
-- **Status:** Accepted
+- **Status:** Accepted (§4 schedule source superseded by [ADR-0003](ADR-0003-google-calendar-slots.md))
 - **Date:** 2026-07-03
 - **Deciders:** author + course requirements
 

@@ -23,10 +23,12 @@
     "FR-SLOT-01": "MVP",
     "FR-SLOT-02": "MVP",
     "FR-SLOT-03": "MVP",
+    "FR-SLOT-04": "MVP",
     "FR-GUARD-03": "MVP",
     "FR-HITL-01": "MVP",
     "FR-HITL-02": "MVP",
     "FR-HITL-03": "MVP",
+    "FR-HITL-04": "MVP",
     "FR-GUARD-01": "MVP",
     "FR-DASH-01": "MVP",
     "FR-DASH-02": "Future",
@@ -45,6 +47,7 @@
     "TC-STACK-02": "MVP",
     "TC-PROTO-01": "MVP",
     "TC-DATA-01": "MVP",
+    "TC-CAL-01": "MVP",
     "TC-SEC-01": "MVP",
     "TC-PURE-01": "MVP",
     "TC-TEST-01": "MVP",
@@ -210,6 +213,13 @@
       "recordings": []
     },
     {
+      "id": "FR-SLOT-04",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
       "id": "FR-GUARD-03",
       "specs": [],
       "planned": null,
@@ -232,6 +242,13 @@
     },
     {
       "id": "FR-HITL-03",
+      "specs": [],
+      "planned": null,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-HITL-04",
       "specs": [],
       "planned": null,
       "tests": [],
@@ -347,6 +364,10 @@
     },
     {
       "check": "spec-mention",
+      "msg": "FR-SLOT-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
       "msg": "FR-GUARD-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
@@ -360,6 +381,10 @@
     {
       "check": "spec-mention",
       "msg": "FR-HITL-03 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
+    },
+    {
+      "check": "spec-mention",
+      "msg": "FR-HITL-04 is not cited by any spec under openspec/specs/ (no specs authored yet - expected before Phase 2)"
     },
     {
       "check": "spec-mention",
@@ -463,6 +488,10 @@
     },
     {
       "check": "test-trace",
+      "msg": "FR-SLOT-04 has no test annotated \"@trace FR-SLOT-04\""
+    },
+    {
+      "check": "test-trace",
       "msg": "FR-GUARD-03 has no test annotated \"@trace FR-GUARD-03\""
     },
     {
@@ -476,6 +505,10 @@
     {
       "check": "test-trace",
       "msg": "FR-HITL-03 has no test annotated \"@trace FR-HITL-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-HITL-04 has no test annotated \"@trace FR-HITL-04\""
     },
     {
       "check": "test-trace",
@@ -575,6 +608,10 @@
     },
     {
       "check": "recording-evidence",
+      "msg": "FR-SLOT-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
       "msg": "FR-GUARD-03 is not referenced by any recording manifest under docs/qa/"
     },
     {
@@ -588,6 +625,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-HITL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-HITL-04 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

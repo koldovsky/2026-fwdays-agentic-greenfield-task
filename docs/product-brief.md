@@ -63,9 +63,12 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
    request card, so the trial lesson opens with music the student already loves
    (FR-INTAKE-06, BC-LESSON-01).
 4. **Pick a time.** The agent proposes 2–3 free slots that fit the lead — always
-   Mon–Fri, always 10:00–20:00, because the slots come from deterministic code,
-   not from the model (FR-SLOT-01, FR-GUARD-03, BC-SCHEDULE-01). The chosen slot
-   is soft-held as `pending` (FR-SLOT-02).
+   Mon–Fri, always 10:00–20:00. Availability is real: the deterministic grid
+   minus busy time in the teacher's DEMO Google Calendar (FR-SLOT-01,
+   FR-GUARD-03, BC-SCHEDULE-01, ADR-0003), ranked so the slot suits the lead
+   *and* keeps the teacher's day compact (FR-SLOT-04). The chosen slot is
+   soft-held as `pending` and appears in the calendar as a tentative event
+   (FR-SLOT-02).
 5. **Watch it live.** On the dashboard, the teacher sees the conversation stream
    and the request card fill in field by field over AG-UI events (FR-DASH-01).
    The week's schedule renders as a **concert hall**: days are rows, hour slots
@@ -93,8 +96,9 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
   agent kindly explains the school teaches voice, with piano only as warm-up
   accompaniment, and offers a trial voice lesson instead. No false promises.
 - **The Saturday push.** "Can we do Saturday, please?" — the agent cannot offer
-  a weekend even if it wanted to: no such slot exists in the database. It offers
-  the nearest weekday options instead.
+  a weekend even if it wanted to: no such slot exists in the grid the code
+  generates, and the calendar can only subtract from it. It offers the nearest
+  weekday options instead.
 - **The group joiner.** A lead prefers the group format; the agent suggests an
   existing group within ±2 years of the student's age, or the waitlist for a new
   one (FR-GROUP-01).
@@ -120,8 +124,10 @@ only job is a single confirm/adjust/decline decision when she has a free minute.
 questions and the first-lesson brief, amendments and cancellation before the
 decision (FR-INTAKE-07), returning leads (FR-INTAKE-08), FAQ from the knowledge
 base with the question log and the answer delivered back to whoever asked
-(FR-KB-04), deterministic slots with the widen-the-window fallback (FR-SLOT-03),
-the `pending` hold, the live AG-UI dashboard with human-in-the-loop decisions,
+(FR-KB-04), Google-Calendar-backed slots with convenience ranking and the
+widen-the-window fallback (FR-SLOT-01..04, ADR-0003), the `pending` hold with
+its tentative calendar event, the live AG-UI dashboard with human-in-the-loop
+decisions,
 the concert-hall schedule view (FR-DASH-03), the plain-list Question inbox, the
 Telegram close-out, honest degradation on API failures (NFR-REL-01), and the
 privacy notice (NFR-PRIV-02) — plus the guardrail eval suite (`npm run evals`)
@@ -146,8 +152,11 @@ multi-teacher scheduling.
   booking; the `confirmed` transition exists only behind the administrator's
   click (FR-GUARD-01).
 - **Rules live in code, not in hope.** Age limits and the Mon–Fri 10:00–20:00
-  window are enforced by deterministic, unit-tested functions; the model only
-  chooses among options the code has already vetted (FR-GUARD-03/04, TC-PURE-01).
+  window are enforced by deterministic, unit-tested functions; the teacher's
+  calendar only *subtracts* availability, and the ranking that balances the
+  lead's wishes with a compact teaching day is a pure function too; the model
+  only chooses among options the code has already vetted (FR-GUARD-03/04,
+  FR-SLOT-04, TC-PURE-01, ADR-0003).
 - **Facts come from one file — and the file learns.** Everything the agent
   claims about the school traces to `knowledge/school.md`; unknowns are recorded,
   never invented (FR-FAQ-01/02, BC-PRICE-01). The base grows from real lead
