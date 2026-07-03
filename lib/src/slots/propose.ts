@@ -74,8 +74,9 @@
 import type { CalendarPort } from "./calendar-port";
 import { CalendarError } from "./calendar-port";
 import type { Preferences, RankedSlot } from "./rank";
-import type { WidenedStep } from "./widen";
-import type { HoldRequest, HoldResult } from "./hold";
+import { widenAndRank, type WidenedStep } from "./widen";
+import { createHold, type HoldRequest, type HoldResult } from "./hold";
+import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone";
 
 /**
  * The deterministic Ukrainian apology-and-retry message (NFR-REL-01,
@@ -104,15 +105,55 @@ export type ProposeResult =
   | { status: "ok"; slots: RankedSlot[]; widened: WidenedStep; noFreeTimes: boolean }
   | { status: "calendar_unavailable"; apology: string; retainedRequest: ProposeRequest };
 
+/** Zero-padded "YYYY-MM-DD" for a UTC-midnight-anchored calendar date —
+ * calendar-date arithmetic only, same convention as grid.ts (a calendar
+ * date's weekday/date arithmetic does not depend on a timezone). */
+function addDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number) as [number, number, number];
+  const shifted = new Date(Date.UTC(y, m - 1, d) + days * 24 * 60 * 60 * 1000);
+  const year = shifted.getUTCFullYear();
+  const month = String(shifted.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(shifted.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export async function proposeSlots(
   port: CalendarPort,
   request: ProposeRequest,
 ): Promise<ProposeResult> {
-  void port;
-  void request;
-  throw new Error(
-    "Not implemented: proposeSlots (red — implemented in tasks.md section 5)",
-  );
+  const horizonEnd = addDays(request.from, request.days);
+  const range = {
+    start: kyivWallClockToUtc(`${request.from}T00:00`),
+    end: kyivWallClockToUtc(`${horizonEnd}T00:00`),
+  };
+
+  let busyUtc;
+  try {
+    busyUtc = await port.freeBusy(range);
+  } catch (error) {
+    if (error instanceof CalendarError) {
+      return {
+        status: "calendar_unavailable",
+        apology: CALENDAR_UNAVAILABLE_APOLOGY,
+        retainedRequest: request,
+      };
+    }
+    throw error;
+  }
+
+  const busyKyiv = busyUtc.map((interval) => ({
+    start: utcToKyivWallClock(interval.start),
+    end: utcToKyivWallClock(interval.end),
+  }));
+
+  const { slots, widened, noFreeTimes } = widenAndRank({
+    from: request.from,
+    days: request.days,
+    busy: busyKyiv,
+    preferences: request.preferences,
+  });
+
+  return { status: "ok", slots, widened, noFreeTimes };
 }
 
 /**
@@ -127,11 +168,19 @@ export async function holdWithRecovery(
   port: CalendarPort,
   request: HoldRequest,
 ): Promise<HoldRecoveryResult> {
-  void port;
-  void request;
-  throw new Error(
-    "Not implemented: holdWithRecovery (red — implemented in tasks.md section 5)",
-  );
+  try {
+    const result: HoldResult = await createHold(port, request);
+    return result;
+  } catch (error) {
+    if (error instanceof CalendarError) {
+      return {
+        status: "failed",
+        apology: CALENDAR_UNAVAILABLE_APOLOGY,
+        retainedRequest: request,
+      };
+    }
+    throw error;
+  }
 }
 
 // Re-exported so call sites (and tests) can `instanceof`-check a caught

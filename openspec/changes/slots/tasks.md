@@ -118,13 +118,13 @@
 
 ## 5. Tests — NFR-REL-01 failure paths and integration smoke
 
-- [ ] 5.1 Unit test: free/busy fetch failure during proposal (simulated via
+- [x] 5.1 Unit test: free/busy fetch failure during proposal (simulated via
       the fixture adapter throwing a `CalendarTimeoutError`/
       `CalendarApiError`) produces the deterministic Ukrainian
       apology-and-retry text with no LLM call, and preserves the in-memory
       proposal state for resumption (`@trace NFR-REL-01`). Confirm red then
       green.
-- [ ] 5.2 Unit test: tentative-event creation failure during a hold leaves
+- [x] 5.2 Unit test: tentative-event creation failure during a hold leaves
       the booking out of `pending` (no orphan hold without its event) and
       preserves the lead's slot choice for retry (`@trace NFR-REL-01`,
       `@trace FR-SLOT-02`). Confirm red then green.
