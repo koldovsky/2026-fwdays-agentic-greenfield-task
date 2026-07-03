@@ -23,7 +23,7 @@ if (KEY_HEX.length !== 64) {
 let encryptionKeyBuffer: Buffer;
 try {
   encryptionKeyBuffer = Buffer.from(KEY_HEX, 'hex');
-} catch (error) {
+} catch {
   throw new Error('ENCRYPTION_KEY must be a valid hex string');
 }
 
@@ -82,7 +82,7 @@ export function decrypt(encryptedText: string): string {
     decrypted += decipher.final('utf8');
 
     return decrypted;
-  } catch (error) {
+  } catch {
     // Log the security event locally
     console.error('[SECURITY WARNING] Decryption check failed or integrity error occurred.');
     // Throw custom secure exception without leaking cryptographic details
