@@ -100,7 +100,7 @@
       event race, FR-SLOT-02), hold-race (two leads, FR-SLOT-02), delete-on-
       cancel — each `@trace FR-SLOT-02`. Confirm red, then implement the
       hold-lifecycle module (`lib/src/slots/hold.ts`) to green.
-- [ ] 4.3 Build the googleapis-backed `CalendarPort` implementation
+- [x] 4.3 Build the googleapis-backed `CalendarPort` implementation
       (service-account JWT auth per TC-CAL-01) against the real DEMO
       calendar: `freeBusy`, `createTentative`, `upgradeToConfirmed`,
       `deleteEvent`, mapping SDK errors to the three error classes.
