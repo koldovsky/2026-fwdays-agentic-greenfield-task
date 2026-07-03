@@ -6,22 +6,25 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-03 (Europe/Kyiv)
-- **Current phase:** G1 signed — entering Phase 2 (baseline OpenSpec specs)
-- **Active change:** none
-- **Progress:** G0 loop installed (`e8b4952`). PRD hardened via adversarial
-  two-lens review — 13 consolidated fixes (`2527fde`). User decisions locked:
-  model `claude-sonnet-5` + user-token auth (`acc9e64`); musical identity +
-  HallMap + web-booking→Future (`c33157a`); Google Calendar as schedule source,
-  `rankSlots()`, tentative holds, service account — ADR-0003 (`8c682f9`); MCP
-  strategy (`94b71d4`); static context consolidated (`6694f89`). **G1 signed:
-  30 MVP FRs accepted, 0 validator failures** (this commit).
-- **Next task:** Phase 2 — run the `spec-pipeline` workflow: one baseline
-  OpenSpec spec per MVP capability (`intake`, `kb-learning`, `slots`,
-  `booking-hitl`, `dashboard`), each citing its owned FR ids exactly once,
-  with error-path scenarios; then `npx openspec validate --all --strict` (G2).
-  First implementation slice after G3 plan: `slots` (grid ∩ calendar free/busy
-  → `rankSlots()`; includes the calendar-MCP-vs-googleapis adapter spike).
+- **Date and time:** 2026-07-03, evening (Europe/Kyiv)
+- **Current phase:** Phase 2 in flight — spec drafts done, revisions pending
+- **Active change:** none (baseline specs, not a change folder)
+- **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
+  sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),
+  Google Calendar ADR-0003 (`8c682f9`), MCP strategy (`94b71d4`); static
+  context consolidated (`6694f89`); **G1 signed** (`720bded`). **Stack
+  scaffold** (`ed149e8`): npm-workspaces monorepo (lib + bot/agent/db +
+  Next 16 dashboard), gates green, **git hooks verified live** (first attempt
+  correctly blocked: ESLint 10 vs eslint-config-next → pinned v9).
+  **Phase 2 WIP** (`847aaef`): 5 baseline specs drafted + critiqued;
+  `openspec validate --all --strict` 5/5; spec-mention warnings 30→0.
+- **Next task:** RESUME spec-pipeline after the session-limit reset (22:30
+  Kyiv): `Workflow({scriptPath: "<session>/workflows/scripts/spec-pipeline-wf_a1aa4688-c90.js", resumeFromRunId: "wf_05b279e6-e8c"})`
+  — drafts+critiques replay from cache; 5 revise agents (23 critique findings)
+  + coverage-check re-run **on sonnet** (model economy: subagent fan-outs use
+  sonnet; Fable/Opus only for main-loop judgment — user directive). Then G2
+  gate re-check + commit "Phase 2 (G2)". Then Phase 3 capability plan; first
+  slice `slots`.
 
 ## Source Of Truth
 
