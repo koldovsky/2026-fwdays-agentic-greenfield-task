@@ -1,0 +1,40 @@
+<!-- @dsCard group="Colors" viewport="700x162" subtitle="Functional checklist states — fixed, non-negotiable" name="Status Colors" -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{padding:16px;background:#fff;font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+    .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .swatch{border:1px solid #e8eaed;border-radius:10px;overflow:hidden}
+    .chip{height:64px;display:flex;align-items:center;padding-left:16px;gap:10px}
+    .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+    .label{font-weight:600;font-size:12px}
+    .info{padding:8px 10px}
+    .hex{font-family:ui-monospace,monospace;font-size:11px;color:#94a0b0}
+  </style>
+</head>
+<body>
+  <div class="swatches">
+    <div class="swatch">
+      <div class="chip" style="background:#e7f4ec"><div class="dot" style="background:#2f8f5b"></div><span class="label" style="color:#2f8f5b">met</span></div>
+      <div class="info"><div class="hex">#2F8F5B · bg #E7F4EC</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#fbf3da"><div class="dot" style="background:#c79a1e"></div><span class="label" style="color:#b08816">partial</span></div>
+      <div class="info"><div class="hex">#C79A1E · bg #FBF3DA</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#fbe9e9"><div class="dot" style="background:#d05151"></div><span class="label" style="color:#c0403d">gap</span></div>
+      <div class="info"><div class="hex">#D05151 · bg #FBE9E9</div></div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background:#fbeede"><div class="dot" style="background:#e08a3c"></div><span class="label" style="color:#cf7726">overclaim-risk</span></div>
+      <div class="info"><div class="hex">#E08A3C · bg #FBEEDE</div></div>
+    </div>
+  </div>
+</body>
+</html>

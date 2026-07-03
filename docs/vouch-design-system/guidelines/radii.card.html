@@ -1,0 +1,34 @@
+<!-- @dsCard group="Spacing" viewport="700x148" subtitle="Border-radius tokens — pill to tight" name="Border Radius" -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{padding:20px 24px;background:#fff;font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+    .row{display:flex;align-items:center;gap:18px}
+    .box{width:52px;height:36px;background:#eaf0fd;border:1.5px solid #3257c5;flex-shrink:0}
+    .info{display:flex;flex-direction:column;gap:2px}
+    .token{font-family:ui-monospace,monospace;font-size:11px;color:#3257c5}
+    .val{font-size:11px;color:#94a0b0}
+    .sep{width:1px;height:36px;background:#e3e6ea;flex-shrink:0}
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div><div class="box" style="border-radius:5px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-xs</span><span class="val">5px · tags</span></div></div>
+    <div class="sep"></div>
+    <div><div class="box" style="border-radius:7px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-sm</span><span class="val">7px · logo</span></div></div>
+    <div class="sep"></div>
+    <div><div class="box" style="border-radius:11px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-md</span><span class="val">11px · buttons</span></div></div>
+    <div class="sep"></div>
+    <div><div class="box" style="border-radius:16px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-xl</span><span class="val">16px · cards</span></div></div>
+    <div class="sep"></div>
+    <div><div class="box" style="border-radius:20px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-3xl</span><span class="val">20px · hero cards</span></div></div>
+    <div class="sep"></div>
+    <div><div class="box" style="border-radius:999px"></div><div class="info" style="margin-top:4px"><span class="token">--radius-pill</span><span class="val">999px · pills</span></div></div>
+  </div>
+</body>
+</html>

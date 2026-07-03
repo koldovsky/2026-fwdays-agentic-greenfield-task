@@ -1,0 +1,12 @@
+:root {
+  /* ── Elevation ── */
+  --shadow-card:         0 1px 3px rgba(22, 36, 61, 0.08);
+  --shadow-lifted:       0 4px 16px -4px rgba(22, 36, 61, 0.18);
+  --shadow-float:        0 18px 40px -24px rgba(22, 36, 61, 0.35);
+  --shadow-deep:         0 40px 80px -30px rgba(0, 0, 0, 0.55);
+  --shadow-ink:          0 24px 50px -24px rgba(22, 36, 61, 0.5);
+
+  /* ── Brand-tinted ── */
+  --shadow-brand:        0 2px 8px rgba(50, 87, 197, 0.25);
+  --shadow-brand-strong: 0 8px 24px -6px rgba(50, 87, 197, 0.6);
+}
