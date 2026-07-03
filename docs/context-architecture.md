@@ -43,6 +43,14 @@ Loaded only when the task touches it, so its tokens are not paid on unrelated tu
 
 ## Current decision
 
-- **Static budget:** 4k. **Today:** ~2k (AGENTS.md at init).
-- **Recently demoted to dynamic:** n/a at init.
+- **Static budget:** 4k. **Today:** ~2.0k tokens (AGENTS.md, 7 980 bytes,
+  after the 2026-07-03 consolidation).
+- **Consolidation (2026-07-03):** `CLAUDE.md` reduced to the single
+  `@AGENTS.md` line (the factory convention); the homework/branch/PR rules it
+  carried moved into AGENTS.md; stale lines ("stack being defined",
+  pre-generated slots) and template rules not applicable to Kamerton
+  (Better Auth, email senders, form-parsing conventions) pruned.
+- **Recently demoted to dynamic:** nothing yet; first candidates when the
+  budget tightens — the Evals section (→ `evals/README.md`) and the multi-tool
+  Project Factory table (→ `docs/portability.md`).
 - **Owning ADR:** ADR-0002.

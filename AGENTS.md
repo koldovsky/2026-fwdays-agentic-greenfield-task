@@ -1,12 +1,31 @@
 # Kamerton — Vocal-School Booking Agent — Agent Rules
 
-# This may NOT be the Next.js you know
+**Kamerton** («камертон») — a local-first booking agent for a one-teacher vocal
+school: a Telegram bot for leads, a localhost dashboard for the teacher
+(human-in-the-loop), a Claude-driven agent core. `docs/requirements.md` is the
+single source of truth (stable FR/NFR/TC/BC ids); `docs/product-brief.md` is
+the narrative; `DESIGN.md` is the visual identity and voice.
 
-The installed version (App Router — version pinned at stack setup (app stack not yet installed)) may differ from training data.
-Read the relevant guide in `node_modules/next/dist/docs/` (or the
-package's bundled docs) before writing any code. Heed deprecation notices.
+## This repo is a graded homework
 
-Use `docs/requirements.md` to understand the requirements for the project.
+fwdays Academy «Agentic Engineering: Greenfield»: the deliverable is a **PR
+judged on evidence of agentic process** (context engineering, loops,
+maker ≠ checker, verification) — not product size. `README.md` (Ukrainian) has
+the assignment; CodeRabbit reviews the PR in Ukrainian as a course mentor
+(advisory, non-blocking).
+
+- Work on `feat/music-school-agent`, never on `main`.
+- The PR fills `.github/pull_request_template.md`: real name, 1–2 min demo
+  video, which decisions were the human's vs the agent's, tools/MCP used.
+- Keep decision evidence in commits: one commit per approved decision;
+  feature-code commits carry `Refs:`/`Slice:` trailers (commit-msg hook).
+
+## The stack may differ from your training data
+
+Next.js 16 / React 19 (dashboard), grammY (bot), AG-UI + CopilotKit
+(transport), Google Calendar API — verify against the installed package's
+bundled docs or `ctx7` (context7) **before** writing integration code. Heed
+deprecation notices.
 
 ## Project Factory (works in any tool)
 
@@ -25,6 +44,9 @@ trajectory), git hooks, CI, OpenSpec specs, and the gates — is **identical in
 every tool** (pure Node + git). Only orchestration differs: Claude Code fans out
 subagents in parallel; elsewhere run review / eval / spec passes sequentially
 with fresh context (maker ≠ checker). See `docs/portability.md`.
+
+OpenSpec artifacts live under `openspec/`; the OpenSpec skills/commands are in
+`.claude/skills/openspec-*` and `.claude/commands/opsx/`.
 
 ## Project Handoff Protocol
 
@@ -52,28 +74,29 @@ the token budget, and what to demote when this file grows past it.
 
 ## Module conventions
 
-- `db/schema/<domain>.ts` per domain, re-exported from `db/schema/index.ts`;
-  migrations committed (SQL + snapshots).
-- `lib/<domain>/`: `validation.ts` (zod + formData mappers), `queries.ts`,
-  `service.ts`, `actions.ts` (guard → validate → service → revalidate),
-  pure helpers in own files, colocated `*.test.ts`.
-- Pages are thin server components; client components only when needed.
-- ONE shared authenticated shell + ONE role-based navigation source.
+- Monorepo: `packages/bot` (grammY, long polling) · `packages/agent` (Claude
+  thin tool-loop) · `apps/dashboard` (Next.js App Router + CopilotKit/AG-UI
+  over SSE) · shared pure core in `lib/`.
+- `lib/` is framework-free — no `next/*`, no React/DOM, no Telegram SDK, no
+  Google SDK (TC-PURE-01): slot grid, free-slot subtraction, `rankSlots()`,
+  age validation, booking state machine; colocated `*.test.ts`.
+- All calendar I/O goes through one adapter interface (ADR-0003 §6); SQLite
+  access lives in its own module; pages are thin server components, client
+  components only when needed.
 
-## Correctness rules (learned from production bugs)
+## Correctness rules
 
-- Server actions never throw raw on user input — catch and surface inline
-  (`?formError=` + shared banner). Translate FK/unique violations to human
-  messages; hide driver internals.
-- Numeric parsers accept trailing zeros and decimal commas.
-- Uncontrolled filter/edit forms are keyed by the server state they display.
-- Status/state selects offer only reachable transitions; server re-validates.
-- External calls (email, exports, APIs) never fail silently: surface to the
-  user or log with cause; degrade honestly (e.g. show fallback link).
-- Auth library cookie propagation from server actions must be wired
-  (Better Auth: `nextCookies()` plugin, last in plugins list).
-- Seed/test helpers re-pin baseline state; day-bound test assertions use
-  LOCAL calendar dates.
+- Guardrails live in deterministic code, never only in the prompt: the model
+  only picks from code-vetted options (FR-GUARD-*). The agent has **no tool**
+  that can confirm a booking or write the knowledge base (FR-GUARD-01/06) —
+  never add one.
+- External calls (Telegram, Anthropic, Google Calendar) never fail silently:
+  deterministic Ukrainian apology, state preserved for resumption (NFR-REL-01).
+- Status/state selects offer only reachable transitions; the server
+  re-validates (FR-HITL-03/04 re-checks the calendar before Confirm).
+- Lead-facing text is Ukrainian-first, kind, pressure-free (BC-BRAND-01,
+  BC-LANG-01); the DESIGN.md voice rules are embedded verbatim in the agent's
+  static prompt.
 - Validate the RENDERED result for UI, not just code/DOM: gate with axe
   (`check-a11y`, light+dark) AND a vision pass (`vision-verify` — a fresh agent
   looks at the settled still); recordings must assert the FRs they show.
@@ -95,11 +118,12 @@ npm run test:integration   # once the layer exists
 npm run test:e2e           # once the layer exists
 npm run build
 npx openspec validate --all --strict
+node scripts/check-traceability.mjs
 node scripts/check-eval-ratchet.mjs   # once evals exist — graded-quality bar
 ```
 
 Do not archive OpenSpec changes before implementation AND a real-DB smoke
-test pass. Keep `.env.local` private; never commit or print it.
+test pass. Keep `.env` private; never commit or print it.
 
 ## Evals (graded quality, not just correctness)
 
@@ -117,8 +141,18 @@ clarity, empty-state usability, copy tone — scored 0-100 against a rubric.
 
 ## Environment notes
 
-- macOS (darwin), zsh; Node ≥ 20. Monorepo: packages/bot (grammY, long polling) · packages/agent (Claude API thin tool-loop) · apps/dashboard (Next.js + CopilotKit/AG-UI over SSE).
-- Database: SQLite via better-sqlite3 — single local file, gitignored (TC-DATA-01, NFR-PRIV-01). Schedule source of truth is the DEMO Google Calendar: free slots = deterministic Mon–Fri grid minus calendar busy, ranked by pure `rankSlots()` (FR-GUARD-03, FR-SLOT-04, ADR-0003).
-- Agent model: `claude-sonnet-5` (TC-STACK-02); Anthropic auth via the developer's local user token — never introduce an API key into the repo or `.env` (NFR-SEC-01).
-- MCP in the dev process: use the **chrome-devtools MCP** for E2E dashboard verification and demo-proof recordings (TC-TEST-03); use **context7** (`ctx7` CLI) for current grammY / AG-UI / googleapis docs before writing integration code.
-- MCP in the product: the calendar adapter may consume a Google Calendar MCP server (backend as MCP client — the model never gets raw calendar tools); spike decides vs googleapis SDK (TC-CAL-01, ADR-0003 §6).
+- macOS (darwin), zsh; Node ≥ 20.
+- Secrets: `.env` holds only `TELEGRAM_BOT_TOKEN`, the DEMO calendar id, and
+  the path to the gitignored Google service-account JSON key; Anthropic auth
+  uses the developer's local user token — **never introduce an Anthropic API
+  key** into the repo or `.env` (NFR-SEC-01, TC-CAL-01; gitleaks per TC-SEC-01).
+- Agent model: `claude-sonnet-5` (TC-STACK-02).
+- Schedule source of truth: the DEMO Google Calendar — free slots =
+  deterministic Mon–Fri grid minus calendar busy, ranked by pure `rankSlots()`;
+  tentative event on hold, human-only confirm (ADR-0003).
+- MCP in the dev process: **chrome-devtools MCP** for E2E dashboard
+  verification and demo-proof recordings (TC-TEST-03); **context7** (`ctx7`)
+  for current library docs.
+- MCP in the product: the calendar adapter may consume a Google Calendar MCP
+  server (backend as MCP client — the model never gets raw calendar tools);
+  a spike decides vs the googleapis SDK (TC-CAL-01, ADR-0003 §6).
