@@ -28,7 +28,9 @@ No panics in production (top-level recover in main).
   flags, `--flag` double-dash display) and exits 0.
   Only flag exposed in render mode: `--shell <bash|zsh|none>` (supplied by `init`,
   not persisted in config). All other settings via env vars or config file.
-  Subcommands: `init <bash|zsh>`, `on` / `off` (persist enabled state to config).
+  Subcommands: `init <bash|zsh>`, `on` / `off` (persist enabled state to config),
+  `cloud [azure|aws|gcp|auto|none]` (persist active cloud to config; no argument
+  prints the effective value; invalid value → usage error, exit 2).
 - internal/cloud — Provider interface + active-cloud Select (azure|aws|gcp|auto|none).
 - internal/azure — Azure provider: active subscription from azureProfile.json (UTF-8 BOM).
 - internal/aws — AWS provider: profile (+region) from ~/.aws/config (offline; no STS).

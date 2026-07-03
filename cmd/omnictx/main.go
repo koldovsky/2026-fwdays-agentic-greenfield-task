@@ -47,6 +47,8 @@ func main() {
 			os.Exit(runEnable(false))
 		case "toggle":
 			os.Exit(runToggle())
+		case "cloud":
+			os.Exit(runCloud(args[1:], os.Stdout, os.Stderr))
 		}
 	}
 
@@ -131,6 +133,9 @@ Usage:
 Subcommands:
   init <bash|zsh>   shell integration (add to ~/.bashrc / ~/.zshrc)
   on / off          persist enabled: true/false to config file (affects all future shells)
+  cloud [azure|aws|gcp|auto|none]
+                    persist the active cloud to config file; without an argument
+                    prints the effective value (OMNICTX_CLOUD overrides per-session)
 
 Flags:
   --version                   print version and exit
@@ -236,6 +241,41 @@ func runToggle() int {
 	}
 	if err := setGlobalEnabled(path, !enabled); err != nil {
 		fmt.Fprintf(os.Stderr, "omnictx: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none]"
+
+// runCloud handles `omnictx cloud [value]`. With no argument it prints the
+// effective selection (env > config > default). With one argument it persists
+// the value to the config file, like `on`/`off` do for enabled. This is
+// interactive setup mode, so unlike render's normalizeCloud (which silently
+// falls back to auto to protect the prompt) an unknown value is rejected loudly.
+func runCloud(args []string, stdout, stderr io.Writer) int {
+	home, _ := os.UserHomeDir()
+
+	if len(args) == 0 {
+		cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		_, _ = fmt.Fprintln(stdout, cfg.Cloud)
+		return 0
+	}
+	if len(args) > 1 {
+		_, _ = fmt.Fprintln(stderr, cloudUsage)
+		return 2
+	}
+
+	v := strings.ToLower(strings.TrimSpace(args[0]))
+	switch v {
+	case "azure", "aws", "gcp", config.CloudAuto, config.CloudNone:
+	default:
+		_, _ = fmt.Fprintf(stderr, "omnictx: invalid cloud %q\n%s\n", args[0], cloudUsage)
+		return 2
+	}
+
+	if err := setConfigKey(globalConfigPath(), "cloud", v); err != nil {
+		_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
 		return 1
 	}
 	return 0

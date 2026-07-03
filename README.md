@@ -40,19 +40,34 @@ eval "$(omnictx init zsh)"
 ```
 
 This captures your existing prompt once, **prepends** the omnictx segment without
-clobbering it, registers the render hook (`PROMPT_COMMAND` for bash, a `precmd`
-hook for zsh), and defines the toggle functions. The snippet is idempotent — it is
-safe to `eval` more than once in the same shell.
+clobbering it, and registers the render hook (`PROMPT_COMMAND` for bash, a
+`precmd` hook for zsh). The snippet is idempotent — it is safe to `eval` more
+than once in the same shell — and defines no functions beyond the prompt hook.
 
-### Daily use — live toggles (no rc edits)
+### Daily use — toggles (no rc edits)
 
 ```bash
-omnioff      # hide the segment in this shell
-omnion       # show it again
-omnitoggle   # flip the current state
+omnictx off      # persist enabled: false — all future shells start quiet
+omnictx on       # persist enabled: true  — restore the segment
+omnictx toggle   # flip the persisted state
 ```
 
-These just flip `OMNICTX_ENABLED`; the change takes effect on the very next prompt.
+These write the `enabled:` key of the config file, so the change survives new
+shells. For the current session only, use `export OMNICTX_ENABLED=false` — the
+env var overrides the config until unset.
+
+### Switching the displayed cloud
+
+```bash
+omnictx cloud aws    # persist: all future prompts show AWS
+omnictx cloud auto   # persist: back to auto-detect
+omnictx cloud        # print the effective selection (env > config > default)
+```
+
+The value is written to the `cloud:` key of the config file (comments and other
+keys are preserved). For a session-only override use `export OMNICTX_CLOUD=<v>`,
+which takes precedence over the persisted value until unset. An invalid value is
+rejected with a usage error (exit 2) — nothing is written.
 
 ### Manual integration (advanced)
 
@@ -75,21 +90,24 @@ PROMPT='${OMNICTX} '"$PROMPT"
 ## Usage
 
 ```bash
-omnictx                      # print the segment (standalone / debugging)
-omnictx --no-namespace       # hide the namespace
-omnictx --no-icons           # ASCII labels:  aws:<prof>/<region> k8s:<ctx>/<ns>
-omnictx --cloud aws          # pin AWS as the active cloud
-omnictx --cloud none         # kube-only (no cloud slot)
-omnictx --segments cloud,kube
-omnictx --shell bash|zsh|none
+omnictx                       # print the segment (standalone / debugging)
+omnictx --shell bash|zsh|none # color escaping mode (supplied by init)
 omnictx --version
-omnictx init bash|zsh        # print shell integration code
+omnictx init bash|zsh         # print shell integration code
+omnictx on|off|toggle         # persist the enabled state to the config file
+omnictx cloud                 # show the effective active-cloud selection
+omnictx cloud aws             # persist: pin AWS as the active cloud
+omnictx cloud none            # persist: kube-only (no cloud slot)
 ```
+
+`--shell` is the **only** render-mode flag. Everything else is controlled via
+`OMNICTX_*` env vars or the config file (see Configuration below).
 
 ### Output format
 
 - Icons (default): `☁ <cloud> ⎈ <context>:<namespace>` (one `☁` for any provider).
-- ASCII (`--no-icons`): `az:`/`aws:`/`gcp:` `<cloud>` `k8s:<context>/<namespace>`.
+- ASCII (`icons: false` / `OMNICTX_ICONS=false`): `az:`/`aws:`/`gcp:` `<cloud>`
+  `k8s:<context>/<namespace>`.
 
 The cloud value is provider-specific: Azure subscription, AWS `profile[/region]`,
 or GCP project. The `namespace` is visually coupled to `kube`
@@ -113,24 +131,21 @@ miscalculates line width and breaks line editing. `--shell` controls this:
 
 ## Configuration
 
-Flags, env vars, and an optional YAML config file are merged with this precedence:
+Env vars, the optional YAML config file, and the built-in defaults are merged
+with this precedence (the only render-mode flag is `--shell`):
 
 **flag > env var > config file > built-in default**
 
-(`--no-*` flags take precedence over `--segments`.)
-
-| Flag | Env | Default | Purpose |
+| Config key / command | Env | Default | Purpose |
 |---|---|---|---|
-| `--segments cloud,kube,ns` | `OMNICTX_SEGMENTS` | `cloud,kube,namespace` | which segments, in what order |
-| `--cloud azure\|aws\|gcp\|auto\|none` | `OMNICTX_CLOUD` | `auto` | active cloud provider |
-| `--no-azure` / `--no-kube` / `--no-namespace` | — | off | disable a segment (`--no-azure` drops the cloud slot) |
-| `--shell bash\|zsh\|none` | `OMNICTX_SHELL` | `none` | color escaping mode |
-| `--icons` / `--no-icons` | `OMNICTX_ICONS` | icons on | icons vs ASCII |
-| `--separator <str>` | `OMNICTX_SEPARATOR` | `" "` | separator between groups |
-| `--enabled[=<bool>]` | `OMNICTX_ENABLED` | enabled | master on/off (normally via `omnion`/`omnioff`) |
-| `--config <path>` | `OMNICTX_CONFIG` | `~/.config/omnictx/config.yaml` | config file path |
-| `--debug` | — | off | diagnostics to stderr |
-| `--version` | — | — | print version |
+| `segments` | `OMNICTX_SEGMENTS` | `cloud,kube,namespace` | which segments, in what order |
+| `cloud` / `omnictx cloud <v>` | `OMNICTX_CLOUD` | `auto` | active cloud: `azure\|aws\|gcp\|auto\|none` |
+| `icons` | `OMNICTX_ICONS` | `true` | icons vs ASCII labels |
+| `separator` | `OMNICTX_SEPARATOR` | `" "` | separator between segments |
+| `enabled` / `omnictx on\|off\|toggle` | `OMNICTX_ENABLED` | `true` | master on/off |
+| `colors` | — | blue/cyan/dim | per-segment colors (config file only) |
+| `--shell bash\|zsh\|none` (flag) | `OMNICTX_SHELL` | `none` | color escaping mode |
+| — | `OMNICTX_CONFIG` | `~/.config/omnictx/config.yaml` | config file path |
 
 Segment names accept aliases: `azure`/`az`/`aws`/`gcp`→`cloud`, `k`/`k8s`→kube,
 `ns`→namespace. The concrete cloud provider is chosen by `cloud:`, not by the

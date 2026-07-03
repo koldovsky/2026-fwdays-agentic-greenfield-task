@@ -82,10 +82,10 @@ Order follows the configured `segments` list. Default (with icons):
 ```
 ☁ <cloud>  ⎈ <context>:<namespace>
 ```
-ASCII mode (`--no-icons`): `az:<...> k8s:<context>/<namespace>` (provider label per §5.3).
+ASCII mode (`icons: false` / `OMNICTX_ICONS=false`): `az:<...> k8s:<context>/<namespace>` (provider label per §5.3).
 Rules: a segment whose data is unavailable is **skipped entirely** (no empty
 placeholders); namespace renders only as a suffix of the kube segment; if nothing
-renders, print an empty string and exit 0; `--separator` (default `" "`) joins parts.
+renders, print an empty string and exit 0; `separator` (default `" "`) joins parts.
 
 ### 4.2 Colors and escaping
 ANSI codes wrapped per `--shell` (`bash`/`zsh`/`none`) so the shell measures prompt
@@ -222,7 +222,7 @@ omnictx/
 ├── internal/kube/          # current-context + namespace
 ├── internal/render/        # format, colors, bash/zsh escaping (provider-driven)
 ├── internal/config/        # flags+env+YAML → Config (adds `cloud`)
-├── internal/shellinit/     # init bash|zsh + omnion/omnioff/omnitoggle (go:embed)
+├── internal/shellinit/     # init bash|zsh (go:embed, idempotent; no shell functions)
 ├── testdata/               # kubeconfig/azureProfile/aws/gcloud fixtures + goldens
 ├── .github/workflows/ci.yml
 ├── AGENTS.md · CLAUDE.md · README.md · Makefile · PRD.md · go.mod
