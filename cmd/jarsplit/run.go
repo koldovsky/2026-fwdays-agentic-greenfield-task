@@ -91,7 +91,11 @@ func describeFetchError(err error) string {
 	case errors.Is(err, monoclient.ErrRateLimited):
 		return "fatal: monobank rate-limited the request (429) — retry in about 60 seconds"
 	case errors.Is(err, monoclient.ErrUnreachable):
-		return "fatal: could not reach monobank (network error or timeout)"
+		// err's text is dial-failure or "unexpected status NNN" detail from
+		// monoclient, never the token, so it's safe to surface here — it's
+		// often the only clue distinguishing a real network outage from an
+		// unexpected API response (e.g. a 403 the token/permissions caused).
+		return fmt.Sprintf("fatal: could not reach monobank (network error or timeout): %v", err)
 	default:
 		return fmt.Sprintf("fatal: %v", err)
 	}

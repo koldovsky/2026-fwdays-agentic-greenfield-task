@@ -39,3 +39,5 @@ go.work.sum
 
 # Go: vendor (розкоментуй, якщо НЕ комітиш vendor/)
 # vendor/
+
+sample-input.txt

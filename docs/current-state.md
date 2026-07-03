@@ -5,32 +5,40 @@ what happened and what to do next. Update this after completing a unit of work.
 
 ## Last action
 
-**2026-07-02T07:52:00+00:00** — Archived the `add-cli-orchestration`
-OpenSpec change: synced its delta spec into a new main spec at
-`openspec/specs/cli-orchestration/spec.md` (5 requirements — single
-plan-file argument, parse-before-fetch ordering with no output on a
-fatal precondition, single fetch call per run, distinct fatal message
-per fetch failure with no retry, three-tier exit code contract — added
-verbatim, validated with `openspec validate cli-orchestration --strict`),
-then moved the change folder to
-`openspec/changes/archive/2026-07-02-add-cli-orchestration/`. The
-`cli-orchestration` capability (`cmd/jarsplit`) covers FR-FAIL-01,
-FR-EXIT-01, TC-MODULE-01, and is implemented and tested (see prior
-action: `run`/`describeFetchError`/`exitCode`, 11 tests, manual binary
-run confirmed correct). `openspec list` now shows no active changes —
-**all 6 phases of
-[openspec-capability-plan.md](openspec-capability-plan.md) are archived**
-(`plan-parsing`, `mono-client`, `jar-matching`, `link-generation`,
-`output-reporting`, `cli-orchestration`), and `jarsplit` is a real,
-runnable binary implementing every FR/NFR/TC/BC in
-`docs/product-requirements.md`.
+**2026-07-03T05:10:00+00:00** — Ran the built `jarsplit` binary against
+the **live** monobank API for the first time (real `MONO_TOKEN`, real
+`client-info` response). This surfaced a real bug that the fixture-based
+tests never caught: `internal/linkgen/linkgen.go`'s `buildURL` assumed
+`sendId` was a bare ID (per the brief's example `"4xR…"`) and
+unconditionally prepended `"https://send.monobank.ua/jar/"`. The live
+API actually returns `sendId` **already prefixed** with `"jar/"` (e.g.
+`"jar/5x3KgGN3es"`), so every generated link was doubled —
+`.../jar/jar/5x3KgGN3es?a=3000` — which would 404 in a browser. Fixed
+by trimming a leading `"jar/"` off `sendID` before rejoining it onto
+`jarLinkBaseURL`; added `TestGenerateLinks_SendIDWithJarPrefixIsNotDoubled`
+as a regression test. Full suite (`go test ./...`) passes. Re-ran the
+binary live against `sample-input.txt`: 3 malformed header lines
+correctly skipped with warnings (no `=`), 3 valid jars
+(Заощадження/На products/На донати) correctly matched, amounts summed
+in `Разом`, links now well-formed, exit code `1` (partial success, as
+expected given the malformed lines).
+
+Separately (not code-related, flagged to the user directly): an
+earlier debug `curl -v` call in this session echoed the then-current
+`MONO_TOKEN` value into the conversation transcript. The user was told
+to rotate it; the token used for the successful run above is the
+rotated one.
 
 ## Next step
 
-Only one open item remains project-wide: the **V-1** manual verification
-gate on `FR-LINK-01`. Set a real `MONO_TOKEN`, run the built `jarsplit`
-binary against a real plan file, open one live `https://send.monobank.ua
-/jar/{sendId}?a=N` link, and confirm it prefills `N ₴` (not kopiykas) —
-then flip `FR-LINK-01` from `accepted` to `shipped` in
-`docs/product-requirements.md`. Once that's done, `jarsplit` is fully
-`shipped` end to end with no further planned OpenSpec changes.
+The **V-1** manual verification gate on `FR-LINK-01` is now *partially*
+closed: link *shape* is confirmed correct against live data (this was
+the doubled-`jar/` bug above). What's still unverified is the actual
+gate condition — opening a real generated link in a browser and
+confirming the prefilled amount reads `N ₴` (not kopiykas). That
+requires a human with a browser; once done, flip `FR-LINK-01` from
+`accepted` to `shipped` in `docs/product-requirements.md`. Also worth
+a follow-up: `docs/product-brief.md`'s open-question note about
+`sendId` looking like `"4xR…"` is now known to be inaccurate for real
+jars (real `sendId`s carry a `"jar/"` prefix) — consider updating the
+brief so future readers aren't misled the way the original code was.

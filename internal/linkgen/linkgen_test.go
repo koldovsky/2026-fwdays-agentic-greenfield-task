@@ -31,6 +31,16 @@ func TestGenerateLinks_ExactURL(t *testing.T) {
 	}
 }
 
+func TestGenerateLinks_SendIDWithJarPrefixIsNotDoubled(t *testing.T) {
+	matched := []jarmatching.Matched{{Name: "Заощадження", Amount: 3000, SendID: "jar/5x3KgGN3es"}}
+	links := GenerateLinks(matched)
+
+	want := "https://send.monobank.ua/jar/5x3KgGN3es?a=3000"
+	if links[0].URL != want {
+		t.Errorf("URL = %q, want %q", links[0].URL, want)
+	}
+}
+
 func TestGenerateLinks_AmountIsNotScaled(t *testing.T) {
 	matched := []jarmatching.Matched{{Name: "Подорожі", Amount: 3000, SendID: "sid"}}
 	links := GenerateLinks(matched)

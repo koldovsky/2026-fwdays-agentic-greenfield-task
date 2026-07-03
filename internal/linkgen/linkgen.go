@@ -4,6 +4,7 @@ package linkgen
 
 import (
 	"fmt"
+	"strings"
 
 	"md/agentic/monojar/internal/jarmatching"
 )
@@ -34,6 +35,11 @@ func GenerateLinks(matched []jarmatching.Matched) []Link {
 
 // buildURL renders the jar top-up link for sendID and amount. amount is
 // UAH, applied 1:1 with no conversion.
+//
+// monobank's client-info API returns sendId already prefixed with "jar/"
+// (e.g. "jar/5x3KgGN3es"), so any such prefix is trimmed before it is
+// rejoined onto jarLinkBaseURL to avoid a doubled "jar/jar/" path.
 func buildURL(sendID string, amount int) string {
+	sendID = strings.TrimPrefix(sendID, "jar/")
 	return fmt.Sprintf("%s%s?a=%d", jarLinkBaseURL, sendID, amount)
 }
