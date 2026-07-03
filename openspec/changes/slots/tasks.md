@@ -1,15 +1,15 @@
 ## 1. Dependencies and database schema
 
-- [ ] 1.1 Add the `googleapis` package (and `google-auth-library` if not
+- [x] 1.1 Add the `googleapis` package (and `google-auth-library` if not
       pulled in transitively) as a dependency of the calendar adapter
       module; do not add any Google SDK dependency to `lib/` itself
       (TC-PURE-01).
-- [ ] 1.2 Add the `bookings` table migration/seed to `packages/db`:
+- [x] 1.2 Add the `bookings` table migration/seed to `packages/db`:
       `id, slot_start, slot_end, status, calendar_event_id, created_at`,
       `status ∈ {pending, confirmed, declined, cancelled}` (TC-DATA-01,
       design.md Decision 2); no `request_id` column yet — leave a code
       comment naming S2 `intake` as the owner of that follow-up column.
-- [ ] 1.3 Add `.env.example` entries if not already present for
+- [x] 1.3 Add `.env.example` entries if not already present for
       `GOOGLE_CALENDAR_ID` / `GOOGLE_APPLICATION_CREDENTIALS` (TC-CAL-01) —
       confirm they already exist (`.env.example` has both) and only add a
       note if the spike's chosen transport needs anything additional (e.g.
@@ -91,7 +91,7 @@
 
 ## 4. Services and adapter — calendar port + spike
 
-- [ ] 4.1 Write `lib/src/slots/calendar-port.ts`: the `CalendarPort`
+- [x] 4.1 Write `lib/src/slots/calendar-port.ts`: the `CalendarPort`
       interface and the three-class error taxonomy from design.md
       Decision 1 (types only, no implementation, no Google SDK import).
 - [ ] 4.2 Write a fixture/fake `CalendarPort` implementation for unit tests

@@ -1,0 +1,11 @@
+{
+  "name": "@kamerton/calendar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Google Calendar adapter (TC-CAL-01, ADR-0003 §6): the only module that imports the Google SDK — lib/ stays framework-free (TC-PURE-01)",
+  "main": "src/index.ts",
+  "dependencies": {
+    "googleapis": "^173.0.0"
+  }
+}

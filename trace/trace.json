@@ -260,7 +260,13 @@
         "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/slots/hold.test.ts",
+        "lib/src/slots/hold.test.ts",
+        "lib/src/slots/hold.test.ts",
+        "lib/src/slots/hold.test.ts",
+        "lib/src/slots/hold.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -455,10 +461,6 @@
     {
       "check": "test-trace",
       "msg": "FR-GUARD-06 has no test annotated \"@trace FR-GUARD-06\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SLOT-02 has no test annotated \"@trace FR-SLOT-02\""
     },
     {
       "check": "test-trace",
