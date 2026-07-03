@@ -1,8 +1,10 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { db } from '@/db';
-import { sessions, users } from '@/db/schema';
+import { sessions, users, subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import BillingManager, { SubscriptionData, WalletCard } from './BillingManager';
+import { getWalletCards } from '@/lib/monobank';
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -35,6 +37,34 @@ export default async function DashboardPage() {
 
   const user = userList[0];
 
+  // Lookup user subscription
+  const subList = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, user.id))
+    .limit(1);
+
+  const sub = subList[0] || null;
+
+  let cards: WalletCard[] = [];
+  if (sub && sub.walletId) {
+    try {
+      cards = await getWalletCards(sub.walletId);
+    } catch (err) {
+      console.error('Failed to fetch wallet cards:', err);
+    }
+  }
+
+  const subscriptionData: SubscriptionData | null = sub ? {
+    id: sub.id,
+    tariffPlan: sub.tariffPlan,
+    status: sub.status,
+    autoRenew: sub.autoRenew,
+    currentPeriodEnd: sub.currentPeriodEnd.toISOString(),
+    cardToken: sub.cardToken,
+    walletId: sub.walletId,
+  } : null;
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-page font-sans text-text-primary">
       {/* Top Navbar */}
@@ -50,7 +80,7 @@ export default async function DashboardPage() {
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
-                className="border border-border-custom bg-transparent px-3 py-1.5 font-sans text-xs font-medium text-text-secondary transition-colors hover:bg-bg-secondary"
+                className="border border-border-custom bg-transparent px-3 py-1.5 font-sans text-xs font-medium text-text-secondary transition-colors hover:bg-bg-secondary cursor-pointer"
               >
                 Вийти
               </button>
@@ -110,8 +140,12 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Billing Manager component */}
+          <BillingManager subscription={subscriptionData} cards={cards} />
         </div>
       </main>
     </div>
   );
 }
+

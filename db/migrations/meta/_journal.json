@@ -15,6 +15,20 @@
       "when": 1783085294995,
       "tag": "0001_glorious_lily_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783093116198,
+      "tag": "0002_ordinary_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783093527353,
+      "tag": "0003_familiar_mastermind",
+      "breakpoints": true
     }
   ]
 }
