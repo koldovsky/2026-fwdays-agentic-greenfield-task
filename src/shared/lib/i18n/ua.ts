@@ -203,4 +203,14 @@ export const ua: Dictionary = {
     generating: "Адаптуємо резюме",
     startOverAction: "Почати заново",
   },
+  export: {
+    headline: "Адаптоване резюме",
+    footer: "Адаптовано за допомогою Vouch",
+    copyAction: "Копіювати",
+    pdfAction: "Завантажити PDF",
+    docxAction: "Завантажити DOCX",
+    copiedNotice: "Скопійовано",
+    pending: "Готуємо файл",
+    error: "Не вдалося експортувати. Спробуйте ще раз.",
+  },
 };

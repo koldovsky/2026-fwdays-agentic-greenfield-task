@@ -271,4 +271,20 @@ export interface Dictionary {
     /** Reset the wizard back to the analyze step. */
     readonly startOverAction: string;
   };
+  /** Export step (FR-EXPORT-01/02/03/04). */
+  readonly export: {
+    /** Document title placed at the top of exported files. */
+    readonly headline: string;
+    /** Free-tier attribution footer; omitted for paid exports (FR-EXPORT-04). */
+    readonly footer: string;
+    readonly copyAction: string;
+    readonly pdfAction: string;
+    readonly docxAction: string;
+    /** Confirmation after a successful clipboard copy. */
+    readonly copiedNotice: string;
+    /** Shown while a download is being generated. */
+    readonly pending: string;
+    /** Calm failure copy when an export could not be produced (NFR-OBS-01). */
+    readonly error: string;
+  };
 }

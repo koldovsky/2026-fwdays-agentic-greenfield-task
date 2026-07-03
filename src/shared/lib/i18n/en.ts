@@ -201,4 +201,14 @@ export const en: Dictionary = {
     generating: "Tailoring your résumé",
     startOverAction: "Start over",
   },
+  export: {
+    headline: "Tailored résumé",
+    footer: "Tailored with Vouch",
+    copyAction: "Copy",
+    pdfAction: "Download PDF",
+    docxAction: "Download DOCX",
+    copiedNotice: "Copied",
+    pending: "Preparing file",
+    error: "Export failed. Try again.",
+  },
 };

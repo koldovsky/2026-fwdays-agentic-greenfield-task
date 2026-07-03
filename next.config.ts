@@ -37,11 +37,21 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // CV extraction libraries (add-upload-cv, TC-PARSE-01/02) are Node-only and
-  // resolve internal assets at runtime — opt them out of Server Components
-  // bundling so the /api/cv/parse route loads them via native require
+  // Node-only libraries that resolve internal assets at runtime — opt them out
+  // of Server Components bundling so their routes load them via native require
   // (node_modules/next/dist/docs: serverExternalPackages).
-  serverExternalPackages: ["pdf-parse", "mammoth"],
+  //   - pdf-parse / mammoth: CV extraction (add-upload-cv, TC-PARSE-01/02).
+  //   - @react-pdf/renderer: PDF export (add-resume-wizard §4, FR-EXPORT-02) —
+  //     pulls in yoga-layout (wasm) + fontkit, which must not go through the
+  //     webpack transform.
+  //   - docx: DOCX export (FR-EXPORT-03).
+  serverExternalPackages: ["pdf-parse", "mammoth", "@react-pdf/renderer", "docx"],
+  // The PDF route reads the bundled PT Sans TTFs from /public at runtime via
+  // fs; force-include them in that route's serverless trace so they ship with
+  // the function on Vercel (they are otherwise CDN-only static assets).
+  outputFileTracingIncludes: {
+    "/api/export/pdf": ["./public/fonts/ptsans/**"],
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
