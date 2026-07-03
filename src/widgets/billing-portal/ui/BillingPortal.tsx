@@ -80,7 +80,7 @@ export function BillingPortal({
     >
       <div>
         <div className="text-sm text-ink-soft">{copy.billing.currentPlanLabel}</div>
-        <div className="mt-1 font-display text-2xl text-ink">
+        <div data-testid="current-plan-name" className="mt-1 font-display text-2xl text-ink">
           {copy.billing.planName[effectivePlan]}
         </div>
         {effectivePlan !== "free" && (

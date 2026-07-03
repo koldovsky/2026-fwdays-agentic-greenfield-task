@@ -10,21 +10,24 @@
 // a per-IP sliding window (in-memory, single-instance stopgap — design.md);
 // logged-in callers are gated by the durable usage counter. An over-limit
 // request emits a calm `rate_limited` event on the normal 200 NDJSON stream —
-// never a raw 429 that breaks the streaming contract (NFR-OBS-01) — and only a
-// successful `result` charges the budget (mirrors FR-TAILOR-03).
+// never a raw 429 that breaks the streaming contract (NFR-OBS-01).
+//
+// Budget is RESERVED before the LLM call, not charged after it (the previous
+// shape — read the count, run the LLM, then record a hit — left a window the
+// full length of the tailoring run in which concurrent requests from the same
+// caller all read "under the limit" and all got admitted; reserveHitInMemory
+// / usageCounterRepo.reserve fold the check and the write into one atomic
+// step so that can't happen). A reservation that doesn't end in a `result`
+// event is rolled back — failed runs never consume budget (FR-TAILOR-03).
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
-import { ANON_TAILORING_LIMIT, canTailor, type AccountKind } from "@/entities/usage-counter";
+import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT, type AccountKind } from "@/entities/usage-counter";
 import { runTailoringLoop } from "@/features/run-tailoring";
 import type { TailorRunEvent, TailoringRunInput } from "@/features/run-tailoring";
 import { createSubscriptionRepo, createUsageCounterRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { resolveLlmProvider } from "@/shared/lib/llm";
-import {
-  checkRateLimitInMemory,
-  clientIpFrom,
-  recordRateLimitHitInMemory,
-} from "@/shared/lib/rate-limit";
+import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 export const runtime = "nodejs";
 /** The loop is bounded, but streaming can outlast a default serverless window. */
@@ -75,20 +78,26 @@ export async function POST(request: Request): Promise<Response> {
         send({ type: "status", phase: "failed" });
       };
 
-      // Resolve the provider inside the stream: a missing key / bad config
-      // throws here, and must surface as a calm failure event on the open
-      // stream — never a raw 500 or a blank body (NFR-OBS-01). No user id or
-      // account metadata is ever passed to the loop (NFR-SEC-02).
+      // Set only when a reservation was actually granted; used to roll it
+      // back if the run doesn't end in a `result` event.
+      let releaseReservation: (() => Promise<void>) | null = null;
+      // Set only for a paid user — their runs aren't gated by the counter,
+      // but a successful one is still tallied (unconditional, non-gating
+      // increment; no atomicity concerns since nothing depends on the value).
+      let paidTallyUserId: string | null = null;
       try {
         // Gate before the provider is even resolved, so a throttled request
-        // never touches the LLM (NFR-COST-02). Both checks are read-only — a
-        // rejected request is never charged.
+        // never touches the LLM (NFR-COST-02). Each branch reserves budget
+        // atomically — check and record happen in one step, so no window
+        // exists for a concurrent request to slip through.
         if (userId === null) {
-          const verdict = checkRateLimitInMemory(anonKey, ANON_WINDOW_MS, ANON_TAILORING_LIMIT);
-          if (!verdict.allowed) {
+          const reservation = reserveHitInMemory(anonKey, ANON_WINDOW_MS, ANON_TAILORING_LIMIT);
+          if (!reservation.allowed) {
             rejectRateLimited();
             return;
           }
+          const token = reservation.token as number;
+          releaseReservation = async () => releaseHitInMemory(anonKey, ANON_WINDOW_MS, token);
         } else {
           // Real plan lookup (add-payments-emulator task 2.2, NFR-COST-02):
           // an active — or canceled-but-not-yet-lapsed (FR-BILLING-02) — paid
@@ -101,35 +110,45 @@ export async function POST(request: Request): Promise<Response> {
           } catch {
             kind = "free";
           }
-          // Paid is unlimited (canTailor short-circuits) — skip the counter
-          // read; free accounts are gated by the durable lifetime counter.
-          if (kind !== "paid") {
+          if (kind === "paid") {
+            paidTallyUserId = userId;
+          } else {
+            // Free accounts reserve against the durable lifetime counter.
             const counters = createUsageCounterRepo(getDb());
-            const counter = (await counters.get(userId)) ?? { userId, tailoringsUsed: 0 };
-            if (!canTailor(counter, kind)) {
+            const granted = await counters.reserve(userId, FREE_TAILORING_LIMIT);
+            if (!granted) {
               rejectRateLimited();
               return;
             }
+            releaseReservation = () => counters.release(userId);
           }
         }
 
+        // Resolve the provider inside the stream: a missing key / bad config
+        // throws here, and must surface as a calm failure event on the open
+        // stream — never a raw 500 or a blank body (NFR-OBS-01). No user id
+        // or account metadata is ever passed to the loop (NFR-SEC-02).
         const llm = resolveLlmProvider();
-        let charged = false;
+        let succeeded = false;
         for await (const event of runTailoringLoop({ llm }, input)) {
-          // Charge exactly once, only when a real result was produced — failed
-          // runs never consume budget (FR-TAILOR-03) — and before forwarding
-          // it, so a client that disconnects mid-stream is still charged.
-          if (event.type === "result" && !charged) {
-            charged = true;
-            if (userId === null) {
-              recordRateLimitHitInMemory(anonKey, ANON_WINDOW_MS);
-            } else {
-              await createUsageCounterRepo(getDb()).increment(userId);
-            }
-          }
+          if (event.type === "result") succeeded = true;
           send(event);
         }
+        if (succeeded) {
+          if (paidTallyUserId !== null) await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+        } else if (releaseReservation) {
+          // The reservation already charged the budget up front; a run that
+          // never produced a result must refund it (FR-TAILOR-03).
+          await releaseReservation();
+        }
       } catch {
+        if (releaseReservation) {
+          try {
+            await releaseReservation();
+          } catch {
+            // Best-effort refund; the calm failure event below still fires.
+          }
+        }
         send({ type: "error", code: "failed" });
         send({ type: "status", phase: "failed" });
       } finally {

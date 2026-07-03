@@ -8,6 +8,7 @@
 // stay isolated.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT } from "@/entities/usage-counter";
 import type { TailorRunEvent } from "@/features/run-tailoring";
 import {
   createFakeProvider,
@@ -26,7 +27,11 @@ vi.mock("@/shared/lib/llm", async (importOriginal) => {
 const currentUserId = vi.hoisted(() => vi.fn());
 vi.mock("@/app/auth", () => ({ currentUserId }));
 
-const usageCounterRepo = vi.hoisted(() => ({ get: vi.fn(), increment: vi.fn() }));
+const usageCounterRepo = vi.hoisted(() => ({
+  increment: vi.fn(),
+  reserve: vi.fn(),
+  release: vi.fn(),
+}));
 const subscriptionRepo = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@/shared/lib/db", () => ({
   createUsageCounterRepo: () => usageCounterRepo,
@@ -72,8 +77,9 @@ async function readNdjson(res: Response): Promise<TailorRunEvent[]> {
 beforeEach(() => {
   vi.clearAllMocks();
   currentUserId.mockResolvedValue(null);
-  usageCounterRepo.get.mockResolvedValue(null);
   usageCounterRepo.increment.mockResolvedValue(undefined);
+  usageCounterRepo.reserve.mockResolvedValue(true);
+  usageCounterRepo.release.mockResolvedValue(undefined);
   subscriptionRepo.get.mockResolvedValue(null); // default: never paid (Free)
 });
 
@@ -160,6 +166,17 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
+  it("caps concurrent anonymous requests from the same IP at the limit — the race a check-then-record-later gate allows", async () => {
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    const ip = "198.51.100.30";
+
+    const responses = await Promise.all(Array.from({ length: 5 }, () => POST(post(INPUT, ip))));
+    const allEvents = await Promise.all(responses.map(readNdjson));
+    const successCount = allEvents.filter((events) => events.some((e) => e.type === "result")).length;
+
+    expect(successCount).toBe(ANON_TAILORING_LIMIT);
+  });
+
   it("does not charge the anonymous per-IP window for a failed run (FR-TAILOR-03)", async () => {
     resolveLlmProvider.mockImplementation(() => {
       throw new Error("ANTHROPIC_API_KEY is not set");
@@ -176,7 +193,7 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
 
   it("blocks a logged-in free user at the lifetime limit before the LLM", async () => {
     currentUserId.mockResolvedValue("user-1");
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-1", tailoringsUsed: 2 });
+    usageCounterRepo.reserve.mockResolvedValue(false); // already at the limit
 
     const res = await POST(post(INPUT, "198.51.100.3"));
 
@@ -185,26 +202,28 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     expect(events).toContainEqual({ type: "error", code: "rate_limited" });
     expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
     expect(resolveLlmProvider).not.toHaveBeenCalled();
-    // A rejected request is never charged.
+    // A rejected reservation is never charged, and there is nothing to release.
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
+    expect(usageCounterRepo.release).not.toHaveBeenCalled();
   });
 
-  it("charges a logged-in free user exactly once on a successful result", async () => {
+  it("reserves a logged-in free user's budget atomically before the LLM runs, and doesn't double-charge on success", async () => {
     currentUserId.mockResolvedValue("user-2");
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-2", tailoringsUsed: 1 });
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(INPUT, "198.51.100.4"));
 
     const events = await readNdjson(res);
     expect(events.find((e) => e.type === "result")).toBeDefined();
-    expect(usageCounterRepo.increment).toHaveBeenCalledTimes(1);
-    expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-2");
+    expect(usageCounterRepo.reserve).toHaveBeenCalledTimes(1);
+    expect(usageCounterRepo.reserve).toHaveBeenCalledWith("user-2", FREE_TAILORING_LIMIT);
+    // The reservation already counted the run — no separate charge, no release.
+    expect(usageCounterRepo.increment).not.toHaveBeenCalled();
+    expect(usageCounterRepo.release).not.toHaveBeenCalled();
   });
 
-  it("never increments the usage counter when the run fails (FR-TAILOR-03)", async () => {
+  it("releases a logged-in free user's reservation when the run fails (FR-TAILOR-03)", async () => {
     currentUserId.mockResolvedValue("user-3");
-    usageCounterRepo.get.mockResolvedValue(null); // first-ever run
     resolveLlmProvider.mockImplementation(() => {
       throw new Error("boom");
     });
@@ -214,6 +233,8 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     const events = await readNdjson(res);
     expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
     expect(events.find((e) => e.type === "result")).toBeUndefined();
+    expect(usageCounterRepo.reserve).toHaveBeenCalledWith("user-3", FREE_TAILORING_LIMIT);
+    expect(usageCounterRepo.release).toHaveBeenCalledWith("user-3");
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
   });
 
@@ -226,17 +247,15 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
       status: "active",
       currentPeriodEnd: "2999-01-01T00:00:00.000Z",
     });
-    // Counter far past the free limit — must not matter on a paid plan.
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-paid", tailoringsUsed: 40 });
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(INPUT, "198.51.100.7"));
 
     const events = await readNdjson(res);
     expect(events.find((e) => e.type === "result")).toBeDefined();
-    // Paid is unlimited: the counter gate is skipped entirely...
-    expect(usageCounterRepo.get).not.toHaveBeenCalled();
-    // ...but successful runs are still tallied.
+    // Paid is unlimited: the reservation gate is skipped entirely...
+    expect(usageCounterRepo.reserve).not.toHaveBeenCalled();
+    // ...but successful runs are still tallied (non-gating, no reservation).
     expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-paid");
   });
 
@@ -249,7 +268,6 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
       status: "canceled",
       currentPeriodEnd: "2999-01-01T00:00:00.000Z",
     });
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-canceled", tailoringsUsed: 5 });
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(INPUT, "198.51.100.8"));
@@ -266,19 +284,20 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
       status: "canceled",
       currentPeriodEnd: "2020-01-01T00:00:00.000Z",
     });
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-lapsed", tailoringsUsed: 2 });
+    usageCounterRepo.reserve.mockResolvedValue(false); // simulate already at the free limit
 
     const res = await POST(post(INPUT, "198.51.100.9"));
 
     const events = await readNdjson(res);
     expect(events).toContainEqual({ type: "error", code: "rate_limited" });
     expect(resolveLlmProvider).not.toHaveBeenCalled();
+    expect(usageCounterRepo.reserve).toHaveBeenCalledWith("user-lapsed", FREE_TAILORING_LIMIT);
   });
 
   it("degrades a broken subscription read to the stricter free gate (NFR-OBS-01)", async () => {
     currentUserId.mockResolvedValue("user-db-down");
     subscriptionRepo.get.mockRejectedValue(new Error("connection refused"));
-    usageCounterRepo.get.mockResolvedValue({ userId: "user-db-down", tailoringsUsed: 2 });
+    usageCounterRepo.reserve.mockResolvedValue(false); // simulate already at the free limit
 
     const res = await POST(post(INPUT, "198.51.100.10"));
 
@@ -286,6 +305,7 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     const events = await readNdjson(res);
     expect(events).toContainEqual({ type: "error", code: "rate_limited" });
     expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
+    expect(usageCounterRepo.reserve).toHaveBeenCalledWith("user-db-down", FREE_TAILORING_LIMIT);
   });
 
   it("treats a broken session read as anonymous instead of failing (NFR-OBS-01)", async () => {
@@ -298,7 +318,7 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     const events = await readNdjson(res);
     expect(events.find((e) => e.type === "result")).toBeDefined();
     // Anonymous path: the durable counter is never touched.
-    expect(usageCounterRepo.get).not.toHaveBeenCalled();
+    expect(usageCounterRepo.reserve).not.toHaveBeenCalled();
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
   });
 });

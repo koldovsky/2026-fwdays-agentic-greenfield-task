@@ -51,3 +51,36 @@ describe("createUsageCounterRepo.increment", () => {
     expect(db.calls[0].params).toEqual(["u1"]);
   });
 });
+
+describe("createUsageCounterRepo.reserve", () => {
+  it("issues a WHERE-guarded upsert and reports granted when a row is returned", async () => {
+    const db = new FakeDb().enqueue([{ tailorings_used: 1 }]);
+    const granted = await createUsageCounterRepo(db).reserve("u1", 2);
+
+    expect(granted).toBe(true);
+    expect(db.calls[0].sql).toMatch(/INSERT INTO usage_counters/);
+    expect(db.calls[0].sql).toMatch(/ON CONFLICT \(user_id\)/);
+    expect(db.calls[0].sql).toMatch(
+      /DO UPDATE SET tailorings_used = usage_counters\.tailorings_used \+ 1\s+WHERE usage_counters\.tailorings_used < \$2/,
+    );
+    expect(db.calls[0].sql).toMatch(/RETURNING tailorings_used/);
+    expect(db.calls[0].params).toEqual(["u1", 2]);
+  });
+
+  it("reports not granted when the WHERE guard suppresses the update (no row returned)", async () => {
+    const db = new FakeDb().enqueue([]);
+    const granted = await createUsageCounterRepo(db).reserve("u1", 2);
+    expect(granted).toBe(false);
+  });
+});
+
+describe("createUsageCounterRepo.release", () => {
+  it("issues a floored decrement", async () => {
+    const db = new FakeDb().enqueue([]);
+    await createUsageCounterRepo(db).release("u1");
+
+    expect(db.calls[0].sql).toMatch(/UPDATE usage_counters/);
+    expect(db.calls[0].sql).toMatch(/GREATEST\(0, tailorings_used - 1\)/);
+    expect(db.calls[0].params).toEqual(["u1"]);
+  });
+});

@@ -11,6 +11,7 @@ import { createCvProfileRepo } from "./cv-profile-repo";
 import { runMigrations } from "./migrate";
 import type { Queryable } from "./port";
 import { createTailoringRepo } from "./tailoring-repo";
+import { createUsageCounterRepo } from "./usage-counter-repo";
 
 function adapter(pg: PGlite): Queryable {
   return {
@@ -129,5 +130,47 @@ describe("tailoring history + cascade", () => {
       [saved.id],
     );
     expect(Number(orphans.rows[0].n)).toBe(0);
+  }, 30_000);
+});
+
+describe("usage-counter reserve/release under concurrency (NFR-COST-02)", () => {
+  it("reserve caps admissions at the limit even when requests race — the bug a plain get()-then-increment() pair allows", async () => {
+    const u = await db.query<{ id: string }>(
+      `INSERT INTO users (email, auth_provider) VALUES ($1, $2) RETURNING id`,
+      ["racer@example.com", "password"],
+    );
+    const userId = u.rows[0].id;
+    const repo = createUsageCounterRepo(db);
+    const limit = 2;
+
+    // Five "simultaneous" callers for the same user, same limit — the exact
+    // shape of a scripted abuser firing concurrent requests before any of
+    // them has finished (the real /api/tailor route awaits a full LLM run
+    // between reading the count and recording it, which is what the old
+    // check-then-record pattern left racy).
+    const outcomes = await Promise.all(
+      Array.from({ length: 5 }, () => repo.reserve(userId, limit)),
+    );
+
+    expect(outcomes.filter(Boolean)).toHaveLength(limit);
+    const after = await repo.get(userId);
+    expect(after?.tailoringsUsed).toBe(limit);
+  }, 30_000);
+
+  it("release rolls back a reservation so a subsequent attempt is admitted again", async () => {
+    const u = await db.query<{ id: string }>(
+      `INSERT INTO users (email, auth_provider) VALUES ($1, $2) RETURNING id`,
+      ["retry@example.com", "password"],
+    );
+    const userId = u.rows[0].id;
+    const repo = createUsageCounterRepo(db);
+
+    expect(await repo.reserve(userId, 1)).toBe(true);
+    expect(await repo.reserve(userId, 1)).toBe(false); // at limit
+
+    await repo.release(userId); // the reserved attempt failed, refund it
+
+    expect((await repo.get(userId))?.tailoringsUsed).toBe(0);
+    expect(await repo.reserve(userId, 1)).toBe(true); // admitted again
   }, 30_000);
 });

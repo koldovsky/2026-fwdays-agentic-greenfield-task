@@ -12,11 +12,7 @@
 // blob writes; neither bytes nor extracted text are ever logged (NFR-SEC-01).
 import { MAX_UPLOAD_BYTES, validateUpload } from "@/shared/lib/parse-document";
 import { extractDocumentText } from "@/shared/lib/parse-document/extract";
-import {
-  checkRateLimitInMemory,
-  clientIpFrom,
-  recordRateLimitHitInMemory,
-} from "@/shared/lib/rate-limit";
+import { clientIpFrom, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -44,10 +40,12 @@ export async function POST(request: Request): Promise<Response> {
       request.headers.get("x-real-ip"),
     );
     const rateKey = `cv-parse:ip:${clientIp}`;
-    if (!checkRateLimitInMemory(rateKey, PARSE_WINDOW_MS, PARSE_LIMIT).allowed) {
+    // Every attempt counts, success or fail (CPU is spent either way) —
+    // unlike the tailor route's success-only budget, so a single atomic
+    // reserve (no release path) is the whole gate.
+    if (!reserveHitInMemory(rateKey, PARSE_WINDOW_MS, PARSE_LIMIT).allowed) {
       return errorResponse("rate_limited", 429);
     }
-    recordRateLimitHitInMemory(rateKey, PARSE_WINDOW_MS);
 
     // Cheap oversize rejection before buffering the body, when the client
     // declared a length. The authoritative check is on file.size below.

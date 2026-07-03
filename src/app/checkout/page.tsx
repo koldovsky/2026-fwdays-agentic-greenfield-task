@@ -26,7 +26,16 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
   const { token } = await searchParams;
   const raw = typeof token === "string" ? token : "";
-  const session = raw === "" ? null : verifyCheckoutToken(raw, getPaymentsWebhookSecret());
+  // A misconfigured PAYMENTS_WEBHOOK_SECRET must 404 like any other invalid
+  // token, never a raw 500 (NFR-OBS-01) — mirrors the route handlers' guard.
+  let session: ReturnType<typeof verifyCheckoutToken> = null;
+  if (raw !== "") {
+    try {
+      session = verifyCheckoutToken(raw, getPaymentsWebhookSecret());
+    } catch {
+      session = null;
+    }
+  }
   if (session === null) notFound();
 
   return (

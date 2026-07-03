@@ -21,7 +21,7 @@ describe("BillingPortal — active plan (FR-BILLING-01)", () => {
   it("shows the current plan, next renewal date, invoice history, and cancel", () => {
     render(<BillingPortal subscription={activePro} now={NOW} />);
 
-    expect(screen.getByText(ua.billing.planName.pro)).toBeInTheDocument();
+    expect(screen.getByTestId("current-plan-name")).toHaveTextContent(ua.billing.planName.pro);
     expect(screen.getByText(ua.billing.renewsOnLabel)).toBeInTheDocument();
     expect(screen.getByText("2026-08-01")).toBeInTheDocument();
     // Synthetic invoice: period start, amount, settled status.
@@ -73,7 +73,7 @@ describe("BillingPortal — canceled (FR-BILLING-02)", () => {
     render(<BillingPortal subscription={canceledPro} now={NOW} />);
 
     // Still on the paid plan until period end.
-    expect(screen.getByText(ua.billing.planName.pro)).toBeInTheDocument();
+    expect(screen.getByTestId("current-plan-name")).toHaveTextContent(ua.billing.planName.pro);
     expect(screen.getByText(ua.billing.accessUntilLabel)).toBeInTheDocument();
     expect(screen.getByText("2026-08-01")).toBeInTheDocument();
     expect(screen.getByText(ua.billing.canceledNote)).toBeInTheDocument();

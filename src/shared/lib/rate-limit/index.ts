@@ -2,11 +2,11 @@
 // (NFR-SEC-04, NFR-COST-02). The pure core is unit-tested directly; route
 // handlers use the in-memory adapter exported here.
 export {
-  checkRateLimit,
-  recordHit,
+  reserveHit,
+  releaseHit,
   type RateLimitParams,
-  type RateLimitResult,
+  type ReserveResult,
   type RateLimitStore,
 } from "./lib/rate-limit";
-export { checkRateLimitInMemory, recordRateLimitHitInMemory } from "./lib/in-memory-adapter";
+export { reserveHitInMemory, releaseHitInMemory } from "./lib/in-memory-adapter";
 export { clientIpFrom } from "./lib/client-ip";

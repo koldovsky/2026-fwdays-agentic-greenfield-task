@@ -5,19 +5,18 @@ import { NextResponse } from "next/server";
 import { registerWithPassword } from "@/shared/lib/auth";
 import { createCredentialsRepo, createUserRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
-import {
-  checkRateLimitInMemory,
-  clientIpFrom,
-  recordRateLimitHitInMemory,
-} from "@/shared/lib/rate-limit";
+import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 /** Per-IP sign-up throttle (add-security-hardening, NFR-SEC-04): at most
- * REGISTER_MAX_PER_IP *created accounts* per IP per window. Only a successful
- * creation records a hit — failed or rejected attempts are never charged
- * (mirrors the tailor budget rule); the uniform-copy 409/500 paths stay as-is
- * so throttling adds no account-enumeration signal. */
+ * REGISTER_MAX_PER_IP *created accounts* per IP per window. The window is
+ * reserved atomically up front (not read-then-recorded-later, which left a
+ * gap the size of a password hash + DB insert for concurrent requests to all
+ * pass the same gate) and released if the attempt doesn't end in a created
+ * account — failed or rejected attempts are never charged (mirrors the
+ * tailor budget rule); the uniform-copy 409/500 paths stay as-is so
+ * throttling adds no account-enumeration signal. */
 const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 const REGISTER_MAX_PER_IP = 5;
 
@@ -29,14 +28,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     request.headers.get("x-forwarded-for"),
     request.headers.get("x-real-ip"),
   )}`;
-  if (!checkRateLimitInMemory(ipKey, REGISTER_WINDOW_MS, REGISTER_MAX_PER_IP).allowed) {
+  const reservation = reserveHitInMemory(ipKey, REGISTER_WINDOW_MS, REGISTER_MAX_PER_IP);
+  if (!reservation.allowed) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
+  const releaseReservation = (): void =>
+    releaseHitInMemory(ipKey, REGISTER_WINDOW_MS, reservation.token as number);
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
+    releaseReservation();
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
 
@@ -46,9 +49,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     name?: unknown;
   };
   if (typeof email !== "string" || !email.includes("@")) {
+    releaseReservation();
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
   if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
+    releaseReservation();
     return NextResponse.json({ error: "weak_password" }, { status: 400 });
   }
 
@@ -62,12 +67,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       { email, password, name: typeof name === "string" && name !== "" ? name : null },
     );
     if (!result.ok) {
+      // The window was already reserved up front; a rejected attempt (e.g.
+      // email taken) must refund it rather than count against the IP.
+      releaseReservation();
       return NextResponse.json({ error: result.error }, { status: 409 });
     }
-    // Charge the per-IP window only for an account that was actually created.
-    recordRateLimitHitInMemory(ipKey, REGISTER_WINDOW_MS);
     return NextResponse.json({ user: result.value }, { status: 201 });
   } catch (cause) {
+    releaseReservation();
     console.error("[register] unexpected failure", cause);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
