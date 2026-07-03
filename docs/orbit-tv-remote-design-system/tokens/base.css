@@ -1,0 +1,12 @@
+/* Minimal global reset + defaults, scoped to what consumers need. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--base-100);
+  color: var(--fg-1);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
+}

@@ -1,0 +1,32 @@
+/* ============================================================
+   SPACING & RADIUS TOKENS
+   Neumorphism reads best with generous, consistent radii and
+   breathing room — surfaces need room for shadows to resolve.
+   ============================================================ */
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* neumorphic shadow "throw" — offset/blur pairs, small→large */
+  --nm-offset-sm: 4px;
+  --nm-blur-sm: 8px;
+  --nm-offset-md: 7px;
+  --nm-blur-md: 16px;
+  --nm-offset-lg: 12px;
+  --nm-blur-lg: 28px;
+}

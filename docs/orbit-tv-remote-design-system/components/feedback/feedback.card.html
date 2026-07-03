@@ -1,0 +1,34 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Feedback" subtitle="Modal (Add TV dialog)" -->
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:0;background:var(--base-100);}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Modal, Input, Button } = window.OrbitTVRemoteDesignSystem_08e5b7;
+
+function Demo() {
+  const [ip, setIp] = React.useState('');
+  return (
+    <div style={{ position: 'relative', width: 700, height: 400 }}>
+      <Modal
+        open={true}
+        title="Add a TV"
+        footer={<Button variant="primary">Connect</Button>}
+      >
+        <Input label="IP Address" icon="lan" placeholder="192.168.1.42" value={ip} onChange={setIp} />
+      </Modal>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

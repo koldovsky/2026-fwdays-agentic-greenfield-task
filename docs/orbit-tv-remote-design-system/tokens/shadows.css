@@ -1,0 +1,31 @@
+/* ============================================================
+   NEUMORPHIC SHADOW SYSTEM
+   Two moods: "raised" (extruded from the surface — default resting
+   state for cards/buttons) and "inset" (pressed into the surface —
+   wells, tracks, active/pressed state). One flat surface color;
+   depth comes entirely from the light/dark shadow pair.
+   ============================================================ */
+
+:root {
+  --nm-raised-sm: var(--nm-offset-sm) var(--nm-offset-sm) var(--nm-blur-sm) var(--shadow-dark),
+    calc(var(--nm-offset-sm) * -1) calc(var(--nm-offset-sm) * -1) var(--nm-blur-sm) var(--shadow-light);
+
+  --nm-raised-md: var(--nm-offset-md) var(--nm-offset-md) var(--nm-blur-md) var(--shadow-dark),
+    calc(var(--nm-offset-md) * -1) calc(var(--nm-offset-md) * -1) var(--nm-blur-md) var(--shadow-light);
+
+  --nm-raised-lg: var(--nm-offset-lg) var(--nm-offset-lg) var(--nm-blur-lg) var(--shadow-dark),
+    calc(var(--nm-offset-lg) * -1) calc(var(--nm-offset-lg) * -1) var(--nm-blur-lg) var(--shadow-light);
+
+  --nm-inset-sm: inset var(--nm-offset-sm) var(--nm-offset-sm) var(--nm-blur-sm) var(--shadow-dark),
+    inset calc(var(--nm-offset-sm) * -1) calc(var(--nm-offset-sm) * -1) var(--nm-blur-sm) var(--shadow-light);
+
+  --nm-inset-md: inset var(--nm-offset-md) var(--nm-offset-md) var(--nm-blur-md) var(--shadow-dark),
+    inset calc(var(--nm-offset-md) * -1) calc(var(--nm-offset-md) * -1) var(--nm-blur-md) var(--shadow-light);
+
+  /* accent-colored raised shadow, for primary buttons — shadow tinted toward accent, not gray */
+  --nm-raised-accent: var(--nm-offset-md) var(--nm-offset-md) var(--nm-blur-md) rgba(232, 114, 15, 0.35),
+    calc(var(--nm-offset-md) * -1) calc(var(--nm-offset-md) * -1) var(--nm-blur-md) rgba(255, 178, 122, 0.5);
+
+  /* focus ring — used sparingly, only for keyboard nav accessibility */
+  --nm-focus-ring: 0 0 0 3px var(--accent-wash);
+}

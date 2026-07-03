@@ -1,0 +1,54 @@
+<!-- @dsCard group="Components" viewport="700x340" name="Forms" subtitle="Toggle, Input, Slider" -->
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px;background:var(--base-100);}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Toggle, Input, Slider } = window.OrbitTVRemoteDesignSystem_08e5b7;
+
+function Section({ label, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-3)', fontFamily: 'var(--font-sans)' }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function Demo() {
+  const [dark, setDark] = React.useState(false);
+  const [ip, setIp] = React.useState('192.168.1.42');
+  const [vol, setVol] = React.useState(62);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 22, fontFamily: 'var(--font-sans)' }}>
+      <Section label="Toggle">
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Toggle checked={dark} onChange={setDark} label="Dark mode" />
+          <Toggle checked={true} label="Always on" />
+        </div>
+      </Section>
+      <Section label="Input">
+        <div style={{ width: 320 }}>
+          <Input label="IP Address" icon="lan" placeholder="192.168.1.42" value={ip} onChange={setIp} />
+        </div>
+      </Section>
+      <Section label="Slider">
+        <div style={{ width: 340 }}>
+          <Slider icon="volume_up" value={vol} onChange={setVol} />
+        </div>
+      </Section>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

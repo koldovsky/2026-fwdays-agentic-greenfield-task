@@ -1,0 +1,27 @@
+{
+  "name": "back-end",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Back-end service (Fastify + TypeScript).",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "discover": "tsx scripts/discover-tvs.ts",
+    "pair": "tsx scripts/pair-tv.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

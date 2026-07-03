@@ -1,0 +1,34 @@
+{
+  "name": "2026-fwdays-agentic-greenfield-task-ap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Курс fwdays Academy · Agentic Engineering: Greenfield.",
+  "homepage": "https://github.com/AntoniPetrenko/2026-fwdays-agentic-greenfield-task-AP#readme",
+  "bugs": {
+    "url": "https://github.com/AntoniPetrenko/2026-fwdays-agentic-greenfield-task-AP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AntoniPetrenko/2026-fwdays-agentic-greenfield-task-AP.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "skills:sync": "metaskills",
+    "skills:claude": "metaskills claude",
+    "back:dev": "npm --prefix back-end run dev",
+    "back:build": "npm --prefix back-end run build",
+    "back:install": "npm --prefix back-end install",
+    "back:discover": "npm --prefix back-end run discover",
+    "front:dev": "npm --prefix front-end run dev",
+    "front:build": "npm --prefix front-end run build",
+    "front:install": "npm --prefix front-end install",
+    "install:all": "npm install && npm run back:install && npm run front:install"
+  },
+  "devDependencies": {
+    "metaskills": "^1.0.4"
+  }
+}
