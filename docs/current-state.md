@@ -1,5 +1,47 @@
 # Project Current State
 
+## [2026-07-03T20:26:00+03:00]
+
+**Остання дія:** Синхронізовано дельта-специфікацію `ingestion-api` до головної специфікації `openspec/specs/ingestion-api/spec.md` та заархівувано зміну в `openspec/changes/archive/2026-07-03-ingestion-api`.
+
+**Статус:**
+*   **Працює:**
+    *   Синхронізовано специфікацію `ingestion-api` (створено файл [spec.md](file:///d:/home/Documents/Developer/2026-fwdays-agentic-greenfield-task/openspec/specs/ingestion-api/spec.md)).
+    *   Зміну `ingestion-api` заархівовано в [openspec/changes/archive/2026-07-03-ingestion-api](file:///d:/home/Documents/Developer/2026-fwdays-agentic-greenfield-task/openspec/changes/archive/2026-07-03-ingestion-api).
+    *   Всі артефакти та завдання з розробки `ingestion-api` повністю завершено (100% готовності).
+    *   Проект успішно збирається (`npm run build`) та проходить перевірку лінтера (`npm run lint`).
+*   **В процесі:** Підготовка до планування та реалізації наступної можливості.
+*   **Заблоковано:** Немає.
+
+**Наступні кроки:**
+1. Ініціювати та спланувати наступну можливість (наприклад, `dashboard-analytics`).
+
+**Примітки:**
+*   Архів успішно створено, зміни додано в git.
+
+## [2026-07-03T20:20:00+03:00]
+
+**Остання дія:** Повністю реалізовано та протестовано можливість `ingestion-api` (усі 18 завдань завершено).
+
+**Статус:**
+*   **Працює:**
+    *   Додано функції автентифікації API-ключів та перевірки підписки у `lib/auth.ts`.
+    *   Створено валідатор конверсій `lib/conversions.ts` з підтримкою типів TypeScript та валідацією часових міток.
+    *   Реалізовано API-ендпоінт `POST /api/conversions` у `app/api/conversions/route.ts` із підтримкою batch insert, валідації JSON, автентифікації та перевірки статусу підписки.
+    *   Створено API-ендпоінт очищення застарілих конверсій `GET /api/conversions/cleanup` у `app/api/conversions/cleanup/route.ts` з використанням batch delete по `LIMIT 10000`.
+    *   Додано `vercel.json` з конфігурацією щоденного Cron Job.
+    *   Додано `CRON_SECRET` у `.env` та `.env.example`.
+    *   Проект успішно проходить лінтинг (`npm run lint`), компіляцію (`tsc --noEmit`) та збірку (`npm run build`).
+*   **В процесі:** Очікування команди на архівування виконаної зміни `ingestion-api` (команда `/opsx:archive`).
+*   **Заблоковано:** Немає.
+
+**Наступні кроки:**
+1. Синхронізувати дельта-специфікацію та заархівувати зміну (команда `/opsx:archive`).
+2. Перейти до етапу 5: dashboard-analytics (візуалізація отриманих даних та налаштування інтеграцій користувачем).
+
+**Примітки:**
+*   Пов'язані вимоги: `FR-API-01` — `FR-API-06`, `NFR-PERF-01`.
+
 ## [2026-07-03T19:57:00+03:00]
 
 **Остання дія:** Виправлено всі знахідки рецензії специфікації `ingestion-api` (F1–F5 та Gap pass) у файлі `spec.md`.
