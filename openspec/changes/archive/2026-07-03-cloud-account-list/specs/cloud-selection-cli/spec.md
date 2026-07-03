@@ -1,37 +1,4 @@
-# cloud-selection-cli
-
-## Purpose
-
-The `omnictx cloud` subcommand: a persistent CLI switch for the active-cloud selection (`azure|aws|gcp|auto|none`). Complements the session-scoped `OMNICTX_CLOUD` env var the same way `omnictx on/off` complements `OMNICTX_ENABLED` — by persisting the choice to the config file.
-
-## Requirements
-
-### Requirement: Persist the active-cloud selection via `omnictx cloud <value>`
-The CLI SHALL provide a subcommand `omnictx cloud <azure|aws|gcp|auto|none|on|off>` that writes the resolved value to the `cloud:` key of the config file (path resolved as `OMNICTX_CONFIG` > `~/.config/omnictx/config.yaml`) and exits with code 0. The aliases `on` and `off` SHALL be resolved before writing: `off` persists `cloud: none`, `on` persists `cloud: auto`. A previously pinned provider is not remembered across `off`/`on`. The write SHALL change only the `cloud:` line, preserving all other keys and comments, and SHALL create the file and its parent directory if absent.
-
-#### Scenario: Set a provider pin in an existing config
-- **WHEN** the config file contains `enabled: true`, a comment line, and `cloud: auto`, and the user runs `omnictx cloud aws`
-- **THEN** the config file contains `cloud: aws`, the comment and `enabled: true` are unchanged, and the exit code is 0
-
-#### Scenario: Config file does not exist yet
-- **WHEN** no config file exists and the user runs `omnictx cloud gcp`
-- **THEN** the file and its parent directory are created, the file contains `cloud: gcp`, and the exit code is 0
-
-#### Scenario: Custom config path via OMNICTX_CONFIG
-- **WHEN** `OMNICTX_CONFIG` points to a custom path and the user runs `omnictx cloud azure`
-- **THEN** the file at the custom path is updated (not the default path)
-
-#### Scenario: All selection values are accepted
-- **WHEN** the user runs `omnictx cloud <v>` for each of `azure`, `aws`, `gcp`, `auto`, `none`
-- **THEN** each invocation persists exactly that value and exits 0
-
-#### Scenario: off is an alias for none
-- **WHEN** the user runs `omnictx cloud off`
-- **THEN** the config file contains `cloud: none` and the exit code is 0
-
-#### Scenario: on is an alias for auto and does not restore a previous pin
-- **WHEN** the config file contains `cloud: aws` and the user runs `omnictx cloud off` followed by `omnictx cloud on`
-- **THEN** the config file contains `cloud: auto` (not `cloud: aws`) and both invocations exit 0
+## MODIFIED Requirements
 
 ### Requirement: Reject invalid values with a usage error
 The subcommand SHALL validate its argument strictly. The word `list` is reserved for the listing forms and SHALL never be persisted as a cloud value. For any single argument other than `azure|aws|gcp|auto|none|on|off|list` (case-insensitive, surrounding whitespace ignored) it SHALL print a usage message naming the allowed values to stderr, SHALL NOT modify the config file, and SHALL exit with code 2. A two-argument form is valid only as `<azure|aws|gcp> list`; anything else SHALL print the usage message and exit 2. This is deliberately stricter than render mode, which silently normalizes unknown values to `auto` to protect the prompt.
@@ -48,34 +15,7 @@ The subcommand SHALL validate its argument strictly. The word `list` is reserved
 - **WHEN** the user runs `omnictx cloud aws gcp`
 - **THEN** stderr contains the usage message, no file is modified, and the exit code is 2
 
-### Requirement: Print the current effective value with `omnictx cloud`
-When invoked with no argument, the subcommand SHALL print the effective cloud selection — resolved with the normal precedence (env `OMNICTX_CLOUD` > config file > default `auto`) — to stdout followed by a newline, and exit 0. Resolution failures (missing/broken config) SHALL degrade to the default rather than erroring.
-
-#### Scenario: Value comes from the config file
-- **WHEN** the config file contains `cloud: gcp`, `OMNICTX_CLOUD` is unset, and the user runs `omnictx cloud`
-- **THEN** stdout is `gcp` and the exit code is 0
-
-#### Scenario: Env overrides the persisted value
-- **WHEN** the config file contains `cloud: gcp`, `OMNICTX_CLOUD=aws` is set, and the user runs `omnictx cloud`
-- **THEN** stdout is `aws` and the exit code is 0
-
-#### Scenario: Nothing configured
-- **WHEN** no config file exists, `OMNICTX_CLOUD` is unset, and the user runs `omnictx cloud`
-- **THEN** stdout is `auto` and the exit code is 0
-
-### Requirement: Help lists the cloud subcommand
-The grouped `--help` output SHALL list the `cloud` subcommand under the Subcommands section, including the allowed values, alongside the existing `init` and `on`/`off` entries.
-
-#### Scenario: Help mentions cloud
-- **WHEN** the user runs `omnictx --help`
-- **THEN** the Subcommands section contains a `cloud` entry showing `azure|aws|gcp|auto|none`
-
-### Requirement: Render behavior is unchanged
-The new subcommand SHALL NOT alter render-mode behavior: rendering still never breaks the prompt, `OMNICTX_CLOUD` still overrides the config per-session, and no new render-mode flags are introduced.
-
-#### Scenario: Persisted pin is honored on next render
-- **WHEN** `omnictx cloud aws` has been run and a subsequent render invocation occurs without `OMNICTX_CLOUD` set
-- **THEN** the cloud slot uses the AWS provider (subject to its data being readable), and any provider read failure still results in the segment being skipped with exit 0
+## ADDED Requirements
 
 ### Requirement: List provider accounts with `omnictx cloud <provider> list`
 The subcommand SHALL support `omnictx cloud <azure|aws|gcp> list`, printing an offline, read-only table of that provider's locally configured accounts with a header row, `text/tabwriter`-style alignment, and `*` in the `CURRENT` column for the active entry. Data comes exclusively from local files (never CLI tools or the network). With nothing to list, the command SHALL print nothing (no header) and exit 0; config and provider files are never modified.

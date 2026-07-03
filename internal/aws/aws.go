@@ -8,6 +8,7 @@ package aws
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"omnictx/internal/cloud"
 	"omnictx/internal/ini"
@@ -88,6 +89,64 @@ func resolveRegion(lookup LookupEnv, home, profile string) string {
 		return v
 	}
 	return ""
+}
+
+// Profile is one entry of `cloud aws list`: a profile name plus its region
+// from ~/.aws/config (empty when the config does not set one).
+type Profile struct {
+	Name   string
+	Region string
+}
+
+// Profiles lists locally configured profiles: the sections of ~/.aws/config
+// (with the "profile " prefix stripped) followed by names that exist only in
+// ~/.aws/credentials, deduplicated, in file order. Regions come from the
+// config file only — credential values are never read. Missing or unparsable
+// files degrade to an empty (or partial) list.
+func Profiles(lookup LookupEnv, home string) []Profile {
+	var profiles []Profile
+	seen := map[string]bool{}
+
+	add := func(name string) {
+		if name == "" || seen[name] {
+			return
+		}
+		seen[name] = true
+		profiles = append(profiles, Profile{Name: name})
+	}
+
+	cfg := ini.File{}
+	if data, err := os.ReadFile(configPath(lookup, home)); err == nil {
+		cfg = ini.Parse(data)
+		for _, section := range ini.Sections(data) {
+			switch {
+			case section == "default":
+				add("default")
+			case strings.HasPrefix(section, "profile "):
+				add(strings.TrimSpace(strings.TrimPrefix(section, "profile ")))
+			}
+			// Other section kinds (e.g. [sso-session ...]) are not profiles.
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(home, ".aws", "credentials")); err == nil {
+		// Credentials sections are bare profile names; only names are used.
+		for _, section := range ini.Sections(data) {
+			add(section)
+		}
+	}
+
+	for i := range profiles {
+		if v, ok := cfg.Get(sectionFor(profiles[i].Name), "region"); ok {
+			profiles[i].Region = v
+		}
+	}
+	return profiles
+}
+
+// CurrentProfile exposes the active-profile resolution (AWS_PROFILE >
+// AWS_VAULT > "default") for the list view's CURRENT marker.
+func CurrentProfile(lookup LookupEnv) string {
+	return resolveProfile(lookup)
 }
 
 // sectionFor maps a profile to its ~/.aws/config section: the default profile is

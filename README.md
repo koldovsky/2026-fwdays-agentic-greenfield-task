@@ -79,6 +79,17 @@ keys are preserved). For a session-only override use `export OMNICTX_CLOUD=<v>`,
 which takes precedence over the persisted value until unset. An invalid value is
 rejected with a usage error (exit 2) — nothing is written.
 
+To see what there is to pin, list a provider's local accounts — offline, from
+the same files omnictx already reads (AWS profiles from `~/.aws/config` +
+`~/.aws/credentials` names, gcloud configurations, Azure subscriptions):
+
+```
+$ omnictx cloud aws list      # or: gcp list / azure list / bare "cloud list"
+CURRENT   NAME      REGION
+*         default   us-east-1
+          prod      eu-west-1
+```
+
 ### Switching the kube-context
 
 ```bash
@@ -130,6 +141,8 @@ omnictx on|off|toggle         # persist the enabled state to the config file
 omnictx cloud                 # show the effective active-cloud selection
 omnictx cloud aws             # persist: pin AWS as the active cloud
 omnictx cloud none            # persist: kube-only (no cloud slot)
+omnictx cloud aws list        # offline table of AWS profiles (also: gcp, azure)
+omnictx cloud list            # same table for the active provider
 omnictx kube                  # show the current kube-context
 omnictx kube list             # kubectl-style table of contexts (current marked *)
 omnictx kube prod-cluster     # switch the current kube-context

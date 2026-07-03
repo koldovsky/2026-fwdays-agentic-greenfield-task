@@ -140,6 +140,10 @@ Subcommands:
                     persist the active cloud to config file; off hides the slot,
                     on returns to auto-detect; without an argument prints the
                     effective value (OMNICTX_CLOUD overrides per-session)
+  cloud [azure|aws|gcp] list
+                    offline table of that provider's local accounts (AWS profiles,
+                    gcloud configurations, Azure subscriptions); bare "cloud list"
+                    uses the active provider
   kube [<context>|list|on|off]
                     switch the current kube-context (rewrites current-context in
                     kubeconfig); no argument prints the current one, "list" shows
@@ -258,13 +262,17 @@ func runToggle() int {
 	return 0
 }
 
-const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none|on|off]"
+const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none|on|off]\n" +
+	"       omnictx cloud [azure|aws|gcp] list"
 
-// runCloud handles `omnictx cloud [value]`. With no argument it prints the
-// effective selection (env > config > default). With one argument it persists
-// the value to the config file, like `on`/`off` do for enabled. This is
-// interactive setup mode, so unlike render's normalizeCloud (which silently
-// falls back to auto to protect the prompt) an unknown value is rejected loudly.
+// runCloud handles `omnictx cloud [value]` and the read-only listing forms.
+// With no argument it prints the effective selection (env > config > default).
+// `list` (reserved, never persisted) prints the active provider's accounts;
+// `<provider> list` prints that provider's accounts. With one value argument
+// it persists the value to the config file, like `on`/`off` do for enabled.
+// This is interactive setup mode, so unlike render's normalizeCloud (which
+// silently falls back to auto to protect the prompt) an unknown value is
+// rejected loudly.
 func runCloud(args []string, stdout, stderr io.Writer) int {
 	home, _ := os.UserHomeDir()
 
@@ -273,9 +281,35 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintln(stdout, cfg.Cloud)
 		return 0
 	}
-	if len(args) > 1 {
+	if len(args) > 2 {
 		_, _ = fmt.Fprintln(stderr, cloudUsage)
 		return 2
+	}
+
+	if len(args) == 2 {
+		provider := strings.ToLower(strings.TrimSpace(args[0]))
+		form := strings.ToLower(strings.TrimSpace(args[1]))
+		switch {
+		case form != "list":
+			_, _ = fmt.Fprintln(stderr, cloudUsage)
+			return 2
+		case provider == "azure" || provider == "aws" || provider == "gcp":
+			printCloudList(stdout, provider, home)
+			return 0
+		default:
+			_, _ = fmt.Fprintln(stderr, cloudUsage)
+			return 2
+		}
+	}
+
+	if strings.ToLower(strings.TrimSpace(args[0])) == "list" {
+		// Bare `cloud list`: the effective provider, selected exactly like
+		// render does; none selected -> quiet, exit 0.
+		cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+		if active, ok := cloud.Select(cloudProviders(), cfg.Cloud, os.LookupEnv, home); ok {
+			printCloudList(stdout, active.Key(), home)
+		}
+		return 0
 	}
 
 	v := strings.ToLower(strings.TrimSpace(args[0]))
@@ -369,23 +403,71 @@ func runKube(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// printKubeTable renders `kube list` as a kubectl-get-contexts-style table.
-// The header appears only when there is at least one context, so the
-// no-contexts case stays quiet (empty output, exit 0).
-func printKubeTable(stdout io.Writer, entries []kube.ContextEntry, current string) {
-	if len(entries) == 0 {
+// printTable renders a kubectl-style table with tabwriter alignment. The
+// header appears only when there is at least one row, so empty listings stay
+// quiet (no output, exit 0).
+func printTable(stdout io.Writer, header []string, rows [][]string) {
+	if len(rows) == 0 {
 		return
 	}
 	w := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
-	_, _ = fmt.Fprintln(w, "CURRENT\tNAME\tCLUSTER\tAUTHINFO\tNAMESPACE")
+	_, _ = fmt.Fprintln(w, strings.Join(header, "\t"))
+	for _, r := range rows {
+		_, _ = fmt.Fprintln(w, strings.Join(r, "\t"))
+	}
+	_ = w.Flush()
+}
+
+// printKubeTable renders `kube list` as a kubectl-get-contexts-style table.
+func printKubeTable(stdout io.Writer, entries []kube.ContextEntry, current string) {
+	rows := make([][]string, 0, len(entries))
 	for _, e := range entries {
 		marker := ""
 		if e.Name == current {
 			marker = "*"
 		}
-		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", marker, e.Name, e.Cluster, e.AuthInfo, e.Namespace)
+		rows = append(rows, []string{marker, e.Name, e.Cluster, e.AuthInfo, e.Namespace})
 	}
-	_ = w.Flush()
+	printTable(stdout, []string{"CURRENT", "NAME", "CLUSTER", "AUTHINFO", "NAMESPACE"}, rows)
+}
+
+// printCloudList renders `cloud <provider> list`: the provider's locally
+// configured accounts, read from the same offline sources as render.
+func printCloudList(stdout io.Writer, key, home string) {
+	switch key {
+	case "aws":
+		current := aws.CurrentProfile(os.LookupEnv)
+		var rows [][]string
+		for _, p := range aws.Profiles(os.LookupEnv, home) {
+			marker := ""
+			if p.Name == current {
+				marker = "*"
+			}
+			rows = append(rows, []string{marker, p.Name, p.Region})
+		}
+		printTable(stdout, []string{"CURRENT", "NAME", "REGION"}, rows)
+	case "gcp":
+		current := gcp.CurrentConfiguration(os.LookupEnv, home)
+		var rows [][]string
+		for _, c := range gcp.Configurations(os.LookupEnv, home) {
+			marker := ""
+			if c.Name == current {
+				marker = "*"
+			}
+			rows = append(rows, []string{marker, c.Name, c.Account, c.Project})
+		}
+		printTable(stdout, []string{"CURRENT", "NAME", "ACCOUNT", "PROJECT"}, rows)
+	case "azure":
+		var rows [][]string
+		for _, s := range azure.Subscriptions(os.LookupEnv, home) {
+			marker := ""
+			if s.IsDefault {
+				marker = "*"
+			}
+			rows = append(rows, []string{marker, s.Name, s.ID, s.State})
+		}
+		printTable(stdout, []string{"CURRENT", "NAME", "ID", "STATE"}, rows)
+	}
 }
 
 // cloudProviders is the priority-ordered provider list used for `auto` detection

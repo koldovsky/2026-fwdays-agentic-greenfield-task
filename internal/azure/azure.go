@@ -20,10 +20,16 @@ var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
 
 // profile is a minimal projection of azureProfile.json.
 type profile struct {
-	Subscriptions []struct {
-		Name      string `json:"name"`
-		IsDefault bool   `json:"isDefault"`
-	} `json:"subscriptions"`
+	Subscriptions []Subscription `json:"subscriptions"`
+}
+
+// Subscription is one entry of azureProfile.json as shown by
+// `cloud azure list`. State is empty in older/partial files.
+type Subscription struct {
+	Name      string `json:"name"`
+	ID        string `json:"id"`
+	State     string `json:"state"`
+	IsDefault bool   `json:"isDefault"`
 }
 
 // LookupEnv mirrors os.LookupEnv and is injected for testability.
@@ -62,23 +68,28 @@ func (Provider) Read(lookup LookupEnv, home string) cloud.Reading {
 // string when it cannot be determined. home is used to build the default
 // ~/.azure/azureProfile.json path when AZURE_CONFIG_DIR is not set.
 func Read(lookupEnv LookupEnv, home string) string {
-	path := resolvePath(lookupEnv, home)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	data = bytes.TrimPrefix(data, utf8BOM)
-
-	var p profile
-	if err := json.Unmarshal(data, &p); err != nil {
-		return ""
-	}
-	for _, s := range p.Subscriptions {
+	for _, s := range Subscriptions(lookupEnv, home) {
 		if s.IsDefault {
 			return s.Name
 		}
 	}
 	return ""
+}
+
+// Subscriptions lists every subscription in azureProfile.json (BOM-aware), in
+// file order. Missing or broken files degrade to an empty list.
+func Subscriptions(lookupEnv LookupEnv, home string) []Subscription {
+	data, err := os.ReadFile(resolvePath(lookupEnv, home))
+	if err != nil {
+		return nil
+	}
+	data = bytes.TrimPrefix(data, utf8BOM)
+
+	var p profile
+	if err := json.Unmarshal(data, &p); err != nil {
+		return nil
+	}
+	return p.Subscriptions
 }
 
 // resolvePath returns the azureProfile.json path, honoring AZURE_CONFIG_DIR.

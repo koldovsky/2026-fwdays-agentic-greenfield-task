@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"omnictx/internal/cloud"
@@ -78,5 +79,35 @@ func TestKeyAndLabel(t *testing.T) {
 	}
 	if p.Label(false) != "gcp:" {
 		t.Errorf("Label(ascii) = %q, want gcp:", p.Label(false))
+	}
+}
+
+func TestConfigurations(t *testing.T) {
+	t.Run("rows from fixture dir in name order", func(t *testing.T) {
+		got := Configurations(env(map[string]string{"CLOUDSDK_CONFIG": gcloudDirFixture()}), "/nonexistent-home")
+		want := []Configuration{
+			{Name: "default", Account: "me@example.com", Project: "my-default-project"},
+			{Name: "noproject", Account: "me@example.com"},
+			{Name: "work", Project: "my-work-project"},
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Configurations() = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("missing dir yields nothing", func(t *testing.T) {
+		if got := Configurations(env(nil), t.TempDir()); got != nil {
+			t.Errorf("Configurations() = %v, want nil", got)
+		}
+	})
+}
+
+func TestCurrentConfiguration(t *testing.T) {
+	dir := gcloudDirFixture()
+	if got := CurrentConfiguration(env(map[string]string{"CLOUDSDK_CONFIG": dir}), "/h"); got != "work" {
+		t.Errorf("CurrentConfiguration() = %q, want work (from active_config)", got)
+	}
+	if got := CurrentConfiguration(env(map[string]string{"CLOUDSDK_CONFIG": dir, "CLOUDSDK_ACTIVE_CONFIG_NAME": "default"}), "/h"); got != "default" {
+		t.Errorf("CurrentConfiguration() = %q, want default (env wins)", got)
 	}
 }

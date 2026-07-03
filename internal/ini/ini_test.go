@@ -1,6 +1,9 @@
 package ini
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestParseSectionsAndDefault(t *testing.T) {
 	in := []byte(`
@@ -57,5 +60,28 @@ func TestGetUnknown(t *testing.T) {
 func TestParseFileMissing(t *testing.T) {
 	if _, ok := ParseFile("/definitely/not/here.ini"); ok {
 		t.Error("missing file should report ok=false")
+	}
+}
+
+func TestSections(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"ordered names", "[b]\nk=v\n[a]\nk=v\n", []string{"b", "a"}},
+		{"default section excluded", "k=v\n[one]\nk=v\n", []string{"one"}},
+		{"duplicates dropped", "[x]\n[y]\n[x]\n", []string{"x", "y"}},
+		{"comments and broken lines skipped", "# [nope]\n; [also nope]\n[real]\nnot-a-header]\n", []string{"real"}},
+		{"aws-style profile names kept verbatim", "[default]\n[profile prod]\n", []string{"default", "profile prod"}},
+		{"empty input", "", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Sections([]byte(tt.in))
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Sections() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

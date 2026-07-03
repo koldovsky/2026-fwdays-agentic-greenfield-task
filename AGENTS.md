@@ -32,6 +32,9 @@ No panics in production (top-level recover in main).
   `cloud [azure|aws|gcp|auto|none|on|off]` (persist active cloud to config; `on`/`off`
   alias `auto`/`none` — a pin is not remembered across off/on; no argument prints
   the effective value; invalid value → usage error, exit 2),
+  `cloud [azure|aws|gcp] list` (offline read-only table of local accounts: AWS
+  profiles from config+credentials names, gcloud configurations, Azure
+  subscriptions; bare `cloud list` = active provider; `list` reserved),
   `kube [<context>|list|on|off]` (switch current-context in kubeconfig / print
   current / list all / toggle the kube segment via config key `kube:`; reserved
   words list|on|off; unknown context → exit 2, unparsable target → exit 1).

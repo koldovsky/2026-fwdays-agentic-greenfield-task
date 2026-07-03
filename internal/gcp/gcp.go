@@ -71,6 +71,46 @@ func resolveProject(lookup LookupEnv, home string) string {
 	return ""
 }
 
+// Configuration is one entry of `cloud gcp list`: a gcloud configuration name
+// plus its [core] account and project (empty when absent).
+type Configuration struct {
+	Name    string
+	Account string
+	Project string
+}
+
+// Configurations lists the local gcloud configurations: one row per
+// configurations/config_<name> file under the gcloud dir, in directory order.
+// A missing dir or unparsable file degrades to an empty (or partial) list.
+func Configurations(lookup LookupEnv, home string) []Configuration {
+	dir := gcloudDir(lookup, home)
+	entries, err := os.ReadDir(filepath.Join(dir, "configurations"))
+	if err != nil {
+		return nil
+	}
+
+	var configs []Configuration
+	for _, e := range entries {
+		name, ok := strings.CutPrefix(e.Name(), "config_")
+		if !ok || name == "" || e.IsDir() {
+			continue
+		}
+		c := Configuration{Name: name}
+		if f, ok := ini.ParseFile(filepath.Join(dir, "configurations", e.Name())); ok {
+			c.Account, _ = f.Get("core", "account")
+			c.Project, _ = f.Get("core", "project")
+		}
+		configs = append(configs, c)
+	}
+	return configs
+}
+
+// CurrentConfiguration exposes the active-config resolution for the list
+// view's CURRENT marker.
+func CurrentConfiguration(lookup LookupEnv, home string) string {
+	return activeConfigName(lookup, gcloudDir(lookup, home))
+}
+
 // activeConfigName: CLOUDSDK_ACTIVE_CONFIG_NAME > the single line in
 // <gcloud>/active_config > "default".
 func activeConfigName(lookup LookupEnv, dir string) string {

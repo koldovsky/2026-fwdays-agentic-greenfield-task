@@ -3,6 +3,7 @@ package azure
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -101,4 +102,35 @@ func TestReadDefaultPath(t *testing.T) {
 	if got != "prod-subscription" {
 		t.Fatalf("Read() = %q, want prod-subscription", got)
 	}
+}
+
+func TestSubscriptions(t *testing.T) {
+	t.Run("all entries in file order with default marked", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_default.json")
+		got := Subscriptions(envFunc(map[string]string{"AZURE_CONFIG_DIR": dir}), "/nonexistent-home")
+		want := []Subscription{
+			{Name: "dev-subscription", ID: "0000-aaaa", State: "Enabled", IsDefault: false},
+			{Name: "prod-subscription", ID: "1111-bbbb", State: "Enabled", IsDefault: true},
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Subscriptions() = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("BOM fixture parses", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_bom.json")
+		if got := Subscriptions(envFunc(map[string]string{"AZURE_CONFIG_DIR": dir}), "/h"); len(got) == 0 {
+			t.Error("Subscriptions() empty, want entries from BOM fixture")
+		}
+	})
+
+	t.Run("broken and missing degrade to empty", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_broken.json")
+		if got := Subscriptions(envFunc(map[string]string{"AZURE_CONFIG_DIR": dir}), "/h"); got != nil {
+			t.Errorf("Subscriptions() = %v, want nil for broken JSON", got)
+		}
+		if got := Subscriptions(envFunc(map[string]string{"AZURE_CONFIG_DIR": t.TempDir()}), "/h"); got != nil {
+			t.Errorf("Subscriptions() = %v, want nil for missing file", got)
+		}
+	})
 }

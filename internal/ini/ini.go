@@ -59,6 +59,30 @@ func ParseFile(path string) (File, bool) {
 	return Parse(data), true
 }
 
+// Sections returns the section names in file order, deduplicated. The default
+// (pre-header) section "" is not included — callers listing sections care only
+// about named ones (e.g. AWS profiles).
+func Sections(data []byte) []string {
+	var names []string
+	seen := map[string]bool{}
+
+	sc := bufio.NewScanner(bytes.NewReader(data))
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if len(line) < 2 || line[0] != '[' || !strings.HasSuffix(line, "]") {
+			continue
+		}
+		name := strings.TrimSpace(line[1 : len(line)-1])
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	return names
+}
+
 // Get returns the value for section/key. The default (pre-header) section is "".
 func (f File) Get(section, key string) (string, bool) {
 	s, ok := f[section]

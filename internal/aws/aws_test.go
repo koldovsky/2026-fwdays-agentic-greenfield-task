@@ -1,7 +1,9 @@
 package aws
 
 import (
+	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"omnictx/internal/cloud"
@@ -101,5 +103,68 @@ func TestKeyAndLabel(t *testing.T) {
 	}
 	if p.Label(false) != "aws:" {
 		t.Errorf("Label(ascii) = %q, want aws:", p.Label(false))
+	}
+}
+
+func TestProfiles(t *testing.T) {
+	t.Run("config sections with regions, prefix stripped", func(t *testing.T) {
+		got := Profiles(env(map[string]string{"AWS_CONFIG_FILE": fixture("aws_config_named.ini")}), t.TempDir())
+		want := []Profile{{Name: "default", Region: "us-east-1"}, {Name: "prod", Region: "eu-west-1"}}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Profiles() = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("credentials-only profile is appended without secrets", func(t *testing.T) {
+		home := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(home, ".aws"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		src, _ := os.ReadFile(fixture("aws_credentials_extra.ini"))
+		if err := os.WriteFile(filepath.Join(home, ".aws", "credentials"), src, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		got := Profiles(env(map[string]string{"AWS_CONFIG_FILE": fixture("aws_config_named.ini")}), home)
+		want := []Profile{
+			{Name: "default", Region: "us-east-1"},
+			{Name: "prod", Region: "eu-west-1"},
+			{Name: "ci-only"}, // from credentials; no region, no key material
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Profiles() = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("missing files yield nothing", func(t *testing.T) {
+		if got := Profiles(env(map[string]string{"AWS_CONFIG_FILE": fixture("nope.ini")}), t.TempDir()); got != nil {
+			t.Errorf("Profiles() = %v, want nil", got)
+		}
+	})
+
+	t.Run("broken config still yields credentials names", func(t *testing.T) {
+		home := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(home, ".aws"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		src, _ := os.ReadFile(fixture("aws_credentials_extra.ini"))
+		if err := os.WriteFile(filepath.Join(home, ".aws", "credentials"), src, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		got := Profiles(env(map[string]string{"AWS_CONFIG_FILE": fixture("aws_config_broken.ini")}), home)
+		for _, p := range got {
+			if p.Name == "ci-only" {
+				return
+			}
+		}
+		t.Errorf("Profiles() = %v, want ci-only present", got)
+	})
+}
+
+func TestCurrentProfile(t *testing.T) {
+	if got := CurrentProfile(env(nil)); got != "default" {
+		t.Errorf("CurrentProfile() = %q, want default", got)
+	}
+	if got := CurrentProfile(env(map[string]string{"AWS_PROFILE": "prod"})); got != "prod" {
+		t.Errorf("CurrentProfile() = %q, want prod", got)
 	}
 }
