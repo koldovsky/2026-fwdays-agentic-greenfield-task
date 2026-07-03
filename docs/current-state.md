@@ -7,6 +7,22 @@
 
 ## Last action
 
+- **Plan reconciliation + threads 2–4 workflow launched (2026-07-03, in flight).** Commit
+  `a81d42f` (user) had already landed threads 1 + 5 of the 5-thread plan below: header fix
+  (`TopBarSession` + providers, `views/landing/ui/Header.tsx` deleted), `add-resume-wizard`
+  full spec package, `add-security-hardening` spec + section 1 files only
+  (`shared/lib/rate-limit`, `usage-counter-repo` — written but NOT wired, all tasks.md boxes
+  unchecked, no headers in `next.config.ts`, no honeypot). Multi-agent workflow
+  (`wf_c53b307f-851`) now executing the remainder: security tasks 2–4 (wire `/api/tailor` +
+  register, security headers, honeypot), `add-upload-cv` (spec + implementation,
+  pdf-parse/mammoth), `add-payments-emulator` sections 1–3 (port, emulator, webhook, paywall,
+  billing portal, `/account/billing`), then independent verifier + checker gate, fix loop,
+  perf-audit (NFR-PERF-04, CSP could move LCP). Results to be logged here when it completes.
+- **`BC-HONESTY-03` policy checkpoint RESOLVED (2026-07-03): user approved the default.**
+  Self-attested wizard answers ARE grounding evidence, always tagged `user-confirmed` in the
+  UI, visually distinct from CV-sourced evidence; `BC-HONESTY-01` unchanged (ungrounded still
+  flagged + export-excluded). `add-resume-wizard` implementation is unblocked as a next
+  increment per its existing tasks.md.
 - **`add-agent-loop` task 3.4 reviewed + fixed up (2026-07-03).** Task 3.4 (tailor-workspace
   wired to the real `/api/tailor` loop) went through `verifier` (PASS: lint/build/full vitest —
   35 files, 192 tests — all green) and `checker` (**SHIP, 0 blockers**, 3 notes). Fixed the one

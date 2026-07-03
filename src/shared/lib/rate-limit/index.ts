@@ -9,3 +9,4 @@ export {
   type RateLimitStore,
 } from "./lib/rate-limit";
 export { checkRateLimitInMemory, recordRateLimitHitInMemory } from "./lib/in-memory-adapter";
+export { clientIpFrom } from "./lib/client-ip";

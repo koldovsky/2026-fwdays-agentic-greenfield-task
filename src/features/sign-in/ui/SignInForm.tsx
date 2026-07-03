@@ -115,6 +115,19 @@ export function SignInForm({ locale = "ua", redirectTo = "/tailor" }: SignInForm
         />
       </label>
 
+      {/* Honeypot (NFR-SEC-04), sign-up mode only: off-screen, not
+          display:none (some scrapers skip that), and hidden from assistive
+          tech — real users never encounter it. A filled value is silently
+          dropped in handleSubmit. */}
+      {mode === "sign-up" && (
+        <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+          <label>
+            Website
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
+      )}
+
       {error !== null && (
         <p role="alert" className="text-sm text-gap">
           {authErrorMessage(copy, error)}

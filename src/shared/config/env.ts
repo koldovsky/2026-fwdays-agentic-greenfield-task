@@ -43,3 +43,50 @@ export function getLlmModel(): string | undefined {
   const model = process.env.LLM_MODEL;
   return model === undefined || model === "" ? undefined : model;
 }
+
+export type PaymentsProviderName = "emulator";
+
+/**
+ * Payments provider selector (`PAYMENTS_PROVIDER`, TC-STACK-06). The emulator
+ * is the only adapter today and the default outside production. It is
+ * HARD-disabled in production (add-payments-emulator design "never in
+ * production"; asserted by task 4.2): selecting it — explicitly or by default —
+ * with NODE_ENV=production throws. A real MoR adapter later extends the union
+ * and becomes the only valid production value.
+ */
+export function getPaymentsProviderName(): PaymentsProviderName {
+  const name = process.env.PAYMENTS_PROVIDER;
+  if (name !== undefined && name !== "" && name !== "emulator") {
+    throw new Error(`Unknown PAYMENTS_PROVIDER "${name}" (expected "emulator")`);
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "The payments emulator is disabled in production. Configure a real merchant-of-record adapter (TC-STACK-06).",
+    );
+  }
+  return "emulator";
+}
+
+/**
+ * Whether the payments emulator surfaces (/checkout screen, emulator sign
+ * endpoint) may run: never in production, and only when the emulator is the
+ * selected provider. Non-throwing so route handlers can 404 calmly (NFR-OBS-01).
+ */
+export function isPaymentsEmulatorEnabled(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  const name = process.env.PAYMENTS_PROVIDER;
+  return name === undefined || name === "" || name === "emulator";
+}
+
+/**
+ * HMAC secret for payments webhook signatures (`PAYMENTS_WEBHOOK_SECRET`).
+ * Shared by the event signer (emulator today, real MoR config later) and the
+ * webhook verifier — the signature seam a real MoR drops into.
+ */
+export function getPaymentsWebhookSecret(): string {
+  const secret = process.env.PAYMENTS_WEBHOOK_SECRET;
+  if (secret === undefined || secret === "") {
+    throw new Error("PAYMENTS_WEBHOOK_SECRET is not set");
+  }
+  return secret;
+}

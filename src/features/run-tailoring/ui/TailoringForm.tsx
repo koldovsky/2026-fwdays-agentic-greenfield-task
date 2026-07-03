@@ -16,6 +16,22 @@ export interface TailoringFormProps {
   readonly locale?: Locale;
   /** Called with the finished result once the run streams a `result` event. */
   readonly onResult: (result: TailoringRunResult) => void;
+  /**
+   * Optional controlled value for the CV textarea (add-upload-cv task 4.1).
+   * When provided, the view owns the text — e.g. so an upload's extracted
+   * text lands here for review before tailoring (FR-CV-01/03). When omitted,
+   * the textarea stays uncontrolled exactly as before (paste path, FR-CV-02).
+   */
+  readonly cvText?: string;
+  /** Change handler for the controlled CV textarea. */
+  readonly onCvTextChange?: (text: string) => void;
+  /**
+   * Fired when the server rejects the run with `rate_limited` (NFR-COST-02).
+   * The limit itself is enforced server-side and surfaced inline by this form;
+   * this hook only lets the composing view open the paywall ABOVE it
+   * (FR-PAYWALL-01) — no limit logic is duplicated here.
+   */
+  readonly onRateLimited?: () => void;
 }
 
 const fieldClass =
@@ -24,7 +40,13 @@ const fieldClass =
 
 const labelClass = "block text-sm font-semibold text-ink";
 
-export function TailoringForm({ locale = "ua", onResult }: TailoringFormProps) {
+export function TailoringForm({
+  locale = "ua",
+  onResult,
+  cvText,
+  onCvTextChange,
+  onRateLimited,
+}: TailoringFormProps) {
   const copy = t(locale);
   const [phase, setPhase] = useState<TailorRunPhase | null>(null);
   const [error, setError] = useState<TailorErrorCode | null>(null);
@@ -54,6 +76,7 @@ export function TailoringForm({ locale = "ua", onResult }: TailoringFormProps) {
         }
         if (runEvent.type === "error") {
           setError(runEvent.code);
+          if (runEvent.code === "rate_limited") onRateLimited?.();
           continue;
         }
         if (runEvent.type === "result") {
@@ -76,7 +99,17 @@ export function TailoringForm({ locale = "ua", onResult }: TailoringFormProps) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className={labelClass}>
         {copy.workspace.cvLabel}
-        <textarea name="cvText" rows={8} required className={`mt-1 ${fieldClass}`} />
+        <textarea
+          name="cvText"
+          rows={8}
+          required
+          className={`mt-1 ${fieldClass}`}
+          // Controlled only when the parent provides cvText (task 4.1);
+          // otherwise unchanged uncontrolled paste behavior (FR-CV-02).
+          {...(cvText !== undefined
+            ? { value: cvText, onChange: (e) => onCvTextChange?.(e.target.value) }
+            : {})}
+        />
       </label>
 
       <label className={labelClass}>

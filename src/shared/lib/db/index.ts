@@ -35,3 +35,11 @@ export {
   type UsageCounterRepo,
   type UsageCounterRecord,
 } from "./usage-counter-repo";
+export {
+  createSubscriptionRepo,
+  type SubscriptionRepo,
+  type SubscriptionRecord,
+  type SubscriptionPlan,
+  type SubscriptionStatus,
+  type UpsertSubscriptionInput,
+} from "./subscription-repo";

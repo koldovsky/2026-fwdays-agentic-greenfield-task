@@ -1,8 +1,8 @@
 ## 1. Provider port + emulator
 
-- [ ] 1.1 Define payments port in `shared/lib/payments` (createCheckout/handleWebhook/getSubscription/cancel) + `PAYMENTS_PROVIDER` flag in `shared/config`
-- [ ] 1.2 Emulator adapter: local `/checkout` screen with Succeed/Fail actions that POST signed events to `/api/payments/webhook`
-- [ ] 1.3 Webhook handler updates `subscriptions` (only writer); signature verification seam reused by real MoR later
+- [x] 1.1 Define payments port in `shared/lib/payments` (createCheckout/handleWebhook/getSubscription/cancel) + `PAYMENTS_PROVIDER` flag in `shared/config`
+- [x] 1.2 Emulator adapter: local `/checkout` screen with Succeed/Fail actions that POST signed events to `/api/payments/webhook`
+- [x] 1.3 Webhook handler updates `subscriptions` (only writer); signature verification seam reused by real MoR later
 
 ## 2. Paywall + checkout
 

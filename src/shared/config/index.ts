@@ -12,5 +12,9 @@ export {
   getOpenAiApiKey,
   getLlmProviderName,
   getLlmModel,
+  getPaymentsProviderName,
+  getPaymentsWebhookSecret,
+  isPaymentsEmulatorEnabled,
   type LlmProviderName,
+  type PaymentsProviderName,
 } from "./env";

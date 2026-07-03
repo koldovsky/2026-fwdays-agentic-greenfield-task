@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",
+    "mammoth": "^1.12.0",
     "next": "16.2.9",
     "next-auth": "5.0.0-beta.31",
+    "pdf-parse": "^2.4.5",
     "pg": "^8",
     "react": "19.2.4",
     "react-dom": "19.2.4"

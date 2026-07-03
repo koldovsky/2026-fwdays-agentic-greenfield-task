@@ -1,7 +1,7 @@
 // Sign-in form behavior (FR-AUTH-01): mode switch, credentials submit through
 // Auth.js, and the uniform failure message that never reveals whether an email
 // is registered.
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,9 +12,13 @@ import { SignInForm } from "./SignInForm";
 const signInMock = vi.hoisted(() => vi.fn());
 vi.mock("next-auth/react", () => ({ signIn: signInMock }));
 
+const registerAccountMock = vi.hoisted(() => vi.fn());
+vi.mock("../api/register", () => ({ registerAccount: registerAccountMock }));
+
 describe("SignInForm", () => {
   beforeEach(() => {
     signInMock.mockReset();
+    registerAccountMock.mockReset();
   });
 
   it("renders sign-in mode by default with email and password fields", () => {
@@ -49,5 +53,35 @@ describe("SignInForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       ua.auth.error.invalidCredentials,
     );
+  });
+
+  it("renders the honeypot only in sign-up mode", async () => {
+    const { container } = render(<SignInForm />);
+    expect(container.querySelector('input[name="website"]')).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: ua.auth.signUpAction }));
+    expect(container.querySelector('input[name="website"]')).not.toBeNull();
+  });
+
+  it("silently drops a sign-up with a filled honeypot (NFR-SEC-04)", async () => {
+    const { container } = render(<SignInForm />);
+    await userEvent.click(screen.getByRole("button", { name: ua.auth.signUpAction }));
+
+    await userEvent.type(screen.getByLabelText(ua.auth.emailLabel), "bot@example.com");
+    await userEvent.type(screen.getByLabelText(ua.auth.passwordLabel), "long-enough-pass");
+    // The honeypot is aria-hidden and off-screen — only a scripted submitter
+    // fills it (fireEvent, since userEvent refuses hidden elements).
+    const honeypot = container.querySelector('input[name="website"]');
+    expect(honeypot).not.toBeNull();
+    fireEvent.change(honeypot as HTMLInputElement, {
+      target: { value: "https://spam.example" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: ua.auth.signUpAction }));
+
+    // Silent no-op: no register call, no session call, no error — nothing
+    // distinguishes detection to the submitter.
+    expect(registerAccountMock).not.toHaveBeenCalled();
+    expect(signInMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@
 // NFR-OBS-01). `streamTailoring` is mocked with scripted async generators so
 // these tests exercise the form's own state machine, not the real NDJSON
 // parsing (that's stream-tailoring.test.ts's job).
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -119,5 +119,66 @@ describe("TailoringForm (FR-TAILOR-01)", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: ua.action.tailor })).not.toBeDisabled();
     });
+  });
+
+  it("renders the CV textarea as controlled when cvText is provided (add-upload-cv 4.1)", async () => {
+    const onCvTextChange = vi.fn();
+    render(
+      <TailoringForm onResult={vi.fn()} cvText="from upload" onCvTextChange={onCvTextChange} />,
+    );
+
+    const textarea = screen.getByLabelText(ua.workspace.cvLabel);
+    expect(textarea).toHaveValue("from upload");
+
+    await userEvent.type(textarea, "x");
+    expect(onCvTextChange).toHaveBeenCalledWith("from uploadx");
+  });
+
+  it("relays a rate_limited rejection to onRateLimited and shows the inline copy", async () => {
+    streamTailoringMock.mockImplementation(
+      scripted([
+        { type: "error", code: "rate_limited" },
+        { type: "status", phase: "failed" },
+      ]),
+    );
+    const onRateLimited = vi.fn();
+    render(<TailoringForm onResult={vi.fn()} onRateLimited={onRateLimited} />);
+
+    await fillAndSubmit();
+
+    // Inline copy stays (the form owns the run's error UI)...
+    expect(await screen.findByRole("alert")).toHaveTextContent(ua.tailorRun.rateLimited);
+    // ...and the composing view is told once, so it can open the paywall
+    // above the form (FR-PAYWALL-01) without duplicating limit logic.
+    expect(onRateLimited).toHaveBeenCalledTimes(1);
+  });
+
+  it("silently drops a submission with a filled honeypot (NFR-SEC-04)", async () => {
+    streamTailoringMock.mockClear();
+    streamTailoringMock.mockImplementation(
+      scripted([{ type: "result", result: SCRIPTED_RESULT }]),
+    );
+    const onResult = vi.fn();
+    const { container } = render(<TailoringForm onResult={onResult} />);
+
+    await userEvent.type(screen.getByLabelText(ua.workspace.cvLabel), "cv text");
+    await userEvent.type(screen.getByLabelText(ua.workspace.jdLabel), "jd text");
+    // The honeypot is aria-hidden and off-screen — a real visitor never sees
+    // it; only a scripted submitter fills it (fireEvent, since userEvent
+    // rightly refuses to interact with hidden elements).
+    const honeypot = container.querySelector('input[name="website"]');
+    expect(honeypot).not.toBeNull();
+    fireEvent.change(honeypot as HTMLInputElement, {
+      target: { value: "https://spam.example" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: ua.action.tailor }));
+
+    // Silent no-op: no API call, no error, no progress, no disabled button —
+    // nothing distinguishes detection to the submitter.
+    expect(streamTailoringMock).not.toHaveBeenCalled();
+    expect(onResult).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: ua.action.tailor })).not.toBeDisabled();
   });
 });
