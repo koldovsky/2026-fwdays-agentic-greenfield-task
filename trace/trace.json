@@ -240,7 +240,17 @@
         "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/slots/grid.test.ts",
+        "lib/src/slots/subtract.test.ts",
+        "lib/src/slots/subtract.test.ts",
+        "lib/src/slots/subtract.test.ts",
+        "lib/src/slots/timezone.test.ts",
+        "lib/src/slots/timezone.test.ts",
+        "lib/src/slots/timezone.test.ts",
+        "lib/src/slots/timezone.test.ts",
+        "lib/src/slots/timezone.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -260,7 +270,14 @@
         "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/slots/widen.test.ts",
+        "lib/src/slots/widen.test.ts",
+        "lib/src/slots/widen.test.ts",
+        "lib/src/slots/widen.test.ts",
+        "lib/src/slots/widen.test.ts",
+        "lib/src/slots/widen.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -270,7 +287,12 @@
         "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/slots/rank.test.ts",
+        "lib/src/slots/rank.test.ts",
+        "lib/src/slots/rank.test.ts",
+        "lib/src/slots/rank.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -281,7 +303,10 @@
         "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/slots/grid.test.ts",
+        "lib/src/slots/grid.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -433,23 +458,7 @@
     },
     {
       "check": "test-trace",
-      "msg": "FR-SLOT-01 has no test annotated \"@trace FR-SLOT-01\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-SLOT-02 has no test annotated \"@trace FR-SLOT-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SLOT-03 has no test annotated \"@trace FR-SLOT-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-SLOT-04 has no test annotated \"@trace FR-SLOT-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-03 has no test annotated \"@trace FR-GUARD-03\""
     },
     {
       "check": "test-trace",
