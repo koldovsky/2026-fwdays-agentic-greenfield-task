@@ -1,7 +1,7 @@
 # MVP Capability Plan — Slice DAG (Phase 3)
 
-**G3 sign-off:** [ ] Human has reviewed this slice plan and approved the
-sequencing, ownership, and dependency graph below. Unchecked until signed.
+**G3 sign-off:** [x] Human has reviewed this slice plan and approved the
+sequencing, ownership, and dependency graph below. Signed 2026-07-04.
 
 > Purpose: the deterministic bridge between the 30 accepted MVP FRs
 > (`docs/requirements.md`) and the per-slice OpenSpec/implementation work.
