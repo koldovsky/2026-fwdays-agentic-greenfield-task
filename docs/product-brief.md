@@ -131,8 +131,9 @@ multi-teacher scheduling.
   questions, but only through the administrator's approval in the Question inbox —
   the agent has no way to write to it (FR-KB-01/02/03, FR-GUARD-06).
 - **Local and private by construction.** Long polling means no inbound
-  connections; the dashboard binds to localhost; secrets stay in an untracked
-  `.env` guarded by a gitleaks pre-commit hook; lead data never leaves the
-  machine (NFR-LOCAL-01, NFR-SEC-01, NFR-PRIV-01, TC-SEC-01).
+  connections; the dashboard binds to localhost; the Telegram token stays in an
+  untracked `.env` guarded by a gitleaks pre-commit hook, and the Anthropic side
+  authenticates via the developer's local user token — no API key on disk
+  (NFR-LOCAL-01, NFR-SEC-01, NFR-PRIV-01, TC-SEC-01).
 - **Ukrainian-first, kind, pressure-free.** The voice of the product is defined
   in DESIGN.md and holds everywhere — including refusals (BC-BRAND-01).

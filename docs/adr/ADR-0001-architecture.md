@@ -67,8 +67,11 @@ human-in-the-loop.
    FR-INTAKE-03..05), with exits to `soft_decline` (age < 4), the scope
    explanation (BC-SCOPE-01/02), and off-topic steering (FR-GUARD-05). Every
    change streams as a `STATE_DELTA`.
-7. **Secrets:** untracked `.env` + committed `.env.example`; a gitleaks
-   pre-commit hook blocks token leaks (TC-SEC-01).
+7. **Secrets:** untracked `.env` (carrying only `TELEGRAM_BOT_TOKEN`) +
+   committed `.env.example`; a gitleaks pre-commit hook blocks token leaks
+   (TC-SEC-01). Anthropic auth resolves from the developer's local **user
+   token** (`ant auth login` profile / `ANTHROPIC_AUTH_TOKEN`) — no Anthropic
+   API key exists on disk in the repo (NFR-SEC-01).
 
 ## Alternatives considered
 

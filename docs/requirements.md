@@ -89,7 +89,7 @@ rules are additionally unit-tested in `lib/` (TC-TEST-01/02, TC-PURE-01).
 | ID           | Description                                                                                                         | Status   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------- | -------- |
 | NFR-LOCAL-01 | Fully local run: Telegram via long polling (no public URL/webhook); dashboard on `localhost` only; the only outbound connections are the Telegram Bot API and the Anthropic API | accepted |
-| NFR-SEC-01   | Secrets (`TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`) come only from a local `.env`; nothing secret is committed (see TC-SEC-01) | accepted |
+| NFR-SEC-01   | Secrets: `TELEGRAM_BOT_TOKEN` comes only from a local `.env`; Anthropic auth uses the developer's local user token (`ant auth login` profile / `ANTHROPIC_AUTH_TOKEN`) — no Anthropic API key is stored in the repo or `.env`; nothing secret is committed (see TC-SEC-01) | accepted |
 | NFR-UX-01    | First agent reply to a lead within ~5 s; dashboard text streams as it is generated                                    | proposed |
 | NFR-PRIV-01  | Leads' personal data (SQLite file) never reaches the public repo; `*.db` is gitignored                                | accepted |
 | NFR-DX-01    | `npm run lint && tsc --noEmit && npm test` finish in < 60 s on a clean checkout                                       | proposed |
@@ -99,7 +99,7 @@ rules are additionally unit-tested in `lib/` (TC-TEST-01/02, TC-PURE-01).
 | ID          | Description                                                                                                          | Status   |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
 | TC-STACK-01 | TypeScript monorepo: `packages/bot` (grammY, long polling), `packages/agent`, `apps/dashboard` (Next.js App Router)   | accepted |
-| TC-STACK-02 | Agent LLM: Claude API (`claude-sonnet-4-6`) with a thin, visible tool-use loop — no heavy agent framework              | accepted |
+| TC-STACK-02 | Agent LLM: Claude API (`claude-sonnet-5`) with a thin, visible tool-use loop — no heavy agent framework                | accepted |
 | TC-PROTO-01 | Dashboard transport is **AG-UI** over SSE (CopilotKit on the frontend); A2UI payloads are a possible future extension, not MVP | accepted |
 | TC-DATA-01  | Storage: SQLite via `better-sqlite3`; single file, gitignored; slots pre-generated Mon–Fri 10:00–19:00 starts, 60-min step | accepted |
 | TC-SEC-01   | Pre-commit hook runs **gitleaks**; `.env.example` with placeholders is committed, `.env` never is                      | accepted |
