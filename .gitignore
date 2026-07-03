@@ -46,3 +46,10 @@ next-env.d.ts
 
 # project-factory temp clone (local init only)
 .project-factory-src/
+
+# homework demo intermediates (final mp4 is kept for submission)
+docs/homework-demo/voice-parts/
+docs/homework-demo/raw/
+docs/homework-demo/page@*.webm
+docs/homework-demo/test.mp3
+test-results/

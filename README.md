@@ -6,6 +6,27 @@
 
 > Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
 
+---
+
+## Цей форк: Weather Explorer
+
+У цій гілці — повний MVP **Weather Explorer** (Next.js 16, React 19): прогноз на 7 днів,
+comfort score на вихідні, пошук міста, карта OSM, порівняння до 3 міст, анімований фон.
+
+| Артефакт | Де |
+|----------|-----|
+| Запуск | `npm install && npm run dev` |
+| Правила агентів | [`AGENTS.md`](./AGENTS.md) |
+| Memory Bank | [`docs/memory/`](./docs/memory/README.md) |
+| Вимоги | [`docs/requirements.md`](./docs/requirements.md) |
+| OpenSpec | [`openspec/specs/`](./openspec/specs/) |
+| QA / демо-записи | [`docs/qa/`](./docs/qa/) |
+| **Інструкція здачі** | [**`docs/homework-submission.md`**](./docs/homework-submission.md) |
+
+Upstream (шаблон завдання): [koldovsky/2026-fwdays-agentic-greenfield-task](https://github.com/koldovsky/2026-fwdays-agentic-greenfield-task).
+
+---
+
 ## Що зробити
 
 1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.

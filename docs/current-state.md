@@ -1,53 +1,60 @@
 # Current State — Weather Explorer
 
-Last updated: 2026-06-27
+Last updated: 2026-06-30
 
 ## Phase
 
-Project Factory workflow is active. **MVP slice delivery complete (9/9).**  
-**QA proof pack authored; demo recordings generated (G6 evidence).**
+**MVP complete (9/9 slices). Homework submitted (fwdays Greenfield).**
+
+Project Factory workflow delivered Weather Explorer end-to-end.  
+**fwdays homework:** PR open, CI green, video + Memory Bank + agentic artifacts on fork.
 
 Completed:
 
-- G0: scaffold, factory loop, hooks, CI, trace scripts.
-- G1: requirements, product brief, visual design.
-- G2: baseline OpenSpec for all MVP capabilities.
-- G3: MVP capability plan exists.
-- G4 archived: all nine MVP slices (`add-comfort-score` … `add-bottom-jokes`).
-- G6 (partial): QA proof pack in `docs/qa/` + 9 Playwright demo clips with manifest.
+- G0–G4: scaffold, requirements, OpenSpec baseline, all nine MVP slices archived.
+- G6 (partial): QA proof pack + 9 Playwright demo clips + homework demo video.
+- **Homework (2026-06-30):** Memory Bank, PR #1, CI fixes, `homework-demo-final.mp4`.
 
 ## Current Slice
 
-Active slice: none (MVP slices complete)
+Active slice: **none** (delivery + homework submission complete)
 
 Last completed slice: `add-bottom-jokes`
 
-Status:
+## Homework submission — Vitalii Yurkov
 
-- QA proof pack: traceability matrix, manual test plan, demo script, risk register,
-  acceptance report, and `docs/qa/demo-recordings/manifest.json` (9 clips, all asserted).
-- Weather-specific `scripts/record-demos.mjs`; `@playwright/test` added for recordings.
-- Manual browser smoke passed on 2026-06-27.
+| Item | Link / path |
+|------|-------------|
+| Fork | https://github.com/arabuga/2026-fwdays-agentic-greenfield-task |
+| PR (submission) | https://github.com/arabuga/2026-fwdays-agentic-greenfield-task/pull/1 |
+| Branch | `homework/submission` |
+| Video | `docs/homework-demo/homework-demo-final.mp4` (also linked in PR) |
+| Live app | https://2026-fwdays-agentic-greenfield-task.vercel.app |
+| Guide | [homework-submission.md](./homework-submission.md) |
 
 ## Validation Snapshot
 
-Last green (2026-06-27):
+Last green (2026-06-30, CI on PR #1):
 
-- `npm run test:run` (50 tests)
-- `npm run lint`
-- `npm run build`
-- `npx @fission-ai/openspec@latest validate --all --strict`
-- `node scripts/check-recordings.mjs` — 9 clips, 0 failures
-- `node scripts/check-traceability.mjs --pre-commit` — 0 failures (FR-MAP-03 covered after clip 04 refresh)
+- GitHub Actions `verify` job — all steps pass (lint, tsc, traceability, trajectory, OpenSpec, coverage, integration, E2E, build)
+- `npm run test:run` — 50 unit tests
+- CI fix: `fetch-depth: 0` in checkout (trajectory needs full git history for `Slice:` trailers)
+
+## Memory Bank
+
+- `docs/memory/*` — operational summaries (pattern from `agent-ide-bootstrap`)
+- Rules: `.cursor/rules/memory-bank.mdc`, `.cursor/rules/docs-maintenance.mdc`
+- Handoff: read `activeContext.md` + this file at session start
 
 ## Known Deferrals
 
-- Trajectory/eval suite and vision-verify artifacts (optional G6 hardening).
+- Optional G6 hardening: full `npm run qa:verify`, eval-suite, vision-verify.
 - Live deployment Lighthouse / TTFB (NFR-PERF-01/02).
-- Future-phase scope from `docs/requirements.md` (accounts, push, native app).
+- Product owner sign-off on [mvp-acceptance-report.md](./qa/mvp-acceptance-report.md).
+- Future-phase scope: accounts, push, native app.
 
 ## Next Actions
 
-1. Run `npm run qa:verify` if trajectory/eval evidence exists.
-2. Optional: push branch and open PR for workshop delivery.
-3. Product owner sign-off on [mvp-acceptance-report.md](./qa/mvp-acceptance-report.md).
+1. **Idle / maintenance** — no active delivery slice. Resume only for new scope or course feedback.
+2. Optional: merge PR #1 into `main` on fork for a clean default branch.
+3. Optional: iterate on CodeRabbit review comments if any remain open.

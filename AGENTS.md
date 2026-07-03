@@ -23,12 +23,15 @@ This repo uses **Project Factory** — spec-driven delivery with deterministic g
 
 Before substantive work, read when present:
 
-1. `docs/current-state.md` — handoff (phase, next step)
-2. `docs/mvp-capability-plan.md` — slice order and FR ownership
-3. `openspec/specs/` — capability contracts
-4. `docs/adr/` — accepted decisions
+1. `docs/memory/` — Memory Bank (operational summaries; see `docs/memory/README.md`)
+2. `docs/current-state.md` — handoff (phase, next step)
+3. `docs/mvp-capability-plan.md` — slice order and FR ownership
+4. `openspec/specs/` — capability contracts
+5. `docs/adr/` — accepted decisions
 
-Update `docs/current-state.md` after each archived slice or gate passage.
+Update `docs/memory/activeContext.md` and `docs/memory/progress.md` when focus or
+status changes. Update `docs/current-state.md` after each archived slice or gate passage.
+Homework submission checklist: `docs/homework-submission.md`.
 
 At the end of every substantive response, propose the next recommended step so
 the user does not need to ask "what next?". Keep it short, grounded in
@@ -85,6 +88,14 @@ Git hooks (`.githooks/`) enforce this on every commit.
 - Recordings illustrate; evals decide pass/fail
 
 See `evals/README.md`.
+
+## Memory Bank
+
+Operational summaries: `docs/memory/*` (enforced by `.cursor/rules/memory-bank.mdc`).  
+Project Factory handoff: `docs/current-state.md`.  
+Deep dives: `openspec/specs/`, `docs/requirements.md`, `docs/qa/`.
+
+Keep memory files short; link out for proofs and long narratives.
 
 ## Skills (dynamic context)
 
