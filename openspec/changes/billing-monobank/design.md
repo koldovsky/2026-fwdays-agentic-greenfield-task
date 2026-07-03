@@ -40,8 +40,16 @@ Integrating the Monobank Acquiring API allows the platform to handle subscriptio
 - **Alternative:** Storing card tokens indefinitely for future restarts.
 - **Rationale:** When a user cancels their subscription, the token must be deleted at the end of the paid period using `DELETE /api/merchant/wallet/card`. Keeping inactive tokens exposes unnecessary risk and violates privacy compliance.
 
+### Decision 6: Caching exchange rates for dynamic billing
+- **Alternative:** Direct querying of Monobank currency API on every invoice request.
+- **Rationale:** Monobank's public API endpoints have strict rate limits (1 request per 5 minutes). Requesting rates on every subscription registration or renewal will lead to `429 Too Many Requests` responses. Storing the rate in a local cache (TTL: 1 hour) ensures stable billing page creation and protects our services from being blocked.
+
+### Decision 7: Multi-state resumption strategy
+- **Alternative:** Requiring users to always re-enter card credentials (new checkout flow).
+- **Rationale:** If the current paid period is still active, resumption only requires turning automatic renewal back on (`autoRenew: true`), avoiding redundant payment transactions. If the period has expired but a card token is still available (status `paused` or `suspended`), a merchant-initiated payment (`POST /api/merchant/wallet/payment`) minimizes user friction. If the token was already deleted (status `cancelled` and period ended), a new checkout flow is initiated to securely obtain a new card token.
+
 ## Risks / Trade-offs
 
 - **[Risk] Webhook delivery failure or delay** → **[Mitigation]** Standard fallback verification: when the cron job runs, it polls `GET /api/merchant/invoice/status` for any subscription with a pending `created` or `processing` status to reconcile its state before taking action.
-- **[Risk] Currency conversion and price volatility** → **[Mitigation]** The pricing tiers ($10.99/mo, $120/yr) are converted to UAH equivalent dynamically. The exchange rate will be queried from a reliable service (or a stable fallback conversion factor) when generating the invoice.
+- **[Risk] Currency conversion rate limit and API unavailability** → **[Mitigation]** The pricing exchange rate is cached locally with 1-hour TTL. If the currency API is completely unavailable or returns an error (e.g. rate limit HTTP 429), the system falls back to the last known database-stored exchange rate or a hardcoded fallback conversion factor of 41.5 UAH/USD.
 - **[Risk] Insufficient funds during recurring payment** → **[Mitigation]** The subscriber is immediately notified in their Telegram bot about the failed payment with a direct billing dashboard link to update card details or retry manually.
