@@ -236,7 +236,8 @@
     {
       "id": "FR-SLOT-01",
       "specs": [
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -245,7 +246,8 @@
     {
       "id": "FR-SLOT-02",
       "specs": [
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -254,7 +256,8 @@
     {
       "id": "FR-SLOT-03",
       "specs": [
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -263,7 +266,8 @@
     {
       "id": "FR-SLOT-04",
       "specs": [
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -273,7 +277,8 @@
       "id": "FR-GUARD-03",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -284,7 +289,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/slots/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -592,6 +598,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-DASH-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"slots\" is not archived"
     }
   ]
 }
