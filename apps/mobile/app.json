@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Honeydo",
+    "slug": "honeydo",
+    "scheme": "honeydo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#1C1A17",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blackflamy.honeydo",
+      "infoPlist": {
+        "NSSupportsLiveActivities": true
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.blackflamy.honeydo"]
+      }
+    },
+    "android": {
+      "package": "com.blackflamy.honeydo",
+      "adaptiveIcon": {
+        "backgroundColor": "#1C1A17",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true,
+            "usePrecompiledModules": false,
+            "useFrameworks": "static",
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "@bacons/apple-targets",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.767324284545-sritsbie7vtq10mmcva9ddn50r3g0r35"
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

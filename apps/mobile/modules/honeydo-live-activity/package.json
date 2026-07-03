@@ -1,0 +1,10 @@
+{
+  "name": "honeydo-live-activity",
+  "version": "0.1.0",
+  "description": "Honeydo Live Activity native module — thin ActivityKit bridge (start/update/end + stop event).",
+  "main": "index.ts",
+  "author": "Honeydo",
+  "homepage": "https://honeydo.app",
+  "license": "UNLICENSED",
+  "private": true
+}

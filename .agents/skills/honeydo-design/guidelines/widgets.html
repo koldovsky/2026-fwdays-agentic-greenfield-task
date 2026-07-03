@@ -1,0 +1,93 @@
+<!-- @dsCard group="Honeydo App" viewport="700x340" name="Home Screen widgets" subtitle="Small & medium — current state, one-tap start/stop, quick-starts" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #0f0d0b; font-family: var(--font-text); }
+  .wall {
+    display: flex; gap: 36px; padding: 36px 32px; justify-content: center; align-items: center;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(245,163,0,.10), transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(255,199,90,.08), transparent 50%),
+      #14110e;
+  }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .cap { font-size: 12px; color: #8a7e6c; font-weight: 600; }
+  .widget { border-radius: 26px; background: var(--surface); border: 1px solid var(--border);
+    box-shadow: 0 16px 40px rgba(0,0,0,.5); overflow: hidden; }
+  [data-theme] { /* themed via attr */ }
+  .small { width: 158px; height: 158px; padding: 16px; }
+  .medium { width: 338px; height: 158px; padding: 16px; display: flex; gap: 14px; }
+
+  .wlabel { font-size: 12px; color: var(--text-muted); font-weight: 700; letter-spacing: .03em; display: flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-faint); }
+  .desc { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 6px; line-height: 1.2; }
+  .time { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; font-weight: 800; color: var(--accent); letter-spacing: -.02em; }
+  .stopbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent); font-weight: 800; font-family: var(--font-rounded); font-size: 14px; border: none; }
+  .startbtn { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+  .quick { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 12px; background: var(--surface-alt); border: 1px solid var(--border); }
+  .qdot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .qname { font-size: 13px; color: var(--text); font-weight: 600; flex: 1; }
+  .qplay { color: var(--accent); }
+  .sq { width: 14px; height: 14px; border-radius: 4px; background: currentColor; }
+</style>
+</head>
+<body>
+  <div class="wall">
+    <!-- SMALL · running -->
+    <div class="col">
+      <div class="widget small" data-theme="dark" style="background:var(--surface)">
+        <div style="display:flex;flex-direction:column;height:100%;justify-content:space-between">
+          <div>
+            <div class="wlabel"><span class="dot"></span> RUNNING</div>
+            <div class="desc">Design review</div>
+          </div>
+          <div class="time" style="font-size:30px">1:24</div>
+          <button class="stopbtn"><span class="sq" style="background:var(--on-accent)"></span> Stop</button>
+        </div>
+      </div>
+      <div class="cap">Small · running</div>
+    </div>
+
+    <!-- SMALL · idle (light) -->
+    <div class="col">
+      <div class="widget small" data-theme="light" style="background:var(--surface)">
+        <div style="display:flex;flex-direction:column;height:100%;justify-content:space-between">
+          <div>
+            <div class="wlabel">HONEYDO</div>
+            <div class="desc" style="color:var(--text-muted)">Not tracking</div>
+          </div>
+          <button class="stopbtn" style="background:var(--accent);color:var(--on-accent)">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Start
+          </button>
+        </div>
+      </div>
+      <div class="cap">Small · idle (light)</div>
+    </div>
+
+    <!-- MEDIUM -->
+    <div class="col">
+      <div class="widget medium" data-theme="dark" style="background:var(--surface)">
+        <div style="flex:1.1;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--border);padding-right:14px">
+          <div>
+            <div class="wlabel"><span class="dot"></span> RUNNING</div>
+            <div class="desc">Design review</div>
+          </div>
+          <div class="time" style="font-size:34px">1:24:08</div>
+          <button class="stopbtn"><span class="sq" style="background:var(--on-accent)"></span> Stop</button>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:7px;justify-content:center">
+          <div style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:.03em">QUICK START</div>
+          <div class="quick"><span class="qdot" style="background:#7BC57F"></span><span class="qname">Inbox</span><span class="qplay"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>
+          <div class="quick"><span class="qdot" style="background:#5B8DEF"></span><span class="qname">Meetings</span><span class="qplay"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>
+          <div class="quick"><span class="qdot" style="background:#9B6A9E"></span><span class="qname">Reading</span><span class="qplay"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>
+        </div>
+      </div>
+      <div class="cap">Medium · running + quick-starts</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!-- @dsCard group="Brand" viewport="700x180" name="Elevation & running glow" subtitle="Warm-tinted soft shadows; amber glow signals a live timer" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; color: #F4ECDD; font-family: var(--font-text); }
+  .wrap { display: flex; gap: 22px; padding: 26px 26px; align-items: center; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 120px; height: 78px;
+    display: flex; align-items: flex-end; padding: 10px; font-size: 11px; color: #B8A88E; }
+  .glow { border-color: var(--accent-soft); box-shadow: var(--shadow-glow); color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" style="box-shadow:var(--shadow-1)">shadow-1</div>
+    <div class="card" style="box-shadow:var(--shadow-2)">shadow-2</div>
+    <div class="card" style="box-shadow:var(--shadow-3)">shadow-3</div>
+    <div class="card glow">running glow</div>
+  </div>
+</body>
+</html>

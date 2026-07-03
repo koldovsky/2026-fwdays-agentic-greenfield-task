@@ -7,6 +7,9 @@ Thumbs.db
 .vscode/
 *.log
 
+# Local agent settings (personal, not shared)
+.claude/settings.local.json
+
 # Секрети / змінні середовища
 .env
 .env.*
@@ -25,3 +28,15 @@ venv/
 target/
 bin/
 obj/
+
+# TS / Expo / Metro
+*.tsbuildinfo
+.expo/
+.metro-health-check*
+
+# Test coverage
+coverage/
+
+
+# Native
+/ios

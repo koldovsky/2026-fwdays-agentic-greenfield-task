@@ -1,0 +1,901 @@
+# Current state
+
+Running hand-off log. **Newest entry first.** Read at the start of a session; append
+at the end of one. `docs/requirements.md` is ground truth — this file is a memory aid.
+See AGENTS.md → "Read first — project docs" for the format.
+
+---
+
+## 2026-07-03T00:25Z — Implemented `add-live-activity` (Phase 6, source scaffold)
+
+Built the first **native iOS extension** — an ActivityKit Live Activity for the running timer —
+as committable source. Mobile `lint` + `typecheck` green; the native side is **not** covered by
+the repo `gate` and is verified by prebuild + an on-device Xcode build (iOS 16.2+). FR-LIVE-01→05,
+TC-NATIVE-01/02/03, NFR-WIDGET-01.
+
+- **Build pipeline (`app.json`):** added `@bacons/apple-targets` plugin; App Group
+  `group.com.blackflamy.honeydo` entitlement on the app; `NSSupportsLiveActivities: true`; iOS
+  deployment target → **16.4** (via `expo-build-properties`; its floor, ≥ the 16.2 Live Activity
+  display minimum). `@bacons/apple-targets@^4` added to
+  `apps/mobile` devDeps.
+- **Extension (`apps/mobile/targets/live-activity/`):** `expo-target.config.js` (widget target +
+  App Group), `HoneydoTimerAttributes` (static `entryId`; ContentState `title`/`startedAt`/
+  `isRunning`), `LiveActivity.swift` (WidgetBundle + Lock Screen + Dynamic Island compact/expanded/
+  minimal, elapsed via `Text(timerInterval:)` — no push/poll), `StopTimerIntent.swift`
+  (`LiveActivityIntent`, iOS 17+ in-place; 16.2 degrades to a `honeydo://` deep-link).
+- **Native module (`apps/mobile/modules/honeydo-live-activity/`):** Expo module `HoneydoLiveActivity`
+  — `start`/`update`/`end` over ActivityKit, observes the `honeydo.timer.stopRequested` Darwin
+  notification → emits `onStopRequested`, and reads/writes the App Group (`currentActivity`,
+  `pendingStop`). Attributes struct duplicated here (must stay in sync with the extension copy).
+- **JS (`apps/mobile/src`):** typed, no-op-safe bridge `native/liveActivity.ts`
+  (`requireOptionalNativeModule`); `hooks/useLiveActivitySync.ts` binds the activity to
+  `useRunningEntry()` (start/update/end), routes a Live-Activity Stop back through the existing
+  `useStopEntry` mutation (server stays authority, TC-NATIVE-03), and reconciles on foreground
+  (pending App-Group stop + re-sync). Mounted once as `<LiveActivityBridge />` inside the query
+  provider in `App.tsx`.
+
+**State now:** all JS + native **source** is in place and JS gates are green; nothing native has
+been compiled/run here. `ios/`/`android/` are CNG-gitignored, so the tracked truth is `app.json` +
+`targets/` + `modules/`. Open tasks are **1.4** (`npm run prebuild` on a Mac) and **6.2** (Dev
+Client device/simulator smoke). Interactive Stop is effectively iOS 17+; 16.2 shows the activity
+and deep-links to stop. Needs an Apple Developer account for the App Group; can't run in Expo Go.
+
+**Next steps:** on a Mac — `npm run prebuild`, open Xcode, add the App Group capability (dev team),
+build a Dev Client, run the 6.2 smoke. This change also stands up the App Group + prebuild pipeline
+that **home-widget** will reuse. Then `/opsx-archive add-live-activity`.
+
+---
+
+## 2026-07-02T21:15Z — Archived `add-daily-insight` (specs synced)
+
+Synced the `daily-insight` delta and archived the change. `openspec validate --specs` green
+(8/8).
+
+- **Spec sync:** new capability `openspec/specs/daily-insight/spec.md` created from the delta
+  (all 9 requirements verbatim: FR-INSIGHT-01→06, plus authn/scoping and the Stats card;
+  TC-STACK-07, TC-PURE-01, TC-TEST-01, NFR-COST-01, NFR-OBS-01). Gave it a real Purpose (fresh
+  capability, no prior main spec — same as `profile-stats`).
+- **Archive:** `openspec/changes/add-daily-insight/` →
+  `openspec/changes/archive/2026-07-03-add-daily-insight/`.
+- **Warning:** archived with task **7.2** (manual device smoke) still open — code + automated
+  gate are green; only on-device verification (and optional live-key `source:"llm"` check) is
+  outstanding (same posture as `add-tags`/`add-profile-stats`).
+
+**State now:** Phases 1–5 (foundation, time-entries, tags, profile-stats, daily-insight)
+implemented and archived. Next capability per the plan is the **home widget** (Phase 6).
+
+**Next steps:** run the 7.2 smoke when convenient; then `/opsx-propose home-widget`.
+
+---
+
+## 2026-07-02T21:00Z — Implemented `add-daily-insight` (Phase 5, AI insight)
+
+Built the daily-insight capability end-to-end, shared-first + test-first. Repo `gate` green
+(shared 51 tests incl. 11 new; API 19 tests incl. 5 new) and mobile lint/typecheck green — all
+with **no** Anthropic key (deterministic fallback path). FR-INSIGHT-01→06, NFR-COST-01,
+NFR-OBS-01, TC-STACK-07, TC-PURE-01, TC-TEST-01.
+
+- **Shared (`@honeydo/shared`):** `localDateKeyInTz` (TZ-aware local-day key via `Intl`),
+  `InsightSummary`/`DailyInsight` contracts, and pure `insight.ts` — `buildInsightInput`
+  (14-day window bucketed by local start-day, avg of prior 13, top-3 tags), `fallbackInsight`
+  (deterministic sentence), `sanitizeInsight` (strip emoji, ≤ 200 chars, reject invented
+  figures → `null`). New `insight.test.ts` (11 tests).
+- **API (`@honeydo/api`):** `DailyInsight` model + migration `20260702205032_add_daily_insight`
+  (unique `(userId, localDate)` = one generation/day). `AnthropicService` (SDK wrapper, ~4s
+  abort, disabled when no key), `InsightService` (tz resolve→UTC, shape, cache upsert, sanitize,
+  fallback on disabled/timeout/reject), `InsightController` (`GET /insight?tz=`,
+  `POST /insight/refresh?tz=`, JWT-guarded + user-scoped) wired into `AppModule`.
+  `@anthropic-ai/sdk` added; `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` in `.env.example`.
+- **Mobile (`@honeydo/mobile`):** `api/insight.ts` (+device IANA tz), `useInsight` +
+  `useRefreshInsight` (per-day cached query), `InsightCard` (tokens only, calm loading, quiet
+  retry), mounted at the top of `StatsScreen`.
+
+**State now:** LLM never reaches the client; key absent → fallback everywhere, so dev/CI need
+no key. All automated gates green; migration applied to local DB. Only manual task open is 7.2
+(on-device smoke; optionally set a key to confirm `source:"llm"`).
+
+**Next steps:** run the 7.2 smoke when convenient, then `/opsx-archive add-daily-insight`.
+Phase 6 per the plan is the **home widget** (`docs/capabilities/08-home-widget.md`).
+
+---
+
+## 2026-07-02T20:20Z — Archived `add-profile-stats` (specs synced)
+
+Synced the `profile-stats` delta and archived the change. `openspec validate --specs` green
+(7/7).
+
+- **Spec sync:** new capability `openspec/specs/profile-stats/spec.md` created from the delta
+  (all 6 requirements verbatim: FR-STATS-01→05, TC-STACK-06). Gave it a real Purpose (was a
+  fresh capability, no prior main spec to merge).
+- **Archive:** `openspec/changes/add-profile-stats/` → `openspec/changes/archive/2026-07-02-add-profile-stats/`.
+- **Warning:** archived with task **7.2** (manual device smoke) still open — code + automated
+  gate are green; only on-device verification is outstanding (same posture as `add-tags`).
+
+**State now:** Phases 1–4 (foundation, time-entries, tags, profile-stats) implemented and
+archived. Next capability per the plan is **`daily-insight`** (Phase 5).
+
+**Next steps:** run the 7.2 device smoke when convenient; then `/opsx-propose daily-insight`.
+
+---
+
+## 2026-07-02T20:12Z — Implemented `add-profile-stats` (Stats + Profile identity)
+
+Built Phase 4 `profile-stats` — the review surface — shared-first, client-side aggregation, no
+API/DB work. Full repo `gate` green (shared 40 tests incl. 13 new; API 14) + mobile lint/typecheck.
+
+- **Shared (`@honeydo/shared`)** — new pure, unit-tested aggregation (TC-PURE-01, TC-TEST-01):
+  - `stats.ts`: `weeklyTotals(entries, now)` (last 7 local days, oldest first — FR-STATS-02),
+    `periodTotals` (`today`/`week`/`allTime`, week == chart sum — FR-STATS-03), `tagTotals`
+    (per-tag, counts toward every tag, untagged/running excluded, sorted — FR-STATS-04), plus
+    `entriesOnDay`/`entriesInLastNDays`. All take `now` for determinism; start-day attribution
+    (FR-ENTRY-10); running entries count 0.
+  - `dates.ts`: extracted `localDateKey` (now shared by `groupEntriesByDay` and stats).
+  - Contracts: `TagTotal`, `PeriodTotals` (`DayTotal` already existed). `formatHoursShort` added
+    to `duration.ts`.
+- **Mobile (`@honeydo/mobile`)** — filled the two placeholder tabs:
+  - **Stats** (`StatsScreen`): 3-up totals (Today accent / This week / All time), a
+    `WeekChart` (react-native-svg bars, today highlighted — TC-STACK-06/FR-THEME-03), and a
+    Top-tags card with a Week/All-time `SegmentedControl`. Loading, calm error, and first-run
+    empty states (NFR-OBS-01).
+  - **Profile** (`ProfileScreen`): added an `Avatar` monogram beside name/email/provider
+    (FR-STATS-01).
+  - New: `hooks/useStats.ts` (derives from the existing `useEntries()` cache, `now` captured
+    per mount, memoized — no new query), `components/{Avatar,StatBlock,TopTag,WeekChart}.tsx`.
+    Tokens only.
+
+**Deferred (documented in the change):** server-side pre-aggregated stats endpoints → moved to
+`daily-insight` (needs the user's TZ server-side); Google **profile-photo** avatars → need an
+`auth` `avatarUrl` contract + persistence (ships initials monogram now); daily **goal line** on
+the chart → `streaks`. "This week" is a rolling 7-day window (matches FR-STATS-02).
+
+**State now:** all `add-profile-stats` tasks done except **7.2** (manual device smoke). Change
+not yet archived.
+
+**Next steps:** device smoke (7.2) → then `/opsx-archive` for `add-profile-stats` (sync the
+`profile-stats` delta spec to `openspec/specs/`), then Phase 5 `daily-insight`.
+
+---
+
+## 2026-07-02T19:50Z — Archived `add-tags`; promoted its specs to main
+
+`/openspec-archive-change add-tags`: all 4 artifacts done, 28/29 tasks (only 7.2 device smoke
+outstanding — archived with confirmation). Synced the delta specs to main first:
+- **New `tags` spec** (`openspec/specs/tags/spec.md`): create / assign / rename-delete-detach /
+  filter-history / user-scoped requirements. (FR-TAG-01→04, BC-SCOPE-01, FR-AUTH-06)
+- **`time-entries` spec**: "Continue a past entry" finalized to copy the description **and its
+  tags**, plus a new "Continue copies the source entry's tags" scenario. (FR-ENTRY-08)
+
+Change moved to `openspec/changes/archive/2026-07-02-add-tags/`; `openspec list` is now empty.
+
+**Next steps:** run the 7.2 device smoke against a build; then the next capability per
+`docs/implementation-plan.md` (profile-stats → daily-insight → home-widget).
+
+---
+
+## 2026-07-02T19:45Z — Timer composer glow no longer clipped by the header
+
+The running/composer card's amber glow was being cut off at the top: `StartControl` lived
+inside the Timer `ScrollView`, which clips to its own bounds (right under the header), so the
+26px-radius shadow got sheared — prior top padding (`ed50ad6`) couldn't fully protect it.
+Moved `StartControl` **out** of the `ScrollView` into the plain (non-clipping) `SafeAreaView`
+column; only the "Today" list scrolls now, and the full glow shows in composing/running/focused
+states. (FR-ENTRY-01 UI)
+
+Also investigated the reported first-tab-switch header flash: the nav config is already hardened
+(`lazy:false`, `detachInactiveScreens:false`, `animation:'none'`, `initialWindowMetrics`) and
+`animation:'none'` applies no opacity interpolation — so a blank→content flash on a **dev-client**
+build is most likely a debug-only first-realization cost (or `FlashList`'s first layout on
+History). Left unchanged pending a release-build check — no code change made.
+
+**State now:** mobile lint + typecheck clean. Committed on `dev`.
+
+---
+
+## 2026-07-02T17:15Z — Tags UI polish round 2 (6 items)
+
+1. History pull-to-refresh now works anywhere: wrapped the `FlashList` in a `flex:1` view so
+   it fills below the filter chips (was sized to content).
+2. `ColorPicker` reworked — dropped the hex input for a **draggable hue slider** (rainbow
+   `LinearGradient` + `PanResponder`, HSL→hex) alongside the preset swatches; no hex typing.
+3. Same `flex:1` wrap fixes the filter-then-All overlap where the first entry hid under the chips.
+4. Profile "Manage tags" restyled to the design SettingRow: grouped card, larger row, icon in a
+   colored (blue `tagPalette[2]`) rounded square with a white (`onColor`) glyph.
+5. Reduced the Manage Tags "New tag" bottom margin.
+6. Manage Tags back control is now a custom bare `ChevronLeft` (`headerLeft`) — no button
+   background/border/label.
+
+New token `onColor` (white on saturated chips, both schemes).
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. All JS.
+Committed on `dev`. `add-tags` still 28/29 (device smoke).
+
+---
+
+## 2026-07-02T16:30Z — Tags UI polish (11 review items)
+
+1. Tag selection added to the Timer "What are you working on?" composer (`StartControl` now
+   hosts a `TagPicker`; start passes `tagIds`).
+2. History filter row height constrained (horizontal `ScrollView` `flexGrow:0` + `maxHeight`)
+   — no longer stretches to fill the screen.
+3. Active filter chip now matches design: **solid amber** fill + `on-accent` text/dot.
+4. Pull-refresh spinner is per-screen local state (not the shared query's `isRefetching`), so
+   refreshing History no longer spins Timer.
+5. History refresh spinner is amber (custom `RefreshControl` with `tintColor`), matching Timer.
+6. Pull-to-refresh works from anywhere on the screen (Timer `contentContainerStyle` `flexGrow:1`
+   so the whole area is pannable).
+7–9. Manage Tags redesigned: grouped card list; the **New tag** action moved to a bottom
+   primary `Button` (Empty-State style, `Plus` icon).
+10. Manage Tags back button is now a bare chevron (`headerBackButtonDisplayMode: 'minimal'`) —
+    no "ProfileHome" label.
+11. New reusable `ColorPicker` (preset palette **+ custom hex input**) used by the entry-form
+    `TagPicker` and the Manage Tags editor.
+
+Also fixed a same-millisecond timing flake in the entries tag test.
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. All JS —
+hot-reloads. Committed on `dev`. `add-tags` still at 28/29 (device smoke 7.2 outstanding).
+
+---
+
+## 2026-07-02T15:30Z — Implemented `add-tags` mobile (groups 4–7; 28/29 tasks)
+
+**Done:** `/opsx:apply add-tags` mobile layer, on top of the shared+API layer from `065018a`.
+- **Data:** `api/tags.ts` + `useTags` (list/create/update/delete; delete optimistic, invalidates
+  tags + entries). Entry mutations now send `tagIds`; optimistic running entry carries `tags: []`.
+- **Assign:** `TagPicker` (multi-select chips + inline create with a preset color palette) wired
+  into `EntryFormModal` (seeds from the entry, submits `tagIds`); colored tag dots on `TimerEntry`
+  rows. (FR-TAG-01/02)
+- **Filter:** `FilterChips` row on History ("All" + per-tag), `filterEntriesByTags` before
+  grouping, calm "no entries with these tags" state. (FR-TAG-04)
+- **Manage Tags:** Profile tab wrapped in a `ProfileStack` (Profile → ManageTags); a "Manage tags"
+  row on Profile pushes to `ManageTagsScreen` (list, rename, recolor, delete-with-confirm, create;
+  delete detaches via the API and refreshes entries). (FR-TAG-03) Profile now shows the user's name.
+- New tag color palette centralized as `tagPalette` in `tokens.ts` (no raw hex in components).
+
+**State now:** `npm run gate` green (shared 24, api 14); mobile lint + typecheck clean. **No new
+native deps** — all hot-reloads (restart the API for the schema change if needed). 28/29 tasks;
+only 7.2 (device smoke) remains.
+
+**Next steps:** device smoke (create/assign/filter/rename/recolor/delete + continue-copies-tags),
+then `/opsx:archive add-tags`. Then capability 06 `profile-stats` (`/opsx:propose add-profile-stats`)
+— weekly chart + totals + per-tag breakdown. Small debts still open: `danger`/`scrim` token CSS
+sync, auth `name` in `openspec/specs/auth`.
+
+---
+
+## 2026-07-02T14:00Z — Archived `add-time-entries-core` (capability 04 complete)
+
+**Done:** On-device smoke passed ("all good"); marked task 6.2 done (**32/32**) and ran
+`openspec archive add-time-entries-core -y`. Promoted the delta into a new living spec
+`openspec/specs/time-entries/spec.md` (**+11 requirements**, validates `--strict`); change moved to
+`openspec/changes/archive/2026-07-02-add-time-entries-core/`. No active changes remain.
+
+**State now:** MVP core loop is live end-to-end (shared pure logic + API single-running invariant +
+Timer/History UI). Five living specs: foundation, auth, app-shell, theming, **time-entries**.
+`npm run gate` green.
+
+**Next steps:** Capability 05 **`tags`** (`/opsx:propose add-tags`) — tag CRUD + assign to entries
++ History filter (FR-TAG-01→04), building on this loop. Still-open small debts: mirror the
+`danger`/`scrim` tokens into `.agents/skills/honeydo-design/tokens/`, and reflect the auth `name`
+addition in `openspec/specs/auth`.
+
+---
+
+## 2026-07-02T13:30Z — Fourth fixes pass (interaction polish)
+
+1. **Pull-to-refresh** now works: Timer `ScrollView` got `alwaysBounceVertical` (short content
+   wouldn't pull before); History `FlashList` uses `onRefresh`/`refreshing` props.
+2. **Running glow**: a translucent card can't cast a visible iOS shadow, so the running Timer card
+   is now wrapped in an opaque glow wrapper that casts the amber shadow **outside** the box.
+3. **Date fields redesigned**: grouped under a `WHEN` card with a divider + "tap the date or time"
+   hint; rows no longer look like text inputs (label + native compact pickers as the obvious
+   controls; accentColor tint).
+4. **Modal timing**: removed the note `autoFocus`, so the keyboard no longer pops before the sheet.
+5. **Tab-switch flash**: `TabNavigator` sets `lazy: false`, `animation: 'none'`, and an opaque
+   `sceneStyle` bg — no more first-switch flash of the previous screen.
+6. **Keyboard flicker**: note inputs (Timer + modal) set `autoCorrect={false}`/`spellCheck={false}`
+   to stop the QuickType/suggestions bar blinking.
+7. **Lingering composer keyboard**: `+` dismisses the keyboard before opening the sheet; the Timer
+   ScrollView dismisses on drag; the composer collapses back to the hero on blur when empty.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. All JS — visible on Fast
+Refresh (only the earlier native deps/migration need the one-time rebuild). Same outstanding items:
+on-device smoke (task 6.2), token-CSS sync, auth-spec name note; then archive.
+
+---
+
+## 2026-07-02T12:45Z — Third fixes pass + dev-server DX
+
+**Root cause for two reported bugs:** `npm run api` was `nest start` (no watch), so a
+long-running dev server served **stale** code — hence "property name should not exist" on sign-up
+and Google names never saving (old server had neither the `name` DTO nor the extraction). Fixed by
+pointing `npm run api` → `start:dev` (**watch**); added `api:once` for the non-watch variant. The
+name code itself was already correct; **restart the API** to pick it up.
+
+**Also done (UI):**
+- Empty-state (first run) now shows the same top **amber gradient** as the auth screen; normal
+  (non-empty) Timer/History keep a plain background.
+- Add/edit sheet: switched `animationType` slide→**fade** with a warm **`scrim`** token, so the dim
+  no longer "rises" as ugly grey.
+- Running timer card + running history row now cast the **amber glow** (design `--shadow-glow`),
+  not the neutral dark shadow.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. New tokens (`danger`,
+`scrim`) still not mirrored to `.agents/skills/honeydo-design/tokens/`; auth `name` still not in
+`openspec/specs/auth`. On-device rebuild + smoke (task 6.2) still outstanding — and **restart the
+local API** before retesting sign-up / Google name.
+
+**Next steps:** restart API + on-device smoke, then `/opsx:archive add-time-entries-core`.
+
+---
+
+## 2026-07-02T12:00Z — Second fixes pass: destructive Sign out, picker UX, refresh, keyboard
+
+**Done:** Seven small feedback items.
+1. Added a `danger` token (both themes) + `Button destructive` prop; **Sign out** now reads red
+   (matches design `#E07A5F`).
+2. Add/edit sheet: iOS date/time uses the native **compact** picker (opens its own popover — no
+   overlap with the note input, Cancel stays reachable); picking dismisses the keyboard.
+3. The entry form now **resets** to fresh defaults every time the sheet opens.
+4. Removed the underline from `TextLink` (amber already signals it; also applied to the modal
+   Cancel/Delete which now use `danger`).
+5. **Google name:** root cause was the returning-identity early-return not backfilling — the API
+   now backfills `name` from the verified Google profile on sign-in when missing (also covers
+   accounts created before name capture). Verify in the DB via `npx prisma studio` (User table).
+6. **Pull-to-refresh** on Timer + History (RefreshControl → `refetch`).
+7. iOS keyboard **Done** bar via a single root `KeyboardDoneAccessory` (`InputAccessoryView`);
+   the shared `Input` and the Timer note field reference it.
+
+**State now:** `npm run gate` green (shared 19, api 7). Committed on `dev`. `danger` token added to
+`tokens.ts` but **not yet mirrored** into `.agents/skills/honeydo-design/tokens/` — sync if we keep
+it. Still needs the on-device rebuild + smoke (task 6.2).
+
+**Next steps:** on-device smoke of all the above, then `/opsx:archive add-time-entries-core`.
+
+---
+
+## 2026-07-02T11:10Z — Post-review fixes: user name, empty-state CTA, keyboard, motion
+
+**Done:** Feedback pass on the time-entries UI.
+- **User name (spans auth):** added `User.name` (Prisma + migration `user_name`), `AuthUser.name`
+  + `SignUpRequest.name` contracts, Google `id_token` name extraction (name/given_name), name
+  stored on sign-up + Google provision (backfilled on link). Sign-up form gained an optional
+  **Name** field; the Timer header greeting now reads "GOOD MORNING, {first name}". *(Small
+  enhancement to the archived `auth` capability — not yet reflected in `openspec/specs/auth`;
+  formalize if we want the spec to track it.)*
+- **Empty state:** restored the centered "Start your first entry" CTA (I'd wrongly moved it to a
+  top-right `+`; the `+` stays as the manual-add affordance). Tapping the CTA reveals the composer
+  with the note input auto-focused (FR-SHELL-03).
+- **Keyboard:** the add/edit sheet now wraps in `KeyboardAvoidingView` so the keyboard no longer
+  covers the fields.
+- **Motion:** new `PressableScale` (spring scale) replaces instant `pressed` transforms on
+  `Button` and the round Timer/entry controls — presses settle smoothly (design-system calm motion).
+
+**State now:** `npm run gate` green (shared 19, api 7; lint + typecheck + builds pass). Committed
+on `dev`. Still needs the on-device rebuild + smoke (task 6.2) — now also verify the sign-up name
+field, greeting, and the smoother button feel.
+
+**Next steps:** unchanged — on-device smoke, then `/opsx:archive add-time-entries-core`, then
+`/opsx:propose add-tags`.
+
+---
+
+## 2026-07-02T10:25Z — Implemented `add-time-entries-core` (31/32 tasks)
+
+**Done:** `/opsx:apply add-time-entries-core` — the MVP core loop across all three packages,
+in two committed passes.
+- **Shared:** `formatDurationHms` (`h:mm:ss`, guarded) + pure `groupEntriesByDay` (local-day
+  buckets, newest-first, per-day totals, midnight-crossers on their start day); user-scoped
+  `TimeEntry` contract + `ManualTimeEntry`/`UpdateTimeEntry`. FR-ENTRY-07/09/10, TC-PURE-01.
+- **API:** `TimeEntry` gains a `userId` owner (+ migration, `@@index([userId, startedAt])`);
+  `time-entries` module behind `JwtAuthGuard`, `@CurrentUser`-scoped. **Single-running invariant
+  enforced server-side in a transaction** (start & continue stop any running entry first). Full
+  CRUD + stop/manual/continue. FR-ENTRY-01→06/08/11, BC-SCOPE-01.
+- **Mobile:** TanStack Query provider + `api/timeEntries.ts` + `useTimeEntries` hooks (optimistic
+  start/stop/continue/delete with rollback) + `useElapsed` live tick. Functional **Timer** screen
+  (start/running control card, live clock, Today list, add/edit sheet) and **History** screen
+  (FlashList day groups + per-day totals). New primitives: `TimerEntry`, `EntryFormModal`
+  (RHF + Zod, native date-time pickers). NFR-PERF-01/02, TC-STACK-05.
+- New deps (native → need a rebuild): `@shopify/flash-list`, `@react-native-community/datetimepicker`;
+  and JS-only `@tanstack/react-query`.
+
+**State now:** `npm run gate` green (shared 19 tests, api 7 tests incl. invariant + cross-user
+isolation, lint + typecheck + builds all pass). `openspec validate add-time-entries-core --strict`
+passes. 4/4 artifacts, **31/32 tasks** — committed in 2 layers on `dev` (shared+api, then mobile).
+
+**Next steps:** Task 6.2 remains — **manual on-device smoke** (start→stop→manual→edit→delete→
+continue; confirm one running entry + day grouping). Needs a dev-client **rebuild** (`npm run
+ios:device`) since flash-list + datetimepicker are native. After smoke passes, `/opsx:archive
+add-time-entries-core` (promotes `time-entries` spec). Then capability 05 `tags`
+(`/opsx:propose add-tags`) — adds tag assignment + History filter on top of this loop. Still
+deferred: the `accentText` AA token (theming) and the untracked `.claude/settings.json`.
+
+---
+
+## 2026-06-30T23:30Z — Implemented `add-auth` (33/35 tasks)
+
+**Done:** `/opsx:apply add-auth` — auth capability end to end. Shared: pure `validatePassword`
+(100% cov) + auth contracts. API: `User`/`AuthIdentity`/`RefreshToken` + migration; `AuthModule`
+with argon2 hashing, short-lived access JWT + sha256-hashed rotating refresh tokens (reuse
+detection + logout revocation), Google id_token verification with provision/link, and
+`JwtAuthGuard`/`@CurrentUser`/`GET /auth/me`. Mobile: secure token store, fetch client with
+transparent refresh-on-401, `useAuth` context, and a token-styled auth screen (email/password +
+Google PKCE) with an auth gate. Committed in 7 focused layers on `dev`. FR-AUTH-01→06, NFR-SEC-01.
+
+**State now:** `npm run gate` green; mobile lint+typecheck green; **13 API e2e pass** (password
+signup/signin/weak/dup/badcreds, refresh rotate + reuse-reject, logout, Google provision/link,
+/me 401+200). `openspec validate add-auth --strict` passes. Change is 4/4 artifacts, 33/35 tasks.
+
+**Next steps:** Two tasks remain: 8.4 (mobile restyle — waits on brand decision) and 9.4
+(`/opsx:archive add-auth`). Mobile flow is typecheck/lint-clean but **not yet run on a device**
+(no simulator here) — verify the sign-in/up/Google flow on-device before archiving. Then
+Phase 1 continues with app-shell + theming.
+
+---
+
+## 2026-06-30T23:00Z — Proposed `add-auth` (Phase 1, capability 01)
+
+**Done:** `/opsx:propose add-auth` — created the change with all 4 artifacts (proposal, design,
+specs/auth/spec.md, tasks), `valid --strict`. Covers FR-AUTH-01→06 + NFR-SEC-01: email/password
++ Google (OAuth2+PKCE) sign-in, one account per verified email, JWT access + DB-backed rotating
+refresh with reuse detection, argon2 hashing, `JwtAuthGuard`/`@CurrentUser`, and a shared pure
+`validatePassword`. 9 task groups, test-first shared → api → mobile.
+
+**State now:** Planning only, no implementation yet. `add-auth` is the active OpenSpec change.
+
+**Next steps:** `/opsx:apply add-auth` to implement (start with the shared validator, test-first).
+Auth-screen final styling still waits on the brand decision (backend/shared work is unblocked).
+
+---
+
+## 2026-06-30T22:45Z — Archived `add-foundation`; `foundation` spec promoted
+
+**Done:** Completed the last two foundation tasks (3.5 boot verified this session; 6.3 archive)
+and ran `/opsx:archive add-foundation` (sync chosen). The delta promoted into
+`openspec/specs/foundation/spec.md` (6 requirements, validates ✓); the change moved to
+`openspec/changes/archive/2026-06-30-add-foundation/`. No active OpenSpec changes remain.
+
+**State now:** `foundation` is now a living spec. On `dev`, committed. Phase 0 done.
+
+**Next steps:** Resolve the honey-vs-blackwork brand decision (gates Phase 1 UI), then
+`/opsx:propose add-auth` to start the next capability.
+
+---
+
+## 2026-07-01T18:45Z — Archived `add-theming`; `theming` spec promoted
+
+**Done:** Archived `add-theming` (sync chosen). Delta promoted to `openspec/specs/theming/spec.md`
+(5 requirements, validates); change moved to `archive/2026-07-01-add-theming`. Phase 1 complete
+(auth, app-shell, theming). Four living specs; no active changes.
+
+**Open (deferred by owner):** the AA accent-text-on-Light finding — recommend adding an
+`accentText` token (accent in Dark, darker amber e.g. #A85D00 in Light) for `TextLink`/accent
+text; sync to design tokens. Not blocking; tracked here + in the archived design.md.
+
+**Next steps:** Capability 04 `time-entries` — the MVP core loop (shared + api + mobile). Bigger
+than the last few; `/opsx:propose add-time-entries-core`.
+
+---
+
+## 2026-07-01T18:30Z — Implemented `add-theming` (FR-THEME-01/02/03)
+
+**Done:** Applied `add-theming` (JS-only, no rebuild). `preference.ts` (secure-store, default
+dark); `ThemeProvider` now holds a tri-state preference (light/dark/system), loads on mount (no
+flash), resolves system→OS, persists on change; `useThemeControls` exposes `{ preference,
+setPreference }`. New token-driven `SegmentedControl` per the design; Profile has an APPEARANCE
+section. Typecheck/lint/bundle green; change validates.
+
+**AA finding (NFR-A11Y-02):** all text passes AA **except accent _text_ on the Light bg**
+(#F5A300 on #FFFBF2 = 2.01). Fine as a fill (onAccent/accent = 8.05); the gap is amber
+links/error text on cream (e.g. TextLink). **Flagged, not silently changed** (brand token):
+recommend an `accentText`/`link` token = accent in Dark, darker amber (#A85D00, AA-text) in
+Light. Needs owner decision.
+
+**State now:** 8/9 tasks; only 5.4 (archive after on-device verify) left. Hot-reloads.
+
+**Next steps:** Verify Light/Dark/System on-device; decide the accentText token; then
+`/opsx:archive add-theming`. Then capability 04 `time-entries`.
+
+---
+
+## 2026-07-01T18:10Z — Proposed `add-theming` (capability 03)
+
+**Done:** `/opsx:propose add-theming` — all 4 artifacts, `valid --strict`. Covers FR-THEME-01/02/03/04
++ NFR-A11Y-02: a Light/Dark/System control on Profile, persisted + applied instantly (Dark default).
+The token mechanism already exists in ThemeProvider; this adds the tri-state preference + persistence
++ a SegmentedControl. Key decision: persist via **expo-secure-store** (already installed) → JS-only,
+no rebuild. FR-THEME-04 (native surfaces follow system) deferred. 5 task groups.
+
+**State now:** Planning only. `add-theming` is the active change; foundation/auth/app-shell are living specs.
+
+**Next steps:** `/opsx:apply add-theming` (JS-only, hot-reloads). Then capability 04 `time-entries`.
+
+---
+
+## 2026-07-01T17:50Z — Archived `add-app-shell`; `app-shell` spec promoted
+
+**Done:** Empty-state glow finalized (reliable iOS wrapper shadow — boxShadow wasn't rendering
+on the native gradient view under New Arch). User confirmed the shell works on-device. Archived
+`add-app-shell` (sync chosen): delta promoted to `openspec/specs/app-shell/spec.md` (3
+requirements, validates); change moved to `archive/2026-07-01-add-app-shell`. No active changes.
+
+**State now:** Three living specs — foundation, auth, app-shell. Phase 1 done except `theming`
+(the Light/Dark/System switch). Mobile app: gated 4-tab shell (Timer/History/Stats/Profile),
+auth flow, empty state.
+
+**Next steps:** Capability 03 `theming` (`/opsx:propose add-theming`) or jump to 04
+`time-entries` (the core loop). Recommend theming first (quick, unblocks polish) then time-entries.
+
+---
+
+## 2026-07-01T17:30Z — Empty-state halo → circle; History-screen context in docs
+
+**Done:** Empty-state gradient background halo was a square `<Rect>` — swapped to a `<Circle>`
+so it reads round (logo squircle unchanged). Reviewed all capabilities for History-tab context:
+`04-time-entries.md` said "Timer/History screen" (implying one page) — updated to make clear
+`time-entries` fills **two separate app-shell tabs** (Timer screen + History screen), and noted
+the same in `implementation-plan.md`. Decision: History stays part of `time-entries` (it's a
+view of the same entries; FR-ENTRY-07/FR-TAG-04/NFR-PERF-02 define it) — **not** a new
+capability; the tab separation is an app-shell navigation concern.
+
+**State now:** Mobile typecheck + lint + bundle green. JS-only (hot-reloads).
+
+**Next steps:** Verify empty-state halo + 4 tabs on-device; `/opsx:archive add-app-shell`.
+
+---
+
+## 2026-07-01T17:10Z — app-shell: 4 tabs per design (was 3)
+
+**Done:** The design UI kit (`ui_kits/honeydo/App.jsx`) has **four** tabs — Timer, History,
+Stats, Profile — not the "Timer/History" combined tab I'd read from FR-SHELL-01. Owner
+confirmed the design wins. Updated FR-SHELL-01 (requirements.md), the capability doc, and the
+add-app-shell change (spec/tasks/design/proposal). Implemented: split TimerHistoryScreen into
+`TimerScreen` (empty-state host) + `HistoryScreen` placeholder, TabNavigator now has 4 tabs,
+TabBar icons match the design (timer, list, bar-chart-2, user). Also fixed the empty-state
+logo (radial svg halo + visible gradient) earlier this session.
+
+**State now:** Mobile typecheck + lint + bundle green; change validates. 18/19 tasks; only 6.5
+(archive after on-device verify) left. JS-only change → hot-reloads (no rebuild needed).
+
+**Next steps:** Verify the 4 tabs on-device, then `/opsx:archive add-app-shell`.
+
+---
+
+## 2026-07-01T16:45Z — Implemented `add-app-shell` (FR-SHELL-01/02/03)
+
+**Done:** Applied `add-app-shell`. React Navigation (native-stack root + bottom-tabs). `App.tsx`
+now: `SafeAreaProvider` → `ThemeProvider` → `NavigationContainer` (bg bridged to avoid white
+flash). `RootNavigator` gates on `useAuthStore` (loading splash / Auth / Tabs). Custom
+`TabBar` (expo-blur + amber active + Lucide icons) per the design; 3 tabs (Timer/History,
+Stats, Profile). Reusable `EmptyState` (honey-jar hero) per EmptyScreen; Timer/History shows
+"Start your first entry" behind a `hasEntries` placeholder. Removed HomeScreen. Added nav +
+safe-area + screens + expo-blur deps.
+
+**State now:** Mobile typecheck + lint + bundle green; prebuild pods install (115) under
+useFrameworks:static. 34/35 tasks; only 6.5 (archive after on-device verify) left. **Rebuild
+required** (`npm run ios:device`) — native modules.
+
+**Next steps:** User rebuilds + verifies tabs/gate/empty-state on-device, then
+`/opsx:archive add-app-shell`. Then capability 03 (theming) or 04 (time-entries).
+
+---
+
+## 2026-07-01T16:20Z — Proposed `add-app-shell` (capability 02)
+
+**Done:** Archived `add-auth` (auth spec promoted), then `/opsx:propose add-app-shell` — all 4
+artifacts, `valid --strict`. Covers FR-SHELL-01/02/03: a gated root navigator (auth ↔ tabs via
+`useAuthStore`), a bottom-tab shell (Timer/History, Stats, Profile) with the design's blurred
+amber tab bar, and the first-run empty state. React Navigation (native-stack + bottom-tabs,
+custom tab bar via expo-blur), mobile-only. 6 task groups.
+
+**State now:** Planning only. `add-app-shell` is the active change; `auth` + `foundation` are
+living specs.
+
+**Next steps:** `/opsx:apply add-app-shell` (native deps → rebuild). Reproduce the
+`honeydo-design` TabBar/EmptyScreen faithfully per the design rule.
+
+---
+
+## 2026-07-01T16:00Z — Google Sign-In: switch to native SDK (fixes redirect_uri_mismatch)
+
+**Done:** expo-auth-session's browser flow caused `Error 400: redirect_uri_mismatch` (a native
+app can't use a Web client's redirect, and iOS clients have no redirect field). Replaced it
+with **@react-native-google-signin/google-signin**: configured with `iosClientId` (FE) +
+`webClientId` (BE, as serverClientId) so the id_token audience = the Web client — the API
+verifies it unchanged. Added the plugin `iosUrlScheme` (reversed iOS client id → Info.plist),
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to mobile env, and rewrote `useGoogleAuth`. Removed the now-
+unused expo-auth-session/web-browser/crypto. Pod install needed `useFrameworks: "static"` in
+expo-build-properties (GoogleSignIn's AppCheckCore needs modular headers) — verified pod install
+succeeds (GoogleSignIn 9.2.0).
+
+**State now:** Mobile typecheck + lint green; iOS bundle clean; Info.plist has the URL scheme;
+pods install. No GCloud redirect URIs to configure. **Rebuild required** (`npm run ios:device`).
+
+**Next steps:** User rebuilds + tests Google on-device; then `openspec archive add-auth`. If the
+native compile fails on `useFrameworks: static` + RN-from-source, revisit those build props.
+
+---
+
+## 2026-07-01T15:35Z — Native modules need dev-build rebuild; icons folder + structure rule
+
+**Done:** Diagnosed the on-device "Unimplemented component: ViewManagerAdapter_ExpoLinearGradient"
++ "U" icon placeholders — the dev build predates the newly-added **native** modules
+(`react-native-svg`, `expo-linear-gradient`). Regenerated the native project and verified both
+autolink (Podfile.lock + ExpoModulesProvider register `LinearGradientModule`/`RNSVG`), so a
+**rebuild** (`npm run ios:device`, NOT JS hot-reload) clears it. Moved `GoogleIcon` to
+`src/icons/` (icons aren't components) and added a **project-structure rule** to
+`apps/mobile/AGENTS.md` (screens/components/icons/store/api/auth/theme/assets by responsibility).
+
+**State now:** Mobile typecheck + lint green; iOS bundle clean. Native modules linked.
+User must **rebuild the dev build** to see the redesigned screen render correctly.
+
+**Next steps:** `npm run ios:device` on-device; visual check; then `openspec archive add-auth`.
+
+---
+
+## 2026-07-01T15:15Z — Auth screen rebuilt to match the design system
+
+**Done:** The auth form didn't follow the design. Rebuilt it against
+`honeydo-design/ui_kits/honeydo/AuthScreen.jsx`: gradient hexagon logo mark, amber top
+glow, labeled inputs with leading Lucide icons (mail/lock) on `surface-alt` with amber
+focus, an "or" divider, a Google-branded button, and the "Create an account" link. Added
+reusable token-driven `Input` + `Button` components (per the skill's core components) and a
+`GoogleIcon`. Icons via `lucide-react-native` (+ `react-native-svg`), gradients via
+`expo-linear-gradient`. **Strengthened the design rule** (root + mobile AGENTS): reproduce
+the skill reference faithfully — functional-but-unstyled UI is a defect; note substitutions,
+never drop elements.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean. Deferred: the fine
+honeycomb texture (only the amber glow is ported) and "Forgot password?" (no reset flow —
+out of scope per DESIGN non-goals). Lucide barrel import inflates the module graph; can
+switch to per-icon later if bundle size matters.
+
+**Next steps:** On-device visual check; then `openspec archive add-auth`.
+
+---
+
+## 2026-07-01T14:45Z — Auth screen: real fix for input tremble
+
+**Done:** The earlier fixed-height/reserved-slot change didn't stop the tremble — root cause
+was the **vertically-centered form inside a KeyboardAvoidingView**, which re-centers the whole
+column (including the focused input) on any height change (keyboard accessory/autofill bar).
+Replaced it with a **top-anchored ScrollView** (`automaticallyAdjustKeyboardInsets`,
+`keyboardShouldPersistTaps`), dropped KeyboardAvoidingView. Now inputs stay put; only content
+below can move, and the keyboard scrolls instead of shoving layout.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean (722 modules).
+
+**Next steps:** User confirms tremble is gone on-device; then `openspec archive add-auth`.
+
+---
+
+## 2026-07-01T14:30Z — Auth screen: stable layout + link affordance
+
+**Done:** Fixed input "trembling" (layout reflow): the centered form re-centered whenever an
+error line or the iOS keyboard-accessory changed height. Gave inputs/buttons a fixed height
+(52) and reserved fixed-height slots for field + server errors, and added
+`textContentType` to the inputs. Added a reusable `TextLink` (accent + underline) and used
+it for the auth mode toggle so "Create an account" / "Sign in" read as tappable links.
+
+**State now:** Mobile typecheck + lint green. Layout no longer shifts on focus/typing.
+
+**Next steps:** Continue on-device auth verification; `openspec archive add-auth` when done.
+
+---
+
+## 2026-07-01T14:10Z — Mobile forms + state conventions (RHF+Zod, Zustand)
+
+**Done:** Added an AGENTS.md rule: mobile forms validate with **React Hook Form + Zod**
+(via `@hookform/resolvers`), reusing shared validators; shared/app **state uses Zustand**
+(`src/store/`), not Context. Applied it: migrated the auth Context to a Zustand
+`useAuthStore`, and rebuilt `AuthScreen` with RHF + Zod schemas that call the shared
+`validatePassword` (one policy for client + server). Zod 4 needed the `standardSchemaResolver`
+(the `zodResolver` overloads don't match Zod 4). Removed `AuthContext.tsx`. Installed
+react-hook-form, zod, @hookform/resolvers, zustand.
+
+**State now:** Mobile typecheck + lint green; iOS bundle exports clean (721 modules). No
+dedicated OpenSpec/agent skill for RHF/Zod/Zustand exists in the registry, so none installed —
+libraries + the AGENTS rule + existing vercel react/react-native skills cover it.
+
+**Next steps:** Continue on-device auth verification; `openspec archive add-auth` when done.
+
+---
+
+## 2026-07-01T13:45Z — Unique bundle id for device signing
+
+**Done:** Device build failed signing because `com.honeydo.app` is already registered to
+another Apple team. Changed the bundle id (ios + android) to `com.blackflamy.honeydo` (the
+id that already registered to the user's team in the earlier root build) and re-prebuilt;
+the native project now signs under team ZXQ369UC2M.
+
+**State now:** Rerun `npm run ios:device` — signing should pass and the dev build installs.
+
+**Next steps:** Verify auth on-device (API running), then `openspec archive add-auth`.
+
+---
+
+## 2026-07-01T13:30Z — Fixed root-run dev-build breakage + added guardrail scripts
+
+**Done:** Running `expo run:ios` from the repo ROOT (instead of apps/mobile) built the app
+from the root project, which autolinked only root deps → the installed app lacked
+`ExpoSecureStore` (runtime "Cannot find native module 'ExpoSecureStore'") and re-hit the
+AppEntry error. Cleaned the root again (reverted root package.json/lock; removed root
+ios/, app.json, tsconfig.json) and regenerated apps/mobile/ios cleanly — verified
+ExpoSecureStore is autolinked (Podfile.lock + ExpoModulesProvider.swift register
+SecureStoreModule). Added **root delegating scripts** (`npm run ios` / `ios:device` /
+`android` / `prebuild`) that always target `@honeydo/mobile`, so building from the repo
+root now does the right thing instead of breaking.
+
+**State now:** apps/mobile/ios regenerated with all native modules. Rebuild with
+`npm run ios:device` (works from anywhere). Old broken app on device is a different bundle
+id (com.blackflamy.honeydo) — delete it; the correct one is com.honeydo.app.
+
+**Next steps:** User reruns `npm run ios:device`, then verifies auth on-device (API must be
+running). Then `openspec archive add-auth` (task 9.4).
+
+---
+
+## 2026-07-01T13:00Z — iOS dev build enabled (prebuild verified)
+
+**Done:** Prepared a development build (expo-dev-client) for physical-device testing since
+Expo Go is too old on the user's phone. Ran `expo prebuild --clean` from `apps/mobile` →
+generated `apps/mobile/ios/Honeydo.xcworkspace`, CocoaPods installed clean (98 pods),
+monorepo autolinking works. Mobile `ios`/`android` scripts now use `expo run:*`; root
+`.gitignore` guards a stray root `/ios`. `apps/mobile/ios` is gitignored.
+
+**State now:** Native iOS project generated and buildable on this machine (Xcode 26.6,
+CocoaPods 1.16.2). Device install still requires the user's Apple ID signing + a connected
+iPhone (can't be done here). API must run for the app to work (Docker was down this session).
+
+**Next steps:** In Xcode, set the signing Team on the Honeydo target (unique bundle id if
+com.honeydo.app collides), then `npx expo run:ios --device`. Then `openspec archive add-auth`
+(task 9.4) once auth is verified on-device.
+
+---
+
+## 2026-06-30T22:38Z — Fixed `npm run api` boot failure + committed foundation
+
+**Done:** Diagnosed the reported `Cannot find module .../dist/main` error: root cause was
+`incremental: true` (tsconfig) + `deleteOutDir: true` (nest-cli) desyncing — nest wipes `dist/`
+but the `.tsbuildinfo` (outside dist) survives, so tsc skips emit and `dist/main` never exists.
+Fixed by setting `incremental: false` in `apps/api/tsconfig.build.json`; verified with a hard
+repro (stale tsbuildinfo + deleted dist now re-emits). Also found **port :3000 is occupied by
+another local app ("Qnous")** — moved the API default to **:3333** (`main.ts`, `.env(.example)`,
+AGENTS.md). Then committed the previously-uncommitted `foundation` work (it had never been
+committed — the AGENTS rule is agent guidance, not automation) in focused commits on `dev`.
+
+**State now:** `npm run gate` green (~21 s); `npm run db:up && npm run migrate && npm run api`
+boots on :3333 and `/health` returns ok. Working tree committed on `dev`.
+
+**Next steps:** `openspec archive add-foundation` (task 6.3) once satisfied, then resolve the
+brand decision and `openspec new change add-auth`.
+
+---
+
+## 2026-07-01T01:25Z — `foundation` capability: OpenSpec proposal + gaps closed
+
+**Done:** Proposed and implemented the `add-foundation` OpenSpec change (proposal/design/
+specs/tasks, validated `--strict`). Formalized the monorepo skeleton as the `foundation`
+spec and closed the two known gaps. Added the NFR-DX-01 backend quality gate (root `npm
+run gate` = `build:shared && lint && typecheck && test && build:api`), enabled full
+TypeScript `strict` in `apps/api` (was partial), added a global `ValidationPipe` +
+`class-validator`/`class-transformer` (TC-STACK-02), enforced 100% coverage on shared
+pure modules via `vitest.config.ts` (TC-PURE-01), added a mobile ESLint no-raw-hex guard
+(FR-THEME-03, theme dir exempt), and added the Expo Dev Client path (`expo-dev-client`
++ `prebuild` script + `apps/mobile/README.md`, TC-STACK-01). Touches TC-STACK-01/02,
+TC-PURE-01, TC-TEST-01, NFR-DX-01.
+
+**State now:** `npm run gate` green on a clean checkout in ~21 s (< 60 s budget). Mobile
+lint/typecheck green; hex guard verified to fire in app code and pass in `src/theme`.
+Shared coverage 100% on `duration.ts`. 23/24 change tasks done.
+
+**Next steps:** Task 3.5 (boot-against-Postgres + `/health` e2e) is unverified this
+session — **Docker was unavailable** here (it was verified end-to-end in the 2026-06-30
+session). Re-run `npm run db:up → migrate → api` with Docker, then
+`openspec archive add-foundation` (task 6.3). After that, resolve the brand decision and
+`openspec new change add-auth`.
+
+---
+
+## 2026-06-30T22:00Z — Added review-before-commit rule
+
+**Done:** Added an AGENTS.md Workflow rule: review the full diff and run a review pass
+(`/code-review`) plus `lint`/`typecheck`/`test` before every commit; never commit unreviewed
+or red changes.
+
+**State now:** On `dev`, tree clean after this commit. Docs-only change.
+
+**Next steps:** Unchanged — resolve the brand decision, then `openspec new change add-auth`.
+
+---
+
+## 2026-06-30T21:55Z — Per-capability docs + git workflow on `dev`
+
+**Done:** Added `docs/capabilities/` (one file per capability, numbered by build order, with
+FR/NFR/TC mapping, scope, non-goals, risks) + an index. Added an AGENTS.md rule: **commit after
+every change to the `dev` branch** (branch from `main`, focused commits, reference IDs, never
+commit to `main` directly). Created the `dev` branch and committed all prior uncommitted work in
+4 focused commits (scaffold, design system, openspec init, docs). Gitignored
+`.claude/settings.local.json`.
+
+**State now:** On `dev`, working tree clean. `main` unchanged (advances via reviewed merge).
+Capabilities documented; OpenSpec specs/changes still not scaffolded.
+
+**Next steps:** Resolve the brand decision, then `openspec new change add-auth` and implement
+test-first — committing each step to `dev`.
+
+---
+
+## 2026-06-30T21:45Z — Capability split + implementation order (OpenSpec)
+
+**Done:** Wrote `docs/implementation-plan.md` — splits `requirements.md` into 10 OpenSpec
+capabilities (+ a foundation phase) with full FR/NFR/TC ID mapping, a dependency graph, a
+phased build order, cross-cutting concerns, and risks. Maps each capability to a candidate
+`openspec/changes/add-<capability>/` proposal. OpenSpec is initialized (CLI 1.4.1; `specs/`
+still empty).
+
+**State now:** Plan only — no specs/changes scaffolded yet. Recommended first change:
+`openspec new change add-auth`. Note the brand-mismatch risk gates any UI work (Phase 1).
+
+**Next steps:** Resolve the honey-vs-blackwork brand decision, then scaffold `add-auth` as the
+first OpenSpec change and implement test-first.
+
+---
+
+## 2026-06-30T21:41Z — Project docs wired into AGENTS.md
+
+**Done:** Added a "Read first — project docs" section to AGENTS.md instructing agents to
+use `docs/requirements.md` (source of truth) + `docs/product-brief.md` (narrative), and
+to maintain this `current-state.md` each session. Bootstrapped this file.
+
+**State now:** Convention documented and seeded. No code changed.
+
+**Next steps:** Begin implementing against the requirements (auth / app-shell / time-entries
+core loop). Note an unresolved brand mismatch: the brief/PRD describe a "dark/blackwork-leaning"
+identity, but the integrated design system (DESIGN.md, `honeydo-design` skill) is a warm
+honey theme — reconcile which is canonical before building UI (FR-THEME-*, BC-BRAND-01).
+
+---
+
+## 2026-06-30T21:34Z — Local Postgres + API boot verified end-to-end
+
+**Done:** Added `docker-compose.yml` (Postgres 16, host port **5434** to avoid clashes with
+other local Postgres on 5432/5433). Root scripts `db:up`/`db:down`/`db:reset`. Updated
+`apps/api/.env` + `.env.example` to port 5434. Ran first Prisma migration (`init`) creating
+the `TimeEntry` table. Touches TC-STACK-03.
+
+**State now:** `npm run db:up` → `npm run migrate` → `npm run api` works. Server boots,
+connects to Postgres, `GET http://localhost:3000/health` returns the shared `HealthStatus`.
+Container `honeydo-pg` may still be running.
+
+**Next steps:** Build real endpoints (time-entries CRUD) with class-validator DTOs (TC-STACK-02),
+backed by `PrismaService`. Add auth (FR-AUTH-*).
+
+---
+
+## 2026-06-30T21:15Z — Backend scaffolded: @honeydo/api + @honeydo/shared
+
+**Done:** Scaffolded NestJS 11 app `@honeydo/api` (`apps/api`) with Prisma (pinned 6.19.3;
+Prisma 7 dropped `url` in schema), a global `PrismaModule`/`PrismaService`, `ConfigModule`,
+and a `GET /health` endpoint returning the shared `HealthStatus` type. Created framework-free
+`@honeydo/shared` (`packages/shared`): API contracts (`contracts.ts`) + tested pure duration
+logic (`duration.ts`, 5 passing tests). Unified TypeScript to `~6.0.3` across packages and made
+the api tsconfig TS-6-clean. Touches TC-STACK-02/03, TC-PURE-01, TC-TEST-01.
+
+**State now:** All green — `shared` build (CJS) + tests, `api` build + test, `mobile` typecheck.
+
+**Next steps:** See entry above (DB/run) — now done.
+
+---
+
+## 2026-06-30T23:15Z (local) — Mobile app scaffolded + design system integrated
+
+**Done:** Set up npm-workspaces monorepo root. Scaffolded Expo SDK 57 + TS app `@honeydo/mobile`
+(`apps/mobile`) with monorepo `metro.config.js` and a typed design-token theme (`src/theme/`,
+`useTheme()`). Installed the design system as the `honeydo-design` skill and wrote `DESIGN.md`
+(production token reference, RN mapping). Touches TC-STACK-01, FR-THEME-03.
+
+**State now:** `mobile` typechecks; starter screen renders from tokens. Run with `npm run mobile`.
+
+**Next steps:** Build the app shell + tab navigation (FR-SHELL-01). Reconcile brand mismatch
+flagged in the top entry.

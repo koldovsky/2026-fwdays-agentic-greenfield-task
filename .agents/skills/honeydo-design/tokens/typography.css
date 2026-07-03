@@ -1,0 +1,48 @@
+/* ============================================================
+   Honeydo — Typography tokens
+   Headings & numeric readouts: SF Pro Rounded (friendly, honey-soft).
+   Body: SF Pro Text.
+   On Apple devices the real system fonts render via the
+   `ui-rounded` / `-apple-system` keywords. Everywhere else we fall
+   back to the webfonts declared in fonts.css (Nunito / Nunito Sans).
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-rounded: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+  --font-text:    -apple-system, "SF Pro Text", "Nunito Sans", system-ui, sans-serif;
+  /* Tabular numerals for timers/totals (kept legible while counting) */
+  --font-numeric: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+
+  /* Type scale (iOS-leaning) */
+  --text-timer:     56px; /* big elapsed-time readout */
+  --text-display:   40px; /* large totals / hero numbers */
+  --text-large-title:34px; /* iOS large title */
+  --text-title:     28px;
+  --text-title2:    22px;
+  --text-headline:  17px;
+  --text-body:      17px;
+  --text-callout:   16px;
+  --text-subhead:   15px;
+  --text-footnote:  13px;
+  --text-caption:   12px;
+
+  /* Weights */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold:600;
+  --weight-bold:    700;
+  --weight-heavy:   800;
+
+  /* Line heights */
+  --leading-tight:  1.05;
+  --leading-snug:   1.2;
+  --leading-normal: 1.35;
+  --leading-relaxed:1.5;
+
+  /* Tracking */
+  --tracking-timer: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:  0.02em;
+}

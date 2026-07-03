@@ -1,0 +1,56 @@
+/* ============================================================
+   Honeydo — base resets & primitives
+   Minimal, token-driven. Sets the default DARK theme surface.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-rounded);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+  margin: 0;
+}
+
+/* Tabular, rounded numerals for any time/total readout */
+.honey-numeric {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-timer);
+}
+
+button { font-family: inherit; }
+
+/* Honeycomb motif — a faint repeating hex texture for hero/empty
+   states. Token-driven so it tints with the theme. */
+.honey-comb-bg {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 50% 0,
+      color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 0L56 16v33L28 65 0 49V16z' fill='none' stroke='%23000' stroke-opacity='0.05' stroke-width='1'/%3E%3Cpath d='M28 65l28 16v33L28 130 0 114V81z' fill='none' stroke='%23000' stroke-opacity='0.05' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 56px 100px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

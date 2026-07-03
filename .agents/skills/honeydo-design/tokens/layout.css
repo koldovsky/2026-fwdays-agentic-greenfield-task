@@ -1,0 +1,56 @@
+/* ============================================================
+   Honeydo — Spacing, radius, shadow, motion, layout tokens
+   ============================================================ */
+
+:root {
+  /* Spacing scale (4pt base, iOS rhythm) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;   /* default screen gutter */
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  32px;
+  --space-8:  40px;
+  --space-9:  56px;
+  --space-10: 72px;
+
+  --screen-gutter: 20px;   /* iOS content inset */
+
+  /* Corner radii — soft, tactile, honey-rounded */
+  --radius-xs:  8px;
+  --radius-sm:  12px;
+  --radius-md:  16px;   /* default card */
+  --radius-lg:  22px;   /* large card / sheet */
+  --radius-xl:  28px;
+  --radius-pill: 999px; /* chips, primary buttons */
+  --radius-icon: 22.37%;/* iOS squircle approximation (continuous corner) */
+
+  /* Shadows — warm-tinted, soft, never harsh black */
+  --shadow-1: 0 1px 2px rgba(42, 27, 5, 0.06);
+  --shadow-2: 0 2px 8px rgba(42, 27, 5, 0.08);
+  --shadow-3: 0 8px 24px rgba(42, 27, 5, 0.10);
+  --shadow-4: 0 16px 40px rgba(42, 27, 5, 0.14);
+  /* Amber-glow for the running timer */
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 8px 28px var(--running-glow);
+
+  /* Borders */
+  --border-width: 1px;
+  --hairline: 0.5px; /* iOS separator */
+
+  /* Motion — calm, satisfying settle. No harsh bounces. */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1); /* @kind other */
+  --ease-settle:   cubic-bezier(0.22, 1, 0.36, 1);   /* @kind other */
+  --ease-spring:   cubic-bezier(0.34, 1.4, 0.64, 1); /* @kind other */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+
+  --dur-fast:   140ms; /* @kind other */
+  --dur-base:   240ms; /* @kind other */
+  --dur-slow:   420ms; /* @kind other */
+  --dur-pour:   700ms;  /* @kind other */
+
+  /* Layout */
+  --tabbar-height: 84px;   /* incl. home-indicator safe area */
+  --nav-height:    52px;
+  --content-max:   430px;  /* iPhone logical width ceiling */
+}

@@ -1,0 +1,23 @@
+<!-- @dsCard group="Type" viewport="700x190" name="Numeric readouts" subtitle="Tabular rounded numerals for timers & totals" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; color: #F4ECDD; font-family: var(--font-text); }
+  .wrap { display: flex; align-items: center; gap: 40px; padding: 20px 28px; }
+  .block { display: flex; flex-direction: column; gap: 4px; }
+  .num { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.02em; }
+  .timer { font-size: var(--text-timer); color: var(--accent); }
+  .display { font-size: var(--text-display); }
+  .tag { font-size: 11px; color: #B8A88E; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="block"><span class="num timer">1:24:08</span><span class="tag">Running timer · 56px</span></div>
+    <div class="block"><span class="num display">6.5<span style="font-size:22px;color:#B8A88E"> h</span></span><span class="tag">Today total · 40px</span></div>
+  </div>
+</body>
+</html>

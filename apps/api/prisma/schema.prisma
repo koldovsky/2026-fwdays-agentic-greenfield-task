@@ -1,0 +1,111 @@
+// Honeydo API — Prisma schema. The Prisma client lives ONLY in apps/api
+// (see AGENTS.md). Models map to the @honeydo/shared API contracts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The single signed-in user. `passwordHash` is null for accounts created via Google
+/// only (an argon2 hash otherwise — never plaintext, NFR-SEC-01).
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  passwordHash String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  identities   AuthIdentity[]
+  refreshTokens RefreshToken[]
+  timeEntries  TimeEntry[]
+  tags         Tag[]
+  dailyInsights DailyInsight[]
+}
+
+/// A sign-in provider linked to a user. One verified email maps to one User across
+/// providers (FR-AUTH-04). `provider` is "password" or "google".
+model AuthIdentity {
+  id             String   @id @default(cuid())
+  provider       String
+  /// Stable id from the provider (Google `sub`); the user id itself for password.
+  providerUserId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+/// A rotating refresh token. Only the token hash is stored; rotation sets `revokedAt`
+/// and `replacedById` (FR-AUTH-05, NFR-SEC-01).
+model RefreshToken {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// A single tracked time entry, owned by one user (BC-SCOPE-01). `stoppedAt`/
+/// `durationSec` are null while running; at most one running entry per user is an
+/// invariant enforced in the service transaction (FR-ENTRY-01/03/11).
+model TimeEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note        String
+  startedAt   DateTime  @default(now())
+  stoppedAt   DateTime?
+  durationSec Int?
+  tags        Tag[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, startedAt])
+}
+
+/// A user-defined label for grouping/filtering entries (FR-TAG-01). Implicit
+/// many-to-many with TimeEntry: deleting a tag detaches it (removes join rows) and
+/// never deletes entries (FR-TAG-03). Name is unique per user.
+model Tag {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  entries   TimeEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+/// The cached daily insight for a user on a given local day (FR-INSIGHT-03, NFR-COST-01).
+/// `localDate` is the user's local `YYYY-MM-DD`; `@@unique([userId, localDate])` enforces the
+/// one-generation-per-day bound. `source` is "llm" or "fallback"; `model` is set only for LLM
+/// output. Regeneration (explicit refresh) upserts the same row.
+model DailyInsight {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  localDate String
+  text      String
+  source    String
+  model     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, localDate])
+  @@index([userId])
+}

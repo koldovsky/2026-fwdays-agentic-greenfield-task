@@ -1,0 +1,28 @@
+<!-- @dsCard group="Type" viewport="700x210" name="Body & text scale" subtitle="SF Pro Text — body, callouts, footnotes (Nunito Sans fallback)" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; background: #1C1A17; color: #F4ECDD; font-family: var(--font-text); }
+  .wrap { padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; align-items: baseline; gap: 14px; }
+  .tag { font-size: 11px; color: #B8A88E; width: 130px; flex: none; }
+  .body { font-size: var(--text-body); }
+  .callout { font-size: var(--text-callout); }
+  .subhead { font-size: var(--text-subhead); color: #B8A88E; }
+  .foot { font-size: var(--text-footnote); color: #B8A88E; }
+  .cap { font-size: var(--text-caption); letter-spacing: .03em; text-transform: uppercase; color: #B8A88E; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row"><span class="tag">Body · 17</span><span class="body">Start a timer, stop when you switch. Your day fills up on its own.</span></div>
+    <div class="row"><span class="tag">Callout · 16</span><span class="callout">Continue where you left off</span></div>
+    <div class="row"><span class="tag">Subhead · 15</span><span class="subhead">Grouped by day · newest first</span></div>
+    <div class="row"><span class="tag">Footnote · 13</span><span class="foot">Last entry 2h ago</span></div>
+    <div class="row"><span class="tag">Caption · 12</span><span class="cap">This week</span></div>
+  </div>
+</body>
+</html>

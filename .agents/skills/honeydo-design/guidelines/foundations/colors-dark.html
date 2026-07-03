@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x190" name="Dark theme palette" subtitle="Amber on warm dark gray — the default, never pure black" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-text); background: #1C1A17; }
+  .wrap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 18px 20px; }
+  .sw { border-radius: 12px; overflow: hidden; border: 1px solid var(--honey-d-border); }
+  .chip { height: 64px; }
+  .meta { padding: 7px 9px; background: #262220; }
+  .name { font-size: 12px; font-weight: 700; color: var(--honey-d-text); }
+  .hex { font-size: 11px; color: var(--honey-d-text-muted); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="sw"><div class="chip" style="background:#1C1A17"></div><div class="meta"><div class="name">bg</div><div class="hex">#1C1A17</div></div></div>
+    <div class="sw"><div class="chip" style="background:#262220"></div><div class="meta"><div class="name">surface</div><div class="hex">#262220</div></div></div>
+    <div class="sw"><div class="chip" style="background:#2A2520"></div><div class="meta"><div class="name">surface-alt</div><div class="hex">#2A2520</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F4ECDD"></div><div class="meta"><div class="name">text</div><div class="hex">#F4ECDD</div></div></div>
+    <div class="sw"><div class="chip" style="background:#B8A88E"></div><div class="meta"><div class="name">text-muted</div><div class="hex">#B8A88E</div></div></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Local Postgres for the Honeydo API. Credentials come from the environment
+# (export POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB, or put them in a gitignored
+# repo-root `.env`, which Docker Compose auto-loads). No credentials are committed.
+#   npm run db:up      # start in the background
+#   npm run migrate    # apply Prisma migrations
+#   npm run api        # start the NestJS server
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: honeydo-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Host port 5434 to avoid clashing with other local Postgres instances.
+      - "5434:5432"
+    volumes:
+      - honeydo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  honeydo-pgdata:

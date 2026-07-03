@@ -1,0 +1,118 @@
+## ADDED Requirements
+
+### Requirement: Running-timer Live Activity on the Lock Screen
+
+While a timer is running, the app SHALL present an iOS Live Activity showing the running entry's
+**description** and the **live elapsed** time on the Lock Screen, so tracking is visible without
+opening the app (FR-LIVE-01). At most one Live Activity SHALL exist at a time, matching the
+single running entry.
+
+#### Scenario: Activity appears while tracking
+
+- **WHEN** a user starts a timer and locks the device (iOS 16.2+)
+- **THEN** the Lock Screen shows a Live Activity with the entry's description and a live-updating
+  elapsed time
+
+#### Scenario: At most one activity
+
+- **WHEN** a running entry exists
+- **THEN** exactly one Live Activity is present for that entry, and none exists when no timer is
+  running
+
+### Requirement: Dynamic Island presentations
+
+On devices with a Dynamic Island, the Live Activity SHALL provide the **compact**, **expanded**,
+and **minimal** presentations (FR-LIVE-02): compact shows the live elapsed; expanded shows the
+description, elapsed, and a Stop control; minimal shows a small tracking indicator.
+
+#### Scenario: Compact shows elapsed
+
+- **WHEN** a timer is running and the app is backgrounded on a Dynamic Island device
+- **THEN** the compact presentation shows the live elapsed time
+
+#### Scenario: Expanded shows description, elapsed, and Stop
+
+- **WHEN** the user long-presses / expands the Dynamic Island
+- **THEN** it shows the entry description, live elapsed, and a Stop control
+
+#### Scenario: Minimal indicator when sharing the island
+
+- **WHEN** another activity shares the Dynamic Island
+- **THEN** Honeydo renders its minimal presentation as a small tracking indicator
+
+### Requirement: Stop control via an App Intent without duplicating timer logic
+
+The Live Activity SHALL expose a **Stop** control that ends the currently running timer. On iOS
+versions that support interactive Live Activity controls, Stop SHALL act **without opening the
+app**; on earlier supported versions it SHALL deep-link into the app to stop. The control SHALL
+dispatch through the app's existing start/stop path and MUST NOT re-implement timer or
+authentication logic in the extension (FR-LIVE-03, TC-NATIVE-03).
+
+#### Scenario: Stop ends the timer in place
+
+- **WHEN** the user taps Stop on the Live Activity on a device with interactive controls
+- **THEN** the running timer is stopped via the app's existing stop path and the activity ends,
+  without launching the app to the foreground
+
+#### Scenario: Older iOS degrades to deep-link
+
+- **WHEN** the user taps Stop on a supported iOS version without interactive Live Activity controls
+- **THEN** the app opens via its URL scheme and stops the running timer
+
+#### Scenario: No duplicate logic in the extension
+
+- **WHEN** the Stop control is triggered
+- **THEN** the extension only signals intent (via the shared App Group) and the stop is applied
+  through the app's existing stop mutation against the server, not by extension-side timer logic
+
+### Requirement: Lifecycle bound to the running entry with battery-friendly elapsed
+
+The Live Activity SHALL start when a timer starts and end when it stops (FR-LIVE-04). Elapsed
+time SHALL be rendered using **system timer text**, not periodic push updates or polling, so
+there is no measurable battery drain (FR-LIVE-04, NFR-WIDGET-01).
+
+#### Scenario: Starts and ends with the timer
+
+- **WHEN** a timer starts, and later stops
+- **THEN** a Live Activity begins at start and is ended when the timer stops
+
+#### Scenario: Elapsed advances without pushes
+
+- **WHEN** the Live Activity is visible while tracking
+- **THEN** the elapsed time advances via the system's timer text with no continuous push updates
+  or polling
+
+### Requirement: App and activity stay consistent via a shared App Group
+
+The app and the extension SHALL share state through a common **App Group**, and the app SHALL
+keep the Live Activity consistent with the running entry using ActivityKit updates — including
+reconciling on app launch/foreground (FR-LIVE-05).
+
+#### Scenario: Description edit reflects in the activity
+
+- **WHEN** the running entry's description changes in the app
+- **THEN** the Live Activity updates to show the new description
+
+#### Scenario: Reconcile on foreground
+
+- **WHEN** the app returns to the foreground and the activity and running entry disagree (an
+  orphaned activity, or a running timer with no activity)
+- **THEN** the app reconciles so exactly one activity matches the running entry (or none when not
+  tracking)
+
+### Requirement: Delivered as an iOS native extension via prebuild
+
+The Live Activity SHALL ship as a native iOS extension configured through Expo config plugins /
+prebuild, and SHALL NOT be expected to run in Expo Go (TC-NATIVE-01). It SHALL use ActivityKit
+with a shared App Group and target **iOS 16.2+** (TC-NATIVE-02).
+
+#### Scenario: Built through prebuild, not Expo Go
+
+- **WHEN** the iOS app is built
+- **THEN** the extension is generated by `expo prebuild` from config and runs in a Dev Client /
+  release build, and the feature is absent when running under Expo Go
+
+#### Scenario: Minimum iOS version
+
+- **WHEN** the app runs on iOS below 16.2
+- **THEN** no Live Activity is presented and the app otherwise functions normally

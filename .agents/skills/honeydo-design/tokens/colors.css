@@ -1,0 +1,79 @@
+/* ============================================================
+   Honeydo — Color tokens
+   Two themes built from one named palette. Switching Light/Dark
+   is a token swap on [data-theme], never a redesign.
+   Default theme is DARK (declared on :root).
+   ============================================================ */
+
+:root {
+  /* --- Raw palette: LIGHT (orange + white/cream) --- */
+  --honey-l-bg:           #FFFBF2;
+  --honey-l-surface:      #FFFFFF;
+  --honey-l-surface-alt:  #FFF4DE;
+  --honey-l-accent:       #F5A300;
+  --honey-l-accent-press: #C97A04;
+  --honey-l-gold:         #FFC75A;
+  --honey-l-text:         #2A2118;
+  --honey-l-text-muted:   #7A6A55;
+  --honey-l-border:       #F0E2C8;
+  --honey-l-success:      #3E8E4F; /* honeyed green, AA on cream */
+  --honey-l-success-soft: #E3F1DE;
+
+  /* --- Raw palette: DARK (orange + warm dark gray) --- */
+  --honey-d-bg:           #1C1A17;
+  --honey-d-surface:      #262220;
+  --honey-d-surface-alt:  #2A2520;
+  --honey-d-accent:       #FFB23E;
+  --honey-d-accent-press: #E0922A;
+  --honey-d-gold:         #FFC75A;
+  --honey-d-text:         #F4ECDD;
+  --honey-d-text-muted:   #B8A88E;
+  --honey-d-border:       #3A332B;
+  --honey-d-success:      #7BC57F; /* brighter honeyed green for dark */
+  --honey-d-success-soft: #243023;
+
+  /* ============================================================
+     SEMANTIC ALIASES — use THESE everywhere, never raw palette.
+     :root carries the DARK theme (app default).
+     ============================================================ */
+  --bg:            var(--honey-d-bg);
+  --surface:       var(--honey-d-surface);
+  --surface-alt:   var(--honey-d-surface-alt);
+  --accent:        var(--honey-d-accent);
+  --accent-pressed:var(--honey-d-accent-press);
+  --highlight-gold:var(--honey-d-gold);
+  --text:          var(--honey-d-text);
+  --text-muted:    var(--honey-d-text-muted);
+  --border:        var(--honey-d-border);
+  --success:       var(--honey-d-success);
+  --success-soft:  var(--honey-d-success-soft);
+
+  /* On-accent text: warm dark sits on the amber fill in both themes */
+  --on-accent:     #2A1B05;
+
+  /* Running-timer glow (amber, used in box-shadow/radial) */
+  --running-glow:      color-mix(in srgb, var(--accent) 55%, transparent);
+  --running-glow-soft: color-mix(in srgb, var(--accent) 18%, transparent);
+
+  /* Translucent material fills (overlays, chips, blur layers) */
+  --fill-faint:    color-mix(in srgb, var(--text) 6%, transparent);
+  --fill-soft:     color-mix(in srgb, var(--text) 10%, transparent);
+  --accent-faint:  color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-soft:   color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ---------- LIGHT theme override ---------- */
+[data-theme="light"] {
+  --bg:            var(--honey-l-bg);
+  --surface:       var(--honey-l-surface);
+  --surface-alt:   var(--honey-l-surface-alt);
+  --accent:        var(--honey-l-accent);
+  --accent-pressed:var(--honey-l-accent-press);
+  --highlight-gold:var(--honey-l-gold);
+  --text:          var(--honey-l-text);
+  --text-muted:    var(--honey-l-text-muted);
+  --border:        var(--honey-l-border);
+  --success:       var(--honey-l-success);
+  --success-soft:  var(--honey-l-success-soft);
+  --on-accent:     #2A1B05;
+}
