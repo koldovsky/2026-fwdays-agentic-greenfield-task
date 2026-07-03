@@ -8,8 +8,10 @@ package azure
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"omnictx/internal/cloud"
 )
@@ -90,6 +92,113 @@ func Subscriptions(lookupEnv LookupEnv, home string) []Subscription {
 		return nil
 	}
 	return p.Subscriptions
+}
+
+// UnknownAccountError reports a `use` target that matches no subscription.
+type UnknownAccountError struct {
+	Target    string
+	Available []string // "name (id)" strings for the error message
+}
+
+func (e *UnknownAccountError) Error() string {
+	return fmt.Sprintf("unknown Azure subscription %q (available: %s)", e.Target, strings.Join(e.Available, ", "))
+}
+
+// AmbiguousAccountError reports a `use` target that matches several
+// subscriptions by display name; the id must be used instead.
+type AmbiguousAccountError struct {
+	Target  string
+	Matches []string // "name (id)" strings of the colliding entries
+}
+
+func (e *AmbiguousAccountError) Error() string {
+	return fmt.Sprintf("subscription name %q is ambiguous, use the id instead: %s", e.Target, strings.Join(e.Matches, ", "))
+}
+
+// Use makes the subscription matching target (exact name, or id compared
+// case-insensitively) the default one, like `az account set`. azureProfile.json
+// is a file omnictx does not own, so the rewrite is conservative:
+//
+//   - parse-before-write: an unreadable/unparsable file is never touched;
+//   - the whole document round-trips through generic maps — JSON has no
+//     comments, so every field survives (only key order/whitespace normalize);
+//   - a leading UTF-8 BOM is preserved when the original has one;
+//   - the write is atomic (same-dir temp + rename, permission bits kept).
+func Use(lookupEnv LookupEnv, home, target string) error {
+	path := resolvePath(lookupEnv, home)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+	hadBOM := bytes.HasPrefix(data, utf8BOM)
+	data = bytes.TrimPrefix(data, utf8BOM)
+
+	var doc map[string]any
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return fmt.Errorf("refusing to modify unparsable %s: %v", path, err)
+	}
+	subs, _ := doc["subscriptions"].([]any)
+
+	var matches, available []string
+	var matchIdx []int
+	for i, s := range subs {
+		m, ok := s.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := m["name"].(string)
+		id, _ := m["id"].(string)
+		entry := fmt.Sprintf("%s (%s)", name, id)
+		available = append(available, entry)
+		if name == target || strings.EqualFold(id, target) {
+			matchIdx = append(matchIdx, i)
+			matches = append(matches, entry)
+		}
+	}
+	if len(matchIdx) == 0 {
+		return &UnknownAccountError{Target: target, Available: available}
+	}
+	if len(matchIdx) > 1 {
+		return &AmbiguousAccountError{Target: target, Matches: matches}
+	}
+
+	for i, s := range subs {
+		if m, ok := s.(map[string]any); ok {
+			m["isDefault"] = i == matchIdx[0]
+		}
+	}
+
+	out, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return err
+	}
+	out = append(out, '\n')
+	if hadBOM {
+		out = append(append([]byte{}, utf8BOM...), out...)
+	}
+
+	mode := os.FileMode(0o644)
+	if fi, err := os.Stat(path); err == nil {
+		mode = fi.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".omnictx-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer func() { _ = os.Remove(tmpName) }() // no-op once renamed
+	if _, err := tmp.Write(out); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(mode); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, path)
 }
 
 // resolvePath returns the azureProfile.json path, honoring AZURE_CONFIG_DIR.

@@ -90,6 +90,33 @@ CURRENT   NAME      REGION
           prod      eu-west-1
 ```
 
+### Switching cloud accounts
+
+Azure and GCP keep their active account in local files, so omnictx can switch
+them the same careful way it switches kube-contexts (validate first, atomic
+write, never touch an unparsable file):
+
+```bash
+omnictx cloud gcp use work           # writes <gcloud>/active_config
+omnictx cloud azure use "My Sub"     # flips isDefault in azureProfile.json
+omnictx cloud azure use e01c2626-... # by id — required when names collide
+```
+
+A successful `use` also pins that provider as the displayed cloud (persists
+`cloud: <provider>`), so the prompt immediately shows what you just switched to.
+
+Short aliases live in the omnictx config file and are checked first:
+
+```yaml
+aliases:
+  azure: { prod: "Azure subscription 1" }   # values may be names or ids
+  gcp:   { w: work }
+```
+
+AWS is the honest exception: the ecosystem has no persistent "current profile"
+(it is the session-scoped `AWS_PROFILE`), so `omnictx cloud aws use prod` just
+prints the correct command — `export AWS_PROFILE=prod` — and exits non-zero.
+
 ### Switching the kube-context
 
 ```bash
@@ -143,6 +170,8 @@ omnictx cloud aws             # persist: pin AWS as the active cloud
 omnictx cloud none            # persist: kube-only (no cloud slot)
 omnictx cloud aws list        # offline table of AWS profiles (also: gcp, azure)
 omnictx cloud list            # same table for the active provider
+omnictx cloud gcp use work    # activate a gcloud configuration
+omnictx cloud azure use prod  # switch the default Azure subscription (name/id/alias)
 omnictx kube                  # show the current kube-context
 omnictx kube list             # kubectl-style table of contexts (current marked *)
 omnictx kube prod-cluster     # switch the current kube-context
@@ -216,6 +245,11 @@ colors:                              # names or raw SGR codes (e.g. "1;34")
   cloud: blue                        # optional per-provider overrides: azure/aws/gcp
   kube: cyan
   namespace: dim
+aliases:                             # short names for `omnictx cloud <p> use <alias>`
+  azure:
+    prod: "Azure subscription 1"     # value = subscription name or id
+  gcp:
+    w: work                          # value = gcloud configuration name
 ```
 
 > `shell` is intentionally **not** a config key — it is supplied per-shell by

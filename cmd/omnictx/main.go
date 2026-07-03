@@ -144,6 +144,12 @@ Subcommands:
                     offline table of that provider's local accounts (AWS profiles,
                     gcloud configurations, Azure subscriptions); bare "cloud list"
                     uses the active provider
+  cloud <azure|gcp> use <account>
+                    switch the active account: azure flips isDefault in
+                    azureProfile.json (name or id), gcp activates the named
+                    configuration; accepts short aliases from the config file
+                    and pins that provider as the displayed cloud on success.
+                    AWS has no persistent profile — use export AWS_PROFILE=<name>
   kube [<context>|list|on|off]
                     switch the current kube-context (rewrites current-context in
                     kubeconfig); no argument prints the current one, "list" shows
@@ -263,7 +269,8 @@ func runToggle() int {
 }
 
 const cloudUsage = "usage: omnictx cloud [azure|aws|gcp|auto|none|on|off]\n" +
-	"       omnictx cloud [azure|aws|gcp] list"
+	"       omnictx cloud [azure|aws|gcp] list\n" +
+	"       omnictx cloud <azure|gcp> use <account>"
 
 // runCloud handles `omnictx cloud [value]` and the read-only listing forms.
 // With no argument it prints the effective selection (env > config > default).
@@ -281,9 +288,13 @@ func runCloud(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintln(stdout, cfg.Cloud)
 		return 0
 	}
-	if len(args) > 2 {
+	if len(args) > 3 {
 		_, _ = fmt.Fprintln(stderr, cloudUsage)
 		return 2
+	}
+
+	if len(args) == 3 {
+		return runCloudUse(args, home, stdout, stderr)
 	}
 
 	if len(args) == 2 {
@@ -398,6 +409,72 @@ func runKube(args []string, stdout, stderr io.Writer) int {
 
 	if err := kube.WriteContext(os.LookupEnv, home, target); err != nil {
 		_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+// runCloudUse handles `omnictx cloud <provider> use <account>`: switching the
+// provider's active account where that state lives in a local file (gcloud
+// active_config, azureProfile.json isDefault). AWS is the honest exception —
+// it has no persistent current-profile concept, so we print the session env
+// hint instead of inventing one. The account argument goes through the
+// `aliases` config key first; names/ids are otherwise matched verbatim.
+func runCloudUse(args []string, home string, _, stderr io.Writer) int {
+	provider := strings.ToLower(strings.TrimSpace(args[0]))
+	verb := strings.ToLower(strings.TrimSpace(args[1]))
+	account := strings.TrimSpace(args[2])
+
+	if verb != "use" {
+		_, _ = fmt.Fprintln(stderr, cloudUsage)
+		return 2
+	}
+
+	cfg, _ := config.Resolve(config.Flags{}, os.LookupEnv, home)
+	if canon := cfg.Aliases[provider][account]; canon != "" {
+		account = canon
+	}
+
+	switch provider {
+	case "gcp":
+		if err := gcp.Use(os.LookupEnv, home, account); err != nil {
+			code := 1
+			var unknown *gcp.UnknownConfigError
+			if errors.As(err, &unknown) {
+				code = 2
+			}
+			_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
+			return code
+		}
+		return pinCloudAfterUse(provider, stderr)
+	case "azure":
+		if err := azure.Use(os.LookupEnv, home, account); err != nil {
+			code := 1
+			var unknown *azure.UnknownAccountError
+			var ambiguous *azure.AmbiguousAccountError
+			if errors.As(err, &unknown) || errors.As(err, &ambiguous) {
+				code = 2
+			}
+			_, _ = fmt.Fprintf(stderr, "omnictx: %v\n", err)
+			return code
+		}
+		return pinCloudAfterUse(provider, stderr)
+	case "aws":
+		_, _ = fmt.Fprintf(stderr,
+			"omnictx: AWS has no persistent current profile; set it for the session instead:\n  export AWS_PROFILE=%s\n", account)
+		return 2
+	default:
+		_, _ = fmt.Fprintln(stderr, cloudUsage)
+		return 2
+	}
+}
+
+// pinCloudAfterUse persists `cloud: <provider>` after a successful account
+// switch, so the prompt immediately shows the provider that was just switched
+// to (instead of whatever the previous pin/auto-detection displayed).
+func pinCloudAfterUse(provider string, stderr io.Writer) int {
+	if err := setConfigKey(globalConfigPath(), "cloud", provider); err != nil {
+		_, _ = fmt.Fprintf(stderr, "omnictx: account switched, but pinning the cloud failed: %v\n", err)
 		return 1
 	}
 	return 0

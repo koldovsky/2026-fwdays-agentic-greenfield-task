@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -110,4 +112,70 @@ func TestCurrentConfiguration(t *testing.T) {
 	if got := CurrentConfiguration(env(map[string]string{"CLOUDSDK_CONFIG": dir, "CLOUDSDK_ACTIVE_CONFIG_NAME": "default"}), "/h"); got != "default" {
 		t.Errorf("CurrentConfiguration() = %q, want default (env wins)", got)
 	}
+}
+
+// useFixture copies the gcloud fixture tree into a temp dir so Use can write.
+func useFixture(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "configurations"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range []string{"config_default", "config_work"} {
+		src, err := os.ReadFile(filepath.Join(gcloudDirFixture(), "configurations", n))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "configurations", n), src, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, "active_config"), []byte("default"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
+func TestUse(t *testing.T) {
+	t.Run("activates an existing configuration", func(t *testing.T) {
+		dir := useFixture(t)
+		lookup := env(map[string]string{"CLOUDSDK_CONFIG": dir})
+
+		if err := Use(lookup, "/nonexistent-home", "work"); err != nil {
+			t.Fatalf("Use: %v", err)
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "active_config"))
+		if string(data) != "work" {
+			t.Errorf("active_config = %q, want %q", data, "work")
+		}
+		if got := CurrentConfiguration(lookup, "/h"); got != "work" {
+			t.Errorf("CurrentConfiguration after Use = %q, want work", got)
+		}
+	})
+
+	t.Run("unknown configuration writes nothing", func(t *testing.T) {
+		dir := useFixture(t)
+		lookup := env(map[string]string{"CLOUDSDK_CONFIG": dir})
+
+		err := Use(lookup, "/nonexistent-home", "prod")
+		var unknown *UnknownConfigError
+		if !errors.As(err, &unknown) {
+			t.Fatalf("err = %v, want UnknownConfigError", err)
+		}
+		if len(unknown.Available) != 2 {
+			t.Errorf("available = %v, want the two fixture names", unknown.Available)
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "active_config"))
+		if string(data) != "default" {
+			t.Errorf("active_config modified on error: %q", data)
+		}
+	})
+
+	t.Run("missing configurations dir is an unknown error", func(t *testing.T) {
+		err := Use(env(map[string]string{"CLOUDSDK_CONFIG": t.TempDir()}), "/h", "work")
+		var unknown *UnknownConfigError
+		if !errors.As(err, &unknown) {
+			t.Fatalf("err = %v, want UnknownConfigError", err)
+		}
+	})
 }

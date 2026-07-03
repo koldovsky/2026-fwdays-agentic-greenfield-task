@@ -1,9 +1,11 @@
 package azure
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -131,6 +133,107 @@ func TestSubscriptions(t *testing.T) {
 		}
 		if got := Subscriptions(envFunc(map[string]string{"AZURE_CONFIG_DIR": t.TempDir()}), "/h"); got != nil {
 			t.Errorf("Subscriptions() = %v, want nil for missing file", got)
+		}
+	})
+}
+
+func TestUse(t *testing.T) {
+	lookupFor := func(dir string) LookupEnv {
+		return envFunc(map[string]string{"AZURE_CONFIG_DIR": dir})
+	}
+
+	t.Run("switch by name flips the flags and keeps unknown fields", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_dupnames.json")
+		if err := Use(lookupFor(dir), "/h", "real-subscription"); err != nil {
+			t.Fatalf("Use: %v", err)
+		}
+		subs := Subscriptions(lookupFor(dir), "/h")
+		for _, s := range subs {
+			if s.IsDefault != (s.ID == "cccc-3333") {
+				t.Errorf("isDefault wrong for %s: %v", s.ID, s.IsDefault)
+			}
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+		if !strings.Contains(string(data), "keep-me-i-am-an-unknown-field") {
+			t.Errorf("unknown top-level field lost in round-trip:\n%s", data)
+		}
+	})
+
+	t.Run("switch by id resolves duplicate names", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_dupnames.json")
+		if err := Use(lookupFor(dir), "/h", "bbbb-2222"); err != nil {
+			t.Fatalf("Use: %v", err)
+		}
+		if got := Read(lookupFor(dir), "/h"); got != "N/A(tenant level account)" {
+			t.Errorf("Read after Use = %q", got)
+		}
+		for _, s := range Subscriptions(lookupFor(dir), "/h") {
+			if s.IsDefault != (s.ID == "bbbb-2222") {
+				t.Errorf("isDefault wrong for %s", s.ID)
+			}
+		}
+	})
+
+	t.Run("ambiguous name requires the id", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_dupnames.json")
+		orig, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+
+		err := Use(lookupFor(dir), "/h", "N/A(tenant level account)")
+		var ambiguous *AmbiguousAccountError
+		if !errors.As(err, &ambiguous) {
+			t.Fatalf("err = %v, want AmbiguousAccountError", err)
+		}
+		if len(ambiguous.Matches) != 2 {
+			t.Errorf("matches = %v, want both duplicates", ambiguous.Matches)
+		}
+		if data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json")); string(data) != string(orig) {
+			t.Error("file must stay byte-identical on an ambiguity error")
+		}
+	})
+
+	t.Run("unknown account writes nothing", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_default.json")
+		orig, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+
+		err := Use(lookupFor(dir), "/h", "nope")
+		var unknown *UnknownAccountError
+		if !errors.As(err, &unknown) {
+			t.Fatalf("err = %v, want UnknownAccountError", err)
+		}
+		if data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json")); string(data) != string(orig) {
+			t.Error("file must stay byte-identical on an unknown error")
+		}
+	})
+
+	t.Run("BOM is preserved and file stays readable", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_bom.json")
+		subs := Subscriptions(lookupFor(dir), "/h")
+		if len(subs) == 0 {
+			t.Fatal("BOM fixture should have subscriptions")
+		}
+		if err := Use(lookupFor(dir), "/h", subs[0].ID); err != nil {
+			t.Fatalf("Use: %v", err)
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+		if len(data) < 3 || data[0] != 0xEF || data[1] != 0xBB || data[2] != 0xBF {
+			t.Error("BOM lost after rewrite")
+		}
+		if got := Read(lookupFor(dir), "/h"); got != subs[0].Name {
+			t.Errorf("Read after Use = %q, want %q", got, subs[0].Name)
+		}
+	})
+
+	t.Run("broken and missing refuse the write", func(t *testing.T) {
+		dir := withProfile(t, "azureProfile_broken.json")
+		orig, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+		if err := Use(lookupFor(dir), "/h", "x"); err == nil {
+			t.Fatal("Use must refuse an unparsable file")
+		}
+		if data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json")); string(data) != string(orig) {
+			t.Error("broken file must stay byte-identical")
+		}
+		if err := Use(lookupFor(t.TempDir()), "/h", "x"); err == nil {
+			t.Fatal("Use must refuse a missing file")
 		}
 	})
 }

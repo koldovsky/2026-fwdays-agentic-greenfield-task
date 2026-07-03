@@ -49,6 +49,9 @@ type Config struct {
 	Separator string
 	Shell     string
 	Colors    map[string]string
+	// Aliases maps provider -> short alias -> canonical account (subscription
+	// name/id for azure, configuration name for gcp). Config-file only.
+	Aliases map[string]map[string]string
 }
 
 // Flags holds raw command-line flag values. Pointer fields are nil when the
@@ -68,9 +71,10 @@ type fileConfig struct {
 	Segments  []string          `yaml:"segments"`
 	Cloud     *string           `yaml:"cloud"`
 	Kube      *bool             `yaml:"kube"`
-	Icons     *bool             `yaml:"icons"`
-	Separator *string           `yaml:"separator"`
-	Colors    map[string]string `yaml:"colors"`
+	Icons     *bool                        `yaml:"icons"`
+	Separator *string                      `yaml:"separator"`
+	Colors    map[string]string            `yaml:"colors"`
+	Aliases   map[string]map[string]string `yaml:"aliases"`
 }
 
 // Defaults returns the built-in configuration used when nothing overrides it.
@@ -169,6 +173,9 @@ func applyFile(cfg *Config, fc fileConfig) {
 		for k, v := range fc.Colors {
 			cfg.Colors[k] = v
 		}
+	}
+	if fc.Aliases != nil {
+		cfg.Aliases = fc.Aliases
 	}
 }
 

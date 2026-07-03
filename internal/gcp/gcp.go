@@ -7,6 +7,7 @@
 package gcp
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -109,6 +110,61 @@ func Configurations(lookup LookupEnv, home string) []Configuration {
 // view's CURRENT marker.
 func CurrentConfiguration(lookup LookupEnv, home string) string {
 	return activeConfigName(lookup, gcloudDir(lookup, home))
+}
+
+// UnknownConfigError reports a `use` target that matches no local gcloud
+// configuration; Available carries the names for the error message.
+type UnknownConfigError struct {
+	Name      string
+	Available []string
+}
+
+func (e *UnknownConfigError) Error() string {
+	return fmt.Sprintf("unknown gcloud configuration %q (available: %s)", e.Name, strings.Join(e.Available, ", "))
+}
+
+// Use activates the named gcloud configuration by writing <gcloud>/active_config
+// — the same single-line file `gcloud config configurations activate` writes.
+// The name must match an existing configurations/config_<name> file; nothing is
+// written otherwise. The write is atomic (same-dir temp + rename). Note that
+// CLOUDSDK_ACTIVE_CONFIG_NAME still overrides the file per-session.
+func Use(lookup LookupEnv, home, name string) error {
+	configs := Configurations(lookup, home)
+	names := make([]string, len(configs))
+	found := false
+	for i, c := range configs {
+		names[i] = c.Name
+		if c.Name == name {
+			found = true
+		}
+	}
+	if !found {
+		return &UnknownConfigError{Name: name, Available: names}
+	}
+
+	path := filepath.Join(gcloudDir(lookup, home), "active_config")
+	mode := os.FileMode(0o644)
+	if fi, err := os.Stat(path); err == nil {
+		mode = fi.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".omnictx-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer func() { _ = os.Remove(tmpName) }() // no-op once renamed
+	if _, err := tmp.WriteString(name); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(mode); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, path)
 }
 
 // activeConfigName: CLOUDSDK_ACTIVE_CONFIG_NAME > the single line in

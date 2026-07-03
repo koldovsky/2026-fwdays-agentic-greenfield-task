@@ -1,0 +1,8 @@
+{
+  "installationId": "keep-me-i-am-an-unknown-field",
+  "subscriptions": [
+    { "id": "aaaa-1111", "name": "N/A(tenant level account)", "state": "Enabled", "isDefault": true },
+    { "id": "bbbb-2222", "name": "N/A(tenant level account)", "state": "Enabled", "isDefault": false },
+    { "id": "cccc-3333", "name": "real-subscription", "state": "Enabled", "isDefault": false }
+  ]
+}

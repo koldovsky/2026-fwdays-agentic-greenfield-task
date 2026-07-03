@@ -219,3 +219,28 @@ func TestInvalidBoolEnvLeavesDebugNote(t *testing.T) {
 		t.Errorf("expected a debug note about OMNICTX_KUBE, got %v", debug)
 	}
 }
+
+func TestAliasesFromFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	yaml := "aliases:\n  azure:\n    prod: \"Azure subscription 1\"\n  gcp:\n    w: work\n"
+	if err := os.WriteFile(path, []byte(yaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, _ := Resolve(Flags{}, envFunc(map[string]string{"OMNICTX_CONFIG": path}), "/home")
+	if got := cfg.Aliases["azure"]["prod"]; got != "Azure subscription 1" {
+		t.Errorf("azure alias = %q, want Azure subscription 1", got)
+	}
+	if got := cfg.Aliases["gcp"]["w"]; got != "work" {
+		t.Errorf("gcp alias = %q, want work", got)
+	}
+
+	// Absent key -> nil map, safe to index.
+	cfg, _ = Resolve(Flags{}, envFunc(nil), "/home")
+	if cfg.Aliases != nil {
+		t.Errorf("Aliases = %v, want nil by default", cfg.Aliases)
+	}
+	if v := cfg.Aliases["gcp"]["w"]; v != "" {
+		t.Errorf("indexing nil aliases should yield empty, got %q", v)
+	}
+}

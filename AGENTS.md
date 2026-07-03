@@ -35,6 +35,11 @@ No panics in production (top-level recover in main).
   `cloud [azure|aws|gcp] list` (offline read-only table of local accounts: AWS
   profiles from config+credentials names, gcloud configurations, Azure
   subscriptions; bare `cloud list` = active provider; `list` reserved),
+  `cloud <azure|gcp> use <account>` (switch active account: gcp writes
+  <gcloud>/active_config, azure flips isDefault in azureProfile.json via JSON
+  round-trip with BOM preserved; name/id or `aliases.<provider>.<short>` from
+  omnictx config; unknown/ambiguous → exit 2, broken source → exit 1; AWS
+  excluded — prints `export AWS_PROFILE=<x>` hint, exit 2),
   `kube [<context>|list|on|off]` (switch current-context in kubeconfig / print
   current / list all / toggle the kube segment via config key `kube:`; reserved
   words list|on|off; unknown context → exit 2, unparsable target → exit 1).

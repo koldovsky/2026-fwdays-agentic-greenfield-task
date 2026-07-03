@@ -105,6 +105,8 @@ func TestUsageListsCloudSubcommand(t *testing.T) {
 	for _, want := range []string{
 		"cloud [azure|aws|gcp|auto|none|on|off]",
 		"cloud [azure|aws|gcp] list",
+		"cloud <azure|gcp> use <account>",
+		"AWS_PROFILE", // the honest AWS answer lives in the help too
 		"OMNICTX_CLOUD", // the per-session override is worth calling out
 	} {
 		if !strings.Contains(out, want) {
@@ -759,4 +761,171 @@ func TestRunCloudBareList(t *testing.T) {
 			t.Error("bare list must not create/modify the config file")
 		}
 	})
+}
+
+// gcloudUseEnv copies the gcloud fixtures into a writable temp dir.
+func gcloudUseEnv(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "configurations"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range []string{"config_default", "config_work"} {
+		src, err := os.ReadFile(filepath.Join("..", "..", "testdata", "gcloud", "configurations", n))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "configurations", n), src, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, "active_config"), []byte("default"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CLOUDSDK_CONFIG", dir)
+	t.Setenv("CLOUDSDK_ACTIVE_CONFIG_NAME", "")
+	return dir
+}
+
+// azureUseEnv copies an azureProfile fixture into a writable temp dir.
+func azureUseEnv(t *testing.T, fixture string) string {
+	t.Helper()
+	dir := t.TempDir()
+	src, err := os.ReadFile(filepath.Join("..", "..", "testdata", fixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "azureProfile.json"), src, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AZURE_CONFIG_DIR", dir)
+	return dir
+}
+
+func TestRunCloudUseGcp(t *testing.T) {
+	t.Run("by name", func(t *testing.T) {
+		dir := gcloudUseEnv(t)
+		cfgPath := cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"gcp", "use", "work"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d (stderr: %s)", code, stderr.String())
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "active_config"))
+		if string(data) != "work" {
+			t.Errorf("active_config = %q, want work", data)
+		}
+		// A successful use also pins the provider as the displayed cloud.
+		cfg, _ := os.ReadFile(cfgPath)
+		if !strings.Contains(string(cfg), "cloud: gcp") {
+			t.Errorf("omnictx config should gain cloud: gcp after use:\n%s", cfg)
+		}
+	})
+
+	t.Run("via alias from omnictx config", func(t *testing.T) {
+		dir := gcloudUseEnv(t)
+		path := cloudTestConfig(t)
+		if err := os.WriteFile(path, []byte("aliases:\n  gcp:\n    w: work\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"gcp", "use", "w"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d (stderr: %s)", code, stderr.String())
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "active_config"))
+		if string(data) != "work" {
+			t.Errorf("active_config = %q, want work (via alias)", data)
+		}
+	})
+
+	t.Run("unknown configuration lists available and exits 2", func(t *testing.T) {
+		gcloudUseEnv(t)
+		cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"gcp", "use", "prod"}, &stdout, &stderr); code != 2 {
+			t.Fatalf("exit code = %d, want 2", code)
+		}
+		for _, want := range []string{"default", "work"} {
+			if !strings.Contains(stderr.String(), want) {
+				t.Errorf("stderr missing %q:\n%s", want, stderr.String())
+			}
+		}
+	})
+}
+
+func TestRunCloudUseAzure(t *testing.T) {
+	t.Run("by id via alias", func(t *testing.T) {
+		dir := azureUseEnv(t, "azureProfile_dupnames.json")
+		path := cloudTestConfig(t)
+		if err := os.WriteFile(path, []byte("aliases:\n  azure:\n    second: bbbb-2222\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"azure", "use", "second"}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code = %d (stderr: %s)", code, stderr.String())
+		}
+		data, _ := os.ReadFile(filepath.Join(dir, "azureProfile.json"))
+		if !strings.Contains(string(data), `"keep-me-i-am-an-unknown-field"`) {
+			t.Errorf("unknown field lost:\n%s", data)
+		}
+		// A successful use also pins the provider as the displayed cloud.
+		cfg, _ := os.ReadFile(path)
+		if !strings.Contains(string(cfg), "cloud: azure") {
+			t.Errorf("omnictx config should gain cloud: azure after use:\n%s", cfg)
+		}
+	})
+
+	t.Run("failed use does not pin the cloud", func(t *testing.T) {
+		azureUseEnv(t, "azureProfile_default.json")
+		cfgPath := cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"azure", "use", "nope"}, &stdout, &stderr); code != 2 {
+			t.Fatalf("exit code = %d, want 2", code)
+		}
+		if _, err := os.ReadFile(cfgPath); err == nil {
+			t.Error("failed use must not create/modify the omnictx config")
+		}
+	})
+
+	t.Run("duplicate name asks for the id", func(t *testing.T) {
+		azureUseEnv(t, "azureProfile_dupnames.json")
+		cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"azure", "use", "N/A(tenant level account)"}, &stdout, &stderr); code != 2 {
+			t.Fatalf("exit code = %d, want 2", code)
+		}
+		if !strings.Contains(stderr.String(), "aaaa-1111") || !strings.Contains(stderr.String(), "bbbb-2222") {
+			t.Errorf("stderr should list both candidate ids:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("missing profile is an I/O error", func(t *testing.T) {
+		t.Setenv("AZURE_CONFIG_DIR", t.TempDir())
+		cloudTestConfig(t)
+		var stdout, stderr strings.Builder
+		if code := runCloud([]string{"azure", "use", "x"}, &stdout, &stderr); code != 1 {
+			t.Fatalf("exit code = %d, want 1", code)
+		}
+	})
+}
+
+func TestRunCloudUseAwsHint(t *testing.T) {
+	cloudTestConfig(t)
+	var stdout, stderr strings.Builder
+	if code := runCloud([]string{"aws", "use", "prod"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "export AWS_PROFILE=prod") {
+		t.Errorf("stderr should hint the session env var:\n%s", stderr.String())
+	}
+}
+
+func TestRunCloudUseInvalidVerb(t *testing.T) {
+	cloudTestConfig(t)
+	var stdout, stderr strings.Builder
+	if code := runCloud([]string{"gcp", "activate", "work"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "usage:") {
+		t.Errorf("stderr should show usage:\n%s", stderr.String())
+	}
 }
