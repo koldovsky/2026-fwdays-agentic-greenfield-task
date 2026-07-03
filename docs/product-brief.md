@@ -1,0 +1,138 @@
+# Product Brief — Kamerton / Vocal-School Booking Agent
+
+> Companion to `docs/requirements.md`. The requirements document is the numbered,
+> traceable source of truth; this brief is the business narrative behind it.
+> Tone throughout the product is Ukrainian-first, kind and pressure-free
+> (BC-BRAND-01); the agent prepares decisions, a human makes them (FR-GUARD-01).
+
+## What this is
+
+Kamerton (Ukrainian for "tuning fork") is a local-first booking agent for a
+one-teacher vocal school. Parents and adult students talk to a Telegram bot; the
+bot answers questions strictly from the school's knowledge base, collects what is
+needed for a trial voice lesson, and turns the conversation into a structured
+booking request. That request streams in real time — over the AG-UI protocol —
+onto the teacher's local dashboard, where she confirms, adjusts, or declines it
+with one click, and the bot instantly relays her decision back to Telegram. The
+whole system runs on one machine: no webhooks, no tunnels, no cloud database.
+
+## Who it is for
+
+Two actors. The **lead** — a parent of a child aged 4+ or an adult who wants to
+study voice — interacts only with the Telegram bot, in Ukrainian, at whatever
+hour suits them. The **administrator** — the vocal teacher herself, the school's
+only teacher — works from a dashboard on `localhost` between her own lessons.
+
+One scoping note that shapes many conversations: the school teaches **voice
+only**. A piano is present in the room, but the teacher uses it exclusively to
+accompany vocal warm-ups — so the agent must explain that distinction gracefully
+whenever someone asks for "piano lessons" (BC-SCOPE-01/02).
+
+## The pain it addresses
+
+Intake today is manual. Parents message at all hours and ask the same questions —
+minimum age, individual or group, schedule, price — and agreeing on a trial-lesson
+time stretches across many messages, because the teacher cannot reply while she is
+teaching. Some leads simply go cold in that gap. The product reduces this to one
+calm loop: the bot handles the conversation whenever it happens, and the teacher's
+only job is a single confirm/adjust/decline decision when she has a free minute.
+
+## End-to-end usage
+
+1. **Write.** A lead messages the bot. The agent greets them and answers factual
+   questions strictly from `knowledge/school.md` (FR-FAQ-01); anything the base
+   cannot answer is flagged for the administrator instead of improvised
+   (FR-FAQ-02, BC-PRICE-01) — and every question, answered or not, is logged for
+   the knowledge-base loop (FR-KB-01).
+2. **Qualify.** The agent collects the student's name, age, preferred format, and
+   preferred weekday/time range (FR-INTAKE-01), validating age and scope before
+   going any further (FR-INTAKE-02): under-4s get a kind "come back at 4"
+   (BC-AGE-01, FR-GUARD-04), instrument requests get the warm-ups explanation
+   (BC-SCOPE-02), and the undecided get a short individual-vs-group comparison
+   (BC-FORMAT-01).
+3. **Get to know the singer.** Three light questions, one at a time, borrowed
+   from how established vocal studios open a first conversation. *Why:* karaoke
+   with friends, the stage, beating shyness, or the lead's own words
+   (FR-INTAKE-03). *What:* favourite artists, what's on the playlist, and one
+   song they'd love to sing — asked of the parent when the student is little
+   (FR-INTAKE-04). *Where from:* prior choir or lessons, and whether a cappella
+   or a backing track feels more comfortable — a gentle shyness signal, never a
+   test (FR-INTAKE-05). Together these become the **first-lesson brief** on the
+   request card, so the trial lesson opens with music the student already loves
+   (FR-INTAKE-06, BC-LESSON-01).
+4. **Pick a time.** The agent proposes 2–3 free slots that fit the lead — always
+   Mon–Fri, always 10:00–20:00, because the slots come from deterministic code,
+   not from the model (FR-SLOT-01, FR-GUARD-03, BC-SCHEDULE-01). The chosen slot
+   is soft-held as `pending` (FR-SLOT-02).
+5. **Watch it live.** On the dashboard, the teacher sees the conversation stream
+   and the request card fill in field by field over AG-UI events (FR-DASH-01);
+   a developer panel exposes the raw event feed for the curious (FR-DASH-02).
+6. **Decide.** The `pending` request — first-lesson brief included — shows
+   Confirm / Propose another time / Decline. Nothing reaches the lead until she
+   acts (FR-HITL-01, FR-GUARD-01). Next to the queue sits the **Question inbox**:
+   unanswered lead questions, deduplicated and ordered by frequency (FR-KB-02);
+   answering one appends it to the knowledge base for every future lead
+   (FR-KB-03) — and only she can do that, never the agent (FR-GUARD-06).
+7. **Close the loop.** Her decision travels back through the bot: a confirmation
+   with the date and time, or a counter-offer, lands in the lead's Telegram
+   within a second (FR-HITL-02).
+
+## Key workflows in prose
+
+- **The evening inquiry.** A parent writes at 22:30. The agent answers the age
+  question, collects everything, and holds a Tuesday 17:00 slot. The teacher
+  confirms it over morning coffee; the parent wakes up to a confirmed lesson.
+- **The piano misunderstanding.** "We'd like piano lessons for our son" — the
+  agent kindly explains the school teaches voice, with piano only as warm-up
+  accompaniment, and offers a trial voice lesson instead. No false promises.
+- **The Saturday push.** "Can we do Saturday, please?" — the agent cannot offer
+  a weekend even if it wanted to: no such slot exists in the database. It offers
+  the nearest weekday options instead.
+- **The group joiner.** A lead prefers the group format; the agent suggests an
+  existing group within ±2 years of the student's age, or the waitlist for a new
+  one (FR-GROUP-01).
+- **The first lesson that lands.** A shy adult admits they want to stop dreading
+  karaoke nights and loves 90s rock. The teacher opens the trial with a song from
+  that playlist and a no-audience warm-up — because the brief told her exactly
+  that before she confirmed the slot (FR-INTAKE-03/04/05/06, BC-LESSON-01).
+- **The growing FAQ.** Three different parents ask whether lessons continue over
+  school holidays. The Question inbox shows it once, with a ×3 counter; the
+  teacher types the answer one time, and the fourth parent gets it instantly from
+  the bot (FR-KB-01/02/03, FR-GUARD-06).
+
+## MVP vs Future boundary
+
+**In the MVP:** the full single-flow loop above — intake with the get-to-know
+questions and the first-lesson brief, FAQ from the knowledge base with the
+question log, deterministic slots, the `pending` hold, the live AG-UI dashboard
+with human-in-the-loop decisions and the Question inbox, and the Telegram
+close-out — plus the guardrail eval suite (`npm run evals`) and the unit-tested
+pure `lib/` (TC-TEST-01/02, TC-PURE-01). Group matching (FR-GROUP-01), the
+raw-events developer panel (FR-DASH-02), and inbox deduplication-by-similarity
+(the "×3 counter" in FR-KB-02; a plain list ships first) are Should-priority:
+they ship if time allows and are cut first.
+
+**Future (deferred):** the PRD's explicit out-of-scope list, none of which is
+built — payments, reminders, rescheduling of confirmed lessons, calendar
+integrations, public deployment, voice-message or audio analysis, and
+multi-teacher scheduling.
+
+## Operating principles
+
+- **A human makes every commitment.** The agent has no tool that can confirm a
+  booking; the `confirmed` transition exists only behind the administrator's
+  click (FR-GUARD-01).
+- **Rules live in code, not in hope.** Age limits and the Mon–Fri 10:00–20:00
+  window are enforced by deterministic, unit-tested functions; the model only
+  chooses among options the code has already vetted (FR-GUARD-03/04, TC-PURE-01).
+- **Facts come from one file — and the file learns.** Everything the agent
+  claims about the school traces to `knowledge/school.md`; unknowns are recorded,
+  never invented (FR-FAQ-01/02, BC-PRICE-01). The base grows from real lead
+  questions, but only through the administrator's approval in the Question inbox —
+  the agent has no way to write to it (FR-KB-01/02/03, FR-GUARD-06).
+- **Local and private by construction.** Long polling means no inbound
+  connections; the dashboard binds to localhost; secrets stay in an untracked
+  `.env` guarded by a gitleaks pre-commit hook; lead data never leaves the
+  machine (NFR-LOCAL-01, NFR-SEC-01, NFR-PRIV-01, TC-SEC-01).
+- **Ukrainian-first, kind, pressure-free.** The voice of the product is defined
+  in DESIGN.md and holds everywhere — including refusals (BC-BRAND-01).
