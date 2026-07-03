@@ -1,0 +1,42 @@
+{
+  "skill_name": "maui-current-apis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to add a button to my MAUI app that opens the user's browser to our website. Here's what I have so far — can you add this feature?\n\n```csharp\npublic partial class MainPage : ContentPage\n{\n    private void OnHelpClicked(object sender, EventArgs e)\n    {\n        // TODO: open https://example.com in browser\n        Device.OpenUri(new Uri(\"https://example.com\"));\n    }\n}\n```",
+      "expected_output": "Replaces Device.OpenUri with Launcher.OpenAsync(), notes that Device class is deprecated in .NET MAUI, provides correct async implementation",
+      "files": [],
+      "expectations": [
+        "Device.OpenUri is replaced with Launcher.OpenAsync or Launcher.Default.OpenAsync",
+        "The handler is made async to properly await the Launcher call",
+        "No Device.* API calls remain in the output code",
+        "The output explicitly notes or comments that Device.OpenUri is deprecated/removed in .NET MAUI"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Please review this MAUI page code and fix any issues you see:\n\n```csharp\nusing Xamarin.Forms;\n\nnamespace MyApp;\n\npublic partial class SettingsPage : ContentPage\n{\n    public SettingsPage()\n    {\n        InitializeComponent();\n        Device.BeginInvokeOnMainThread(() => {\n            StatusLabel.Text = \"Ready\";\n        });\n    }\n\n    protected override void OnAppearing()\n    {\n        base.OnAppearing();\n        var service = DependencyService.Get<ISettingsService>();\n        service?.Load();\n        On<Xamarin.Forms.PlatformConfiguration.iOS>()\n            .SetUseSafeArea(true);\n    }\n}\n```",
+      "expected_output": "Identifies and fixes all three deprecated patterns: Xamarin.Forms namespace, Device.BeginInvokeOnMainThread, DependencyService.Get, SetUseSafeArea",
+      "files": [],
+      "expectations": [
+        "The Xamarin.Forms using/namespace is replaced with Microsoft.Maui.Controls or removed",
+        "Device.BeginInvokeOnMainThread is replaced with MainThread.BeginInvokeOnMainThread or MainThread.InvokeOnMainThreadAsync",
+        "DependencyService.Get is replaced with constructor injection (ISettingsService injected via constructor parameter)",
+        "SetUseSafeArea or the Xamarin.Forms.PlatformConfiguration.iOS platform-specific is replaced with SafeAreaEdges property on the page"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I'm migrating a Xamarin.Forms app to .NET MAUI. Here's a page that uses some patterns I'm not sure about. Can you update it to use current .NET MAUI 10 APIs?\n\n```xml\n<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<ContentPage xmlns=\"http://xamarin.com/schemas/2014/forms\"\n             xmlns:x=\"http://schemas.microsoft.com/winfx/2009/xaml\"\n             x:Class=\"MyApp.ProductListPage\"\n             Title=\"Products\">\n    <ContentPage.Content>\n        <StackLayout>\n            <ListView ItemsSource=\"{Binding Products}\"\n                      HasUnevenRows=\"True\">\n                <ListView.ItemTemplate>\n                    <DataTemplate>\n                        <ViewCell>\n                            <StackLayout Orientation=\"Horizontal\" Padding=\"10\">\n                                <Label Text=\"{Binding Name}\" FontAttributes=\"Bold\" />\n                                <Label Text=\"{Binding Price, StringFormat='{0:C}'}\" />\n                            </StackLayout>\n                        </ViewCell>\n                    </DataTemplate>\n                </ListView.ItemTemplate>\n            </ListView>\n        </StackLayout>\n    </ContentPage.Content>\n</ContentPage>\n```",
+      "expected_output": "Updates XML namespace to MAUI, replaces ListView+ViewCell with CollectionView+DataTemplate, adds x:DataType, removes HasUnevenRows",
+      "files": [],
+      "expectations": [
+        "The xmlns is updated from http://xamarin.com/schemas/2014/forms to http://schemas.microsoft.com/dotnet/2021/maui",
+        "ListView is replaced with CollectionView",
+        "ViewCell wrapper is removed from the DataTemplate",
+        "x:DataType compiled binding is added to the page or DataTemplate",
+        "HasUnevenRows attribute is removed (not applicable to CollectionView)"
+      ]
+    }
+  ]
+}
