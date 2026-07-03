@@ -2,15 +2,14 @@
 # Binding traceability trailer (M-01). Any commit that touches *product code* must
 # carry a `Refs:` or `Slice:` trailer naming the requirement/slice it serves, so
 # `git log --grep FR-xxx` becomes a complete audit of where a requirement was
-# implemented. Harness/docs commits (harness/scripts/, docs/, .githooks/, harness/evals/, .github/)
-# are exempt.
+# implemented. Harness/docs commits (harness/, docs/, .github/) are exempt.
 #
 # Enable once per clone:
-#   git config core.hooksPath .githooks
+#   git config core.hooksPath harness/githooks
 msg_file="$1"
 
-# Product-code directories (mirror check_traceability.py CODE_DIRS, minus harness dirs).
-code=$(git diff --cached --name-only | grep -E '^(packages|src|lib|app|apps|test|tests|examples)/' || true)
+# Product-code directories (mirror check_traceability.py CODE_DIRS exactly).
+code=$(git diff --cached --name-only | grep -E '^(packages|src|test|tests|examples|apps)/' || true)
 [ -z "$code" ] && exit 0
 
 if grep -qE '^(Refs|Slice):' "$msg_file"; then

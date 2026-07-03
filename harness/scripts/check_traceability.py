@@ -57,6 +57,19 @@ def deprecated_ids() -> Set[str]:
     return found
 
 
+TEST_DIR_NAMES = {"test", "tests"}
+
+
+def _is_test_path(rel: str) -> bool:
+    """A file counts as a test when it lives under a test/tests directory or is *.test.* / *.spec.*."""
+    path = Path(rel)
+    return (
+        any(part in TEST_DIR_NAMES for part in path.parts)
+        or ".test." in path.name
+        or ".spec." in path.name
+    )
+
+
 def code_id_refs() -> Dict[str, List[str]]:
     refs: Dict[str, List[str]] = {}
     for directory in CODE_DIRS:
@@ -67,6 +80,16 @@ def code_id_refs() -> Dict[str, List[str]]:
             if path.is_file() and path.suffix in CODE_EXTS:
                 for ident in _ids(_read(path)):
                     refs.setdefault(ident, []).append(str(path.relative_to(PROJECT_ROOT)))
+    return refs
+
+
+def test_id_refs(code_refs: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    """Test-scoped subset of ``code_refs`` — the coverage gate (3) must only accept test citations."""
+    refs: Dict[str, List[str]] = {}
+    for ident, paths in code_refs.items():
+        tests = [p for p in paths if _is_test_path(p)]
+        if tests:
+            refs[ident] = tests
     return refs
 
 
@@ -103,8 +126,9 @@ def check() -> List[str]:
         where = ", ".join(sorted(set(code_refs[ident]))[:3])
         problems.append(f"{ident}: cited in code/tests ({where}) but marked (deprecated)")
 
+    test_refs = test_id_refs(code_refs)
     for ident in sorted(traceability_done_ids()):
-        if ident.split("-")[0] in COVERAGE_FAMILIES and ident not in code_refs:
+        if ident.split("-")[0] in COVERAGE_FAMILIES and ident not in test_refs:
             problems.append(
                 f"{ident}: marked done ([x]) in docs/traceability.md but no test cites it"
             )

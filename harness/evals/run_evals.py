@@ -24,6 +24,7 @@ Also importable: ``check()`` returns the list of failures.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Dict, List
@@ -88,9 +89,10 @@ def eval_cost_tiered_routing(agents: Dict[str, Dict[str, str]]) -> List[str]:
         if not fm.get("model"):
             out.append(f"model-routing: agent '{name}' declares no model (cost-tiered routing relies on it)")
     impl = agents.get(WRITER, {}).get("model")
-    planner = agents.get("milestone-planner", {}).get("model")
-    if impl and planner and impl == planner:
-        out.append(f"model-routing: writer and planner share model {impl!r} — the cost tier collapsed")
+    for judge in sorted(READERS):
+        judge_model = agents.get(judge, {}).get("model")
+        if impl and judge_model and impl == judge_model:
+            out.append(f"model-routing: writer and judge '{judge}' share model {impl!r} — the cost tier collapsed")
     return out
 
 
@@ -118,7 +120,9 @@ def eval_loop_hooks() -> List[str]:
         if not entries:
             out.append(f"hooks: no '{event}' hook configured")
             continue
-        if not any(isinstance(e.get("loop_limit"), int) for e in entries):
+        # bool is a subclass of int — `loop_limit: true` must not count as a bounded loop.
+        if not any(isinstance(e.get("loop_limit"), int) and not isinstance(e.get("loop_limit"), bool)
+                   for e in entries):
             out.append(f"hooks: '{event}' hook has no integer loop_limit (unbounded nudging)")
     return out
 
@@ -130,7 +134,9 @@ def eval_loop_recipe() -> List[str]:
     cmd = _read(PROJECT_ROOT / "harness" / "commands" / "implement-requirement.md").lower()
     if not cmd:
         return ["loop-recipe: harness/commands/implement-requirement.md is missing"]
-    if "test" not in cmd or "first" not in cmd:
+    # Require the adjacent positive phrase ("test first" / "test-first" / "test **first**"), not
+    # merely the two words somewhere in the file (which negated/incidental mentions would satisfy).
+    if not re.search(r"test\W{1,3}first", cmd):
         out.append("loop-recipe: implement-requirement.md no longer states the test-first rule")
     if "traceability" not in cmd:
         out.append("loop-recipe: implement-requirement.md no longer updates docs/traceability.md")

@@ -29,7 +29,7 @@ gives them a visual, drag-and-drop authoring surface:
 | Package | What it is |
 | --- | --- |
 | `@transon/editor-core` | Pure TypeScript core: the `EngineProvider` port, typed metadata, and the projection codec. Headless — usable without any UI. |
-| `@transon/editor-blockly` | Blockly (Zelos) rendering layer: metadata-projected palette/toolbox and the rule-agnostic block behavior runtime. |
+| `@transon/editor-blockly` | Blockly rendering layer (thrasos renderer): metadata-projected palette/toolbox and the rule-agnostic block behavior runtime. |
 | `@transon/editor-element` | Framework-agnostic public surface: `createTransonEditor()` plus the `<transon-editor>` custom element (ESM + a self-contained IIFE build). |
 | `@transon/editor-react` | Native React surface: `<TransonEditor />` with React as a peer dependency. |
 | `editor-ui` | Internal React UI (panels, sandbox/compact modes, session store). Not published — bundled by the element and React packages. |

@@ -46,8 +46,11 @@ blocks merge is as costly as a missed bug.
 ## Stage 3 — Verdict
 
 - Run the deterministic gates and treat any red as an automatic 🔴: `check_traceability.py`,
-  `check_links.py`, `check_engine_parity.py`, `update_memory.py --check`, `run_evals.py`,
-  `check_maturity.py --check`.
+  `check_links.py`, `check_engine_parity.py`, `update_memory.py --check --require-engine`,
+  `run_evals.py`, `check_maturity.py --check`. At this gate the snapshot check's engine-absent
+  self-skip is **not** a pass (`--require-engine` makes it fail); pin the engine first
+  (`export TRANSON_REPO=../transon`). If the engine genuinely cannot be pinned, record the skip
+  explicitly in the verdict as a waived gate — never let it pass silently.
 - Classify each surviving finding: **🔴 Critical (must fix)** / **🟡 Suggestion** / **🟢 Nice-to-have**,
   each citing its SPEC/AD ID.
 - End with a clear merge verdict: **ready to merge**, or the blocking 🔴 list. No 🔴 may be waived

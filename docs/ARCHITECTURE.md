@@ -444,7 +444,7 @@ flowchart TB
 
     subgraph Editor["Editor packages (engine-free)"]
         UI["editor-ui (internal React)"]
-        BLK["@transon/editor-blockly (Zelos)"]
+        BLK["@transon/editor-blockly (thrasos)"]
         CORE["@transon/editor-core (pure TS)"]
     end
 
@@ -480,7 +480,7 @@ The dashed edges are the **host boundary**: everything below it is supplied by t
 | Package | Public | Depends on | Responsibility |
 |---|:--:|---|---|
 | `@transon/editor-core` | yes | pure TS | The **projection templates** `G_*` (data), the **committed codec artifacts** (encoder/decoder + palette/toolbox, regenerated at build time, AD-030), the codec-skeleton invariants (`SPEC.md` §11.4/§13.11/§15.3), surface check (`SPEC.md` §15.7), `JsonPathBlockMap` (`SPEC.md` §9.12), metadata model, `EngineProvider` **port** (used to *run* the codec, §5.4), error taxonomy (`SPEC.md` §16.4). Engine-free, headless. **Deliverable #1.** |
-| `@transon/editor-blockly` | yes | core, blockly | Renders the projected palette/toolbox to Zelos; the finite **rule-agnostic behavior runtime** (AD-031); wires `workspace ⇄ blocks` so the generated encoder/decoder can read/write workspace JSON |
+| `@transon/editor-blockly` | yes | core, blockly | Renders the projected palette/toolbox through the configured Blockly renderer (thrasos default, AD-033); the finite **rule-agnostic behavior runtime** (AD-031); wires `workspace ⇄ blocks` so the generated encoder/decoder can read/write workspace JSON |
 | `editor-ui` (internal) | — | core, blockly, react | panels, sandbox/compact modes, `EditorSession` store, theming (light DOM) |
 | `@transon/editor-element` | yes | editor-ui (React bundled) | `createTransonEditor()` + `<transon-editor>`; ESM + IIFE global |
 | `@transon/editor-react` | yes (opt) | editor-ui (React peer) | native React entry |
@@ -731,7 +731,7 @@ CI uses the Node→Python adapter (`test/engine-node-adapter`, AD-011) rather th
   workspace→document, matching §5.2/§5.4 and `editor-core`'s `run.ts`.)*
 - **Error mapping** (`SPEC.md` FR-091..095, §16.4): the `JsonPathBlockMap` is produced by the codec
   skeleton as it walks (§5.4); the UI highlights the mapped or nearest-parent block.
-- **Theming / encapsulation** (AD-017, AD-018): Zelos default, light DOM + scoped CSS.
+- **Theming / encapsulation** (AD-017, AD-018, AD-033): thrasos default, light DOM + scoped CSS.
 - **Diagnostics** (`SPEC.md` FR-080, §18): engine + metadata versions, parity diffs, renderer
   used.
 

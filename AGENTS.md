@@ -8,7 +8,7 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
 
 - `docs/SPEC.md` — the *what*: FR/NFR/AC/UC, rule coverage, supported surface, error taxonomy,
   governance (§21).
-- `docs/ARCHITECTURE.md` — the *how*: decisions `AD-001..AD-032`, packages, host boundary, the
+- `docs/ARCHITECTURE.md` — the *how*: the architecture decisions (`AD-*`, append-only), packages, host boundary, the
   projection codec (no editor-defined IR, AD-032), flows.
 - `docs/metadata-contract.md` — the engine↔editor metadata *shape*.
 - `docs/traceability.md` — requirement→test coverage, engine-parity checks, round-trip corpus.
@@ -36,7 +36,7 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
 
 - TypeScript monorepo: pnpm workspaces · Turborepo · Vite (library mode) · Vitest · Changesets (AD-021).
 - Packages (AD-019/020): `@transon/editor-core` (pure TS, deliverable #1) → `@transon/editor-blockly`
-  (Zelos) → `editor-ui` (internal React) → `@transon/editor-element` (vanilla + `<transon-editor>`) +
+  (thrasos, AD-033) → `editor-ui` (internal React) → `@transon/editor-element` (vanilla + `<transon-editor>`) +
   `@transon/editor-react`.
 - Reference host: in-browser Pyodide/PyScript (AD-025); round-trip CI: Node→Python adapter (AD-011).
 - License: MIT. npm scope: `@transon`.

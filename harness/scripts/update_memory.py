@@ -38,7 +38,7 @@ SNAPSHOT_JSON = DOCS / "metadata-snapshot.json"
 SNAPSHOT_SIDECAR = DOCS / "metadata-snapshot.md"
 CURRENT_STATE = DOCS / "current-state.md"
 
-WATCHED_PREFIXES = ("docs/", "packages/", "src/", "test/", "tests/", "examples/", "apps/")
+WATCHED_PREFIXES = ("docs/", "packages/", "src/", "test/", "tests/", "examples/", "apps/", "harness/")
 
 STATE_BEGIN = "<!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->"
 STATE_END = "<!-- END generated: at-a-glance -->"
@@ -342,6 +342,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if do_state:
         ok, msg = write_state()
         print(("OK: " if ok else "WARN: ") + msg)
+        rc = rc or (0 if ok else 1)
     return rc
 
 

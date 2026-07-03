@@ -33,6 +33,11 @@ GATES: List[Tuple[str, List[str]]] = [
 ]
 
 
+# Sentinel returncode for "the watcher itself failed to run the gate" — distinct from any
+# gate exit code, so build_report() can keep watcher errors (exit 1) apart from drift (exit 2).
+WATCHER_ERROR = -1
+
+
 def _run(argv: List[str]) -> Tuple[int, str]:
     try:
         r = subprocess.run(
@@ -40,7 +45,7 @@ def _run(argv: List[str]) -> Tuple[int, str]:
             capture_output=True, text=True, timeout=180,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        return 1, f"watcher could not run {argv[0]}: {exc}"
+        return WATCHER_ERROR, f"watcher could not run {argv[0]}: {exc}"
     return r.returncode, (r.stdout + r.stderr).strip()
 
 
@@ -52,17 +57,32 @@ def _tail(text: str, n: int = 6) -> str:
 def build_report() -> Tuple[int, str]:
     """Return (exit_code, markdown_report)."""
     drift: List[str] = []
+    watcher_errors: List[str] = []
     rows: List[str] = []
     for label, argv in GATES:
         code, out = _run(argv)
-        status = "✅ clean" if code == 0 else "⚠️ drift"
-        rows.append(f"### {status} — {label}\n\n```\n{_tail(out) or '(no output)'}\n```")
-        if code != 0:
+        if code == WATCHER_ERROR:
+            status = "❌ watcher error"
+            watcher_errors.append(label)
+        elif code != 0:
+            status = "⚠️ drift"
             drift.append(label)
+        else:
+            status = "✅ clean"
+        rows.append(f"### {status} — {label}\n\n```\n{_tail(out) or '(no output)'}\n```")
 
-    if not drift:
+    if not drift and not watcher_errors:
         header = "# Drift watch — clean ✅\n\nAll read-only gates pass; no accumulated drift detected."
         return 0, header + "\n\n" + "\n\n".join(rows)
+
+    if not drift:
+        header = (
+            "# Drift watch — watcher error ❌\n\n"
+            f"**{len(watcher_errors)} gate(s) could not run:** {', '.join(watcher_errors)}. "
+            "This is a watcher problem (missing interpreter/script/timeout), not repo drift — "
+            "no gate reported drift among those that did run."
+        )
+        return 1, header + "\n\n" + "\n\n".join(rows)
 
     header = (
         "# Drift watch — proposal ⚠️\n\n"
@@ -75,6 +95,8 @@ def build_report() -> Tuple[int, str]:
         "- **maturity ratchet** → a dimension regressed vs `docs/maturity-baseline.json`.\n\n"
         "Pipe a gate name to `harness/automations/ci_triage.py` for the targeted remedy."
     )
+    if watcher_errors:
+        header += f"\n\n**Also {len(watcher_errors)} gate(s) could not run (watcher error):** {', '.join(watcher_errors)}."
     return 2, header + "\n\n" + "\n\n".join(rows)
 
 

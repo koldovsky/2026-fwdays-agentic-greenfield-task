@@ -220,7 +220,9 @@ def d2_spec_trace(s) -> Tuple[int, str]:
     by_hook = _enforced_by_hook(s, "check_traceability", "check-traceability")
     if not (in_ci or by_hook):
         return 2, "numbered IDs + check_traceability.py, but run voluntarily (no CI/hook)"
-    trailer = _enforced_by_hook(s, "refs:", "slice:") or bool(_glob("harness/githooks/commit-msg*") + _glob(".husky/commit-msg*"))
+    # The trailer convention counts only when a binding git-layer hook actually enforces
+    # Refs:/Slice: — the mere presence of a commit-msg hook file is not enforcement.
+    trailer = _enforced_by_hook(s, "refs:", "slice:")
     if in_ci and trailer:
         return 4, "traceability gated in CI + commit-trailer convention enforced"
     return 3, "traceability checker runs in CI/hook (blocking)"

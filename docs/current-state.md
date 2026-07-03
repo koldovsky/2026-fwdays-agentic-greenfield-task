@@ -8,13 +8,60 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `9864a2e` — chore(dev): reference-host dev server on a free port |
-| Branch | `r31-corpus-migration` |
+| Repo HEAD | `5d963e8` — docs: sync tracked statuses with implemented reality (audit pass) |
+| Branch | `main` |
 | Engine pin | transon `v0.1.6` @ `b64b340b9090` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**External-review remediation DONE (2026-07-03) — 17 findings triaged: 15 fixed, 2 refuted; all gates
+green; UNCOMMITTED.** Verified each finding of an external code review against the tree. **Fixed
+(docs):** AGENTS.md stale `AD-001..AD-032` range (now unbounded `AD-*`) + stale Zelos package label;
+CLAUDE.md re-thinned to a pure pointer (single-source description now only in `harness/README.md` /
+`docs/portability.md`); ARCHITECTURE.md §5.1 row / mermaid label / §6.3 bullet + README package table
+aligned to the thrasos default (AD-033); traceability.md one-shot grep now covers all real test
+locations (`packages/*/test`, `test/`, `examples/*/test`); review-gate.md Stage-3 snapshot gate is now
+blocking (`update_memory.py --check --require-engine`, skip must be an explicit waived-gate record).
+**Fixed (harness code):** `drift_watch.py` keeps watcher errors (exit 1) distinct from drift (exit 2)
+via a `WATCHER_ERROR` sentinel; `run_evals.py` cost-tier check now compares the writer against BOTH
+judge roles, rejects boolean `loop_limit` (bool⊂int), and requires the adjacent "test…first" phrase;
+`commit-msg` hook comment points at `harness/githooks` and its path regex mirrors `CODE_DIRS` exactly
+(dropped `lib|app`); `check_maturity.py` D2 trailer credit needs actual `Refs:`/`Slice:` hook content,
+not mere commit-msg file presence (ratchet still L4); `check_traceability.py` coverage gate (3) now
+accepts only test-scoped citations (`test_id_refs` filter — still green, so all done rows genuinely
+have test citations); `update_memory.py` watches `harness/` for the handoff nudge and propagates a
+`write_state()` failure into the exit code. **Refuted (no change):** the "unchecked presentation
+source-scan row" (already `[x]` in both tables) and the README `createTransonEditor` example ("engine
+at top level" is wrong — the real options shape IS `{ host: { engine } }`, per `EditorControllerOptions`
+/ `TransonEditorHost`). Validated: traceability, links, evals, maturity (`--check`), engine parity,
+snapshot `--check`, full `drift_watch` run — all exit 0; watcher-error path + new eval guards
+smoke-tested directly._
+
+_**Docs-vs-reality synchronization pass DONE (2026-07-03) — statuses reconciled; all gates + all 7 test
+suites verified green (core 21 · blockly 27 · ui 116 · element 12 · react 5 · adapter 1260 ·
+reference-host 7 = 1448).** Independent audit (3 read-only investigation agents + local gate/test runs)
+of every "done" claim vs the tree. **Verdict: every functional claim checked out** — FR-130/131/132,
+R-31 (snapshot `3.0`, 121-case flat corpus, contract v2.1), and all still-open items (M-09, Playwright/axe
+CI job, UAT #1/#2 editor side, context-sensitive examples, root-fallback highlighting) are exactly as
+recorded. The drift was all in the OTHER direction — docs under-reporting reality: **(1)** the milestone
+work is no longer "NOT pushed": every milestone/UAT branch (`m0`…`m5`, `fix-editor-layout-css`,
+`fr-130`, `fr-131`, `r31-corpus-migration`) is an ancestor of `main`, and `main` == `origin/main`
+(`ca3a975`) — the old Next-step-1 "push train" is superseded (history landed linearly on `main`; no PRs
+were used; the stale local branch refs can be deleted at leisure). The header's old `9864a2e` pin was a
+dangling pre-rebase duplicate of `467c36a`. **(2)** `traceability.md` carried stale rows contradicted by
+its own body: the "Pre-implementation baseline" header/legend boilerplate; `[ ]` rows for work long
+gated `[x]` elsewhere (FR-127/NFR-048 vs the parity-table row; NFR-035/AD-009 + AD-010 vs AC-024/025;
+NFR-001..005/AD-003/004, AD-008, AD-011 vs the corpus); AC-002..005/009/010/027 never flipped after
+M2–M5 delivered them; §7.5 + §7.16 notes still deferring FR-037/038 + FR-121 "to M4/M5". All fixed —
+rows flipped **with ID citations added to the covering tests** (roundtrip/escape/import-export/sync
+headers) per the §"How to keep this current" discipline; `mount.test.tsx`→`.ts` path typo fixed.
+**(3) One genuine gap surfaced: FR-017 (block comments/descriptions) was never implemented** — its
+traceability note said "M5" but M5's scope never included it; now recorded honestly as an open backlog
+item in §7.2. Remaining honest `[~]`/`[ ]`: the §7.1/7.3/7.4/7.6/7.7/7.9/7.10/7.11 range rows (per-ID
+sweep not yet done; known open members FR-017, FR-068), NFR-030 (review-only), AD-027/029 (engine-repo
+test halves), NFR-036..040, NFR-047. Gates re-run green after the edits._
 
 _**Review-gate on the R-31 + FR-132 tree DONE (2026-07-03) — 1 critical + 4 suggestions confirmed, all fixed; branch `r31-corpus-migration`; committed.** Ran the `harness/workflows/review-gate.md` adversarial pass (5 dimensions fan-out, per-finding refutation; maker ≠ checker — the slices were implemented in prior sessions) over the then-uncommitted working tree. 14 candidates → 6 refuted, 8 confirmed (deduped to 6). **Fixed:** (🔴) `groupExamples` derived curated-tier membership from tag literals (`'worked-example'`/`'recipe'`) — exactly the tag-convention join contract §2.7 v2.1 forbids; `ExampleCase` now carries `tier`, resolved in `buildExampleCorpus` from the `docs.worked_examples`/`docs.recipes` name-reference lists, and the panel groups on it (adversarial fixture: a mistagged non-curated case must stay in its rule group). (🟡) rule ownership now falls back to parameter-level `docs.rules[*].params[*].examples` references — previously all 30 "Reference · other" entries were engine-rule-owned; FR-132 text aligned (SPEC-first). (🟡) the §15.8 sweeps' corpus-size assertion was tautological (`collectDocsExamples().length === docs.examples.length` by construction) — added a `CORPUS_FLOOR = 121` anti-truncation ratchet (docs-examples.ts + the three sweeps + the editor-ui corpus test). (🟡) handoff narrative contradicted the tree on the 0.1.6 pin bump — reconciled. (🟢) stale `"2.0"` comment in `snapshot.ts` fixed. **Known accepted nit (recorded, not fixed):** multi-referenced examples group under the first referencing rule in `docs.rules` emission order, so context rules (`this`, `item`, …) absorb some operation examples — any smarter owner pick would be an editor-side heuristic (AD-012 tension); revisit only with an engine-emitted primary-owner field. All gates green (traceability, links, parity, snapshot, evals, maturity); editor-ui 116 + core 21 + adapter 1260 green._
 
@@ -329,32 +376,32 @@ The authoritative milestone tracker is [`ROADMAP.md`](ROADMAP.md#milestone-track
 living read of it.
 
 - **M0 — engine `switch`/`cond` + projection-ready export + Node adapter** — ☑ done (committed
-  `8751707`, not pushed; CI pin flip deferred). Engine half: `../transon` exports
+  `8751707`, since merged to `main` and pushed; CI pin flip deferred). Engine half: `../transon` exports
   `get_editor_metadata()` (`switch`/`cond` + projection-ready split catalog/docs, `metadata_version
   2.0`) — captured in [`metadata-snapshot.json`](metadata-snapshot.json). Editor half: monorepo
   scaffolding + AD-021 pins, `@transon/editor-core` stub (`EngineProvider` port + snapshot loader), and
   the Node→Python `test/engine-node-adapter` running markers `@`/`$` — reviewed + gate-green. Only the
   CI engine-pin flip (M-09: `--require-engine`) remains, waiting on `transon` being pip-installable in CI.
-- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ☑ done (committed, not
-  pushed; two `round-trip-reviewer` sign-offs). Codec in `packages/editor-core/src/codec/`;
+- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ☑ done (committed, since merged
+  to `main` and pushed; two `round-trip-reviewer` sign-offs). Codec in `packages/editor-core/src/codec/`;
   engine-executed tests in `test/engine-node-adapter/test/codec/`. `decode(encode(T)) == T` structurally
   + by execution (AC-035); arms projected from committed-JSON generators with byte-equal regen
   (AD-026/030); literal-marker escape (FR-059…063/123), exact-variant surface check (§15.7),
   `JsonPathBlockMap` (FR-091/094/122), custom marker (FR-063); workspace-shape + FR-126 gates pass; clean
   recursion ceiling (§6.5). 133 tests.
-- **M2 — full catalog** — ☑ done (committed `142bbc9`→`69d1472` + the closeout, not pushed; two
+- **M2 — full catalog** — ☑ done (committed `142bbc9`→`69d1472` + the closeout, since merged to `main` and pushed; two
   `round-trip-reviewer` sign-offs). All 22 rules + every variant round-trip by construction (147 engine
   examples + corpus); constant-field disposition (FR-118); import-failure → `transon_unsupported`;
   AC-034 synthetic-rule proof; object/fields escape-collision fix (FR-123/§11.4 refined); test bridge
   hardened. 763 tests. See **Last action** for detail.
 - **M3 — `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime** — ☑ done (committed
-  `12b2751`→`f4de4c8`, not pushed; `round-trip-reviewer` sign-off). The full catalog projects to Blockly
+  `12b2751`→`f4de4c8`, since merged to `main` and pushed; `round-trip-reviewer` sign-off). The full catalog projects to Blockly
   (committed `palette.json`/`toolbox.json` from `G_palette`/`G_toolbox`) + the finite rule-agnostic behavior
   runtime (`@transon/editor-blockly`: 1 field + 3 structural mutators). FR-125 (palette-load) + FR-126
   (encoder-load, both directions) + FR-127/NFR-048 (presentation-from-data) + NFR-046 (runtime-size) + AC-036
   (self-hosting in-surface) + AC-037 (synthetic-rule-from-data) all gated. 1387 tests. See **Last action**.
 - **M4 — `editor-ui` + `editor-element`: shell + host execution + bidirectional sync** — ☑ done
-  (committed `1902f64`→`98e70eb`, not pushed; `round-trip-reviewer` sign-off). The runnable editor in
+  (committed `1902f64`→`98e70eb`, since merged to `main` and pushed; `round-trip-reviewer` sign-off). The runnable editor in
   sandbox + compact modes over the `EditorController`/`EditorSession` store; interactive light-DOM Zelos
   mount (AD-017/018, jsdom); host validate/execute (AC-012…016/024/025); error→block highlighting
   (AC-017); strict §7.15 bidirectional sync (AC-033); editable scalar field (FR-015) + on-canvas
@@ -362,7 +409,7 @@ living read of it.
   AC-022); the Pyodide reference host (AD-025). One reviewer must-fix (§7.15 surface check) fixed +
   regression-locked. 1477 tests. See **Last action**.
 - **M5 — `editor-react` + examples + embedding + accessibility + self-hosting** — ☑ done (committed
-  `26691ee`→`1cf0be6`, not pushed; `round-trip-reviewer`-signed-off, codec byte-unchanged). New public
+  `26691ee`→`1cf0be6`, since merged to `main` and pushed; `round-trip-reviewer`-signed-off, codec byte-unchanged). New public
   `@transon/editor-react` (React peer); full embedding config (read-only/theming FR-128/categories/marker);
   examples corpus (89 deduped) with expected-vs-actual; import/copy/download + unsaved guard; tooltips +
   version diagnostics; §12.6 progressive disclosure (data-driven, no regen); self-hosting through the
@@ -380,13 +427,10 @@ living read of it.
    only: (i) context-sensitive examples (selected block → its rule's reference examples;
    `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
    bump~~ done in this tree — transon 0.1.6 is on PyPI.)
-1. **Push the milestone branches + open PR(s)** — **all of M0–M5 are complete and NOT pushed** (one
-   branch/PR per milestone): `m0-editor-scaffolding` (M0), `m1-codec-skeleton` (M1), `m2-full-catalog`
-   (M2, off M1), `m3-editor-blockly` (M3, off M2), `m4-editor-ui` (M4, off M3), `m5-react-embedding`
-   (M5, off M4). Reference the covered FR/AC IDs. If they should merge to `main` in order, rebase each
-   after the prior lands. **Note:** the post-M5 UAT branches stack linearly on M5 and should ride the
-   same push train: `fix-editor-layout-css` (`b231d6f`) → `fr-130-curated-operator-dropdown`
-   (`e7a263c`) → `fr-131-json-edit-focus` (`a41e00d`).
+1. ~~Push the milestone branches + open PR(s)~~ **DONE / SUPERSEDED (verified 2026-07-03)** — the
+   entire history (M0–M5 + `fix-editor-layout-css` + `fr-130` + `fr-131` + `r31-corpus-migration`)
+   landed **linearly on `main`** and `main` is pushed (`origin/main` == `ca3a975`); no PRs were used.
+   Optional cleanup only: delete the stale local branch refs (all are ancestors of `main`).
 2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first. ⚠ IN PROGRESS in a
    SEPARATE session (user, 2026-07-02) — do NOT pick this up here; coordinate before touching its
    surfaces (contract §2.2, codec container branch, runtime primitives).** The shape-hint
