@@ -1,0 +1,25 @@
+#!/bin/sh
+# Binding inner-loop gate (M-01). The deterministic checks an agent is *told* to
+# run before finishing must also run before a commit can land — so drift cannot
+# be committed locally, not just blocked at the PR.
+#
+# Enable once per clone:
+#   git config core.hooksPath harness/githooks
+#
+# Skip in an emergency with --no-verify (CI still enforces the same checks).
+set -e
+
+python3 harness/scripts/check_traceability.py
+python3 harness/scripts/check_links.py
+python3 harness/evals/run_evals.py
+python3 harness/scripts/check_maturity.py --check
+# Committed metadata snapshot must not have drifted from the engine (skip-safe until pinned).
+python3 harness/scripts/update_memory.py --check
+# check_engine_parity self-skips until the engine is importable; CI is authoritative.
+python3 harness/scripts/check_engine_parity.py
+# No hand-written codec↔workspace mapping layer (FR-126, AD-032).
+python3 harness/scripts/check_no_codec_mapping.py
+# Editor-owned presentation is data (not TS literals) + complete (FR-127, NFR-048).
+python3 harness/scripts/check_presentation.py
+# Blockly behavior runtime stays finite + rule-agnostic (NFR-046, AD-031).
+python3 harness/scripts/check_behavior_runtime_size.py

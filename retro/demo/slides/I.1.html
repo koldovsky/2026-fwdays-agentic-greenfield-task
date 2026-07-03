@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">The problem</div>
+<h1>Every system speaks <span class="hl">JSON</span> — never the <span class="hl">same</span> JSON.</h1>
+<div class="row" style="margin-top:70px">
+  <div class="card" style="transform:rotate(-1.5deg)">
+    <div style="color:var(--dim);font-size:22px;margin-bottom:12px">the API you call</div>
+    <pre><span class="p">{</span> <span class="k">"countryCode"</span>: <span class="s">"FR"</span>,
+  <span class="k">"countryName"</span>: <span class="s">"France"</span> <span class="p">}</span></pre>
+  </div>
+  <div class="arrow">≠</div>
+  <div class="card" style="transform:rotate(1deg)">
+    <div style="color:var(--dim);font-size:22px;margin-bottom:12px">the config you load</div>
+    <pre><span class="p">{</span> <span class="k">"countries"</span>: <span class="p">{</span> <span class="k">"FR"</span>: <span class="s">"France"</span> <span class="p">}</span>,
+  <span class="k">"locale"</span>: <span class="s">"fr-FR"</span> <span class="p">}</span></pre>
+  </div>
+  <div class="arrow">≠</div>
+  <div class="card" style="transform:rotate(-.8deg)">
+    <div style="color:var(--dim);font-size:22px;margin-bottom:12px">the service you feed</div>
+    <pre><span class="p">[{</span> <span class="k">"name"</span>: <span class="s">"France"</span>,
+   <span class="k">"code"</span>: <span class="s">"FR"</span> <span class="p">}]</span></pre>
+  </div>
+</div>
+<div class="sub" style="margin-top:60px">so we reshape it, all day — with throwaway code, or a one-liner</div>
+</body></html>

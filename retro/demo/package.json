@@ -1,0 +1,9 @@
+{
+  "name": "transon-demo-video",
+  "private": true,
+  "description": "Demo-video production pipeline (retro/demo) — meta-material, not part of the editor workspace",
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.57"
+  }
+}

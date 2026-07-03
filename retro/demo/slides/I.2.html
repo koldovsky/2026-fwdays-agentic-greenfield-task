@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">One-liners</div>
+<h1>Your logic — a program <span class="hl">hidden inside a string</span></h1>
+<div style="display:flex;flex-direction:column;gap:36px;margin-top:64px;width:1420px">
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span style="color:var(--dim);font-size:20px;margin-left:12px">swap keys and values — fine, at first</span></div>
+    <pre>$ jq <span class="s">'with_entries({key: .value, value: .key})'</span></pre>
+  </div>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span style="color:var(--dim);font-size:20px;margin-left:12px">group transactions by user, sum the amounts — a Tuesday</span></div>
+    <pre>$ jq <span class="s">'group_by(.user) | map({key: .[0].user,
+        value: map(.amount) | add}) | from_entries'</span></pre>
+  </div>
+</div>
+<div class="sub" style="margin-top:56px">can't store it in a JSON column · can't validate it with a schema · can't generate it safely</div>
+</body></html>

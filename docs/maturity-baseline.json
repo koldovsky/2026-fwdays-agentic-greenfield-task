@@ -1,0 +1,67 @@
+{
+  "generated_by": "harness/scripts/check_maturity.py",
+  "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
+  "pre_code": true,
+  "score_pct": 93,
+  "tier": "L4 · Optimizing",
+  "weighted": 31.5,
+  "weighted_max": 34.0,
+  "dimensions": {
+    "D1": {
+      "name": "context engineering",
+      "weight": 1.0,
+      "level": 3,
+      "evidence": "always-on contract in 2 tool(s) (Cursor rules + Claude CLAUDE.md/SessionStart) + 8 skills + scoped rules; negative rules present",
+      "lifecycle_gated": false
+    },
+    "D2": {
+      "name": "spec & traceability",
+      "weight": 1.5,
+      "level": 4,
+      "evidence": "traceability gated in CI + commit-trailer convention enforced",
+      "lifecycle_gated": false
+    },
+    "D3": {
+      "name": "verification & gates",
+      "weight": 1.5,
+      "level": 4,
+      "evidence": "gates run in CI + coverage/eval ratchet guards regression",
+      "lifecycle_gated": true
+    },
+    "D4": {
+      "name": "review / maker != checker",
+      "weight": 1.0,
+      "level": 4,
+      "evidence": "adversarial review workflow + structurally triggered",
+      "lifecycle_gated": false
+    },
+    "D5": {
+      "name": "loop & orchestration",
+      "weight": 1.0,
+      "level": 4,
+      "evidence": "loops + scheduled automations / worktrees",
+      "lifecycle_gated": false
+    },
+    "D6": {
+      "name": "memory & knowledge",
+      "weight": 1.0,
+      "level": 4,
+      "evidence": "intent ledger + working handoff + committed snapshot",
+      "lifecycle_gated": false
+    },
+    "D7": {
+      "name": "portability & tooling",
+      "weight": 1.0,
+      "level": 4,
+      "evidence": "2 agent-tool surfaces + documented portability",
+      "lifecycle_gated": false
+    },
+    "D8": {
+      "name": "proof & observability",
+      "weight": 0.5,
+      "level": 1,
+      "evidence": "UI-test MCP / transcripts configured; no asserted proof yet",
+      "lifecycle_gated": true
+    }
+  }
+}

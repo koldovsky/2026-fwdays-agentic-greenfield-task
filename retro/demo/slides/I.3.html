@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">Transon</div>
+<h1>The transformation <span class="hl">itself is JSON</span></h1>
+<div class="row" style="margin-top:64px">
+  <div class="card">
+    <div style="color:var(--dim);font-size:22px;margin-bottom:12px">JSON input</div>
+    <pre><span class="p">{</span> <span class="k">"FR"</span>: <span class="s">"France"</span>,
+  <span class="k">"GB"</span>: <span class="s">"United Kingdom"</span>,
+  <span class="k">"JP"</span>: <span class="s">"Japan"</span> <span class="p">}</span></pre>
+  </div>
+  <div class="arrow">+</div>
+  <div class="card" style="border-color:var(--accent)">
+    <div style="color:var(--accent);font-size:22px;margin-bottom:12px">JSON template — pure data</div>
+    <pre><span class="p">{</span> <span class="m">"$"</span>: <span class="s">"map"</span>,
+  <span class="k">"key"</span>:   <span class="p">{</span> <span class="m">"$"</span>: <span class="s">"value"</span> <span class="p">}</span>,
+  <span class="k">"value"</span>: <span class="p">{</span> <span class="m">"$"</span>: <span class="s">"key"</span> <span class="p">}</span> <span class="p">}</span></pre>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card">
+    <div style="color:var(--dim);font-size:22px;margin-bottom:12px">JSON output</div>
+    <pre><span class="p">{</span> <span class="k">"France"</span>: <span class="s">"FR"</span>,
+  <span class="k">"United Kingdom"</span>: <span class="s">"GB"</span>,
+  <span class="k">"Japan"</span>: <span class="s">"JP"</span> <span class="p">}</span></pre>
+  </div>
+</div>
+<div style="margin-top:64px">
+  <span class="chip">store it</span><span class="chip">send it</span><span class="chip">validate it</span>
+  <span class="chip">diff it</span><span class="chip">generate it</span><span class="chip" style="border-color:var(--green);color:var(--green)">no code execution</span>
+</div>
+</body></html>

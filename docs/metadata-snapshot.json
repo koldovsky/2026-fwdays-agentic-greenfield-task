@@ -1,0 +1,5282 @@
+{
+  "catalog": {
+    "functions": [
+      {
+        "input": "any",
+        "name": "str",
+        "output": "str"
+      },
+      {
+        "input": "str",
+        "name": "int",
+        "output": "int"
+      },
+      {
+        "input": "str",
+        "name": "float",
+        "output": "float"
+      },
+      {
+        "input": "any",
+        "name": "type",
+        "output": "string"
+      }
+    ],
+    "operators": [
+      {
+        "alternative": "lt",
+        "kind": "binary",
+        "name": "<",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "le",
+        "kind": "binary",
+        "name": "<=",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "eq",
+        "kind": "binary",
+        "name": "==",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "ne",
+        "kind": "binary",
+        "name": "!=",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "ge",
+        "kind": "binary",
+        "name": ">=",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "gt",
+        "kind": "binary",
+        "name": ">",
+        "result": "boolean",
+        "types": "any"
+      },
+      {
+        "alternative": "add",
+        "kind": "binary",
+        "name": "+",
+        "result": "string, number",
+        "types": "string, number"
+      },
+      {
+        "alternative": "sub",
+        "kind": "binary",
+        "name": "-",
+        "result": "number",
+        "types": "number"
+      },
+      {
+        "alternative": "mul",
+        "kind": "binary",
+        "name": "*",
+        "result": "number",
+        "types": "number"
+      },
+      {
+        "alternative": "div",
+        "kind": "binary",
+        "name": "/",
+        "result": "number",
+        "types": "number"
+      },
+      {
+        "alternative": "mod",
+        "kind": "binary",
+        "name": "%",
+        "result": "number",
+        "types": "number"
+      },
+      {
+        "alternative": "and",
+        "kind": "binary",
+        "name": "&&",
+        "result": "any",
+        "types": "any"
+      },
+      {
+        "alternative": "or",
+        "kind": "binary",
+        "name": "||",
+        "result": "any",
+        "types": "any"
+      },
+      {
+        "alternative": "not",
+        "kind": "unary",
+        "name": "!",
+        "result": "boolean",
+        "types": "boolean"
+      }
+    ],
+    "rules": [
+      {
+        "name": "this",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "parent",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "item",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "key",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "index",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "value",
+        "params": [],
+        "variants": [
+          {
+            "id": "base",
+            "params": []
+          }
+        ]
+      },
+      {
+        "name": "set",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "name"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "name"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "attr",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "name"
+          },
+          {
+            "kind": "dynamic",
+            "name": "names"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "name",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          },
+          {
+            "id": "names",
+            "params": [
+              {
+                "name": "names",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "object",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "key"
+          },
+          {
+            "kind": "dynamic",
+            "name": "value"
+          },
+          {
+            "container": "mapping",
+            "kind": "dynamic",
+            "name": "fields"
+          }
+        ],
+        "variants": [
+          {
+            "id": "key+value",
+            "params": [
+              {
+                "name": "key",
+                "required": true
+              },
+              {
+                "name": "value",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "fields",
+            "params": [
+              {
+                "name": "fields",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "map",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "item"
+          },
+          {
+            "kind": "dynamic",
+            "name": "items"
+          },
+          {
+            "kind": "dynamic",
+            "name": "key"
+          },
+          {
+            "kind": "dynamic",
+            "name": "value"
+          }
+        ],
+        "variants": [
+          {
+            "id": "item",
+            "params": [
+              {
+                "name": "item",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "items",
+            "params": [
+              {
+                "name": "items",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "key+value",
+            "params": [
+              {
+                "name": "key",
+                "required": true
+              },
+              {
+                "name": "value",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "filter",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "cond"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "cond",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "zip",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "items"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "items",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "file",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "name"
+          },
+          {
+            "kind": "dynamic",
+            "name": "content"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "content",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "join",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "items"
+          },
+          {
+            "kind": "dynamic",
+            "name": "sep"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "items",
+                "required": true
+              },
+              {
+                "name": "sep",
+                "required": false
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "chain",
+        "params": [
+          {
+            "container": "list",
+            "kind": "dynamic",
+            "name": "funcs"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "funcs",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "expr",
+        "params": [
+          {
+            "kind": "constant",
+            "name": "op",
+            "options": [
+              "<",
+              "lt",
+              "<=",
+              "le",
+              "==",
+              "eq",
+              "!=",
+              "ne",
+              ">=",
+              "ge",
+              ">",
+              "gt",
+              "+",
+              "add",
+              "-",
+              "sub",
+              "*",
+              "mul",
+              "/",
+              "div",
+              "%",
+              "mod",
+              "&&",
+              "and",
+              "||",
+              "or",
+              "!",
+              "not"
+            ]
+          },
+          {
+            "kind": "dynamic",
+            "name": "value"
+          },
+          {
+            "kind": "dynamic",
+            "name": "values"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "op",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "value",
+            "params": [
+              {
+                "name": "op",
+                "required": true
+              },
+              {
+                "name": "value",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "values",
+            "params": [
+              {
+                "name": "op",
+                "required": true
+              },
+              {
+                "name": "values",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "call",
+        "params": [
+          {
+            "kind": "constant",
+            "name": "name",
+            "options": [
+              "str",
+              "int",
+              "float",
+              "type"
+            ]
+          },
+          {
+            "kind": "dynamic",
+            "name": "value"
+          },
+          {
+            "kind": "dynamic",
+            "name": "values"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "value",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "value",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "values",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "values",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "format",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "pattern"
+          },
+          {
+            "kind": "dynamic",
+            "name": "value"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "pattern",
+                "required": true
+              },
+              {
+                "name": "value",
+                "required": false
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "include",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "name"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "name",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "switch",
+        "params": [
+          {
+            "kind": "dynamic",
+            "name": "key"
+          },
+          {
+            "container": "mapping",
+            "kind": "dynamic",
+            "name": "cases"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "key",
+                "required": true
+              },
+              {
+                "name": "cases",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "cond",
+        "params": [
+          {
+            "arm": {
+              "params": [
+                {
+                  "kind": "dynamic",
+                  "name": "when"
+                },
+                {
+                  "kind": "dynamic",
+                  "name": "then"
+                }
+              ],
+              "required": [
+                "when",
+                "then"
+              ]
+            },
+            "container": "arms",
+            "kind": "dynamic",
+            "name": "cases"
+          },
+          {
+            "kind": "dynamic",
+            "name": "default"
+          }
+        ],
+        "variants": [
+          {
+            "id": "base",
+            "params": [
+              {
+                "name": "cases",
+                "required": true
+              },
+              {
+                "name": "default",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "docs": {
+    "examples": [
+      {
+        "data": {
+          "a": 1
+        },
+        "doc": "Gets value from input `dict` by the name of attribute defined in template as constant value.",
+        "name": "AttrSimpleFixedName",
+        "result": 1,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": "a"
+        }
+      },
+      {
+        "data": {
+          "a": 1
+        },
+        "doc": "Attempts to get a value from input `dict` by the name that does not exist.",
+        "name": "AttrSimpleNameDoesNotExist",
+        "result": null,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": "b"
+        }
+      },
+      {
+        "data": {
+          "a": {
+            "b": {
+              "c": 1
+            }
+          }
+        },
+        "doc": "Tries to get a value from nested input structure of `dicts` with paths defined in different attribute of input data.\nActual path is not correct at its second component.\nTemplate results with no value.",
+        "name": "AttrSimplePathDoesNotExist1",
+        "result": null,
+        "tags": [
+          "attr:names"
+        ],
+        "template": {
+          "$": "attr",
+          "names": [
+            "a",
+            "x",
+            "c"
+          ]
+        }
+      },
+      {
+        "data": [
+          [
+            [
+              1
+            ]
+          ]
+        ],
+        "doc": "Tries to get a value from nested input structure of `lists` with paths defined in different attribute of input data.\nActual path is not correct at its second component.\nTemplate results with no value.",
+        "name": "AttrSimplePathDoesNotExist2",
+        "result": null,
+        "tags": [
+          "attr:names"
+        ],
+        "template": {
+          "$": "attr",
+          "names": [
+            0,
+            1,
+            0
+          ]
+        }
+      },
+      {
+        "data": [
+          1
+        ],
+        "doc": "Gets value from input `list` by the index defined in template as constant value.",
+        "name": "AttrSimpleFixedIndex",
+        "result": 1,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": 0
+        }
+      },
+      {
+        "data": [
+          1
+        ],
+        "doc": "Attempts to get a value from input `list` by the index that does not exist.",
+        "name": "AttrSimpleIndexDoesNotExist",
+        "result": null,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": 2
+        }
+      },
+      {
+        "data": [
+          1,
+          2,
+          3
+        ],
+        "doc": "When a dynamic attribute name evaluates to no value, lookup returns no value\nuniformly — including on lists, where an invalid index type would otherwise fail.",
+        "name": "AttrDynamicNameNoContent",
+        "result": null,
+        "tags": [
+          "attr:name",
+          "get"
+        ],
+        "template": {
+          "$": "attr",
+          "name": {
+            "$": "get",
+            "name": "missing_var"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "name": "a"
+        },
+        "doc": "Gets value from input `dict` by the name of attribute defined in different attribute of input data.",
+        "name": "AttrDynamicReferenceName1",
+        "result": 1,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": {
+            "$": "attr",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "name": "b"
+        },
+        "doc": "Gets value from input `dict` by the name of attribute defined in different attribute of input data.",
+        "name": "AttrDynamicReferenceName2",
+        "result": 2,
+        "tags": [
+          "attr:name"
+        ],
+        "template": {
+          "$": "attr",
+          "name": {
+            "$": "attr",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": {
+            "b": {
+              "c": 1,
+              "d": 2
+            },
+            "e": {
+              "f": 3,
+              "g": 4
+            }
+          }
+        },
+        "doc": "Gets a `list` of values with 4 elements discovered in nested input structure of `dicts` with paths defined in template.",
+        "name": "AttrSimpleFixedNames",
+        "result": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "tags": [
+          "attr:names"
+        ],
+        "template": [
+          {
+            "$": "attr",
+            "names": [
+              "a",
+              "b",
+              "c"
+            ]
+          },
+          {
+            "$": "attr",
+            "names": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          {
+            "$": "attr",
+            "names": [
+              "a",
+              "e",
+              "f"
+            ]
+          },
+          {
+            "$": "attr",
+            "names": [
+              "a",
+              "e",
+              "g"
+            ]
+          }
+        ]
+      },
+      {
+        "data": {
+          "a": {
+            "b": {
+              "c": 1,
+              "d": 2
+            },
+            "e": {
+              "f": 3,
+              "g": 4
+            }
+          },
+          "path": [
+            "a",
+            "e",
+            "f"
+          ]
+        },
+        "doc": "Gets value from nested input structure of `dicts` with paths defined in different attribute of input data.",
+        "name": "AttrDynamicReferenceNames",
+        "result": 3,
+        "tags": [
+          "attr:names"
+        ],
+        "template": {
+          "$": "attr",
+          "names": {
+            "$": "attr",
+            "name": "path"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": {
+            "b": {
+              "c": 1,
+              "d": 2
+            },
+            "e": {
+              "f": 3,
+              "g": 4
+            }
+          },
+          "paths": [
+            [
+              "a",
+              "b",
+              "d"
+            ],
+            [
+              "a",
+              "b",
+              "c"
+            ],
+            [
+              "a",
+              "e",
+              "g"
+            ],
+            [
+              "a",
+              "e",
+              "f"
+            ]
+          ]
+        },
+        "doc": "Gets a `list` of values discovered in nested input structure of `dicts` with paths defined in input data.\nList of paths may include any number of paths of any depth.",
+        "name": "AttrDynamicReferenceMultipleNames",
+        "result": [
+          2,
+          1,
+          4,
+          3
+        ],
+        "tags": [
+          "attr:names",
+          "chain",
+          "set",
+          "get",
+          "map:item"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "set",
+              "name": "root"
+            },
+            {
+              "$": "attr",
+              "name": "paths"
+            },
+            {
+              "$": "map",
+              "item": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "get",
+                    "name": "root"
+                  },
+                  {
+                    "$": "attr",
+                    "names": {
+                      "$": "item"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          {
+            "a": {
+              "b": {
+                "c": 1
+              }
+            },
+            "d": {
+              "e": {
+                "f": 2
+              }
+            }
+          },
+          {
+            "a": {
+              "b": {
+                "c": 3
+              }
+            },
+            "d": {
+              "e": {
+                "f": 4
+              }
+            }
+          }
+        ],
+        "doc": "Searching for values in nested structure with sequence of `attr` operations chained together.",
+        "name": "ChainWithAttr",
+        "result": [
+          {
+            "key": 1,
+            "value": 2
+          },
+          {
+            "key": 3,
+            "value": 4
+          }
+        ],
+        "tags": [
+          "map:item",
+          "chain",
+          "chain:funcs"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "key": {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "item"
+                },
+                {
+                  "$": "attr",
+                  "name": "a"
+                },
+                {
+                  "$": "attr",
+                  "name": "b"
+                },
+                {
+                  "$": "attr",
+                  "name": "c"
+                }
+              ]
+            },
+            "value": {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "item"
+                },
+                {
+                  "$": "attr",
+                  "name": "d"
+                },
+                {
+                  "$": "attr",
+                  "name": "e"
+                },
+                {
+                  "$": "attr",
+                  "name": "f"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "data": -5,
+        "doc": "Evaluates each arm's `when` in order and emits the `then` of the first truthy\none. Only the selected `then` is walked; later arms are skipped. This is the\nordered, multi-way generalization of an `if`/`else` chain.",
+        "name": "CondFirstTruthyArm",
+        "result": "negative",
+        "tags": [
+          "cond",
+          "cond:cases",
+          "cond:default",
+          "expr",
+          "expr:value"
+        ],
+        "template": {
+          "$": "cond",
+          "cases": [
+            {
+              "then": "negative",
+              "when": {
+                "$": "expr",
+                "op": "<",
+                "value": 0
+              }
+            },
+            {
+              "then": "zero",
+              "when": {
+                "$": "expr",
+                "op": "==",
+                "value": 0
+              }
+            }
+          ],
+          "default": "positive"
+        }
+      },
+      {
+        "data": 10,
+        "doc": "Falls back to the `default` template when no arm's `when` is truthy.",
+        "name": "CondDefaultBranch",
+        "result": "positive",
+        "tags": [
+          "cond",
+          "cond:default",
+          "expr"
+        ],
+        "template": {
+          "$": "cond",
+          "cases": [
+            {
+              "then": "negative",
+              "when": {
+                "$": "expr",
+                "op": "<",
+                "value": 0
+              }
+            },
+            {
+              "then": "zero",
+              "when": {
+                "$": "expr",
+                "op": "==",
+                "value": 0
+              }
+            }
+          ],
+          "default": "positive"
+        }
+      },
+      {
+        "data": "FF",
+        "doc": "Converts input string into integer in base-16.",
+        "name": "ConvertValues",
+        "result": 255,
+        "tags": [
+          "call:values",
+          "func:int"
+        ],
+        "template": {
+          "$": "call",
+          "name": "int",
+          "values": [
+            {
+              "$": "this"
+            },
+            16
+          ]
+        }
+      },
+      {
+        "data": 123,
+        "doc": "Adds 100 to input integer and converts result into string.\nIllustrates usage of `call` attribute `value`.",
+        "name": "ConvertValue",
+        "result": "223",
+        "tags": [
+          "call:value",
+          "expr:value",
+          "op:add",
+          "func:str"
+        ],
+        "template": {
+          "$": "call",
+          "name": "str",
+          "value": {
+            "$": "expr",
+            "op": "add",
+            "value": 100
+          }
+        }
+      },
+      {
+        "data": 123,
+        "doc": "Converts input integer into string.",
+        "name": "ConvertNoParameters",
+        "result": "123",
+        "tags": [
+          "call",
+          "call:name",
+          "func:str"
+        ],
+        "template": {
+          "$": "call",
+          "name": "str"
+        }
+      },
+      {
+        "data": "2.5",
+        "doc": "Parses an input string into a floating-point number using the `float` function.",
+        "name": "ConvertToFloat",
+        "result": 2.5,
+        "tags": [
+          "call",
+          "func:float"
+        ],
+        "template": {
+          "$": "call",
+          "name": "float"
+        }
+      },
+      {
+        "data": {
+          "name": "Alice"
+        },
+        "doc": "Returns a fallback string when a missing attribute is looked up.",
+        "name": "AttrWithDefault",
+        "result": "anonymous",
+        "tags": [
+          "attr",
+          "attr:default"
+        ],
+        "template": {
+          "$": "attr",
+          "default": "anonymous",
+          "name": "nickname"
+        }
+      },
+      {
+        "data": {},
+        "doc": "Returns a fallback number when an undefined variable is requested.",
+        "name": "GetWithDefault",
+        "result": 0,
+        "tags": [
+          "get",
+          "get:default"
+        ],
+        "template": {
+          "$": "get",
+          "default": 0,
+          "name": "count"
+        }
+      },
+      {
+        "data": {
+          "other": 1
+        },
+        "doc": "Returns a fallback label when a formatted value is missing.",
+        "name": "FormatWithDefault",
+        "result": "unknown",
+        "tags": [
+          "format",
+          "format:default"
+        ],
+        "template": {
+          "$": "format",
+          "default": "unknown",
+          "pattern": "{label}",
+          "value": {
+            "$": "attr",
+            "name": "label"
+          }
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Adds suffix to input string.\nIllustrates functionality of `expr` rule in form of monad.",
+        "name": "ExprSimpleMonads1",
+        "result": "value_suffix",
+        "tags": [
+          "expr:value",
+          "op:add"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "+",
+          "value": "_suffix"
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Adds prefix to input string.\nIllustrates functionality of `expr` rule in form of monad and usage of `parent` rule.",
+        "name": "ExprSimpleMonads2",
+        "result": "prefix_value",
+        "tags": [
+          "chain",
+          "expr:value",
+          "parent"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            "prefix_",
+            {
+              "$": "expr",
+              "op": "+",
+              "value": {
+                "$": "parent"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "a": 3,
+          "b": 4
+        },
+        "doc": "For input dictionary containing two integers returns sum of squares.\nIllustrates functionality of `expr` rule in form of monad.",
+        "name": "ExprMonadsComplex",
+        "result": 25,
+        "tags": [
+          "chain",
+          "expr:value",
+          "parent"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "attr",
+                  "name": "a"
+                },
+                {
+                  "$": "expr",
+                  "op": "*",
+                  "value": {
+                    "$": "this"
+                  }
+                }
+              ]
+            },
+            {
+              "$": "expr",
+              "op": "+",
+              "value": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "parent"
+                  },
+                  {
+                    "$": "attr",
+                    "name": "b"
+                  },
+                  {
+                    "$": "expr",
+                    "op": "*",
+                    "value": {
+                      "$": "this"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Adds suffix to input string.\nIllustrates functionality of `expr` rule with direct parameters.",
+        "name": "ExprSimpleValues1",
+        "result": "value_suffix",
+        "tags": [
+          "expr:values",
+          "this"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "+",
+          "values": [
+            {
+              "$": "this"
+            },
+            "_suffix"
+          ]
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Adds prefix to input string.\nIllustrates functionality of `expr` rule with direct parameters.",
+        "name": "ExprSimpleValues2",
+        "result": "prefix_value",
+        "tags": [
+          "expr:values",
+          "this"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "+",
+          "values": [
+            "prefix_",
+            {
+              "$": "this"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "a": 3,
+          "b": 4
+        },
+        "doc": "For input dictionary containing two integers returns sum of squares.\nIllustrates functionality of `expr` rule with direct parameters.",
+        "name": "ExprValuesComplex",
+        "result": 25,
+        "tags": [
+          "expr:values"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "+",
+          "values": [
+            {
+              "$": "expr",
+              "op": "*",
+              "values": [
+                {
+                  "$": "attr",
+                  "name": "a"
+                },
+                {
+                  "$": "attr",
+                  "name": "a"
+                }
+              ]
+            },
+            {
+              "$": "expr",
+              "op": "*",
+              "values": [
+                {
+                  "$": "attr",
+                  "name": "b"
+                },
+                {
+                  "$": "attr",
+                  "name": "b"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "data": "ignored by values mode",
+        "doc": "With `values`, the operator runs as `reduce(op, evaluated_list)` — the current\ncontext value is not an implicit argument. Input data affects the result only\nwhen you reference it explicitly inside a list item (e.g. `{\"$\": \"this\"}`).",
+        "name": "ExprValuesIgnoresThis",
+        "result": 6,
+        "tags": [
+          "expr:values"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "+",
+          "values": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      {
+        "data": 6,
+        "doc": "`and`/`&&` use Python logical conjunction (truthiness), not bitwise `&`.\nWith integers, `6 and 3` yields `3`, not `2`.",
+        "name": "ExprLogicalAnd",
+        "result": 3,
+        "tags": [
+          "expr:op",
+          "op:and"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "and",
+          "value": 3
+        }
+      },
+      {
+        "data": 0,
+        "doc": "`or`/`||` use Python logical disjunction (truthiness), not bitwise `|`.\nReturns the first truthy operand or the last operand.",
+        "name": "ExprLogicalOr",
+        "result": 5,
+        "tags": [
+          "expr:op",
+          "op:or"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "or",
+          "value": 5
+        }
+      },
+      {
+        "data": {},
+        "doc": "`or` treats `NO_CONTENT` as falsy, so a missing value falls through to the fallback.",
+        "name": "ExprOrNoContentFallback",
+        "result": "fallback",
+        "tags": [
+          "expr:op",
+          "op:or",
+          "attr"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "or",
+          "values": [
+            {
+              "$": "attr",
+              "name": "missing"
+            },
+            "fallback"
+          ]
+        }
+      },
+      {
+        "data": true,
+        "doc": "Calculates negation of input using `expr` rule with unary operator as monad.",
+        "name": "ExprUnary1",
+        "result": false,
+        "tags": [
+          "expr:op",
+          "op:not"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "!"
+        }
+      },
+      {
+        "data": false,
+        "doc": "Calculates negation of input using `expr` rule with unary operator in alternative form.",
+        "name": "ExprUnary2",
+        "result": true,
+        "tags": [
+          "expr:op",
+          "op:not"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "not"
+        }
+      },
+      {
+        "data": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          }
+        ],
+        "doc": "The ``file`` rule writes output through a ``file_writer`` delegate passed to\n``Transformer(...)``. It always returns ``NO_CONTENT`` (shown as ``null`` in JSON),\nso ``map`` over it yields an empty list — the side effect is the write, not the\ntransform result. ``name`` and ``content`` are templates; if either evaluates to\n``NO_CONTENT``, nothing is written for that invocation.",
+        "name": "FileWriteViaMap",
+        "result": [],
+        "tags": [
+          "file",
+          "file:name",
+          "file:content"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "file",
+            "content": {
+              "$": "item"
+            },
+            "name": {
+              "$": "join",
+              "items": [
+                "output_",
+                {
+                  "$": "call",
+                  "name": "str",
+                  "value": {
+                    "$": "index"
+                  }
+                },
+                ".json"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4,
+          "e": 5,
+          "f": 6
+        },
+        "doc": "Iterates over input `dict` and filters out items with even value.",
+        "name": "FilterDict",
+        "result": {
+          "a": 1,
+          "c": 3,
+          "e": 5
+        },
+        "tags": [
+          "filter",
+          "expr",
+          "value"
+        ],
+        "template": {
+          "$": "filter",
+          "cond": {
+            "$": "expr",
+            "op": "mod",
+            "values": [
+              {
+                "$": "value"
+              },
+              2
+            ]
+          }
+        }
+      },
+      {
+        "data": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "doc": "Iterates over input `list` and filters out items with even value.",
+        "name": "FilterList",
+        "result": [
+          1,
+          3,
+          5
+        ],
+        "tags": [
+          "filter",
+          "expr",
+          "item"
+        ],
+        "template": {
+          "$": "filter",
+          "cond": {
+            "$": "expr",
+            "op": "mod",
+            "values": [
+              {
+                "$": "item"
+              },
+              2
+            ]
+          }
+        }
+      },
+      {
+        "data": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        "doc": "Filters a list, keeping only elements at odd indices (1, 3, 5, ...).\nDemonstrates that ``index`` works inside ``filter`` as well as ``map``.",
+        "name": "FilterListByOddIndex",
+        "result": [
+          "b",
+          "d"
+        ],
+        "tags": [
+          "filter",
+          "filter:cond",
+          "index",
+          "expr"
+        ],
+        "template": {
+          "$": "filter",
+          "cond": {
+            "$": "expr",
+            "op": "mod",
+            "values": [
+              {
+                "$": "index"
+              },
+              2
+            ]
+          }
+        }
+      },
+      {
+        "data": [
+          "a",
+          "b",
+          "c"
+        ],
+        "doc": "Sets some names to context, one with `true` value and one with `false`.\nIterates over input `list` of string and filters out items with name that is not set to `true` in the context.",
+        "name": "FilterListNoContent",
+        "result": [
+          "a"
+        ],
+        "tags": [
+          "chain",
+          "filter",
+          "set",
+          "get"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "set",
+              "name": "current"
+            },
+            true,
+            {
+              "$": "set",
+              "name": "a"
+            },
+            false,
+            {
+              "$": "set",
+              "name": "b"
+            },
+            {
+              "$": "get",
+              "name": "current"
+            },
+            {
+              "$": "filter",
+              "cond": {
+                "$": "get",
+                "name": {
+                  "$": "item"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          0.5,
+          0.3333333333333333,
+          0.25,
+          0.2,
+          0.16666666666666666,
+          0.14285714285714285,
+          0.125,
+          0.1111111111111111
+        ],
+        "doc": "Iterates list with floats and produces list of strings by formatting each item.",
+        "name": "FormatFromSingleValue",
+        "result": [
+          "0.500",
+          "0.333",
+          "0.250",
+          "0.200",
+          "0.167",
+          "0.143",
+          "0.125",
+          "0.111"
+        ],
+        "tags": [
+          "map:item",
+          "format"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "format",
+            "pattern": "{:.03f}"
+          }
+        }
+      },
+      {
+        "data": [
+          {
+            "index": 1,
+            "name": "a"
+          },
+          {
+            "index": 2,
+            "name": "b"
+          },
+          {
+            "index": 3,
+            "name": "c"
+          }
+        ],
+        "doc": "Iterates over list of dicts and produces list of string using items for filling pattern slots.",
+        "name": "FormatFromDict",
+        "result": [
+          "a-1",
+          "b-2",
+          "c-3"
+        ],
+        "tags": [
+          "map:item",
+          "format"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "format",
+            "pattern": "{name}-{index}"
+          }
+        }
+      },
+      {
+        "data": [
+          [
+            "a",
+            1
+          ],
+          [
+            "b",
+            2
+          ],
+          [
+            "c",
+            3
+          ]
+        ],
+        "doc": "Iterates over list of lists and produces list of string using items for filling pattern slots.",
+        "name": "FormatFromList",
+        "result": [
+          "a-1",
+          "b-2",
+          "c-3"
+        ],
+        "tags": [
+          "map:item",
+          "format"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "format",
+            "pattern": "{0}-{1}"
+          }
+        }
+      },
+      {
+        "data": [
+          "a",
+          "b",
+          "c"
+        ],
+        "doc": "Iterates over list of values.\nFor formatting value creates dict with dynamically calculated values.\nProduces list of strings using formatting.",
+        "name": "FormatWithValue",
+        "result": [
+          "a-1",
+          "b-2",
+          "c-3"
+        ],
+        "tags": [
+          "map:item",
+          "format:value",
+          "index",
+          "expr:values"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "format",
+            "pattern": "{x}-{y}",
+            "value": {
+              "x": {
+                "$": "this"
+              },
+              "y": {
+                "$": "expr",
+                "op": "+",
+                "values": [
+                  {
+                    "$": "index"
+                  },
+                  1
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "greeting": "Hello",
+          "name": "world",
+          "pattern": "{greeting}, {name}!"
+        },
+        "doc": "Formats a dict using a pattern string taken from the same input.",
+        "name": "FormatWithDynamicPattern",
+        "result": "Hello, world!",
+        "tags": [
+          "format",
+          "format:pattern",
+          "attr"
+        ],
+        "template": {
+          "$": "format",
+          "pattern": {
+            "$": "attr",
+            "name": "pattern"
+          }
+        }
+      },
+      {
+        "data": {
+          "greeting": "Hi"
+        },
+        "doc": "Produces no result when a formatted value is missing instead of interpolating\nthe sentinel repr into the output string.",
+        "name": "FormatSkipsMissingValue",
+        "result": null,
+        "tags": [
+          "format",
+          "format:value",
+          "attr"
+        ],
+        "template": {
+          "$": "format",
+          "pattern": "Hello, {name}!",
+          "value": {
+            "$": "attr",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "data": {},
+        "doc": "Returns no result when a named attribute is absent from the input.\nUsed as an included sub-template in ``IncludeWithDefault``.",
+        "name": "LookupMissingAttr",
+        "result": null,
+        "tags": [
+          "attr"
+        ],
+        "template": {
+          "$": "attr",
+          "name": "missing"
+        }
+      },
+      {
+        "data": {},
+        "doc": "Returns a fallback when the included template produces no result.",
+        "name": "IncludeWithDefault",
+        "result": "fallback",
+        "tags": [
+          "include",
+          "include:default"
+        ],
+        "template": {
+          "$": "include",
+          "default": "fallback",
+          "name": "LookupMissingAttr"
+        }
+      },
+      {
+        "data": [
+          {
+            "keys": [
+              "a",
+              "b",
+              "c"
+            ],
+            "values": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "keys": [
+              "d",
+              "e",
+              "f"
+            ],
+            "values": [
+              4,
+              5,
+              6
+            ]
+          }
+        ],
+        "doc": "Illustrates usage of `include` rule by iterating over input `list` and applying different template to each item.\nProduces a `list` of results applying `MapListsToDict` template.\nFor all examples in this documentation you can use them under their name in include command.\nThis was achieved by providing special `template_loader` factory to `Transformer` class.",
+        "name": "Include",
+        "result": [
+          {
+            "a": 1,
+            "b": 2,
+            "c": 3
+          },
+          {
+            "d": 4,
+            "e": 5,
+            "f": 6
+          }
+        ],
+        "tags": [
+          "include",
+          "include:name"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "include",
+            "name": "MapListsToDict"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": "b",
+          "c": "d"
+        },
+        "doc": "Enriches input dict with default value.",
+        "name": "JoinWithStaticNoOverrides",
+        "result": {
+          "a": "b",
+          "c": "d"
+        },
+        "tags": [
+          "join",
+          "this"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "a": "default"
+            },
+            {
+              "$": "this"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "c": "d",
+          "e": "f"
+        },
+        "doc": "Enriches input dict with default value.",
+        "name": "JoinWithStaticWithOverrides",
+        "result": {
+          "a": "default",
+          "c": "d",
+          "e": "f"
+        },
+        "tags": [
+          "join",
+          "this"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "a": "default"
+            },
+            {
+              "$": "this"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "first": {
+            "a": 1,
+            "b": 2
+          },
+          "second": {
+            "c": 3,
+            "d": 4
+          }
+        },
+        "doc": "Joins two dicts taken from separate attributes of input into one dict.",
+        "name": "JoinTwoDictsNoCommonKeys",
+        "result": {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4
+        },
+        "tags": [
+          "join",
+          "join:items"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "attr",
+              "name": "first"
+            },
+            {
+              "$": "attr",
+              "name": "second"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "first": {
+            "a": 1,
+            "b": 2,
+            "c": 5
+          },
+          "second": {
+            "c": 3,
+            "d": 4
+          }
+        },
+        "doc": "Joins two dicts taken from separate attributes of input into one dict.",
+        "name": "JoinTwoDictsWithCommonKeys",
+        "result": {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4
+        },
+        "tags": [
+          "join",
+          "join:items"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "attr",
+              "name": "first"
+            },
+            {
+              "$": "attr",
+              "name": "second"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "first": "hello ",
+          "second": "world!"
+        },
+        "doc": "Joins two dicts taken from separate attributes of input into one dict.",
+        "name": "JoinTwoStrings",
+        "result": "hello world!",
+        "tags": [
+          "join",
+          "join:items"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "attr",
+              "name": "first"
+            },
+            {
+              "$": "attr",
+              "name": "second"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "first": "hello",
+          "second": "world",
+          "separator": ", "
+        },
+        "doc": "Joins two strings using a separator taken from input data.",
+        "name": "JoinTwoStringsWithDynamicSep",
+        "result": "hello, world",
+        "tags": [
+          "join",
+          "join:sep",
+          "attr"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "attr",
+              "name": "first"
+            },
+            {
+              "$": "attr",
+              "name": "second"
+            }
+          ],
+          "sep": {
+            "$": "attr",
+            "name": "separator"
+          }
+        }
+      },
+      {
+        "data": [
+          {
+            "key": "a",
+            "value": "b"
+          },
+          {
+            "key": "c",
+            "value": "d"
+          }
+        ],
+        "doc": "Iterates over input list twice.\nFirst time produces list of `dicts` with keys and values defined in separate attributes of input items.\nSecond time produces list of `dicts` but with keys and values swapped.\nJoins together results of two iteration into single list.\nThen joins together items of the list into single resulting object.",
+        "name": "JoinManyDynamicDicts",
+        "result": {
+          "a": "b",
+          "b": "a",
+          "c": "d",
+          "d": "c"
+        },
+        "tags": [
+          "join",
+          "map:item",
+          "object"
+        ],
+        "template": {
+          "$": "join",
+          "items": {
+            "$": "join",
+            "items": [
+              {
+                "$": "map",
+                "item": {
+                  "$": "object",
+                  "key": {
+                    "$": "attr",
+                    "name": "key"
+                  },
+                  "value": {
+                    "$": "attr",
+                    "name": "value"
+                  }
+                }
+              },
+              {
+                "$": "map",
+                "item": {
+                  "$": "object",
+                  "key": {
+                    "$": "attr",
+                    "name": "value"
+                  },
+                  "value": {
+                    "$": "attr",
+                    "name": "key"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "data": {
+          "first": "Ada",
+          "last": "Lovelace"
+        },
+        "doc": "Joins optional string fields, omitting any that are missing.",
+        "name": "JoinSkipsMissingStringFields",
+        "result": "Ada Lovelace",
+        "tags": [
+          "join",
+          "attr"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "attr",
+              "name": "first"
+            },
+            {
+              "$": "attr",
+              "name": "middle"
+            },
+            {
+              "$": "attr",
+              "name": "last"
+            }
+          ],
+          "sep": " "
+        }
+      },
+      {
+        "data": {},
+        "doc": "Joining an empty list of items produces no value (`NO_CONTENT`).",
+        "name": "JoinEmptyReturnsNoContent",
+        "result": null,
+        "tags": [
+          "join"
+        ],
+        "template": {
+          "$": "join",
+          "items": []
+        }
+      },
+      {
+        "data": {},
+        "doc": "When there are no items to join, `default` supplies the result value.",
+        "name": "JoinEmptyWithDefaultDict",
+        "result": {},
+        "tags": [
+          "join",
+          "join:default"
+        ],
+        "template": {
+          "$": "join",
+          "default": {},
+          "items": []
+        }
+      },
+      {
+        "data": [
+          1,
+          2,
+          3
+        ],
+        "doc": "Maps over a list input, wrapping each element in a one-item list around an object\nwith an ``x`` field. Matches the headline intro example: the outer ``test`` key is\ncopied literally, the nested ``map`` rule runs once per input element, and the inner\n``item`` rule resolves to each element's value.",
+        "name": "MapListToNestedListWithItem",
+        "result": {
+          "test": [
+            [
+              {
+                "x": 1
+              }
+            ],
+            [
+              {
+                "x": 2
+              }
+            ],
+            [
+              {
+                "x": 3
+              }
+            ]
+          ]
+        },
+        "tags": [
+          "map",
+          "map:item",
+          "item"
+        ],
+        "template": {
+          "test": {
+            "$": "map",
+            "item": [
+              {
+                "x": {
+                  "$": "item"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "data": {
+          "first": [
+            1,
+            2,
+            3
+          ],
+          "second": [
+            4,
+            5,
+            6
+          ]
+        },
+        "doc": "Maps two lists obtained from different attributes of input.\nThen joins two obtained lists into single resulting list.",
+        "name": "MapListToList",
+        "result": [
+          {
+            "first": 1
+          },
+          {
+            "first": 2
+          },
+          {
+            "first": 3
+          },
+          {
+            "second": 4
+          },
+          {
+            "second": 5
+          },
+          {
+            "second": 6
+          }
+        ],
+        "tags": [
+          "chain",
+          "join",
+          "map:item",
+          "item"
+        ],
+        "template": {
+          "$": "join",
+          "items": [
+            {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "attr",
+                  "name": "first"
+                },
+                {
+                  "$": "map",
+                  "item": {
+                    "first": {
+                      "$": "item"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "attr",
+                  "name": "second"
+                },
+                {
+                  "$": "map",
+                  "item": {
+                    "second": {
+                      "$": "item"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        },
+        "doc": "Iterates over input dict and produces list of dicts with corresponding fields for keys and values.",
+        "name": "MapDictToList",
+        "result": [
+          {
+            "key": "a",
+            "value": 1
+          },
+          {
+            "key": "b",
+            "value": 2
+          },
+          {
+            "key": "c",
+            "value": 3
+          }
+        ],
+        "tags": [
+          "map:item",
+          "key",
+          "value"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "key": {
+              "$": "key"
+            },
+            "value": {
+              "$": "value"
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "a": "d",
+          "b": "e",
+          "c": "f"
+        },
+        "doc": "Iterates over input dictionary and produces dictionary with keys and values swapped.",
+        "name": "MapDictToDictItems",
+        "result": {
+          "d": "a",
+          "e": "b",
+          "f": "c"
+        },
+        "tags": [
+          "map:key",
+          "map:value",
+          "key",
+          "value"
+        ],
+        "template": {
+          "$": "map",
+          "key": {
+            "$": "value"
+          },
+          "value": {
+            "$": "key"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        },
+        "doc": "Iterates over input dictionary and produces interlaced list of both keys and values.",
+        "name": "MapDictToListItems",
+        "result": [
+          "a",
+          1,
+          "b",
+          2,
+          "c",
+          3
+        ],
+        "tags": [
+          "map:items",
+          "key",
+          "value"
+        ],
+        "template": {
+          "$": "map",
+          "items": [
+            {
+              "$": "key"
+            },
+            {
+              "$": "value"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "keys": [
+            "a",
+            "b",
+            "c"
+          ],
+          "values": [
+            1,
+            2,
+            3
+          ]
+        },
+        "doc": "Zips two lists containing keys and values together into pairs.\nThen iterates over list of pairs and produces resulting dict.",
+        "name": "MapListsToDict",
+        "result": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        },
+        "tags": [
+          "chain",
+          "zip",
+          "map:key",
+          "map:value",
+          "attr:name"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "zip",
+              "items": [
+                {
+                  "$": "attr",
+                  "name": "keys"
+                },
+                {
+                  "$": "attr",
+                  "name": "values"
+                }
+              ]
+            },
+            {
+              "$": "map",
+              "key": {
+                "$": "attr",
+                "name": 0
+              },
+              "value": {
+                "$": "attr",
+                "name": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Gets variable names `foo` that does not exist from context.\nThen tries to get attribute named `bar` of non-existing value.\nThis results into no value which translates into `None`.",
+        "name": "NoContentForAttr",
+        "result": null,
+        "tags": [
+          "attr:name",
+          "chain",
+          "get"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "get",
+              "name": "foo"
+            },
+            {
+              "$": "attr",
+              "name": "bar"
+            }
+          ]
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Creates a dict with item key that has no value.\nIt results with empty object.",
+        "name": "NoContentForObjectKey",
+        "result": {},
+        "tags": [
+          "object:key",
+          "get"
+        ],
+        "template": {
+          "$": "object",
+          "key": {
+            "$": "get",
+            "name": "foo"
+          },
+          "value": "bar"
+        }
+      },
+      {
+        "data": "value",
+        "doc": "Creates a dict with item value that has no value.\nIt results with empty object.",
+        "name": "NoContentForObjectValue",
+        "result": {},
+        "tags": [
+          "object:value",
+          "get"
+        ],
+        "template": {
+          "$": "object",
+          "key": "foo",
+          "value": {
+            "$": "get",
+            "name": "bar"
+          }
+        }
+      },
+      {
+        "data": {
+          "x": "xxx"
+        },
+        "doc": "Builds a multi-key object in `fields` mode where one value has no value.\nThe entry whose value resolves to no value is omitted from the result.",
+        "name": "NoContentForObjectFields",
+        "result": {
+          "present": "xxx"
+        },
+        "tags": [
+          "object:fields",
+          "get"
+        ],
+        "template": {
+          "$": "object",
+          "fields": {
+            "missing": {
+              "$": "get",
+              "name": "nope"
+            },
+            "present": {
+              "$": "attr",
+              "name": "x"
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "x": "xxx",
+          "y": "yyy"
+        },
+        "doc": "Demonstrates skipping of items in `list` generation by `map` rule when they have no value.",
+        "name": "NoContentForMappingList",
+        "result": [
+          0,
+          "xxx",
+          1,
+          2,
+          "yyy"
+        ],
+        "tags": [
+          "map:items",
+          "get",
+          "index",
+          "item"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            [
+              {
+                "$": "attr",
+                "name": "x"
+              },
+              {
+                "$": "get",
+                "name": "nope"
+              },
+              {
+                "$": "attr",
+                "name": "y"
+              }
+            ],
+            {
+              "$": "map",
+              "items": [
+                {
+                  "$": "index"
+                },
+                {
+                  "$": "item"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "x": "xxx",
+          "y": "yyy"
+        },
+        "doc": "Demonstrates skipping of items in `dict` generation by `map` rule when they have no value.",
+        "name": "NoContentForMappingDict",
+        "result": {
+          "xxx": "yyy"
+        },
+        "tags": [
+          "map:key",
+          "map:value",
+          "get"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            [
+              {
+                "key": {
+                  "$": "attr",
+                  "name": "x"
+                },
+                "value": {
+                  "$": "get",
+                  "name": "nope"
+                }
+              },
+              {
+                "key": {
+                  "$": "get",
+                  "name": "nope"
+                },
+                "value": {
+                  "$": "attr",
+                  "name": "y"
+                }
+              },
+              {
+                "key": {
+                  "$": "attr",
+                  "name": "x"
+                },
+                "value": {
+                  "$": "attr",
+                  "name": "y"
+                }
+              }
+            ],
+            {
+              "$": "map",
+              "key": {
+                "$": "attr",
+                "name": "key"
+              },
+              "value": {
+                "$": "attr",
+                "name": "value"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "amount": 42,
+          "field": "price"
+        },
+        "doc": "Builds a single-item dict whose attribute name comes from the input.\nBoth the key and the value are dynamic templates.",
+        "name": "ObjectDynamicKeyValue",
+        "result": {
+          "price": 42
+        },
+        "tags": [
+          "object",
+          "object:key",
+          "object:value",
+          "attr:name"
+        ],
+        "template": {
+          "$": "object",
+          "key": {
+            "$": "attr",
+            "name": "field"
+          },
+          "value": {
+            "$": "attr",
+            "name": "amount"
+          }
+        }
+      },
+      {
+        "data": {
+          "field": "price"
+        },
+        "doc": "Produces an object whose key is the marker (`$`) itself.\n\nIn `fields` mode the keys of the mapping are emitted verbatim, so `$` is kept\nas literal data instead of being interpreted as a rule invocation. The values\nare still walked as templates, so the emitted document can mix literal marker\nkeys with dynamic values — here transon is used to generate a transon template.",
+        "name": "ObjectFieldsLiteralMarker",
+        "result": {
+          "$": "attr",
+          "name": "price"
+        },
+        "tags": [
+          "object",
+          "object:fields",
+          "attr:name"
+        ],
+        "template": {
+          "$": "object",
+          "fields": {
+            "$": "attr",
+            "name": {
+              "$": "attr",
+              "name": "field"
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "high": 100,
+          "low": 10
+        },
+        "doc": "Builds a multi-key object with literal keys and dynamic values.\n\nThis is handy for documents that use `$`-prefixed operator keys (e.g. MongoDB\nqueries): the keys stay literal while each value is interpolated from input.",
+        "name": "ObjectFieldsMultipleLiteralKeys",
+        "result": {
+          "$gt": 10,
+          "$lt": 100
+        },
+        "tags": [
+          "object:fields",
+          "attr:name"
+        ],
+        "template": {
+          "$": "object",
+          "fields": {
+            "$gt": {
+              "$": "attr",
+              "name": "low"
+            },
+            "$lt": {
+              "$": "attr",
+              "name": "high"
+            }
+          }
+        }
+      },
+      {
+        "data": 3,
+        "doc": "`<`/`lt` returns `true` when the current context value is strictly less than the\ngiven value.",
+        "name": "OperatorLessThan",
+        "result": true,
+        "tags": [
+          "op:lt",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "<",
+          "value": 10
+        }
+      },
+      {
+        "data": 10,
+        "doc": "`<=`/`le` returns `true` when the current context value is less than or equal to the\ngiven value.",
+        "name": "OperatorLessOrEqual",
+        "result": true,
+        "tags": [
+          "op:le",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "le",
+          "value": 10
+        }
+      },
+      {
+        "data": 5,
+        "doc": "`==`/`eq` returns `true` when both operands are equal.",
+        "name": "OperatorEqual",
+        "result": true,
+        "tags": [
+          "op:eq",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "==",
+          "value": 5
+        }
+      },
+      {
+        "data": 6,
+        "doc": "`!=`/`ne` returns `true` when the operands differ.",
+        "name": "OperatorNotEqual",
+        "result": true,
+        "tags": [
+          "op:ne",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "!=",
+          "value": 5
+        }
+      },
+      {
+        "data": 10,
+        "doc": "`>=`/`ge` returns `true` when the current context value is greater than or equal to\nthe given value.",
+        "name": "OperatorGreaterOrEqual",
+        "result": true,
+        "tags": [
+          "op:ge",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "ge",
+          "value": 3
+        }
+      },
+      {
+        "data": 10,
+        "doc": "`>`/`gt` returns `true` when the current context value is strictly greater than the\ngiven value.",
+        "name": "OperatorGreaterThan",
+        "result": true,
+        "tags": [
+          "op:gt",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": ">",
+          "value": 3
+        }
+      },
+      {
+        "data": 10,
+        "doc": "`-`/`sub` subtracts the given value from the current context value.",
+        "name": "OperatorSubtract",
+        "result": 6,
+        "tags": [
+          "op:sub",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "-",
+          "value": 4
+        }
+      },
+      {
+        "data": 6,
+        "doc": "`*`/`mul` multiplies the current context value by the given value.",
+        "name": "OperatorMultiply",
+        "result": 42,
+        "tags": [
+          "op:mul",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "*",
+          "value": 7
+        }
+      },
+      {
+        "data": 9,
+        "doc": "`/`/`div` performs true division; the result is a float.",
+        "name": "OperatorDivide",
+        "result": 4.5,
+        "tags": [
+          "op:div",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "/",
+          "value": 2
+        }
+      },
+      {
+        "data": 9,
+        "doc": "`%`/`mod` returns the remainder of dividing the current context value by the given\nvalue.",
+        "name": "OperatorModulo",
+        "result": 1,
+        "tags": [
+          "op:mod",
+          "expr:value"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "%",
+          "value": 2
+        }
+      },
+      {
+        "data": {
+          "address": {
+            "city": "London",
+            "zip": "EC1A 1BB"
+          },
+          "name": "Ada"
+        },
+        "doc": "**Read a deeply nested value.**\n\n*Task: \"I have a value buried under several keys — how do I pull it out?\"*\n\nGive `attr` a `names` path instead of a single `name` and it walks the keys in\norder, returning the value at the end (or *no value* if any segment is missing).",
+        "name": "RecipeReadNestedValue",
+        "result": "London",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "attr",
+          "names": [
+            "address",
+            "city"
+          ]
+        }
+      },
+      {
+        "data": {
+          "amount": 42
+        },
+        "doc": "**Fall back to a default when a field is missing.**\n\n*Task: \"How do I substitute a value when the input doesn't have the key?\"*\n\n`attr` returns *no value* for a missing key; add a `default` template and that\nvalue is used instead. The same `default` parameter exists on `get`, `format`,\n`join`, and `include`.",
+        "name": "RecipeDefaultForMissingField",
+        "result": "USD",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "attr",
+          "default": "USD",
+          "name": "currency"
+        }
+      },
+      {
+        "data": [
+          {
+            "email": "ada@example.com",
+            "name": "Ada"
+          },
+          {
+            "email": "alan@example.com",
+            "name": "Alan"
+          },
+          {
+            "email": "grace@example.com",
+            "name": "Grace"
+          }
+        ],
+        "doc": "**Pull one field out of every item (project a list).**\n\n*Task: \"How do I turn a list of records into a list of just one of their\nfields?\"*\n\n`map` in `item` mode rebuilds each element; here the new element is just the\nrecord's `email`, read by `attr`. The other fields are dropped.",
+        "name": "RecipePluckFieldFromEach",
+        "result": [
+          "ada@example.com",
+          "alan@example.com",
+          "grace@example.com"
+        ],
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "attr",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "data": {
+          "FR": "France",
+          "GB": "United Kingdom",
+          "JP": "Japan"
+        },
+        "doc": "**Swap the keys and values of a dict.**\n\n*Task: \"How do I invert a mapping so the values become the keys?\"*\n\nIterating a dict, `map` exposes each entry through the `key` and `value`\naccessor rules. Building the result in `key`/`value` mode with them crossed over\ninverts the mapping.",
+        "name": "RecipeSwapKeysAndValues",
+        "result": {
+          "France": "FR",
+          "Japan": "JP",
+          "United Kingdom": "GB"
+        },
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "map",
+          "key": {
+            "$": "value"
+          },
+          "value": {
+            "$": "key"
+          }
+        }
+      },
+      {
+        "data": [
+          "red",
+          "green",
+          "blue"
+        ],
+        "doc": "**Join a list of strings into one string.**\n\n*Task: \"How do I concatenate a list into a single delimited string?\"*\n\n`join` concatenates its `items`; when they are all strings it inserts the `sep`\nbetween them. Here `this` feeds the whole input list straight in.",
+        "name": "RecipeJoinListToString",
+        "result": "red, green, blue",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "join",
+          "items": {
+            "$": "this"
+          },
+          "sep": ", "
+        }
+      },
+      {
+        "data": {
+          "first": "Ada",
+          "last": "Lovelace"
+        },
+        "doc": "**Build a string from a record's fields.**\n\n*Task: \"How do I interpolate fields into a template string?\"*\n\n`format` runs Python's `str.format`; when the value is a dict it is unpacked, so\nthe pattern can reference fields by name (`{first}`, `{last}`).",
+        "name": "RecipeBuildStringFromFields",
+        "result": "Ada Lovelace",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "format",
+          "pattern": "{first} {last}"
+        }
+      },
+      {
+        "data": {
+          "age": "42"
+        },
+        "doc": "**Convert a value to a different type.**\n\n*Task: \"My number arrived as a string — how do I parse it?\"*\n\n`call` invokes a registered conversion function (`str`, `int`, `float`) on its\n`value`; here `int` parses the `\"42\"` read by `attr` into the number `42`.",
+        "name": "RecipeConvertType",
+        "result": 42,
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "call",
+          "name": "int",
+          "value": {
+            "$": "attr",
+            "name": "age"
+          }
+        }
+      },
+      {
+        "data": {
+          "status": "S"
+        },
+        "doc": "**Map a code to a display label.**\n\n*Task: \"My input has a short status code — how do I turn it into a\nhuman-readable string?\"*\n\n`switch` compares its evaluated `key` against the literal keys of `cases` and\nreturns the matching template's value; only the selected case is evaluated.\nAn unknown code falls through to `default`.",
+        "name": "RecipeMapCodeToLabel",
+        "result": "Suspended",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "switch",
+          "cases": {
+            "A": "Active",
+            "D": "Deleted",
+            "S": "Suspended"
+          },
+          "default": "Unknown",
+          "key": {
+            "$": "attr",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "data": {
+          "size": 42
+        },
+        "doc": "**Bucket a value by ranges.**\n\n*Task: \"How do I classify a number into small/medium/large?\"*\n\n`cond` evaluates its arms in order and selects the first whose `when` is\ntruthy. Each `when` here is an `expr` comparison against the piped value\n(`chain` puts the number into the current context first); values matching\nno arm fall through to `default`.",
+        "name": "RecipeBucketValueByRanges",
+        "result": "medium",
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "attr",
+              "name": "size"
+            },
+            {
+              "$": "cond",
+              "cases": [
+                {
+                  "then": "small",
+                  "when": {
+                    "$": "expr",
+                    "op": "<",
+                    "value": 10
+                  }
+                },
+                {
+                  "then": "medium",
+                  "when": {
+                    "$": "expr",
+                    "op": "<",
+                    "value": 100
+                  }
+                }
+              ],
+              "default": "large"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "price": 25,
+          "qty": 4
+        },
+        "doc": "**Compute a value once, use it twice.**\n\n*Task: \"How do I avoid repeating the same calculation in two output fields?\"*\n\n`set` stores the current context value under a variable name (and passes it\nthrough unchanged), so a `chain` can compute a derived value, store it, and\nlet later steps read it back with `get` as many times as needed.",
+        "name": "RecipeComputeOnceUseTwice",
+        "result": {
+          "label": "Total: 100",
+          "total": 100
+        },
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "expr",
+              "op": "*",
+              "values": [
+                {
+                  "$": "attr",
+                  "name": "qty"
+                },
+                {
+                  "$": "attr",
+                  "name": "price"
+                }
+              ]
+            },
+            {
+              "$": "set",
+              "name": "total"
+            },
+            {
+              "$": "object",
+              "fields": {
+                "label": {
+                  "$": "format",
+                  "pattern": "Total: {}",
+                  "value": {
+                    "$": "get",
+                    "name": "total"
+                  }
+                },
+                "total": {
+                  "$": "get",
+                  "name": "total"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "names": [
+            "Ada",
+            "Alan",
+            "Grace"
+          ],
+          "scores": [
+            95,
+            88,
+            97
+          ]
+        },
+        "doc": "**Pair up two parallel lists into records.**\n\n*Task: \"I have matching lists of names and scores — how do I merge them into\na list of objects?\"*\n\n`zip` transposes the two lists into `[name, score]` pairs; `map` then rebuilds\neach pair as an `object`, with `attr` reading list items by numeric index.",
+        "name": "RecipePairUpTwoLists",
+        "result": [
+          {
+            "name": "Ada",
+            "score": 95
+          },
+          {
+            "name": "Alan",
+            "score": 88
+          },
+          {
+            "name": "Grace",
+            "score": 97
+          }
+        ],
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "zip",
+              "items": [
+                {
+                  "$": "attr",
+                  "name": "names"
+                },
+                {
+                  "$": "attr",
+                  "name": "scores"
+                }
+              ]
+            },
+            {
+              "$": "map",
+              "item": {
+                "$": "object",
+                "fields": {
+                  "name": {
+                    "$": "attr",
+                    "name": 0
+                  },
+                  "score": {
+                    "$": "attr",
+                    "name": 1
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          {
+            "price": 300,
+            "sku": "DESK-01"
+          },
+          {
+            "price": 12,
+            "sku": "USB-03"
+          },
+          {
+            "price": 120,
+            "sku": "CHAIR-09"
+          },
+          {
+            "price": 45,
+            "sku": "LAMP-22"
+          }
+        ],
+        "doc": "**Keep only the items matching a condition.**\n\n*Task: \"How do I filter a list on a comparison, not just a truthy flag?\"*\n\n`filter` keeps the items whose `cond` is truthy; the condition here is an\n`expr` comparison (`price >= 100`) built from the item's own fields, so any\npredicate expressible with operators works — not only boolean flags.",
+        "name": "RecipeKeepItemsMatchingCondition",
+        "result": [
+          {
+            "price": 300,
+            "sku": "DESK-01"
+          },
+          {
+            "price": 120,
+            "sku": "CHAIR-09"
+          }
+        ],
+        "tags": [
+          "recipe"
+        ],
+        "template": {
+          "$": "filter",
+          "cond": {
+            "$": "expr",
+            "op": ">=",
+            "values": [
+              {
+                "$": "attr",
+                "name": "price"
+              },
+              100
+            ]
+          }
+        }
+      },
+      {
+        "data": {
+          "id": 1
+        },
+        "doc": "A variable stored at one literal-dict key is visible to later sibling keys\nevaluated in the same scope (dict insertion order).",
+        "name": "SetVisibleToLaterSiblingKey",
+        "result": {
+          "first": {
+            "id": 1
+          },
+          "second": {
+            "id": 1
+          }
+        },
+        "tags": [
+          "set",
+          "set:name",
+          "get",
+          "get:name"
+        ],
+        "template": {
+          "first": {
+            "$": "set",
+            "name": "saved"
+          },
+          "second": {
+            "$": "get",
+            "name": "saved"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": 1
+        },
+        "doc": "A variable stored at one literal-dict key is not visible to sibling keys\nthat were already evaluated — visibility depends on dict key order.",
+        "name": "SetInvisibleToEarlierSiblingKey",
+        "result": {
+          "first": {
+            "id": 1
+          },
+          "second": "missing"
+        },
+        "tags": [
+          "set",
+          "get"
+        ],
+        "template": {
+          "first": {
+            "$": "set",
+            "name": "saved"
+          },
+          "second": {
+            "$": "get",
+            "default": "missing",
+            "name": "saved"
+          }
+        }
+      },
+      {
+        "data": {
+          "count": 3
+        },
+        "doc": "The first func of a `chain` runs in the caller's context, so a `set` there\nis visible to later sibling templates outside the `chain`.",
+        "name": "SetInFirstChainFuncVisibleToSibling",
+        "result": {
+          "later": {
+            "count": 3
+          },
+          "pipeline": {
+            "count": 3
+          }
+        },
+        "tags": [
+          "chain",
+          "set",
+          "get"
+        ],
+        "template": {
+          "later": {
+            "$": "get",
+            "name": "saved"
+          },
+          "pipeline": {
+            "$": "chain",
+            "funcs": [
+              {
+                "$": "set",
+                "name": "saved"
+              },
+              {
+                "$": "this"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "data": 42,
+        "doc": "A `set` in a non-first `chain` func writes to a derived context and is not\nvisible to sibling templates outside the `chain`.",
+        "name": "SetInLaterChainFuncNotVisibleToSibling",
+        "result": {
+          "later": "gone",
+          "pipeline": 42
+        },
+        "tags": [
+          "chain",
+          "set",
+          "get"
+        ],
+        "template": {
+          "later": {
+            "$": "get",
+            "default": "gone",
+            "name": "inner"
+          },
+          "pipeline": {
+            "$": "chain",
+            "funcs": [
+              {
+                "$": "this"
+              },
+              {
+                "$": "set",
+                "name": "inner"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "data": "hello",
+        "doc": "A `set` in the first `chain` func is copied into derived contexts and is\nvisible to later funcs in the same `chain`.",
+        "name": "SetInFirstChainFuncVisibleToLaterFunc",
+        "result": "hello",
+        "tags": [
+          "chain",
+          "set",
+          "get"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "set",
+              "name": "saved"
+            },
+            {
+              "$": "get",
+              "name": "saved"
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          1,
+          2
+        ],
+        "doc": "A variable stored before a `map` is copied into each iteration context and\nis visible inside the loop.",
+        "name": "SetBeforeMapVisibleInsideIteration",
+        "result": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "tags": [
+          "chain",
+          "set",
+          "get",
+          "map:item"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "set",
+              "name": "root"
+            },
+            {
+              "$": "map",
+              "item": {
+                "$": "get",
+                "name": "root"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          1,
+          2
+        ],
+        "doc": "A variable stored inside a `map` iteration is not visible after the loop\nends — each iteration uses a derived context.",
+        "name": "SetInsideMapNotVisibleAfterLoop",
+        "result": "isolated",
+        "tags": [
+          "chain",
+          "set",
+          "get",
+          "map:item"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "map",
+              "item": {
+                "$": "set",
+                "name": "item_var"
+              }
+            },
+            {
+              "$": "get",
+              "default": "isolated",
+              "name": "item_var"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "kind": "b"
+        },
+        "doc": "Dispatches on a value read from the input and emits the matching case. Only the\nselected case template is evaluated — the other arms are never walked — so\n`switch` is the lazy alternative to building a dict and indexing it.",
+        "name": "SwitchDispatchOnKey",
+        "result": "Banana",
+        "tags": [
+          "switch",
+          "switch:key",
+          "switch:cases",
+          "attr",
+          "attr:name"
+        ],
+        "template": {
+          "$": "switch",
+          "cases": {
+            "a": "Apple",
+            "b": "Banana"
+          },
+          "key": {
+            "$": "attr",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "data": {
+          "kind": "z"
+        },
+        "doc": "Falls back to the `default` template when no case matches the dispatch key\n(this also covers the case where the key evaluates to no value).",
+        "name": "SwitchDefaultBranch",
+        "result": "Unknown",
+        "tags": [
+          "switch",
+          "switch:default"
+        ],
+        "template": {
+          "$": "switch",
+          "cases": {
+            "a": "Apple"
+          },
+          "default": "Unknown",
+          "key": {
+            "$": "attr",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 1
+        },
+        "doc": "Reports the JSON type of an object with the `type` function.",
+        "name": "TypeOfObject",
+        "result": "object",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": [
+          1,
+          2,
+          3
+        ],
+        "doc": "Reports the JSON type of an array with the `type` function.",
+        "name": "TypeOfArray",
+        "result": "array",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": "hello",
+        "doc": "Reports the JSON type of a string with the `type` function.",
+        "name": "TypeOfString",
+        "result": "string",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": 7,
+        "doc": "Reports the JSON type of an integer with the `type` function.",
+        "name": "TypeOfInt",
+        "result": "int",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": 2.5,
+        "doc": "Reports the JSON type of a floating-point number with the `type` function.",
+        "name": "TypeOfFloat",
+        "result": "float",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": true,
+        "doc": "Reports the JSON type of a boolean with the `type` function (note booleans are\ndistinguished from integers).",
+        "name": "TypeOfBoolean",
+        "result": "boolean",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": null,
+        "doc": "Reports the JSON type of `null` with the `type` function.",
+        "name": "TypeOfNull",
+        "result": "null",
+        "tags": [
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "call",
+          "name": "type"
+        }
+      },
+      {
+        "data": [
+          1,
+          2
+        ],
+        "doc": "Dispatches on a node's JSON type with a non-throwing `switch` whose key is the\n`type` function — the canonical pattern a generated codec uses to walk an\narbitrary document.",
+        "name": "TypeDispatchWithSwitch",
+        "result": "is-array",
+        "tags": [
+          "switch",
+          "switch:key",
+          "call",
+          "func:type"
+        ],
+        "template": {
+          "$": "switch",
+          "cases": {
+            "array": "is-array",
+            "object": "is-object"
+          },
+          "default": "is-scalar",
+          "key": {
+            "$": "call",
+            "name": "type",
+            "value": {
+              "$": "this"
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "a": 2,
+          "b": 3,
+          "c": 4
+        },
+        "doc": "**Arithmetic via nested rules — no string DSL.**\n\ntranson has no expression mini-language: you compose arithmetic by *nesting*\n`expr` rules, each one a plain JSON object. Here `(a + b) * c` is built by feeding\nthe result of an inner `+` into an outer `*`, with every operand read from the\ninput by `attr`. Where JSONata or jq would write a terse `(a + b) * c`, transon\nkeeps the expression as data — so it can be stored, generated, diffed, and\nvalidated like any other JSON.",
+        "name": "WorkedExampleNestedArithmetic",
+        "result": 20,
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "expr",
+          "op": "*",
+          "values": [
+            {
+              "$": "expr",
+              "op": "+",
+              "values": [
+                {
+                  "$": "attr",
+                  "name": "a"
+                },
+                {
+                  "$": "attr",
+                  "name": "b"
+                }
+              ]
+            },
+            {
+              "$": "attr",
+              "name": "c"
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "currency": "USD",
+          "items": [
+            {
+              "name": "Standing desk",
+              "price": 300,
+              "qty": 2,
+              "sku": "DESK-01"
+            },
+            {
+              "name": "Ergonomic chair",
+              "price": 120,
+              "qty": 4,
+              "sku": "CHAIR-09"
+            },
+            {
+              "name": "Desk lamp",
+              "price": 45,
+              "qty": 3,
+              "sku": "LAMP-22"
+            },
+            {
+              "name": "27\" monitor",
+              "price": 250,
+              "qty": 2,
+              "sku": "MON-27"
+            },
+            {
+              "name": "USB-C cable",
+              "price": 12,
+              "qty": 10,
+              "sku": "USB-03"
+            }
+          ],
+          "order_id": "SO-10428"
+        },
+        "doc": "**Reshape a list of records (line items → billing summary).**\n\nThe everyday JSON-transformation task — the same shape JSONata demonstrates with\n`Account.Order.Product.(Price * Quantity)` and jq with\n`.items | map({sku, amount: (.qty * .price)})`. `chain` pulls the `items` list out\nof the input with `attr`, then `map` rebuilds each record as a new `object` whose\n`amount` field is computed on the fly by an `expr` multiplication. Five rules —\n`chain` → `attr` → `map` → `object` → `expr` — compose into one declarative\ntemplate, showing how the primitives documented separately below combine into a\nreal transformation.",
+        "name": "WorkedExampleReshapeRecords",
+        "result": [
+          {
+            "amount": 600,
+            "sku": "DESK-01"
+          },
+          {
+            "amount": 480,
+            "sku": "CHAIR-09"
+          },
+          {
+            "amount": 135,
+            "sku": "LAMP-22"
+          },
+          {
+            "amount": 500,
+            "sku": "MON-27"
+          },
+          {
+            "amount": 120,
+            "sku": "USB-03"
+          }
+        ],
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "attr",
+              "name": "items"
+            },
+            {
+              "$": "map",
+              "item": {
+                "$": "object",
+                "fields": {
+                  "amount": {
+                    "$": "expr",
+                    "op": "*",
+                    "values": [
+                      {
+                        "$": "attr",
+                        "name": "qty"
+                      },
+                      {
+                        "$": "attr",
+                        "name": "price"
+                      }
+                    ]
+                  },
+                  "sku": {
+                    "$": "attr",
+                    "name": "sku"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "email": "ada@example.com",
+          "id": 7,
+          "profile": {
+            "firstName": "Ada",
+            "lastName": "Lovelace"
+          }
+        },
+        "doc": "**Rename keys and flatten a nested record.**\n\nThe signature task of structural mappers like Jolt's `shift` spec: take a nested\ndocument and emit a flat one with renamed keys. `object` in `fields` mode lists the\noutput keys literally; each value pulls from the input — `attr` with `names`\nwalks a path (`profile → firstName`) to flatten, and `format` joins first/last into\na single `fullName` (the equivalent of JSONata's `firstName & \" \" & lastName`).",
+        "name": "WorkedExampleRenameAndFlatten",
+        "result": {
+          "email": "ada@example.com",
+          "fullName": "Ada Lovelace",
+          "userId": 7
+        },
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "object",
+          "fields": {
+            "email": {
+              "$": "attr",
+              "name": "email"
+            },
+            "fullName": {
+              "$": "format",
+              "pattern": "{} {}",
+              "value": [
+                {
+                  "$": "attr",
+                  "names": [
+                    "profile",
+                    "firstName"
+                  ]
+                },
+                {
+                  "$": "attr",
+                  "names": [
+                    "profile",
+                    "lastName"
+                  ]
+                }
+              ]
+            },
+            "userId": {
+              "$": "attr",
+              "name": "id"
+            }
+          }
+        }
+      },
+      {
+        "data": [
+          {
+            "active": true,
+            "id": 1,
+            "name": "Ada Lovelace",
+            "role": "admin"
+          },
+          {
+            "active": false,
+            "id": 2,
+            "name": "Alan Turing",
+            "role": "editor"
+          },
+          {
+            "active": true,
+            "id": 3,
+            "name": "Grace Hopper",
+            "role": "admin"
+          },
+          {
+            "active": false,
+            "id": 4,
+            "name": "Edsger Dijkstra",
+            "role": "viewer"
+          },
+          {
+            "active": true,
+            "id": 5,
+            "name": "Katherine Johnson",
+            "role": "editor"
+          },
+          {
+            "active": true,
+            "id": 6,
+            "name": "Margaret Hamilton",
+            "role": "admin"
+          }
+        ],
+        "doc": "**Filter a list, then project a field.**\n\nThe classic select-and-pluck pipeline: JSONata writes `users[active].name`, jq\nwrites `map(select(.active)) | map(.name)`. transon composes it from two rules in a\n`chain` — `filter` keeps the records whose `active` flag is truthy, then `map`\nprojects each survivor down to its `name`, dropping the other fields.",
+        "name": "WorkedExampleFilterAndProject",
+        "result": [
+          "Ada Lovelace",
+          "Grace Hopper",
+          "Katherine Johnson",
+          "Margaret Hamilton"
+        ],
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "chain",
+          "funcs": [
+            {
+              "$": "filter",
+              "cond": {
+                "$": "attr",
+                "name": "active"
+              }
+            },
+            {
+              "$": "map",
+              "item": {
+                "$": "attr",
+                "name": "name"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": [
+          {
+            "capital": "Washington, D.C.",
+            "code": "US",
+            "name": "United States"
+          },
+          {
+            "capital": "Paris",
+            "code": "FR",
+            "name": "France"
+          },
+          {
+            "capital": "Tokyo",
+            "code": "JP",
+            "name": "Japan"
+          },
+          {
+            "capital": "Brasilia",
+            "code": "BR",
+            "name": "Brazil"
+          },
+          {
+            "capital": "Nairobi",
+            "code": "KE",
+            "name": "Kenya"
+          },
+          {
+            "capital": "Berlin",
+            "code": "DE",
+            "name": "Germany"
+          }
+        ],
+        "doc": "**Index a list into a lookup dict (key-by).**\n\nTurning a list of records into a dict keyed by one of their fields — jq's\n`INDEX(.code)`, lodash's `keyBy` — is a staple of data shaping. `map` in its\n`key`/`value` mode builds the dict directly: `attr` picks the `code` for each\nkey and the `name` for each value, collapsing the list (and discarding the other\nfields) into an O(1) lookup table.",
+        "name": "WorkedExampleIndexByKey",
+        "result": {
+          "BR": "Brazil",
+          "DE": "Germany",
+          "FR": "France",
+          "JP": "Japan",
+          "KE": "Kenya",
+          "US": "United States"
+        },
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "map",
+          "key": {
+            "$": "attr",
+            "name": "code"
+          },
+          "value": {
+            "$": "attr",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "data": {
+          "email": "ada@example.com",
+          "name": "Ada"
+        },
+        "doc": "**Optional fields and defaults (the `NO_CONTENT` model).**\n\nConditionally including a field is awkward in many tools (JSON-e reaches for\n`$if`, Jolt for cardinality tricks). In transon it falls out of the data model:\na value that resolves to *no value* is simply skipped. Here `phone` is absent from\nthe input, so `attr` yields `NO_CONTENT` and `object` omits the key entirely;\nmeanwhile `tier` is missing too but supplies a `default`, so it lands as `\"free\"`.\nOne uniform rule — skip *no value*, fall back on `default` — covers both\n\"drop when absent\" and \"substitute when absent\".",
+        "name": "WorkedExampleOptionalFieldsAndDefaults",
+        "result": {
+          "email": "ada@example.com",
+          "name": "Ada",
+          "tier": "free"
+        },
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "object",
+          "fields": {
+            "email": {
+              "$": "attr",
+              "name": "email"
+            },
+            "name": {
+              "$": "attr",
+              "name": "name"
+            },
+            "phone": {
+              "$": "attr",
+              "name": "phone"
+            },
+            "tier": {
+              "$": "attr",
+              "default": "free",
+              "name": "tier"
+            }
+          }
+        }
+      },
+      {
+        "data": [
+          {
+            "name": "Initech",
+            "plan": "ent",
+            "seats": 250
+          },
+          {
+            "name": "Hooli",
+            "plan": "pro",
+            "seats": 8
+          },
+          {
+            "name": "Pied Piper",
+            "plan": "trial",
+            "seats": 3
+          }
+        ],
+        "doc": "**Conditional enrichment inside a map (per-record branch logic).**\n\n*The shape most real templates take*: iterate a list of records and rebuild\neach one with fields that depend on the record's own values. `map` drives the\niteration and `object` shapes each output record; inside it, `switch`\ndispatches a short plan code to its display label (with a `default` for\nunknown codes), while `cond` buckets the numeric `seats` field with an `expr`\ncomparison. Only the selected branch of each dispatch is ever evaluated —\nwhere JSONata would write nested ternaries and jq an `if/elif` chain, transon\nkeeps every branch a plain JSON template.",
+        "name": "WorkedExampleConditionalEnrichmentInsideMap",
+        "result": [
+          {
+            "name": "Initech",
+            "plan": "Enterprise",
+            "size": "large"
+          },
+          {
+            "name": "Hooli",
+            "plan": "Professional",
+            "size": "small"
+          },
+          {
+            "name": "Pied Piper",
+            "plan": "Free",
+            "size": "small"
+          }
+        ],
+        "tags": [
+          "worked-example"
+        ],
+        "template": {
+          "$": "map",
+          "item": {
+            "$": "object",
+            "fields": {
+              "name": {
+                "$": "attr",
+                "name": "name"
+              },
+              "plan": {
+                "$": "switch",
+                "cases": {
+                  "ent": "Enterprise",
+                  "pro": "Professional"
+                },
+                "default": "Free",
+                "key": {
+                  "$": "attr",
+                  "name": "plan"
+                }
+              },
+              "size": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "attr",
+                    "name": "seats"
+                  },
+                  {
+                    "$": "cond",
+                    "cases": [
+                      {
+                        "then": "small",
+                        "when": {
+                          "$": "expr",
+                          "op": "<",
+                          "value": 10
+                        }
+                      }
+                    ],
+                    "default": "large"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": null,
+        "doc": "Transposes parallel lists into rows of paired values.\nEach row is a list (not a Python tuple), so the result is JSON-friendly.",
+        "name": "ZipLists",
+        "result": [
+          [
+            "a",
+            1
+          ],
+          [
+            "b",
+            2
+          ],
+          [
+            "c",
+            3
+          ]
+        ],
+        "tags": [
+          "zip",
+          "zip:items"
+        ],
+        "template": {
+          "$": "zip",
+          "items": [
+            [
+              "a",
+              "b",
+              "c"
+            ],
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        }
+      },
+      {
+        "data": null,
+        "doc": "Strings are iterables: zipping them pairs characters, like Python's `zip`.",
+        "name": "ZipStrings",
+        "result": [
+          [
+            "a",
+            "1"
+          ],
+          [
+            "b",
+            "2"
+          ]
+        ],
+        "tags": [
+          "zip"
+        ],
+        "template": {
+          "$": "zip",
+          "items": [
+            "ab",
+            "12"
+          ]
+        }
+      }
+    ],
+    "functions": [
+      {
+        "doc": "Convert any value to its string representation (Python `str`).",
+        "examples": [
+          "ConvertValue",
+          "ConvertNoParameters"
+        ],
+        "name": "str"
+      },
+      {
+        "doc": "Parse a string (or number) into an integer (Python `int`). An optional base can be passed as a second value.",
+        "examples": [
+          "ConvertValues"
+        ],
+        "name": "int"
+      },
+      {
+        "doc": "Parse a string (or number) into a floating-point number (Python `float`).",
+        "examples": [
+          "ConvertToFloat"
+        ],
+        "name": "float"
+      },
+      {
+        "doc": "Return the JSON type of a value: one of `object`, `array`, `string`, `int`, `float`, `boolean`, or `null`. Total — never raises on well-formed JSON, so it is the one operation a `switch`/`cond` key can safely apply to an unknown node.",
+        "examples": [
+          "TypeOfObject",
+          "TypeOfArray",
+          "TypeOfString",
+          "TypeOfInt",
+          "TypeOfFloat",
+          "TypeOfBoolean",
+          "TypeOfNull",
+          "TypeDispatchWithSwitch"
+        ],
+        "name": "type"
+      }
+    ],
+    "operators": [
+      {
+        "doc": "Less-than comparison: `true` when the left operand is strictly less than the right.",
+        "examples": [
+          "OperatorLessThan"
+        ],
+        "name": "<"
+      },
+      {
+        "doc": "Less-than-or-equal comparison.",
+        "examples": [
+          "OperatorLessOrEqual"
+        ],
+        "name": "<="
+      },
+      {
+        "doc": "Equality comparison: `true` when both operands are equal.",
+        "examples": [
+          "OperatorEqual"
+        ],
+        "name": "=="
+      },
+      {
+        "doc": "Inequality comparison: `true` when the operands differ.",
+        "examples": [
+          "OperatorNotEqual"
+        ],
+        "name": "!="
+      },
+      {
+        "doc": "Greater-than-or-equal comparison.",
+        "examples": [
+          "OperatorGreaterOrEqual"
+        ],
+        "name": ">="
+      },
+      {
+        "doc": "Greater-than comparison.",
+        "examples": [
+          "OperatorGreaterThan"
+        ],
+        "name": ">"
+      },
+      {
+        "doc": "Addition for numbers, concatenation for strings.",
+        "examples": [
+          "ConvertValue",
+          "ExprSimpleMonads1"
+        ],
+        "name": "+"
+      },
+      {
+        "doc": "Subtraction.",
+        "examples": [
+          "OperatorSubtract"
+        ],
+        "name": "-"
+      },
+      {
+        "doc": "Multiplication.",
+        "examples": [
+          "OperatorMultiply"
+        ],
+        "name": "*"
+      },
+      {
+        "doc": "True division; the result is a float.",
+        "examples": [
+          "OperatorDivide"
+        ],
+        "name": "/"
+      },
+      {
+        "doc": "Modulo: the remainder of a division.",
+        "examples": [
+          "OperatorModulo"
+        ],
+        "name": "%"
+      },
+      {
+        "doc": "Logical conjunction by truthiness (Python `and`). Returns one of the operands, not a strict boolean.",
+        "examples": [
+          "ExprLogicalAnd"
+        ],
+        "name": "&&"
+      },
+      {
+        "doc": "Logical disjunction by truthiness (Python `or`). Returns the first truthy operand and treats `NO_CONTENT` as falsy.",
+        "examples": [
+          "ExprLogicalOr",
+          "ExprOrNoContentFallback"
+        ],
+        "name": "||"
+      },
+      {
+        "doc": "Logical negation (Python `not`).",
+        "examples": [
+          "ExprUnary1",
+          "ExprUnary2"
+        ],
+        "name": "!"
+      }
+    ],
+    "recipes": [
+      "RecipeReadNestedValue",
+      "RecipeDefaultForMissingField",
+      "RecipePluckFieldFromEach",
+      "RecipeSwapKeysAndValues",
+      "RecipeJoinListToString",
+      "RecipeBuildStringFromFields",
+      "RecipeConvertType",
+      "RecipeMapCodeToLabel",
+      "RecipeBucketValueByRanges",
+      "RecipeComputeOnceUseTwice",
+      "RecipePairUpTwoLists",
+      "RecipeKeepItemsMatchingCondition"
+    ],
+    "rules": [
+      {
+        "description": "Returns the value stored in current transformation context.\nThe root context has the value equals to input of transformation.\nEach operation creates new context with value of its result.",
+        "examples": [
+          "ExprSimpleValues1",
+          "ExprSimpleValues2",
+          "JoinWithStaticNoOverrides",
+          "JoinWithStaticWithOverrides"
+        ],
+        "name": "this",
+        "params": []
+      },
+      {
+        "description": "Returns the value stored in previous context.",
+        "examples": [
+          "ExprSimpleMonads2",
+          "ExprMonadsComplex"
+        ],
+        "name": "parent",
+        "params": []
+      },
+      {
+        "description": "Works inside `map`/`filter` when iterating over lists.\nReturns current item.",
+        "examples": [
+          "FilterList",
+          "MapListToNestedListWithItem",
+          "MapListToList",
+          "NoContentForMappingList"
+        ],
+        "name": "item",
+        "params": []
+      },
+      {
+        "description": "Works inside `map`/`filter` when iterating over dicts.\nReturns the key of current element.",
+        "examples": [
+          "MapDictToList",
+          "MapDictToDictItems",
+          "MapDictToListItems"
+        ],
+        "name": "key",
+        "params": []
+      },
+      {
+        "description": "Works inside `map`/`filter`.\nReturns 0-based index of iteration.",
+        "examples": [
+          "FilterListByOddIndex",
+          "FormatWithValue",
+          "NoContentForMappingList"
+        ],
+        "name": "index",
+        "params": []
+      },
+      {
+        "description": "Works inside `map`/`filter` when iterating over dicts.\nReturns the value of current element.",
+        "examples": [
+          "FilterDict",
+          "MapDictToList",
+          "MapDictToDictItems",
+          "MapDictToListItems"
+        ],
+        "name": "value",
+        "params": []
+      },
+      {
+        "description": "Stores `context.this` under the given name in the *current* context scope.\nReturns `context.this` unchanged (pass-through), so it can sit inside a\n`chain` without altering the piped value.\n\n**Scoping** — where a `set` is visible depends on which context object it\nruns in:\n\n- **Descendant scopes**: visible in any context derived *after* the `set`\n  (child scopes resolve ancestor variables through the parent chain; the first\n  `set` in a child materializes inherited variables for write isolation).\n- **Later siblings, same scope**: when a `set` runs directly at a literal-dict\n  key or list element, later-evaluated siblings in that dict/list share the\n  same context and can `get` the variable. Earlier siblings cannot — visibility\n  follows dict key / list index order.\n- **First `chain` func**: runs in the caller's context, so a `set` there is\n  visible to later `chain` funcs and to sibling templates outside the `chain`.\n- **Later `chain` funcs, `map`/`filter` items, etc.**: run in derived contexts;\n  their `set` values stay inside that scope and do not escape to parents or\n  already-evaluated siblings.\n\n`include` starts a separate transformation — variables do not cross that\nboundary.",
+        "examples": [
+          "AttrDynamicReferenceMultipleNames",
+          "FilterListNoContent",
+          "SetVisibleToLaterSiblingKey",
+          "SetInvisibleToEarlierSiblingKey",
+          "SetInFirstChainFuncVisibleToSibling",
+          "SetInLaterChainFuncNotVisibleToSibling",
+          "SetInFirstChainFuncVisibleToLaterFunc",
+          "SetBeforeMapVisibleInsideIteration",
+          "SetInsideMapNotVisibleAfterLoop"
+        ],
+        "name": "set",
+        "params": [
+          {
+            "description": "Name of the variable. Can be dynamic. The names `this`, `item`, `key`, `value` and `index` are reserved and cannot be used as variable names. Raises `TransformationError` if the name evaluates to `NO_CONTENT`. See the rule docstring for scoping rules.",
+            "examples": [
+              "SetVisibleToLaterSiblingKey"
+            ],
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "description": "Returns the value stored under the given name in the *current* context.\n\nAncestor variables are available because `derive()` links child scopes to their\nparent and `get` walks that chain — but only variables that were already `set`\nbefore that derivation. A `set` in a sibling template or a later `chain` func that\nshares no context object with this evaluation will not be found.\n\nReturns `NO_CONTENT` when the name is undefined, unless `default` is\nprovided.",
+        "examples": [
+          "AttrDynamicNameNoContent",
+          "AttrDynamicReferenceMultipleNames",
+          "GetWithDefault",
+          "FilterListNoContent",
+          "NoContentForAttr",
+          "NoContentForObjectKey",
+          "NoContentForObjectValue",
+          "NoContentForObjectFields",
+          "NoContentForMappingList",
+          "NoContentForMappingDict",
+          "SetVisibleToLaterSiblingKey",
+          "SetInvisibleToEarlierSiblingKey",
+          "SetInFirstChainFuncVisibleToSibling",
+          "SetInLaterChainFuncNotVisibleToSibling",
+          "SetInFirstChainFuncVisibleToLaterFunc",
+          "SetBeforeMapVisibleInsideIteration",
+          "SetInsideMapNotVisibleAfterLoop"
+        ],
+        "name": "get",
+        "params": [
+          {
+            "description": "Name of the variable. Can be dynamic. The names `this`, `item`, `key`, `value` and `index` are reserved and cannot be used as variable names. Raises `TransformationError` if the name evaluates to `NO_CONTENT`. See the rule docstring for scoping rules.",
+            "examples": [
+              "SetVisibleToLaterSiblingKey"
+            ],
+            "name": "name"
+          },
+          {
+            "description": "Optional template for value returned when the variable is undefined. Can be dynamic.",
+            "examples": [
+              "GetWithDefault"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Returns values of attribute or item from current value in context.\nCan search in deeply nested structures with path.\nIf attribute is not present returns no value.\nIf the dynamic name or any path segment evaluates to `NO_CONTENT`, returns\nno value (uniformly for all container types).\n\nParameters are mutually exclusive.",
+        "examples": [
+          "AttrWithDefault",
+          "ExprOrNoContentFallback",
+          "FormatWithDynamicPattern",
+          "FormatSkipsMissingValue",
+          "LookupMissingAttr",
+          "JoinTwoStringsWithDynamicSep",
+          "JoinSkipsMissingStringFields",
+          "SwitchDispatchOnKey"
+        ],
+        "name": "attr",
+        "params": [
+          {
+            "description": "Name of attribute to search. \nIt is possible to use a number as the name for items in arrays. \nCan be dynamic.",
+            "examples": [
+              "AttrSimpleFixedName",
+              "AttrSimpleNameDoesNotExist",
+              "AttrSimpleFixedIndex",
+              "AttrSimpleIndexDoesNotExist",
+              "AttrDynamicNameNoContent",
+              "AttrDynamicReferenceName1",
+              "AttrDynamicReferenceName2",
+              "MapListsToDict",
+              "NoContentForAttr",
+              "ObjectDynamicKeyValue",
+              "ObjectFieldsLiteralMarker",
+              "ObjectFieldsMultipleLiteralKeys",
+              "SwitchDispatchOnKey"
+            ],
+            "name": "name"
+          },
+          {
+            "description": "List of attribute names or indexes to search in nested structure. \nCan be dynamic.",
+            "examples": [
+              "AttrSimplePathDoesNotExist1",
+              "AttrSimplePathDoesNotExist2",
+              "AttrSimpleFixedNames",
+              "AttrDynamicReferenceNames",
+              "AttrDynamicReferenceMultipleNames"
+            ],
+            "name": "names"
+          },
+          {
+            "description": "Optional template for value returned when the attribute or path is missing. Can be dynamic.",
+            "examples": [
+              "AttrWithDefault"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Returns a dict.\n\nIn the default `key`/`value` mode it returns a dict with a single,\ndynamically named item; this is useful when the attribute name itself comes\nfrom the input. If you need multiple attributes use `join` or `map`. If `key`\nor `value` returns no result then the rule returns an empty dict.\n\nIn the `fields` mode it builds a dict from a literal mapping: each key is\nemitted verbatim and each value is walked as a template. Because the keys are\nliteral, this is the canonical way to produce an object whose key is the\nmarker (`$`) itself — data that would otherwise be interpreted as a rule\ninvocation. Values that evaluate to `NO_CONTENT` are skipped, omitting the\ncorresponding key from the result.",
+        "examples": [
+          "JoinManyDynamicDicts",
+          "ObjectDynamicKeyValue",
+          "ObjectFieldsLiteralMarker"
+        ],
+        "name": "object",
+        "params": [
+          {
+            "description": "Defines template for name of attribute. Mutually exclusive with `fields`.",
+            "examples": [
+              "NoContentForObjectKey",
+              "ObjectDynamicKeyValue"
+            ],
+            "name": "key"
+          },
+          {
+            "description": "Defines template for value of attribute. Mutually exclusive with `fields`.",
+            "examples": [
+              "NoContentForObjectValue",
+              "ObjectDynamicKeyValue"
+            ],
+            "name": "value"
+          },
+          {
+            "description": "A literal mapping whose keys are emitted verbatim — including the marker (`$`), so this is how you produce an object key that is the marker itself (data that would otherwise be read as a rule invocation). Each value is walked as a template. Entries whose value evaluates to `NO_CONTENT` are omitted. Mutually exclusive with `key`/`value`.",
+            "examples": [
+              "NoContentForObjectFields",
+              "ObjectFieldsLiteralMarker",
+              "ObjectFieldsMultipleLiteralKeys"
+            ],
+            "name": "fields"
+          }
+        ]
+      },
+      {
+        "description": "Iterates over `list` or `dict` and produces new `dict` or `list` with items based on template.",
+        "examples": [
+          "MapListToNestedListWithItem"
+        ],
+        "name": "map",
+        "params": [
+          {
+            "description": "Defines template for items when producing the `list`",
+            "examples": [
+              "AttrDynamicReferenceMultipleNames",
+              "ChainWithAttr",
+              "FormatFromSingleValue",
+              "FormatFromDict",
+              "FormatFromList",
+              "FormatWithValue",
+              "JoinManyDynamicDicts",
+              "MapListToNestedListWithItem",
+              "MapListToList",
+              "MapDictToList",
+              "SetBeforeMapVisibleInsideIteration",
+              "SetInsideMapNotVisibleAfterLoop"
+            ],
+            "name": "item"
+          },
+          {
+            "description": "Defines templates for series of items when producing the `list`",
+            "examples": [
+              "MapDictToListItems",
+              "NoContentForMappingList"
+            ],
+            "name": "items"
+          },
+          {
+            "description": "Defines template for key when producing the `dict`",
+            "examples": [
+              "MapDictToDictItems",
+              "MapListsToDict",
+              "NoContentForMappingDict"
+            ],
+            "name": "key"
+          },
+          {
+            "description": "Defines template for value when producing the `dict`",
+            "examples": [
+              "MapDictToDictItems",
+              "MapListsToDict",
+              "NoContentForMappingDict"
+            ],
+            "name": "value"
+          }
+        ]
+      },
+      {
+        "description": "Iterates over `list` or `dict` and filters out items regarding condition calculation.",
+        "examples": [
+          "FilterDict",
+          "FilterList",
+          "FilterListByOddIndex",
+          "FilterListNoContent"
+        ],
+        "name": "filter",
+        "params": [
+          {
+            "description": "Defines template for condition",
+            "examples": [
+              "FilterListByOddIndex"
+            ],
+            "name": "cond"
+          }
+        ]
+      },
+      {
+        "description": "Transposes iterables like Python's `zip`: rows become columns and columns become rows.\nEach output row is a **list** (JSON-friendly), not a Python tuple.",
+        "examples": [
+          "MapListsToDict",
+          "ZipLists",
+          "ZipStrings"
+        ],
+        "name": "zip",
+        "params": [
+          {
+            "description": "Defines the list of lists",
+            "examples": [
+              "ZipLists"
+            ],
+            "name": "items"
+          }
+        ]
+      },
+      {
+        "description": "Writes a file using `write_file` delegate (a parameter to `Transformer` constructor).\nThis rule produces no result.\nFile will not be written if `name` or `content` returns no result.",
+        "examples": [
+          "FileWriteViaMap"
+        ],
+        "name": "file",
+        "params": [
+          {
+            "description": "Defines template for file name",
+            "examples": [
+              "FileWriteViaMap"
+            ],
+            "name": "name"
+          },
+          {
+            "description": "Defines template for file content. File content always has JSON formatted data",
+            "examples": [
+              "FileWriteViaMap"
+            ],
+            "name": "content"
+          }
+        ]
+      },
+      {
+        "description": "Joins (concatenates) together several dicts, lists of strings.\nIf items to be concatenated have different types an exception will be thrown.\nItems that evaluate to `NO_CONTENT` are omitted before concatenation.\nWhen no items remain, returns `NO_CONTENT` unless `default` is provided.",
+        "examples": [
+          "JoinWithStaticNoOverrides",
+          "JoinWithStaticWithOverrides",
+          "JoinTwoDictsNoCommonKeys",
+          "JoinTwoDictsWithCommonKeys",
+          "JoinTwoStrings",
+          "JoinTwoStringsWithDynamicSep",
+          "JoinManyDynamicDicts",
+          "JoinSkipsMissingStringFields",
+          "JoinEmptyReturnsNoContent",
+          "JoinEmptyWithDefaultDict",
+          "MapListToList"
+        ],
+        "name": "join",
+        "params": [
+          {
+            "description": "List of values to concatenate.",
+            "examples": [
+              "JoinTwoDictsNoCommonKeys",
+              "JoinTwoDictsWithCommonKeys",
+              "JoinTwoStrings"
+            ],
+            "name": "items"
+          },
+          {
+            "description": "Defines separator for strings concatenation. Can be dynamic. Used only when all items are strings; must evaluate to a string (raises `TransformationError` otherwise). Defaults to empty string.",
+            "examples": [
+              "JoinTwoStringsWithDynamicSep"
+            ],
+            "name": "sep"
+          },
+          {
+            "description": "Optional template for value returned when there are no items to join (including when all items are `NO_CONTENT`). Can be dynamic.",
+            "examples": [
+              "JoinEmptyWithDefaultDict"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Function composition operation.\nBuild function composition and executes it against value in current context.\n`chain(f1, f2, f3)(x) === f3(f2(f1(x)))`\n\nEach function execution creates new context that will be passed to next function.\nThe **first** func runs in the caller's context (so a `set` there is visible\noutside the `chain`); each subsequent func runs in a derived context.\n```plantuml\n@startuml\nleft to right direction\nrectangle this\nrectangle \"intermediate context\" as i1\nrectangle \"intermediate context\" as i2\nrectangle result\nthis --> i1: f1\ni1 --> i2: f2\ni2 --> result: f3\n@enduml\n```",
+        "examples": [
+          "AttrDynamicReferenceMultipleNames",
+          "ChainWithAttr",
+          "ExprSimpleMonads2",
+          "ExprMonadsComplex",
+          "FilterListNoContent",
+          "MapListToList",
+          "MapListsToDict",
+          "NoContentForAttr",
+          "SetInFirstChainFuncVisibleToSibling",
+          "SetInLaterChainFuncNotVisibleToSibling",
+          "SetInFirstChainFuncVisibleToLaterFunc",
+          "SetBeforeMapVisibleInsideIteration",
+          "SetInsideMapNotVisibleAfterLoop"
+        ],
+        "name": "chain",
+        "params": [
+          {
+            "description": "Define list of templates (not just rules) for chaining. The list structure is constant; each element is walked as a template.",
+            "examples": [
+              "ChainWithAttr"
+            ],
+            "name": "funcs"
+          }
+        ]
+      },
+      {
+        "description": "Executes unary or binary operation.\nThere are 3 modes of running this rule:\n\n1. **No attributes were specified:**\nResult is unary operation calculation against current context value.\n2. **Single `value` was specified:**\nResult is binary operation calculation where the\nfirst argument is current values of context and\nthe second is specified value.\n3. **Multiple `values` were specified:**\nResult is calculated by applying operation to all values in pairs (reduction).\nIn this case current context value is ignored.\n\nParameters are mutually exclusive.",
+        "examples": [
+          "CondFirstTruthyArm",
+          "CondDefaultBranch",
+          "FilterDict",
+          "FilterList",
+          "FilterListByOddIndex"
+        ],
+        "name": "expr",
+        "params": [
+          {
+            "description": "Defines name of operation. This is always constant.\n\n###### Possible values:\n\n| operator     | alternative | kind   | types          | result         |\n|--------------|-------------|--------|----------------|----------------|\n| <            | lt          | binary | any            | boolean        |\n| <=           | le          | binary | any            | boolean        |\n| ==           | eq          | binary | any            | boolean        |\n| !=           | ne          | binary | any            | boolean        |\n| >=           | ge          | binary | any            | boolean        |\n| &gt;         | gt          | binary | any            | boolean        |\n| +            | add         | binary | string, number | string, number |\n| -            | sub         | binary | number         | number         |\n| *            | mul         | binary | number         | number         |\n| /            | div         | binary | number         | number         |\n| %            | mod         | binary | number         | number         |\n| &&           | and         | binary | any            | any            |\n| &#124;&#124; | or          | binary | any            | any            |\n| !            | not         | unary  | boolean        | boolean        |\n\nYou can use code-style or mnemonic name (i.e. operator or alternative). ",
+            "examples": [
+              "ExprLogicalAnd",
+              "ExprLogicalOr",
+              "ExprOrNoContentFallback",
+              "ExprUnary1",
+              "ExprUnary2"
+            ],
+            "name": "op"
+          },
+          {
+            "description": "Defines template for single parameter value",
+            "examples": [
+              "CondFirstTruthyArm",
+              "ConvertValue",
+              "ExprSimpleMonads1",
+              "ExprSimpleMonads2",
+              "ExprMonadsComplex",
+              "OperatorLessThan",
+              "OperatorLessOrEqual",
+              "OperatorEqual",
+              "OperatorNotEqual",
+              "OperatorGreaterOrEqual",
+              "OperatorGreaterThan",
+              "OperatorSubtract",
+              "OperatorMultiply",
+              "OperatorDivide",
+              "OperatorModulo"
+            ],
+            "name": "value"
+          },
+          {
+            "description": "Defines template for multiple parameter values.\n\n> **Warning:** Unlike unary mode and `value` mode, **`this` is not used** when `values`\n> is specified. The operator is applied via `reduce(op, values)` over the evaluated\n> list only. Include `{\"$\": \"this\"}` as a list item if you need the current context\n> value in the reduction.",
+            "examples": [
+              "ExprSimpleValues1",
+              "ExprSimpleValues2",
+              "ExprValuesComplex",
+              "ExprValuesIgnoresThis",
+              "FormatWithValue"
+            ],
+            "name": "values"
+          }
+        ]
+      },
+      {
+        "description": "Runs function registered in `Transformer`.\nUsually, that is used to convert values into different type, but you can also use it to call any function.\n\nThere are 3 modes of running this rule:\n\n1. **No attributes were specified:**\nRuns conversion function with single parameter - value of current context.\n2. **Single `value` was specified:**\nRuns conversion function with single parameter - provided value.\nCurrent context is ignored in this case.\n3. **Multiple `values` were specified:**\nRuns conversion function with multiple parameters.\nCurrent context is ignored in this case.\n\nParameters are mutually exclusive.",
+        "examples": [
+          "ConvertNoParameters",
+          "ConvertToFloat",
+          "TypeOfObject",
+          "TypeOfArray",
+          "TypeOfString",
+          "TypeOfInt",
+          "TypeOfFloat",
+          "TypeOfBoolean",
+          "TypeOfNull",
+          "TypeDispatchWithSwitch"
+        ],
+        "name": "call",
+        "params": [
+          {
+            "description": "Defines the name of function. This is always constant.\n\n###### Possible values:\n\n| name  | input | output |\n|-------|:-----:|:------:|\n| str   |  any  |  str   | \n| int   |  str  |  int   | \n| float |  str  | float  | \n| type  |  any  | string | ",
+            "examples": [
+              "ConvertNoParameters"
+            ],
+            "name": "name"
+          },
+          {
+            "description": "Defines template for single parameter value",
+            "examples": [
+              "ConvertValue"
+            ],
+            "name": "value"
+          },
+          {
+            "description": "Defines template for multiple parameters values",
+            "examples": [
+              "ConvertValues"
+            ],
+            "name": "values"
+          }
+        ]
+      },
+      {
+        "description": "Execute string formatting using current value.\n\nIf `value` is specified it is used for formatting otherwise current context value is used.\n\nSee [this page](https://docs.python.org/3/tutorial/inputoutput.html#the-string-format-method)\nfor examples of how formatting in python works.\n\nIf value for formatting is `dict` it will be unpacked to separate names.\nIf value is list if will be unpacked to separate items.\nOtherwise while value will be passed to formatting.\n\nReturns no value when the formatting value (or any unpacked list element or dict\nkey/value) is `NO_CONTENT`, unless `default` is provided.",
+        "examples": [
+          "FormatWithDefault",
+          "FormatFromSingleValue",
+          "FormatFromDict",
+          "FormatFromList",
+          "FormatWithDynamicPattern",
+          "FormatSkipsMissingValue"
+        ],
+        "name": "format",
+        "params": [
+          {
+            "description": "Defines pattern for string formatting. Can be dynamic. Must evaluate to a string (raises `TransformationError` otherwise).",
+            "examples": [
+              "FormatWithDynamicPattern"
+            ],
+            "name": "pattern"
+          },
+          {
+            "description": "Defines template for input data. Optional.",
+            "examples": [
+              "FormatWithValue",
+              "FormatSkipsMissingValue"
+            ],
+            "name": "value"
+          },
+          {
+            "description": "Optional template for value returned when the formatting value (or any unpacked list element or dict key/value) is `NO_CONTENT`. Can be dynamic.",
+            "examples": [
+              "FormatWithDefault"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Loads and runs another template using the `template_loader` delegate\n(a parameter to `Transformer` constructor).\n\nOnly the current context value is passed to the included template — variables\nstored with `set`/`get` and iteration accessors do not cross the boundary.\n\nThe `template_loader` is always called as `loader(name, context=...)`, where\n`context` is an `IncludeContext` carrying the parent's loader, marker, depth\nguard, and include-stack. The loader is responsible for **constructing** the\nsub-`Transformer` with them (e.g. via `context.transformer(template)`), which\ninherits the parent's marker by default — so a sub-template using the default\nmarker stays consistent across the boundary, recursive / self-`include`ing\ntemplates re-resolve without each host re-patching the loader, and the loaded\ninstance is never mutated. Pass an explicit `marker` to `context.transformer`\nto pin a different marker for the sub-template.\n\nNested includes are limited by `max_include_depth` on `Transformer` (default 50).\nExceeding the limit raises `TransformationError` with the include name chain.\n\nIf the included template produces no result, this rule produces no result unless\n`default` is provided.",
+        "examples": [
+          "IncludeWithDefault",
+          "Include"
+        ],
+        "name": "include",
+        "params": [
+          {
+            "description": "Name or path to template. Can be dynamic. Meaning of this `name` depends on provided template loader.",
+            "examples": [
+              "Include"
+            ],
+            "name": "name"
+          },
+          {
+            "description": "Optional template for value returned when the included template produces no result. Can be dynamic.",
+            "examples": [
+              "IncludeWithDefault"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Lazy equality dispatch: evaluates `key`, then evaluates **only** the matching\nentry of `cases`. Non-selected case templates are never walked, so `switch`\ndiffers from building a dict and indexing it (which would evaluate every arm).\n\nMatching is by equality between the evaluated `key` and the literal case keys.\nWhen no case matches — including when `key` evaluates to `NO_CONTENT` — the\n`default` template is evaluated if present, otherwise the rule produces no\nvalue.",
+        "examples": [
+          "SwitchDispatchOnKey",
+          "SwitchDefaultBranch",
+          "TypeDispatchWithSwitch"
+        ],
+        "name": "switch",
+        "params": [
+          {
+            "description": "Template for the value to dispatch on. Can be dynamic. Compared by equality against the (literal) keys of `cases`.",
+            "examples": [
+              "SwitchDispatchOnKey",
+              "TypeDispatchWithSwitch"
+            ],
+            "name": "key"
+          },
+          {
+            "description": "A mapping from case value to result template. Only the template of the selected case is evaluated; the others are never walked.",
+            "examples": [
+              "SwitchDispatchOnKey"
+            ],
+            "name": "cases"
+          },
+          {
+            "description": "Optional template evaluated when no case matches (including when `key` evaluates to `NO_CONTENT`). Can be dynamic.",
+            "examples": [
+              "SwitchDefaultBranch"
+            ],
+            "name": "default"
+          }
+        ]
+      },
+      {
+        "description": "Lisp-style ordered multi-way conditional (subsumes a chained `if`/`else`).\nWalks each arm's `when` in order; the **first** truthy `when` selects its\n`then`, which is the only `then` evaluated. A `when` that evaluates to\n`NO_CONTENT` is treated as falsy. When no arm matches, the `default` template\nis evaluated if present, otherwise the rule produces no value.",
+        "examples": [
+          "CondFirstTruthyArm",
+          "CondDefaultBranch"
+        ],
+        "name": "cond",
+        "params": [
+          {
+            "arms": [
+              {
+                "description": "Predicate template for this arm. Can be dynamic. The first arm whose `when` is truthy is selected.",
+                "name": "when"
+              },
+              {
+                "description": "Result template, evaluated only when this arm is selected. Can be dynamic.",
+                "name": "then"
+              }
+            ],
+            "description": "Ordered list of `{when, then}` arms. The first arm whose `when` is truthy selects its `then`; later arms and non-selected `then` templates are never walked.",
+            "examples": [
+              "CondFirstTruthyArm"
+            ],
+            "name": "cases"
+          },
+          {
+            "description": "Optional template evaluated when no arm matches. Can be dynamic.",
+            "examples": [
+              "CondFirstTruthyArm",
+              "CondDefaultBranch"
+            ],
+            "name": "default"
+          }
+        ]
+      }
+    ],
+    "worked_examples": [
+      "WorkedExampleNestedArithmetic",
+      "WorkedExampleReshapeRecords",
+      "WorkedExampleRenameAndFlatten",
+      "WorkedExampleFilterAndProject",
+      "WorkedExampleIndexByKey",
+      "WorkedExampleOptionalFieldsAndDefaults",
+      "WorkedExampleConditionalEnrichmentInsideMap"
+    ]
+  },
+  "engine_version": null,
+  "metadata_version": "3.0"
+}
