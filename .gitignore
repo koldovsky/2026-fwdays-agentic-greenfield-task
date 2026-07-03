@@ -25,3 +25,6 @@ venv/
 target/
 bin/
 obj/
+coverage/
+**/raw/
+*.db
