@@ -31,7 +31,7 @@ The system SHALL support two subscription tariff plans: Monthly (valued at $10.9
 - **WHEN** a subscription registration or renewal is initiated for a selected tariff plan
 - **THEN** the system SHALL calculate the UAH equivalent amount in minor units (kopecks).
 - **AND** the system SHALL check the local cache for the exchange rate (TTL: 1 hour).
-- **AND** if the cached rate is expired or missing, the system SHALL fetch the current exchange rate using Monobank's public API (`GET https://api.monobank.ua/bank/currency`) and update the local cache.
+- **AND** if the cached rate is expired or missing, the system SHALL fetch the current exchange rate using Monobank's public API (`GET https://api.monobank.ua/bank/currency`), select the selling rate (`rateSell`) for USD (currencyCodeA: 840) to UAH (currencyCodeB: 980), and update the local cache.
 - **AND** if the Monobank API is unreachable or returns an error (e.g. rate limit HTTP 429), the system SHALL fall back to a database-stored rate or use a hardcoded fallback exchange rate of 41.5 UAH/USD.
 - **AND** the Monthly plan equivalent SHALL target approximately 10.99 USD in UAH kopecks.
 - **AND** the Yearly plan equivalent SHALL target approximately 120.00 USD in UAH kopecks.
@@ -47,7 +47,7 @@ To initiate a subscription, the system SHALL request invoice creation via Monoba
 - **AND** it SHALL redirect the user to the provided `pageUrl` for payment.
 
 ### Requirement: Monobank Webhook Processing and ECDSA Signature Verification
-The system SHALL expose a webhook endpoint to receive payment updates from Monobank. The system SHALL verify the authenticity of all webhooks by checking the `X-Sign` header against the raw request body using Monobank's public key (fetched from `GET /api/merchant/pubkey` and cached).
+The system SHALL expose a webhook endpoint to receive payment updates from Monobank. The system SHALL verify the authenticity of all webhooks by checking the `X-Sign` header against the raw, unparsed request body string (bytes) using Monobank's public key (fetched from `GET /api/merchant/pubkey` and cached).
 
 #### Scenario: Successful payment webhook updates database subscription
 - **WHEN** a webhook POST request with a valid ECDSA signature is received on `/api/billing/webhook` with status `success`
@@ -65,9 +65,11 @@ The system SHALL run a scheduled process (Cron) to initiate recurrent merchant b
 
 #### Scenario: Cron triggers successful recurring payment
 - **WHEN** the cron job runs and identifies a subscription with status `'active'`, `autoRenew` set to `true`, and `currentPeriodEnd` less than or equal to the current time
-- **THEN** the system SHALL execute a recurrent payment request to Monobank using the stored `cardToken` (passing only `cardToken` in the payload).
-- **AND** the request payload SHALL specify `initiationKind` as `"merchant"`.
+- **THEN** the system SHALL execute a recurrent payment request to Monobank Acquiring API `POST /api/merchant/wallet/payment` using the stored `cardToken`.
+- **AND** the request payload SHALL specify `cardToken`, `amount` (calculated dynamic UAH equivalent for the tariff plan in minor units), `ccy` (980 for UAH), and `initiationKind` as `"merchant"`.
+- **AND** the system SHALL store the returned `invoiceId` as the subscription's `lastInvoiceId` in the database.
 - **AND** if the payment completes successfully, the system SHALL update `currentPeriodEnd` by adding the subscription interval (1 month or 1 year) and reset `failedAttemptsCount` to 0.
+- **AND** the system SHALL send a Telegram alert to the administrator about the successful recurring payment (containing client profile data: name, website, phone, email, time, Telegram nickname, and payment details: amount, transaction time).
 
 ### Requirement: Failed Recurring Payment Retry Logic
 The system SHALL handle failed recurrent billing attempts by scheduling up to 2 retries within 48 hours. If all retries fail, the subscription SHALL transition to `suspended` status.
@@ -99,7 +101,7 @@ The system SHALL allow users to cancel their subscription after confirming a war
 - **AND** the system SHALL send a Telegram alert to the administrator about the subscription cancellation (containing client profile data: name, website, phone, email, time, Telegram nickname).
 - **AND** the system SHALL allow the user to use the service until `currentPeriodEnd`.
 - **AND** the cron job SHALL skip this subscription for recurrent billing runs since it is cancelled.
-- **AND** when the paid period ends (`currentPeriodEnd <= NOW()`), the cron job SHALL send a `DELETE` request to Monobank Acquiring API `DELETE /api/merchant/wallet/card` using the saved `cardToken`.
+- **AND** when the paid period ends (`currentPeriodEnd <= NOW()`), the cron job SHALL check if `cardToken` is present, and if so, send a `DELETE` request to Monobank Acquiring API `DELETE /api/merchant/wallet/card` using the saved `cardToken`.
 - **AND** it SHALL remove `cardToken` and `walletId` from the user's `subscriptions` record in the database.
 - **AND** the system SHALL trigger a user notification in Telegram indicating that the conversion transfer service has been cancelled (containing a link to pay/re-activate, using a calm tone without exclamation marks).
 
@@ -115,7 +117,9 @@ The system SHALL allow users to resume paused, cancelled, or suspended subscript
 #### Scenario: User resumes subscription after the paid period ends (status paused or suspended)
 - **WHEN** a user clicks the "Resume Subscription" button, and `NOW() >= currentPeriodEnd` (for a `'paused'` or `'suspended'` subscription, where `cardToken` and `walletId` are still present in the database)
 - **THEN** the system SHALL calculate the dynamic UAH amount for the tariff plan.
-- **AND** the system SHALL execute a recurrent payment request to Monobank Acquiring API `POST /api/merchant/wallet/payment` with `initiationKind: "merchant"` using the stored `cardToken`.
+- **AND** the system SHALL execute a recurrent payment request to Monobank Acquiring API `POST /api/merchant/wallet/payment` using the stored `cardToken`.
+- **AND** the request payload SHALL specify `cardToken`, `amount` (calculated dynamic UAH equivalent), `ccy` (980 for UAH), and `initiationKind` as `"merchant"`.
+- **AND** the system SHALL store the returned `invoiceId` as the subscription's `lastInvoiceId` in the database.
 - **AND** if the payment completes successfully (`status` is returned as `success`), the system SHALL update the subscription status to `'active'`, reset `failedAttemptsCount` to 0, update `currentPeriodEnd` to 1 month or 1 year from the transaction completion.
 - **AND** the system SHALL send a Telegram alert to the administrator about the subscription renewal and payment success (containing client profile data and payment details: amount, transaction time).
 - **AND** if the payment requires 3DS verification (`status` is returned as `processing` with a non-null `tdsUrl`), the system SHALL redirect the user to the provided `tdsUrl` to complete the authentication.
@@ -135,7 +139,7 @@ The system SHALL allow users to resume paused, cancelled, or suspended subscript
 ### Automated Tests
 - Mock the Monobank Acquiring HTTP client. Verify that:
   - `POST /api/merchant/invoice/create` receives `saveCardData.saveCard: true`.
-  - `POST /api/merchant/wallet/payment` receives only `cardToken` and `initiationKind: "merchant"`.
+  - `POST /api/merchant/wallet/payment` receives `cardToken`, `amount`, `ccy` (980), and `initiationKind: "merchant"`.
   - `DELETE /api/merchant/wallet/card` receives the correct `cardToken`.
 - Webhook tests:
   - Test validation of valid ECDSA signature using `X-Sign` header and request body.

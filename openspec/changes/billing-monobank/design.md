@@ -22,7 +22,7 @@ Integrating the Monobank Acquiring API allows the platform to handle subscriptio
 
 ### Decision 1: Cryptographic signature verification using native Node.js `crypto`
 - **Alternative:** External packages like `elliptic` or `jsrsasign`.
-- **Rationale:** Native Node.js `crypto` is performant and secure. The public key returned by Monobank `GET /api/merchant/pubkey` is a base64-encoded X.509 ASN.1 public key. Once base64-decoded, it contains standard PEM delimiters which Node.js `crypto.verify` can consume directly to verify ASN.1 signature payloads.
+- **Rationale:** Native Node.js `crypto` is performant and secure. The public key returned by Monobank `GET /api/merchant/pubkey` is a base64-encoded X.509 ASN.1 public key. Once base64-decoded, it contains standard PEM delimiters which Node.js `crypto.verify` can consume directly to verify ASN.1 signature payloads. Note that the verification must run on the raw, unparsed request body string (bytes) to prevent signature invalidation caused by payload formatting changes after standard JSON parsing.
 
 ### Decision 2: Idempotency of Webhook handler
 - **Alternative:** Processing webhook status changes blindly.

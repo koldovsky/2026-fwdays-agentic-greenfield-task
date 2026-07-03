@@ -14,11 +14,11 @@
 - [ ] 3.2 Create Webhook Route Handler `POST /api/billing/webhook` to handle payment status updates (updating database with `cardToken` and `walletId` on success, handling idempotency by checking active invoice status first).
 - [ ] 3.3 Create API endpoint `POST /api/billing/pause` to process subscription pause request.
 - [ ] 3.4 Create API endpoint `POST /api/billing/cancel` to handle user cancellations.
-- [ ] 3.5 Create API endpoint `POST /api/billing/resume` to handle subscription resumption (enabling `autoRenew: true` if active/pending, triggering wallet payment if paused/suspended, or creating a new invoice if cancelled and expired).
+- [ ] 3.5 Create API endpoint `POST /api/billing/resume` to handle subscription resumption (enabling `autoRenew: true` if active/pending, triggering wallet payment with `amount` and `ccy` if paused/suspended and saving the returned `invoiceId` as `lastInvoiceId`, or creating a new invoice if cancelled and expired).
 
 ## 4. Background Billing Scheduler (Cron)
 
-- [ ] 4.1 Implement scheduler handler (cron job) to find active subscriptions reaching `current_period_end` and execute `POST /api/merchant/wallet/payment` with `initiationKind: "merchant"`.
+- [ ] 4.1 Implement scheduler handler (cron job) to find active subscriptions reaching `current_period_end` and execute `POST /api/merchant/wallet/payment` with `initiationKind: "merchant"` (passing `cardToken`, calculated `amount`, `ccy`: 980 and saving the returned `invoiceId` as `lastInvoiceId` in the database).
 - [ ] 4.2 Integrate retry queue logic in the cron process to retry failed payments up to 2 times within 48 hours before setting subscription to `suspended`.
 
 ## 5. Telegram Billing Alerts
