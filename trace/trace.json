@@ -71,7 +71,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -80,7 +80,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -89,7 +89,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -98,7 +98,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -107,7 +107,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -117,7 +117,7 @@
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -128,7 +128,7 @@
         "openspec/specs/dashboard/spec.md",
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -138,7 +138,7 @@
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -147,7 +147,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -156,7 +156,7 @@
       "specs": [
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -165,7 +165,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -174,7 +174,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -183,7 +183,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -193,7 +193,7 @@
         "openspec/specs/dashboard/spec.md",
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -202,7 +202,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -211,7 +211,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -220,7 +220,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -229,7 +229,7 @@
       "specs": [
         "openspec/specs/kb-learning/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -238,7 +238,7 @@
       "specs": [
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -247,7 +247,7 @@
       "specs": [
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -256,7 +256,7 @@
       "specs": [
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -265,7 +265,7 @@
       "specs": [
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -275,7 +275,7 @@
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -286,7 +286,7 @@
         "openspec/specs/dashboard/spec.md",
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -295,7 +295,7 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -305,7 +305,7 @@
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -315,7 +315,7 @@
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -326,7 +326,7 @@
         "openspec/specs/dashboard/spec.md",
         "openspec/specs/slots/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -337,7 +337,7 @@
         "openspec/specs/dashboard/spec.md",
         "openspec/specs/intake/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     },
@@ -346,17 +346,13 @@
       "specs": [
         "openspec/specs/dashboard/spec.md"
       ],
-      "planned": null,
+      "planned": true,
       "tests": [],
       "recordings": []
     }
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "plan-ownership",
-      "msg": "docs/mvp-capability-plan.md not found - ownership check skipped (expected before Phase 3; mandatory at --release)"
-    },
     {
       "check": "test-trace",
       "msg": "FR-INTAKE-01 has no test annotated \"@trace FR-INTAKE-01\""

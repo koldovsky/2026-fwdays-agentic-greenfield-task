@@ -6,8 +6,8 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-03, evening (Europe/Kyiv)
-- **Current phase:** Phase 2 in flight — spec drafts done, revisions pending
+- **Date and time:** 2026-07-04, ~01:20 (Europe/Kyiv)
+- **Current phase:** **Phase 2 DONE (G2 passed)** — Phase 3 capability plan next
 - **Active change:** none (baseline specs, not a change folder)
 - **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
   sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),
@@ -16,15 +16,22 @@
   scaffold** (`ed149e8`): npm-workspaces monorepo (lib + bot/agent/db +
   Next 16 dashboard), gates green, **git hooks verified live** (first attempt
   correctly blocked: ESLint 10 vs eslint-config-next → pinned v9).
-  **Phase 2 WIP** (`847aaef`): 5 baseline specs drafted + critiqued;
-  `openspec validate --all --strict` 5/5; spec-mention warnings 30→0.
-- **Next task:** RESUME spec-pipeline after the session-limit reset (22:30
-  Kyiv): `Workflow({scriptPath: "<session>/workflows/scripts/spec-pipeline-wf_a1aa4688-c90.js", resumeFromRunId: "wf_05b279e6-e8c"})`
-  — drafts+critiques replay from cache; 5 revise agents (23 critique findings)
-  + coverage-check re-run **on sonnet** (model economy: subagent fan-outs use
-  sonnet; Fable/Opus only for main-loop judgment — user directive). Then G2
-  gate re-check + commit "Phase 2 (G2)". Then Phase 3 capability plan; first
-  slice `slots`.
+  **Phase 2 WIP** (`847aaef`): 5 baseline specs drafted + critiqued.
+  ESLint-9 pin + handoff (`49bf591`). **Phase 2 (G2) DONE** (`c16975c`):
+  spec-pipeline resumed from cache; revise pass applied (kb-learning 6,
+  slots 7 incl. Europe/Kyiv timezone conventions); coverage check found
+  3 gaps + 2 contradictions, all fixed (proposing = conversation state only,
+  NFR-UX-01 → intake, delete-lead → dashboard, questions.delivery_status
+  amended into ADR-0001 §4, actor unified to "administrator").
+  Gate: `openspec validate --all --strict` 5/5; check-traceability 30 FRs,
+  0 failures, 0 spec-mention warnings.
+- **Next task:** **Phase 3** — draft `docs/mvp-capability-plan.md` (slice
+  DAG; every MVP FR owned by exactly one slice — the format the
+  `check-traceability` plan-ownership rule parses; first slice = `slots`
+  per the signed decision), then **G3 = human sign-off of the plan**.
+  After G3: Phase 4a change folder for `slots`, tests-first red→green.
+  Model economy: subagent fan-outs on sonnet; Fable only for main-loop
+  judgment (user directive).
 
 ## Source Of Truth
 
