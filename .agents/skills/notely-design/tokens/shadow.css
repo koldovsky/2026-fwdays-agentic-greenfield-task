@@ -1,0 +1,30 @@
+/* Notely — Elevation / shadow tokens.
+   Soft, low-spread shadows (Notion/Linear feel). Levels 0–5.
+   Dark theme uses deeper, less-blue shadows + subtle ring. */
+:root {
+  /* 0 = flush, no elevation */
+  --shadow-0: none;
+  /* 1 = resting cards, list items */
+  --shadow-1: 0 1px 2px rgba(16,18,23,0.06), 0 1px 1px rgba(16,18,23,0.04);
+  /* 2 = raised cards, hovered note cards */
+  --shadow-2: 0 2px 4px rgba(16,18,23,0.06), 0 4px 8px rgba(16,18,23,0.05);
+  /* 3 = dropdowns, popovers, tooltips */
+  --shadow-3: 0 4px 8px rgba(16,18,23,0.07), 0 8px 16px rgba(16,18,23,0.07);
+  /* 4 = modals, drawers */
+  --shadow-4: 0 8px 16px rgba(16,18,23,0.08), 0 16px 32px rgba(16,18,23,0.10);
+  /* 5 = highest — command palette, large overlays */
+  --shadow-5: 0 16px 32px rgba(16,18,23,0.10), 0 24px 56px rgba(16,18,23,0.16);
+
+  /* Focus ring (paired with focus color) */
+  --shadow-focus: 0 0 0 3px rgba(99,102,241,0.35);
+}
+
+[data-theme="dark"] {
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-2: 0 2px 6px rgba(0,0,0,0.45);
+  --shadow-3: 0 6px 16px rgba(0,0,0,0.5);
+  --shadow-4: 0 12px 28px rgba(0,0,0,0.55);
+  --shadow-5: 0 20px 48px rgba(0,0,0,0.65);
+  --shadow-focus: 0 0 0 3px rgba(129,134,246,0.45);
+}

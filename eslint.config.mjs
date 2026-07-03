@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Reference-only recreation from the design system export — not imported
+    // by the app (see DESIGN.md). components/ IS linted since the app imports it.
+    ".agents/skills/notely-design/ui_kits/**",
   ]),
 ]);
 

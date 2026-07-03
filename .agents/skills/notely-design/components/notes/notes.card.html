@@ -1,0 +1,37 @@
+<!-- @dsCard group="Components" viewport="700x360" name="Notes — NoteCard, Folder, Checklist, Toolbar" subtitle="Note-taking building blocks" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style> body { margin:0; padding:20px; background:var(--color-bg); } </style></head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { NoteCard, FolderItem, ChecklistItem, EditorToolbar } = window.NotelyDesignSystem_fd4cb3;
+    function Demo(){
+      const [done,setDone]=React.useState({a:true});
+      return (<div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:18}}>
+        <div style={{display:"flex",flexDirection:"column",gap:2}}>
+          <FolderItem name="All notes" icon="layout-grid" count={24} active/>
+          <FolderItem name="Personal" color="#4f46e5" count={12}/>
+          <FolderItem name="Work" color="#0d9488" count={9}/>
+          <FolderItem name="Archive" icon="archive" count={5}/>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <NoteCard title="Weekly review" snippet="Three wins, one lesson, and the single most important thing for next week." date="2 min ago" tags={[{label:"Work",color:"#0d9488"}]} pinned favorite/>
+          <EditorToolbar active={{bold:true}}/>
+          <div>
+            <ChecklistItem checked={done.a} text="Draft the Q3 spec" onToggle={()=>setDone(d=>({...d,a:!d.a}))}/>
+            <ChecklistItem checked={done.b} text="Share with the team" onToggle={()=>setDone(d=>({...d,b:!d.b}))}/>
+          </div>
+        </div>
+      </div>);
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+    setTimeout(()=>window.lucide && window.lucide.createIcons(), 50);
+  </script>
+</body></html>

@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
+/* Same set as .agents/skills/notely-design/styles.css, minus tokens/fonts.css:
+   its CDN @import for Google Fonts can't legally follow Tailwind's rules in
+   the bundled stylesheet, and we don't need it since fonts are self-hosted
+   via next/font in app/layout.tsx. */
+@import "../.agents/skills/notely-design/tokens/colors.css";
+@import "../.agents/skills/notely-design/tokens/typography.css";
+@import "../.agents/skills/notely-design/tokens/spacing.css";
+@import "../.agents/skills/notely-design/tokens/radius.css";
+@import "../.agents/skills/notely-design/tokens/shadow.css";
+@import "../.agents/skills/notely-design/tokens/motion.css";
+@import "../.agents/skills/notely-design/tokens/base.css";
+
+/* Point the design system's font tokens at the self-hosted next/font
+   variables set on <html> in app/layout.tsx. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-sans: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
+    SFMono-Regular, Menlo, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* body background/color/font-family already come from
+   .agents/skills/notely-design/tokens/base.css, imported above. */

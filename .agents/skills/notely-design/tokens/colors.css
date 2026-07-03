@@ -1,0 +1,128 @@
+/* Notely — Color tokens
+   Base palette (raw values) + semantic aliases.
+   Light theme on :root, dark theme on [data-theme="dark"].
+   Contrast targets: body text ≥ 7:1, secondary ≥ 4.5:1 (WCAG AA+). */
+
+:root {
+  /* ---- Base neutral ramp (cool gray, Notion-like) ---- */
+  --gray-0:  #ffffff;
+  --gray-25: #fcfcfd;
+  --gray-50: #f7f8fa;
+  --gray-100:#f0f1f4;
+  --gray-150:#e8eaef;
+  --gray-200:#e1e4ea;
+  --gray-300:#cbd0d9;
+  --gray-400:#9aa1ad;
+  --gray-500:#6b7280;
+  --gray-600:#4d5460;
+  --gray-700:#373c45;
+  --gray-800:#252930;
+  --gray-900:#16181d;
+  --gray-950:#0d0e12;
+
+  /* ---- Brand: Indigo ---- */
+  --indigo-50: #eef0ff;
+  --indigo-100:#e0e3ff;
+  --indigo-200:#c6cbff;
+  --indigo-300:#a3a8fb;
+  --indigo-400:#8186f6;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-800:#3730a3;
+  --indigo-900:#2e2a7f;
+
+  /* ---- Accent secondary: cool teal (sparingly) ---- */
+  --teal-400:#2dd4bf;
+  --teal-500:#14b8a6;
+  --teal-600:#0d9488;
+
+  /* ---- Semantic hues ---- */
+  --green-500:#16a34a; --green-600:#15803d; --green-50:#e9f7ee;
+  --amber-500:#d97706; --amber-600:#b45309; --amber-50:#fdf2e3;
+  --red-500:  #dc2626; --red-600:  #b91c1c; --red-50: #fdecec;
+  --blue-500: #2563eb; --blue-600: #1d4ed8; --blue-50:#e9f1fe;
+
+  /* ====================================================
+     SEMANTIC ALIASES (use THESE in components) — LIGHT
+     ==================================================== */
+  --color-primary:        var(--indigo-600);
+  --color-primary-hover:  var(--indigo-700);
+  --color-primary-pressed:var(--indigo-800);
+  --color-primary-subtle: var(--indigo-50);
+  --color-on-primary:     #ffffff;
+
+  --color-secondary:        var(--teal-600);
+  --color-secondary-subtle: #e4f7f4;
+  --color-accent:           var(--indigo-500);
+
+  --color-success: var(--green-600); --color-success-subtle: var(--green-50);
+  --color-warning: var(--amber-600); --color-warning-subtle: var(--amber-50);
+  --color-danger:  var(--red-600);   --color-danger-subtle:  var(--red-50);
+  --color-info:    var(--blue-600);  --color-info-subtle:    var(--blue-50);
+
+  /* Surfaces */
+  --color-bg:       var(--gray-50);
+  --color-surface:  var(--gray-25);
+  --color-card:     var(--gray-0);
+  --color-overlay:  rgba(16, 18, 23, 0.45);
+  --color-elevated: var(--gray-0);
+
+  /* Text */
+  --color-text:           var(--gray-900);
+  --color-text-secondary: var(--gray-600);
+  --color-text-tertiary:  var(--gray-500);
+  --color-text-disabled:  var(--gray-400);
+  --color-text-on-accent: #ffffff;
+  --color-link:           var(--indigo-600);
+
+  /* Lines */
+  --color-border:        var(--gray-200);
+  --color-border-strong: var(--gray-300);
+  --color-divider:       var(--gray-150);
+
+  /* Interaction states (overlay on surfaces) */
+  --color-hover:    rgba(16, 18, 23, 0.045);
+  --color-pressed:  rgba(16, 18, 23, 0.085);
+  --color-selected: var(--indigo-50);
+  --color-focus-ring: var(--indigo-500);
+}
+
+[data-theme="dark"] {
+  --color-primary:        var(--indigo-500);
+  --color-primary-hover:  var(--indigo-400);
+  --color-primary-pressed:var(--indigo-300);
+  --color-primary-subtle: rgba(99, 102, 241, 0.16);
+  --color-on-primary:     #ffffff;
+
+  --color-secondary:        var(--teal-400);
+  --color-secondary-subtle: rgba(20, 184, 166, 0.16);
+  --color-accent:           var(--indigo-400);
+
+  --color-success: #34d399; --color-success-subtle: rgba(52, 211, 153, 0.15);
+  --color-warning: #fbbf24; --color-warning-subtle: rgba(251, 191, 36, 0.15);
+  --color-danger:  #f87171; --color-danger-subtle:  rgba(248, 113, 113, 0.15);
+  --color-info:    #60a5fa; --color-info-subtle:    rgba(96, 165, 250, 0.15);
+
+  --color-bg:       var(--gray-950);
+  --color-surface:  var(--gray-900);
+  --color-card:     var(--gray-800);
+  --color-overlay:  rgba(0, 0, 0, 0.6);
+  --color-elevated: var(--gray-800);
+
+  --color-text:           #f4f5f7;
+  --color-text-secondary: #b3b9c4;
+  --color-text-tertiary:  #8b909c;
+  --color-text-disabled:  #5b616d;
+  --color-text-on-accent: #ffffff;
+  --color-link:           var(--indigo-300);
+
+  --color-border:        #2c313a;
+  --color-border-strong: #3a4049;
+  --color-divider:       #23272f;
+
+  --color-hover:    rgba(255, 255, 255, 0.06);
+  --color-pressed:  rgba(255, 255, 255, 0.11);
+  --color-selected: rgba(99, 102, 241, 0.18);
+  --color-focus-ring: var(--indigo-400);
+}

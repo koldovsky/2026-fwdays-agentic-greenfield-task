@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@notely-design/*": ["./.agents/skills/notely-design/*"]
     }
   },
   "include": [

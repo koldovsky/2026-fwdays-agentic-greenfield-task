@@ -1,0 +1,59 @@
+<!-- @dsCard group="Components" viewport="700x320" name="Core — Buttons, Badges, Tags, Avatar" subtitle="Actions and primitives" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin:0; padding:20px; background:var(--color-card); }
+  .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .lab { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--color-text-tertiary); width:100%; margin-bottom:-4px; }
+</style></head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { Button, IconButton, Badge, Tag, Avatar } = window.NotelyDesignSystem_fd4cb3;
+    const Ic = ({n}) => <i data-lucide={n} style={{width:16,height:16}} />;
+    function Demo(){
+      return (<div>
+        <div className="lab">Button — variants & sizes</div>
+        <div className="row">
+          <Button>New note</Button>
+          <Button variant="secondary" leadingIcon={<Ic n="share-2"/>}>Share</Button>
+          <Button variant="ghost">Cancel</Button>
+          <Button variant="danger" leadingIcon={<Ic n="trash-2"/>}>Delete</Button>
+          <Button size="sm">Small</Button>
+          <Button disabled>Disabled</Button>
+          <Button loading>Saving</Button>
+        </div>
+        <div className="lab">IconButton</div>
+        <div className="row">
+          <IconButton icon={<Ic n="pin"/>} label="Pin"/>
+          <IconButton icon={<Ic n="star"/>} label="Favorite" active/>
+          <IconButton icon={<Ic n="more-horizontal"/>} label="More" variant="outline"/>
+          <IconButton icon={<Ic n="plus"/>} label="Add" variant="solid"/>
+        </div>
+        <div className="lab">Badge & Tag</div>
+        <div className="row">
+          <Badge tone="primary">12</Badge>
+          <Badge tone="success" dot>Synced</Badge>
+          <Badge tone="warning" variant="solid">Draft</Badge>
+          <Badge tone="danger">Conflict</Badge>
+          <Tag color="#4f46e5">Product</Tag>
+          <Tag color="#0d9488" removable>Ideas</Tag>
+        </div>
+        <div className="lab">Avatar</div>
+        <div className="row">
+          <Avatar name="Maya Chen" status="online"/>
+          <Avatar name="Lee Park" size="lg"/>
+          <Avatar name="Sam Doe" size="sm" status="away"/>
+        </div>
+      </div>);
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+    setTimeout(()=>window.lucide && window.lucide.createIcons(), 50);
+  </script>
+</body></html>
