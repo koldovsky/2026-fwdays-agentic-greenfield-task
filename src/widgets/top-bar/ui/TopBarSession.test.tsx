@@ -1,7 +1,7 @@
 // Client session island (FR-SHELL-01, add-agent-loop landing fix): the landing
 // route stays static (NFR-PERF-04) so the session is read client-side via
 // next-auth/react's useSession instead of server-side auth().
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
@@ -24,6 +24,8 @@ describe("TopBarSession", () => {
 
     render(<TopBarSession />);
 
+    // Signed-in: the account burger is shown; name + sign-out are in its dropdown.
+    fireEvent.click(screen.getByRole("button", { name: ua.accountMenu.triggerLabel }));
     expect(screen.getByText("Olena")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: ua.auth.signOutAction })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: ua.topBar.signIn })).not.toBeInTheDocument();

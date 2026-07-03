@@ -7,6 +7,50 @@
 
 ## Last action
 
+- **Fixed `POST /api/tailor` "request sent, no response, no error" (2026-07-03).** Root cause:
+  `claude.ts` sent `thinking: {type:"adaptive"}` with **no `effort`** → Opus 4.8 defaults to
+  `high`; adaptive thinking tokens count against `max_tokens` (grounding capped at 1024), so the
+  model burned the budget thinking and turns ran minutes across extract→generate→ground×N,
+  blowing past the route's `maxDuration=60`. The serverless fn was killed mid-stream, the client's
+  `for await` ended with **no terminal `result`/`error` event**, and the UI silently returned to
+  idle. Fixes: (1) `shared/lib/llm/provider.ts` adds optional `effort: LlmEffort`; `claude.ts`
+  sets `output_config:{effort}` defaulting to `"low"` (mechanical JSON tasks — fast, minimal
+  thinking, verified valid on SDK 0.109). (2) `TailoringForm.tsx` now surfaces the calm `failed`
+  copy if the stream closes with no terminal event (NFR-OBS-01) + regression test. (3)
+  `maxDuration` raised 60→300 (`/api/tailor`, `/generate`), 60→120 (`/analyze`) — Vercel
+  Fluid/Pro ceiling, clamped harmlessly on lower plans. Verified: lint + build clean, 444 tests
+  green. **Not yet committed.** (Live E2E still needs `ANTHROPIC_API_KEY` set — sandbox has none.)
+
+- **Header account menu + Profile page + Subscription link — DONE (2026-07-03, same session).**
+  Subscription UI already existed at `/account/billing` (was unlinked); GDPR APIs existed
+  (`DELETE /api/account`, `GET /api/account/export`) with no UI. Added:
+  - `widgets/top-bar/ui/AccountMenu.tsx` (client) — CSS-drawn burger (no icon lib), a **disclosure**
+    (not a WAI-ARIA menu — see below) dropdown for signed-in users. Items: Profile→`/account/profile`,
+    Tailoring→`/tailor`, Usage (disabled + "coming soon", no link), Subscription→`/account/billing`,
+    Logout (composes `features/sign-in` SignOutButton). `TopBar` renders it in place of the old
+    inline name+SignOut group.
+  - New `views/account-profile` + `/account/profile` page (mirrors `/account/billing` gating):
+    identity, plan summary (links to Subscription), Refer-a-Friend coming-soon card, **GDPR
+    self-serve** (export link + `features/delete-profile` two-step delete → `DELETE /api/account`).
+  - i18n `accountMenu` + `profile` sections (ua+en). Tests for AccountMenu / DeleteAccountButton /
+    AccountProfileView; TopBar/TopBarSession tests updated for the dropdown.
+  - **Independent checker review: `ship: true`, 0 blockers.** Two `major` quality findings fixed:
+    (1) dropped the `role="menu"/"menuitem"` pattern (SignOutButton `<button>` nested in a
+    `menuitem` was an ARIA conflict; nav-link dropdown is correctly a disclosure — also resolves the
+    no-arrow-key-nav minor); (2) grounding is honesty-critical (BC-HONESTY-01/FR-BULLETS-03) so it's
+    pinned to `effort:"high"` (`GROUNDING_EFFORT` in loop.ts) with `GROUNDING_MAX_TOKENS` 1024→2048
+    for thinking headroom — only extract/generate use the adapter's `low` default. FSD/DESIGN/GDPR
+    flow all cleared by the checker.
+  - **Open follow-up (not a blocker):** a live honesty-eval against a real provider should confirm
+    `low` effort doesn't weaken extract/generate quality and `high` grounding behaves — blocked here
+    by no `ANTHROPIC_API_KEY`. Grounding depth is unchanged from what shipped pre-fix, so this is
+    verification, not a regression risk.
+
+Verified after fixes: `yarn lint` clean, `yarn build` clean (`/account/profile` dynamic route),
+`yarn test` = 72 files / 455 tests green. **Whole change (both parts) not yet committed.**
+
+## Prior action
+
 - **`add-resume-wizard` backend increment committed (`996d0ba`).** Implements tasks.md sections
   1 (minus 1.7), 2 (minus 2.5), 3 in full: `runTailoringLoop` split into `runAnalysisPhase`
   (parse-cv → extract-requirements → score → derive-clarifying-questions) +

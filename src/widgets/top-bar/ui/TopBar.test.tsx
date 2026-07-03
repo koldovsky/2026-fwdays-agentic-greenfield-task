@@ -1,6 +1,6 @@
 // Top-bar session state (FR-SHELL-01, add-auth 3.1): anonymous visitors get
 // sign-in / try-free CTAs; a signed-in user sees their identity and sign-out.
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
@@ -25,11 +25,16 @@ describe("TopBar", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows the user identity and sign-out when signed in", () => {
+  it("shows the account menu (identity + sign-out) behind the burger when signed in", () => {
     render(<TopBar user={{ email: "olena@example.com", name: null }} />);
+    // Signed-in: the burger trigger is shown, the sign-in CTA is gone.
+    const trigger = screen.getByRole("button", { name: ua.accountMenu.triggerLabel });
+    expect(screen.queryByRole("link", { name: ua.topBar.signIn })).not.toBeInTheDocument();
+    // Identity + sign-out live inside the dropdown, revealed on open.
+    expect(screen.queryByText("olena@example.com")).not.toBeInTheDocument();
+    fireEvent.click(trigger);
     expect(screen.getByText("olena@example.com")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: ua.auth.signOutAction })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: ua.topBar.signIn })).not.toBeInTheDocument();
   });
 
   it("keeps the primary nav (logo, features, pricing) in both states", () => {

@@ -201,4 +201,43 @@ export interface Dictionary {
     readonly navFeatures: string;
     readonly navPricing: string;
   };
+  /** Signed-in account dropdown in the top bar (FR-SHELL-01). */
+  readonly accountMenu: {
+    /** Accessible label for the burger trigger. */
+    readonly triggerLabel: string;
+    readonly profile: string;
+    readonly tailoring: string;
+    readonly usage: string;
+    readonly subscription: string;
+    readonly logout: string;
+    /** Small tag on not-yet-shipped items (Usage, Refer a friend). */
+    readonly comingSoon: string;
+  };
+  /** Profile page (/account/profile). */
+  readonly profile: {
+    readonly title: string;
+    readonly lead: string;
+    readonly nameLabel: string;
+    readonly emailLabel: string;
+    /** Label above the current plan; plan display names reuse `billing.planName`. */
+    readonly planLabel: string;
+    /** Link out to the subscription/billing page. */
+    readonly viewSubscription: string;
+    /** Refer-a-friend promo card (coming soon). */
+    readonly referTitle: string;
+    readonly referLead: string;
+    /** GDPR self-serve section (NFR-GDPR-01/02). */
+    readonly dataTitle: string;
+    readonly dataLead: string;
+    /** Export-my-data action — links to GET /api/account/export. */
+    readonly exportAction: string;
+    /** Delete-account action + its confirm step (FR-CV-05, NFR-GDPR-02). */
+    readonly deleteAction: string;
+    readonly deleteConfirmPrompt: string;
+    readonly deleteConfirmAction: string;
+    readonly deleteCancelAction: string;
+    readonly deletePending: string;
+    /** Calm failure copy (NFR-OBS-01). */
+    readonly deleteError: string;
+  };
 }

@@ -3,9 +3,9 @@
 // widget stays server-renderable and below the app boundary; sign-out is the
 // client control from features/sign-in.
 import Link from "next/link";
-import { SignOutButton } from "@/features/sign-in";
 import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
+import { AccountMenu } from "./AccountMenu";
 
 export interface TopBarUser {
   readonly name?: string | null;
@@ -48,16 +48,7 @@ export function TopBar({ user = null, locale = "ua" }: TopBarProps) {
         </nav>
 
         {user !== null ? (
-          <div
-            role="group"
-            aria-label={copy.topBar.accountLabel}
-            className="flex items-center gap-3"
-          >
-            <span className="max-w-[200px] truncate text-sm text-ink-soft">
-              {user.name ?? user.email}
-            </span>
-            <SignOutButton locale={locale} />
-          </div>
+          <AccountMenu user={user} locale={locale} />
         ) : (
           <div className="flex items-center gap-2">
             <Button href="/sign-in" variant="ghost" size="sm">
