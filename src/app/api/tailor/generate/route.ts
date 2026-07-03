@@ -38,8 +38,8 @@ import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/l
 import type { CvProfile, Requirement } from "@/shared/lib/scoring";
 
 export const runtime = "nodejs";
-/** Mirrors /api/tailor — the phase is bounded, but streaming can outlast a default serverless window. */
-export const maxDuration = 60;
+/** Mirrors /api/tailor — generate + ground×N adaptive-thinking calls can outlast a short window. */
+export const maxDuration = 300;
 
 /** Same NFR-COST-02 window as /api/tailor's anonymous gate — one shared budget. */
 const ANON_WINDOW_MS = 24 * 60 * 60 * 1000;

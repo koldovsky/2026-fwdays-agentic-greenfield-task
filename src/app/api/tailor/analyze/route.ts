@@ -20,8 +20,8 @@ import { resolveLlmProvider } from "@/shared/lib/llm";
 import { clientIpFrom, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 export const runtime = "nodejs";
-/** Mirrors /api/tailor: the phase is bounded, but streaming can outlast a default serverless window. */
-export const maxDuration = 60;
+/** Mirrors /api/tailor: extract is one adaptive-thinking call, but give it headroom over a short window. */
+export const maxDuration = 120;
 
 /** Generous anti-abuse cap, not a product limit (NFR-SEC-04): 10 analyses per IP per hour. */
 const ANALYZE_LIMIT = 10;

@@ -8,9 +8,26 @@
 
 import type { Prompt } from "./types";
 
+/**
+ * Reasoning-depth dial for models with adaptive thinking (Opus 4.6+ / Sonnet
+ * 4.6). Framework-free duplicate of the Anthropic SDK's effort union so this
+ * port stays SDK-free (TC-PURE-01); adapters map it onto their own request
+ * shape. Lower effort = fewer thinking tokens and faster turns.
+ */
+export type LlmEffort = "low" | "medium" | "high" | "xhigh" | "max";
+
 export interface LlmCallOptions {
   /** Per-request output-token budget (NFR-COST-01). Adapters apply a safe default. */
   readonly maxTokens?: number;
+  /**
+   * Reasoning depth (NFR-PERF-01/02). Adaptive-thinking models spend thinking
+   * tokens against the same output budget as the answer, and default to `high`
+   * effort — which on Opus 4.8 makes a single turn run minutes and can exhaust
+   * a small `maxTokens` on thinking before any answer is emitted. The tailoring
+   * skills are mechanical structured-JSON tasks, so adapters default this to
+   * `"low"`; callers may raise it per request.
+   */
+  readonly effort?: LlmEffort;
   readonly signal?: AbortSignal;
 }
 

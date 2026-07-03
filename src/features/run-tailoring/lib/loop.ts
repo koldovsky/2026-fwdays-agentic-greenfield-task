@@ -58,7 +58,19 @@ export const STEP_CAP = 40;
 /** Output-token budgets per skill (NFR-COST-01). */
 const EXTRACTION_MAX_TOKENS = 2048;
 const GENERATION_MAX_TOKENS = 4096;
-const GROUNDING_MAX_TOKENS = 1024;
+// Grounding runs at `high` effort (see below) whose adaptive-thinking tokens
+// share this budget; 2048 leaves headroom so deliberation can't starve the
+// (small) verdict JSON and emit empty text. The verdict payload itself is tiny.
+const GROUNDING_MAX_TOKENS = 2048;
+
+/**
+ * Grounding is the honesty-critical second pass (FR-BULLETS-03, BC-HONESTY-01):
+ * its job is to catch overclaims, so it keeps full reasoning depth. The adapter
+ * default effort is `low` (fast, for the mechanical extract/generate passes),
+ * but grounding is pinned to `high` here so lowering pipeline latency never
+ * silently weakens overclaim detection.
+ */
+const GROUNDING_EFFORT = "high" as const;
 
 export interface LoopDeps {
   readonly llm: LlmProvider;
@@ -369,6 +381,7 @@ export async function* runGenerationPhase(
         async () => {
           const raw = await deps.llm.complete(groundingPrompt, {
             maxTokens: GROUNDING_MAX_TOKENS,
+            effort: GROUNDING_EFFORT,
           });
           const parsed = parseGroundingResponse(raw);
           if (!parsed.ok) throw new Error(parsed.error);

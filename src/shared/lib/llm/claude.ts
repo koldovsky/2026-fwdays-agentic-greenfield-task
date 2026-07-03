@@ -3,7 +3,7 @@
 // (thinking deltas are not yielded — only response text reaches callers).
 import Anthropic from "@anthropic-ai/sdk";
 
-import type { LlmCallOptions, LlmProvider } from "./provider";
+import type { LlmCallOptions, LlmEffort, LlmProvider } from "./provider";
 import type { Prompt } from "./types";
 
 /** Latest Claude model (design.md: "Claude (default, latest Claude model)"). */
@@ -11,6 +11,19 @@ export const DEFAULT_CLAUDE_MODEL = "claude-opus-4-8";
 
 /** Default per-request output budget (NFR-COST-01); callers may lower it. */
 const DEFAULT_MAX_TOKENS = 4096;
+
+/**
+ * Default reasoning depth for the tailoring skills (NFR-PERF-01/02). Opus 4.8
+ * uses adaptive thinking whose thinking tokens count against `max_tokens`, and
+ * defaults to `high` effort — a single high-effort turn on this model can run
+ * minutes and, on a tight budget like grounding's 1024, spend the whole budget
+ * thinking before emitting any answer (empty text → parse failure → retries →
+ * the run eventually exceeds the route's serverless window and dies mid-stream
+ * with no terminal event). These skills are mechanical structured-JSON
+ * extraction/grounding, so `low` is both correct and far faster; callers can
+ * raise it per request via LlmCallOptions.effort.
+ */
+const DEFAULT_EFFORT: LlmEffort = "low";
 
 export interface ClaudeProviderConfig {
   readonly apiKey: string;
@@ -43,6 +56,7 @@ export function createClaudeProvider(config: ClaudeProviderConfig): LlmProvider 
         model,
         max_tokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS,
         thinking: { type: "adaptive" },
+        output_config: { effort: options?.effort ?? DEFAULT_EFFORT },
         ...(system !== undefined ? { system } : {}),
         messages,
       },

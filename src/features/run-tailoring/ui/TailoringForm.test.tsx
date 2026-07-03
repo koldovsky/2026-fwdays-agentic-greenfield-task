@@ -97,6 +97,26 @@ describe("TailoringForm (FR-TAILOR-01)", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(ua.tailorRun.failed);
   });
 
+  it("surfaces a calm failure when the stream closes with no terminal event (NFR-OBS-01)", async () => {
+    // The serverless function is killed mid-tailoring (e.g. at maxDuration):
+    // progress arrives, then the stream just ends — no `result`, no `error`.
+    // Previously this fell back to idle showing nothing ("no response, no
+    // error"); now it must show the calm failed copy.
+    streamTailoringMock.mockImplementation(
+      scripted([
+        { type: "status", phase: "queued" },
+        { type: "status", phase: "processing" },
+      ]),
+    );
+    const onResult = vi.fn();
+    render(<TailoringForm onResult={onResult} />);
+
+    await fillAndSubmit();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(ua.tailorRun.failed);
+    expect(onResult).not.toHaveBeenCalled();
+  });
+
   it("disables the submit button while a run is in flight", async () => {
     let releaseRun = () => {};
     const gate = new Promise<void>((resolve) => {

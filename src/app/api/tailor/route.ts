@@ -30,8 +30,14 @@ import { resolveLlmProvider } from "@/shared/lib/llm";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 export const runtime = "nodejs";
-/** The loop is bounded, but streaming can outlast a default serverless window. */
-export const maxDuration = 60;
+/**
+ * The loop is bounded, but a full tailoring (extract → generate → ground×N,
+ * each an adaptive-thinking Claude call) can outlast a short serverless window.
+ * 300s is the Vercel Fluid/Pro ceiling; on plans capped lower this is clamped
+ * down harmlessly. Keep effort low (see shared/lib/llm/claude.ts) so real runs
+ * finish well inside this.
+ */
+export const maxDuration = 300;
 
 /** Anonymous per-IP window: ANON_TAILORING_LIMIT per 24 h (NFR-COST-02). */
 const ANON_WINDOW_MS = 24 * 60 * 60 * 1000;

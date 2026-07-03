@@ -66,6 +66,12 @@ export function TailoringForm({
     setPending(true);
     setError(null);
     setPhase(null);
+    // A healthy run always ends in a terminal `result` or `error` event. If the
+    // stream closes without one — e.g. the serverless function is killed at its
+    // maxDuration mid-tailoring — the loop just ends and we would otherwise fall
+    // back to idle showing nothing ("no response, no error"). Track whether a
+    // terminal event arrived and surface a calm failure if not (NFR-OBS-01).
+    let sawTerminal = false;
     try {
       for await (const runEvent of streamTailoring({ cvText, jdText })) {
         if (runEvent.type === "status") {
@@ -75,15 +81,18 @@ export function TailoringForm({
           continue;
         }
         if (runEvent.type === "error") {
+          sawTerminal = true;
           setError(runEvent.code);
           if (runEvent.code === "rate_limited") onRateLimited?.();
           continue;
         }
         if (runEvent.type === "result") {
+          sawTerminal = true;
           onResult(runEvent.result);
           setError(null);
         }
       }
+      if (!sawTerminal) setError("failed");
     } catch {
       // A rejected fetch or a malformed NDJSON line surfaces the same calm
       // failure copy as a coded error event — never an unhandled exception
