@@ -18,7 +18,7 @@
 - [ ] 3.1 Implement Telegram Bot conversation management in `lib/telegram-bot.ts` using state tracking in the database
 - [ ] 3.2 Implement bot response to `/start reg_<token>` by validating the token and prompting the user for their email in Ukrainian: "Будь ласка, введіть вашу електронну адресу (email)"
 - [ ] 3.3 Implement bot validation of email input, handling format error responses, and transition to website URL prompt: "Будь ласка, введіть адресу вашого сайту (website URL)"
-- [ ] 3.4 Implement website URL validation, handling format error responses, user registration, API key generation, and handling the `/cancel` command to abort registration at any stage
+- [ ] 3.4 Implement website URL validation, handling format error responses, user registration, and handling the `/cancel` command to abort registration at any stage
 - [ ] 3.5 Implement OTP code dispatch message: "Ваш одноразовий код для входу: <6-digit_code>"
 - [ ] 3.6 Ensure all bot messages and errors are written in Ukrainian, using a calm tone with no exclamation marks
 
@@ -34,5 +34,5 @@
 - [ ] 5.1 Create mock webhook script to test Telegram bot conversation steps (including invalid inputs, cancellation, and validation errors)
 - [ ] 5.2 Verify end-to-end registration flow (QR code -> Bot conversation -> Database insertion -> Client-side redirect -> Token invalidation)
 - [ ] 5.3 Verify login flows (Magic Link validation and rate-limited, attempt-controlled OTP authentication with user enumeration protection)
-- [ ] 5.4 Implement routine/hook to prune expired records from `pending_registrations` and `otp_codes` tables
+- [ ] 5.4 Implement routine/hook to prune expired records from `pending_registrations`, `magic_links`, and `otp_codes` tables
 - [ ] 5.5 Run typescript compilation (`tsc --noEmit`) and linting (`npm run lint`) to confirm codebase health
