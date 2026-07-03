@@ -1,5 +1,6 @@
-# Local Postgres for the Honeydo API. Credentials come from a repo-root `.env`
-# (Docker Compose auto-loads it); `npm run db:up` seeds it from `.env.example`.
+# Local Postgres for the Honeydo API. Credentials come from the environment
+# (export POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB, or put them in a gitignored
+# repo-root `.env`, which Docker Compose auto-loads). No credentials are committed.
 #   npm run db:up      # start in the background
 #   npm run migrate    # apply Prisma migrations
 #   npm run api        # start the NestJS server
