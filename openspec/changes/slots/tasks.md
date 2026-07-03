@@ -94,7 +94,7 @@
 - [x] 4.1 Write `lib/src/slots/calendar-port.ts`: the `CalendarPort`
       interface and the three-class error taxonomy from design.md
       Decision 1 (types only, no implementation, no Google SDK import).
-- [ ] 4.2 Write a fixture/fake `CalendarPort` implementation for unit tests
+- [x] 4.2 Write a fixture/fake `CalendarPort` implementation for unit tests
       (in-memory busy list + tentative-event map) and add hold-lifecycle
       unit tests against it: create-hold success, hold-collision (manual
       event race, FR-SLOT-02), hold-race (two leads, FR-SLOT-02), delete-on-

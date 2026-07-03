@@ -35,6 +35,8 @@
 
 import type { Slot } from "./grid";
 import type { CalendarPort } from "./calendar-port";
+import { overlaps } from "./subtract";
+import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone";
 
 /** A hold request in Europe/Kyiv wall-clock local time, same `Slot` shape
  *  used across grid/subtract/rank/widen — this module is the boundary that
@@ -55,17 +57,26 @@ export async function createHold(
   port: CalendarPort,
   request: HoldRequest,
 ): Promise<HoldResult> {
-  void port;
-  void request;
-  throw new Error(
-    "Not implemented — lib/src/slots/hold.ts createHold (tasks.md 4.2 green half)",
-  );
+  const range = {
+    start: kyivWallClockToUtc(request.slot.start),
+    end: kyivWallClockToUtc(request.slot.end),
+  };
+
+  const busyUtc = await port.freeBusy(range);
+  const busyKyiv = busyUtc.map((interval) => ({
+    start: utcToKyivWallClock(interval.start),
+    end: utcToKyivWallClock(interval.end),
+  }));
+
+  const collides = busyKyiv.some((busy) => overlaps(request.slot, busy));
+  if (collides) {
+    return { status: "collision" };
+  }
+
+  const { eventId } = await port.createTentative(range, request.summary, request.description);
+  return { status: "held", eventId };
 }
 
 export async function releaseHold(port: CalendarPort, eventId: string): Promise<void> {
-  void port;
-  void eventId;
-  throw new Error(
-    "Not implemented — lib/src/slots/hold.ts releaseHold (tasks.md 4.2 green half)",
-  );
+  await port.deleteEvent(eventId);
 }
