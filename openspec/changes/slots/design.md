@@ -113,15 +113,19 @@ is called out explicitly so it is not mistaken for a forgotten FK.
 
 Per the baseline spec's Conventions section: the grid, `rankSlots()`, and
 every comparison operate on Europe/Kyiv wall-clock time; the DEMO calendar's
-free/busy API returns RFC3339 timestamps with an explicit UTC offset. The
-`CalendarPort` implementation converts every returned busy interval to
-Europe/Kyiv wall-clock *before* it crosses back into `lib/`; `lib/` itself
-never parses a raw UTC offset or touches a timezone library — that
-conversion is adapter-side, keeping `lib/` pure and testable with plain
-wall-clock fixture data (TC-PURE-01). DST transition days are handled by the
-adapter's timezone conversion, not by grid generation — the grid's wall-clock
-starts (10:00–19:00) never shift; only the UTC offset used for the
-conversion changes.
+free/busy API returns RFC3339 timestamps with an explicit UTC offset.
+**The `CalendarPort` interface speaks pure RFC3339 UTC** and adapter
+implementations (googleapis, MCP) are conversion-free pass-throughs; the
+Kyiv↔UTC conversion happens exactly once, on the `lib/` side of the port
+boundary (`hold.ts` and the composition layer) via `lib/`'s own
+`timezone.ts` (`Intl.DateTimeFormat` — stdlib, not an SDK, so TC-PURE-01
+holds). This keeps every adapter trivial and puts the single tested
+conversion next to its unit tests. *(Amended during 4.1/4.2: the original
+wording put conversion adapter-side, contradicting Decision 1's "never
+inside an adapter" — resolved in favor of Decision 1.)* DST transition days
+are handled by that one conversion — the grid's wall-clock starts
+(10:00–19:00) never shift; only the UTC offset used for the conversion
+changes.
 
 ### Decision 4: half-open interval convention, applied uniformly
 
