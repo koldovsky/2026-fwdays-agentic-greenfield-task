@@ -1,6 +1,6 @@
 import { verifySession } from "@/app/lib/dal";
 import { listTrashedNotes } from "@/lib/notes/queries";
-import { TrashedNoteList } from "@/components/notes/trashed-note-list";
+import { TrashedNoteList } from "@/app/components/notes/trashed-note-list";
 
 export default async function TrashPage() {
   const { userId } = await verifySession();

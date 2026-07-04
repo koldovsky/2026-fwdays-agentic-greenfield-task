@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { IconCheck, IconX } from "@/components/icons";
+import { IconCheck, IconX } from "@/app/components/icons";
 
 const AUTO_DISMISS_MS = 3000;
 

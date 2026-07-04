@@ -8,7 +8,7 @@ import {
   IconListOrdered,
   IconListChecks,
   IconCode,
-} from "@/components/icons";
+} from "@/app/components/icons";
 
 export type ToolbarAction =
   | "heading-1"

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { verifySession } from "@/app/lib/dal";
 import { getOwnedFolder } from "@/lib/folders/queries";
 import { listNotesByFolder } from "@/lib/notes/queries";
-import { NoteList } from "@/components/notes/note-list";
+import { NoteList } from "@/app/components/notes/note-list";
 
 export default async function FolderPage({
   params,

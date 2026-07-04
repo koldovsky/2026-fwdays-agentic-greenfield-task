@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Note, Folder, Tag } from "@prisma/client";
 import { Input, Select, Tag as TagChip } from "@notely-design/components";
-import { IconSearch } from "@/components/icons";
-import { NoteList } from "@/components/notes/note-list";
-import { NoteEmptyState } from "@/components/notes/note-empty-state";
+import { IconSearch } from "@/app/components/icons";
+import { NoteList } from "@/app/components/notes/note-list";
+import { NoteEmptyState } from "@/app/components/notes/note-empty-state";
 
 type SearchViewProps = {
   folders: Folder[];
@@ -165,7 +165,15 @@ export function SearchView({
             <TagChip
               key={tag.id}
               onClick={() => toggleTag(tag.id)}
-              style={{ opacity: tagIds.has(tag.id) ? 1 : 0.5 }}
+              style={
+                tagIds.has(tag.id)
+                  ? {
+                      background: "var(--color-primary-subtle)",
+                      borderColor: "var(--color-primary)",
+                      color: "var(--color-primary)",
+                    }
+                  : undefined
+              }
             >
               {tag.name}
             </TagChip>

@@ -5,7 +5,7 @@ import { listFolders } from "@/lib/folders/queries";
 import { listTags } from "@/lib/tags/queries";
 import { renderMarkdown } from "@/lib/markdown/render";
 import { sanitizeServerHtml } from "@/lib/markdown/sanitize.server";
-import { NoteEditor } from "@/components/notes/note-editor";
+import { NoteEditor } from "@/app/components/notes/note-editor";
 
 export default async function NotePage({
   params,

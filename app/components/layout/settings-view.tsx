@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Switch } from "@notely-design/components";
-import { useTheme } from "@/components/providers/theme-provider";
+import { useTheme } from "@/app/components/providers/theme-provider";
 
 function SettingsRow({
   title,

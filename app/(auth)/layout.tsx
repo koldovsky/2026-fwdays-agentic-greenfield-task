@@ -24,7 +24,7 @@ export default function AuthLayout({
             Notely
           </span>
         </div>
-        {children}
+        <main>{children}</main>
       </div>
     </div>
   );

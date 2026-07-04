@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Input, IconButton } from "@notely-design/components";
-import { IconTrash, IconPencil } from "@/components/icons";
+import { IconTrash, IconPencil } from "@/app/components/icons";
 import { renameTag, deleteTag } from "@/app/actions/tags";
 
 type SidebarTagRowProps = {
@@ -85,28 +85,26 @@ export function SidebarTagRow({ id, name, collapsed = false }: SidebarTagRowProp
           {name}
         </span>
       </Link>
-      {hover && (
-        <div className="flex shrink-0 items-center gap-0.5 pr-1.5">
-          <IconButton
-            icon={<IconPencil width={13} height={13} />}
-            label={`Rename ${name}`}
-            variant="ghost"
-            size="sm"
-            onClick={() => setEditing(true)}
-          />
-          <IconButton
-            icon={<IconTrash width={13} height={13} />}
-            label={`Delete ${name}`}
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (window.confirm(`Delete tag "${name}"? Notes keep their content.`)) {
-                void deleteTag(id);
-              }
-            }}
-          />
-        </div>
-      )}
+      <div className="flex shrink-0 items-center gap-0.5 pr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+        <IconButton
+          icon={<IconPencil width={13} height={13} />}
+          label={`Rename ${name}`}
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditing(true)}
+        />
+        <IconButton
+          icon={<IconTrash width={13} height={13} />}
+          label={`Delete ${name}`}
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.confirm(`Delete tag "${name}"? Notes keep their content.`)) {
+              void deleteTag(id);
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }

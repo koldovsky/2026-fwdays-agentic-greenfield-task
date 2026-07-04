@@ -5,11 +5,26 @@ import React from "react";
 /** Notely Tag — removable label for note tags. Supports a color dot. */
 export function Tag({ children, color, removable = false, onRemove, onClick, style, ...rest }) {
   const [hover, setHover] = React.useState(false);
+  const clickable = Boolean(onClick) && !removable;
   return (
     <span
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick(e);
+              }
+            }
+          : undefined
+      }
+      onFocus={clickable ? (e) => (e.currentTarget.style.boxShadow = "var(--shadow-focus)") : undefined}
+      onBlur={clickable ? (e) => (e.currentTarget.style.boxShadow = "none") : undefined}
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         height: 24, padding: "0 8px",

@@ -1,8 +1,8 @@
 "use client";
 
 import { IconButton } from "@notely-design/components";
-import { IconMoon, IconSun } from "@/components/icons";
-import { useTheme } from "@/components/providers/theme-provider";
+import { IconMoon, IconSun } from "@/app/components/icons";
+import { useTheme } from "@/app/components/providers/theme-provider";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();

@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/layout/app-shell";
+import { AppShell } from "@/app/components/layout/app-shell";
 import { verifySession } from "@/app/lib/dal";
 import { listFolders } from "@/lib/folders/queries";
 import { listTags } from "@/lib/tags/queries";

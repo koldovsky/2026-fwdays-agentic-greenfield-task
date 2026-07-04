@@ -1,6 +1,6 @@
 import type { Note } from "@prisma/client";
 import { NoteCard } from "@notely-design/components";
-import { NoteEmptyState } from "@/components/notes/note-empty-state";
+import { NoteEmptyState } from "@/app/components/notes/note-empty-state";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",

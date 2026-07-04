@@ -4,73 +4,72 @@ Agent-maintained snapshot of the last session. Read at session start; update at 
 
 ## Last updated
 
-2026-07-04T21:15:00Z
+2026-07-04T22:55:00Z
 
 ## Last session summary
 
-Ran the full propose → review → implement → verify → sync → archive cycle for phase 7,
-`add-search`. Added a generated, GIN-indexed `tsvector` column on `Note` (title weighted
-above content) via a hand-written migration
-(`prisma/migrations/20260704173453_add_search_vector`); `lib/search/queries.ts` runs one
-`prisma.$queryRaw` combining `websearch_to_tsquery` full-text rank with folder, tag (OR
-across selected tags), and `updatedAt` date-range filters, always scoped to `userId` and
-`deletedAt IS NULL`. `GET /api/search` (route handler, not a server action — it's a
-cancelable read, not a mutation) exposes it. `/search` (new sidebar nav entry) is a Server
-Component that renders the first result set from the URL's query params, then hands off to
-`components/notes/search-view.tsx` (client): 300ms-debounced input, `router.replace` keeps
-the URL in sync with query/folder/tags/date-range state, and each debounced change
-`fetch`es `/api/search` with an `AbortController` so a fast keystroke can't be overwritten
-by a slower, earlier request's response. Results reuse the existing `NoteList`/`NoteCard`;
-a no-results state reuses `NoteEmptyState` (added a `search` icon variant to it). Added
-`IconSearch` to `components/icons.tsx` for both the nav entry and the search field's
-leading icon (used the vendored `Input` component with a custom `leadingIcon` rather than
-the vendored `SearchField`, which bakes in a non-rendering `<i data-lucide>` icon — same
-recurring gap as every prior phase).
+Ran the full propose → review → implement → verify → sync → archive cycle for phase 8,
+`add-quality-hardening` — the last capability in `docs/openspec-capabilities.md`'s
+sequence. This was a measure-and-fix pass, not a feature change. Baselined the app first:
+this Next.js version emits `.next/diagnostics/route-bundle-stats.json` with per-route
+first-load JS; `/notes/[id]` was the heaviest route (630.3K) because `marked` + `dompurify`
+(used only for the Markdown preview) loaded unconditionally. Ran real Lighthouse
+(production build, via `npx lighthouse`, with a session cookie obtained through an actual
+login for protected routes) rather than trusting assumptions: `/login` and `/notes/[id]`
+already scored Performance 97/99 and Accessibility 98/96 *before* any fixes — but the
+Accessibility runs surfaced two genuine, previously-unnoticed WCAG failures: opacity-dimmed
+tag chips (`TagPicker`'s unassigned chips, `SearchView`'s unselected filter chips) dropping
+contrast to 2.79:1, and `app/(auth)/layout.tsx` having no `<main>` landmark at all. Both got
+folded into the change's scope and fixed, alongside the originally-planned work: lazy-load
+the Markdown preview via dynamic `import()` gated on Preview mode (dropped `/notes/[id]`'s
+first-load JS to 565.4K, ~65K saved, matching the isolated 28K preview chunk); fixed real
+keyboard-inaccessibility in the vendored `Tag` component (bare `<span onClick>`, no
+keyboard semantics — added `role="button"`/`tabIndex`/`onKeyDown`, recorded as a Local
+adaptation in `DESIGN.md`); fixed `SidebarFolderRow`/`SidebarTagRow`'s rename/delete
+actions being *absent from the DOM* unless mouse-hovered (`group-focus-within` now reveals
+them for keyboard focus too); added a skip-to-content link (`tabIndex={-1}` on `<main>` so
+focus actually moves there, not just scrolls); added `aria-pressed` to the editor's
+Write/Preview toggle. Final re-measurement: `/login`, `/notes`, `/notes/[id]`, `/search` all
+score Accessibility **100** with zero failing audits; Performance 97/99 on `/login`/
+`/notes/[id]`. Verified with a real keyboard-only walkthrough (Playwright driving only
+Tab/Enter) covering skip link → login → create/edit note → Preview toggle → tag-chip
+assignment → sidebar rename → search tag filter, confirming no focus traps and everything
+actually keyboard-reachable — not just Lighthouse-passing.
 
-Two real problems surfaced and were fixed during implementation (not just planned around):
-(1) leaving the generated `searchVector` column undeclared in `schema.prisma` broke every
-subsequent non-interactive `prisma migrate dev` call (it kept proposing `DROP COLUMN`); fixed
-by declaring it as `Unsupported("tsvector")` with a byte-for-byte-matching
-`@default(dbgenerated("..."))` (matched via a throwaway `prisma db pull`) plus
-`@@index([searchVector], type: Gin)`, verified via `prisma migrate diff` returning an empty
-script and a clean "Already in sync" `migrate dev` run. (2) The vendored `Select`
-component always injects its own hidden `<option value="">{placeholder}</option>`; my "All
-folders" option also used `value=""`, so the two collided and the UI showed "Select…"
-instead of "All folders" — fixed with `placeholder=""` on that `Select` usage.
-
-Verified end-to-end in a real browser (Playwright + system Chrome, driving the existing
-demo account after discovering and locally repairing a pre-existing, unrelated data issue —
-`demo@notely.dev`'s `passwordHash` in the dev DB was a literal placeholder string, not a
-real bcrypt hash): title-only and content-only query matches on the right note only,
-trashed notes never appear, folder/tag/date-range filters each narrow correctly and combine
-with an active query, the date-range filter correctly empties results and shows the
-search-specific empty state, typing updates results live without a submit, and a page
-reload preserves both the query and the filtered results via the synced URL. Registered a
-throwaway second user with a sentinel-term note to confirm cross-user isolation in both
-directions (each user's search only ever sees their own notes). Throwaway user and its
-note/tag data were cleaned up from the dev DB afterward; dev server stopped. `tsc --noEmit`,
-`npm run lint`, `npm run build` all clean; `/search` and `/api/search` both show up as
-registered routes in the build output.
+Lost real time to a self-inflicted measurement bug worth flagging for future sessions: a
+stale `next start` process survived a `pkill -f "next start"` (its argv shows as
+`next-server (v16.2.9)`, which doesn't match that pattern) and kept serving an old build's
+HTML/chunk-hash mapping through several rebuilds, causing `ChunkLoadError`s that looked
+like real regressions. Root-caused by checking `ps aux | grep next-server` directly and
+confirming only one PID before trusting any Lighthouse/Playwright result. `tsc --noEmit`,
+`npm run lint`, `npm run build` all clean at every step. Test users/notes created during
+verification (including two "Keyboard test note" notes on the demo account) cleaned up
+from the dev DB; production `next start` server stopped.
 
 ## Current focus
 
-Start `add-quality-hardening` (phase 8) — the last capability, and the formal acceptance
-gate for NFR-001 (page load < 2s), NFR-003 (Lighthouse ≥ 95), and NFR-004 (WCAG 2.2 AA).
-Depends on all feature changes above, which are now all archived. Expect this phase to
-involve bundle analysis, lazy-loading the markdown editor chunk, a Lighthouse CI run, and
-an accessibility audit (focus, labels, contrast, keyboard nav) rather than new features.
+**All 9 phases (0–8) in `docs/openspec-capabilities.md` are now archived — the planned
+implementation sequence is complete.** No active OpenSpec change. Next steps are
+product-driven, not roadmap-driven: revisit the open items below (pagination, restore-from-
+trash, nested folders, etc.) if/when product asks, or start a new capability outside the
+original sequence if scope expands. If picking this back up, read this file plus
+`docs/openspec-capabilities.md`'s "Requirement coverage checklist" (all FR/NFR/UI/SEC/DATA
+IDs from `requirements.md` are covered) as the starting point.
 
 ## Completed recently
 
+- Implemented and archived `add-quality-hardening` →
+  `openspec/changes/archive/2026-07-04-add-quality-hardening/` (19/19 tasks, including 3
+  tasks added mid-implementation from real Lighthouse findings); synced new
+  `openspec/specs/quality-hardening/spec.md`
 - Implemented and archived `add-search` → `openspec/changes/archive/2026-07-04-add-search/`
   (17/17 tasks); synced new `openspec/specs/search/spec.md`
-- Implemented and archived `add-note-actions` → `openspec/changes/archive/2026-07-04-add-note-actions/`
-  (all tasks complete); synced `openspec/specs/note-actions/spec.md`
-- Implemented and archived `add-markdown-editor` → `openspec/changes/archive/2026-07-04-add-markdown-editor/`
-  (all tasks complete); synced `openspec/specs/markdown-editor/spec.md`
-- Implemented and archived `add-folders-tags` → `openspec/changes/archive/2026-07-04-add-folders-tags/`
-  (all tasks complete); synced `openspec/specs/folders-tags/spec.md`
-- Checked off phases 0–7 in `docs/openspec-capabilities.md`'s capability sequence checklist
+- Checked off phases 0–8 (all of them) in `docs/openspec-capabilities.md`'s capability
+  sequence checklist
+- Noted: at some point this session, the entire `components/` directory was moved to
+  `app/components/` (all imports updated to match) — already done and consistent
+  repo-wide by the time this session picked it up; not something this session initiated,
+  just verified clean (`tsc`/lint/build all passed against the new layout)
 
 ## Blockers / open questions
 
@@ -80,45 +79,53 @@ an accessibility audit (focus, labels, contrast, keyboard nav) rather than new f
 - Local dev Postgres runs via `docker-compose.yml` (port 5453, `notely`/`notely`);
   `DATABASE_URL` lives in `.env` (gitignored) mirroring `.env.example`.
 - `demo@notely.dev`'s `passwordHash` in the local dev DB had been a literal placeholder
-  string (not a real bcrypt hash) before this session — repaired locally to a real hash of
-  `notely-demo-1` (matching `prisma/seed.ts`'s `DEMO_PASSWORD`) so the account is usable for
-  manual verification again. If a future fresh `docker compose up` + reseed resets this,
-  that's expected — the seed script itself was always correct.
+  string (not a real bcrypt hash); repaired locally (this is the second session to touch
+  this — repair should already be in place from the `add-search` session unless the DB was
+  reset since).
+- Pagination on `/notes` and `/search` remains unimplemented — flagged, not fixed, in both
+  the `add-search` and `add-quality-hardening` sessions. Acceptable at current/seed data
+  volume; revisit if note counts grow large enough to threaten NFR-001/003 for real.
 - Cosmetic, still open: several vendored design-system components render icons via
-  `<i data-lucide>`, needing a script this project never loads. Worked around case-by-case
-  with hand-rolled `components/icons.tsx` SVGs each phase (now includes `IconSearch`).
-  Worth a real fix (install `lucide` and call `createIcons()` once, globally) if this keeps
-  recurring — it has, every phase so far.
-- Search has no pagination (`LIMIT 50`, no "load more") and doesn't search trashed notes —
-  neither is in FR-060..064; revisit if product wants either before `quality-hardening`.
-- Restore-from-trash and permanent-delete remain out of scope (not in FR-024's wording) —
-  flag if product wants them before `quality-hardening`.
-- Sidebar has no per-folder/per-tag note counts by design decision — revisit if product wants
-  them.
+  `<i data-lucide>` (not this project's problem to fully solve — `Tag.jsx`'s clickable-chip
+  fix this session only touched the keyboard-semantics half, not its icon rendering, which
+  wasn't in scope). Worth a real fix (install `lucide` and call `createIcons()` once,
+  globally) if it keeps mattering.
+- Restore-from-trash and permanent-delete remain out of scope (not in FR-024's wording).
+- Sidebar has no per-folder/per-tag note counts by design decision.
 - No nested/hierarchical folders (`data-model`'s `Folder` has no `parentId`) — flat by design.
 - Bold, italic, links, images, tables, syntax highlighting, drag-drop image upload, and slash
-  commands remain explicitly out of scope for the Markdown editor (confirmed with the user);
-  the sanitizer allowlist actively strips them even if hand-typed.
-- No duplicate entry point from the notes list — editor-only, by design decision this session
-  (matches where Delete already lives). Revisit if users want a faster list-level duplicate.
-- Testing gotcha for future sessions: Playwright's default `text=` selector is a
-  case-insensitive substring match — don't use it for status text that's a substring of
-  another possible status (e.g. `"Saved"` vs `"Unsaved changes"`); assert exact text instead.
-  Also scope result-list assertions to `main` (e.g. `page.locator("main").getByText(...)`) —
-  the sidebar's "New note" link (`/notes/new`) matches any bare `a[href^="/notes/"]`
-  selector, and sidebar folder/tag rows share text with in-page folder/tag filter controls.
+  commands remain explicitly out of scope for the Markdown editor (confirmed with the user
+  in the `markdown-editor` phase; re-confirmed indirectly this session — `**bold**` still
+  gets sanitizer-stripped after the preview lazy-load refactor, exactly as before).
+- No duplicate entry point from the notes list — editor-only, by design decision.
+- Testing/ops gotchas for future sessions:
+  - Playwright's default `text=` selector is case-insensitive substring match — assert
+    exact text for anything that's a substring of another possible value.
+  - Scope result-list assertions to `main` (e.g. `page.locator("main").getByText(...)`) —
+    the sidebar shares text/link patterns with page content (e.g. "New note" links to
+    `/notes/new` from the sidebar, separate from the page's own create-note button/form).
+  - **Before trusting any Lighthouse/browser-automation result against a locally-run
+    `next start`, run `ps aux | grep next-server` and confirm exactly one PID.**
+    `pkill -f "next start"` does **not** match the actual process (`next-server
+    (v16.2.9)`) — a stale server from an earlier build can silently keep serving through
+    several rebuilds, producing `ChunkLoadError`s and stale accessibility/performance
+    numbers that look like real regressions but aren't. Kill by PID, or fully verify the
+    process list, not just the command you used to start it.
 
 ## Files touched
 
-- `docs/openspec-capabilities.md` (checked off phases 0–7)
-- `openspec/specs/search/spec.md` (new, synced from `add-search`)
-- `openspec/changes/archive/2026-07-04-add-search/`
-- `prisma/schema.prisma` (added `Note.searchVector`), `prisma/migrations/20260704173453_add_search_vector/`,
-  `prisma/migrations/20260704173933_sync_search_vector_unsupported_field/`
-- `lib/search/queries.ts` (new)
-- `app/api/search/route.ts` (new)
-- `app/(dashboard)/search/page.tsx` (new)
-- `components/notes/search-view.tsx` (new)
-- `components/notes/note-empty-state.tsx` (added `search` icon variant)
-- `components/icons.tsx` (added `IconSearch`, mapped in `navIconMap`)
-- `lib/nav-items.ts` (added "Search" nav entry)
+- `docs/openspec-capabilities.md` (checked off phases 0–8 — all complete)
+- `openspec/specs/quality-hardening/spec.md` (new, synced from `add-quality-hardening`)
+- `openspec/changes/archive/2026-07-04-add-quality-hardening/`
+- `app/components/notes/note-editor.tsx` (lazy-loaded Markdown preview via dynamic
+  `import()`; `aria-pressed` on Write/Preview toggle)
+- `.agents/skills/notely-design/components/core/Tag.jsx` (keyboard semantics for clickable
+  chips; recorded in `DESIGN.md`'s Local adaptations)
+- `app/components/notes/tag-picker.tsx`, `app/components/notes/search-view.tsx` (replaced
+  opacity-based dimming with non-opacity styling — real contrast fix)
+- `app/components/layout/sidebar-folder-row.tsx`, `app/components/layout/sidebar-tag-row.tsx`
+  (rename/delete actions now keyboard-reachable via `group-focus-within`)
+- `app/components/layout/app-shell.tsx` (skip-to-content link; `<main>` gets
+  `id="main-content"` + `tabIndex={-1}`)
+- `app/(auth)/layout.tsx` (added `<main>` landmark)
+- `DESIGN.md` (Local adaptations list entry for `Tag.jsx`)

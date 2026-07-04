@@ -83,6 +83,13 @@ re-apply:
    Router's Server-Components-by-default model. Purely presentational components
    (`Avatar`, `Badge`, `Divider`, `EmptyState`, `ProgressBar`, `Skeleton`, `Spinner`) were
    left as Server Components.
+4. `Tag`: when `onClick` is passed without `removable`, the chip is used as a clickable
+   toggle (tag filters, tag-picker "add" chips) but was a bare `<span onClick>` — not
+   reachable or activatable via keyboard at all. Added `role="button"`, `tabIndex={0}`, an
+   `onKeyDown` handler (Enter/Space triggers `onClick`), and a focus-visible ring matching
+   `IconButton`/`Button`'s pattern. Found via a real accessibility audit
+   (`add-quality-hardening`, phase 8) — a genuine WCAG 2.1.1 (Keyboard) failure, not a
+   style preference.
 
 ## Component inventory (26)
 

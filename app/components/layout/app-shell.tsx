@@ -12,14 +12,14 @@ import {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from "@/lib/storage";
-import { Sidebar } from "@/components/layout/sidebar";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { LogoutButton } from "@/components/layout/logout-button";
+import { Sidebar } from "@/app/components/layout/sidebar";
+import { ThemeToggle } from "@/app/components/layout/theme-toggle";
+import { LogoutButton } from "@/app/components/layout/logout-button";
 import {
   IconMenu,
   IconPanelLeftClose,
   IconPanelLeftOpen,
-} from "@/components/icons";
+} from "@/app/components/icons";
 
 type AppShellProps = {
   children: ReactNode;
@@ -66,6 +66,13 @@ export function AppShell({ children, folders, tags }: AppShellProps) {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[var(--color-bg)]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-[var(--radius-md)] focus:px-3 focus:py-2 focus:text-sm focus:font-medium"
+        style={{ background: "var(--color-card)", color: "var(--color-text)", boxShadow: "var(--shadow-focus)" }}
+      >
+        Skip to content
+      </a>
       {/* Desktop / tablet sidebar */}
       <div className="hidden md:flex md:shrink-0">
         <Sidebar collapsed={collapsed} folders={folders} tags={tags} />
@@ -127,7 +134,11 @@ export function AppShell({ children, folders, tags }: AppShellProps) {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden outline-none"
+        >
           {children}
         </main>
       </div>

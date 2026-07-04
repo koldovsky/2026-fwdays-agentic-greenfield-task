@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Input, IconButton } from "@notely-design/components";
-import { IconFolder, IconTrash, IconPencil } from "@/components/icons";
+import { IconFolder, IconTrash, IconPencil } from "@/app/components/icons";
 import { renameFolder, deleteFolder } from "@/app/actions/folders";
 
 type SidebarFolderRowProps = {
@@ -87,28 +87,26 @@ export function SidebarFolderRow({
           {name}
         </span>
       </Link>
-      {hover && (
-        <div className="flex shrink-0 items-center gap-0.5 pr-1.5">
-          <IconButton
-            icon={<IconPencil width={13} height={13} />}
-            label={`Rename ${name}`}
-            variant="ghost"
-            size="sm"
-            onClick={() => setEditing(true)}
-          />
-          <IconButton
-            icon={<IconTrash width={13} height={13} />}
-            label={`Delete ${name}`}
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (window.confirm(`Delete folder "${name}"? Notes inside it are kept.`)) {
-                void deleteFolder(id);
-              }
-            }}
-          />
-        </div>
-      )}
+      <div className="flex shrink-0 items-center gap-0.5 pr-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+        <IconButton
+          icon={<IconPencil width={13} height={13} />}
+          label={`Rename ${name}`}
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditing(true)}
+        />
+        <IconButton
+          icon={<IconTrash width={13} height={13} />}
+          label={`Delete ${name}`}
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.confirm(`Delete folder "${name}"? Notes inside it are kept.`)) {
+              void deleteFolder(id);
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }

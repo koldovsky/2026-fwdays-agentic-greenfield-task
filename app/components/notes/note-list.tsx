@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Note } from "@prisma/client";
 import { NoteCard } from "@notely-design/components";
-import { NoteEmptyState } from "@/components/notes/note-empty-state";
+import { NoteEmptyState } from "@/app/components/notes/note-empty-state";
 import { createNote } from "@/app/actions/notes";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {

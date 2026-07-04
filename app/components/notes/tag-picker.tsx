@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Tag as TagChip, Input, IconButton } from "@notely-design/components";
-import { IconPlus } from "@/components/icons";
+import { IconPlus } from "@/app/components/icons";
 import { addNoteTag, removeNoteTag, createAndAssignTag } from "@/app/actions/notes";
 
 type TagOption = { id: string; name: string };
@@ -65,7 +65,7 @@ export function TagPicker({ noteId, allTags, initialTagIds }: TagPickerProps) {
         <TagChip
           key={tag.id}
           onClick={() => addTag(tag.id)}
-          style={{ opacity: 0.6 }}
+          style={{ borderStyle: "dashed" }}
         >
           {tag.name}
         </TagChip>

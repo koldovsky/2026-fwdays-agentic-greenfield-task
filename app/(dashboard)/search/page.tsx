@@ -2,7 +2,7 @@ import { verifySession } from "@/app/lib/dal";
 import { listFolders } from "@/lib/folders/queries";
 import { listTags } from "@/lib/tags/queries";
 import { searchNotes } from "@/lib/search/queries";
-import { SearchView } from "@/components/notes/search-view";
+import { SearchView } from "@/app/components/notes/search-view";
 
 type SearchPageParams = {
   q?: string;

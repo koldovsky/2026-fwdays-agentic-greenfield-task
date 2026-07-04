@@ -541,7 +541,7 @@ Track progress by checking off each full cycle (steps 1–9):
 - [x] **Phase 5** — `add-markdown-editor` → `markdown-editor`
 - [x] **Phase 6** — `add-note-actions` → `note-actions`
 - [x] **Phase 7** — `add-search` → `search`
-- [ ] **Phase 8** — `add-quality-hardening` → `quality-hardening`
+- [x] **Phase 8** — `add-quality-hardening` → `quality-hardening`
 
 **MVP milestone:** phases 0–3 checked = shippable core product.
 

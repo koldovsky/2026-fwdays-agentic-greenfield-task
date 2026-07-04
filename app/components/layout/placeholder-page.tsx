@@ -7,7 +7,7 @@ import {
   IconSettings,
   IconStar,
   IconTrash,
-} from "@/components/icons";
+} from "@/app/components/icons";
 
 const pageIcons = {
   inbox: IconInbox,

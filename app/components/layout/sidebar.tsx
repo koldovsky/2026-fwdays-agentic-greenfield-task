@@ -4,11 +4,11 @@ import Link from "next/link";
 import type { Folder, Tag } from "@prisma/client";
 import { Button } from "@notely-design/components";
 import { bottomNavItems, primaryNavItems } from "@/lib/nav-items";
-import { navIconMap, IconPlus } from "@/components/icons";
-import { SidebarNavLink, SidebarSection } from "@/components/layout/sidebar-nav";
-import { SidebarFolderRow } from "@/components/layout/sidebar-folder-row";
-import { SidebarTagRow } from "@/components/layout/sidebar-tag-row";
-import { SidebarCreateRow } from "@/components/layout/sidebar-create-row";
+import { navIconMap, IconPlus } from "@/app/components/icons";
+import { SidebarNavLink, SidebarSection } from "@/app/components/layout/sidebar-nav";
+import { SidebarFolderRow } from "@/app/components/layout/sidebar-folder-row";
+import { SidebarTagRow } from "@/app/components/layout/sidebar-tag-row";
+import { SidebarCreateRow } from "@/app/components/layout/sidebar-create-row";
 import { createFolder } from "@/app/actions/folders";
 import { createTag } from "@/app/actions/tags";
 

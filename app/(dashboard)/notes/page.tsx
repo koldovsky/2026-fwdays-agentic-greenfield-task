@@ -1,7 +1,7 @@
 import { Button } from "@notely-design/components";
 import { verifySession } from "@/app/lib/dal";
 import { listActiveNotes } from "@/lib/notes/queries";
-import { NoteList } from "@/components/notes/note-list";
+import { NoteList } from "@/app/components/notes/note-list";
 import { createNote } from "@/app/actions/notes";
 
 export default async function NotesPage() {

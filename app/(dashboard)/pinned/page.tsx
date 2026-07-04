@@ -1,4 +1,4 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { PlaceholderPage } from "@/app/components/layout/placeholder-page";
 
 export default function PinnedPage() {
   return (

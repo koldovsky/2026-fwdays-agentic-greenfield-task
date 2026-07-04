@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@notely-design/components";
-import { IconPlus } from "@/components/icons";
+import { IconPlus } from "@/app/components/icons";
 
 type SidebarCreateRowProps = {
   label: string;

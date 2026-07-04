@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@notely-design/components";
-import { IconInbox, IconTrash, IconSearch } from "@/components/icons";
+import { IconInbox, IconTrash, IconSearch } from "@/app/components/icons";
 
 const icons = {
   inbox: IconInbox,

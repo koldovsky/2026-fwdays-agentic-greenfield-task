@@ -3,28 +3,25 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Input, IconButton, Button } from "@notely-design/components";
-import { Textarea } from "@/components/ui/textarea";
-import { Toast } from "@/components/ui/toast";
-import { IconTrash, IconCopy } from "@/components/icons";
+import { Textarea } from "@/app/components/ui/textarea";
+import { Toast } from "@/app/components/ui/toast";
+import { IconTrash, IconCopy } from "@/app/components/icons";
 import { updateNote, softDeleteNote, duplicateNote } from "@/app/actions/notes";
-import { FolderPicker } from "@/components/notes/folder-picker";
-import { TagPicker } from "@/components/notes/tag-picker";
-import { EditorToolbar, type ToolbarAction } from "@/components/notes/editor-toolbar";
-import { NotePreview } from "@/components/notes/note-preview";
+import { FolderPicker } from "@/app/components/notes/folder-picker";
+import { TagPicker } from "@/app/components/notes/tag-picker";
+import { EditorToolbar, type ToolbarAction } from "@/app/components/notes/editor-toolbar";
+import { NotePreview } from "@/app/components/notes/note-preview";
 import {
   applyHeading,
   applyListPrefix,
   applyCodeFormatting,
 } from "@/lib/markdown/editing";
-import { renderMarkdown } from "@/lib/markdown/render";
-import { sanitizeClientHtml } from "@/lib/markdown/sanitize.client";
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 type EditorMode = "write" | "preview";
@@ -99,12 +96,26 @@ export function NoteEditor({
     }
   });
 
-  const previewHtml = useMemo(() => {
-    if (content === initialContent) {
-      return initialPreviewHtml;
-    }
-    return sanitizeClientHtml(renderMarkdown(content));
-  }, [content, initialContent, initialPreviewHtml]);
+  // `marked` + `sanitize.client` (dompurify) are only needed once the user actually
+  // views Preview with edited content — dynamically imported here instead of at module
+  // scope so they aren't part of this route's initial JS for users who never preview.
+  const [renderedPreviewHtml, setRenderedPreviewHtml] = useState(initialPreviewHtml);
+  useEffect(() => {
+    if (mode !== "preview" || content === initialContent) return;
+    let cancelled = false;
+    Promise.all([
+      import("@/lib/markdown/render"),
+      import("@/lib/markdown/sanitize.client"),
+    ]).then(([{ renderMarkdown }, { sanitizeClientHtml }]) => {
+      if (!cancelled) {
+        setRenderedPreviewHtml(sanitizeClientHtml(renderMarkdown(content)));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, content, initialContent]);
+  const previewHtml = content === initialContent ? initialPreviewHtml : renderedPreviewHtml;
 
   const save = useCallback(async () => {
     if (timeoutRef.current) {
@@ -284,6 +295,7 @@ export function NoteEditor({
             type="button"
             variant={mode === "write" ? "secondary" : "ghost"}
             size="sm"
+            aria-pressed={mode === "write"}
             onClick={() => setMode("write")}
           >
             Write
@@ -292,6 +304,7 @@ export function NoteEditor({
             type="button"
             variant={mode === "preview" ? "secondary" : "ghost"}
             size="sm"
+            aria-pressed={mode === "preview"}
             onClick={() => setMode("preview")}
           >
             Preview
