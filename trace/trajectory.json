@@ -1,12 +1,22 @@
 {
   "generatedBy": "scripts/check-trajectory.mjs",
-  "slices": [],
+  "slices": [
+    {
+      "slice": "2026-07-04-slots",
+      "reviewEvidence": "missing",
+      "trailerCommits": 15,
+      "libDomains": [
+        "src"
+      ],
+      "processComplete": true
+    }
+  ],
   "overlaps": [],
   "failures": [],
   "warnings": [
     {
-      "check": "slices",
-      "msg": "no archived slices found under openspec/changes/archive/ (nothing to audit yet)"
+      "check": "review-evidence",
+      "msg": "2026-07-04-slots: review-findings.json is missing (review must have run clean before archive)"
     }
   ]
 }

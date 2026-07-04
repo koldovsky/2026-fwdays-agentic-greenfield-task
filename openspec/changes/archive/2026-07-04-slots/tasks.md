@@ -155,7 +155,7 @@
       5/5, this change validates).
 - [x] 6.7 Run `node scripts/check-traceability.mjs` (FR-SLOT-01..04,
       FR-GUARD-03 show implemented coverage, 0 failures).
-- [ ] 6.8 Update `docs/current-state.md` (phase, last-updated timestamp
+- [x] 6.8 Update `docs/current-state.md` (phase, last-updated timestamp
       Europe/Kyiv, spike verdict summary, next slice = S2 `intake`) and
       `README.md` if it references slice status.
 - [x] 6.9 Manual real-DB smoke test, spelled out step by step *(scripted:
@@ -188,5 +188,5 @@
          path; call `freeBusy`; confirm the deterministic Ukrainian
          apology message is produced and no crash/unhandled rejection
          occurs; restore the valid path afterward.
-- [ ] 6.10 Only after 6.1–6.9 all pass: run `npx openspec archive slots
+- [x] 6.10 Only after 6.1–6.9 all pass: run `npx openspec archive slots
       --yes`.
