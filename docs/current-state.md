@@ -4,6 +4,29 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-03T17:23:30Z
+
+**What was done**
+- Created OpenSpec proposals for all 9 capabilities from `docs/capabilities.md`. Each change ships with `proposal.md` + `design.md` + `specs/<name>/spec.md` + `tasks.md` and passes `openspec validate`.
+  - Phase 0: `platform-foundation`, `mdns-advertisement`
+  - Phase 1: `upnp-tv-discovery`, `device-list-ui`
+  - Phase 2: `tv-connection-lifecycle`
+  - Phase 3: `remote-control-keys`, `volume-control`, `input-management`
+  - Phase 4: `error-surfacing`
+- Enriched `openspec/config.yaml` with a project-wide `context:` block (mytv summary, architecture, ground-truth docs, house rules) so every future proposal inherits it, plus per-artifact `rules:` for `proposal`, `design`, `tasks` (last task must always be the current-state log entry).
+- Requirements traceability: every requirement ID from `docs/requirements.md` (FR-DISCOVERY-*, FR-MDNS-*, FR-HOSTING-*, FR-CONNECTION-*, FR-REMOTE-*, FR-VOLUME-*, FR-INPUT-*, FR-UI-*, FR-ERROR-*, NFR-01/02/04/05, BC-02) is mapped to at least one change's Covers or Impact section.
+- Every change's `tasks.md` ends with a "prepend an entry to docs/current-state.md" step, per the config rule.
+
+**Verification**
+- `openspec validate <name>` passes for all 9 changes. No code changed.
+
+**Follow-ups for the next session**
+- Two requirement gaps still open in `docs/requirements.md`: no FR for manual TV-add-by-IP (product-brief has it), no FR for power control (product-brief lists it). Both should get FR IDs before proposing the follow-up changes that would ship them (both plug into `device-list-ui` and `remote-control-keys` respectively).
+- Start implementation with `platform-foundation` (Phase 0). `mdns-advertisement` can be built in parallel.
+- Run `/opsx:apply platform-foundation` to begin implementation.
+
+---
+
 ## 2026-07-03T16:33:56Z
 
 **What was done**

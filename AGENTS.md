@@ -70,4 +70,6 @@ Before reporting a task done:
 
 - **Back-end changes**: `npm run back:build` from repo root passes. If the change touches TV I/O, at minimum document the manual repro (curl against a mock).
 - **Front-end changes**: `npm run front:build` from repo root passes; open the dev server (`npm run front:dev`) and eyeball the affected screen — visual regressions in neomorphic surfaces are silent in TS/lint.
-- Never claim UI works from a build alone.
+- **Tests are required, not optional, whenever the change's own `tasks.md` adds them.** If a task says "add an integration test" / "add a unit test" / etc., checking that task off requires the test to exist **and pass** — run it via `npm run back:test` / `npm run front:test` from repo root. A test task marked `[x]` with no passing test run is not done.
+- If `npm run back:test` / `npm run front:test` fails because no `test` script is defined yet in that package's `package.json`, that itself is a gate failure for any change whose `tasks.md` calls for tests — wire up the script (e.g. `tsx --test src/**/*.test.ts` for the back-end) as part of implementing those tasks, don't skip past the missing script.
+- Never claim UI works, or that a feature is correct, from a build alone.
