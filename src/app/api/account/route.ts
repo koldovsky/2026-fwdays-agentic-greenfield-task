@@ -15,15 +15,25 @@ export async function DELETE(): Promise<NextResponse> {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const db = getDb();
-  await deleteAccount(
-    {
-      users: createUserRepo(db),
-      cvProfiles: createCvProfileRepo(db, getCvEncryptionKey()),
-      tailorings: createTailoringRepo(db),
-    },
-    userId,
-  );
+  // Any downstream throw (unconfigured env, DB/FK error, key failure) must
+  // surface as a calm coded 500 — never an uncaught raw 500 that leaks a stack
+  // or schema detail to the caller (NFR-OBS-01, defense-in-depth against
+  // information disclosure). The cause is logged server-side only.
+  try {
+    const db = getDb();
+    await deleteAccount(
+      {
+        users: createUserRepo(db),
+        cvProfiles: createCvProfileRepo(db, getCvEncryptionKey()),
+        tailorings: createTailoringRepo(db),
+      },
+      userId,
+    );
+  } catch (cause) {
+    // No user id, CV text, or key material in the log line (NFR-SEC-01/02).
+    console.error("[api/account] delete failed", cause);
+    return NextResponse.json({ error: "deletion_failed" }, { status: 500 });
+  }
 
   const response = NextResponse.json({ deleted: true });
   // Auth.js v5 session cookie (secure-prefixed in production, plain in dev).

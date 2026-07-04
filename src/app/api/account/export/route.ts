@@ -14,20 +14,29 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const db = getDb();
-  const data = await exportAccountData(
-    {
-      users: createUserRepo(db),
-      cvProfiles: createCvProfileRepo(db, getCvEncryptionKey()),
-      tailorings: createTailoringRepo(db),
-    },
-    userId,
-  );
-  if (data === null) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
-  }
+  // getCvEncryptionKey()/getDb() throw when their env is unset, and assembly can
+  // throw on a DB error — all must degrade to a calm coded 500, never an uncaught
+  // raw 500 leaking a stack or the missing-key detail (NFR-OBS-01, no info
+  // disclosure). The cause is logged server-side only (never the key or CV text).
+  try {
+    const db = getDb();
+    const data = await exportAccountData(
+      {
+        users: createUserRepo(db),
+        cvProfiles: createCvProfileRepo(db, getCvEncryptionKey()),
+        tailorings: createTailoringRepo(db),
+      },
+      userId,
+    );
+    if (data === null) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
 
-  return NextResponse.json(data, {
-    headers: { "Content-Disposition": 'attachment; filename="vouch-export.json"' },
-  });
+    return NextResponse.json(data, {
+      headers: { "Content-Disposition": 'attachment; filename="vouch-export.json"' },
+    });
+  } catch (cause) {
+    console.error("[api/account/export] export failed", cause);
+    return NextResponse.json({ error: "export_failed" }, { status: 500 });
+  }
 }
