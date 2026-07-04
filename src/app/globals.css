@@ -114,6 +114,14 @@
   --surface-page: var(--color-surface-canvas);
   --border: var(--color-hairline);
   --accent: var(--color-brand);
+
+  /* ── Motion (mirrors docs/vouch-design-system/tokens/motion.css) ──
+   * Restrained editorial motion. Only opacity/transform animate (CLS 0);
+   * all of it is disabled under prefers-reduced-motion below. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-duration: 520ms;
+  --reveal-distance: 16px;
+  --hover-duration: 150ms;
 }
 
 body {
@@ -140,9 +148,55 @@ html {
   border-radius: var(--radius-sm);
 }
 
+/* Scroll-reveal primitive (shared/ui Reveal). Motion is opacity/transform only,
+ * so it never shifts layout (CLS stays 0). SSR renders revealed (visible without
+ * JS); the client hides then reveals once on intersection. The `fade="false"`
+ * variant keeps opacity at 1 so an LCP element paints on first render. */
+/* Transition is armed a frame AFTER the initial hide so the hide itself is
+ * instant (no fade-out flash); only the reveal that follows animates. */
+[data-reveal][data-armed="true"] {
+  transition:
+    opacity var(--reveal-duration) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal][data-revealed="false"] {
+  opacity: 0;
+  transform: translateY(var(--reveal-distance));
+}
+[data-reveal][data-fade="false"][data-revealed="false"] {
+  opacity: 1;
+}
+
+/* Hero entrance: a one-shot CSS load animation on the hero's supporting elements
+ * (kicker, lead, CTAs, note). It never touches the h1 or the demo card, so
+ * whichever is the LCP element paints on first render. Runs without JS; the 0%
+ * state (not a painted-then-hidden state) means no flash. Reduced-motion below
+ * zeroes the duration, so with `both` fill it lands on the visible end state. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise-in var(--reveal-duration) var(--ease-out) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  /* Belt-and-suspenders: even before the JS matchMedia guard runs, keep every
+   * reveal fully visible and unmoved. */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
   *,
   *::before,

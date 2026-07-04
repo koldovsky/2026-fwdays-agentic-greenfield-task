@@ -17,3 +17,6 @@ export type { GroundingBadgeProps, GroundingStatus } from "./grounding-badge";
 
 export { ChecklistRow } from "./checklist-row";
 export type { ChecklistRowProps, ChecklistRowStatus } from "./checklist-row";
+
+export { Reveal } from "./reveal";
+export type { RevealProps } from "./reveal";

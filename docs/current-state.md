@@ -7,33 +7,19 @@
 
 ## Last action
 
-- **10-task batch analyzed + P0 ECONNRESET fixed (2026-07-04, ultracode).** User handed a 10-item
-  batch (re-scoped version of the roadmap) and asked to prioritize, dedupe against shipped code, and
-  continue. Ran a 10-agent evidence workflow (`wf_c452a9aa-e02`) mapping each task to real code state
-  (trust code over prose). Result: **half already shipped.** Then fixed the P0 and the one red-suite
-  blocker:
-  - **Task 2 (P0) FIXED + committed (`fcf39c5`).** `DELETE /api/account` (and export) 500'd with
-    `read ECONNRESET`. Root cause: `pg.ts` was a bare `new Pool({connectionString})` — no SSL, no
-    idle timeout, no `pool.on('error')`. A managed/serverless PG closes idle sockets → the reused
-    pooled client resets on the next query, and an idle-client `error` with no listener crashes the
-    process. Fix: pool now sets `ssl` (new `getDatabaseSsl()`, on in prod), `keepAlive`,
-    `idleTimeoutMillis` (evict before the server does), `connectionTimeoutMillis`, `max`, a
-    `pool.on('error')` logger, and **retry-once** on connection-level errors in `createPgQueryable`
-    (query errors still surface). Resolves the whole ECONNRESET class (delete/export/tailor/history).
-    +8 tests.
-  - **Task 6 red tests FIXED + committed (`7babd9d`).** 2 stale non-UUID fixtures in
-    `tailoring/[id]/route.test.ts` collided with the route's UUID guard (404 before the mock). Now
-    use valid UUIDs; IDOR case now genuinely tests ownership. **Full suite green: 102 files / 623.**
-  - **Latent broken build FIXED + committed (`e134db0`).** `yarn build` was red on the branch: the
-    `add-tailoring-history` "unverified" commit left a TS narrowing error in `tailor/generate` (a
-    mutable `let` narrowing lost across the `withTransaction` closure → `persistTailoring` saw
-    `string | null`). lint + vitest passed but `tsc` failed — the branch was undeployable. Fixed by
-    capturing the narrowed value in a const. **`yarn build` + `yarn lint` + 623 tests all green.**
+- **T5 premium PDF attach DONE (verified green), starting T7 animations (2026-07-04, ultracode).**
+  T5 (`add-premium-pdf-attach`) §1-3 shipped across commits `b341245`..`ac90fad`: server-gated PDF
+  attachment feeding the GENERATION pass only, grounding-isolation guard, attach control UI + new
+  `PaywallReason="attach"`. Re-verified this session: **lint + build + 102 files / 635 tests all
+  green.** §4.2/4.3 (live honesty-eval, openspec archive) remain sandbox-blocked (no `ANTHROPIC_API_KEY`,
+  no openspec CLI).
+- **Now implementing T7 (`landing-animations`, P2/L)** — the last spec-ready task. Picked over T10
+  (language toggle) because T10 is blocked on a real font question (fonts are Bricolage+Hanken,
+  latin-only subsets — Cyrillic support unconfirmed, may force a brand font swap = user decision).
+  Plan below.
 
-- **Prior (same day): registration 500 + `db:migrate` runner (`73dd267`).** Fresh Vercel deploy 500'd
-  on register — no `DATABASE_URL` and **no prod migration step** (`runMigrations` only ran in tests +
-  dev pglite). Added `scripts/migrate.mjs` + `db:migrate` npm script (self-contained, per-file tx,
-  idempotent, honors `sslmode`). Pushed to `origin/vouch`. **User's DB: not provisioned yet.**
+- **Prior context (see git log):** ECONNRESET P0 (`fcf39c5`), red-suite fix (`7babd9d`), latent build
+  fix (`e134db0`), `db:migrate` runner (`73dd267`), landing rework T8+T9 (`583e150`).
 
 ## Evidence-based status of the 10-task batch (see git log for the fix commits)
 
@@ -46,59 +32,45 @@
 | 6 | Tailoring history | **PARTIAL→green** — feature works E2E; suite now green; archive + 0004 integ-test pending | S | P2 |
 | 9 | Landing marketing/copy (enemy-centric) | **PARTIAL** — no pain-first hero, i18n debt | M | P2 |
 | 8 | Landing → new flow (cover letter / info tag / attach / history) | **TODO** (deps 1,5,6) | M | P1 |
-| 5 | Premium PDF attach | **TODO** — nothing exists; spec-first (security/LLM/honesty) | L | P1 |
-| 7 | Animations | **TODO** — `landing-animations` spec exists (unimpl); app-side unspec'd | L | P2 |
+| 5 | Premium PDF attach | **DONE** (§1-3, `b341245`..`ac90fad`); §4 archive/live-eval sandbox-blocked | L | P1 |
+| 7 | Animations | **IN PROGRESS** — implementing `landing-animations` spec this session | L | P2 |
 | 10 | Whole-app UA/EN toggle | **TODO** — infra only; **Cyrillic fonts unwired = blocker**; landing hardcoded EN | L | P2 |
 
 ## Working on
 
-- **Tasks 8+9 — landing rework DONE (checker PASS).** Change `update-landing-flow` (spec + impl).
-  Problem-first/enemy-centric hero (structured `content.ts` `hero` object), blue "coverable" (info)
-  state added to the checklist demo (5 states), cover-letter + saved-history surfaced in step 03 and a
-  new FAQ. No premium PDF-attach copy (unbuilt), no new hue. lint+build+623 tests green; checker
-  subagent PASS (0 findings). **Pending:** `perf-audit` (no Chrome here, LCP margin ~20 ms) + openspec
-  archive (CLI not installed). Kept deterministic cover letter per user (task 1).
-- **T5 premium PDF attach — SPEC AUTHORED, ready to implement (next after /compact).** Change
-  `add-premium-pdf-attach` (proposal + `premium-attach` spec delta + tasks). Chosen next because it is
-  the highest-priority remaining (P1). Execution plan = `openspec/changes/add-premium-pdf-attach/tasks.md`.
-- **After T5:** T7 animations (P2/L, `landing-animations` spec ready to implement), T10 language toggle
-  (P2/L, wire Cyrillic fonts first — the real blocker).
+- **T7 `landing-animations` (P2/L) — implementing this session.** Spec-ready change
+  `openspec/changes/landing-animations`. Restrained motion: scroll-reveal below the fold, LCP-safe
+  hero entrance, CTA micro-interactions. Constraints: motion is `opacity`/`transform` only (CLS 0),
+  reduced-motion fully disables it, must not regress the razor-thin LCP budget (NFR-PERF-04, ~20 ms
+  margin). Plan below.
 
-### Plan — T5 (add-premium-pdf-attach), resume here after /compact
+### Plan — T7 (landing-animations)
 
-1. **Confirm 2 decisions** (see proposal.md): **D1** persist the PDF at rest vs request-scoped
-   (default: request-scoped, smallest security/GDPR surface); **D3** the configured Claude model
-   supports PDF document blocks (gate off calmly if not). **D2 is fixed:** PDF feeds the GENERATION
-   pass only, grounding stays text-only (BC-HONESTY-01/02).
-2. Extend the tailoring request contract with an optional PDF attachment; `/api/tailor/generate`
-   honors it only after a **server-side `hasPaidAccess`** check (never trust a client flag), validate
-   PDF type + size cap, never log bytes.
-3. Generation pass: add the PDF as a document content block (`shared/lib/llm`); add the attachment to
-   `GROUNDING_FORBIDDEN` + an adversarial honesty-eval fixture proving it never reaches grounding.
-4. UI: attach control enabled for paid, disabled + "premium" badge for free/anon; new
-   `PaywallReason="attach"` opens the upgrade surface. Tokens only, ua+en i18n, no em-dashes.
-5. Verify: lint+build+test, honesty-eval (needs `ANTHROPIC_API_KEY`), grounding-isolation guard,
-   verifier + checker subagents, then archive.
+1. **Motion foundation** — `globals.css`: motion tokens (`--ease-out`, `--reveal-duration`,
+   `--reveal-distance`) + `[data-reveal]` transition CSS + `[data-revealed="false"]` hidden state;
+   extend the existing reduced-motion block to force revealed/visible. Mirror tokens in
+   `docs/vouch-design-system/tokens/motion.css` + DESIGN.md note (sync rule).
+2. **Reveal primitive** — new `shared/ui/reveal` client slice: polymorphic `as`, `delay`, and a
+   `fade` prop (default true; `fade={false}` = transform-only, keeps LCP element painted). SSR-visible
+   default (`revealed` starts true → paints visible without JS); `useLayoutEffect` hides then an
+   IntersectionObserver reveals once; `matchMedia` reduced-motion guard stays visible. Unit tests.
+3. **Wire landing** — Reveal (fade) on below-fold sections (Pillars, BeforeAfter, ChecklistPreview,
+   HowItWorks, Pricing, Faq, FinalCta); hero entrance uses `fade={false}` so the LCP headline never
+   goes to opacity 0.
+4. **CTA micro-interactions** — Button: add ghost hover + restrained hover transition on primary;
+   keep `:focus-visible` halo (NFR-A11Y-01). Existing `active:scale-[0.97]` press stays.
+5. **Verify** — lint + build + test (add Reveal tests). `perf-audit`/Lighthouse **deferred** (no
+   Chrome in sandbox) — CLS-0 guaranteed by construction (opacity/transform only), LCP protected by
+   the `fade={false}` hero. Then multi-dimension adversarial review workflow → fix findings → commit
+   per unit → archive (openspec CLI unavailable, tick tasks).
 
-### DECISION NEEDED from user (T5)
+### T5 — DONE (context)
 
-- **D1:** persist the attached PDF at rest (enables history re-open; adds an encrypted `pdf_binary`
-  column + GDPR export/delete) OR keep it request-scoped (default, simpler/safer)? Assuming
-  request-scoped unless told otherwise.
-
-### Plan — landing 8+9 (change `update-landing-flow`)
-
-1. **Spec** — openspec change `update-landing-flow`: MODIFY `marketing-landing` demo requirement
-   (4→5 checklist states, add blue "coverable/info"); add requirement for cover-letter + history
-   representation. proposal + tasks + spec delta.
-2. **content.ts** — (a) new `hero` object, pain-first/enemy-centric copy (move inline Hero copy here);
-   (b) add an `info` (blue coverable) row to `checklistRows` + update headline/subtext to name it;
-   (c) sharpen `pillars` enemy contrast; (d) step 03 names cover letter + history + export options;
-   (e) add a FAQ item on cover letters + saved history.
-3. **Hero.tsx** — consume the `hero` content object (LCP card structure unchanged = perf-safe).
-4. **Honesty guard** — do NOT sell premium PDF-attach (task 5 unbuilt). Only sell shipped features.
-5. **i18n** — keep landing English (extraction is task 10, deferred); structure content for later.
-6. **Verify** — lint + build + tests; `perf-audit` noted blocked (no Chrome). checker subagent.
+Change `add-premium-pdf-attach` §1-3 shipped (`b341245`..`ac90fad`): server-gated PDF into the
+generation pass only, grounding-isolation guard, attach UI + `PaywallReason="attach"`. §4.2 live
+honesty-eval + §4.3 archive remain sandbox-blocked. **D1 was resolved request-scoped** (no at-rest
+storage); §5 (encrypted `pdf_binary` persistence) deferred to a future change if history re-open is
+wanted.
 
 ## Next steps (ranked: fastest × most critical)
 

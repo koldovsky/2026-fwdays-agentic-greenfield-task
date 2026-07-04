@@ -23,17 +23,22 @@ export interface ButtonProps {
   readonly "aria-label"?: string;
 }
 
+// Hover lift + press feedback are transform/color only (no layout shift). The
+// global :focus-visible halo (globals.css) stays intact; disabled state drops
+// all hover/press affordance. duration-150 matches --hover-duration.
 const base =
   "inline-flex items-center justify-center font-body font-semibold leading-none " +
-  "whitespace-nowrap select-none cursor-pointer transition-[opacity,transform] duration-100 " +
-  "active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-surface-canvas " +
+  "whitespace-nowrap select-none cursor-pointer " +
+  "transition-[opacity,transform,background-color,color,box-shadow] duration-150 " +
+  "hover:-translate-y-px active:translate-y-0 active:scale-[0.97] " +
+  "disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-surface-canvas " +
   "disabled:text-ink-faint disabled:border-transparent disabled:shadow-none";
 
 const variantClass: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary: "bg-brand text-white shadow-brand hover:bg-brand-hover",
-  secondary: "bg-surface-card text-ink border border-hairline",
-  ghost: "bg-transparent text-brand",
-  dark: "bg-ink text-white",
+  primary: "bg-brand text-white shadow-brand hover:bg-brand-hover hover:shadow-brand-strong",
+  secondary: "bg-surface-card text-ink border border-hairline hover:border-ink-faint",
+  ghost: "bg-transparent text-brand hover:bg-brand-wash",
+  dark: "bg-ink text-white hover:shadow-lifted",
 };
 
 const sizeClass: Record<NonNullable<ButtonProps["size"]>, string> = {

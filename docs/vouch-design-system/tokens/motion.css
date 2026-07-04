@@ -1,0 +1,11 @@
+:root {
+  /* ── Motion ──
+   * Restrained editorial motion for the landing page (scroll-reveal, hero
+   * entrance, CTA micro-interactions). Only opacity/transform animate, so
+   * motion never shifts layout (CLS 0). All of it is disabled under
+   * prefers-reduced-motion. Mirrored in src/app/globals.css @theme. */
+  --ease-out:         cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-duration:  520ms;
+  --reveal-distance:  16px;
+  --hover-duration:   150ms;
+}

@@ -1,8 +1,14 @@
 // Hero: positioning copy + primary CTA, alongside the signature static demo card
 // (FR-SALES-01/02). Demo uses example data only — no network, no sign-in.
+// Entrance: only the supporting copy below the headline rises in (`.rise-in`);
+// the h1 and the demo card stay painted so the LCP element is never delayed
+// (landing-animations, NFR-PERF-04). Motion is CSS-only and reduced-motion-safe.
+import type { CSSProperties } from "react";
 import { Button, GroundingBadge } from "@/shared/ui";
 import { demoBullets, demoRequirement, demoScore, hero } from "../lib/content";
 import { Kicker, Wrap } from "./primitives";
+
+const riseDelay = (ms: number) => ({ "--rise-delay": `${ms}ms` }) as CSSProperties;
 
 function DemoCard() {
   return (
@@ -52,8 +58,16 @@ export function Hero() {
             <span className="text-brand">{hero.headlineEmphasis}</span>
             {hero.headlineTail}
           </h1>
-          <p className="mt-5 max-w-[32em] text-lg leading-relaxed text-ink-soft">{hero.lead}</p>
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <p
+            className="rise-in mt-5 max-w-[32em] text-lg leading-relaxed text-ink-soft"
+            style={riseDelay(0)}
+          >
+            {hero.lead}
+          </p>
+          <div
+            className="rise-in mt-7 flex flex-wrap items-center gap-3"
+            style={riseDelay(80)}
+          >
             <Button href="/tailor" variant="primary" size="lg">
               {hero.ctaPrimary}
             </Button>
@@ -61,7 +75,9 @@ export function Hero() {
               {hero.ctaSecondary}
             </Button>
           </div>
-          <p className="mt-[14px] text-sm text-ink-muted">{hero.note}</p>
+          <p className="rise-in mt-[14px] text-sm text-ink-muted" style={riseDelay(160)}>
+            {hero.note}
+          </p>
         </div>
 
         <DemoCard />

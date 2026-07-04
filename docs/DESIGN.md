@@ -45,6 +45,11 @@ Available namespaces: `*-ink*` / `*-brand*` / `*-surface-*` / status colors
   libraries, no SVG icon paths.
 - **Casing:** status/requirement tokens all-lowercase; section eyebrows
   UPPERCASE · MONOSPACE · TRACKED.
+- **Motion:** restrained, `opacity`/`transform` only (never layout — CLS stays
+  0). Tokens in `tokens/motion.css` mirrored into `globals.css` `@theme`
+  (`--ease-out`, `--reveal-duration`, `--reveal-distance`, `--hover-duration`).
+  Scroll-reveal via the `shared/ui` `Reveal` primitive; all motion is disabled
+  under `prefers-reduced-motion` and must not delay the LCP element.
 
 See `docs/vouch-design-system/readme.md` for the complete reference (hover/press
 states, borders, animations, component specs).
