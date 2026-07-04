@@ -35,7 +35,7 @@ confirmed clarifying-question answers, and it SHALL NOT introduce any claim the
 tailored, grounded bullets did not already justify. Output is Ukrainian-first
 via `shared/lib/i18n` with an English fallback. The cover-letter builder lives in
 `features/export-cover-letter` and composes only lower FSD layers. Implements
-FR-EXPORT-01, BC-HONESTY-01, BC-HONESTY-02, NFR-I18N-01.
+FR-COVERLETTER-01, BC-HONESTY-01, BC-HONESTY-02, NFR-I18N-01.
 
 #### Scenario: Letter is grounded, not fabricated
 - **WHEN** the cover letter is generated
@@ -59,7 +59,7 @@ for anonymous or free callers, mirroring the existing pdf/docx export routes —
 SHALL NOT rely on a client-only gate. Failures SHALL surface a calm coded error,
 never a raw 500 or a blank. The free-tier attribution footer rule (`FR-EXPORT-04`)
 applies to the cover-letter export the same as to the résumé export. Implements
-FR-EXPORT-01, FR-PAYWALL-01, FR-EXPORT-04, NFR-OBS-01.
+FR-COVERLETTER-02, FR-PAYWALL-01, FR-EXPORT-04, NFR-OBS-01.
 
 #### Scenario: Paid caller exports the cover letter
 - **WHEN** a paid user requests a cover-letter export

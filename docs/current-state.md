@@ -38,17 +38,27 @@
 - **Roadmap batch — analysis + P0 fixes + top-tier specs DONE this pass.** Feature implementation
   not started; pick the next item per the ranking.
 
+## Decisions resolved 2026-07-04 (user)
+
+- **Cover letter → in scope.** PRD updated: `FR-COVERLETTER-01/02` added, removed from
+  "Out of scope (MVP)". `add-tailoring-intelligence` §0.1 + specs reconciled to cite the new IDs.
+- **Payments → Stripe sandbox** behind the existing port (more providers later); MoR/VAT deferred,
+  not a blocker. TC-STACK-06 updated. New change **`add-stripe-payments`** (spec + todos).
+- **Stripe key → placeholder template only** (`.env.example` + dev-setup use `sk_test_…`/`pk_test_…`).
+  Real key rotated by user; never in repo.
+- **Cyrillic font (my call):** Golos Text (body/UI) + Unbounded (display) — both Cyrillic-capable.
+  Unblocks T10; still needs DESIGN.md update + perf-audit before shipping. Recorded, not built.
+- **Sentry → skip implementation**; keep `harden-sentry-privacy` spec + todos. Build before any
+  real paid/PII E2E (live PII-leak debt).
+
 ## Next steps
 
-1. **Commit the docs + 4 OpenSpec packages** (this session — pending) and push `vouch`.
-2. **Decisions needed before building (see roadmap "Open decisions"):**
-   - **Cover letter is PRD out-of-scope MVP** — promote into scope (add `FR-COVERLETTER-*`) before
-     `add-tailoring-intelligence` §4/§5. Product call, not engineering.
-   - **Merchant-of-record** (TC-STACK-06) — blocks T13. **Cyrillic display font** — blocks T10.
-3. **Rotate the exposed Stripe secret key** before any T13 work.
-4. Next build target by rank: **T11 Sentry hardening** (fast, live privacy debt) via
-   `harden-sentry-privacy`; then T4 header, then T12 legal.
-5. Install/validate `openspec` CLI, then `openspec validate <change>` on all 4 packages.
+1. **Commit this session's docs + specs** (5 OpenSpec packages, PRD edit, `.env.example`) — pending;
+   push `vouch`.
+2. Next build target by rank: **T4 header** (P1, M) or **T1 tailoring intelligence** (flagship, now
+   fully unblocked). Then T12 legal, T13 Stripe, T5 premium PDF.
+3. Install/validate `openspec` CLI, then `openspec validate <change>` on all 5 packages before
+   implementing each.
 
 ## Blockers / open questions
 

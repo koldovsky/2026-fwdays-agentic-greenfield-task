@@ -32,11 +32,11 @@ XL > 1wk.
 | 6 | T1 | Tailoring intelligence (seniority, blue-info status, cover letter) | P1 | XL | spec'd → `add-tailoring-intelligence` |
 | 7 | T6 | Tailoring history (list past tailorings) | P2 | M | mapped |
 | 8 | T5 | Premium: attach original PDF to request | P1 | L | mapped |
-| 9 | T13 | Real Stripe sandbox (replace emulator) | P1 | XL | mapped — **blocked** (see below) |
+| 9 | T13 | Stripe sandbox behind the port | P1 | XL | spec'd → `add-stripe-payments` |
 | 10 | T7 | App-wide animation/UX (skeletons, optimistic, hover) | P2 | XL | extends `landing-animations` |
 | 11 | T8 | Update landing to new tailoring flow | P1 | M | mapped — depends on T1/T5/T6 |
 | 12 | T9 | Landing copy: enemy-centric marketing | P2 | M | mapped |
-| 13 | T10 | App-wide UA/EN language toggle | P2 | L | mapped — **blocked** (Cyrillic font) |
+| 13 | T10 | App-wide UA/EN language toggle | P2 | L | mapped — font decided (see below) |
 
 **Quick-win tier (do first):** BUG-1, BUG-2 (done), then **T11** — high value,
 fast, and it is *live privacy debt*.
@@ -119,16 +119,16 @@ with a disabled + "premium" badge for free users → upgrade modal (new
 `PaywallReason`). Document-sourced bullets tagged + excludable like any ungrounded
 claim (FR-BULLETS-02). Depends on T1's grounding model. FR-PAYWALL-01/02.
 
-### T13 — Real Stripe (P1, XL) — BLOCKED
-`shared/lib/payments` has a provider **port** + working **emulator**; zero real
-Stripe in `src`, no `stripe` dep, `PaymentsProviderName = "emulator"` only.
-Blockers: **(a) TC-STACK-06 merchant-of-record decision** — Stripe is a processor,
-NOT a MoR; the PRD names Paddle/Lemon Squeezy for EU/UA VAT handling. Engineering
-cannot resolve this alone (finance/legal). (b) STRIPE_* secrets provisioned
-(rotate the exposed key first). (c) T12 legal pages (checkout must surface terms).
-Build behind the existing port. Security: verify webhooks via
-`stripe.webhooks.constructEvent` (not custom HMAC), idempotency on retries
-(double-charge risk), secret key never in the client bundle.
+### T13 — Stripe sandbox (P1, XL) — spec'd → `add-stripe-payments`
+`shared/lib/payments` has a provider **port** + contract test + working
+**emulator**; the factory has a branch point for a real adapter. **Decision
+(2026-07-04): add Stripe sandbox behind the port**, MoR/VAT deferred (not a
+blocker). Add the `stripe` dep + a Stripe adapter satisfying the port, select via
+`PAYMENTS_PROVIDER=stripe`, real Checkout Session, signature-verified idempotent
+webhook syncing `subscriptions`, cancel at period end. Security: verify webhooks
+via `stripe.webhooks.constructEvent` (raw body, not custom HMAC), idempotency on
+retries, secret key never in the client bundle. Rotate the exposed key first;
+checkout should surface T12 legal terms.
 
 ### T7 — App-wide animations (P2, XL)
 `landing-animations` change already designed (landing scroll-reveal/hero/CTA,
@@ -149,12 +149,13 @@ painful résumé-lying workaround) to `content.ts` + sections. Stay inside
 BC-BRAND-01 (calm, honest — no hype, or it undercuts the honesty brand). Sequence
 after T8 so both passes touch `content.ts` once. Content only.
 
-### T10 — Language toggle (P2, L) — BLOCKED
-`shared/lib/i18n` has ua/en; no runtime i18n lib (by design). Blocker: display
-fonts (Bricolage Grotesque + Hanken Grotesk) are **Latin-only**, so a Ukrainian
-UI falls back silently (NFR-OBS-02) or breaks. **Resolve the Cyrillic display-font
-decision first**, then add a locale provider + persist choice + extract landing
-strings. Deferring is safe for MVP validation. NFR-I18N-01, BC-BRAND-01.
+### T10 — Language toggle (P2, L) — font decision made
+`shared/lib/i18n` has ua/en; no runtime i18n lib (by design). The Cyrillic-font
+blocker is **resolved** (decision #4): Golos Text (body/UI) + Unbounded (display),
+both Cyrillic-capable via `next/font`. Remaining work: swap the fonts (DESIGN.md
+update + `perf-audit`), add a locale provider + persist choice, extract landing
+strings to i18n. Still P2 (deferring is safe for MVP validation). NFR-I18N-01,
+BC-BRAND-01, NFR-PERF-04.
 
 ## Cross-cutting risks
 
@@ -178,32 +179,37 @@ strings. Deferring is safe for MVP validation. NFR-I18N-01, BC-BRAND-01.
 - **i18n discipline:** all new UI strings centralized in `shared/lib/i18n` with
   ua/en parity (lint-enforced).
 
-## Open decisions (need the user / stakeholders)
+## Decisions (resolved 2026-07-04)
 
-1. **Merchant-of-record (TC-STACK-06)** — Stripe direct vs a MoR (Paddle / Lemon
-   Squeezy) for EU/UA VAT. Blocks T13. Finance + legal call.
-2. **Cyrillic display font** — pick a Cyrillic-capable display/body font (or accept
-   a system fallback for UA). Blocks T10, shadows T8/T9 UA copy.
-3. **Cover-letter is PRD-out-of-scope (T1) — needs a PRD decision.** The PRD lists
-   "Cover letter generation" under *Out of scope (MVP)* and has no `FR-COVERLETTER-*`
-   ID. You explicitly requested it, so intent is clear, but the PRD is the source of
-   truth: **promote it into scope** (add `FR-COVERLETTER-*`, move it out of the
-   out-of-scope list) before implementing `add-tailoring-intelligence` §4/§5. The
-   change's task §0.1 blocks on this. Not an engineering call.
-4. **Cover-letter scope depth (T1)** — once in scope: MVP = grounded bullets
-   reformatted as prose, or a fuller role-specific letter? Recommend the minimal
-   version first.
-5. **`enableLogs: true`** is set in all three Sentry configs — Sentry logs are
-   another plaintext egress path. `harden-sentry-privacy` redaction covers it, but
-   reconsider enabling it at all in production.
+1. **Cover letter → in scope.** PRD now has `FR-COVERLETTER-01/02` and drops the
+   out-of-scope line; `add-tailoring-intelligence` §0.1 resolved. ✅
+2. **Payments provider → Stripe (sandbox).** Added behind the existing port so more
+   providers come later; MoR/VAT (Paddle / Lemon Squeezy) **deferred**, not an MVP
+   blocker. TC-STACK-06 updated. New change `add-stripe-payments`. T13 unblocked. ✅
+3. **Stripe key → placeholder template only.** Real key rotated by user; `.env.example`
+   + dev-setup use `sk_test_…`/`pk_test_…` placeholders. Never in repo. ✅
+4. **Cyrillic font (my call).** Adopt a Cyrillic-first pairing for Ukrainian UI:
+   **body/UI → Golos Text** (Cyrillic-first grotesque, close to Hanken), **display →
+   Unbounded** (Ukrainian foundry, full Cyrillic) — keep Bricolage for Latin-only
+   marketing if desired. Unblocks T10. Still needs a DESIGN.md update + a
+   `perf-audit` (LCP ~20ms margin) + designer nod before shipping; both fonts load
+   via `next/font`. Recorded, not yet implemented.
+5. **Sentry → skip implementation for now.** Keep the spec + todos
+   (`harden-sentry-privacy`); do not build this pass. Note it is live PII-leak debt,
+   so build before any real paid/PII E2E. `enableLogs: true` in all three configs is
+   an extra plaintext egress path — the change's redaction covers it; reconsider
+   enabling it in production.
+6. **Cover-letter scope depth** — recommend MVP = grounded bullets reformatted as
+   prose first; a fuller role-specific letter later.
 
 ## OpenSpec changes proposed from this roadmap
 
 - `fix-gdpr-account-endpoints` (BUG-1/2) — retroactive; captures the calm-error
   contract + the previously-unspecced `account` capability. Code already shipped.
-- `harden-sentry-privacy` (T11)
+- `harden-sentry-privacy` (T11) — spec + todos only; implementation deferred.
 - `add-legal-pages` (T12)
-- `add-tailoring-intelligence` (T1)
+- `add-tailoring-intelligence` (T1) — cover letter now in PRD scope.
+- `add-stripe-payments` (T13) — Stripe sandbox behind the port; MoR deferred.
 
 > Validation note: the `openspec` CLI is **not** installed in this environment
 > (a prior handoff note claiming otherwise was stale). Run

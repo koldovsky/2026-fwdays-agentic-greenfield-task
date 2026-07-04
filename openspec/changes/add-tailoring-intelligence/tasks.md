@@ -1,6 +1,6 @@
 ## 0. Product decision (do first — blocks the cover-letter half)
 
-- [ ] 0.1 Resolve the PRD conflict: `docs/cv-agent-requirements.md` "Out of scope (MVP)" lists "Cover letter generation". Either promote it (add a `FR-COVERLETTER-*` block + move the line out of scope) or defer §4/§5 of this change; record the decision in `docs/current-state.md`
+- [x] 0.1 RESOLVED 2026-07-04 (user): cover letter promoted into scope. PRD adds `FR-COVERLETTER-01/02` and removes "Cover letter generation" from "Out of scope (MVP)". §4/§5 of this change proceed.
 - [ ] 0.2 Confirm a blue/info design token exists for the `info` checklist status in `docs/vouch-design-system/` / `src/app/globals.css` `@theme`; if not, agree one with DESIGN.md before adding any hue (no new brand hues without sign-off)
 
 ## 1. Blue `info` checklist status (scoring core — MODIFIES `checklist`)

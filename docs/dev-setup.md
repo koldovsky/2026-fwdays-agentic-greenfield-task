@@ -15,6 +15,14 @@ random values; do not commit this file (it is gitignored by Next.js defaults).
 | `CV_ENCRYPTION_KEY` | CV persistence (AES-256-GCM at rest, NFR-SEC-01) | 32 bytes as 64-char hex or base64 | `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | live tailoring only (tests use a fake provider) | Anthropic key | console.anthropic.com |
 | `NEXT_PUBLIC_SITE_URL` | correct SEO URLs (defaults to `https://vouch.app`) | absolute URL | your origin |
+| `PAYMENTS_PROVIDER` | payments provider selector | `emulator` (default) or `stripe` | — |
+| `STRIPE_SECRET_KEY` | Stripe sandbox (server-only; `PAYMENTS_PROVIDER=stripe`) | `sk_test_…` | Stripe dashboard (test mode) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe sandbox (client-safe) | `pk_test_…` | Stripe dashboard (test mode) |
+| `STRIPE_WEBHOOK_SECRET` | verify Stripe webhook signatures | `whsec_…` | `stripe listen` or dashboard |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry (leave empty to disable locally) | DSN URL | Sentry project settings |
+
+A full template lives in `.env.example` — copy it to `.env.local` and fill in
+real values. Never commit real keys (`.env.local` is gitignored).
 
 One-shot creation (run in your own terminal, not via an agent):
 

@@ -108,6 +108,8 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | FR-EXPORT-02  | User can download a clean PDF                                                                                          | proposed |
 | FR-EXPORT-03  | User can download a DOCX                                                                                               | proposed |
 | FR-EXPORT-04  | Free-tier exports include a small footer line «Адаптовано за допомогою CV-Agent»; paid exports are clean              | proposed |
+| FR-COVERLETTER-01 | User can generate a cover letter for the target role at the end of the tailoring flow, grounded only in their CV + the JD (no fabricated experience; same honesty rules as bullets, BC-HONESTY-01) | proposed |
+| FR-COVERLETTER-02 | The cover letter is exportable (copy / download) and gated as a paid feature like other exports (FR-PAYWALL-01; FR-EXPORT-04 footer rules apply) | proposed |
 
 ### Landing page & sales surface (capability `sales`)
 
@@ -169,7 +171,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | TC-STACK-03  | Anthropic API (Claude) for generation and grounding passes; Vercel AI SDK v5 for streaming and structured output                         | accepted |
 | TC-STACK-04  | BullMQ + Redis for the async tailoring queue; workers run as long-lived Node processes or Vercel background functions                    | accepted |
 | TC-STACK-05  | PostgreSQL for users, CV profiles, job descriptions, tailorings, subscriptions, usage counters                                           | accepted |
-| TC-STACK-06  | Merchant of record (Paddle or Lemon Squeezy) for payments; subscription state synced via webhooks into `subscriptions` table             | proposed |
+| TC-STACK-06  | Payments provider behind a swappable port; subscription state synced via webhooks into `subscriptions` table. **Initial provider: Stripe (sandbox), decided 2026-07-04** — sandbox-only for now, more providers later. Stripe is a processor, not a merchant-of-record; EU/UA VAT handling via a MoR (Paddle / Lemon Squeezy) is a deferred follow-up, not an MVP blocker | proposed |
 | TC-STACK-07  | Auth via Auth.js, Supabase Auth, or Clerk — decision deferred; must support email + Google OAuth without custom session management       | proposed |
 | TC-PARSE-01  | PDF text extraction server-side only; client never receives raw binary; library TBD (pdf-parse, pdfjs-dist, or Cloudflare Worker)        | proposed |
 | TC-PARSE-02  | DOCX text extraction server-side only; library TBD (mammoth.js)                                                                         | proposed |
@@ -197,7 +199,6 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 
 - Coach / multi-candidate mode (one account, many CVs)
 - ATS keyword gap diagnostic as a standalone view
-- Cover letter generation
 - Browser extension for one-click JD capture
 - LinkedIn profile tailoring
 - Recruiter-facing view or API

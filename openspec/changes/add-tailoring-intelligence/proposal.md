@@ -97,10 +97,9 @@ rewrite**, so the spec is written to be precise and testable.
   (paid-gated like the existing pdf/docx routes, `FR-PAYWALL-01`),
   `src/widgets/export-stepper` (offer the cover letter), `src/shared/lib/i18n`
   (ua + en copy, `NFR-I18N-01`).
-- Product note (open question, see tasks §0): the PRD "Out of scope (MVP)" list
-  currently names "Cover letter generation." This change treats that line as
-  superseded by the flagship scope; the PRD must be updated (or the cover-letter
-  half deferred) before implementation — the spec cites `FR-EXPORT-01` for the
-  export surface but there is no dedicated `FR-COVERLETTER-*` ID yet.
+- Product note (RESOLVED 2026-07-04, user): cover letter is now in scope. The PRD
+  adds `FR-COVERLETTER-01` (grounded generation) + `FR-COVERLETTER-02` (paid,
+  gated export) and drops "Cover letter generation" from "Out of scope (MVP)". The
+  cover-letter spec cites those IDs.
 - Scheduling: XL change. Gates the T8 landing rewrite — land and verify before
   the landing copy is rewritten around these capabilities.
