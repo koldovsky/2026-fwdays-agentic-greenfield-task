@@ -31,6 +31,7 @@ export interface MdnsClient {
     port: number;
     host?: string;
     txt?: Record<string, string>;
+    probe?: boolean;
   }) => MdnsService;
   destroy: (cb?: () => void) => void;
 }
@@ -143,6 +144,15 @@ export function startMdns(
         port,
         host: hostname,
         txt: { path: '/' },
+        // Skip RFC 6762 §9 probing. Design.md scopes the MVP to one
+        // mytv per LAN, and bonjour-service's probe path (a) writes a
+        // raw `console.log(new Error(...))` outside our Pino stream when
+        // it sees any duplicate response, and (b) silently stops the
+        // service without notifying us — leaving the handle stuck in
+        // 'advertising' but not actually broadcasting. Straight-announce
+        // instead overwrites stale cached records (e.g. from a previous
+        // dev session that didn't flush a goodbye packet).
+        probe: false,
       });
       const addrs = activeIpv4Addresses(getIfaces);
       lastAddresses = addrs;

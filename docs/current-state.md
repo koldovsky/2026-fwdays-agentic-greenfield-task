@@ -4,6 +4,16 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-04T11:33:05Z
+
+**What was done — hotfix on top of `mdns-advertisement` (C2): silence bonjour-service probe noise and wire real shutdown signals**
+- Symptom during a real `back:dev` run: bonjour-service dumped `Error: Service name is already in use on the network` (raw `console.log(new Error(...))` from `node_modules/bonjour-service/dist/lib/registry.js:32`, bypassing Pino) whenever a stale `mytv` record was still cached on the LAN from a previous session. Worse: the library *silently* calls `service.stop()` on probe conflict without notifying the caller, so `handle.state` stayed at `"advertising"` even though nothing was actually being broadcast — `/api/health` reported a false positive.
+- **Fix 1** (`back-end/src/mdns.ts`): pass `probe: false` to `client.publish(...)`. Skips RFC 6762 §9 probing entirely — legitimate under the design.md "one mytv per LAN" MVP scope, and re-announcing over a stale cached record is the desired behavior on restart. Killed the noisy `console.log` and the false-positive state issue in one move. `MdnsClient.publish` type gained `probe?: boolean` accordingly.
+- **Fix 2** (`back-end/src/index.ts`): added `SIGINT`/`SIGTERM` handlers that call `app.close()` so Fastify's `onClose` hook fires — which is what actually runs `mdnsHandle.stop()`, which internally waits ~500 ms for the bonjour goodbye packet to leave the LAN before destroying the client. Without this the previous session's advertisement lingered in peer caches for the record's TTL (5 min for A records here) and every subsequent startup collided with itself. This closes the "advertisement withdraws on shutdown" scenario in `openspec/specs/mdns-advertisement/spec.md` for real signal-driven shutdowns, and it's also the follow-up the `platform-foundation` reviewer flagged (long-lived background loops in later capabilities like `upnp-tv-discovery` need this too).
+- Verification: `npm run back:build` + `npm run back:test` still 11/11 green. Live repro against the compiled `dist/index.js`: `curl` returns `mdns.state: "advertising"`, `kill -TERM <pid>` produces log line `received shutdown signal; closing server` and exits with code 0; `dns-sd -B _http._tcp .` shows the `mytv` instance without the earlier bonjour conflict error.
+- Note on the earlier `kill -TERM` attempt via `npm run back:dev`: sending TERM to `npm` does **not** propagate to the tsx child — npm just dies and orphans the Node process. The signal handling wiring here is on the actual Node process, not on npm; in production the app runs via `node dist/index.js` (systemd or similar), which signals it directly. For local `back:dev` cleanup, use `pkill -TERM -f 'tsx.*src/index.ts'` (or Ctrl-C in the foreground terminal, which sends SIGINT straight to the process group) — worth documenting in `back-end/README.md` if the next contributor trips over this.
+- **Follow-ups for the next session**: none blocking. Next capability per `docs/capabilities.md` is `upnp-tv-discovery` (C3 — Phase 1, only depends on `platform-foundation`).
+
 ## 2026-07-04T11:18:27Z
 
 **What was done — implemented `mdns-advertisement` (C2) via the `/next-change` Loop Engineering cycle**
