@@ -17,6 +17,14 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  # Keep under free-tier file cap (~150): skip agent-workflow scaffolding.
+  path_filters:
+    - "!openspec/**"
+    - "!.cursor/**"
+    - "!.claude/**"
+    - "!docs/demo-video/**"
+    - "!**/skills-lock.json"
+    - "!package-lock.json"
   path_instructions:
     - path: "**"
       instructions: >-
