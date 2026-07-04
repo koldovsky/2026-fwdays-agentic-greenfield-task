@@ -2,7 +2,12 @@
 // adversarial run trips the invariant it violates (grounding isolation, order,
 // bounded retries, fail-honest termination, no user id in payload).
 import { describe, expect, it } from "vitest";
-import { adversarialTraces, goldenTrace, goldenTraceWithConfirmedAnswers } from "./fixtures";
+import {
+  adversarialTraces,
+  goldenTrace,
+  goldenTraceWithConfirmedAnswers,
+  goldenTraceWithSeniority,
+} from "./fixtures";
 import { runSuite } from "./runner";
 import { gradeTrajectory } from "./trajectory";
 
@@ -20,6 +25,15 @@ describe("gradeTrajectory — golden", () => {
   it("passes every check when a bullet is grounded via a confirmed answer", () => {
     const grade = gradeTrajectory(goldenTraceWithConfirmedAnswers);
     expect(grade.checks.find((c) => c.id === "grounding-isolation")).toMatchObject({ ok: true });
+    expect(grade.passed).toBe(true);
+    expect(grade.score).toBe(1);
+  });
+
+  // add-tailoring-intelligence §3: the analysis-phase infer-seniority step
+  // reads only the CV and must not perturb any honesty check — the augmented
+  // pipeline still grades clean.
+  it("passes every check when the run infers seniority", () => {
+    const grade = gradeTrajectory(goldenTraceWithSeniority);
     expect(grade.passed).toBe(true);
     expect(grade.score).toBe(1);
   });

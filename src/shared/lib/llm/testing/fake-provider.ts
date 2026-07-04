@@ -13,6 +13,8 @@ import {
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
+  SENIORITY_SYSTEM_PROMPT,
+  type CareerStage,
   type GroundingLabel,
   type LlmCallOptions,
   type LlmProvider,
@@ -20,8 +22,13 @@ import {
   type Requirement,
 } from "..";
 
-/** Which of the two-pass prompts a given call carries. */
-export type FakePhase = "extraction" | "generation" | "grounding" | "unknown";
+/** Which pass a given call carries. `seniority` is the §3 analysis-phase step. */
+export type FakePhase =
+  | "extraction"
+  | "seniority"
+  | "generation"
+  | "grounding"
+  | "unknown";
 
 /** One recorded provider call — the classified phase plus the raw prompt. */
 export interface FakeCall {
@@ -36,6 +43,8 @@ export type FakeResponder = string | ((call: FakeCall) => string);
 
 export interface FakeProviderScript {
   readonly extraction?: FakeResponder;
+  /** §3 seniority inference — auxiliary/best-effort; unscripted calls throw. */
+  readonly seniority?: FakeResponder;
   readonly generation?: FakeResponder;
   readonly grounding?: FakeResponder;
   /** Phases that should throw instead of responding (fail-honest tests). */
@@ -56,6 +65,7 @@ function payloadOf(prompt: Prompt): string {
 export function classifyPrompt(prompt: Prompt): FakePhase {
   const system = prompt.messages.find((m) => m.role === "system")?.content ?? "";
   if (system === EXTRACTION_SYSTEM_PROMPT) return "extraction";
+  if (system === SENIORITY_SYSTEM_PROMPT) return "seniority";
   if (system === GENERATION_SYSTEM_PROMPT) return "generation";
   if (system === GROUNDING_SYSTEM_PROMPT) return "grounding";
   return "unknown";
@@ -89,11 +99,13 @@ export function createFakeProvider(script: FakeProviderScript = {}): FakeProvide
     const responder =
       phase === "extraction"
         ? script.extraction
-        : phase === "generation"
-          ? script.generation
-          : phase === "grounding"
-            ? script.grounding
-            : undefined;
+        : phase === "seniority"
+          ? script.seniority
+          : phase === "generation"
+            ? script.generation
+            : phase === "grounding"
+              ? script.grounding
+              : undefined;
     const text = resolve(responder, call);
     if (text === undefined) {
       throw new Error(`fake: no response scripted for phase "${phase}"`);
@@ -125,6 +137,11 @@ export function createFakeProvider(script: FakeProviderScript = {}): FakeProvide
 /** Build an extraction response: `{"requirements":[...]}` (parse.ts). */
 export function fakeExtraction(requirements: readonly Requirement[]): string {
   return JSON.stringify({ requirements });
+}
+
+/** Build a seniority response: `{"stage":"...","rationale":"..."}` (parse.ts). */
+export function fakeSeniority(stage: CareerStage, rationale = "На основі досвіду в резюме."): string {
+  return JSON.stringify({ stage, rationale });
 }
 
 /** Build a generation response: `{"bullets":[{id,text,sourceSentence?}]}`. */

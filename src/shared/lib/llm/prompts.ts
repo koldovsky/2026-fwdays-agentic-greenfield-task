@@ -4,12 +4,14 @@
 // JD, or the ranked requirements (BC-HONESTY-01 / FR-BULLETS-03).
 
 import type {
+  CareerStage,
   ConfirmedAnswerEvidence,
   ExtractionInput,
   GenerationInput,
   GroundingInput,
   Prompt,
   PromptMessage,
+  SeniorityInput,
 } from "./types";
 
 // --- Centralized prompt text (do not scatter string literals) -------------
@@ -73,6 +75,25 @@ export const EXTRACTION_SYSTEM_PROMPT = [
   '{"requirements":[{"id":"r1","text":"...","importance":"must-have","keywords":["..."]}]}',
 ].join("\n");
 
+/**
+ * Seniority system prompt (analysis phase). Infers the career stage from the
+ * candidate's CV prose ONLY. Explicitly forbids inventing skills, numbers,
+ * companies, or experience absent from the CV (BC-HONESTY-01) and pins a
+ * Ukrainian rationale (NFR-I18N-01). Conservative by construction — weak signal
+ * must not be inflated to "senior".
+ */
+export const SENIORITY_SYSTEM_PROMPT = [
+  "Ти — аналітик резюме. Визнач рівень кандидата (junior, mid або senior)",
+  "ВИКЛЮЧНО на основі тексту резюме, наведеного нижче.",
+  "Категорично заборонено вигадувати навички, цифри, компанії чи досвід,",
+  "яких немає в тексті резюме (BC-HONESTY-01).",
+  "Будь консервативним: за слабких сигналів (короткий стаж, відсутність",
+  "керівного досвіду) НЕ завищуй рівень до senior.",
+  "Обґрунтування пиши українською і спирайся лише на сигнали з резюме.",
+  "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
+  '{"stage":"mid","rationale":"..."}',
+].join("\n");
+
 // --- Helpers --------------------------------------------------------------
 
 function formatRequirements(
@@ -121,6 +142,31 @@ function formatConfirmedAnswersBlock(
   ];
 }
 
+const CAREER_STAGE_LABEL: Readonly<Record<CareerStage, string>> = {
+  junior: "джуніор",
+  mid: "мідл",
+  senior: "сеньйор",
+};
+
+/**
+ * A TONE-only calibration block (§3.5) — tells generation/cover-letter to match
+ * the candidate's register, explicitly WITHOUT adding facts. Empty when the
+ * stage is absent so the baseline prompt stays byte-for-byte unchanged. It is
+ * NEVER used by the grounding builder (BC-HONESTY-03).
+ */
+function formatCareerStageBlock(
+  careerStage: CareerStage | undefined,
+): readonly string[] {
+  if (!careerStage) return [];
+  return [
+    "",
+    "## Рівень кандидата (лише для тону)",
+    `Кандидат — ${CAREER_STAGE_LABEL[careerStage]}. Підбирай регістр формулювань`,
+    "під цей рівень, але НЕ додавай навичок, цифр чи досвіду понад те, що вже є",
+    "в резюме (BC-HONESTY-01).",
+  ];
+}
+
 // --- Pass 0: extraction prompt ---------------------------------------------
 
 /**
@@ -143,6 +189,29 @@ export function buildExtractionPrompt(input: ExtractionInput): Prompt {
   return { messages };
 }
 
+// --- Seniority inference prompt (analysis phase) --------------------------
+
+/**
+ * Build the seniority-inference prompt. Carries ONLY the candidate's raw CV
+ * text (§3, contextKeys `["cvText"]`) — never the JD, requirements, or bullets.
+ * The stage it yields is a tone signal for generation, never a new claim.
+ */
+export function buildSeniorityPrompt(input: SeniorityInput): Prompt {
+  const userContent = [
+    "## Резюме кандидата",
+    input.cvText.trim() || "(резюме відсутнє)",
+    "",
+    "Визнач рівень кандидата (junior, mid або senior) лише за цим текстом.",
+  ].join("\n");
+
+  const messages: readonly PromptMessage[] = [
+    { role: "system", content: SENIORITY_SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ];
+
+  return { messages };
+}
+
 // --- Pass 1: generation prompt --------------------------------------------
 
 /**
@@ -152,7 +221,7 @@ export function buildExtractionPrompt(input: ExtractionInput): Prompt {
  * labeled evidence lane (BC-HONESTY-03).
  */
 export function buildGenerationPrompt(input: GenerationInput): Prompt {
-  const { cvProfile, requirements, jobDescription, confirmedAnswers } = input;
+  const { cvProfile, requirements, jobDescription, confirmedAnswers, careerStage } = input;
 
   const userContent = [
     "## Опис вакансії",
@@ -169,6 +238,7 @@ export function buildGenerationPrompt(input: GenerationInput): Prompt {
     "## Речення з резюме кандидата",
     formatSentences(cvProfile.sentences),
     ...formatConfirmedAnswersBlock(confirmedAnswers),
+    ...formatCareerStageBlock(careerStage),
     "",
     "Переформулюй досвід кандидата у пункти, адаптовані під вимоги вакансії.",
   ].join("\n");

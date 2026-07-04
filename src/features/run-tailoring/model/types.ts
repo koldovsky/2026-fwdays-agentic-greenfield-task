@@ -5,6 +5,7 @@
 import type { Bullet } from "@/entities/bullet";
 import type { TailoringChecklistRow } from "@/entities/tailoring";
 import type { SkillName } from "@/shared/lib/evals";
+import type { CareerStage } from "@/shared/lib/llm";
 
 /** Visible progress states, queued → processing → done | failed (FR-TAILOR-01). */
 export type TailorRunPhase = "queued" | "processing" | "done" | "failed";
@@ -17,6 +18,11 @@ export interface TailoringRunResult {
   readonly bullets: readonly Bullet[];
   /** Deterministic 0–100 weighted match score (FR-CHECKLIST-04). */
   readonly matchScore: number;
+  /**
+   * Inferred career stage (add-tailoring-intelligence §3), a tone signal only.
+   * Optional: best-effort inference may be absent without failing the run.
+   */
+  readonly careerStage?: CareerStage;
 }
 
 /** One NDJSON line on the /api/tailor stream. */

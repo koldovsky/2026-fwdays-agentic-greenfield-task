@@ -1,6 +1,44 @@
 import { describe, expect, it } from "vitest";
 
-import { parseGenerationResponse, parseGroundingResponse } from "./index";
+import {
+  parseGenerationResponse,
+  parseGroundingResponse,
+  parseSeniorityResponse,
+} from "./index";
+
+describe("parseSeniorityResponse (§3, BC-HONESTY-01, NFR-OBS-01)", () => {
+  it("parses a valid stage + rationale", () => {
+    const res = parseSeniorityResponse('{"stage":"senior","rationale":"10 років досвіду з лідерством"}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value).toEqual({ stage: "senior", rationale: "10 років досвіду з лідерством" });
+  });
+
+  it("tolerates Markdown fences and surrounding prose", () => {
+    const raw = 'Ось:\n```json\n{"stage":"mid","rationale":"кілька проєктів"}\n```';
+    const res = parseSeniorityResponse(raw);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.stage).toBe("mid");
+  });
+
+  it("maps an unknown/invalid stage conservatively to junior (never inflate)", () => {
+    const res = parseSeniorityResponse('{"stage":"principal","rationale":"багато досвіду"}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.stage).toBe("junior");
+  });
+
+  it("fails (typed error) when the rationale is missing — no bare stage", () => {
+    const res = parseSeniorityResponse('{"stage":"senior"}');
+    expect(res.ok).toBe(false);
+  });
+
+  it("never throws on malformed JSON — returns a typed error", () => {
+    const res = parseSeniorityResponse("not json at all");
+    expect(res.ok).toBe(false);
+  });
+});
 
 describe("parseGenerationResponse (FR-TAILOR-02)", () => {
   it("parses valid JSON with id, text, sourceSentence", () => {

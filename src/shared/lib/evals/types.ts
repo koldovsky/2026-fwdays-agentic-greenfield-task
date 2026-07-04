@@ -53,6 +53,7 @@ export interface OutputCase {
 export type SkillName =
   | "parse-cv"
   | "extract-requirements"
+  | "infer-seniority"
   | "derive-clarifying-questions"
   | "generate-bullet"
   | "ground-bullet"

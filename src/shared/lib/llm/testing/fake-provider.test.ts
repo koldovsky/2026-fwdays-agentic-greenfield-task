@@ -7,6 +7,7 @@ import {
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
+  buildSeniorityPrompt,
   type Prompt,
 } from "..";
 import {
@@ -15,9 +16,11 @@ import {
   fakeExtraction,
   fakeGeneration,
   fakeGrounding,
+  fakeSeniority,
 } from "./fake-provider";
 
 const extractionPrompt = buildExtractionPrompt({ jobDescription: "React role" });
+const seniorityPrompt = buildSeniorityPrompt({ cvText: "6 років на React" });
 const generationPrompt = buildGenerationPrompt({
   cvProfile: { skills: ["react"], sentences: ["Built a React app."] },
   requirements: [{ id: "r1", text: "React", importance: "must-have", keywords: ["react"] }],
@@ -37,6 +40,7 @@ async function collect(stream: AsyncIterable<string>): Promise<string> {
 describe("classifyPrompt", () => {
   it("classifies each pass by its system prompt", () => {
     expect(classifyPrompt(extractionPrompt)).toBe("extraction");
+    expect(classifyPrompt(seniorityPrompt)).toBe("seniority");
     expect(classifyPrompt(generationPrompt)).toBe("generation");
     expect(classifyPrompt(groundingPrompt)).toBe("grounding");
   });
@@ -70,6 +74,13 @@ describe("createFakeProvider", () => {
     ]);
     // The payload carries the message content for leak scans.
     expect(provider.calls[0].payload).toContain("React role");
+  });
+
+  it("classifies and answers the §3 seniority pass", async () => {
+    const provider = createFakeProvider({ seniority: fakeSeniority("mid", "кілька проєктів") });
+    const raw = await provider.complete(seniorityPrompt);
+    expect(JSON.parse(raw)).toEqual({ stage: "mid", rationale: "кілька проєктів" });
+    expect(provider.calls.map((c) => c.phase)).toEqual(["seniority"]);
   });
 
   it("stream and complete return the same text (chunked)", async () => {

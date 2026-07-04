@@ -28,9 +28,12 @@ import {
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
+  buildSeniorityPrompt,
   parseExtractionResponse,
   parseGenerationResponse,
   parseGroundingResponse,
+  parseSeniorityResponse,
+  type CareerStage,
   type ConfirmedAnswerEvidence,
   type GeneratedBullet,
   type GroundingVerdict,
@@ -57,6 +60,8 @@ export const STEP_CAP = 40;
 
 /** Output-token budgets per skill (NFR-COST-01). */
 const EXTRACTION_MAX_TOKENS = 2048;
+// Seniority is a tiny JSON verdict ({stage, rationale}) — a small budget suffices.
+const SENIORITY_MAX_TOKENS = 512;
 const GENERATION_MAX_TOKENS = 4096;
 // Grounding runs at `high` effort (see below) whose adaptive-thinking tokens
 // share this budget; 2048 leaves headroom so deliberation can't starve the
@@ -90,7 +95,7 @@ class StepFailedError extends Error {
  * no-user-id eval can scan real payloads.
  */
 function makeStepRunner(steps: TraceStep[]) {
-  return async function runStep<T>(
+  async function runStep<T>(
     skill: SkillName,
     contextKeys: readonly string[],
     llmPayload: string | undefined,
@@ -118,7 +123,39 @@ function makeStepRunner(steps: TraceStep[]) {
         void error; // retried — the final failure is what surfaces (NFR-OBS-01)
       }
     }
-  };
+  }
+
+  /**
+   * A best-effort variant for a NON-essential auxiliary step (§3 seniority): it
+   * retries up to the same bound but, on exhaustion, records NO step and
+   * resolves to `undefined` instead of throwing. Recording nothing on failure
+   * keeps the trace honest — a failed auxiliary must not leave a `failed` step
+   * that would trip `fail-honest-termination` on an otherwise-clean run, and a
+   * flaky tone signal must never sink an honest tailoring (NFR-OBS-01). A
+   * successful call records a normal traced step exactly like {@link runStep}.
+   */
+  async function runOptional<T>(
+    skill: SkillName,
+    contextKeys: readonly string[],
+    llmPayload: string | undefined,
+    fn: () => Promise<T>,
+  ): Promise<T | undefined> {
+    if (steps.length >= STEP_CAP) return undefined;
+    let attempts = 0;
+    for (;;) {
+      attempts += 1;
+      try {
+        const value = await fn();
+        steps.push({ skill, attempts, contextKeys, ...(llmPayload ? { llmPayload } : {}) });
+        return value;
+      } catch (error) {
+        void error;
+        if (attempts >= MAX_ATTEMPTS) return undefined; // best-effort: no step recorded
+      }
+    }
+  }
+
+  return { runStep, runOptional };
 }
 
 // --- Analysis phase: parse-cv → extract-requirements → score →
@@ -136,6 +173,11 @@ export type AnalysisEvent =
       readonly requirements: readonly Requirement[];
       /** Derived from weak checklist rows for the wizard's clarify step (FR-WIZARD-02). */
       readonly clarifyingQuestions: readonly ClarifyingQuestion[];
+      /**
+       * Best-effort inferred career stage (§3), a generation-tone signal only.
+       * Optional: absent when the inference could not be produced this run.
+       */
+      readonly careerStage?: CareerStage;
     }
   | { readonly type: "error"; readonly code: TailorErrorCode };
 
@@ -163,7 +205,7 @@ export async function* runAnalysisPhase(
   input: TailoringRunInput,
 ): AsyncGenerator<AnalysisEvent, RunTrace, void> {
   const steps: TraceStep[] = [];
-  const runStep = makeStepRunner(steps);
+  const { runStep, runOptional } = makeStepRunner(steps);
   const trace = (terminated: RunTrace["terminated"]): RunTrace => ({
     steps,
     stepCap: STEP_CAP,
@@ -205,6 +247,27 @@ export async function* runAnalysisPhase(
       },
     );
     yield { type: "step", skill: "extract-requirements" };
+
+    // 2b. infer-seniority — best-effort tone signal, sees ONLY the raw CV text
+    //     (§3, BC-HONESTY-01). NON-fatal: a failed tone inference must never
+    //     sink an otherwise-honest tailoring (NFR-OBS-01), so runOptional
+    //     records a step on success and nothing on exhaustion. The stage is
+    //     NEVER threaded into grounding (BC-HONESTY-03 — see runGenerationPhase).
+    const seniorityPrompt = buildSeniorityPrompt({ cvText: input.cvText });
+    const careerStage = await runOptional(
+      "infer-seniority",
+      ["cvText"],
+      JSON.stringify(seniorityPrompt),
+      async () => {
+        const raw = await deps.llm.complete(seniorityPrompt, {
+          maxTokens: SENIORITY_MAX_TOKENS,
+        });
+        const parsed = parseSeniorityResponse(raw);
+        if (!parsed.ok) throw new Error(parsed.error);
+        return parsed.value.stage;
+      },
+    );
+    if (careerStage !== undefined) yield { type: "step", skill: "infer-seniority" };
 
     // 3. score — pure and deterministic, no LLM (FR-CHECKLIST-01, TC-PURE-01).
     // Reordered ahead of generation (add-resume-wizard design.md §1): score
@@ -248,6 +311,7 @@ export async function* runAnalysisPhase(
       cvProfile,
       requirements,
       clarifyingQuestions,
+      ...(careerStage !== undefined ? { careerStage } : {}),
     };
     return trace("done");
   } catch (error) {
@@ -283,6 +347,12 @@ export interface GenerationPhaseInput {
    */
   readonly checklist: readonly TailoringChecklistRow[];
   readonly matchScore: number;
+  /**
+   * Inferred career stage from analysis (§3) — TONE calibration for generation
+   * only, never threaded into the grounding pass (BC-HONESTY-03). Optional:
+   * best-effort inference may be absent, leaving the baseline prompt unchanged.
+   */
+  readonly careerStage?: CareerStage;
 }
 
 /** One NDJSON-shaped event from {@link runGenerationPhase}. */
@@ -329,9 +399,9 @@ export async function* runGenerationPhase(
   deps: LoopDeps,
   input: GenerationPhaseInput,
 ): AsyncGenerator<GenerationEvent, RunTrace, void> {
-  const { cvProfile, requirements, jobDescription, confirmedAnswers, checklist, matchScore: score } = input;
+  const { cvProfile, requirements, jobDescription, confirmedAnswers, checklist, matchScore: score, careerStage } = input;
   const steps: TraceStep[] = [];
-  const runStep = makeStepRunner(steps);
+  const { runStep } = makeStepRunner(steps);
   const trace = (terminated: RunTrace["terminated"]): RunTrace => ({
     steps,
     stepCap: STEP_CAP,
@@ -342,6 +412,11 @@ export async function* runGenerationPhase(
   // contextKeys as before the wizard split.
   const confirmedAnswersKey: readonly string[] =
     confirmedAnswers.length > 0 ? ["confirmedAnswers"] : [];
+  // Named in generate-bullet's contextKeys only when a stage is actually
+  // supplied, so a stage-free run traces identically to before §3. It is
+  // deliberately NEVER added to any ground-bullet step (BC-HONESTY-03).
+  const careerStageKey: readonly string[] =
+    careerStage !== undefined ? ["careerStage"] : [];
 
   try {
     // 1. generate-bullet — pass 1 (FR-TAILOR-02).
@@ -350,10 +425,11 @@ export async function* runGenerationPhase(
       requirements,
       jobDescription,
       confirmedAnswers,
+      ...(careerStage !== undefined ? { careerStage } : {}),
     });
     const generated = await runStep(
       "generate-bullet",
-      ["cvProfile", "requirements", "jdText", ...confirmedAnswersKey],
+      ["cvProfile", "requirements", "jdText", ...confirmedAnswersKey, ...careerStageKey],
       JSON.stringify(generationPrompt),
       async () => {
         const raw = await deps.llm.complete(generationPrompt, {
@@ -430,7 +506,12 @@ export async function* runGenerationPhase(
       }),
     );
 
-    const result: TailoringRunResult = { checklist, bullets, matchScore: score };
+    const result: TailoringRunResult = {
+      checklist,
+      bullets,
+      matchScore: score,
+      ...(careerStage !== undefined ? { careerStage } : {}),
+    };
     yield { type: "result", result };
     yield { type: "status", phase: "done" };
     return trace("done");
@@ -491,6 +572,9 @@ export async function* runTailoringLoop(
     confirmedAnswers: [],
     checklist: analysisResult.checklist,
     matchScore: analysisResult.matchScore,
+    ...(analysisResult.careerStage !== undefined
+      ? { careerStage: analysisResult.careerStage }
+      : {}),
   });
 
   let genStep = await generation.next();

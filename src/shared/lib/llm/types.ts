@@ -40,6 +40,32 @@ export interface ConfirmedAnswerEvidence {
   readonly answer: string;
 }
 
+// --- Seniority inference (analysis phase, tone signal only) ----------------
+
+/** Inferred career stage from the CV prose (add-tailoring-intelligence §3). */
+export type CareerStage = "junior" | "mid" | "senior";
+
+/**
+ * Input to seniority inference. Carries ONLY the candidate's own raw CV text —
+ * never the JD, requirements, or generated bullets. The inference is a pure
+ * prompt that reads CV prose and returns a stage; it must never introduce a
+ * skill, number, or experience absent from that text (BC-HONESTY-01).
+ */
+export interface SeniorityInput {
+  readonly cvText: string;
+}
+
+/**
+ * The seniority verdict: a stage plus a short Ukrainian rationale that cites
+ * only CV-sourced signal (NFR-I18N-01, BC-HONESTY-01). It MAY calibrate the
+ * tone of generation/cover-letter output but is NEVER part of the grounding
+ * pass's context (BC-HONESTY-03) and adds no claim of its own.
+ */
+export interface SeniorityVerdict {
+  readonly stage: CareerStage;
+  readonly rationale: string;
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {
@@ -50,6 +76,12 @@ export interface GenerationInput {
   readonly jobDescription: string;
   /** Confirmed wizard answers, alongside (never instead of) the CV (BC-HONESTY-03). */
   readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
+  /**
+   * Inferred career stage — TONE calibration only (§3.5). Absent leaves the
+   * baseline prompt byte-for-byte unchanged; present may shift phrasing but
+   * introduces no claim the CV did not already support (BC-HONESTY-01).
+   */
+  readonly careerStage?: CareerStage;
 }
 
 export interface GeneratedBullet {

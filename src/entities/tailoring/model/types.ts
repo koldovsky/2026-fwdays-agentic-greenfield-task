@@ -7,6 +7,7 @@
 // are re-declared here from the shared scoring core (single source of truth).
 // Framework-free (TC-PURE-01): no next/*, no DOM, no IO.
 
+import type { CareerStage } from "@/shared/lib/llm";
 import type { ChecklistItem, Requirement } from "@/shared/lib/scoring";
 
 /** One scored requirement row within a tailoring (re-declared from shared types). */
@@ -44,4 +45,9 @@ export interface Tailoring {
   readonly bullets: readonly TailoringBullet[];
   /** Deterministic 0–100 weighted match score (FR-CHECKLIST-04). */
   readonly matchScore: number;
+  /**
+   * Inferred career stage for this run (add-tailoring-intelligence §3) — a tone
+   * signal, never a claim. Optional: best-effort inference may be absent.
+   */
+  readonly careerStage?: CareerStage;
 }

@@ -3,6 +3,7 @@
 // { ok: false, error } so the pipeline can fail honestly (NFR-OBS-01).
 
 import type {
+  CareerStage,
   ExtractionResult,
   GeneratedBullet,
   GenerationResult,
@@ -11,12 +12,15 @@ import type {
   GroundingVerdict,
   ParseResult,
   Requirement,
+  SeniorityVerdict,
 } from "./types";
 
 const GROUNDING_LABELS: readonly GroundingLabel[] = [
   "grounded",
   "overclaim-risk",
 ];
+
+const CAREER_STAGES: readonly CareerStage[] = ["junior", "mid", "senior"];
 
 const EVIDENCE_KINDS = ["cv", "user-confirmed"] as const;
 type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
@@ -122,6 +126,35 @@ export function parseExtractionResponse(
   }
 
   return ok({ requirements });
+}
+
+// --- Seniority response (analysis phase) ----------------------------------
+
+function normalizeStage(value: unknown): CareerStage | undefined {
+  const stage = asString(value)?.trim().toLowerCase();
+  return CAREER_STAGES.find((s) => s === stage);
+}
+
+/**
+ * Parse the seniority response into a typed verdict. An unknown/invalid stage
+ * maps conservatively to `junior` — never over-trust the model into inflating
+ * seniority (the honest default, mirroring parse-grounding's stance). A missing
+ * rationale yields a typed error so the tolerant caller can drop the signal.
+ */
+export function parseSeniorityResponse(
+  raw: string,
+): ParseResult<SeniorityVerdict> {
+  const root = extractJson(raw);
+  if (root === undefined) return fail("Відповідь не містить валідного JSON");
+  if (!isObject(root)) return fail("Очікувався JSON-обʼєкт з полем stage");
+
+  const rationale = asString(root["rationale"])?.trim();
+  if (!rationale) return fail("Вердикт не має обґрунтування (rationale)");
+
+  // Unknown/invalid stage → junior: never over-trust the model into inflation.
+  const stage = normalizeStage(root["stage"]) ?? "junior";
+
+  return ok({ stage, rationale });
 }
 
 // --- Pass 1: generation response ------------------------------------------

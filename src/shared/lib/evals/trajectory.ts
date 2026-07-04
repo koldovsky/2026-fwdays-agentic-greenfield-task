@@ -17,6 +17,23 @@ export const MAX_ATTEMPTS = 3;
  */
 const GROUNDING_ALLOWED = new Set(["bullet", "cvText", "confirmedAnswers"]);
 
+/**
+ * Keys that must NEVER reach the grounding pass, named explicitly
+ * (add-tailoring-intelligence §5.2). The `GROUNDING_ALLOWED` whitelist already
+ * denies these by default, but naming the inferred-seniority and cover-letter
+ * context keys makes the guarantee legible and keeps the check honest even if
+ * the whitelist is later widened: seniority is a generation-tone signal and the
+ * cover letter is a downstream artifact — letting either into grounding would
+ * let an inferred/derived claim launder an unsupported bullet to "grounded"
+ * (BC-HONESTY-03).
+ */
+const GROUNDING_FORBIDDEN = new Set([
+  "careerStage",
+  "seniority",
+  "coverLetter",
+  "coverLetterContext",
+]);
+
 function grade(checks: Check[]): Grade {
   const passed = checks.every((c) => c.ok);
   const score = checks.length === 0 ? 1 : checks.filter((c) => c.ok).length / checks.length;
@@ -36,6 +53,10 @@ function orderOk(skills: readonly SkillName[]): boolean {
   const rank: Record<SkillName, number> = {
     "parse-cv": 0,
     "extract-requirements": 1,
+    // infer-seniority reads only the CV and feeds generation tone; it sits
+    // after extraction, alongside the other pure analysis steps, ahead of
+    // generation (add-tailoring-intelligence §3).
+    "infer-seniority": 2,
     score: 2,
     "derive-clarifying-questions": 2,
     "generate-bullet": 3,
@@ -71,7 +92,9 @@ export function gradeTrajectory(trace: RunTrace): Grade {
 
   // Structural grounding isolation — the core honesty invariant (BC-HONESTY-01).
   const leakySteps = trace.steps.filter(
-    (s) => s.skill === "ground-bullet" && s.contextKeys.some((k) => !GROUNDING_ALLOWED.has(k)),
+    (s) =>
+      s.skill === "ground-bullet" &&
+      s.contextKeys.some((k) => !GROUNDING_ALLOWED.has(k) || GROUNDING_FORBIDDEN.has(k)),
   );
   checks.push({
     id: "grounding-isolation",

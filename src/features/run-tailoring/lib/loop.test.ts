@@ -17,6 +17,7 @@ import {
   fakeExtraction,
   fakeGeneration,
   fakeGrounding,
+  fakeSeniority,
 } from "@/shared/lib/llm/testing/fake-provider";
 import { describe, expect, it } from "vitest";
 
@@ -46,6 +47,7 @@ function groundedScript() {
     extraction: fakeExtraction([
       { id: "r1", text: "REQSENTINEL React досвід", importance: "must-have", keywords: ["react"] },
     ]),
+    seniority: fakeSeniority("mid"),
     generation: fakeGeneration([
       { id: "b1", text: "Побудував платіжну систему на React.", sourceSentence: CV_EVIDENCE },
     ]),
@@ -81,9 +83,12 @@ describe("runTailoringLoop", () => {
     // Score (and deriving clarifying questions) now runs right after
     // extraction, ahead of generation/grounding (add-resume-wizard
     // design.md §1) — score never depended on generated bullets.
+    // infer-seniority (add-tailoring-intelligence §3) runs after extraction as a
+    // best-effort tone signal, ahead of the pure analysis steps.
     expect(skills).toEqual([
       "parse-cv",
       "extract-requirements",
+      "infer-seniority",
       "score",
       "derive-clarifying-questions",
       "generate-bullet",
@@ -132,11 +137,52 @@ describe("runTailoringLoop", () => {
     expect(grade.checks.find((c) => c.id === "two-pass-grounding")?.ok).toBe(true);
   });
 
+  it("threads the inferred career stage into generation but NEVER into grounding (§3.5/§3.6, BC-HONESTY-03)", async () => {
+    const provider = createFakeProvider(groundedScript());
+    const { events, trace } = await drive({ llm: provider }, INPUT);
+
+    // The stage rides the result (tags the tailoring).
+    expect(resultOf(events)?.careerStage).toBe("mid");
+
+    // generate-bullet's recorded context names the stage; ground-bullet's never does.
+    const genStep = trace.steps.find((s) => s.skill === "generate-bullet");
+    const groundStep = trace.steps.find((s) => s.skill === "ground-bullet");
+    expect(genStep?.contextKeys).toContain("careerStage");
+    expect(groundStep?.contextKeys).not.toContain("careerStage");
+
+    // On the wire: the grounding prompt never carries a stage label.
+    for (const call of provider.calls.filter((c) => c.phase === "grounding")) {
+      for (const label of ["джуніор", "мідл", "сеньйор", "Рівень кандидата"]) {
+        expect(call.payload).not.toContain(label);
+      }
+    }
+
+    // The whole honesty contract still holds on the real run.
+    expect(gradeTrajectory(trace).passed).toBe(true);
+  });
+
+  it("stays honest when seniority inference fails: no stage, no failed step, run still completes (§3, NFR-OBS-01)", async () => {
+    // Best-effort: seniority throws every attempt, but the tailoring completes.
+    const provider = createFakeProvider({ ...groundedScript(), throwOn: ["seniority"] });
+    const { events, trace } = await drive({ llm: provider }, INPUT);
+
+    expect(events.at(-1)).toEqual({ type: "status", phase: "done" });
+    expect(trace.terminated).toBe("done");
+    // No infer-seniority step recorded (best-effort records nothing on failure),
+    // so no `failed` step trips fail-honest-termination.
+    expect(trace.steps.some((s) => s.skill === "infer-seniority")).toBe(false);
+    expect(trace.steps.some((s) => s.failed === true)).toBe(false);
+    // Stage absent → generation ran with no stage, and it's not on the result.
+    expect(resultOf(events)?.careerStage).toBeUndefined();
+    expect(gradeTrajectory(trace).passed).toBe(true);
+  });
+
   it("excludes an overclaim-risk bullet from export by default (FR-BULLETS-02, BC-HONESTY-02)", async () => {
     const provider = createFakeProvider({
       extraction: fakeExtraction([
         { id: "r1", text: "Керував великою командою", importance: "must-have", keywords: ["лідерство"] },
       ]),
+      seniority: fakeSeniority("senior"),
       generation: fakeGeneration([{ id: "b1", text: "Керував командою з 50 інженерів." }]),
       // No CV evidence for the claim → the verifier flags it.
       grounding: fakeGrounding([{ bulletId: "b1", label: "overclaim-risk" }]),
@@ -186,10 +232,10 @@ describe("runTailoringLoop", () => {
     expect(a?.matchScore).toBe(b?.matchScore);
     expect(a?.checklist).toEqual(b?.checklist);
 
-    // Exactly one LLM call per LLM skill (extract, generate, ground) — parse-cv
-    // and score make zero calls, proving scoring is pure.
+    // Exactly one LLM call per LLM skill (extract, seniority, generate, ground)
+    // — parse-cv and score make zero calls, proving scoring is pure.
     const phases = first.calls.map((c) => c.phase);
-    expect(phases).toEqual(["extraction", "generation", "grounding"]);
+    expect(phases).toEqual(["extraction", "seniority", "generation", "grounding"]);
 
     // At the trace level: the pure steps record no LLM payload at all (TC-PURE-01).
     const pureSteps = runA.trace.steps.filter(

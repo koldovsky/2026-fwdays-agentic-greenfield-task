@@ -5,20 +5,24 @@ export {
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
+  SENIORITY_SYSTEM_PROMPT,
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
+  buildSeniorityPrompt,
 } from "./prompts";
 export {
   parseExtractionResponse,
   parseGenerationResponse,
   parseGroundingResponse,
+  parseSeniorityResponse,
 } from "./parse";
 export type { LlmCallOptions, LlmProvider } from "./provider";
 export { createClaudeProvider, DEFAULT_CLAUDE_MODEL } from "./claude";
 export { createChatGptProvider, DEFAULT_CHATGPT_MODEL } from "./chatgpt";
 export { resolveLlmProvider } from "./factory";
 export type {
+  CareerStage,
   ConfirmedAnswerEvidence,
   ExtractionInput,
   ExtractionResult,
@@ -34,4 +38,6 @@ export type {
   PromptMessage,
   PromptRole,
   Requirement,
+  SeniorityInput,
+  SeniorityVerdict,
 } from "./types";

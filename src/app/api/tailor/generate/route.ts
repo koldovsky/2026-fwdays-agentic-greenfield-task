@@ -33,7 +33,7 @@ import { runGenerationPhase } from "@/features/run-tailoring";
 import type { GenerationEvent, GenerationPhaseInput } from "@/features/run-tailoring";
 import { createSubscriptionRepo, createUsageCounterRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
-import { resolveLlmProvider, type ConfirmedAnswerEvidence } from "@/shared/lib/llm";
+import { resolveLlmProvider, type CareerStage, type ConfirmedAnswerEvidence } from "@/shared/lib/llm";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 import type { CvProfile, Requirement } from "@/shared/lib/scoring";
 
@@ -50,6 +50,11 @@ function isCvProfile(value: unknown): value is CvProfile {
   if (typeof value !== "object" || value === null) return false;
   const { skills, sentences } = value as { skills?: unknown; sentences?: unknown };
   return Array.isArray(skills) && Array.isArray(sentences);
+}
+
+const CAREER_STAGES: readonly CareerStage[] = ["junior", "mid", "senior"];
+function asCareerStage(value: unknown): CareerStage | undefined {
+  return CAREER_STAGES.find((s) => s === value);
 }
 
 /**
@@ -70,10 +75,15 @@ function parseGenerateBody(
     confirmedAnswers?: unknown;
     checklist?: unknown;
     matchScore?: unknown;
+    careerStage?: unknown;
   };
   if (!isCvProfile(b.cvProfile) || !Array.isArray(b.requirements)) {
     return { ok: false };
   }
+  // Career stage is echoed back from /api/tailor/analyze; validate it as a
+  // known stage so a malformed value degrades to "no stage" (baseline tone)
+  // rather than reaching generation. It is NEVER used by grounding (§3.6).
+  const careerStage = asCareerStage(b.careerStage);
   return {
     ok: true,
     value: {
@@ -85,6 +95,7 @@ function parseGenerateBody(
         : [],
       checklist: Array.isArray(b.checklist) ? (b.checklist as readonly TailoringChecklistRow[]) : [],
       matchScore: typeof b.matchScore === "number" ? b.matchScore : 0,
+      ...(careerStage !== undefined ? { careerStage } : {}),
     },
   };
 }

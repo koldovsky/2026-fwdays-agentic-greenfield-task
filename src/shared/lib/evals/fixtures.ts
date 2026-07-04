@@ -139,6 +139,21 @@ export const goldenTraceWithConfirmedAnswers: RunTrace = mutateTrace((t) => {
   });
 });
 
+/**
+ * A well-formed run that also runs the analysis-phase `infer-seniority` step
+ * (add-tailoring-intelligence §3). The step reads only the CV, sits after
+ * extraction ahead of generation, and must not perturb any honesty check —
+ * proving the augmented pipeline still grades clean.
+ */
+export const goldenTraceWithSeniority: RunTrace = mutateTrace((t) => {
+  t.steps = [
+    t.steps[0], // parse-cv
+    t.steps[1], // extract-requirements
+    { skill: "infer-seniority", attempts: 1, contextKeys: ["cvText"], llmPayload: "infer stage from cv" },
+    ...t.steps.slice(2),
+  ];
+});
+
 export const adversarialTraces: ReadonlyArray<{
   readonly name: string;
   readonly trace: RunTrace;
@@ -148,6 +163,13 @@ export const adversarialTraces: ReadonlyArray<{
     name: "grounding pass sees the JD/requirements",
     trace: mutateTrace((t) => {
       t.steps = replaceStep(t.steps, 3, { skill: "ground-bullet", attempts: 1, contextKeys: ["bullet", "cvText", "requirements"] });
+    }),
+    expectFail: "grounding-isolation",
+  },
+  {
+    name: "grounding pass sees the inferred career stage (§5.2)",
+    trace: mutateTrace((t) => {
+      t.steps = replaceStep(t.steps, 3, { skill: "ground-bullet", attempts: 1, contextKeys: ["bullet", "cvText", "careerStage"] });
     }),
     expectFail: "grounding-isolation",
   },
