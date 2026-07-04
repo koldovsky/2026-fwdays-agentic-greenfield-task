@@ -7,6 +7,25 @@
 
 ## Last action
 
+- **T6 history STARTED (2026-07-04, ultracode). Scope discovery = bigger than roadmap "M".**
+  Scouted the seams before coding. Findings that reshape the plan:
+  - `tailoring-repo.ts` already has `save`/`listByUser`/`findById`/`deleteById` (cites
+    FR-HISTORY-01/02) — but **`save` is never called from the live flow**; only GDPR
+    export/delete read via the repo. **The entire write path is unwired** → history is empty today.
+  - **Nothing** is persisted during a run: no `cv_profiles`, `job_descriptions`, or `tailorings`
+    rows are written at upload/analyze/generate. `tailorings.cv_profile_id` is a **NOT NULL FK**
+    we don't hold at generate (generate has structured `cvProfile`, not raw CV text).
+  - **PRD correction:** history is **paid-only** (FR-TAILOR-04, FR-HISTORY-01: "logged-in paid
+    users"; free users see the current-session result only). The generate route already resolves
+    `kind` (paid/free) — reuse that gate.
+  - No tx helper on the `Queryable` port; no `job-description-repo`.
+  - Decision (mine, recorded): **persist-on-generate, paid + signed-in only, best-effort/non-fatal**
+    (a save failure must never sink an already-streamed result). Satisfy FKs by (a) migration
+    **0004** makes `tailorings.cv_profile_id` **nullable** (history needs job_title/score/checklist/
+    bullets, not the CV blob — bullets already embed grounded evidence) + adds `job_title text`;
+    (b) persist a `job_descriptions` row (plaintext JD, already the schema) + the tailoring. CV-at-
+    rest linkage deferred (its own unbuilt concern; keeps encryption off the hot path).
+
 - **T1 tailoring intelligence §3-5 IMPLEMENTED + committed (2026-07-04, ultracode).** Continued the
   roadmap by rank; T1 (flagship P1) is the last big feature. Worked directly on `vouch` (user
   directive: keep all changes on `vouch`, no worktree — `bgIsolation:none` in `.claude/settings.json`,
@@ -64,12 +83,30 @@
 
 ## Working on
 
-- **T1 `add-tailoring-intelligence` — DONE + ARCHIVED** (§0-6 all complete; verified, checker-fixed,
-  specs folded into baselines). Only open thread: task 3.7 live honesty-eval, blocked on
-  `ANTHROPIC_API_KEY`.
-- **Next roadmap target: T6 history** (rank 7, P2/M, unblocked — `views/history` slice, `job_title`
-  column migration, IDOR-gated `GET /api/tailoring/:id`, list + re-open UI, wire the AccountMenu
-  "coming soon" link) OR **T5 premium PDF-attach** (rank 8, P1/L — builds on T1's grounding model).
+- **T6 `add-tailoring-history` — IN PROGRESS.** Change `add-tailoring-history` (empty stub → being
+  authored). FR-HISTORY-01/02, FR-TAILOR-04. Paid-only. Plan below.
+
+### Plan — T6 history (add-tailoring-history, spec-first)
+
+1. **Spec** — author `add-tailoring-history` proposal + tasks + `history` capability spec delta
+   (WHEN/THEN for persist-on-generate, paid gate, IDOR, list, re-open). `openspec validate`.
+2. **Migration 0004** (`0004_tailoring_history.sql`): `ALTER TABLE tailorings ADD COLUMN job_title
+   text` + `ALTER COLUMN cv_profile_id DROP NOT NULL`. Verify via pglite integration test.
+3. **`extractJobTitle(jd)`** pure helper in `shared/lib` (TC-PURE-01) + unit tests (heuristic: first
+   meaningful JD line / role phrase; null when nothing plausible).
+4. **Repo** — extend `tailoring-repo`: `jobTitle` on `SaveTailoringInput`/`TailoringSummary`/`Record`,
+   `cvProfileId` nullable; persist + select `job_title`. Minimal `job-description-repo` (`save`).
+5. **Persist-on-generate** — best-effort helper called after the `result` event in
+   `/api/tailor/generate` **only when `kind === "paid"`**: insert JD row + tailoring (job_title
+   extracted, cv_profile_id NULL), map checklist/bullets to repo inputs, wrapped in try/catch
+   (log server-side, never break the stream). Map ChecklistStatus/grounding → repo enums.
+6. **Routes** — `GET /api/tailoring` (list, current user, paid) + `GET /api/tailoring/[id]`
+   (detail, **IDOR-gated: 404 when `record.userId !== currentUserId`**, don't leak existence).
+7. **`views/history` slice** — list (job title · score · date · re-open) + detail (re-open into
+   ResultView read/edit). Thin `/history` + `/history/[id]` app routes.
+8. **AccountMenu** — add real History link (paid; honest state for free).
+9. **i18n** ua+en `history` block. **Tests** at every seam. **Verify** (verifier + checker
+   subagents, maker≠checker) → archive.
 
 ### Done — T1 blue "info" checklist status (add-tailoring-intelligence §0-2)
 
