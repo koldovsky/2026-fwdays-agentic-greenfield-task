@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { sessions, users, subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import BillingManager, { SubscriptionData, WalletCard } from './BillingManager';
+import DashboardClient from './DashboardClient';
+import { SubscriptionData, WalletCard } from './BillingManager';
 import { getWalletCards } from '@/lib/monobank';
 
 export default async function DashboardPage() {
@@ -96,53 +97,7 @@ export default async function DashboardPage() {
             Особистий кабінет (Панель користувача)
           </h2>
           
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* User Profile Info Card */}
-            <div className="border border-border-custom bg-bg-secondary p-6">
-              <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">
-                Інформація про профіль
-              </h3>
-              <dl className="space-y-3 font-mono text-sm">
-                <div>
-                  <dt className="text-text-muted text-xs">Email</dt>
-                  <dd className="text-text-primary">{user.email}</dd>
-                </div>
-                <div>
-                  <dt className="text-text-muted text-xs">Сайт</dt>
-                  <dd className="text-text-primary">{user.websiteUrl || 'не вказано'}</dd>
-                </div>
-                <div>
-                  <dt className="text-text-muted text-xs">Telegram ID</dt>
-                  <dd className="text-text-primary">{user.telegramId.toString()}</dd>
-                </div>
-                {user.telegramUsername && (
-                  <div>
-                    <dt className="text-text-muted text-xs">Telegram Username</dt>
-                    <dd className="text-text-primary">@{user.telegramUsername}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            {/* API access details card */}
-            <div className="border border-border-custom bg-bg-secondary p-6">
-              <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">
-                API доступи
-              </h3>
-              <p className="text-xs text-text-secondary leading-relaxed mb-4">
-                Для підключення Google Таблиць використовуйте ваш API-ключ. Ви можете переглянути його хеш нижче.
-              </p>
-              <div className="font-mono text-xs">
-                <span className="text-text-muted block mb-1">Хеш API-ключа (SHA-256):</span>
-                <span className="text-text-primary break-all bg-bg-card border border-border-custom p-2 block">
-                  {user.apiKeyHash}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Billing Manager component */}
-          <BillingManager subscription={subscriptionData} cards={cards} />
+          <DashboardClient apiKeyHash={user.apiKeyHash} subscription={subscriptionData} cards={cards} />
         </div>
       </main>
     </div>
