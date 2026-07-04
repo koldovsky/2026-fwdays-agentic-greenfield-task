@@ -149,11 +149,11 @@
 
 ## 4. Services — agent tool-loop (red → green against a fake model port)
 
-- [ ] 4.1 Write `packages/agent/src/model-port.ts`: the `ModelPort`
+- [x] 4.1 Write `packages/agent/src/model-port.ts`: the `ModelPort`
       interface (`send(messages, tools) -> Promise<ModelResponse>`) and the
       fixed `MODEL_CONFIG` constant (`claude-sonnet-5`, thinking disabled —
       design.md Decision 2). No implementation yet.
-- [ ] 4.2 Write `packages/agent/src/testing/fake-model-port.ts`: a scripted
+- [x] 4.2 Write `packages/agent/src/testing/fake-model-port.ts`: a scripted
       `FakeModelPort` (queue of canned `ModelResponse`s) for deterministic
       loop tests.
 - [ ] 4.3 Write `packages/agent/src/tools.ts` tests FIRST
