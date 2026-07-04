@@ -19,6 +19,11 @@ export {
   type Grounding,
 } from "./tailoring-repo";
 export {
+  createJobDescriptionRepo,
+  type JobDescriptionRepo,
+  type JobDescriptionRecord,
+} from "./job-description-repo";
+export {
   createUserRepo,
   type UserRepo,
   type PersistedUser,

@@ -22,8 +22,15 @@ export interface BulletInput {
 
 export interface SaveTailoringInput {
   readonly userId: string;
-  readonly cvProfileId: string;
+  /**
+   * Owning CV profile, or null. Nullable since add-tailoring-history: history is
+   * persisted at generation time, where only the structured cvProfile (not the
+   * raw text needed to encrypt a cv_profiles row) is available (migration 0004).
+   */
+  readonly cvProfileId: string | null;
   readonly jobDescriptionId: string;
+  /** Role extracted from the JD for the history list, or null (FR-HISTORY-01). */
+  readonly jobTitle: string | null;
   readonly matchScore: number | null;
   readonly checklist: readonly ChecklistItemInput[];
   readonly bullets: readonly BulletInput[];
@@ -31,13 +38,14 @@ export interface SaveTailoringInput {
 
 export interface TailoringSummary {
   readonly id: string;
+  readonly jobTitle: string | null;
   readonly matchScore: number | null;
   readonly createdAt: string;
 }
 
 export interface TailoringRecord extends TailoringSummary {
   readonly userId: string;
-  readonly cvProfileId: string;
+  readonly cvProfileId: string | null;
   readonly jobDescriptionId: string;
   readonly checklist: readonly ChecklistItemInput[];
   readonly bullets: readonly BulletInput[];
@@ -58,10 +66,16 @@ export function createTailoringRepo(db: Queryable) {
   return {
     async save(input: SaveTailoringInput): Promise<TailoringRecord> {
       const { rows } = await db.query<{ id: string; created_at: string | Date }>(
-        `INSERT INTO tailorings (user_id, cv_profile_id, job_description_id, match_score)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO tailorings (user_id, cv_profile_id, job_description_id, job_title, match_score)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING id, created_at`,
-        [input.userId, input.cvProfileId, input.jobDescriptionId, input.matchScore],
+        [
+          input.userId,
+          input.cvProfileId,
+          input.jobDescriptionId,
+          input.jobTitle,
+          input.matchScore,
+        ],
       );
       const id = rows[0].id;
 
@@ -85,6 +99,7 @@ export function createTailoringRepo(db: Queryable) {
         userId: input.userId,
         cvProfileId: input.cvProfileId,
         jobDescriptionId: input.jobDescriptionId,
+        jobTitle: input.jobTitle,
         matchScore: input.matchScore,
         createdAt: toIso(rows[0].created_at),
         checklist: input.checklist,
@@ -96,15 +111,17 @@ export function createTailoringRepo(db: Queryable) {
     async listByUser(userId: string): Promise<TailoringSummary[]> {
       const { rows } = await db.query<{
         id: string;
+        job_title: string | null;
         match_score: number | null;
         created_at: string | Date;
       }>(
-        `SELECT id, match_score, created_at
+        `SELECT id, job_title, match_score, created_at
          FROM tailorings WHERE user_id = $1 ORDER BY created_at DESC`,
         [userId],
       );
       return rows.map((r) => ({
         id: r.id,
+        jobTitle: r.job_title,
         matchScore: r.match_score,
         createdAt: toIso(r.created_at),
       }));
@@ -115,12 +132,13 @@ export function createTailoringRepo(db: Queryable) {
       const { rows } = await db.query<{
         id: string;
         user_id: string;
-        cv_profile_id: string;
+        cv_profile_id: string | null;
         job_description_id: string;
+        job_title: string | null;
         match_score: number | null;
         created_at: string | Date;
       }>(
-        `SELECT id, user_id, cv_profile_id, job_description_id, match_score, created_at
+        `SELECT id, user_id, cv_profile_id, job_description_id, job_title, match_score, created_at
          FROM tailorings WHERE id = $1`,
         [id],
       );
@@ -142,6 +160,7 @@ export function createTailoringRepo(db: Queryable) {
         userId: t.user_id,
         cvProfileId: t.cv_profile_id,
         jobDescriptionId: t.job_description_id,
+        jobTitle: t.job_title,
         matchScore: t.match_score,
         createdAt: toIso(t.created_at),
         checklist: [...checklist.rows],

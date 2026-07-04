@@ -36,6 +36,8 @@ describe("migrations", () => {
   it("apply the init migration, then are idempotent", async () => {
     const applied = await runMigrations(db);
     expect(applied).toContain("0001_init.sql");
+    // add-tailoring-history migration 0004 applies in the same ordered run.
+    expect(applied).toContain("0004_tailoring_history.sql");
     expect(await runMigrations(db)).toEqual([]);
   }, 30_000);
 });
@@ -97,6 +99,7 @@ describe("tailoring history + cascade", () => {
       userId,
       cvProfileId: cv.rows[0].id,
       jobDescriptionId: jd.rows[0].id,
+      jobTitle: "Senior RN Engineer",
       matchScore: 82,
       checklist: [
         { requirement: "React Native", importance: "must", status: "met", rationale: "7y" },
@@ -110,7 +113,11 @@ describe("tailoring history + cascade", () => {
 
     const summaries = await repo.listByUser(userId);
     expect(summaries).toHaveLength(1);
-    expect(summaries[0]).toMatchObject({ id: saved.id, matchScore: 82 });
+    expect(summaries[0]).toMatchObject({
+      id: saved.id,
+      jobTitle: "Senior RN Engineer",
+      matchScore: 82,
+    });
 
     const full = await repo.findById(saved.id);
     expect(full?.checklist).toHaveLength(2);
@@ -130,6 +137,37 @@ describe("tailoring history + cascade", () => {
       [saved.id],
     );
     expect(Number(orphans.rows[0].n)).toBe(0);
+  }, 30_000);
+
+  it("persists a tailoring with a null cv_profile_id (migration 0004, persist-on-generate)", async () => {
+    // add-tailoring-history: history is stored at generation time with no CV
+    // linkage — cv_profile_id is nullable, only job_title/score/checklist/bullets
+    // matter. Proves the 0004 constraint relaxation holds end-to-end.
+    const u = await db.query<{ id: string }>(
+      `INSERT INTO users (email, auth_provider) VALUES ($1, $2) RETURNING id`,
+      ["katherine@example.com", "password"],
+    );
+    const userId = u.rows[0].id;
+    const jd = await db.query<{ id: string }>(
+      `INSERT INTO job_descriptions (user_id, raw_text) VALUES ($1, $2) RETURNING id`,
+      [userId, "Position: Flight Software Engineer"],
+    );
+
+    const repo = createTailoringRepo(db);
+    const saved = await repo.save({
+      userId,
+      cvProfileId: null,
+      jobDescriptionId: jd.rows[0].id,
+      jobTitle: "Flight Software Engineer",
+      matchScore: 91,
+      checklist: [{ requirement: "Fortran", importance: "must", status: "met", rationale: "yes" }],
+      bullets: [{ text: "Computed trajectories by hand", grounding: "met", included: true }],
+    });
+
+    const full = await repo.findById(saved.id);
+    expect(full?.cvProfileId).toBeNull();
+    expect(full?.jobTitle).toBe("Flight Software Engineer");
+    expect(full?.matchScore).toBe(91);
   }, 30_000);
 });
 

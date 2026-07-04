@@ -52,6 +52,7 @@ async function seedUserWithData() {
     userId: user.id,
     cvProfileId: cv.id,
     jobDescriptionId: jd.rows[0].id,
+    jobTitle: "Senior engineer",
     matchScore: 77,
     checklist: [{ requirement: "React", importance: "must", status: "met", rationale: "so" }],
     bullets: [{ text: "Built an API", grounding: "met", included: true }],
