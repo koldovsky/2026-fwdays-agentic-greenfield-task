@@ -12,6 +12,7 @@ export const en: Dictionary = {
     statusLabel: {
       met: "Met",
       partial: "Partial",
+      info: "Coverable",
       gap: "Gap",
       "overclaim-risk": "Overclaim risk",
     },

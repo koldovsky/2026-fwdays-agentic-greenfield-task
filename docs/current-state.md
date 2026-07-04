@@ -35,9 +35,22 @@
 
 ## Working on
 
-- **Implementing the roadmap by priority.** T4 header **DONE** (`rework-app-header`, `2932654`).
-  T12 legal pages **DONE** (`add-legal-pages`) — committing now. Next: T1 tailoring intelligence
-  (flagship, now fully unblocked) or T5 premium PDF, then T13 Stripe.
+- **Implementing the roadmap by priority.** T4 header **DONE** (`2932654`). T12 legal **DONE**
+  (`a4ea87a`). T1 **partial: blue "info" checklist status DONE** (§0-2 of `add-tailoring-intelligence`).
+  Remaining T1: §3 seniority inference + §4 cover-letter generation + §5 grounding-isolation guard —
+  **need `ANTHROPIC_API_KEY`** for honesty-eval (new LLM prompts), so paused here for a checkpoint.
+
+### Done — T1 blue "info" checklist status (add-tailoring-intelligence §0-2)
+
+- New `ChecklistStatus` value `"info"` (between partial and gap): a multi-word requirement whose
+  full text is absent but a component token is grounded in the CV (e.g. "React Native" ← "React").
+  Deterministic, pure (TC-PURE-01); single-word keywords never qualify (conservative).
+- Rationale is a Ukrainian cover-letter suggestion naming the adjacent evidence; credit 0.25
+  (below partial 0.5, above gap 0). Reuses the **existing brand blue** token (no new hue — DESIGN.md).
+- Threaded through every exhaustive map: StatusPill, ChecklistRow, ChecklistPanel, i18n statusLabel
+  (ua "Можна підсилити" / en "Coverable"). New migration `0003` widens the `checklist_items.status`
+  CHECK constraint. Scoring + panel tests added. lint+build clean, **529 tests** green (migration
+  0003 verified via the pglite integration test).
 
 ### Done — T12 legal (add-legal-pages)
 

@@ -6,7 +6,7 @@ import { Badge } from "@/shared/ui/badge";
 import { StatusPill } from "@/shared/ui/status-pill";
 
 /** Row-local status vocabulary (matches the ChecklistRow.d.ts contract). */
-export type ChecklistRowStatus = "met" | "partial" | "gap" | "overclaim";
+export type ChecklistRowStatus = "met" | "partial" | "info" | "gap" | "overclaim";
 
 export interface ChecklistRowProps {
   /** Requirement title (e.g. "5+ years React"). */
@@ -24,6 +24,7 @@ export interface ChecklistRowProps {
 const dotClass: Record<ChecklistRowStatus, string> = {
   met: "bg-met",
   partial: "bg-partial",
+  info: "bg-brand",
   gap: "bg-gap",
   overclaim: "bg-overclaim",
 };
@@ -32,6 +33,7 @@ const dotClass: Record<ChecklistRowStatus, string> = {
 const toPillStatus: Record<ChecklistRowStatus, ChecklistStatus> = {
   met: "met",
   partial: "partial",
+  info: "info",
   gap: "gap",
   overclaim: "overclaim-risk",
 };

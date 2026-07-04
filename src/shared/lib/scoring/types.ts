@@ -3,7 +3,9 @@
 
 export type RequirementImportance = "must-have" | "nice-to-have";
 
-export type ChecklistStatus = "met" | "partial" | "gap" | "overclaim-risk";
+// "info" (blue): not directly met, but plausibly coverable by adjacent CV
+// evidence — a suggestion to surface in a cover letter, not a red "gap".
+export type ChecklistStatus = "met" | "partial" | "info" | "gap" | "overclaim-risk";
 
 export interface Requirement {
   readonly id: string;

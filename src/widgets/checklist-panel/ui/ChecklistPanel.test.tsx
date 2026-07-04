@@ -17,6 +17,7 @@ const rows: ChecklistPanelRow[] = [
   { requirement: req("a", "5+ years React", "must-have"), status: "met", rationale: "CV підтверджує React." },
   { requirement: req("b", "GraphQL", "nice-to-have"), status: "partial", rationale: "Дотичний досвід." },
   { requirement: req("c", "Team lead", "must-have"), status: "overclaim-risk", rationale: "Немає підтвердження в CV." },
+  { requirement: req("d", "React Native", "nice-to-have"), status: "info", rationale: "Дотичний досвід «react»." },
 ];
 
 describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
@@ -40,6 +41,12 @@ describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
     expect(
       screen.getByText(ua.checklist.statusLabel["overclaim-risk"]),
     ).toBeInTheDocument();
+    expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
+  });
+
+  it("renders the blue info status with its own label, distinct from gap (FR-CHECKLIST-02)", () => {
+    render(<ChecklistPanel score={50} rows={rows} />);
+    expect(screen.getByText(ua.checklist.statusLabel.info)).toBeInTheDocument();
     expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u
 const ALL_STATUSES: readonly ChecklistStatus[] = [
   "met",
   "partial",
+  "info",
   "gap",
   "overclaim-risk",
 ];
@@ -93,6 +94,31 @@ describe("checklistItem (FR-CHECKLIST-01/02/03, BC-HONESTY-01)", () => {
     const item = checklistItem(req({ keywords: ["cobol"] }), cvWithReactProse);
     expect(item.status).toBe("gap");
   });
+
+  it("info: a multi-word requirement is adjacent-covered by a component token (FR-CHECKLIST-01)", () => {
+    // "React Native" is not in the CV, but "React" is — coverable, not a red gap.
+    const item = checklistItem(req({ keywords: ["react native"] }), cvWithReactProse);
+    expect(item.status).toBe("info");
+    expect(item.rationale).toContain("react");
+    expect(item.rationale.length).toBeLessThanOrEqual(100);
+    expect(item.rationale).not.toMatch(EMOJI);
+  });
+
+  it("info never fires on a true gap or a single-word keyword", () => {
+    // Single-word keyword absent entirely → gap, never info.
+    expect(checklistItem(req({ keywords: ["kubernetes"] }), cvWithReactProse).status).toBe("gap");
+    // Multi-word keyword with no component present → gap.
+    expect(checklistItem(req({ keywords: ["apache kafka"] }), cvWithReactProse).status).toBe("gap");
+  });
+
+  it("info does not override grounded or claimed-only statuses", () => {
+    // Grounded component would be "info", but a fully grounded keyword wins as met/partial.
+    const partial = checklistItem(
+      req({ keywords: ["react", "react native"] }),
+      cvWithReactProse,
+    );
+    expect(partial.status).toBe("partial");
+  });
 });
 
 describe("matchScore (FR-CHECKLIST-04)", () => {
@@ -118,10 +144,19 @@ describe("matchScore (FR-CHECKLIST-04)", () => {
     );
   });
 
+  it("info credit sits between partial and gap (FR-CHECKLIST-04)", () => {
+    const one = (status: ChecklistStatus) =>
+      matchScore([{ requirement: req(), item: { status, rationale: "" } }]);
+    expect(one("info")).toBeLessThan(one("partial"));
+    expect(one("info")).toBeGreaterThan(one("gap"));
+    expect(one("info")).toBeGreaterThan(one("overclaim-risk"));
+  });
+
   it("Integer 0-100 bounds across varied inputs", () => {
     const statuses: ChecklistStatus[] = [
       "met",
       "partial",
+      "info",
       "gap",
       "overclaim-risk",
     ];

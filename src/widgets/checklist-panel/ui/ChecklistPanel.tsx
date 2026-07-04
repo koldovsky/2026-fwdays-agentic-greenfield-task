@@ -33,6 +33,7 @@ export interface ChecklistPanelProps {
 const toRowStatus: Record<ChecklistStatus, ChecklistRowStatus> = {
   met: "met",
   partial: "partial",
+  info: "info",
   gap: "gap",
   "overclaim-risk": "overclaim",
 };

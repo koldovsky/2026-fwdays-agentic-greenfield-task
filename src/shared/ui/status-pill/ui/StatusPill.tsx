@@ -1,5 +1,6 @@
-// Checklist status chip (FR-CHECKLIST-02): maps the 4 checklist statuses
-// met | partial | gap | overclaim-risk to their token colors + Ukrainian labels.
+// Checklist status chip (FR-CHECKLIST-02): maps the 5 checklist statuses
+// met | partial | info | gap | overclaim-risk to their token colors + Ukrainian
+// labels. "info" reuses the existing brand blue (no new hue — DESIGN.md).
 // Ukrainian-first copy comes from the shared i18n dictionary (NFR-I18N-01).
 import { ua } from "@/shared/lib/i18n";
 import type { ChecklistStatus } from "@/shared/lib/scoring";
@@ -14,6 +15,7 @@ export interface StatusPillProps {
 const pillClass: Record<ChecklistStatus, string> = {
   met: "bg-met-bg text-met",
   partial: "bg-partial-bg text-partial-text",
+  info: "bg-brand-wash text-brand",
   gap: "bg-gap-bg text-gap-text",
   "overclaim-risk": "bg-overclaim-bg text-overclaim-text",
 };
@@ -21,6 +23,7 @@ const pillClass: Record<ChecklistStatus, string> = {
 const dotClass: Record<ChecklistStatus, string> = {
   met: "bg-met",
   partial: "bg-partial",
+  info: "bg-brand",
   gap: "bg-gap",
   "overclaim-risk": "bg-overclaim",
 };

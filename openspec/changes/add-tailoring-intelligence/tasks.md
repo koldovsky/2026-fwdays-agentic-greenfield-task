@@ -1,21 +1,21 @@
 ## 0. Product decision (do first — blocks the cover-letter half)
 
 - [x] 0.1 RESOLVED 2026-07-04 (user): cover letter promoted into scope. PRD adds `FR-COVERLETTER-01/02` and removes "Cover letter generation" from "Out of scope (MVP)". §4/§5 of this change proceed.
-- [ ] 0.2 Confirm a blue/info design token exists for the `info` checklist status in `docs/vouch-design-system/` / `src/app/globals.css` `@theme`; if not, agree one with DESIGN.md before adding any hue (no new brand hues without sign-off)
+- [x] 0.2 Confirm a blue/info design token exists for the `info` checklist status in `docs/vouch-design-system/` / `src/app/globals.css` `@theme`; if not, agree one with DESIGN.md before adding any hue (no new brand hues without sign-off)
 
 ## 1. Blue `info` checklist status (scoring core — MODIFIES `checklist`)
 
-- [ ] 1.1 Add `"info"` to `ChecklistStatus` in `src/shared/lib/scoring/types.ts` (fixed set becomes met · partial · info · gap · overclaim-risk) — FR-CHECKLIST-02
-- [ ] 1.2 In `src/shared/lib/scoring/checklist.ts`, add the deterministic `info` rule: a requirement with no grounded and no claimed-only keyword, but with adjacent CV evidence plausibly covering it, resolves to `info` instead of `gap`; keep the rule pure and deterministic — FR-CHECKLIST-01, TC-PURE-01
-- [ ] 1.3 Add the Ukrainian `info` rationale (≤100 chars, no emoji) framed as an improvement suggestion ("розкрийте це в супровідному листі"), naming the adjacent CV evidence — FR-CHECKLIST-03
-- [ ] 1.4 Add `info` to `STATUS_CREDIT` in `checklist.ts` with partial (below `partial`, above `gap`) weighted credit; keep `matchScore` in 0–100 and must-have weighted above nice-to-have — FR-CHECKLIST-04
-- [ ] 1.5 Unit tests: `info` triggers only on the coverable case, never on a true `gap`, never on `overclaim-risk`; determinism holds; rationale format holds; score bounds + must-have weighting hold — FR-CHECKLIST-01/02/03/04
+- [x] 1.1 Add `"info"` to `ChecklistStatus` in `src/shared/lib/scoring/types.ts` (fixed set becomes met · partial · info · gap · overclaim-risk) — FR-CHECKLIST-02
+- [x] 1.2 In `src/shared/lib/scoring/checklist.ts`, add the deterministic `info` rule: a requirement with no grounded and no claimed-only keyword, but with adjacent CV evidence plausibly covering it, resolves to `info` instead of `gap`; keep the rule pure and deterministic — FR-CHECKLIST-01, TC-PURE-01
+- [x] 1.3 Add the Ukrainian `info` rationale (≤100 chars, no emoji) framed as an improvement suggestion ("розкрийте це в супровідному листі"), naming the adjacent CV evidence — FR-CHECKLIST-03
+- [x] 1.4 Add `info` to `STATUS_CREDIT` in `checklist.ts` with partial (below `partial`, above `gap`) weighted credit; keep `matchScore` in 0–100 and must-have weighted above nice-to-have — FR-CHECKLIST-04
+- [x] 1.5 Unit tests: `info` triggers only on the coverable case, never on a true `gap`, never on `overclaim-risk`; determinism holds; rationale format holds; score bounds + must-have weighting hold — FR-CHECKLIST-01/02/03/04
 
 ## 2. Surface `info` in the UI
 
-- [ ] 2.1 Add an `info` `ChecklistRowStatus` (blue) to `src/shared/ui` using the confirmed token from 0.2; keep visible focus/contrast — NFR-A11Y-01, FR-CHECKLIST-02
-- [ ] 2.2 Map + render `info` in `src/widgets/checklist-panel` (blue "suggestion", not red "missing"); add ua + en labels in `src/shared/lib/i18n` — NFR-I18N-01
-- [ ] 2.3 Widget/UI tests: an `info` row renders blue with its suggestion rationale and is not styled as a `gap`
+- [x] 2.1 Add an `info` `ChecklistRowStatus` (blue) to `src/shared/ui` using the confirmed token from 0.2; keep visible focus/contrast — NFR-A11Y-01, FR-CHECKLIST-02
+- [x] 2.2 Map + render `info` in `src/widgets/checklist-panel` (blue "suggestion", not red "missing"); add ua + en labels in `src/shared/lib/i18n` — NFR-I18N-01
+- [x] 2.3 Widget/UI tests: an `info` row renders blue with its suggestion rationale and is not styled as a `gap`
 
 ## 3. Seniority inference (NEW `cover-letter`)
 

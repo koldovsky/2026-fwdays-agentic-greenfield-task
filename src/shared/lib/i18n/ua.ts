@@ -12,6 +12,7 @@ export const ua: Dictionary = {
     statusLabel: {
       met: "Підтверджено",
       partial: "Частково",
+      info: "Можна підсилити",
       gap: "Відсутнє",
       "overclaim-risk": "Ризик перебільшення",
     },
