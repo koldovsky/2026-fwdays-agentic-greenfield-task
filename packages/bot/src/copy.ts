@@ -27,3 +27,15 @@
  */
 export const ANTHROPIC_PROCESSING_NOTICE: string =
   "Зауважте: ваші повідомлення тут обробляє асистент на основі штучного інтелекту Anthropic Claude.";
+
+/**
+ * A deterministic, kind Ukrainian acknowledgement used ONLY when a turn's
+ * own reply would otherwise be empty — a bare tool-use model response with
+ * no accompanying text (notably `cancel_request`), or a button-callback tap
+ * this pipeline's own wire-format mapping does not recognise (tasks.md 5.4
+ * green half). A lead must never receive an empty Telegram message; this is
+ * this module's own fallback, never a substitute for the model's real
+ * narration when one exists. No exclamation marks, no pressure vocabulary
+ * (BC-BRAND-01).
+ */
+export const EMPTY_NARRATION_FALLBACK_COPY: string = "Дякую, я це записала.";

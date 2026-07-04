@@ -271,7 +271,7 @@
       legitimately green immediately — the same 2.4/4.5 precedent this
       task's own brief names; the genuinely red half (that `pipeline.ts`
       actually SENDS these constants) is proven in `pipeline.test.ts`.
-- [ ] 5.4 Write `packages/bot/src/pipeline.test.ts` FIRST (red), against
+- [x] 5.4 Write `packages/bot/src/pipeline.test.ts` FIRST (red), against
       `FakeTelegramTransport` + `FakeModelPort` + a real in-memory SQLite
       (`openDatabase(":memory:")`):
       - `sendChatAction` is always the first call recorded on any inbound
@@ -317,7 +317,7 @@
         (`@trace NFR-REL-01`).
       Confirm every case red, then implement `pipeline.ts` (the update
       handler composing steps 1–3 of design.md Decision 3) to green.
-- [ ] 5.5 Write `tests/integration/agent/smoke.test.ts`: one tiny real
+- [x] 5.5 Write `tests/integration/agent/smoke.test.ts`: one tiny real
       round trip against the real `AnthropicModelPort`
       (`claude-sonnet-5`, local user-token auth) — a single scripted lead
       message ("Мене звати Оксана") asserts a `save_name` tool call
@@ -329,7 +329,7 @@
       `openDatabase()`, reading `TELEGRAM_BOT_TOKEN`/`ANTHROPIC_AUTH_TOKEN`
       from `.env`/the local user-token profile (NFR-SEC-01) — no code path
       that could accept an Anthropic API key.
-- [ ] 5.7 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] 5.7 Run `npm run test:run` and `npm run test:integration`; confirm
       5.4–5.5 green with no regressions in S1 `slots` suites.
 
 ## 6. Validation, review gate, and archive prep
