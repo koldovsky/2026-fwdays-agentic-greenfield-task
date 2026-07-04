@@ -15,6 +15,9 @@ import { paidGateError, resolvePaidUser } from "../paid-user";
 
 export const runtime = "nodejs";
 
+/** tailorings.id is a uuid; a non-uuid can never exist, so treat it as 404. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -23,6 +26,13 @@ export async function GET(
   if (!gate.ok) return NextResponse.json(paidGateError(gate.status), { status: gate.status });
 
   const { id } = await params;
+  // Reject a malformed id up front: querying with a non-uuid throws in Postgres
+  // ("invalid input syntax for type uuid"), which would surface as a 500. It can
+  // never be a real record, so it is a 404 — identical to a missing/not-owned id
+  // (no existence disclosure, NFR-SEC-02).
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   try {
     const tailoring = await getHistoryItem(

@@ -41,7 +41,7 @@ import {
   createTailoringRepo,
   createUsageCounterRepo,
 } from "@/shared/lib/db";
-import { getDb } from "@/shared/lib/db/pg";
+import { getDb, withTransaction } from "@/shared/lib/db/pg";
 import { resolveLlmProvider, type CareerStage, type ConfirmedAnswerEvidence } from "@/shared/lib/llm";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 import type { CvProfile, Requirement } from "@/shared/lib/scoring";
@@ -221,17 +221,19 @@ export async function POST(request: Request): Promise<Response> {
             // logged server-side and never touches the user's result or the
             // stream (NFR-OBS-01, FR-TAILOR-03). Free/anon runs persist nothing.
             if (finalResult !== null && parsed.ok) {
+              const jobDescription = parsed.value.jobDescription;
               try {
-                await persistTailoring(
-                  {
-                    jobDescriptions: createJobDescriptionRepo(getDb()),
-                    tailorings: createTailoringRepo(getDb()),
-                  },
-                  {
-                    userId: paidTallyUserId,
-                    jobDescription: parsed.value.jobDescription,
-                    result: finalResult,
-                  },
+                // One transaction: the JD row + the tailoring + its children
+                // commit all-or-nothing, so a mid-write failure never leaves a
+                // partial history record or an orphan job_descriptions row.
+                await withTransaction((tx) =>
+                  persistTailoring(
+                    {
+                      jobDescriptions: createJobDescriptionRepo(tx),
+                      tailorings: createTailoringRepo(tx),
+                    },
+                    { userId: paidTallyUserId, jobDescription, result: finalResult },
+                  ),
                 );
               } catch (persistError) {
                 console.error("[api/tailor/generate] history persistence failed", persistError);

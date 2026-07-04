@@ -39,7 +39,12 @@ vi.mock("@/shared/lib/db", () => ({
   createJobDescriptionRepo: () => jobDescriptionRepo,
   createTailoringRepo: () => tailoringRepo,
 }));
-vi.mock("@/shared/lib/db/pg", () => ({ getDb: vi.fn(() => ({})) }));
+vi.mock("@/shared/lib/db/pg", () => ({
+  getDb: vi.fn(() => ({})),
+  // Persist runs inside a transaction; the fake just invokes the callback with a
+  // stand-in tx so the mocked repos (which ignore their arg) still record calls.
+  withTransaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
+}));
 
 import { POST } from "./route";
 

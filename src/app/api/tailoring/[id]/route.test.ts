@@ -63,11 +63,20 @@ describe("GET /api/tailoring/:id", () => {
     expect(await res.json()).toEqual({ error: "not_found" });
   });
 
-  it("404s a missing id (same response as not-owned)", async () => {
+  it("404s a missing (but well-formed) id (same response as not-owned)", async () => {
     tailoringRepo.findById.mockResolvedValue(null);
-    const res = await GET(new Request("http://localhost/api/tailoring/missing"), ctx("missing"));
+    const uuid = "00000000-0000-4000-8000-000000000000";
+    const res = await GET(new Request(`http://localhost/api/tailoring/${uuid}`), ctx(uuid));
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "not_found" });
+    expect(tailoringRepo.findById).toHaveBeenCalledWith(uuid);
+  });
+
+  it("404s a malformed non-uuid id without touching the repo (calm, not a 500)", async () => {
+    const res = await GET(new Request("http://localhost/api/tailoring/not-a-uuid"), ctx("not-a-uuid"));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_found" });
+    expect(tailoringRepo.findById).not.toHaveBeenCalled();
   });
 
   it("401s an anonymous caller before any read", async () => {
