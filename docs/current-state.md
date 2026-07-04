@@ -52,8 +52,22 @@
 
 ## Working on
 
-- **Batch cleanup complete for the fast+critical items (2, 6, and confirming 1/3/4 done).** Next up is
-  the landing pair (8+9) then the three large spec-first items (5, 7, 10).
+- **Tasks 8+9 — landing rework (IN PROGRESS).** User picked landing next; keep deterministic cover
+  letter (task 1 decision). FR-SALES-01/02/03. Enemy-centric per org rule. Spec-first.
+
+### Plan — landing 8+9 (change `update-landing-flow`)
+
+1. **Spec** — openspec change `update-landing-flow`: MODIFY `marketing-landing` demo requirement
+   (4→5 checklist states, add blue "coverable/info"); add requirement for cover-letter + history
+   representation. proposal + tasks + spec delta.
+2. **content.ts** — (a) new `hero` object, pain-first/enemy-centric copy (move inline Hero copy here);
+   (b) add an `info` (blue coverable) row to `checklistRows` + update headline/subtext to name it;
+   (c) sharpen `pillars` enemy contrast; (d) step 03 names cover letter + history + export options;
+   (e) add a FAQ item on cover letters + saved history.
+3. **Hero.tsx** — consume the `hero` content object (LCP card structure unchanged = perf-safe).
+4. **Honesty guard** — do NOT sell premium PDF-attach (task 5 unbuilt). Only sell shipped features.
+5. **i18n** — keep landing English (extraction is task 10, deferred); structure content for later.
+6. **Verify** — lint + build + tests; `perf-audit` noted blocked (no Chrome). checker subagent.
 
 ## Next steps (ranked: fastest × most critical)
 
