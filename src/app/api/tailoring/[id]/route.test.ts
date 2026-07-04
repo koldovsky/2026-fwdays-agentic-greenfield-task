@@ -22,9 +22,13 @@ const PAID = {
   currentPeriodEnd: "2999-01-01T00:00:00.000Z",
 };
 
+// A well-formed uuid so the route's UUID_RE guard lets the request through to
+// the mocked repo (the ownership/read branches under test live past that guard).
+const VALID_ID = "11111111-1111-4111-8111-111111111111";
+
 function record(userId: string) {
   return {
-    id: "t-1",
+    id: VALID_ID,
     userId,
     cvProfileId: null,
     jobDescriptionId: "jd-1",
@@ -49,18 +53,21 @@ beforeEach(() => {
 describe("GET /api/tailoring/:id", () => {
   it("returns the full tailoring when the paid caller owns it", async () => {
     tailoringRepo.findById.mockResolvedValue(record("u-1"));
-    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    const res = await GET(new Request(`http://localhost/api/tailoring/${VALID_ID}`), ctx(VALID_ID));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.tailoring.id).toBe("t-1");
+    expect(body.tailoring.id).toBe(VALID_ID);
     expect(body.tailoring.bullets).toHaveLength(1);
   });
 
   it("404s a tailoring owned by another user without disclosing existence (IDOR)", async () => {
     tailoringRepo.findById.mockResolvedValue(record("someone-else"));
-    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    const res = await GET(new Request(`http://localhost/api/tailoring/${VALID_ID}`), ctx(VALID_ID));
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "not_found" });
+    // Reached the repo (past the uuid guard), so this genuinely tests the
+    // ownership branch, not the malformed-id guard.
+    expect(tailoringRepo.findById).toHaveBeenCalledWith(VALID_ID);
   });
 
   it("404s a missing (but well-formed) id (same response as not-owned)", async () => {
@@ -95,7 +102,7 @@ describe("GET /api/tailoring/:id", () => {
 
   it("returns a calm coded 500 on a read error (NFR-OBS-01)", async () => {
     tailoringRepo.findById.mockRejectedValue(new Error("boom"));
-    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    const res = await GET(new Request(`http://localhost/api/tailoring/${VALID_ID}`), ctx(VALID_ID));
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "history_failed" });
   });
