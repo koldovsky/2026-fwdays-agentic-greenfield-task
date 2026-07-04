@@ -44,6 +44,6 @@
 
 ## 6. Verify
 
-- [ ] 6.1 Run the agent-verify skill: build + typecheck + lint + full test suite green; exercise FR-CHECKLIST-01/02/03/04, FR-BULLETS-01/03, FR-EXPORT-01, BC-HONESTY-01/02/03, NFR-I18N-01 with evidence
-- [ ] 6.2 Run the checker-review skill (maker ≠ checker): audit the diff vs PRD IDs, DESIGN.md (no new hues, blue `info` uses an approved token), and the FSD import rules (new `features/export-cover-letter` imports only downward)
-- [ ] 6.3 Update `docs/current-state.md` (last action + timestamp, working-on IDs, next steps, blockers); on completion run openspec-archive to fold the `checklist`/`bullets` deltas + new `cover-letter` spec into the baselines
+- [x] 6.1 verifier subagent (fresh context): `yarn lint` + `yarn build` + `yarn test` (92 files / 570 green) — **PASS**; every touched FR/NFR exercised with named-test evidence
+- [x] 6.2 checker subagent (maker ≠ checker): audited the diff vs PRD IDs / DESIGN.md / FSD rules. Found 1 major — the wizard flow dropped `careerStage` at the client boundary (§3 inert in production); **fixed** (`fix(tailoring): thread careerStage through the wizard generate call`) + regression test. Grounding isolation, hues, i18n all clean.
+- [x] 6.3 `docs/current-state.md` refreshed (last action + timestamp, IDs, next steps, blockers); change `openspec validate`-clean; archiving now
