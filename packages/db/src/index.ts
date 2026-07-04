@@ -7,6 +7,12 @@ import Database from "better-sqlite3";
 import { initSchema } from "./schema.js";
 
 export { initSchema, BOOKING_STATUSES, type BookingStatus } from "./schema.js";
+export {
+  insertBooking,
+  updateBookingStatus,
+  type InsertBookingInput,
+  type BookingRow,
+} from "./bookings.js";
 
 /**
  * Open (or create) the SQLite database file at `path` and ensure every table

@@ -20,6 +20,7 @@
   "include": [
     "lib/**/*.ts",
     "packages/**/*.ts",
+    "tests/**/*.ts",
     "vitest.config.ts"
   ],
   "exclude": [

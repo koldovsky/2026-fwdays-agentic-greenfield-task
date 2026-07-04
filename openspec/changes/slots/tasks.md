@@ -128,16 +128,18 @@
       the booking out of `pending` (no orphan hold without its event) and
       preserves the lead's slot choice for retry (`@trace NFR-REL-01`,
       `@trace FR-SLOT-02`). Confirm red then green.
-- [ ] 5.3 Integration test/smoke (real DEMO calendar, real service-account
+- [x] 5.3 Integration test/smoke (real DEMO calendar, real service-account
       credentials, `tests/integration/slots/`): free/busy round-trip
       against a seeded busy event, ranked top-2/3 slots printed and
       manually inspected, a tentative event visibly created then deleted in
       the calendar UI (screenshot evidence per the demo-proof expectation
-      in `docs/mvp-capability-plan.md` §S1).
-- [ ] 5.4 Integration test: calendar-outage path against a deliberately
+      in `docs/mvp-capability-plan.md` §S1). (screenshot deferred to
+      QA-proof stage — needs a logged-in browser via chrome-devtools MCP;
+      see `tests/integration/slots/round-trip.test.ts`'s header comment.)
+- [x] 5.4 Integration test: calendar-outage path against a deliberately
       broken credential/endpoint — confirms the same NFR-REL-01 apology
       path fires end-to-end (not just at the unit-fixture level).
-- [ ] 5.5 Integration test: real `bookings` row moves to `pending` on hold
+- [x] 5.5 Integration test: real `bookings` row moves to `pending` on hold
       and back out (or to a terminal-adjacent absence) on collision/
       failure, verified against the actual SQLite file (TC-DATA-01).
 

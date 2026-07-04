@@ -23,8 +23,16 @@ export default tseslint.config(
     // packages/* are Node-hosted (adapters, bot, agent) — unlike lib/, which
     // stays framework-free (TC-PURE-01), they legitimately touch
     // process/console/etc. Scoped here rather than repo-wide so lib/ globals
-    // stay minimal.
-    files: ["packages/**/*.ts", "packages/**/*.mjs", "packages/**/*.js"],
+    // stay minimal. tests/integration/** shares the same need: it is
+    // Node-hosted test infra (loads `.env` via `process.loadEnvFile`, logs
+    // manual-inspection output via `console.log`), never part of the
+    // framework-free lib/ boundary.
+    files: [
+      "packages/**/*.ts",
+      "packages/**/*.mjs",
+      "packages/**/*.js",
+      "tests/**/*.ts",
+    ],
     languageOptions: {
       globals: globals.node,
     },
