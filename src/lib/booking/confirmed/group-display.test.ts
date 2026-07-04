@@ -4,8 +4,8 @@ import { describe, it } from "node:test";
 import {
   groupConsecutiveConfirmedBookings,
   participantLabelsForGroup,
-} from "./group-display.ts";
-import type { ConfirmedBooking } from "./types.ts";
+} from "./group-display";
+import type { ConfirmedBooking } from "./types";
 
 function booking(
   overrides: Partial<ConfirmedBooking> & Pick<ConfirmedBooking, "id" | "slot" | "fullName">,

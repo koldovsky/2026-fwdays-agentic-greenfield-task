@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { chromium } from "playwright";
 
-import { loadSeedAccountsSync } from "../src/lib/auth/secrets.ts";
+import { loadSeedAccountsSync } from "@/lib/auth/secrets";
 
 const BASE = (process.env.COLIBRI_STG_URL ?? "http://localhost:3001").replace(/\/$/, "");
 const OUT = process.env.COLIBRI_DEMO_OUT ?? path.join(process.cwd(), "docs/demo-video");
