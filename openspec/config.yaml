@@ -1,0 +1,26 @@
+schema: spec-driven
+
+context: |
+  Product: Outdoor Activity Booking — Mahogany HOA MVP
+  PRD (single source of truth): docs/requirements.md — trace all specs to FR-*/NFR-*/BC-* IDs
+  Stack: Next.js 16, React 19, Tailwind 4, TypeScript, App Router, src/
+  External integration: mahoganyhoa.com WordPress + JotForm (picnic) — browser automation, captcha required
+  Homework: fwdays Academy · Agentic Engineering Greenfield
+  User inputs: full name, email, phone, Mahogany address, natural-language booking request
+  MVP facilities: tennis courts (inline form), beach picnic sites (JotForm iframe wizard)
+
+rules:
+  proposal:
+    - Reference PRD requirement IDs for every capability listed
+    - Include Non-goals section
+    - Keep under 600 words
+  design:
+    - Document integration approach for external MHOA forms (iframe vs inline)
+    - Note captcha and signature handling constraints
+  specs:
+    - Every requirement MUST cite PRD IDs in parentheses
+    - Every requirement MUST have at least one Scenario (WHEN/THEN)
+    - Use SHALL/MUST for normative requirements
+  tasks:
+    - Break into chunks verifiable in one agent session
+    - Reference spec requirement names in task descriptions

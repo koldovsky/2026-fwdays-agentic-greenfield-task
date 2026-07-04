@@ -1,0 +1,38 @@
+{
+  "name": "fwdays",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "node --import tsx --test src/**/*.test.ts && ./scripts/test-cron-wrapper.sh && ./scripts/test-deploy-schedule-sync.sh && ./scripts/test-confirmed-merge.sh",
+    "test:e2e": "COLIBRI_SUBMIT_MODE=stub playwright test",
+    "test:a11y": "COLIBRI_SUBMIT_MODE=stub playwright test a11y",
+    "schedule:run": "node --import tsx scripts/run-scheduled-bookings.ts",
+    "smoke:stg": "./scripts/smoke-stg.sh",
+    "smoke:stg:quick": "./scripts/smoke-stg.sh --quick"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "playwright": "^1.61.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@fission-ai/openspec": "^1.5.0",
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "fallow": "^2.104.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.3",
+    "typescript": "^5"
+  }
+}

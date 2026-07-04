@@ -1,0 +1,62 @@
+---
+description: >-
+  OpenSpec changes must ship with automated tests; UI flows use Playwright E2E.
+  MCP browser validation complements but does not replace the E2E suite.
+alwaysApply: true
+---
+
+# Spec-first is mandatory (OpenSpec)
+
+**Read `.cursor/rules/openspec-required.mdc` first** — no `src/**` feature code until
+`npx openspec validate <id> --strict` passes.
+
+Every non-trivial behavior change — anything touching `src/**`, pages, APIs, stores,
+deploy scripts for new features — MUST go through OpenSpec:
+
+1. **Create the change first.** Add `openspec/changes/<kebab-id>/` with
+   `proposal.md`, `tasks.md`, `.openspec.yaml`, and spec deltas under
+   `specs/<capability>/spec.md`.
+2. **Validate** before coding: `npx openspec validate <id> --strict`
+3. **Implement** tasks; keep `openspec/specs/` as source of truth after sync/archive.
+4. **Archive** when done: `/opsx-archive` → `/opsx-sync` merges deltas into `openspec/specs/`.
+
+Trivial edits (typos, comments, formatting) may skip a change. When unsure, create one.
+
+# Definition of Done: scenarios must be tested
+
+When implementing an OpenSpec change (`/opsx-apply`) or any user-visible behavior:
+
+1. **Every `ADDED`/`MODIFIED` scenario** in the change spec MUST have an automated test
+   before the change is archived.
+2. **`tasks.md` MUST include a Tests task group** — one test per new/changed scenario.
+3. Do **not** archive until:
+   - every scenario has a test, AND
+   - `npm test`, `npm run lint`, `npm run build` pass, AND
+   - `npm run test:e2e` passes when UI flows changed.
+
+## Pick the test layer
+
+| Layer | When | Location |
+| ----- | ---- | -------- |
+| **Unit** | Pure validation, parsers, helpers | `src/**/*.test.ts` |
+| **Playwright E2E** | Pages, forms, navigation, a11y | `tests/e2e/**` |
+| **MCP browser** | Exploratory UX review, pre-merge spot-check | `/validate-ui` skill |
+
+MCP validation (`user-playwright`) is for **live UX review** — see
+`.cursor/skills/playwright-ui-validation/SKILL.md`. It does **not** replace E2E
+tests in CI (see lab-test-booking: MCP `click` may not fire React `onClick`; real
+Playwright suite is the regression gate).
+
+## E2E setup (Colibri Book)
+
+- Config: `playwright.config.ts`
+- Run: `npm run test:e2e` (starts `npm run dev` on `:3000` if not running)
+- Install browsers once: `npx playwright install chromium`
+- No isolated DB — static intake UI; dev server on port **3000**
+
+## Example
+
+Change `add-booking-intake` adds "Missing full name → field error":
+- ✅ E2E: submit empty form → expect full-name error alert
+- ✅ Unit: `validateFullName("")` returns error
+- ✅ Optional: `/validate-ui` pass before archive for visual/a11y spot-check

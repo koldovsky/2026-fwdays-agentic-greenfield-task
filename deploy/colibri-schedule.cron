@@ -1,0 +1,9 @@
+# Colibri scheduled booking runner — install to /etc/cron.d/colibri-book
+# Invokes deploy/cron-schedule-run.sh, which skips the API call when the queue
+# is empty or all jobs are completed/failed (no Playwright work needed).
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+CRON_TZ=America/Edmonton
+
+1,11,21,31,41,51 * * * * deploy /opt/colibri-book/deploy/cron-schedule-run.sh >> /var/log/colibri-schedule.log 2>&1
