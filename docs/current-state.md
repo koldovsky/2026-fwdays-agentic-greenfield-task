@@ -44,8 +44,30 @@
 
 ## Working on
 
-- Nothing in flight. T7 is closed out and committed; tree clean. Next: tasks 8 + 9 (landing), or the
-  pending archives/integ-tests below. **Do not start 8/9/10 without confirming scope with the user.**
+- **Surfacing shipped premium PDF-attach on the landing (completes T8's last gap), 2026-07-05.**
+  Discovery: T8/T9 are already largely DONE via the `update-landing-flow` change (5-status demo incl.
+  blue "coverable", cover-letter + history in how-it-works/FAQ, problem-first hero). Task 6's 0004
+  integration test also already exists and is green (`persistence.integration.test.ts`, 6 tests). The
+  ONE real T8 gap: PDF-attach (T5) shipped but is not on the landing; `update-landing-flow` §3.1
+  explicitly guarded it out while T5 was unbuilt. Now unblocked.
+
+### Plan — surface premium PDF-attach (new change `surface-premium-attach-landing`)
+
+1. **Spec-first:** new openspec change; delta MODIFIES marketing-landing "full export flow" requirement
+   to represent the original-PDF input as a shipped Pro capability, and supersedes the now-false
+   scenario line ("no unbuilt PDF attach advertised"). Honest framing: PDF enriches the GENERATION
+   source only, never grounding; still no fabrication (BC-HONESTY-01).
+2. **content.ts:** add PDF-attach to the Pro plan features; add a FAQ item (enemy framing: extracted
+   text loses your document; Pro reads your full original PDF, still grounded).
+3. **Verify:** lint + build + test. `perf-audit` deferred (no Chrome). checker subagent review → fix.
+4. **Commit** per unit; tick tasks (openspec archive CLI-blocked).
+
+### Deferred (next, larger) — landing i18n extraction
+
+~90 landing strings are hardcoded EN in `content.ts` + a few inline in FinalCta/Footer; the i18n
+`Dictionary` has no `landing` block. Extracting to `shared/lib/i18n` (ua+en) is L-effort and pairs
+naturally with T10 (blocked on unwired Cyrillic fonts). Kept as its own change to avoid a huge diff and
+to let the user steer the Ukrainian marketing voice. NOT started.
 
 ## Next steps (ranked: fastest x most critical)
 

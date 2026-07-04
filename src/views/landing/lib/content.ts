@@ -226,6 +226,7 @@ export const plans: readonly Plan[] = [
     features: [
       "Unlimited tailorings",
       "Clean PDF + DOCX export",
+      "Tailor from your original PDF, not just its text",
       "Tailoring history + cover letters",
       "Priority generation",
     ],
@@ -267,6 +268,11 @@ export const faqItems: readonly FaqItem[] = [
     question: "Can it write my cover letter too?",
     answer:
       "Yes. Pro turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
+  },
+  {
+    question: "Can I attach my original PDF?",
+    answer:
+      "Yes, on Pro. Extraction turns your CV into plain text and drops the structure the original carried, so Pro lets you attach the original PDF and the tailor works from your full document, layout and detail included, for a more faithful rewrite. It only widens what the tailor reads while writing: the attached PDF never enters the grounding pass and never adds experience your CV doesn't support, so the result stays as honest as always.",
   },
   {
     question: "How is this different from ChatGPT?",
