@@ -44,6 +44,24 @@ Enforcement (`.claude/settings.json` + `.claude/hooks/`): a `UserPromptSubmit` h
 rule each turn; a `Stop` hook blocks finishing when the working tree changed but
 `docs/current-state.md` was not updated.
 
+## Commit on the fly (required)
+
+**Commit each coherent unit of work as you go — do not batch a whole session into one commit, and
+never leave a session with the tree dirty.** This is the durable memory between sessions; an
+uncommitted change is a change the next session cannot trust (this handoff doc has drifted from the
+real commit state more than once — commits are the source of truth, prose is not).
+
+Rules:
+- After each self-contained change (a bug fix, a slice, a spec) passes `yarn lint` + relevant
+  tests, commit it. One logical change per commit.
+- Conventional Commits (`feat` / `fix` / `docs` / `chore` / `refactor` / `test`), scoped to the
+  change slug, e.g. `fix(delete-profile): …`.
+- **Never commit secrets** — no keys, `.env*`, tokens, or PHI. Verify `git status` / the diff
+  before every commit.
+- Branch first if on `main`. End commit messages with the `Co-Authored-By` trailer.
+- Before finishing a session: tree must be clean (committed) or the dirty files explicitly noted in
+  `docs/current-state.md` with why.
+
 ## Skills (Agentic Engineering)
 
 Project skills live in `.claude/skills/` (Claude Code) and `.cline/skills/` + `.clinerules/workflows/` (Cline). Reach for them by default:
