@@ -90,6 +90,11 @@ export function AccountMenu({ user, locale = "ua" }: AccountMenuProps) {
           <Link href="/tailor" className={itemClass} onClick={close}>
             {menu.tailoring}
           </Link>
+          {/* Real link (add-tailoring-history) — the paid gate lives on the
+              route/view, which shows the upgrade state for a free user. */}
+          <Link href="/history" className={itemClass} onClick={close}>
+            {menu.history}
+          </Link>
           {/* Usage is not built yet — a disabled row, honestly labeled (no dead link). */}
           <span
             aria-disabled="true"

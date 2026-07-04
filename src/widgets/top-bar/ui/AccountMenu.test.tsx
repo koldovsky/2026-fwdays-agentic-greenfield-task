@@ -35,6 +35,10 @@ describe("AccountMenu", () => {
       "href",
       "/tailor",
     );
+    expect(screen.getByRole("link", { name: ua.accountMenu.history })).toHaveAttribute(
+      "href",
+      "/history",
+    );
     expect(screen.getByRole("link", { name: ua.accountMenu.subscription })).toHaveAttribute(
       "href",
       "/account/billing",

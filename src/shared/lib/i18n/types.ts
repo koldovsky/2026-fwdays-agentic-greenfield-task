@@ -209,6 +209,8 @@ export interface Dictionary {
     readonly triggerLabel: string;
     readonly profile: string;
     readonly tailoring: string;
+    /** Tailoring history destination (add-tailoring-history, FR-HISTORY-01). */
+    readonly history: string;
     readonly usage: string;
     readonly subscription: string;
     readonly logout: string;
@@ -301,6 +303,29 @@ export interface Dictionary {
       /** Neutral closing line. */
       readonly closing: string;
     };
+  };
+  /** Tailoring history (add-tailoring-history, FR-HISTORY-01/02, FR-TAILOR-04). */
+  readonly history: {
+    /** List page title + short intro. */
+    readonly title: string;
+    readonly lead: string;
+    /** Empty state (paid user, no tailorings yet) + its CTA to start one. */
+    readonly empty: string;
+    readonly emptyCta: string;
+    /** Fallback label when a stored tailoring has no extracted job title. */
+    readonly untitled: string;
+    /** Per-row match-score label + open action. */
+    readonly scoreLabel: string;
+    readonly openAction: string;
+    /** Detail page: back-to-list link + short lead. */
+    readonly backToList: string;
+    readonly detailLead: string;
+    /** Paid gate surfaced to a free user (history is paid-only, FR-TAILOR-04). */
+    readonly lockedTitle: string;
+    readonly lockedLead: string;
+    readonly lockedCta: string;
+    /** Calm failure copy (NFR-OBS-01). */
+    readonly loadError: string;
   };
   /** Legal pages (add-legal-pages): Privacy Policy + public offer, BC-PRIVACY-01/02, NFR-GDPR-01/02. */
   readonly legal: {
