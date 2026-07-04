@@ -344,3 +344,76 @@ describe("POST /api/tailor/generate history persistence (add-tailoring-history, 
     expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-paid");
   });
 });
+
+// add-premium-pdf-attach (T5): the attach is server-gated on paid entitlement,
+// feeds the GENERATION pass only, and never reaches grounding (BC-HONESTY-01/02,
+// FR-PAYWALL-02, NFR-SEC-04). "%PDF-1.4\n" base64 = a valid PDF; "hello world"
+// base64 fails the magic-byte sniff.
+const PDF_ATTACHMENT = { mediaType: "application/pdf", dataBase64: "JVBERi0xLjQK" };
+const NON_PDF_ATTACHMENT = { mediaType: "application/pdf", dataBase64: "aGVsbG8gd29ybGQ=" };
+
+function userAttachmentsOf(provider: ReturnType<typeof groundedProvider>, phase: "generation" | "grounding") {
+  return provider.calls
+    .filter((c) => c.phase === phase)
+    .map((c) => c.prompt.messages.find((m) => m.role === "user")?.attachments);
+}
+
+describe("POST /api/tailor/generate PDF attachment (add-premium-pdf-attach T5)", () => {
+  it("paid caller: the PDF reaches the generation pass only, never grounding (BC-HONESTY-01/02)", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    const provider = groundedProvider();
+    resolveLlmProvider.mockReturnValue(provider);
+
+    const res = await POST(post({ ...VALID_BODY, attachment: PDF_ATTACHMENT }, "198.51.100.70"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    // Generation saw the document block…
+    const genAttachments = userAttachmentsOf(provider, "generation");
+    expect(genAttachments).toHaveLength(1);
+    expect(genAttachments[0]).toEqual([{ kind: "pdf", mediaType: "application/pdf", dataBase64: "JVBERi0xLjQK" }]);
+    const genCall = provider.calls.find((c) => c.phase === "generation");
+    expect(genCall?.payload).toContain("Оригінал резюме (PDF)");
+
+    // …grounding never did (isolation holds end-to-end).
+    for (const attachments of userAttachmentsOf(provider, "grounding")) {
+      expect(attachments).toBeUndefined();
+    }
+  });
+
+  it("anonymous caller: an attached PDF is ignored, run degrades to text-only (FR-PAYWALL-02)", async () => {
+    const provider = groundedProvider();
+    resolveLlmProvider.mockReturnValue(provider);
+
+    const res = await POST(post({ ...VALID_BODY, attachment: PDF_ATTACHMENT }, "198.51.100.71"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    expect(userAttachmentsOf(provider, "generation")[0]).toBeUndefined();
+    const genCall = provider.calls.find((c) => c.phase === "generation");
+    expect(genCall?.payload).not.toContain("Оригінал резюме (PDF)");
+  });
+
+  it("logged-in free caller: an attached PDF is ignored (server-side entitlement, not a client flag)", async () => {
+    currentUserId.mockResolvedValue("user-free");
+    const provider = groundedProvider();
+    resolveLlmProvider.mockReturnValue(provider);
+
+    const res = await POST(post({ ...VALID_BODY, attachment: PDF_ATTACHMENT }, "198.51.100.72"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    expect(userAttachmentsOf(provider, "generation")[0]).toBeUndefined();
+  });
+
+  it("paid caller: a non-PDF attachment (spoofed MIME) is rejected via magic-byte sniff (NFR-SEC-04)", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    const provider = groundedProvider();
+    resolveLlmProvider.mockReturnValue(provider);
+
+    const res = await POST(post({ ...VALID_BODY, attachment: NON_PDF_ATTACHMENT }, "198.51.100.73"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    // Rejected → the run proceeds text-only, no document block.
+    expect(userAttachmentsOf(provider, "generation")[0]).toBeUndefined();
+  });
+});

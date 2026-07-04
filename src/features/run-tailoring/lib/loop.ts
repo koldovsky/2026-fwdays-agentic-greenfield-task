@@ -35,6 +35,7 @@ import {
   parseSeniorityResponse,
   type CareerStage,
   type ConfirmedAnswerEvidence,
+  type DocumentAttachment,
   type GeneratedBullet,
   type GroundingVerdict,
   type LlmProvider,
@@ -353,6 +354,14 @@ export interface GenerationPhaseInput {
    * best-effort inference may be absent, leaving the baseline prompt unchanged.
    */
   readonly careerStage?: CareerStage;
+  /**
+   * The candidate's original CV PDF for the PAID multimodal generation pass
+   * (add-premium-pdf-attach, T5). Fed to generate-bullet ONLY and NEVER to
+   * ground-bullet (BC-HONESTY-01/02) — the route sets this only after a
+   * server-side paid-entitlement check, never from a client flag. Absent leaves
+   * the baseline text-only prompt byte-for-byte unchanged.
+   */
+  readonly attachments?: readonly DocumentAttachment[];
 }
 
 /** One NDJSON-shaped event from {@link runGenerationPhase}. */
@@ -399,7 +408,7 @@ export async function* runGenerationPhase(
   deps: LoopDeps,
   input: GenerationPhaseInput,
 ): AsyncGenerator<GenerationEvent, RunTrace, void> {
-  const { cvProfile, requirements, jobDescription, confirmedAnswers, checklist, matchScore: score, careerStage } = input;
+  const { cvProfile, requirements, jobDescription, confirmedAnswers, checklist, matchScore: score, careerStage, attachments } = input;
   const steps: TraceStep[] = [];
   const { runStep } = makeStepRunner(steps);
   const trace = (terminated: RunTrace["terminated"]): RunTrace => ({
@@ -417,6 +426,12 @@ export async function* runGenerationPhase(
   // deliberately NEVER added to any ground-bullet step (BC-HONESTY-03).
   const careerStageKey: readonly string[] =
     careerStage !== undefined ? ["careerStage"] : [];
+  // Named in generate-bullet's contextKeys only when the paid PDF is actually
+  // attached, so a text-only run traces identically to before T5. It is
+  // deliberately NEVER added to any ground-bullet step, and it is on the
+  // grounding-forbidden denylist (BC-HONESTY-01/02, evals/trajectory.ts).
+  const hasAttachment = attachments !== undefined && attachments.length > 0;
+  const attachmentKey: readonly string[] = hasAttachment ? ["attachment"] : [];
 
   try {
     // 1. generate-bullet — pass 1 (FR-TAILOR-02).
@@ -426,11 +441,31 @@ export async function* runGenerationPhase(
       jobDescription,
       confirmedAnswers,
       ...(careerStage !== undefined ? { careerStage } : {}),
+      ...(hasAttachment ? { attachments } : {}),
+    });
+    // The traced payload NEVER carries the base64 PDF bytes (NFR-SEC-01): it
+    // records only that an attachment of N bytes was present, so the honesty /
+    // no-user-id evals still scan the real text payload without a document
+    // dump ever reaching a trace, log, or persisted record.
+    const tracedGenerationPayload = JSON.stringify({
+      messages: generationPrompt.messages.map((m) =>
+        m.attachments && m.attachments.length > 0
+          ? {
+              role: m.role,
+              content: m.content,
+              attachments: m.attachments.map((a) => ({
+                kind: a.kind,
+                mediaType: a.mediaType,
+                base64Length: a.dataBase64.length,
+              })),
+            }
+          : m,
+      ),
     });
     const generated = await runStep(
       "generate-bullet",
-      ["cvProfile", "requirements", "jdText", ...confirmedAnswersKey, ...careerStageKey],
-      JSON.stringify(generationPrompt),
+      ["cvProfile", "requirements", "jdText", ...confirmedAnswersKey, ...careerStageKey, ...attachmentKey],
+      tracedGenerationPayload,
       async () => {
         const raw = await deps.llm.complete(generationPrompt, {
           maxTokens: GENERATION_MAX_TOKENS,

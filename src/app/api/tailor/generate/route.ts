@@ -42,7 +42,13 @@ import {
   createUsageCounterRepo,
 } from "@/shared/lib/db";
 import { getDb, withTransaction } from "@/shared/lib/db/pg";
-import { resolveLlmProvider, type CareerStage, type ConfirmedAnswerEvidence } from "@/shared/lib/llm";
+import {
+  resolveLlmProvider,
+  type CareerStage,
+  type ConfirmedAnswerEvidence,
+  type DocumentAttachment,
+} from "@/shared/lib/llm";
+import { PDF_MIME, sniffDocumentType } from "@/shared/lib/parse-document";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 import type { CvProfile, Requirement } from "@/shared/lib/scoring";
 
@@ -64,6 +70,45 @@ function isCvProfile(value: unknown): value is CvProfile {
 const CAREER_STAGES: readonly CareerStage[] = ["junior", "mid", "senior"];
 function asCareerStage(value: unknown): CareerStage | undefined {
   return CAREER_STAGES.find((s) => s === value);
+}
+
+/**
+ * Attachment size cap (add-premium-pdf-attach, T5). Deliberately smaller than
+ * the CV-text upload cap: the PDF travels base64-encoded INSIDE this JSON body
+ * (~4/3 its byte size) and a serverless request body is platform-capped
+ * (Vercel: 4.5 MB). 3 MB decoded (~4 MB base64) stays safely under that with
+ * the rest of the payload. Typical CVs are far smaller; larger originals need
+ * the future at-rest/blob path (decision D1-persist), out of scope here.
+ */
+const MAX_ATTACH_BYTES = 3 * 1024 * 1024;
+
+/**
+ * Parse + FULLY validate the optional PDF attachment (T5). The client sends it
+ * under a dedicated `attachment` field (never `attachments`), so it can NEVER
+ * reach the generation phase unvalidated — parseGenerateBody ignores it and the
+ * caller injects only this validated value, and only after a server-side paid
+ * check. Trust boundary mirrors CV upload (NFR-SEC-04): size cap, declared MIME
+ * must be PDF, and the magic-byte sniff must agree. Oversized payloads are
+ * rejected BEFORE decoding so a giant base64 string can't force a large
+ * allocation. Returns null for absent/invalid input → the run degrades to the
+ * text-only flow (no leak). Bytes are never logged (NFR-SEC-01/02).
+ */
+function parseAttachment(body: unknown): DocumentAttachment | null {
+  const attachment = (body as { attachment?: unknown } | null)?.attachment;
+  if (typeof attachment !== "object" || attachment === null) return null;
+  const { mediaType, dataBase64 } = attachment as {
+    mediaType?: unknown;
+    dataBase64?: unknown;
+  };
+  if (mediaType !== PDF_MIME) return null;
+  if (typeof dataBase64 !== "string" || dataBase64.length === 0) return null;
+  // base64 is ~4/3 the byte size; reject before decoding (NFR-SEC-04).
+  if (dataBase64.length > Math.ceil((MAX_ATTACH_BYTES * 4) / 3) + 4) return null;
+  const bytes = Buffer.from(dataBase64, "base64");
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_ATTACH_BYTES) return null;
+  // Magic-byte sniff is the real trust boundary — a spoofed mediaType is out.
+  if (sniffDocumentType(new Uint8Array(bytes.subarray(0, 8))) !== "pdf") return null;
+  return { kind: "pdf", mediaType: "application/pdf", dataBase64 };
 }
 
 /**
@@ -150,6 +195,11 @@ export async function POST(request: Request): Promise<Response> {
       // but a successful one is still tallied (unconditional, non-gating
       // increment; no atomicity concerns since nothing depends on the value).
       let paidTallyUserId: string | null = null;
+      // Server-side entitlement for the PDF attachment (T5): true ONLY for a
+      // confirmed paid caller. A client flag is never trusted; anon/free runs
+      // leave this false so an attached PDF is silently ignored (calm
+      // degradation, FR-PAYWALL-02, BC-HONESTY-01/02).
+      let attachmentAllowed = false;
       try {
         // Gate before the provider is even resolved, so a throttled request
         // never touches the LLM (NFR-COST-02). Each branch reserves budget
@@ -177,6 +227,7 @@ export async function POST(request: Request): Promise<Response> {
           }
           if (kind === "paid") {
             paidTallyUserId = userId;
+            attachmentAllowed = true;
           } else {
             // Free accounts reserve against the durable lifetime counter.
             const counters = createUsageCounterRepo(getDb());
@@ -204,7 +255,18 @@ export async function POST(request: Request): Promise<Response> {
           // No user id or account metadata is ever passed to the phase
           // (NFR-SEC-02).
           const llm = resolveLlmProvider();
-          for await (const event of runGenerationPhase({ llm }, parsed.value)) {
+          // Honor an attached PDF ONLY for a paid caller (server-side gate) —
+          // otherwise run the normal text-only flow. Parsed lazily so a
+          // non-paid request never decodes attacker-supplied bytes (NFR-SEC-04);
+          // the attachment feeds the generation pass only (BC-HONESTY-01/02).
+          let phaseInput = parsed.value;
+          if (attachmentAllowed) {
+            const attachment = parseAttachment(body);
+            if (attachment !== null) {
+              phaseInput = { ...parsed.value, attachments: [attachment] };
+            }
+          }
+          for await (const event of runGenerationPhase({ llm }, phaseInput)) {
             if (event.type === "result") {
               succeeded = true;
               finalResult = event.result;
