@@ -5,11 +5,44 @@ import crypto from 'crypto';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-export async function sendBotMessage(telegramId: string | bigint, text: string): Promise<boolean> {
+const nextSendTimeByChat = new Map<string, number>();
+let nextOverallSendTime = 0;
+
+async function enforceRateLimits(chatId: string) {
+  const now = Date.now();
+
+  let scheduledOverall = nextOverallSendTime;
+  if (scheduledOverall < now) {
+    scheduledOverall = now;
+  }
+  nextOverallSendTime = scheduledOverall + 34; // макс 30 повідомлень на секунду загалом
+
+  let scheduledChat = nextSendTimeByChat.get(chatId) || 0;
+  if (scheduledChat < now) {
+    scheduledChat = now;
+  }
+  nextSendTimeByChat.set(chatId, scheduledChat + 1000); // макс 1 повідомлення на секунду для конкретного чату
+
+  const executeTime = Math.max(scheduledOverall, scheduledChat);
+  const delay = executeTime - now;
+
+  if (delay > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+}
+
+export async function sendBotMessage(
+  telegramId: string | bigint,
+  text: string,
+  parseMode?: 'HTML' | 'Markdown' | 'MarkdownV2'
+): Promise<boolean> {
   if (!TELEGRAM_BOT_TOKEN) {
     console.error('TELEGRAM_BOT_TOKEN is not configured');
     throw new Error('TELEGRAM_BOT_TOKEN is not configured');
   }
+
+  const chatIdStr = telegramId.toString();
+  await enforceRateLimits(chatIdStr);
 
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   try {
@@ -19,8 +52,9 @@ export async function sendBotMessage(telegramId: string | bigint, text: string):
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: telegramId.toString(),
+        chat_id: chatIdStr,
         text,
+        ...(parseMode ? { parse_mode: parseMode } : {}),
       }),
     });
 

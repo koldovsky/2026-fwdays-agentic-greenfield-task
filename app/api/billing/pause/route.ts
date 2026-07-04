@@ -60,7 +60,7 @@ export async function POST() {
       time: transactionTime,
       email: user.email || 'не вказано',
       website: user.websiteUrl || 'не вказано',
-      telegramUsername: user.telegramUsername,
+      telegramUsername: user.telegramUsername || 'не вказано',
       amount: sub.amount || undefined,
     });
 

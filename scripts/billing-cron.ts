@@ -26,11 +26,18 @@ export async function runBillingCron() {
         .from(users)
         .where(eq(users.id, sub.userId))
         .limit(1);
+      
+      let user = userList[0];
       if (userList.length === 0) {
-        console.error(`User not found for subscription ${sub.id}`);
-        continue;
+        console.warn(`User profile not found in database for ID: ${sub.userId}`);
+        user = {
+          id: sub.userId,
+          email: 'не знайдено',
+          websiteUrl: 'не знайдено',
+          telegramUsername: 'не знайдено',
+          telegramId: null,
+        } as unknown as typeof users.$inferSelect;
       }
-      const user = userList[0];
 
       // A. Active subscription with autoRenew = true (needs billing or retry)
       if (sub.status === 'active' && sub.autoRenew) {
@@ -111,9 +118,10 @@ export async function runBillingCron() {
               time: new Date().toISOString(),
               email: user.email || 'не вказано',
               website: user.websiteUrl || 'не вказано',
-              telegramUsername: user.telegramUsername,
+              telegramUsername: user.telegramUsername || 'не вказано',
               amount: amountInKopecks,
             });
+
 
             console.log(`Successfully charged subscription ${sub.id}.`);
           } else {

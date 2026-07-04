@@ -67,11 +67,17 @@ export async function POST(req: Request) {
       .where(eq(users.id, sub.userId))
       .limit(1);
 
+    let user = userList[0];
     if (userList.length === 0) {
-      return NextResponse.json({ error: 'Користувача не знайдено' }, { status: 404 });
+      console.warn(`User profile not found in database for ID: ${sub.userId}`);
+      user = {
+        id: sub.userId,
+        email: 'не знайдено',
+        websiteUrl: 'не знайдено',
+        telegramUsername: 'не знайдено',
+        telegramId: null,
+      } as unknown as typeof users.$inferSelect;
     }
-
-    const user = userList[0];
 
     // Calculate new period end date
     const intervalMonths = sub.tariffPlan === 'yearly' ? 12 : 1;
@@ -106,9 +112,10 @@ export async function POST(req: Request) {
       time: transactionTime,
       email: user.email || 'не вказано',
       website: user.websiteUrl || 'не вказано',
-      telegramUsername: user.telegramUsername,
+      telegramUsername: user.telegramUsername || 'не вказано',
       amount: amount || sub.amount || undefined,
     });
+
 
     // Send user notification (welcome if initial activation)
     if (isInitialActivation) {
