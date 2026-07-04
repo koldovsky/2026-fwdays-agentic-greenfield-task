@@ -104,8 +104,9 @@ FR-GUARD-03.
 adapter spike), TC-PURE-01 (`lib/` stays framework-free), TC-DATA-01 (grid
 10:00–19:00 starts, 60-min step), TC-TEST-01 (Vitest unit tests), BC-SCHEDULE-01
 (Mon–Fri 10:00–20:00 only), NFR-REL-01 (calendar-failure apology path, no
-silent drop), NFR-UX-01 (slot proposal stays inside the p90 budget — free/busy
-polling latency).
+silent drop). NFR-UX-01 is owned by S2 `intake` (bot ack latency); S1 is only
+an input to it — free/busy latency observed in the spike: warm ~170–220ms,
+well inside the budget (no separate S1 latency NFR exists).
 
 **Dependencies:** none.
 

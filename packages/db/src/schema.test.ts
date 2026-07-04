@@ -48,6 +48,23 @@ describe("bookings schema (TC-DATA-01)", () => {
     db.close();
   });
 
+  // @trace FR-SLOT-02 — DB-level backstop for the hold TOCTOU window
+  // (review-gate S1 finding): if two concurrent holds both pass the
+  // calendar-side freeBusy re-check, the second pending row is rejected.
+  it("rejects a second pending row for the same slot (partial unique index)", () => {
+    const db = openDatabase(":memory:");
+    const insert = db.prepare(
+      `INSERT INTO bookings (slot_start, slot_end, status) VALUES (?, ?, ?)`,
+    );
+    insert.run("2026-07-06T12:00:00+03:00", "2026-07-06T13:00:00+03:00", "pending");
+    expect(() =>
+      insert.run("2026-07-06T12:00:00+03:00", "2026-07-06T13:00:00+03:00", "pending"),
+    ).toThrow(/UNIQUE constraint failed/);
+    // a terminal row for the same slot is fine (the index is partial):
+    insert.run("2026-07-06T12:00:00+03:00", "2026-07-06T13:00:00+03:00", "cancelled");
+    db.close();
+  });
+
   it("rejects a bogus status via the CHECK constraint", () => {
     const db = openDatabase(":memory:");
 

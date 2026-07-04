@@ -25,6 +25,8 @@ const SECRET_PATTERNS = [
   /\b(sk|rk|re|ghp|gho|xox[bap])_[A-Za-z0-9]{16,}\b/,
   /\bAKIA[0-9A-Z]{16}\b/,
   /postgres(ql)?:\/\/[^\s'"]+:[^\s'"]+@/,
+  /\bAIza[0-9A-Za-z_-]{35}\b/, // Google API key (review-gate hardening)
+  /\bsk-ant-[A-Za-z0-9-]{20,}\b/, // Anthropic key — must never exist here (NFR-SEC-01)
 ];
 for (const file of staged) {
   if (/\.(png|webm|jpg|jpeg|gif|pdf|ico|woff2?)$/.test(file)) continue;

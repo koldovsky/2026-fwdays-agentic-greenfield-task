@@ -6,11 +6,11 @@ It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
 Scope: 1 archived slice(s).
-Result: PASS, 1 warning(s)
+Result: PASS
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
-| 2026-07-04-slots | **missing** | 15 | yes | src |
+| 2026-07-04-slots | clean | 16 | yes | src |
 
 ## Cross-slice module overlap
 
@@ -22,4 +22,4 @@ None.
 
 ## Warnings
 
-- **review-evidence**: 2026-07-04-slots: review-findings.json is missing (review must have run clean before archive)
+None.

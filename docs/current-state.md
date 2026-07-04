@@ -6,15 +6,25 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-04, ~03:25 (Europe/Kyiv)
-- **Current phase:** **Phase 4 — slice S1 `slots` 41/44 tasks done**; only
-  6.8 (this update), 6.9 (manual real-DB smoke with the human — visual
-  calendar steps + screenshots for docs/qa/), 6.10 (archive, gated on 6.9)
-  remain. Spike verdict: **googleapis** (MCP disqualified empirically —
-  no service-account auth; evidence in packages/calendar/spike-mcp/).
-  Cadence all green: lint, 46/46 unit, 6/6 live integration (hermetic,
-  runs twice), build, openspec 6/6 strict, traceability 0 failures /
-  56 warnings. Next slice after archive = S2 `intake`.
+- **Date and time:** 2026-07-04, ~04:15 (Europe/Kyiv)
+- **Current phase:** **Slice S1 `slots` COMPLETE and ARCHIVED**
+  (`openspec/changes/archive/2026-07-04-slots/`, 44/44 tasks). Spike
+  verdict: **googleapis** (MCP disqualified empirically — no
+  service-account auth; evidence in packages/calendar/spike-mcp/).
+  6.9 smoke scripted+passed (`scripts/qa/manual-smoke-slots.mjs`,
+  transcript `docs/qa/slots-manual-smoke.md`). **Review-gate ran
+  post-archive** (process deviation — run it BEFORE archive next time):
+  12 confirmed + 3 contested findings, all fixed or dispositioned
+  (review-findings.json in the archive dir); notable fixes: partial
+  unique index on pending slots (TOCTOU backstop), dashboard pinned to
+  127.0.0.1, key chmod 600, secret-scan patterns hardened.
+  Gates: lint, 47/47 unit, 6/6 live integration, build, openspec 5/5
+  strict, traceability 0 failures.
+- **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
+  (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
+  chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
+  Next slice = **S2 `intake`** (change folder → red → green pattern
+  established by S1).
 - **Active change:** none (baseline specs, not a change folder)
 - **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
   sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),

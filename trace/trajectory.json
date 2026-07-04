@@ -3,8 +3,8 @@
   "slices": [
     {
       "slice": "2026-07-04-slots",
-      "reviewEvidence": "missing",
-      "trailerCommits": 15,
+      "reviewEvidence": "clean",
+      "trailerCommits": 16,
       "libDomains": [
         "src"
       ],
@@ -13,10 +13,5 @@
   ],
   "overlaps": [],
   "failures": [],
-  "warnings": [
-    {
-      "check": "review-evidence",
-      "msg": "2026-07-04-slots: review-findings.json is missing (review must have run clean before archive)"
-    }
-  ]
+  "warnings": []
 }

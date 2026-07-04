@@ -31,6 +31,15 @@ CREATE TABLE IF NOT EXISTS bookings (
 );
 `;
 
+// Defense-in-depth backstop for the hold TOCTOU window (review-gate S1
+// finding): the primary double-booking guard is the calendar-side freeBusy
+// re-check in lib/src/slots/hold.ts, but if two concurrent holds both pass
+// it, the DB itself rejects the second pending row for the same interval.
+const CREATE_PENDING_SLOT_UNIQUE_INDEX = `
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_pending_slot
+  ON bookings(slot_start, slot_end) WHERE status = 'pending';
+`;
+
 /**
  * Create every table this module owns if it doesn't already exist. Safe to
  * call repeatedly (idempotent) — e.g. once per process start, before any
@@ -38,4 +47,5 @@ CREATE TABLE IF NOT EXISTS bookings (
  */
 export function initSchema(db: Database.Database): void {
   db.exec(CREATE_BOOKINGS_TABLE);
+  db.exec(CREATE_PENDING_SLOT_UNIQUE_INDEX);
 }

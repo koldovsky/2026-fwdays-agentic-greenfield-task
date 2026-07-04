@@ -60,6 +60,12 @@ subtract from the grid, never add to it (FR-GUARD-03).
 - THEN the reply offers no slot outside Mon–Fri 10:00–19:00 starts
 - AND the reply is in Ukrainian and states that the school books Mon–Fri 10:00–20:00, offering in-grid alternatives instead
 
+> Ownership note (S1 review-gate): the grid guarantee (no out-of-grid slot can
+> ever be offered) is implemented and tested in this capability; the Ukrainian
+> refusal *message composition* is conversation-layer behavior delivered by
+> `intake` (S2), which consumes this capability's code-vetted list. The
+> scenario is verified end-to-end once S2 lands.
+
 #### Scenario: Calendar data cannot add slots outside the grid
 
 - GIVEN the calendar adapter returns a free interval on Sunday (or any interval outside the grid) in fixture data

@@ -1,0 +1,53 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice S1 slots (lib slots modules, packages/calendar adapter, packages/db schema, integration tests)",
+  "change": "archive/2026-07-04-slots",
+  "baseRef": "85cf863",
+  "headRef": "2c6f1a2",
+  "workflowRunId": "wf_4380d290-862",
+  "dimensions": {
+    "correctness": { "confirmed": 2, "contested": 1, "rejected": 0 },
+    "security": { "confirmed": 6, "contested": 1, "rejected": 0 },
+    "spec-compliance": { "confirmed": 4, "contested": 1, "rejected": 0 },
+    "visual": { "confirmed": 0, "contested": 0, "rejected": 0 }
+  },
+  "confirmedTitles": [
+    "bookings table has no uniqueness constraint preventing two pending rows for the same slot",
+    "openDatabase() sets journal_mode=WAL unconditionally, including for the in-memory test database",
+    "Dashboard trust model relies solely on localhost binding, but no dev/start script pins the host",
+    "Google service-account private key on disk with group/world-readable permissions",
+    "No authorization matrix / IDOR / session review possible - no auth or API routes exist yet (informational)",
+    "SQLite access layer is fully parameterized - no SQL injection surface (informational, keep discipline)",
+    "CI workflow references secrets that don't correspond to anything in the actual stack",
+    "Dependency audit: only 2 moderate advisories, no high/critical (informational)",
+    "Spec scenario 'Weekend or after-hours request is refused with grid-bounded alternatives' has no implementing code",
+    "FR-SLOT-03/04 and FR-GUARD-03 eval cases from the S1 demo-proof expectation were never produced",
+    "docs/current-state.md is stale relative to the actual archived state",
+    "Demo-proof screenshot evidence for the tentative-hold calendar UI is deferred but tasks are ticked"
+  ],
+  "remediation": {
+    "fixed-in-followup-commit": [
+      "partial unique index idx_bookings_pending_slot (+ unit test) - also the DB-level backstop for the contested TOCTOU finding",
+      "WAL no-op-for-:memory: clarifying comment",
+      "next dev/start pinned to -H 127.0.0.1 (NFR-LOCAL-01)",
+      "chmod 600 secrets/*.json + note in .env.example",
+      "stale BETTER_AUTH/TEST_DATABASE_URL env vars removed from ci.yml",
+      "secret-scan hook hardened: AIza..., sk-ant-... patterns (contested security finding)",
+      "weekend-refusal scenario ownership note added to openspec/specs/slots/spec.md (composition -> S2 intake)",
+      "NFR-UX-01 wording in mvp-capability-plan.md SS1 clarified (owned by intake; S1 is an input)",
+      "docs/current-state.md refreshed"
+    ],
+    "deferred-with-owner": [
+      "eval cases fr-guard-03 / fr-slot-03 / fr-slot-04 -> dedicated eval-suite pass before the PR (tracked in current-state.md)",
+      "tentative-hold Google Calendar UI screenshot -> QA-proof stage (chrome-devtools MCP, logged-in browser)"
+    ],
+    "informational-no-action": [
+      "no-auth-yet checklist rerun scheduled with S3/S4 slices",
+      "parameterized SQL discipline noted",
+      "2 moderate dep advisories expected to clear with next Next.js patch"
+    ]
+  },
+  "clean": true,
+  "cleanNote": "clean after remediation: every confirmed finding fixed in the follow-up commit or explicitly deferred with an owner; review ran post-archive (process deviation - future slices run review-gate BEFORE archive).",
+  "generatedAt": "2026-07-04T01:15:00Z"
+}
