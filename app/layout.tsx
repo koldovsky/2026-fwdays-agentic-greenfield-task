@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { STORAGE_KEYS } from "@/lib/storage";
 import "./globals.css";
 
-// Matches the Notely design system's typography tokens (Inter + JetBrains
-// Mono) but self-hosts them via next/font instead of the CDN @import in
-// .agents/skills/notely-design/tokens/fonts.css, per docs/app/getting-started/fonts.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -22,6 +21,8 @@ export const metadata: Metadata = {
   description: "A calm, minimal note-taking app.",
 };
 
+const themeBootstrapScript = `(function(){try{var t=localStorage.getItem("${STORAGE_KEYS.theme}");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,8 +32,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

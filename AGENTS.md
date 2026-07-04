@@ -1,3 +1,9 @@
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
+
 <!-- BEGIN:project-docs -->
 
 
@@ -28,12 +34,6 @@ Read `docs/current-state.md` at the start of a session to pick up where the last
 Do not delete historical context abruptly — roll `Completed recently` forward and keep the file
 concise (one screen).
 <!-- END:project-docs -->
-
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:design-system -->
 
