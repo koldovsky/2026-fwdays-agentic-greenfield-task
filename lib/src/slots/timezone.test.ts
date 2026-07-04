@@ -15,7 +15,7 @@
 //   EEST->EET on Sun 2026-10-25 (verified against the IANA tz database via
 //   Intl.DateTimeFormat during test authoring).
 import { describe, expect, it } from "vitest";
-import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone";
+import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone.ts";
 
 describe("Kyiv wall-clock <-> RFC3339 UTC conversion", () => {
   // @trace FR-SLOT-01

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { openDatabase } from "./index.js";
-import { insertBooking, updateBookingStatus } from "./bookings.js";
+import { openDatabase } from "./index.ts";
+import { insertBooking, updateBookingStatus } from "./bookings.ts";
 
 describe("insertBooking (TC-DATA-01)", () => {
   // @trace FR-SLOT-02

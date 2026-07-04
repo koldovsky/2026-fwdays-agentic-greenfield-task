@@ -14,7 +14,7 @@
 //     interval is passed in the same `busy` array, same shape, no special
 //     casing.
 import { describe, expect, it } from "vitest";
-import { subtractBusy } from "./subtract";
+import { subtractBusy } from "./subtract.ts";
 
 /** Local test fixture builder — NOT the real grid generator (that is
  * grid.test.ts's job); just the 10 hourly Mon-Fri slots for one date, kept

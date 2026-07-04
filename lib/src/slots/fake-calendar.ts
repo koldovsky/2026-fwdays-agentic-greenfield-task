@@ -6,9 +6,9 @@
 //
 // Framework-free (TC-PURE-01): no Google SDK, no network, no filesystem.
 
-import { overlaps } from "./subtract";
-import type { BusyInterval, CalendarPort } from "./calendar-port";
-import { CalendarApiError } from "./calendar-port";
+import { overlaps } from "./subtract.ts";
+import type { BusyInterval, CalendarPort } from "./calendar-port.ts";
+import { CalendarApiError } from "./calendar-port.ts";
 
 type EventStatus = "tentative" | "confirmed";
 

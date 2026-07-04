@@ -33,10 +33,10 @@
 //     hold-cancel/decline (FR-SLOT-02); no automatic expiry ever calls this
 //     on its own (spec.md "Holds never expire automatically").
 
-import type { Slot } from "./grid";
-import type { CalendarPort } from "./calendar-port";
-import { overlaps } from "./subtract";
-import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone";
+import type { Slot } from "./grid.ts";
+import type { CalendarPort } from "./calendar-port.ts";
+import { overlaps } from "./subtract.ts";
+import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone.ts";
 
 /** A hold request in Europe/Kyiv wall-clock local time, same `Slot` shape
  *  used across grid/subtract/rank/widen — this module is the boundary that

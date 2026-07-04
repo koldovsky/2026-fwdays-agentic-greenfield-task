@@ -18,9 +18,9 @@
 //   - releaseHold(port, eventId) deletes the tentative event, freeing the
 //     slot for subsequent freeBusy checks (spec.md "delete on cancel").
 import { describe, expect, it } from "vitest";
-import { createHold, releaseHold } from "./hold";
-import { FakeCalendarPort } from "./fake-calendar";
-import { kyivWallClockToUtc } from "./timezone";
+import { createHold, releaseHold } from "./hold.ts";
+import { FakeCalendarPort } from "./fake-calendar.ts";
+import { kyivWallClockToUtc } from "./timezone.ts";
 
 describe("createHold", () => {
   // @trace FR-SLOT-02

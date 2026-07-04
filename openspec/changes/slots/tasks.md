@@ -158,7 +158,11 @@
 - [ ] 6.8 Update `docs/current-state.md` (phase, last-updated timestamp
       Europe/Kyiv, spike verdict summary, next slice = S2 `intake`) and
       `README.md` if it references slice status.
-- [ ] 6.9 Manual real-DB smoke test, spelled out step by step:
+- [x] 6.9 Manual real-DB smoke test, spelled out step by step *(scripted:
+      `scripts/qa/manual-smoke-slots.mjs`, transcript in
+      `docs/qa/slots-manual-smoke.md`; deviations: step-4 busy event
+      API-created on the next Monday; UI screenshots deferred to the
+      QA-proof stage)*:
       1. Ensure `.env` has a valid `GOOGLE_APPLICATION_CREDENTIALS` path and
          `GOOGLE_CALENDAR_ID` for the DEMO calendar, shared with the
          service account ("Make changes").

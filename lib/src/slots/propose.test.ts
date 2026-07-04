@@ -30,16 +30,16 @@ import {
   holdWithRecovery,
   proposeSlots,
   type ProposeRequest,
-} from "./propose";
-import { FakeCalendarPort } from "./fake-calendar";
+} from "./propose.ts";
+import { FakeCalendarPort } from "./fake-calendar.ts";
 import {
   CalendarApiError,
   CalendarTimeoutError,
   type BusyInterval,
   type CalendarPort,
-} from "./calendar-port";
-import type { HoldRequest } from "./hold";
-import { kyivWallClockToUtc } from "./timezone";
+} from "./calendar-port.ts";
+import type { HoldRequest } from "./hold.ts";
+import { kyivWallClockToUtc } from "./timezone.ts";
 
 class FailingCalendarPort implements CalendarPort {
   constructor(

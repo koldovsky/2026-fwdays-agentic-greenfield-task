@@ -16,7 +16,7 @@
 //   (weekday abbreviations "Mon".."Fri"; timeWindow bounds are "HH:mm"
 //   Kyiv wall-clock time-of-day, half-open like the grid's own slots).
 import { describe, expect, it } from "vitest";
-import { rankSlots } from "./rank";
+import { rankSlots } from "./rank.ts";
 
 describe("rankSlots", () => {
   // @trace FR-SLOT-04

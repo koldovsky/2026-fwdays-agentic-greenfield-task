@@ -6,9 +6,9 @@
 // Date.now(), no I/O; "now" and the busy list are always arguments
 // (design.md Decision 5).
 
-import type { Slot } from "./grid";
-import type { BusyInterval } from "./subtract";
-import { overlaps } from "./subtract";
+import type { Slot } from "./grid.ts";
+import type { BusyInterval } from "./subtract.ts";
+import { overlaps } from "./subtract.ts";
 
 /**
  * The lead's stated scheduling preferences (FR-SLOT-04 criterion 1).

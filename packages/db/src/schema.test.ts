@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { openDatabase } from "./index.js";
+import { openDatabase } from "./index.ts";
 
 describe("bookings schema (TC-DATA-01)", () => {
   it("creates the bookings table on init", () => {

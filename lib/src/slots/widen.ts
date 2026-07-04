@@ -6,9 +6,9 @@
 // grid + subtract + rankSlots(): it decides WHICH candidate pool to rank,
 // never how to rank within a pool (design.md Decision 5).
 
-import { generateGrid, type Slot } from "./grid";
-import { subtractBusy, type BusyInterval } from "./subtract";
-import { rankSlots, type Preferences, type RankedSlot } from "./rank";
+import { generateGrid, type Slot } from "./grid.ts";
+import { subtractBusy, type BusyInterval } from "./subtract.ts";
+import { rankSlots, type Preferences, type RankedSlot } from "./rank.ts";
 
 /** The narrowest widening step that supplied the proposal pool (FR-SLOT-03):
  *  "none" — the lead's original window already had >= 2 matches;

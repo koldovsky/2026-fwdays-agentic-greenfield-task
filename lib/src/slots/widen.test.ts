@@ -26,7 +26,7 @@
 //   If Step 3 still yields zero, `noFreeTimes` is true and `slots` is `[]`
 //   -- an explicit signal, never a silent empty result.
 import { describe, expect, it } from "vitest";
-import { widenAndRank } from "./widen";
+import { widenAndRank } from "./widen.ts";
 
 function fullDayBusy(date: string) {
   return { start: `${date}T10:00`, end: `${date}T20:00` };

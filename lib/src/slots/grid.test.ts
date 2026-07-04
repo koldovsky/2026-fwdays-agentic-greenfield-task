@@ -16,7 +16,7 @@
 //     lexicographic string comparison agree with chronological order).
 //   - `end` is always exactly `start` + 60 minutes, same calendar date.
 import { describe, expect, it } from "vitest";
-import { generateGrid } from "./grid";
+import { generateGrid } from "./grid.ts";
 
 const HOUR_STARTS = [
   "10:00",

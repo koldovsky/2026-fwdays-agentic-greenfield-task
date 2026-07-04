@@ -71,12 +71,12 @@
 //     orphan hold to unwind (spec.md "no hold exists without its tentative
 //     event"). On success, `createHold`'s own `"held"`/`"collision"` result
 //     passes through unchanged.
-import type { CalendarPort } from "./calendar-port";
-import { CalendarError } from "./calendar-port";
-import type { Preferences, RankedSlot } from "./rank";
-import { widenAndRank, type WidenedStep } from "./widen";
-import { createHold, type HoldRequest, type HoldResult } from "./hold";
-import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone";
+import type { CalendarPort } from "./calendar-port.ts";
+import { CalendarError } from "./calendar-port.ts";
+import type { Preferences, RankedSlot } from "./rank.ts";
+import { widenAndRank, type WidenedStep } from "./widen.ts";
+import { createHold, type HoldRequest, type HoldResult } from "./hold.ts";
+import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone.ts";
 
 /**
  * The deterministic Ukrainian apology-and-retry message (NFR-REL-01,

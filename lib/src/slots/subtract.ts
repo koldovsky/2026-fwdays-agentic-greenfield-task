@@ -5,7 +5,7 @@
 //
 // Framework-free pure core (TC-PURE-01).
 
-import type { Slot } from "./grid";
+import type { Slot } from "./grid.ts";
 
 /**
  * A busy interval in Europe/Kyiv wall-clock LOCAL "YYYY-MM-DDTHH:mm" form,

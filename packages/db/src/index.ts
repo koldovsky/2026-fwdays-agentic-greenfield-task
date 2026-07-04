@@ -4,15 +4,15 @@
 // questions (FR-KB-01). The *.db file is gitignored.
 
 import Database from "better-sqlite3";
-import { initSchema } from "./schema.js";
+import { initSchema } from "./schema.ts";
 
-export { initSchema, BOOKING_STATUSES, type BookingStatus } from "./schema.js";
+export { initSchema, BOOKING_STATUSES, type BookingStatus } from "./schema.ts";
 export {
   insertBooking,
   updateBookingStatus,
   type InsertBookingInput,
   type BookingRow,
-} from "./bookings.js";
+} from "./bookings.ts";
 
 /**
  * Open (or create) the SQLite database file at `path` and ensure every table

@@ -10,7 +10,7 @@
 // S2 `intake`, per schema.ts's own comment).
 
 import type Database from "better-sqlite3";
-import type { BookingStatus } from "./schema.js";
+import type { BookingStatus } from "./schema.ts";
 
 export interface InsertBookingInput {
   slotStart: string;
