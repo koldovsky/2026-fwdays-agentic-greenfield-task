@@ -55,17 +55,29 @@
 
 ## Working on
 
-- Nothing in flight. Tree clean. All unblocked spec-ready code work is done (T1-T8 + T9 copy).
-  Remaining work is either environment-blocked (archives, ops, Lighthouse, live eval) or larger and
-  coupled to a blocked task (landing i18n extraction ↔ T10 Cyrillic fonts). See next steps.
+- **Landing i18n extraction (T9 remaining piece), spec-first — IN PROGRESS 2026-07-05 (ultracode).**
+  Move all landing copy into `shared/lib/i18n` (ua+en), rewire components via `t(locale).landing`.
+  Change: `extract-landing-i18n` (NFR-I18N-01, BC-BRAND-01). Plan below.
 
-### Deferred (next, larger, unblocked-but-L) — landing i18n extraction
+### Plan — extract-landing-i18n
 
-~90 landing strings are hardcoded EN in `content.ts` + a few inline in FinalCta/Footer; the i18n
-`Dictionary` has no `landing` block. Extracting to `shared/lib/i18n` (ua+en) is L-effort and pairs
-naturally with T10 (blocked on unwired Cyrillic fonts). Kept as its own change to avoid a huge diff and
-to let the user steer the Ukrainian marketing voice. **NOT started — needs user greenlight** (large
-Ukrainian-copy authoring where marketing voice matters).
+1. **Spec-first:** new openspec change; delta adds an NFR-I18N-01 requirement to `marketing-landing`
+   (landing copy resolves through `shared/lib/i18n`, ua+en; no hardcoded UI strings in components).
+2. **Contract:** add a `landing` block to `i18n/types.ts` `Dictionary`. Translatable TEXT only; keyed
+   by stable ids (pillars/steps/plans/faq/checklistRows/beforeAfter/demoBullets as keyed objects, NOT
+   index-zipped arrays). Structural data (accent, status, grounding, price, featured, numbers, hrefs)
+   stays in `content.ts`.
+3. **en.ts + ua.ts:** author the full `landing` section. en = current copy verbatim. ua = faithful
+   Ukrainian (FLAG for native marketing review; product is Ukrainian-first but voice is the team's).
+4. **content.ts → assemblers:** convert the exported consts to `*(locale)` functions that merge
+   `t(locale).landing` text with the structural constants; extract FinalCta.tsx + Footer.tsx inline
+   strings too. Thread `locale` from Landing to each section, **default "en"** (font-safe: display
+   fonts are latin-only until T10 wires Cyrillic; do NOT let it fall back to the `ua` default).
+5. **Verify:** lint + build + test (update landing tests to source from i18n; add an i18n
+   landing-parity test ua-keys == en-keys). Then adversarial review workflow → fix → commit.
+
+**Font-safety invariant:** the landing must keep rendering EN until T10. `t()` defaults to `ua`, so
+every landing call site MUST pass an explicit locale ("en" for now). T10 later flips this + wires fonts.
 
 ## Next steps (ranked: fastest x most critical)
 
