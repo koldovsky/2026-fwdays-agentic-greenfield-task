@@ -1,5 +1,6 @@
 // Landing footer: brand lock, nav links, honest attribution. No trackers.
-import { navLinks } from "../lib/content";
+import Link from "next/link";
+import { legalLinks, navLinks } from "../lib/content";
 import { Wrap } from "./primitives";
 
 export function Footer() {
@@ -18,9 +19,11 @@ export function Footer() {
               {link.label}
             </a>
           ))}
-          <a href="#" className="hover:text-ink">
-            Privacy
-          </a>
+          {legalLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="hover:text-ink">
+              {link.label}
+            </Link>
+          ))}
         </nav>
         <div className="text-sm text-ink-muted">
           Grounded responses powered by the Anthropic API.

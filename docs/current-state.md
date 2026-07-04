@@ -35,8 +35,22 @@
 
 ## Working on
 
-- **Implementing the roadmap by priority.** T4 header **DONE** (`rework-app-header`, committed).
-  Next: continue down the ranking (T1 tailoring intelligence / T12 legal / …), committing each unit.
+- **Implementing the roadmap by priority.** T4 header **DONE** (`rework-app-header`, `2932654`).
+  T12 legal pages **DONE** (`add-legal-pages`) — committing now. Next: T1 tailoring intelligence
+  (flagship, now fully unblocked) or T5 premium PDF, then T13 Stripe.
+
+### Done — T12 legal (add-legal-pages)
+
+- `views/legal` slice + `/privacy` + `/oferta` routes (both prerender **static**, crawlable).
+- Privacy Policy (data held, encrypt-at-rest, no training, no trackers, GDPR export/delete rights)
+  + public offer (parties, Free/Pro/Job-hunt Pass plans, payment/refund, acceptance) — i18n ua+en,
+  **marked draft pending legal-counsel sign-off**.
+- Footer dead `href="#"` Privacy stub → real `/privacy` + `/oferta` links (typed `legalLinks`);
+  checkout surfaces an `/oferta` terms link; both in `sitemap.ts`.
+- `TopBarSession` generalized with `showMarketingNav` (default true; legal pages pass false).
+- lint+build clean, **525 tests** green. T13 (Stripe) now has its legal seam.
+- **OPEN: legal-counsel sign-off** on final Privacy + offer wording before the draft note is
+  removed (add-legal-pages §5.3). checker-review §5.2 also pending.
 
 ### Done — T4 header (rework-app-header, app-shell MODIFIED)
 

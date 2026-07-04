@@ -6,6 +6,7 @@
 // screen NEVER writes subscription state itself — the webhook handler does.
 // On success the user returns to exactly the screen they left (FR-PAYWALL-03);
 // on failure they stay Free with calm copy and a retry CTA (FR-BILLING-03).
+import Link from "next/link";
 import { useState } from "react";
 import { t, type Locale } from "@/shared/lib/i18n";
 import type { PaymentsPlan } from "@/shared/lib/payments";
@@ -61,6 +62,13 @@ export function CheckoutView({
           <dd className="mt-1 font-display text-lg text-ink">{copy.planName[plan]}</dd>
           <dd className="text-sm text-ink-soft">{copy.planPrice[plan]}</dd>
         </dl>
+
+        <p className="mt-4 text-xs text-ink-muted">
+          {copy.termsPrefix}{" "}
+          <Link href="/oferta" className="underline hover:text-ink">
+            {copy.termsLink}
+          </Link>
+        </p>
 
         {phase === "declined" || phase === "error" ? (
           <div className="mt-6" role="status">

@@ -16,6 +16,12 @@ export const navLinks: readonly NavLink[] = [
   { href: "#faq", label: "FAQ" },
 ];
 
+/** Real legal routes for the footer (add-legal-pages) — replaces the dead `#` stub. */
+export const legalLinks: readonly NavLink[] = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/oferta", label: "Public offer" },
+];
+
 export interface Pillar {
   readonly title: string;
   readonly body: string;

@@ -12,22 +12,26 @@ import { TopBar } from "./TopBar";
 export interface TopBarSessionProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
+  /**
+   * Show the marketing nav. Defaults true (landing, whose anchors this points
+   * at). Static session-aware pages that are not the landing (e.g. the legal
+   * pages) pass false so the anchors don't leak off-landing (see rework-app-header).
+   */
+  readonly showMarketingNav?: boolean;
 }
 
-export function TopBarSession({ locale = "ua" }: TopBarSessionProps) {
+export function TopBarSession({ locale = "ua", showMarketingNav = true }: TopBarSessionProps) {
   const { data: session, status } = useSession();
 
-  // This island only renders on the landing page, so the marketing nav belongs
-  // here (its anchors point at landing sections).
   if (status === "authenticated") {
     return (
       <TopBar
         user={{ name: session.user?.name, email: session.user?.email }}
         locale={locale}
-        showMarketingNav
+        showMarketingNav={showMarketingNav}
       />
     );
   }
 
-  return <TopBar user={null} locale={locale} showMarketingNav />;
+  return <TopBar user={null} locale={locale} showMarketingNav={showMarketingNav} />;
 }

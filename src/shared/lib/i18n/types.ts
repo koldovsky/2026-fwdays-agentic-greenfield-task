@@ -132,6 +132,10 @@ export interface Dictionary {
     readonly retryAction: string;
     /** Calm generic failure copy (NFR-OBS-01). */
     readonly error: string;
+    /** Lead-in before the public-offer link (FR-PAYWALL-02, add-legal-pages). */
+    readonly termsPrefix: string;
+    /** Link text pointing at /oferta (the public offer a purchase accepts). */
+    readonly termsLink: string;
   };
   readonly paywall: {
     /** Accessible region label for the paywall panel (FR-PAYWALL-01). */
@@ -285,4 +289,25 @@ export interface Dictionary {
     /** Calm failure copy when an export could not be produced (NFR-OBS-01). */
     readonly error: string;
   };
+  /** Legal pages (add-legal-pages): Privacy Policy + public offer, BC-PRIVACY-01/02, NFR-GDPR-01/02. */
+  readonly legal: {
+    /** Draft banner shown until legal-counsel sign-off (removed at publish). */
+    readonly draftNote: string;
+    readonly privacy: LegalDoc;
+    readonly offer: LegalDoc;
+  };
+}
+
+/** One legal document rendered by views/legal (Ukrainian-first). */
+export interface LegalDoc {
+  /** Page + document title (also the <h1> and meta title). */
+  readonly title: string;
+  /** Meta description for the route. */
+  readonly description: string;
+  /** Human "last updated" line. */
+  readonly updated: string;
+  /** Short intro paragraph under the title. */
+  readonly intro: string;
+  /** Ordered sections: a heading and one or more paragraphs. */
+  readonly sections: readonly { readonly heading: string; readonly paragraphs: readonly string[] }[];
 }

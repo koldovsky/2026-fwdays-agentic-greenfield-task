@@ -95,6 +95,8 @@ export const en: Dictionary = {
     declined: "The payment was declined. Nothing was charged and your access is unchanged.",
     retryAction: "Try again",
     error: "Something went wrong. Try again.",
+    termsPrefix: "By paying you accept our",
+    termsLink: "public offer",
   },
   paywall: {
     regionLabel: "Upgrade",
@@ -209,5 +211,76 @@ export const en: Dictionary = {
     copiedNotice: "Copied",
     pending: "Preparing file",
     error: "Export failed. Try again.",
+  },
+  legal: {
+    draftNote: "Draft: this copy is pending legal-counsel sign-off and is not final.",
+    privacy: {
+      title: "Privacy Policy",
+      description: "What data Vouch holds, how it is protected, and how you control it.",
+      updated: "Updated: 4 July 2026",
+      intro:
+        "Vouch tailors your résumé honestly and respects your data. Below is what we store, how we protect it, and the rights you have.",
+      sections: [
+        {
+          heading: "What we store",
+          paragraphs: [
+            "Account: your email address and name.",
+            "Résumé: your CV text, stored encrypted at rest.",
+            "Tailoring history: the saved results of your tailoring runs.",
+          ],
+        },
+        {
+          heading: "How we protect your data",
+          paragraphs: [
+            "CV text is personal data. It is encrypted at rest (AES-256-GCM) and never logged in plaintext.",
+            "We never use your résumé to train models.",
+            "No third-party trackers or analytics run on any page.",
+          ],
+        },
+        {
+          heading: "Your rights (GDPR)",
+          paragraphs: [
+            "You can export all your stored data (résumé profile and tailoring history) as JSON.",
+            "You can permanently delete your account and all associated data; deletion propagates within 24 hours.",
+            "Exercise both from the Profile section of your account.",
+          ],
+        },
+      ],
+    },
+    offer: {
+      title: "Public Offer",
+      description: "The terms of service and plans for Vouch.",
+      updated: "Updated: 4 July 2026",
+      intro:
+        "This public offer describes the terms of using Vouch. By completing payment you accept these terms.",
+      sections: [
+        {
+          heading: "Parties and service",
+          paragraphs: [
+            "Vouch (the “Service”) provides online résumé tailoring to job descriptions. The User is the person using the Service.",
+          ],
+        },
+        {
+          heading: "Plans",
+          paragraphs: [
+            "Free — one free tailoring.",
+            "Pro — a subscription with full access to tailoring and export.",
+            "Job-hunt Pass — access for a fixed period.",
+            "Current prices are shown on the pricing page.",
+          ],
+        },
+        {
+          heading: "Payment and refunds",
+          paragraphs: [
+            "Payment is processed by a payments provider (Stripe; test mode at this stage).",
+            "Refund terms will be finalized after legal-counsel review.",
+          ],
+        },
+        {
+          heading: "Acceptance",
+          paragraphs: ["Paying for a plan constitutes acceptance of this offer."],
+        },
+      ],
+    },
   },
 };
