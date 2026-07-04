@@ -1,22 +1,25 @@
 // Final CTA block (FR-SALES-01): dark panel with the primary conversion action.
+// Copy via shared/lib/i18n.
+import { type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
+import { finalCtaContent } from "../lib/content";
 import { Wrap } from "./primitives";
 
-export function FinalCta() {
+export function FinalCta({ locale = "en" }: { readonly locale?: Locale }) {
+  const copy = finalCtaContent(locale);
   return (
     <section className="py-16">
       <Wrap>
         <div className="rounded-3xl bg-ink px-10 py-14 text-center text-white shadow-ink">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Tailor a resume you can defend
+            {copy.headline}
           </h2>
           <p className="mx-auto mt-[14px] max-w-[32em] text-lg leading-relaxed text-brand-wash">
-            Paste a job, load your CV, and see the honest match in under two minutes. Your
-            first tailoring is free.
+            {copy.subtext}
           </p>
           <div className="mt-7 flex justify-center">
             <Button href="/tailor" variant="primary" size="lg">
-              Tailor my CV — free
+              {copy.cta}
             </Button>
           </div>
         </div>

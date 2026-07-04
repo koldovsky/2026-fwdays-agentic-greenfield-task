@@ -1,31 +1,29 @@
 // Three-pillar honesty axis (FR-SALES-01). Accent shown as a colored dot token
-// (no icon libraries / SVG paths — BC-BRAND-01).
-import { pillars } from "../lib/content";
+// (no icon libraries / SVG paths — BC-BRAND-01). Copy via shared/lib/i18n.
+import { type Locale } from "@/shared/lib/i18n";
+import { pillarsSection, type Pillar } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-const accentWash: Record<(typeof pillars)[number]["accent"], string> = {
+const accentWash: Record<Pillar["accent"], string> = {
   brand: "bg-brand-wash",
   met: "bg-met-bg",
   overclaim: "bg-overclaim-bg",
 };
 
-const accentDot: Record<(typeof pillars)[number]["accent"], string> = {
+const accentDot: Record<Pillar["accent"], string> = {
   brand: "bg-brand",
   met: "bg-met",
   overclaim: "bg-overclaim",
 };
 
-export function Pillars() {
+export function Pillars({ locale = "en" }: { readonly locale?: Locale }) {
+  const { head, items } = pillarsSection(locale);
   return (
     <section className="py-16">
       <Wrap>
-        <SectionHead
-          kicker="Why Vouch"
-          title="Built to keep you honest — and hireable"
-          lead="Every other tool optimizes for keywords and speed. Vouch optimizes for what you can stand behind in the interview."
-        />
+        <SectionHead kicker={head.kicker} title={head.title} lead={head.lead} />
         <div className="grid gap-4 md:grid-cols-3">
-          {pillars.map((p) => (
+          {items.map((p) => (
             <div
               key={p.title}
               className="rounded-xl border border-hairline bg-surface-card p-6"

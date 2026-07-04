@@ -1,9 +1,14 @@
 // Landing footer: brand lock, nav links, honest attribution. No trackers.
+// Copy via shared/lib/i18n.
 import Link from "next/link";
-import { legalLinks, navLinks } from "../lib/content";
+import { type Locale } from "@/shared/lib/i18n";
+import { footerContent, legalLinks, navLinks } from "../lib/content";
 import { Wrap } from "./primitives";
 
-export function Footer() {
+export function Footer({ locale = "en" }: { readonly locale?: Locale }) {
+  const nav = navLinks(locale);
+  const legal = legalLinks(locale);
+  const { anthropicCredit } = footerContent(locale);
   return (
     <footer className="mt-6 border-t border-hairline py-11">
       <Wrap className="flex flex-wrap items-center justify-between gap-5">
@@ -14,20 +19,18 @@ export function Footer() {
           <span className="text-md font-semibold tracking-normal text-ink">Vouch</span>
         </a>
         <nav aria-label="Footer" className="flex gap-[22px] text-sm text-ink-soft">
-          {navLinks.map((link) => (
+          {nav.map((link) => (
             <a key={link.href} href={link.href} className="hover:text-ink">
               {link.label}
             </a>
           ))}
-          {legalLinks.map((link) => (
+          {legal.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-ink">
               {link.label}
             </Link>
           ))}
         </nav>
-        <div className="text-sm text-ink-muted">
-          Grounded responses powered by the Anthropic API.
-        </div>
+        <div className="text-sm text-ink-muted">{anthropicCredit}</div>
       </Wrap>
     </footer>
   );

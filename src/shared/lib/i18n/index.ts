@@ -1,6 +1,6 @@
 // Public API barrel for i18n (NFR-I18N-01). Ukrainian-first, English fallback.
 import { en } from "./en";
-import type { Dictionary, Locale } from "./types";
+import type { Dictionary, Locale, SectionHeadCopy } from "./types";
 import { ua } from "./ua";
 
 export const dictionaries = { ua, en } as const;
@@ -11,4 +11,4 @@ export function t(locale: Locale): Dictionary {
 }
 
 export { ua, en };
-export type { Dictionary, Locale };
+export type { Dictionary, Locale, SectionHeadCopy };

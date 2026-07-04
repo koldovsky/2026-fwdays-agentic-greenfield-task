@@ -316,4 +316,200 @@ export const en: Dictionary = {
       ],
     },
   },
+  landing: {
+    nav: { how: "How it works", pricing: "Pricing", faq: "FAQ" },
+    legal: { privacy: "Privacy", publicOffer: "Public offer" },
+    hero: {
+      kicker: "Honest resume tailoring",
+      headlineLead: "Generic AI writes resumes you ",
+      headlineEmphasis: "can't defend",
+      headlineTail: " in the interview.",
+      lead: "It invents skills, numbers, and roles you never had, and you find out when a recruiter asks. Vouch tailors your resume to each job and grounds every line in your real experience, so what you send is what you can stand behind.",
+      ctaPrimary: "Tailor my CV, free",
+      ctaSecondary: "See how it works",
+      note: "First tailoring is free. No account needed to try it.",
+    },
+    demo: {
+      cardLabel: "Example of a tailored bullet",
+      requirementPrefix: "Requirement:",
+      requirement: "5+ yrs React Native, native modules",
+      scoreCaption: "match to this job, 7 of 9 requirements met",
+      owned: {
+        text: "Owned the mobile stack end-to-end on a production React Native app: IAP, push/VoIP, and custom native modules across iOS and Android.",
+        label: "Vouched · backed by 3 lines in your CV",
+      },
+      ledTeam: {
+        text: "Led a team of 12 engineers across 4 squads.",
+        label: "No evidence found · excluded from export",
+      },
+    },
+    pillars: {
+      head: {
+        kicker: "Why Vouch",
+        title: "Built to keep you honest, and hireable",
+        lead: "Every other tool optimizes for keywords and speed. Vouch optimizes for what you can stand behind in the interview.",
+      },
+      grounded: {
+        title: "Grounded in your CV",
+        body: "Every rewritten bullet links back to a real sentence in your resume. The model is forbidden from inventing skills, numbers, or roles you never had.",
+      },
+      checklist: {
+        title: "A checklist for every requirement",
+        body: "See each job requirement scored met, partial, gap, or overclaim-risk, with a one-line reason drawn straight from your experience.",
+      },
+      overclaim: {
+        title: "Overclaim, flagged",
+        body: "Anything we can't back gets marked and left out of your export by default. You decide what goes in, nothing sneaks past you onto the page.",
+      },
+    },
+    beforeAfter: {
+      head: {
+        kicker: "Grounded rewrites",
+        title: "Tailored, not invented",
+        lead: "Vouch sharpens what's already true. Your original line stays the source; the rewrite stretches toward the job without drifting off your record.",
+      },
+      yourCvLabel: "Your CV",
+      tailoredLabel: "Tailored for this job",
+      payments: {
+        before:
+          "Worked on payments and subscriptions for a mobile app, including some native bridging work.",
+        after:
+          "Built and shipped in-app purchases and subscription flows in React Native, including custom native modules for iOS and Android billing.",
+        label: "Vouched · linked to your CV",
+      },
+      leadership: {
+        before: "Collaborated with two other engineers on the mobile features.",
+        after: "Directed a 12-person mobile org and set the multi-year platform roadmap.",
+        label: "No evidence found · excluded from export",
+      },
+    },
+    checklist: {
+      head: {
+        kicker: "The checklist",
+        title: "Know exactly where you stand",
+        lead: "Before you send anything, Vouch shows you the honest match, requirement by requirement.",
+      },
+      headline: "Strong fit, honestly scored",
+      subtext:
+        "Met, coverable, partial, gap. Blue is coverable: adjacent evidence you can raise in a cover letter, not a hard miss.",
+      rows: {
+        rn: {
+          requirement: "React Native, production apps",
+          rationale: "7 years across IAP, push/VoIP, and native modules in your CV.",
+        },
+        ts: {
+          requirement: "TypeScript",
+          rationale: "Primary language on Konnect and side projects.",
+        },
+        graphql: {
+          requirement: "GraphQL",
+          rationale:
+            "No direct GraphQL, but your REST and Apollo-client work is adjacent. Raise it in a cover letter.",
+        },
+        node: {
+          requirement: "Node / backend ownership",
+          rationale: "NestJS experience present, but limited end-to-end backend evidence.",
+        },
+        aws: {
+          requirement: "AWS infrastructure at scale",
+          rationale: "No cloud-infra signal found in your CV.",
+        },
+        mgmt: {
+          requirement: "People management",
+          rationale: "Coordinating peers is not managing reports, don't claim the latter.",
+        },
+      },
+    },
+    steps: {
+      head: { kicker: "How it works", title: "Three steps, two minutes" },
+      load: {
+        title: "Load your CV",
+        body: "Upload a PDF or DOCX, or paste it in. Vouch parses it into a structured profile you confirm.",
+      },
+      paste: {
+        title: "Paste the job",
+        body: "Drop in the posting. Vouch pulls out every requirement and labels it must-have or nice-to-have.",
+      },
+      exportStep: {
+        title: "Export what you can defend",
+        body: "In seconds you get the checklist, grounded rewrites, and clean PDF or DOCX exports, plus a grounded cover letter. Overclaims stay out, and every run is saved to your history to reopen later.",
+      },
+    },
+    pricing: {
+      head: {
+        kicker: "Pricing",
+        title: "Honest pricing, too",
+        lead: "The real renewal price, shown in plain numbers. No build-it-free-then-paywall-the-download games.",
+      },
+      free: {
+        name: "Free",
+        cadence: "2 tailorings, lifetime",
+        features: [
+          "Full match checklist",
+          "Grounded rewrites + overclaim flags",
+          "Copy to clipboard",
+        ],
+        cta: "Start free",
+      },
+      pro: {
+        name: "Pro",
+        cadence: "per month, renews at $12",
+        features: [
+          "Unlimited tailorings",
+          "Clean PDF + DOCX export",
+          "Tailor from your original PDF, not just its text",
+          "Tailoring history + cover letters",
+          "Priority generation",
+        ],
+        cta: "Go Pro",
+        badge: "Popular",
+      },
+      pass: {
+        name: "Job-hunt Pass",
+        cadence: "one-time · 30 days",
+        features: ["Everything in Pro", "No subscription", "Built for a focused sprint"],
+        cta: "Get the pass",
+      },
+    },
+    faq: {
+      head: { kicker: "FAQ", title: "The honest questions" },
+      fabricate: {
+        question: "Will it make things up to fit the job?",
+        answer:
+          "No, that's the entire point of Vouch. The model is instructed never to introduce skills, numbers, or experience that aren't in your CV, and a second pass flags anything it can't ground. Unbacked lines are excluded from your export unless you knowingly add them back.",
+      },
+      train: {
+        question: "Do you train on my resume?",
+        answer:
+          "No. Your CV is personal data. It's encrypted at rest, never used to train models, and deletable on request. We don't load third-party trackers on any page.",
+      },
+      coverLetter: {
+        question: "Can it write my cover letter too?",
+        answer:
+          "Yes. Pro turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
+      },
+      attach: {
+        question: "Can I attach my original PDF?",
+        answer:
+          "Yes, on Pro. Extraction turns your CV into plain text and drops the structure the original carried, so Pro lets you attach the original PDF and the tailor works from your full document, layout and detail included, for a more faithful rewrite. It only widens what the tailor reads while writing: the attached PDF never enters the grounding pass and never adds experience your CV doesn't support, so the result stays as honest as always.",
+      },
+      chatgpt: {
+        question: "How is this different from ChatGPT?",
+        answer:
+          "A blank chat will happily invent a decade of experience you don't have. Vouch is built around the opposite constraint: it shows its evidence, scores every requirement, and refuses to write claims your CV can't support.",
+      },
+      pass: {
+        question: "What's the Job-hunt Pass?",
+        answer:
+          "A one-time 30-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts, and the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
+      },
+    },
+    finalCta: {
+      headline: "Tailor a resume you can defend",
+      subtext:
+        "Paste a job, load your CV, and see the honest match in under two minutes. Your first tailoring is free.",
+      cta: "Tailor my CV, free",
+    },
+    footer: { anthropicCredit: "Grounded responses powered by the Anthropic API." },
+  },
 };

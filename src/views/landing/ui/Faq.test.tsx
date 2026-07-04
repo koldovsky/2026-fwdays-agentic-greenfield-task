@@ -3,8 +3,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { faqItems } from "../lib/content";
+import { faqSection } from "../lib/content";
 import { Faq } from "./Faq";
+
+// The landing renders English (locale pinned to "en" until task 10).
+const faqItems = faqSection("en").items;
 
 describe("Faq", () => {
   it("renders every question as a collapsed disclosure", () => {

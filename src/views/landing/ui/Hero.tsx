@@ -3,27 +3,31 @@
 // Entrance: only the supporting copy below the headline rises in (`.rise-in`);
 // the h1 and the demo card stay painted so the LCP element is never delayed
 // (landing-animations, NFR-PERF-04). Motion is CSS-only and reduced-motion-safe.
+// Copy is localized via shared/lib/i18n; locale is pinned to "en" until task 10
+// wires Cyrillic fonts (extract-landing-i18n).
 import type { CSSProperties } from "react";
+import { type Locale } from "@/shared/lib/i18n";
 import { Button, GroundingBadge } from "@/shared/ui";
-import { demoBullets, demoRequirement, demoScore, hero } from "../lib/content";
+import { demoContent, heroContent, type DemoContent } from "../lib/content";
 import { Kicker, Wrap } from "./primitives";
 
 const riseDelay = (ms: number) => ({ "--rise-delay": `${ms}ms` }) as CSSProperties;
 
-function DemoCard() {
+function DemoCard({ demo }: { readonly demo: DemoContent }) {
   return (
     <div
       className="rounded-3xl border border-hairline bg-surface-card p-[22px] shadow-lifted"
-      aria-label="Example of a tailored bullet"
+      aria-label={demo.cardLabel}
     >
       <div className="mb-4 flex items-center justify-between gap-4">
         <span className="text-xs text-ink-muted">
-          Requirement: <b className="font-semibold text-ink-soft">{demoRequirement}</b>
+          {demo.requirementPrefix}{" "}
+          <b className="font-semibold text-ink-soft">{demo.requirement}</b>
         </span>
         <Kicker>Vouch</Kicker>
       </div>
 
-      {demoBullets.map((b, i) => (
+      {demo.bullets.map((b, i) => (
         <div
           key={b.text}
           className={`py-[14px] ${i === 0 ? "" : "border-t border-surface-canvas"}`}
@@ -40,14 +44,16 @@ function DemoCard() {
       ))}
 
       <div className="mt-[18px] flex items-center gap-[10px] border-t border-dashed border-hairline pt-4 text-[12.5px] text-ink-soft">
-        <span className="font-mono font-bold text-met">{demoScore} / 100</span>
-        <span>match to this job — 7 of 9 requirements met</span>
+        <span className="font-mono font-bold text-met">{demo.score} / 100</span>
+        <span>{demo.scoreCaption}</span>
       </div>
     </div>
   );
 }
 
-export function Hero() {
+export function Hero({ locale = "en" }: { readonly locale?: Locale }) {
+  const hero = heroContent(locale);
+  const demo = demoContent(locale);
   return (
     <section className="py-16 sm:py-20">
       <Wrap className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -80,7 +86,7 @@ export function Hero() {
           </p>
         </div>
 
-        <DemoCard />
+        <DemoCard demo={demo} />
       </Wrap>
     </section>
   );

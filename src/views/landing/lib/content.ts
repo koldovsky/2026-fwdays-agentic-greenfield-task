@@ -1,7 +1,11 @@
-// Static marketing content for the landing view (FR-SALES-01/02/03).
-// Example data only — no network, no sign-in (FR-SALES-02). English copy;
-// see docs/current-state.md for the Ukrainian-first i18n follow-up (display
-// font Bricolage Grotesque lacks a Cyrillic subset).
+// Landing content assemblers (FR-SALES-01/02/03, NFR-I18N-01). All copy lives in
+// shared/lib/i18n (ua+en); this module merges that text with the STRUCTURAL data
+// that is not translatable (accent, checklist status, grounding, price, feature
+// ordering, hrefs). Each export is a function of locale so the landing can switch
+// languages once task 10 wires Cyrillic fonts. Until then the section components
+// pass an explicit "en" (see extract-landing-i18n): t() defaults to ua, and the
+// display fonts are latin-only, so the landing must not fall back to that default.
+import { t, type Locale, type SectionHeadCopy } from "@/shared/lib/i18n";
 import type { ChecklistRowStatus } from "@/shared/ui/checklist-row";
 import type { GroundingStatus } from "@/shared/ui/grounding-badge";
 
@@ -10,20 +14,26 @@ export interface NavLink {
   readonly label: string;
 }
 
-export const navLinks: readonly NavLink[] = [
-  { href: "#how", label: "How it works" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
-];
+/** Header/footer nav links (labels localized, hrefs structural). */
+export function navLinks(locale: Locale): readonly NavLink[] {
+  const n = t(locale).landing.nav;
+  return [
+    { href: "#how", label: n.how },
+    { href: "#pricing", label: n.pricing },
+    { href: "#faq", label: n.faq },
+  ];
+}
 
 /** Real legal routes for the footer (add-legal-pages) — replaces the dead `#` stub. */
-export const legalLinks: readonly NavLink[] = [
-  { href: "/privacy", label: "Privacy" },
-  { href: "/oferta", label: "Public offer" },
-];
+export function legalLinks(locale: Locale): readonly NavLink[] {
+  const l = t(locale).landing.legal;
+  return [
+    { href: "/privacy", label: l.privacy },
+    { href: "/oferta", label: l.publicOffer },
+  ];
+}
 
-/** Hero copy (FR-SALES-01). Problem-first framing: name the broken status quo,
- * then position Vouch as the honest alternative. The headline renders as
+/** Hero copy (FR-SALES-01). Problem-first framing; the headline renders as
  * lead + emphasized fragment + tail so the emphasis carries the brand color. */
 export interface Hero {
   readonly kicker: string;
@@ -36,40 +46,9 @@ export interface Hero {
   readonly note: string;
 }
 
-export const hero: Hero = {
-  kicker: "Honest resume tailoring",
-  headlineLead: "Generic AI writes resumes you ",
-  headlineEmphasis: "can't defend",
-  headlineTail: " in the interview.",
-  lead: "It invents skills, numbers, and roles you never had, and you find out when a recruiter asks. Vouch tailors your resume to each job and grounds every line in your real experience, so what you send is what you can stand behind.",
-  ctaPrimary: "Tailor my CV, free",
-  ctaSecondary: "See how it works",
-  note: "First tailoring is free. No account needed to try it.",
-};
-
-export interface Pillar {
-  readonly title: string;
-  readonly body: string;
-  readonly accent: "brand" | "met" | "overclaim";
+export function heroContent(locale: Locale): Hero {
+  return { ...t(locale).landing.hero };
 }
-
-export const pillars: readonly Pillar[] = [
-  {
-    title: "Grounded in your CV",
-    body: "Every rewritten bullet links back to a real sentence in your resume. The model is forbidden from inventing skills, numbers, or roles you never had.",
-    accent: "brand",
-  },
-  {
-    title: "A checklist for every requirement",
-    body: "See each job requirement scored met, partial, gap, or overclaim-risk — with a one-line reason drawn straight from your experience.",
-    accent: "met",
-  },
-  {
-    title: "Overclaim, flagged",
-    body: "Anything we can't back gets marked and left out of your export by default. You decide what goes in — nothing sneaks past you onto the page.",
-    accent: "overclaim",
-  },
-];
 
 export interface DemoBullet {
   readonly text: string;
@@ -78,24 +57,51 @@ export interface DemoBullet {
   readonly excluded: boolean;
 }
 
-export const demoRequirement = "5+ yrs React Native, native modules";
+export interface DemoContent {
+  readonly cardLabel: string;
+  readonly requirementPrefix: string;
+  readonly requirement: string;
+  readonly scoreCaption: string;
+  readonly score: number;
+  readonly bullets: readonly DemoBullet[];
+}
 
-export const demoBullets: readonly DemoBullet[] = [
-  {
-    text: "Owned the mobile stack end-to-end on a production React Native app — IAP, push/VoIP, and custom native modules across iOS and Android.",
-    grounding: "met",
-    label: "Vouched · backed by 3 lines in your CV",
-    excluded: false,
-  },
-  {
-    text: "Led a team of 12 engineers across 4 squads.",
-    grounding: "overclaim",
-    label: "No evidence found · excluded from export",
-    excluded: true,
-  },
-];
+/** Static hero demo card (FR-SALES-02): one grounded + one overclaim bullet. */
+export function demoContent(locale: Locale): DemoContent {
+  const d = t(locale).landing.demo;
+  return {
+    cardLabel: d.cardLabel,
+    requirementPrefix: d.requirementPrefix,
+    requirement: d.requirement,
+    scoreCaption: d.scoreCaption,
+    score: 82,
+    bullets: [
+      { ...d.owned, grounding: "met", excluded: false },
+      { ...d.ledTeam, grounding: "overclaim", excluded: true },
+    ],
+  };
+}
 
-export const demoScore = 82;
+export interface Pillar {
+  readonly title: string;
+  readonly body: string;
+  readonly accent: "brand" | "met" | "overclaim";
+}
+
+export function pillarsSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly items: readonly Pillar[];
+} {
+  const p = t(locale).landing.pillars;
+  return {
+    head: p.head,
+    items: [
+      { ...p.grounded, accent: "brand" },
+      { ...p.checklist, accent: "met" },
+      { ...p.overclaim, accent: "overclaim" },
+    ],
+  };
+}
 
 export interface BeforeAfter {
   readonly before: string;
@@ -104,22 +110,23 @@ export interface BeforeAfter {
   readonly label: string;
 }
 
-export const beforeAfter: readonly BeforeAfter[] = [
-  {
-    before:
-      "Worked on payments and subscriptions for a mobile app, including some native bridging work.",
-    after:
-      "Built and shipped in-app purchases and subscription flows in React Native, including custom native modules for iOS and Android billing.",
-    grounding: "met",
-    label: "Vouched · linked to your CV",
-  },
-  {
-    before: "Collaborated with two other engineers on the mobile features.",
-    after: "Directed a 12-person mobile org and set the multi-year platform roadmap.",
-    grounding: "overclaim",
-    label: "No evidence found · excluded from export",
-  },
-];
+export function beforeAfterSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly yourCvLabel: string;
+  readonly tailoredLabel: string;
+  readonly rows: readonly BeforeAfter[];
+} {
+  const b = t(locale).landing.beforeAfter;
+  return {
+    head: b.head,
+    yourCvLabel: b.yourCvLabel,
+    tailoredLabel: b.tailoredLabel,
+    rows: [
+      { ...b.payments, grounding: "met" },
+      { ...b.leadership, grounding: "overclaim" },
+    ],
+  };
+}
 
 export interface ChecklistPreviewRow {
   readonly requirement: string;
@@ -128,49 +135,29 @@ export interface ChecklistPreviewRow {
   readonly rationale: string;
 }
 
-export const checklistScore = 82;
-export const checklistHeadline = "Strong fit, honestly scored";
-export const checklistSubtext =
-  "Met, coverable, partial, gap. Blue is coverable: adjacent evidence you can raise in a cover letter, not a hard miss.";
-
-export const checklistRows: readonly ChecklistPreviewRow[] = [
-  {
-    requirement: "React Native, production apps",
-    priority: "must",
-    status: "met",
-    rationale: "7 years across IAP, push/VoIP, and native modules in your CV.",
-  },
-  {
-    requirement: "TypeScript",
-    priority: "must",
-    status: "met",
-    rationale: "Primary language on Konnect and side projects.",
-  },
-  {
-    requirement: "GraphQL",
-    priority: "nice",
-    status: "info",
-    rationale: "No direct GraphQL, but your REST and Apollo-client work is adjacent. Raise it in a cover letter.",
-  },
-  {
-    requirement: "Node / backend ownership",
-    priority: "must",
-    status: "partial",
-    rationale: "NestJS experience present, but limited end-to-end backend evidence.",
-  },
-  {
-    requirement: "AWS infrastructure at scale",
-    priority: "nice",
-    status: "gap",
-    rationale: "No cloud-infra signal found in your CV.",
-  },
-  {
-    requirement: "People management",
-    priority: "nice",
-    status: "overclaim",
-    rationale: "Coordinating peers is not managing reports — don't claim the latter.",
-  },
-];
+export function checklistSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly score: number;
+  readonly headline: string;
+  readonly subtext: string;
+  readonly rows: readonly ChecklistPreviewRow[];
+} {
+  const c = t(locale).landing.checklist;
+  return {
+    head: c.head,
+    score: 82,
+    headline: c.headline,
+    subtext: c.subtext,
+    rows: [
+      { ...c.rows.rn, priority: "must", status: "met" },
+      { ...c.rows.ts, priority: "must", status: "met" },
+      { ...c.rows.graphql, priority: "nice", status: "info" },
+      { ...c.rows.node, priority: "must", status: "partial" },
+      { ...c.rows.aws, priority: "nice", status: "gap" },
+      { ...c.rows.mgmt, priority: "nice", status: "overclaim" },
+    ],
+  };
+}
 
 export interface Step {
   readonly number: string;
@@ -178,23 +165,20 @@ export interface Step {
   readonly body: string;
 }
 
-export const steps: readonly Step[] = [
-  {
-    number: "01",
-    title: "Load your CV",
-    body: "Upload a PDF or DOCX, or paste it in. Vouch parses it into a structured profile you confirm.",
-  },
-  {
-    number: "02",
-    title: "Paste the job",
-    body: "Drop in the posting. Vouch pulls out every requirement and labels it must-have or nice-to-have.",
-  },
-  {
-    number: "03",
-    title: "Export what you can defend",
-    body: "In seconds you get the checklist, grounded rewrites, and clean PDF or DOCX exports, plus a grounded cover letter. Overclaims stay out, and every run is saved to your history to reopen later.",
-  },
-];
+export function stepsSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly items: readonly Step[];
+} {
+  const s = t(locale).landing.steps;
+  return {
+    head: s.head,
+    items: [
+      { number: "01", ...s.load },
+      { number: "02", ...s.paste },
+      { number: "03", ...s.exportStep },
+    ],
+  };
+}
 
 export interface Plan {
   readonly name: string;
@@ -206,82 +190,45 @@ export interface Plan {
   readonly badge?: string;
 }
 
-export const plans: readonly Plan[] = [
-  {
-    name: "Free",
-    price: "$0",
-    cadence: "2 tailorings, lifetime",
-    features: [
-      "Full match checklist",
-      "Grounded rewrites + overclaim flags",
-      "Copy to clipboard",
+export function pricingSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly plans: readonly Plan[];
+} {
+  const p = t(locale).landing.pricing;
+  return {
+    head: p.head,
+    plans: [
+      { ...p.free, price: "$0", featured: false },
+      { ...p.pro, price: "$12", featured: true },
+      { ...p.pass, price: "$19", featured: false },
     ],
-    cta: "Start free",
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$12",
-    cadence: "per month, renews at $12",
-    features: [
-      "Unlimited tailorings",
-      "Clean PDF + DOCX export",
-      "Tailor from your original PDF, not just its text",
-      "Tailoring history + cover letters",
-      "Priority generation",
-    ],
-    cta: "Go Pro",
-    featured: true,
-    badge: "Popular",
-  },
-  {
-    name: "Job-hunt Pass",
-    price: "$19",
-    cadence: "one-time · 30 days",
-    features: [
-      "Everything in Pro",
-      "No subscription",
-      "Built for a focused sprint",
-    ],
-    cta: "Get the pass",
-    featured: false,
-  },
-];
+  };
+}
 
 export interface FaqItem {
   readonly question: string;
   readonly answer: string;
 }
 
-export const faqItems: readonly FaqItem[] = [
-  {
-    question: "Will it make things up to fit the job?",
-    answer:
-      "No — that's the entire point of Vouch. The model is instructed never to introduce skills, numbers, or experience that aren't in your CV, and a second pass flags anything it can't ground. Unbacked lines are excluded from your export unless you knowingly add them back.",
-  },
-  {
-    question: "Do you train on my resume?",
-    answer:
-      "No. Your CV is personal data. It's encrypted at rest, never used to train models, and deletable on request. We don't load third-party trackers on any page.",
-  },
-  {
-    question: "Can it write my cover letter too?",
-    answer:
-      "Yes. Pro turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
-  },
-  {
-    question: "Can I attach my original PDF?",
-    answer:
-      "Yes, on Pro. Extraction turns your CV into plain text and drops the structure the original carried, so Pro lets you attach the original PDF and the tailor works from your full document, layout and detail included, for a more faithful rewrite. It only widens what the tailor reads while writing: the attached PDF never enters the grounding pass and never adds experience your CV doesn't support, so the result stays as honest as always.",
-  },
-  {
-    question: "How is this different from ChatGPT?",
-    answer:
-      "A blank chat will happily invent a decade of experience you don't have. Vouch is built around the opposite constraint: it shows its evidence, scores every requirement, and refuses to write claims your CV can't support.",
-  },
-  {
-    question: "What's the Job-hunt Pass?",
-    answer:
-      "A one-time 30-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts — the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
-  },
-];
+export function faqSection(locale: Locale): {
+  readonly head: SectionHeadCopy;
+  readonly items: readonly FaqItem[];
+} {
+  const f = t(locale).landing.faq;
+  return {
+    head: f.head,
+    items: [f.fabricate, f.train, f.coverLetter, f.attach, f.chatgpt, f.pass],
+  };
+}
+
+export function finalCtaContent(locale: Locale): {
+  readonly headline: string;
+  readonly subtext: string;
+  readonly cta: string;
+} {
+  return { ...t(locale).landing.finalCta };
+}
+
+export function footerContent(locale: Locale): { readonly anthropicCredit: string } {
+  return { ...t(locale).landing.footer };
+}

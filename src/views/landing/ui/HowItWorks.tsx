@@ -1,14 +1,16 @@
-// How-it-works section (FR-SALES-01): three numbered steps.
-import { steps } from "../lib/content";
+// How-it-works section (FR-SALES-01): three numbered steps. Copy via i18n.
+import { type Locale } from "@/shared/lib/i18n";
+import { stepsSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function HowItWorks() {
+export function HowItWorks({ locale = "en" }: { readonly locale?: Locale }) {
+  const { head, items } = stepsSection(locale);
   return (
     <section id="how" className="scroll-mt-16 border-y border-hairline bg-surface-card py-16">
       <Wrap>
-        <SectionHead kicker="How it works" title="Three steps, two minutes" />
+        <SectionHead kicker={head.kicker} title={head.title} />
         <div className="grid gap-4 md:grid-cols-3">
-          {steps.map((step) => (
+          {items.map((step) => (
             <div
               key={step.number}
               className="rounded-xl border border-hairline bg-surface-card p-6"

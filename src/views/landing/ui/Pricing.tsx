@@ -1,18 +1,17 @@
 // Pricing table (FR-SALES-03): Free / Pro / Job-hunt Pass with plain renewal
 // numbers. Included-feature marker is a colored dot (no SVG icons — BC-BRAND-01).
+// Copy via shared/lib/i18n.
+import { type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
-import { plans } from "../lib/content";
+import { pricingSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function Pricing() {
+export function Pricing({ locale = "en" }: { readonly locale?: Locale }) {
+  const { head, plans } = pricingSection(locale);
   return (
     <section id="pricing" className="scroll-mt-16 py-16">
       <Wrap>
-        <SectionHead
-          kicker="Pricing"
-          title="Honest pricing, too"
-          lead="The real renewal price, shown in plain numbers. No build-it-free-then-paywall-the-download games."
-        />
+        <SectionHead kicker={head.kicker} title={head.title} lead={head.lead} />
         <div className="grid items-stretch gap-4 md:grid-cols-3">
           {plans.map((plan) => {
             const featured = plan.featured;

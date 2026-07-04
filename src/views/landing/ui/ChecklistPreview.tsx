@@ -1,41 +1,29 @@
 // Match-score checklist preview (FR-SALES-02, FR-CHECKLIST-02/04). Reuses the
-// shared MatchScore donut + ChecklistRow. Static example data only.
+// shared MatchScore donut + ChecklistRow. Static example data only. Copy via i18n.
+import { type Locale } from "@/shared/lib/i18n";
 import { ChecklistRow, MatchScore } from "@/shared/ui";
-import {
-  checklistHeadline,
-  checklistRows,
-  checklistScore,
-  checklistSubtext,
-} from "../lib/content";
+import { checklistSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function ChecklistPreview() {
+export function ChecklistPreview({ locale = "en" }: { readonly locale?: Locale }) {
+  const { head, score, headline, subtext, rows } = checklistSection(locale);
   return (
     <section className="py-16">
       <Wrap>
-        <SectionHead
-          kicker="The checklist"
-          title="Know exactly where you stand"
-          lead="Before you send anything, Vouch shows you the honest match — requirement by requirement."
-        />
+        <SectionHead kicker={head.kicker} title={head.title} lead={head.lead} />
         <div className="grid gap-10 sm:grid-cols-[220px_1fr]">
           <div className="flex flex-col items-start">
-            <MatchScore
-              score={checklistScore}
-              headline={checklistHeadline}
-              subtext={checklistSubtext}
-              size="lg"
-            />
+            <MatchScore score={score} headline={headline} subtext={subtext} size="lg" />
           </div>
           <div>
-            {checklistRows.map((row, i) => (
+            {rows.map((row, i) => (
               <ChecklistRow
                 key={row.requirement}
                 requirement={row.requirement}
                 priority={row.priority}
                 status={row.status}
                 rationale={row.rationale}
-                last={i === checklistRows.length - 1}
+                last={i === rows.length - 1}
               />
             ))}
           </div>

@@ -2,13 +2,16 @@
 // not a third-party tracker (BC-PRIVACY-01). Mirrors the on-page FAQ + pricing so
 // the structured data stays truthful to what the visitor sees.
 import { absoluteUrl, siteDescription, siteName, siteUrl } from "@/shared/config";
-import { faqItems, plans } from "../lib/content";
+import { faqSection, pricingSection } from "../lib/content";
 
 function priceValue(price: string): string {
   return price.replace(/[^0-9.]/g, "");
 }
 
 export function StructuredData() {
+  // JSON-LD mirrors the rendered (English) page; inLanguage is "en" below.
+  const plans = pricingSection("en").plans;
+  const faqItems = faqSection("en").items;
   const graph = [
     {
       "@type": "Organization",

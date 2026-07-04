@@ -349,6 +349,137 @@ export interface Dictionary {
     readonly privacy: LegalDoc;
     readonly offer: LegalDoc;
   };
+  /**
+   * Marketing landing copy (extract-landing-i18n, FR-SALES-01/02/03, NFR-I18N-01).
+   * Text only; structural data (accent, status, grounding, price, hrefs) stays in
+   * views/landing/lib/content.ts. Collections are keyed by stable id, never
+   * index-zipped. Rendered as `en` until task 10 wires Cyrillic fonts.
+   */
+  readonly landing: {
+    /** Header/footer nav link labels. */
+    readonly nav: { readonly how: string; readonly pricing: string; readonly faq: string };
+    /** Footer legal link labels. */
+    readonly legal: { readonly privacy: string; readonly publicOffer: string };
+    /** Hero: problem-first headline split into lead + emphasized fragment + tail. */
+    readonly hero: {
+      readonly kicker: string;
+      readonly headlineLead: string;
+      readonly headlineEmphasis: string;
+      readonly headlineTail: string;
+      readonly lead: string;
+      readonly ctaPrimary: string;
+      readonly ctaSecondary: string;
+      readonly note: string;
+    };
+    /** Static demo card in the hero (example data only). */
+    readonly demo: {
+      /** Accessible label for the demo card. */
+      readonly cardLabel: string;
+      /** "Requirement:" prefix above the demo bullets. */
+      readonly requirementPrefix: string;
+      /** The example job requirement. */
+      readonly requirement: string;
+      /** Caption under the demo match score. */
+      readonly scoreCaption: string;
+      /** A grounded ("Vouched") bullet and an overclaim-risk (excluded) bullet. */
+      readonly owned: { readonly text: string; readonly label: string };
+      readonly ledTeam: { readonly text: string; readonly label: string };
+    };
+    /** Three honesty pillars. */
+    readonly pillars: {
+      readonly head: SectionHeadCopy;
+      readonly grounded: { readonly title: string; readonly body: string };
+      readonly checklist: { readonly title: string; readonly body: string };
+      readonly overclaim: { readonly title: string; readonly body: string };
+    };
+    /** Grounded before/after rewrites. */
+    readonly beforeAfter: {
+      readonly head: SectionHeadCopy;
+      /** Column labels above the original line and the tailored rewrite. */
+      readonly yourCvLabel: string;
+      readonly tailoredLabel: string;
+      readonly payments: {
+        readonly before: string;
+        readonly after: string;
+        readonly label: string;
+      };
+      readonly leadership: {
+        readonly before: string;
+        readonly after: string;
+        readonly label: string;
+      };
+    };
+    /** Match-score checklist preview (five statuses). */
+    readonly checklist: {
+      readonly head: SectionHeadCopy;
+      /** Headline + subtext inside the match-score donut. */
+      readonly headline: string;
+      readonly subtext: string;
+      readonly rows: {
+        readonly rn: { readonly requirement: string; readonly rationale: string };
+        readonly ts: { readonly requirement: string; readonly rationale: string };
+        readonly graphql: { readonly requirement: string; readonly rationale: string };
+        readonly node: { readonly requirement: string; readonly rationale: string };
+        readonly aws: { readonly requirement: string; readonly rationale: string };
+        readonly mgmt: { readonly requirement: string; readonly rationale: string };
+      };
+    };
+    /** How-it-works: three numbered steps. */
+    readonly steps: {
+      readonly head: SectionHeadCopy;
+      readonly load: { readonly title: string; readonly body: string };
+      readonly paste: { readonly title: string; readonly body: string };
+      readonly exportStep: { readonly title: string; readonly body: string };
+    };
+    /** Pricing table: three plans. */
+    readonly pricing: {
+      readonly head: SectionHeadCopy;
+      readonly free: {
+        readonly name: string;
+        readonly cadence: string;
+        readonly features: readonly string[];
+        readonly cta: string;
+      };
+      readonly pro: {
+        readonly name: string;
+        readonly cadence: string;
+        readonly features: readonly string[];
+        readonly cta: string;
+        readonly badge: string;
+      };
+      readonly pass: {
+        readonly name: string;
+        readonly cadence: string;
+        readonly features: readonly string[];
+        readonly cta: string;
+      };
+    };
+    /** FAQ accordion (six questions). */
+    readonly faq: {
+      readonly head: SectionHeadCopy;
+      readonly fabricate: { readonly question: string; readonly answer: string };
+      readonly train: { readonly question: string; readonly answer: string };
+      readonly coverLetter: { readonly question: string; readonly answer: string };
+      readonly attach: { readonly question: string; readonly answer: string };
+      readonly chatgpt: { readonly question: string; readonly answer: string };
+      readonly pass: { readonly question: string; readonly answer: string };
+    };
+    /** Final CTA panel. */
+    readonly finalCta: {
+      readonly headline: string;
+      readonly subtext: string;
+      readonly cta: string;
+    };
+    /** Footer attribution line. */
+    readonly footer: { readonly anthropicCredit: string };
+  };
+}
+
+/** A section eyebrow + heading (+ optional lead) shared across landing sections. */
+export interface SectionHeadCopy {
+  readonly kicker: string;
+  readonly title: string;
+  readonly lead?: string;
 }
 
 /** One legal document rendered by views/legal (Ukrainian-first). */
