@@ -230,14 +230,47 @@
 
 ## 5. Bot wiring and integration tests
 
-- [ ] 5.1 Write `packages/bot/src/telegram-transport.ts`: the
+- [x] 5.1 Write `packages/bot/src/telegram-transport.ts`: the
       `TelegramTransport` interface (`sendChatAction`, `sendMessage`,
       `onMessage`) and a thin grammY-backed production implementation.
-- [ ] 5.2 Write `packages/bot/src/testing/fake-telegram-transport.ts`: a
+      **Confirmed:** interface + `InboundUpdate`/`InboundTextUpdate`/
+      `InboundCallbackUpdate`/`SendMessageOptions` types +
+      `GrammyTelegramTransport` all shipped with real content (verified
+      against the installed grammy@1.44.0 via ctx7 `/websites/grammy_dev`:
+      `new Bot(token)`, `bot.on("message:text"/"callback_query:data", ...)`,
+      `bot.api.sendChatAction`/`sendMessage`, `ctx.answerCallbackQuery()`) —
+      the same "no behaviour to stub, only wiring" precedent as
+      `model-port.ts`. `GrammyTelegramTransport` is deliberately NOT
+      test-covered this pass (untestable without a live
+      `TELEGRAM_BOT_TOKEN`/network, per this task's own "may be a typed
+      throwing stub" caveat — shipped as thin real wiring instead, since it
+      has nothing a red test could meaningfully assert on); it is exercised
+      entirely through `FakeTelegramTransport` in `pipeline.test.ts`, and
+      wired into a running process only in tasks.md 5.6 (out of this
+      pass's scope).
+- [x] 5.2 Write `packages/bot/src/testing/fake-telegram-transport.ts`: a
       `FakeTelegramTransport` recording every call and letting a test
       simulate an inbound update.
-- [ ] 5.3 Write `packages/bot/src/apology.ts` (Telegram-send-failure
+      **Confirmed:** shipped, real content — records `sendChatAction`/
+      `sendMessage` calls on one shared, order-preserving timeline
+      (`calls`/`callKinds`/`sentTexts`), supports a scripted
+      `sendMessageFailures` count (NFR-REL-01's Telegram-outage scenario),
+      and exposes `simulateUpdate()` for a later grammY-wiring test
+      (tasks.md 5.6). Used directly by `pipeline.test.ts`.
+- [x] 5.3 Write `packages/bot/src/apology.ts` (Telegram-send-failure
       Ukrainian apology constant, design.md Decision 3).
+      **Confirmed:** shipped with real content in this red round — same S1
+      `slots/propose.ts`/`packages/agent/src/apology.ts` "no behaviour to
+      stub" precedent. Also added `packages/bot/src/copy.ts`
+      (`ANTHROPIC_PROCESSING_NOTICE`, NFR-PRIV-02's one-line greeting
+      disclosure — bot-owned copy that is not an apology-for-a-failure, per
+      design.md Decision 3's colocation rule; `@kamerton/lib/src/intake/
+      copy.ts` stays byte-identical/untouched). `copy.test.ts`/
+      `apology.test.ts` content-shape assertions (voice rules, no tech
+      jargon, mentions "Anthropic"/preserves the lead's message) are
+      legitimately green immediately — the same 2.4/4.5 precedent this
+      task's own brief names; the genuinely red half (that `pipeline.ts`
+      actually SENDS these constants) is proven in `pipeline.test.ts`.
 - [ ] 5.4 Write `packages/bot/src/pipeline.test.ts` FIRST (red), against
       `FakeTelegramTransport` + `FakeModelPort` + a real in-memory SQLite
       (`openDatabase(":memory:")`):
