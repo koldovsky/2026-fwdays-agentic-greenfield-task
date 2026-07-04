@@ -73,7 +73,9 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -83,7 +85,13 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -93,7 +101,10 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -103,7 +114,10 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -113,7 +127,9 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -124,7 +140,9 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -136,7 +154,12 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -147,7 +170,10 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -157,7 +183,12 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/intake/copy.test.ts",
+        "lib/src/intake/copy.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -405,42 +436,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-01 has no test annotated \"@trace FR-INTAKE-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-02 has no test annotated \"@trace FR-INTAKE-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-03 has no test annotated \"@trace FR-INTAKE-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-04 has no test annotated \"@trace FR-INTAKE-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-05 has no test annotated \"@trace FR-INTAKE-05\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-06 has no test annotated \"@trace FR-INTAKE-06\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-07 has no test annotated \"@trace FR-INTAKE-07\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-INTAKE-08 has no test annotated \"@trace FR-INTAKE-08\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-04 has no test annotated \"@trace FR-GUARD-04\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-GUARD-05 has no test annotated \"@trace FR-GUARD-05\""

@@ -1,9 +1,9 @@
 ## 1. Dependencies and database schema
 
-- [ ] 1.1 Confirm `@anthropic-ai/sdk` (`packages/agent`) and `grammy` +
+- [x] 1.1 Confirm `@anthropic-ai/sdk` (`packages/agent`) and `grammy` +
       `dotenv` (`packages/bot`) are already dependencies (they are, per
       `package.json`) — no new package installs needed for this slice.
-- [ ] 1.2 Add `leads` and `requests` tables to `packages/db/src/schema.ts`
+- [x] 1.2 Add `leads` and `requests` tables to `packages/db/src/schema.ts`
       per `design.md` Decision 4: `leads(id, telegram_user_id UNIQUE,
       telegram_chat_id, telegram_display_name, created_at)`;
       `requests(id, lead_id FK ON DELETE CASCADE, telegram_chat_id, state,
@@ -12,22 +12,29 @@
       preferred_time_range, created_at)` with the `state`/`format`/
       `goal_tag` CHECK constraints; add `idx_requests_lead_id`. Keep the
       `initSchema()` idempotency discipline (`CREATE TABLE IF NOT EXISTS`).
-- [ ] 1.3 Add `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS request_id
+- [x] 1.3 Add `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS request_id
       INTEGER REFERENCES requests(id) ON DELETE SET NULL` to `initSchema()`
       — the column S1 deferred (`packages/db/src/schema.ts`'s own comment
       names this slice as owner). Confirm the bundled better-sqlite3/SQLite
       version supports `ADD COLUMN IF NOT EXISTS` (verified: 3.53.2).
-- [ ] 1.4 Add `db.pragma("foreign_keys = ON")` to `openDatabase()`
+      **Deviation:** empirically, SQLite's `ALTER TABLE` grammar has no
+      `IF NOT EXISTS` clause for `ADD COLUMN` (verified against the bundled
+      better-sqlite3@12.11.1 / SQLite 3.53.2 — it throws a syntax error, not
+      a no-op); idempotency is instead achieved by checking
+      `PRAGMA table_info(bookings)` before running a plain `ALTER TABLE ...
+      ADD COLUMN request_id INTEGER REFERENCES requests(id) ON DELETE SET
+      NULL` (see `ensureBookingsRequestIdColumn()` in `schema.ts`).
+- [x] 1.4 Add `db.pragma("foreign_keys = ON")` to `openDatabase()`
       (`packages/db/src/index.ts`) so `ON DELETE CASCADE` actually fires
       (design.md Decision 4 / Risks).
-- [ ] 1.5 Write `packages/db/src/schema.test.ts` additions (or a new
+- [x] 1.5 Write `packages/db/src/schema.test.ts` additions (or a new
       `leads-requests.test.ts`) confirming red first (tables/column don't
       exist yet): `leads`/`requests` tables are created, the CHECK
       constraints reject bogus `state`/`format`/`goal_tag` values, the
       `telegram_user_id` UNIQUE constraint rejects a duplicate, and deleting
       a `leads` row cascades to its `requests` and `bookings` rows
       (NFR-PRIV-02). Confirm red, then implement schema.ts to green.
-- [ ] 1.6 Write minimal row helpers in `packages/db/src/leads.ts` /
+- [x] 1.6 Write minimal row helpers in `packages/db/src/leads.ts` /
       `requests.ts` (mirroring `bookings.ts`'s `insertX`/`updateX` +
       `RETURNING *` style): `insertLead`, `findLeadByTelegramUserId`,
       `insertRequest`, `updateRequestFields`, `updateRequestState`,
@@ -47,7 +54,7 @@
 - [ ] 2.3 `lib/src/intake/audience.test.ts`: `addressesParent(7) === true`,
       `addressesParent(10) === false`, `addressesParent(14) === false`
       (`@trace FR-INTAKE-04`, BC-AGE-02). Confirm red.
-- [ ] 2.4 `lib/src/intake/copy.test.ts`: the age-refusal, scope-explanation,
+- [x] 2.4 `lib/src/intake/copy.test.ts`: the age-refusal, scope-explanation,
       and format-unsure constants each contain no exclamation marks, no
       pressure vocabulary ("останнє місце"/"тільки сьогодні"/"поспішайте"),
       the age-refusal mentions "4", the scope-explanation never promises
@@ -55,7 +62,7 @@
       explanation contains no digits (BC-PRICE-01 boundary)
       (`@trace FR-GUARD-04`, `@trace BC-BRAND-01`, `@trace BC-SCOPE-01`,
       `@trace BC-SCOPE-02`, `@trace BC-FORMAT-01`). Confirm red.
-- [ ] 2.5 `lib/src/intake/state-machine.test.ts` — happy path: `save_name`
+- [x] 2.5 `lib/src/intake/state-machine.test.ts` — happy path: `save_name`
       → `save_age(9)` → `save_format("individual")` advances `qualifying`
       → `profiling`; `save_goal`/`skip_goal`, `save_tastes`/`skip_tastes`,
       `save_experience_comfort` advance `profiling` → `collecting`;
@@ -63,44 +70,44 @@
       `proposing` (`@trace FR-INTAKE-01`, `@trace FR-INTAKE-02`,
       `@trace FR-INTAKE-03`, `@trace FR-INTAKE-04`, `@trace FR-INTAKE-05`,
       `@trace FR-INTAKE-06`). Confirm red.
-- [ ] 2.6 `state-machine.test.ts` — field-ownership gate: a `save_age` event
+- [x] 2.6 `state-machine.test.ts` — field-ownership gate: a `save_age` event
       while `conversationState === "profiling"` is rejected
       (`error: "FIELD_NOT_OWNED_BY_STATE"`), state/fields unchanged
       (`@trace FR-INTAKE-02`, ADR-0001 §6). Confirm red.
-- [ ] 2.7 `state-machine.test.ts` — minimum-age guardrail: `save_age(3)`
+- [x] 2.7 `state-machine.test.ts` — minimum-age guardrail: `save_age(3)`
       transitions `conversationState` to `soft_decline` (terminal), no
       fields retained; a further `save_age`/`save_name` event while
       `soft_decline` is rejected with no state change (persuasion scenario)
       (`@trace FR-GUARD-04`, BC-AGE-01). Confirm red.
-- [ ] 2.8 `state-machine.test.ts` — no state at or after `proposing` is ever
+- [x] 2.8 `state-machine.test.ts` — no state at or after `proposing` is ever
       reachable with `studentAge < 4` (property-style: attempt every event
       sequence that tries to skip the age gate) (`@trace FR-INTAKE-02`).
       Confirm red.
-- [ ] 2.9 `state-machine.test.ts` — scope/format detours: `save_format
+- [x] 2.9 `state-machine.test.ts` — scope/format detours: `save_format
       ("instrument")` and `save_format("unsure")` each return `detour:
       "scope_violation"`/`"format_unsure"` with `conversationState`
       byte-identical before/after (still `qualifying`, `format` field
       unset) (`@trace FR-INTAKE-02`, BC-SCOPE-01/02, BC-FORMAT-01). Confirm
       red.
-- [ ] 2.10 `state-machine.test.ts` — amend mid-flow: an `amend` event on
+- [x] 2.10 `state-machine.test.ts` — amend mid-flow: an `amend` event on
       `studentAge` (6 → 7) from `profiling` re-validates and updates the
       field with `conversationState` unchanged; an amend that drops the age
       below 4 mid-`profiling` drives the same `soft_decline` transition a
       first-time violation would (`@trace FR-INTAKE-07`). Confirm red.
-- [ ] 2.11 `state-machine.test.ts` — amend changes addressing: combined with
+- [x] 2.11 `state-machine.test.ts` — amend changes addressing: combined with
       2.3's `addressesParent` helper, confirm the derived flag flips when
       age is amended 9 → 12 (computed live off `fields.studentAge`, never
       stored separately) (`@trace FR-INTAKE-07`, BC-AGE-02). Confirm red.
-- [ ] 2.12 `state-machine.test.ts` — cancel: a `cancel` event from
+- [x] 2.12 `state-machine.test.ts` — cancel: a `cancel` event from
       `awaiting_admin` transitions `conversationState` to `done`
       (booking-status cancellation and hold release are proven at the
       agent-loop layer, section 4/5 — this test only proves the
       conversation-state half) (`@trace FR-INTAKE-07`). Confirm red.
-- [ ] 2.13 `state-machine.test.ts` — amend/save rejected after a terminal
+- [x] 2.13 `state-machine.test.ts` — amend/save rejected after a terminal
       state: any `save_*`/`amend` event on a `conversationState: "done"`
       instance is rejected with `error: "TERMINAL_STATE"`, fields unchanged
       (`@trace FR-INTAKE-08`). Confirm red.
-- [ ] 2.14 `state-machine.test.ts` — returning lead / sibling: two
+- [x] 2.14 `state-machine.test.ts` — returning lead / sibling: two
       independently-constructed `IntakeState` values (simulating two
       `requests` rows for the same lead) never share fields — asserted by
       construction (a fresh `initialIntakeState()` call has empty fields
