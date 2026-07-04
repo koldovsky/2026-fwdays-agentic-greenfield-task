@@ -26,13 +26,20 @@ export interface ButtonProps {
 // Hover lift + press feedback are transform/color only (no layout shift). The
 // global :focus-visible halo (globals.css) stays intact; disabled state drops
 // all hover/press affordance. duration-150 matches --hover-duration.
+// The `<button>` disabled visual uses `disabled:` (matches :disabled); the link
+// form has no `disabled` attribute, so it degrades to aria-disabled and mirrors
+// the same muted state via `aria-disabled:` — `pointer-events-none` also blocks
+// hover so a disabled link never shows the lift/color affordance.
 const base =
   "inline-flex items-center justify-center font-body font-semibold leading-none " +
   "whitespace-nowrap select-none cursor-pointer " +
   "transition-[opacity,transform,background-color,color,box-shadow] duration-150 " +
   "hover:-translate-y-px active:translate-y-0 active:scale-[0.97] " +
   "disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-surface-canvas " +
-  "disabled:text-ink-faint disabled:border-transparent disabled:shadow-none";
+  "disabled:text-ink-faint disabled:border-transparent disabled:shadow-none " +
+  "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed " +
+  "aria-disabled:translate-y-0 aria-disabled:bg-surface-canvas " +
+  "aria-disabled:text-ink-faint aria-disabled:border-transparent aria-disabled:shadow-none";
 
 const variantClass: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary: "bg-brand text-white shadow-brand hover:bg-brand-hover hover:shadow-brand-strong",

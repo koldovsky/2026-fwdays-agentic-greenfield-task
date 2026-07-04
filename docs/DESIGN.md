@@ -45,9 +45,11 @@ Available namespaces: `*-ink*` / `*-brand*` / `*-surface-*` / status colors
   libraries, no SVG icon paths.
 - **Casing:** status/requirement tokens all-lowercase; section eyebrows
   UPPERCASE · MONOSPACE · TRACKED.
-- **Motion:** restrained, `opacity`/`transform` only (never layout — CLS stays
-  0). Tokens in `tokens/motion.css` mirrored into `globals.css` `@theme`
-  (`--ease-out`, `--reveal-duration`, `--reveal-distance`, `--hover-duration`).
+- **Motion:** restrained, `opacity`/`transform` only (never layout, so CLS stays
+  0). Tokens in `tokens/motion.css` mirrored into the `globals.css` `:root` block
+  (`--ease-out`, `--reveal-duration`, `--reveal-distance`, `--hover-duration`);
+  they are consumed via raw `var()`, not as Tailwind utilities, so they live in
+  `:root` rather than `@theme`.
   Scroll-reveal via the `shared/ui` `Reveal` primitive; all motion is disabled
   under `prefers-reduced-motion` and must not delay the LCP element.
 

@@ -14,7 +14,9 @@ not spend the performance budget the page just earned — Lighthouse ≥ 90 mobi
 - Scroll-reveal on landing sections below the fold (pillars, before/after,
   checklist preview, how-it-works, pricing, FAQ, final CTA): fade/translate in
   once as they enter the viewport.
-- Hero entrance: headline, lead, CTAs, and demo card animate in on load.
+- Hero entrance: the supporting copy (lead, CTAs, note) animates in on load. The
+  h1 headline and demo card stay painted static so the LCP element is never
+  delayed (NFR-PERF-04).
 - Hover/press micro-interactions on CTA buttons (primary and ghost).
 - All motion is disabled (instant, fully visible end state) when the visitor
   has `prefers-reduced-motion: reduce`.

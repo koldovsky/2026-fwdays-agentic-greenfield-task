@@ -32,7 +32,7 @@ export interface RevealProps {
   /** Stagger delay in ms (drives --reveal-delay). */
   readonly delay?: number;
   /**
-   * When false, only transform animates and opacity stays 1 — use for an
+   * When false, only transform animates and opacity stays 1, for an
    * above-the-fold / LCP element so it paints on first render. Default true.
    */
   readonly fade?: boolean;

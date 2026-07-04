@@ -1,6 +1,7 @@
 // Behaviour of the scroll-reveal primitive: SSR-visible default, hide-then-reveal
 // under IntersectionObserver, and full bypass under reduced-motion.
 import { act, render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Reveal } from "./Reveal";
 
@@ -54,6 +55,16 @@ describe("Reveal", () => {
     // Without IntersectionObserver it must stay revealed (SSR-visible default).
     expect(node?.getAttribute("data-revealed")).toBe("true");
     expect(node?.getAttribute("data-fade")).toBe("true");
+  });
+
+  it("server-renders revealed and unarmed (SSR-visible contract, no pre-hydration hide)", () => {
+    // The genuine SSR guarantee: markup emitted on the server is already
+    // visible (data-revealed="true") and carries no data-armed transition, so
+    // content and the LCP element paint without waiting for JS (NFR-PERF-04).
+    const html = renderToStaticMarkup(<Reveal>Grounded rewrite</Reveal>);
+    expect(html).toContain('data-revealed="true"');
+    expect(html).not.toContain("data-armed");
+    expect(html).toContain("Grounded rewrite");
   });
 
   it("renders the polymorphic element from `as`", () => {

@@ -169,10 +169,10 @@ html {
 }
 
 /* Hero entrance: a one-shot CSS load animation on the hero's supporting elements
- * (kicker, lead, CTAs, note). It never touches the h1 or the demo card, so
- * whichever is the LCP element paints on first render. Runs without JS; the 0%
- * state (not a painted-then-hidden state) means no flash. Reduced-motion below
- * zeroes the duration, so with `both` fill it lands on the visible end state. */
+ * (lead, CTAs, note). It never touches the h1 or the demo card, so whichever is
+ * the LCP element paints on first render. Runs without JS; the 0% state (not a
+ * painted-then-hidden state) means no flash. Reduced-motion below removes the
+ * animation entirely and forces the visible end state. */
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -193,15 +193,22 @@ html {
     scroll-behavior: auto;
   }
   /* Belt-and-suspenders: even before the JS matchMedia guard runs, keep every
-   * reveal fully visible and unmoved. */
-  [data-reveal] {
+   * scroll-reveal AND the hero entrance fully visible and unmoved. Removing the
+   * animation outright (not just its duration) closes the delay window where a
+   * `both`-filled .rise-in would otherwise hold the hidden `from` state before
+   * snapping visible (NFR-A11Y-01). */
+  [data-reveal],
+  .rise-in {
     opacity: 1 !important;
     transform: none !important;
+    animation: none !important;
   }
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
   }
 }
