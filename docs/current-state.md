@@ -7,6 +7,23 @@
 
 ## Last action
 
+- **PROD DEPLOY: registration 500 root-caused + `db:migrate` runner added (2026-07-04).**
+  User deployed to Vercel from GitHub; registration returns 500. Traced two deploy gaps
+  (`route.ts:76-80` swallows the real cause into a generic `server_error` 500 — true error only in
+  Vercel function logs):
+  1. **Env not set** — `getDb()`→`getDatabaseUrl()` throws when `DATABASE_URL` absent (`env.ts:5-11`).
+  2. **Migrations never run in prod** — `runMigrations` (`migrate.ts`) is only called by tests +
+     `dev-pglite-server.mjs`; no deploy step, no npm script. Fresh prod DB has no `users`/
+     `credentials` tables → INSERT fails → 500. (Also: `pg.ts:26` sets no SSL — managed PG needs
+     `?sslmode=require` in the URL.)
+  - **Fix shipped:** new `scripts/migrate.mjs` + `db:migrate` npm script — self-contained forward-only
+    runner over real Postgres (per-file tx, `schema_migrations` idempotency, honors `sslmode` via the
+    URL). Verified: applies all 4 migrations on a fresh pglite, idempotent on re-run; `yarn lint` clean.
+  - **User's DB decision:** none provisioned yet (fresh Vercel project). Next: provision Vercel
+    Postgres/Neon (auto-injects `DATABASE_URL` w/ SSL), set `AUTH_SECRET` + `CV_ENCRYPTION_KEY`
+    (+ `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`), run `yarn db:migrate` against the prod URL once,
+    redeploy. Landmine: `PAYMENTS_PROVIDER=emulator` is hard-disabled in prod (`env.ts:62-67`).
+
 - **T6 history STARTED (2026-07-04, ultracode). Scope discovery = bigger than roadmap "M".**
   Scouted the seams before coding. Findings that reshape the plan:
   - `tailoring-repo.ts` already has `save`/`listByUser`/`findById`/`deleteById` (cites
