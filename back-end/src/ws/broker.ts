@@ -1,14 +1,28 @@
 import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from 'ws';
 import type { Device, DeviceRegistry, RegistryEvent } from '../discovery/registry.js';
+import type { SessionManager, SessionSnapshot } from '../tv/manager.js';
+import { toClientSessionState, type ClientSessionState } from '../tv/types.js';
 
-export type DevicesTopicEvent = 'snapshot' | 'added' | 'updated' | 'removed' | 'offline';
+export type DevicesTopicEvent =
+  | 'snapshot'
+  | 'added'
+  | 'updated'
+  | 'removed'
+  | 'offline'
+  | 'session';
+
+interface SnapshotDevice extends Device {
+  session?: ClientSessionState;
+}
 
 interface DevicesMessage {
   topic: 'devices';
   event: DevicesTopicEvent;
   device?: Device;
-  devices?: Device[];
+  devices?: SnapshotDevice[];
+  udn?: string;
+  state?: ClientSessionState;
 }
 
 export interface DevicesBroker {
@@ -17,44 +31,75 @@ export interface DevicesBroker {
 }
 
 /**
- * Fan out registry events onto `/ws`. On every new connection, sends a
- * `snapshot` message so a client that connected after the initial burst
- * still gets the full state without a separate HTTP round-trip.
+ * Fan out registry events + per-UDN session events onto `/ws`. On every
+ * new connection, sends a `snapshot` message whose `devices[i].session`
+ * carries the current client-visible session state (`Connecting` /
+ * `Connected` / `Disconnected` / `Offline`), so a client that reconnects
+ * mid-session doesn't need a separate HTTP round-trip.
  */
 export function createDevicesBroker(
   registry: DeviceRegistry,
   logger: FastifyInstance['log'],
+  sessionManager?: SessionManager,
 ): DevicesBroker {
   const clients = new Set<WebSocket>();
 
-  const forward =
-    (event: DevicesTopicEvent) =>
-    (device: Device): void => {
-      const message = JSON.stringify({ topic: 'devices', event, device } satisfies DevicesMessage);
-      for (const socket of clients) {
-        if (socket.readyState === socket.OPEN) {
-          try {
-            socket.send(message);
-          } catch (err) {
-            logger.warn({ err, event }, 'devices broker: failed to send to client');
-          }
+  function broadcast(message: DevicesMessage): void {
+    const raw = JSON.stringify(message);
+    for (const socket of clients) {
+      if (socket.readyState === socket.OPEN) {
+        try {
+          socket.send(raw);
+        } catch (err) {
+          logger.warn({ err, event: message.event }, 'devices broker: failed to send to client');
         }
       }
+    }
+  }
+
+  const forwardRegistry =
+    (event: Exclude<DevicesTopicEvent, 'snapshot' | 'session'>) =>
+    (device: Device): void => {
+      broadcast({ topic: 'devices', event, device });
     };
 
-  const onAdded = forward('added');
-  const onUpdated = forward('updated');
-  const onRemoved = forward('removed');
-  const onOffline = forward('offline');
+  const onAdded = forwardRegistry('added');
+  const onUpdated = forwardRegistry('updated');
+  const onRemoved = forwardRegistry('removed');
+  const onOffline = forwardRegistry('offline');
+  const onSession = (snapshot: SessionSnapshot): void => {
+    broadcast({
+      topic: 'devices',
+      event: 'session',
+      udn: snapshot.udn,
+      state: toClientSessionState(snapshot.state),
+    });
+  };
 
-  const eventListeners: Array<[RegistryEvent, (device: Device) => void]> = [
+  const registryListeners: Array<[RegistryEvent, (device: Device) => void]> = [
     ['added', onAdded],
     ['updated', onUpdated],
     ['removed', onRemoved],
     ['offline', onOffline],
   ];
-  for (const [event, listener] of eventListeners) {
+  for (const [event, listener] of registryListeners) {
     registry.on(event, listener);
+  }
+  if (sessionManager) {
+    sessionManager.on('state', onSession);
+  }
+
+  function buildSnapshot(): SnapshotDevice[] {
+    const sessionByUdn = new Map<string, ClientSessionState>();
+    if (sessionManager) {
+      for (const { udn, state } of sessionManager.snapshot()) {
+        sessionByUdn.set(udn, toClientSessionState(state));
+      }
+    }
+    return registry.snapshot().map((d) => {
+      const session = sessionByUdn.get(d.udn);
+      return session === undefined ? d : { ...d, session };
+    });
   }
 
   return {
@@ -63,7 +108,7 @@ export function createDevicesBroker(
       const snapshot: DevicesMessage = {
         topic: 'devices',
         event: 'snapshot',
-        devices: registry.snapshot(),
+        devices: buildSnapshot(),
       };
       try {
         socket.send(JSON.stringify(snapshot));
@@ -75,9 +120,10 @@ export function createDevicesBroker(
       });
     },
     close() {
-      for (const [event, listener] of eventListeners) {
+      for (const [event, listener] of registryListeners) {
         registry.off(event, listener);
       }
+      if (sessionManager) sessionManager.off('state', onSession);
       clients.clear();
     },
   };

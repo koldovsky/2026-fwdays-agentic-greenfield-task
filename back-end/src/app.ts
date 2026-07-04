@@ -9,6 +9,7 @@ import { errorHandler } from './errors.js';
 import { registerStaticSpa } from './plugins/static-spa.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerDevicesRoute } from './routes/devices.js';
+import { registerSessionRoutes } from './routes/sessions.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
 import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
 import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
@@ -18,6 +19,10 @@ import {
   type DiscoveryOptions,
 } from './discovery/index.js';
 import { createDevicesBroker, type DevicesBroker } from './ws/broker.js';
+import { createSessionManager, type SessionManager } from './tv/manager.js';
+import { createTokenStore, type TokenStore } from './tv/token-store.js';
+import type { JsonRpcTransport } from './tv/jsonrpc.js';
+import type { SessionOptions } from './tv/session.js';
 
 export interface MdnsAppOptions {
   enabled?: boolean;
@@ -40,6 +45,25 @@ export interface DiscoveryAppOptions {
   st?: string;
 }
 
+export interface SessionsAppOptions {
+  enabled?: boolean;
+  tokenStore?: TokenStore;
+  createTransport?: (opts: {
+    ip: string;
+    port: number;
+    accessToken?: string;
+    logger: Parameters<NonNullable<SessionOptions['createTransport']>>[0]['logger'];
+  }) => JsonRpcTransport;
+  sessionOptions?: SessionManagerAppSessionOptions;
+}
+
+export type SessionManagerAppSessionOptions = Partial<
+  Omit<
+    SessionOptions,
+    'udn' | 'ip' | 'port' | 'logger' | 'tokenStore' | 'createTransport'
+  >
+>;
+
 export interface CreateAppOptions {
   staticRoot?: string;
   serveSpa?: boolean;
@@ -47,6 +71,7 @@ export interface CreateAppOptions {
   port?: number;
   mdns?: MdnsAppOptions;
   discovery?: DiscoveryAppOptions;
+  sessions?: SessionsAppOptions;
 }
 
 const defaultStaticRoot = fileURLToPath(
@@ -60,6 +85,7 @@ declare module 'fastify' {
       registry: DeviceRegistry;
       broker: DevicesBroker | undefined;
       handle: DiscoveryHandle | undefined;
+      sessions: SessionManager | undefined;
     };
   }
 }
@@ -108,8 +134,31 @@ export async function createApp(
     registry,
     broker: undefined,
     handle: undefined,
+    sessions: undefined,
   };
   app.decorate('discovery', discoveryRef);
+
+  const sessionsOptions = options.sessions ?? {};
+  const sessionsEnabled =
+    sessionsOptions.enabled ?? process.env.SESSIONS_ENABLED !== '0';
+  if (sessionsEnabled) {
+    const tokenStore = sessionsOptions.tokenStore ?? createTokenStore();
+    discoveryRef.sessions = createSessionManager({
+      registry,
+      tokenStore,
+      logger: app.log,
+      ...(sessionsOptions.createTransport
+        ? { createTransport: sessionsOptions.createTransport }
+        : {}),
+      ...(sessionsOptions.sessionOptions
+        ? { sessionOptions: sessionsOptions.sessionOptions }
+        : {}),
+    });
+    app.addHook('onClose', async () => {
+      await discoveryRef.sessions?.close();
+      discoveryRef.sessions = undefined;
+    });
+  }
 
   const discoveryOptions = options.discovery ?? {};
   const discoveryEnabled =
@@ -143,7 +192,11 @@ export async function createApp(
 
   await app.register(websocket);
   if (discoveryEnabled) {
-    discoveryRef.broker = createDevicesBroker(registry, app.log);
+    discoveryRef.broker = createDevicesBroker(
+      registry,
+      app.log,
+      discoveryRef.sessions,
+    );
   }
   app.get('/ws', { websocket: true }, (socket) => {
     discoveryRef.broker?.register(socket);
@@ -156,6 +209,7 @@ export async function createApp(
     async (api) => {
       await registerHealthRoute(api);
       await registerDevicesRoute(api);
+      await registerSessionRoutes(api);
     },
     { prefix: '/api' },
   );

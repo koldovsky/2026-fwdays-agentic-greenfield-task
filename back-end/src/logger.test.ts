@@ -28,3 +28,20 @@ test('redacts a deeply nested AccessToken', () => {
   );
   assert.ok(!output().includes('N3ST3D'));
 });
+
+test('redacts AccessToken inside a JSON-RPC params payload', () => {
+  const { logger, output } = captureLogger();
+  logger.info(
+    {
+      rpcId: 42,
+      method: 'powerControl',
+      params: { power: 'on', AccessToken: 'SESSION-T0K3N' },
+      origin: 'https://10.0.0.42:1516',
+    },
+    'jsonrpc request',
+  );
+  assert.ok(!output().includes('SESSION-T0K3N'));
+  // The rpcId + method should still be in the log for correlation.
+  assert.ok(output().includes('"rpcId":42'));
+  assert.ok(output().includes('powerControl'));
+});
