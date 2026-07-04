@@ -174,6 +174,13 @@ export const adversarialTraces: ReadonlyArray<{
     expectFail: "grounding-isolation",
   },
   {
+    name: "grounding pass sees cover-letter context (§5.2)",
+    trace: mutateTrace((t) => {
+      t.steps = replaceStep(t.steps, 3, { skill: "ground-bullet", attempts: 1, contextKeys: ["bullet", "cvText", "coverLetter"] });
+    }),
+    expectFail: "grounding-isolation",
+  },
+  {
     name: "scoring runs before grounding",
     trace: mutateTrace((t) => {
       t.steps = [

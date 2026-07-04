@@ -241,20 +241,21 @@ describe("buildCoverLetterPrompt (§4, BC-HONESTY-01/02, NFR-I18N-01)", () => {
   });
 });
 
-describe("grounding isolation from seniority (§5.1, BC-HONESTY-03)", () => {
+describe("grounding isolation from seniority + cover letter (§5.1, BC-HONESTY-03)", () => {
   const base: GroundingInput = {
     bullets: [{ id: "b1", text: "Пункт" }],
     cvSentences: cv.sentences,
   };
 
-  it("buildGroundingPrompt has no careerStage channel — its output cannot vary with an upstream stage", () => {
-    // The grounding builder's input type carries no careerStage; a seniority
-    // verdict existing upstream can never reach the grounding payload. Proven
-    // structurally: the serialized grounding prompt is byte-stable, and none of
-    // the stage labels can appear in it.
+  it("buildGroundingPrompt has no careerStage/coverLetter channel — output cannot vary with either upstream", () => {
+    // The grounding builder's input type (GroundingInput) carries neither a
+    // careerStage nor a cover-letter field; a seniority verdict or a generated
+    // cover letter existing upstream can never reach the grounding payload.
+    // Proven structurally: the serialized grounding prompt is byte-stable, and
+    // none of the stage/cover-letter labels can appear in it.
     const text = textOf(buildGroundingPrompt(base).messages);
-    for (const label of ["джуніор", "мідл", "сеньйор", "Рівень кандидата"]) {
-      expect(text).not.toContain(label);
+    for (const label of ["джуніор", "мідл", "сеньйор", "Рівень кандидата", "супровідний лист"]) {
+      expect(text.toLowerCase()).not.toContain(label.toLowerCase());
     }
     expect(buildGroundingPrompt(base)).toEqual(buildGroundingPrompt(base));
   });
