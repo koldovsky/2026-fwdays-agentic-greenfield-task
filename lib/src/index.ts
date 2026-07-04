@@ -5,4 +5,8 @@
 //   booking/   — state machine                               (FR-HITL-03)
 // No next/*, no React/DOM, no Telegram SDK, no Google SDK here — ever.
 
-export {};
+export * from "./intake/age";
+export * from "./intake/format";
+export * from "./intake/audience";
+export * from "./intake/copy";
+export * from "./intake/state-machine";

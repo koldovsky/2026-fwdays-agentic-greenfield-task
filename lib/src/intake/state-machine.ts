@@ -84,6 +84,9 @@
 //     Returns `{ conversationState: "greeting", fields: {} }`, a fresh
 //     object graph every call.
 
+import { validateAge } from "./age";
+import { validateFormat } from "./format";
+
 /** The seven-state-plus-terminal conversation machine (ADR-0001 §6). */
 export type ConversationState =
   | "greeting"
@@ -200,9 +203,62 @@ export interface TransitionResult {
  * other's profile).
  */
 export function initialIntakeState(): IntakeState {
-  throw new Error(
-    "Not implemented — lib/src/intake/state-machine.ts initialIntakeState (tasks.md 3.5 green half)",
+  return { conversationState: "greeting", fields: {} };
+}
+
+const TERMINAL_STATES: ReadonlySet<ConversationState> = new Set(["done", "soft_decline"]);
+
+function isTerminal(conversationState: ConversationState): boolean {
+  return TERMINAL_STATES.has(conversationState);
+}
+
+/** Field-ownership map (design.md Decision 1 / ADR-0001 §6) — every
+ *  save/skip event type names the ONE conversationState allowed to
+ *  process it. `amend`/`cancel` are handled outside this map entirely. */
+const OWNING_STATE: Partial<Record<IntakeEvent["type"], ConversationState>> = {
+  save_name: "qualifying",
+  save_age: "qualifying",
+  save_format: "qualifying",
+  save_goal: "profiling",
+  skip_goal: "profiling",
+  save_tastes: "profiling",
+  skip_tastes: "profiling",
+  save_experience_comfort: "profiling",
+  save_weekdays: "collecting",
+  save_time_range: "collecting",
+};
+
+/** The reducer's own "no-op rejection" helper — always the SAME `state`
+ *  reference back, per TransitionResult's `===`-detectable no-op contract. */
+function rejected(state: IntakeState, error: TransitionErrorCode): TransitionResult {
+  return { state, detour: null, error };
+}
+
+/** The reducer's own guardrail-violation helper (AGE_BELOW_MIN, from either
+ *  a first-time save_age or a later amend) — always discards fields and
+ *  lands on the terminal "soft_decline", per spec.md's "no request in state
+ *  proposing or later ever exists with age < 4". */
+function ageBelowMin(): TransitionResult {
+  return {
+    state: { conversationState: "soft_decline", fields: {} },
+    detour: null,
+    error: "AGE_BELOW_MIN",
+  };
+}
+
+/** Qualifying auto-advances to profiling once name/age/format are ALL
+ *  present and valid — a genuine completeness check (no skip variants exist
+ *  for these three fields, so truthiness is an unambiguous signal). */
+function qualifyingComplete(fields: IntakeFields): boolean {
+  return (
+    fields.studentName !== undefined && fields.studentAge !== undefined && fields.format !== undefined
   );
+}
+
+/** Collecting auto-advances to proposing once both fields are present —
+ *  same genuine completeness reasoning as qualifying (no skip variants). */
+function collectingComplete(fields: IntakeFields): boolean {
+  return fields.preferredWeekdays !== undefined && fields.preferredTimeRange !== undefined;
 }
 
 /**
@@ -211,9 +267,145 @@ export function initialIntakeState(): IntakeState {
  * guardrail / detour / terminal-state rules this function implements.
  */
 export function transition(state: IntakeState, event: IntakeEvent): TransitionResult {
-  void state;
-  void event;
-  throw new Error(
-    "Not implemented — lib/src/intake/state-machine.ts transition (tasks.md 3.5 green half)",
-  );
+  // `cancel` and `amend` sit outside the field-ownership gate (FR-INTAKE-07:
+  // "any state before the administrator's decision") but are still refused
+  // once a terminal state is reached (FR-INTAKE-08).
+  if (event.type === "cancel") {
+    if (isTerminal(state.conversationState)) {
+      return rejected(state, "TERMINAL_STATE");
+    }
+    return {
+      state: { conversationState: "done", fields: state.fields },
+      detour: null,
+    };
+  }
+
+  if (event.type === "amend") {
+    if (isTerminal(state.conversationState)) {
+      return rejected(state, "TERMINAL_STATE");
+    }
+    if (event.field === "studentAge") {
+      const validation = validateAge(event.value as number);
+      if (!validation.ok) {
+        return ageBelowMin();
+      }
+      return {
+        state: {
+          conversationState: state.conversationState,
+          fields: { ...state.fields, studentAge: validation.age },
+        },
+        detour: null,
+      };
+    }
+    return {
+      state: {
+        conversationState: state.conversationState,
+        fields: { ...state.fields, [event.field]: event.value },
+      },
+      detour: null,
+    };
+  }
+
+  // Every remaining event type is a save_*/skip_* — field-ownership gated.
+  if (isTerminal(state.conversationState)) {
+    return rejected(state, "TERMINAL_STATE");
+  }
+
+  const owningState = OWNING_STATE[event.type];
+  // "greeting" is the pre-qualifying state (the bot's own greeting/typing
+  // step, out of this reducer's scope) — the first qualifying-owned event
+  // (save_name/save_age/save_format) is also accepted straight from
+  // "greeting", implicitly entering "qualifying" (FR-INTAKE-08's sibling
+  // isolation test drives a fresh `initialIntakeState()` — "greeting" —
+  // straight into `save_name`).
+  const enteringQualifying = owningState === "qualifying" && state.conversationState === "greeting";
+  if (owningState !== undefined && owningState !== state.conversationState && !enteringQualifying) {
+    return rejected(state, "FIELD_NOT_OWNED_BY_STATE");
+  }
+
+  switch (event.type) {
+    case "save_name": {
+      const fields: IntakeFields = { ...state.fields, studentName: event.name };
+      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      return { state: { conversationState, fields }, detour: null };
+    }
+
+    case "save_age": {
+      const validation = validateAge(event.age);
+      if (!validation.ok) {
+        return ageBelowMin();
+      }
+      const fields: IntakeFields = { ...state.fields, studentAge: validation.age };
+      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      return { state: { conversationState, fields }, detour: null };
+    }
+
+    case "save_format": {
+      const validation = validateFormat(event.format);
+      if (!validation.ok) {
+        if (validation.code === "FORMAT_UNSURE") {
+          return { state, detour: "format_unsure" };
+        }
+        return { state, detour: "scope_violation" };
+      }
+      const fields: IntakeFields = { ...state.fields, format: validation.format };
+      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      return { state: { conversationState, fields }, detour: null };
+    }
+
+    case "save_goal": {
+      const fields: IntakeFields = {
+        ...state.fields,
+        goalTag: event.goalTag,
+        goalText: event.goalText,
+      };
+      return { state: { conversationState: state.conversationState, fields }, detour: null };
+    }
+
+    case "skip_goal":
+      return { state: { conversationState: state.conversationState, fields: { ...state.fields } }, detour: null };
+
+    case "save_tastes": {
+      const fields: IntakeFields = {
+        ...state.fields,
+        tastes: event.tastes,
+        ...(event.dreamSong !== undefined ? { dreamSong: event.dreamSong } : {}),
+      };
+      return { state: { conversationState: state.conversationState, fields }, detour: null };
+    }
+
+    case "skip_tastes":
+      return { state: { conversationState: state.conversationState, fields: { ...state.fields } }, detour: null };
+
+    case "save_experience_comfort": {
+      const fields: IntakeFields = {
+        ...state.fields,
+        experience: event.experience,
+        comfort: event.comfort,
+      };
+      // Designated completing event for "profiling" (FR-INTAKE-05): goal and
+      // tastes may have been explicitly skipped and therefore never leave a
+      // truthy trace on `fields`, so this event — not a field-completeness
+      // check — is what the flow's own fixed question order uses to signal
+      // "profiling is done" (see design.md Decision 1's field-ownership map).
+      return { state: { conversationState: "collecting", fields }, detour: null };
+    }
+
+    case "save_weekdays": {
+      const fields: IntakeFields = { ...state.fields, preferredWeekdays: event.weekdays };
+      const conversationState = collectingComplete(fields) ? "proposing" : state.conversationState;
+      return { state: { conversationState, fields }, detour: null };
+    }
+
+    case "save_time_range": {
+      const fields: IntakeFields = { ...state.fields, preferredTimeRange: event.timeRange };
+      const conversationState = collectingComplete(fields) ? "proposing" : state.conversationState;
+      return { state: { conversationState, fields }, detour: null };
+    }
+
+    default: {
+      const exhaustive: never = event;
+      return exhaustive;
+    }
+  }
 }

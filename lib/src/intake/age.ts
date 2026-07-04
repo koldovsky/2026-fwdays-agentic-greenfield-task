@@ -22,9 +22,11 @@
  *  (FR-GUARD-04, BC-AGE-01). */
 export type AgeValidation = { ok: true; age: number } | { ok: false; code: "AGE_BELOW_MIN" };
 
+const MINIMUM_AGE = 4;
+
 export function validateAge(age: number): AgeValidation {
-  void age;
-  throw new Error(
-    "Not implemented — lib/src/intake/age.ts validateAge (tasks.md 3.1 green half)",
-  );
+  if (age < MINIMUM_AGE) {
+    return { ok: false, code: "AGE_BELOW_MIN" };
+  }
+  return { ok: true, age };
 }

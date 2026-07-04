@@ -35,8 +35,11 @@ export type FormatValidation =
   | { ok: false; code: "FORMAT_UNSURE" | "SCOPE_VIOLATION" };
 
 export function validateFormat(value: CandidateFormat): FormatValidation {
-  void value;
-  throw new Error(
-    "Not implemented — lib/src/intake/format.ts validateFormat (tasks.md 3.2 green half)",
-  );
+  if (value === "individual" || value === "group") {
+    return { ok: true, format: value };
+  }
+  if (value === "unsure") {
+    return { ok: false, code: "FORMAT_UNSURE" };
+  }
+  return { ok: false, code: "SCOPE_VIOLATION" };
 }

@@ -125,22 +125,27 @@
 
 ## 3. Domain logic — implement to green
 
-- [ ] 3.1 Implement `lib/src/intake/age.ts` (`validateAge`) to pass 2.1.
-- [ ] 3.2 Implement `lib/src/intake/format.ts` (`validateFormat`) to pass
+- [x] 3.1 Implement `lib/src/intake/age.ts` (`validateAge`) to pass 2.1.
+- [x] 3.2 Implement `lib/src/intake/format.ts` (`validateFormat`) to pass
       2.2.
-- [ ] 3.3 Implement `lib/src/intake/audience.ts` (`addressesParent`) to
+- [x] 3.3 Implement `lib/src/intake/audience.ts` (`addressesParent`) to
       pass 2.3.
-- [ ] 3.4 Implement `lib/src/intake/copy.ts` (age-refusal,
+- [x] 3.4 Implement `lib/src/intake/copy.ts` (age-refusal,
       scope-explanation, format-unsure Ukrainian constants — design.md
       Decision 1's "guardrail copy is deterministic, never model-composed"
       rule) to pass 2.4.
-- [ ] 3.5 Implement `lib/src/intake/state-machine.ts` (`transition()`, the
+      **Note:** already shipped real (non-stub) content in the 2.15 red
+      round per that task's own precedent (S1 `propose.ts`'s apology
+      constant); left byte-identical, untouched this pass — 2.4 was already
+      green.
+- [x] 3.5 Implement `lib/src/intake/state-machine.ts` (`transition()`, the
       `IntakeState`/`IntakeEvent`/`TransitionResult` types, field-ownership
       gates, the `detour` side-channel per design.md Decision 1) to pass
       2.5–2.14.
-- [ ] 3.6 Export the new `intake/` modules from `lib/src/index.ts`.
-- [ ] 3.7 Run `npm run test:run` and confirm 2.1–2.14 are now green with no
+- [x] 3.6 Export the new `intake/` modules from `lib/src/index.ts`.
+- [x] 3.7 Run `npm run test:run` and confirm 2.1–2.14 are now green with no
       regressions in the S1 `slots` suites.
+      **Confirmed:** 106/106 passed (17 test files), zero regressions.
 
 ## 4. Services — agent tool-loop (red → green against a fake model port)
 

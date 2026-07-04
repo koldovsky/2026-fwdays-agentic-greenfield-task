@@ -23,8 +23,5 @@
 //   Decision 1; state-machine.test.ts 2.11 asserts it flips when age is
 //   amended 9 -> 12 with nothing persisted).
 export function addressesParent(age: number): boolean {
-  void age;
-  throw new Error(
-    "Not implemented — lib/src/intake/audience.ts addressesParent (tasks.md 3.3 green half)",
-  );
+  return age < 10;
 }
