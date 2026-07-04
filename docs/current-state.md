@@ -58,8 +58,33 @@
   new FAQ. No premium PDF-attach copy (unbuilt), no new hue. lint+build+623 tests green; checker
   subagent PASS (0 findings). **Pending:** `perf-audit` (no Chrome here, LCP margin ~20 ms) + openspec
   archive (CLI not installed). Kept deterministic cover letter per user (task 1).
-- **Next:** the three large spec-first items remain: T5 premium PDF attach (P1/L), T7 animations
-  (P2/L, `landing-animations` spec ready), T10 language toggle (P2/L, Cyrillic font is the blocker).
+- **T5 premium PDF attach — SPEC AUTHORED, ready to implement (next after /compact).** Change
+  `add-premium-pdf-attach` (proposal + `premium-attach` spec delta + tasks). Chosen next because it is
+  the highest-priority remaining (P1). Execution plan = `openspec/changes/add-premium-pdf-attach/tasks.md`.
+- **After T5:** T7 animations (P2/L, `landing-animations` spec ready to implement), T10 language toggle
+  (P2/L, wire Cyrillic fonts first — the real blocker).
+
+### Plan — T5 (add-premium-pdf-attach), resume here after /compact
+
+1. **Confirm 2 decisions** (see proposal.md): **D1** persist the PDF at rest vs request-scoped
+   (default: request-scoped, smallest security/GDPR surface); **D3** the configured Claude model
+   supports PDF document blocks (gate off calmly if not). **D2 is fixed:** PDF feeds the GENERATION
+   pass only, grounding stays text-only (BC-HONESTY-01/02).
+2. Extend the tailoring request contract with an optional PDF attachment; `/api/tailor/generate`
+   honors it only after a **server-side `hasPaidAccess`** check (never trust a client flag), validate
+   PDF type + size cap, never log bytes.
+3. Generation pass: add the PDF as a document content block (`shared/lib/llm`); add the attachment to
+   `GROUNDING_FORBIDDEN` + an adversarial honesty-eval fixture proving it never reaches grounding.
+4. UI: attach control enabled for paid, disabled + "premium" badge for free/anon; new
+   `PaywallReason="attach"` opens the upgrade surface. Tokens only, ua+en i18n, no em-dashes.
+5. Verify: lint+build+test, honesty-eval (needs `ANTHROPIC_API_KEY`), grounding-isolation guard,
+   verifier + checker subagents, then archive.
+
+### DECISION NEEDED from user (T5)
+
+- **D1:** persist the attached PDF at rest (enables history re-open; adds an encrypted `pdf_binary`
+  column + GDPR export/delete) OR keep it request-scoped (default, simpler/safer)? Assuming
+  request-scoped unless told otherwise.
 
 ### Plan — landing 8+9 (change `update-landing-flow`)
 
