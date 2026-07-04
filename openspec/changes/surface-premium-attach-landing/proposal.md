@@ -41,6 +41,16 @@ _None._
   scenario. Honesty framing preserved: the attachment enriches generation only,
   never grounding, and never fabricates (BC-HONESTY-01).
 
+## Archive ordering
+
+This change's delta MODIFIES the "Landing represents the full export flow"
+requirement, which is currently an ADDED block in the still-unarchived
+`update-landing-flow` change (not yet in the baseline `marketing-landing` spec). A
+MODIFY resolves against baseline, so `update-landing-flow` MUST be archived first
+(folding that requirement + its "no unbuilt PDF attach advertised" scenario into
+baseline); only then does this MODIFY correctly supersede it. Archive order:
+`update-landing-flow` → `surface-premium-attach-landing`.
+
 ## Impact
 
 - `src/views/landing/lib/content.ts` (Pro plan feature, one FAQ item).

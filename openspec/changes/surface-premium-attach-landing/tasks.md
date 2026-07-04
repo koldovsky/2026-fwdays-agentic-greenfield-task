@@ -15,4 +15,8 @@
 
 - [ ] 3.1 `yarn lint` + `yarn build` + `yarn test` green.
 - [ ] 3.2 `perf-audit` vs NFR-PERF-04 — blocked in sandbox (no Chrome); run in CI/local.
-- [ ] 3.3 checker subagent (maker≠checker) vs PRD + DESIGN + this spec. `openspec validate` + archive pending (CLI not installed here).
+- [x] 3.3 checker subagent (maker≠checker) vs PRD + DESIGN + this spec: PASS on code/honesty/brand (copy ground-truthed against the generation-only attachment path + GROUNDING_FORBIDDEN denylist + paid gating). `openspec validate` + archive pending (CLI not installed here).
+
+## 4. Archive ordering (dependency)
+
+- [ ] 4.1 **Archive `update-landing-flow` BEFORE this change.** This delta MODIFIES the "Landing represents the full export flow" requirement, which is still an ADDED block in the unarchived `update-landing-flow` change, not yet in the baseline `openspec/specs/marketing-landing/spec.md`. A MODIFY resolves against baseline, so archiving this change first would fail to find the target (and the "supersede the prior no-unbuilt-PDF-attach scenario" intent would no-op). Correct order: `update-landing-flow` → `landing-animations` (independent) → `surface-premium-attach-landing`.

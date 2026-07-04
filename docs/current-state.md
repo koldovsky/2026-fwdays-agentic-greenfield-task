@@ -7,6 +7,17 @@
 
 ## Last action
 
+- **Premium PDF-attach surfaced on landing (T8 last gap closed), spec-first + reviewed (2026-07-05, ultracode).**
+  New change `surface-premium-attach-landing` (`1963fe0`): Pro pricing feature line + one FAQ item
+  representing the shipped T5 attach honestly (enriches generation only, never grounding, never
+  fabricates). Checker subagent PASS on code/honesty/brand: FAQ copy ground-truthed against the
+  generation-only attachment path + `GROUNDING_FORBIDDEN` denylist + paid gating. Gate green (103
+  files / 641 tests). One checker blocker was a **spec archive-ordering dependency** (not a code
+  defect): this delta MODIFIES a requirement still ADDED-only in unarchived `update-landing-flow`, so
+  archives MUST run `update-landing-flow` → `surface-premium-attach-landing`. Documented in the change
+  proposal/tasks + Blockers below. Also discovered + recorded: task 6's 0004 integration test already
+  exists and is green (`persistence.integration.test.ts`), and T8/T9's content pass already shipped via
+  `update-landing-flow`.
 - **T7 `landing-animations` DONE (implemented, reviewed, fixed, verified green) (2026-07-05, ultracode).**
   T7 shipped in `fe65f2f` ("UI updates"): motion tokens + reduced-motion kill switch in
   `globals.css`, `shared/ui/reveal` primitive (IntersectionObserver, SSR-visible default,
@@ -38,36 +49,23 @@
 | 5 | Premium PDF attach | **DONE** (`b341245`..`ac90fad`); §4 archive/live-eval sandbox-blocked | P1 |
 | 6 | Tailoring history | **DONE (E2E green)**; 0004 integ-test + archive pending | P2 |
 | 7 | Landing animations | **DONE** (`fe65f2f` + review fixes `f638efe`); Lighthouse + archive pending | P2 |
-| 8 | Landing → new flow (cover letter / info tag / attach / history) | **TODO** (deps 1,5,6) | P1 |
-| 9 | Landing marketing/copy (enemy-centric) | **PARTIAL** (no pain-first hero, i18n debt) | P2 |
+| 8 | Landing → new flow (cover letter / info tag / attach / history) | **DONE** (`update-landing-flow` + attach `1963fe0`) | P1 |
+| 9 | Landing marketing/copy (enemy-centric) | **PARTIAL** — copy done (problem-first hero shipped); **~90-string i18n extraction deferred** | P2 |
 | 10 | Whole-app UA/EN toggle | **TODO**; **Cyrillic fonts unwired = blocker** | P2 |
 
 ## Working on
 
-- **Surfacing shipped premium PDF-attach on the landing (completes T8's last gap), 2026-07-05.**
-  Discovery: T8/T9 are already largely DONE via the `update-landing-flow` change (5-status demo incl.
-  blue "coverable", cover-letter + history in how-it-works/FAQ, problem-first hero). Task 6's 0004
-  integration test also already exists and is green (`persistence.integration.test.ts`, 6 tests). The
-  ONE real T8 gap: PDF-attach (T5) shipped but is not on the landing; `update-landing-flow` §3.1
-  explicitly guarded it out while T5 was unbuilt. Now unblocked.
+- Nothing in flight. Tree clean. All unblocked spec-ready code work is done (T1-T8 + T9 copy).
+  Remaining work is either environment-blocked (archives, ops, Lighthouse, live eval) or larger and
+  coupled to a blocked task (landing i18n extraction ↔ T10 Cyrillic fonts). See next steps.
 
-### Plan — surface premium PDF-attach (new change `surface-premium-attach-landing`)
-
-1. **Spec-first:** new openspec change; delta MODIFIES marketing-landing "full export flow" requirement
-   to represent the original-PDF input as a shipped Pro capability, and supersedes the now-false
-   scenario line ("no unbuilt PDF attach advertised"). Honest framing: PDF enriches the GENERATION
-   source only, never grounding; still no fabrication (BC-HONESTY-01).
-2. **content.ts:** add PDF-attach to the Pro plan features; add a FAQ item (enemy framing: extracted
-   text loses your document; Pro reads your full original PDF, still grounded).
-3. **Verify:** lint + build + test. `perf-audit` deferred (no Chrome). checker subagent review → fix.
-4. **Commit** per unit; tick tasks (openspec archive CLI-blocked).
-
-### Deferred (next, larger) — landing i18n extraction
+### Deferred (next, larger, unblocked-but-L) — landing i18n extraction
 
 ~90 landing strings are hardcoded EN in `content.ts` + a few inline in FinalCta/Footer; the i18n
 `Dictionary` has no `landing` block. Extracting to `shared/lib/i18n` (ua+en) is L-effort and pairs
 naturally with T10 (blocked on unwired Cyrillic fonts). Kept as its own change to avoid a huge diff and
-to let the user steer the Ukrainian marketing voice. NOT started.
+to let the user steer the Ukrainian marketing voice. **NOT started — needs user greenlight** (large
+Ukrainian-copy authoring where marketing voice matters).
 
 ## Next steps (ranked: fastest x most critical)
 
@@ -97,8 +95,12 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
 - **Cyrillic fonts unwired** blocks task 10 (layout.tsx loads latin-only subsets).
 - **`ANTHROPIC_API_KEY`** needed for live honesty-eval (tasks 1, 5); deterministic proxies green.
 - **Stripe** gated on key rotation; only the emulator exists, hard-disabled in prod.
-- **openspec CLI not installed** here, and **Chrome/Lighthouse unavailable**, so archives (4/5/6/7)
-  and `perf-audit` are deferred.
+- **openspec CLI not installed** here, and **Chrome/Lighthouse unavailable**, so archives and
+  `perf-audit` are deferred.
+- **Archive ORDER matters:** `surface-premium-attach-landing` MODIFIES the "full export flow"
+  requirement that is still ADDED-only in unarchived `update-landing-flow`. Archive
+  `update-landing-flow` FIRST, then `surface-premium-attach-landing`, or `openspec validate` won't
+  resolve the MODIFY target. (`landing-animations` is independent.)
 
 ## Prior context (see git log + archived changes)
 
@@ -106,5 +108,6 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
   honesty pipeline, auth (credentials), persistence (pg + AES-256-GCM CV at rest), payments emulator,
   security hardening, account/GDPR APIs, top-bar AccountMenu, landing (perf met).
 - Open changes not archived: `rework-app-header` (4), `add-tailoring-history` (6),
-  `add-premium-pdf-attach` (5), `landing-animations` (7, done + reviewed), `add-payments-emulator`,
-  `add-stripe-payments`, `harden-sentry-privacy`, `add-legal-pages`.
+  `add-premium-pdf-attach` (5), `landing-animations` (7, done + reviewed), `update-landing-flow` (8/9),
+  `surface-premium-attach-landing` (8, done + reviewed; archive AFTER update-landing-flow),
+  `add-payments-emulator`, `add-stripe-payments`, `harden-sentry-privacy`, `add-legal-pages`.
