@@ -8,7 +8,7 @@ Handoff log for agent sessions. Update at the end of each meaningful work sessio
 
 ## Last action
 
-Fixed km constraint fields misalignment in the route sidebar — labels share one grid row so inputs line up when label text wraps.
+Added project verification tables to `docs/test-plan.md` and README (tests, lint, build, Lighthouse, CI, manual review).
 
 ## Current focus
 
@@ -21,7 +21,6 @@ MVP complete (phases 1–8). Ready for demo recording and PR submission.
 
 ## Open items / blockers
 
-- Record 1–2 min demo video and open PR per course README
 - Optional: manual QA on real device before recording
 
 ## Notes for next agent
