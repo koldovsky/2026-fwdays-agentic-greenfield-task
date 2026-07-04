@@ -52,8 +52,14 @@
 
 ## Working on
 
-- **Tasks 8+9 — landing rework (IN PROGRESS).** User picked landing next; keep deterministic cover
-  letter (task 1 decision). FR-SALES-01/02/03. Enemy-centric per org rule. Spec-first.
+- **Tasks 8+9 — landing rework DONE (checker PASS).** Change `update-landing-flow` (spec + impl).
+  Problem-first/enemy-centric hero (structured `content.ts` `hero` object), blue "coverable" (info)
+  state added to the checklist demo (5 states), cover-letter + saved-history surfaced in step 03 and a
+  new FAQ. No premium PDF-attach copy (unbuilt), no new hue. lint+build+623 tests green; checker
+  subagent PASS (0 findings). **Pending:** `perf-audit` (no Chrome here, LCP margin ~20 ms) + openspec
+  archive (CLI not installed). Kept deterministic cover letter per user (task 1).
+- **Next:** the three large spec-first items remain: T5 premium PDF attach (P1/L), T7 animations
+  (P2/L, `landing-animations` spec ready), T10 language toggle (P2/L, Cyrillic font is the blocker).
 
 ### Plan — landing 8+9 (change `update-landing-flow`)
 

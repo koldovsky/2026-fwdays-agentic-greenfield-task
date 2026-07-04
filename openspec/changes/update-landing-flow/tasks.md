@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add a structured `hero` object to `content.ts` (kicker, headline parts, lead, CTAs, note), rewritten problem-first / enemy-centric.
 - [x] 1.2 Add a blue `info` ("coverable") row to `checklistRows`; update `checklistHeadline` + `checklistSubtext` to name the coverable state; keep counts consistent.
-- [~] 1.3 Sharpen `pillars` copy — deferred: the pillars section head already carries the them-vs-us contrast; kept scope tight to avoid churn (hero carries the enemy lift).
+- [~] 1.3 Sharpen `pillars` copy. Deferred: the pillars section head already carries the them-vs-us contrast, so scope stayed tight to avoid churn (the hero carries the enemy lift).
 - [x] 1.4 Update step 03 in `steps` to name the cover-letter export + saved history + export options.
 - [x] 1.5 Add a FAQ item covering cover letters + saved history.
 
@@ -23,4 +23,4 @@
 
 - [x] 4.1 `yarn lint` + `yarn build` + `yarn test` green (623 tests).
 - [ ] 4.2 `perf-audit` vs NFR-PERF-04 (LCP margin ~20 ms) — blocked in sandbox (no Chrome); run in CI/local.
-- [ ] 4.3 checker subagent (maker≠checker) vs PRD + DESIGN + this spec, then `openspec validate` + archive.
+- [x] 4.3 checker subagent (maker≠checker) vs PRD + DESIGN + this spec: PASS (0 blockers/majors/minors). `openspec validate` + archive pending (CLI not installed here).
