@@ -5,6 +5,7 @@
 // rule that keeps `pg` out of client bundles via shared/lib/db/pg.ts.
 export {
   DOCX_MIME,
+  MAX_ATTACHMENT_BYTES,
   MAX_UPLOAD_BYTES,
   PDF_MIME,
   documentTypeForMime,

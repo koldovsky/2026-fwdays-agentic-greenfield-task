@@ -7,6 +7,16 @@
 /** Single source of truth for the upload size cap — 5 MB (design.md). */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
+/**
+ * Cap for the premium PDF attachment (add-premium-pdf-attach, T5). Smaller than
+ * the text-parse upload cap on purpose: the attachment travels base64-encoded
+ * INSIDE the JSON tailoring request (~4/3 its byte size), and a serverless
+ * request body is platform-capped (e.g. Vercel 4.5 MB). 3 MB decoded (~4 MB
+ * base64) stays safely under that with the rest of the payload. Shared by the
+ * client (instant feedback) and the server (the real trust boundary).
+ */
+export const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+
 /** The two document formats Vouch accepts (FR-CV-01). */
 export type DocumentType = "pdf" | "docx";
 

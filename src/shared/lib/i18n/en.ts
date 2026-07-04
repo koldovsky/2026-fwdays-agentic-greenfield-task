@@ -48,6 +48,13 @@ export const en: Dictionary = {
       unparseable: "We could not read text from this file. Paste your resume below instead.",
       failed: "The upload failed. Try again.",
     },
+    attach: {
+      addOriginalPdf: "Attach the original PDF for a better result",
+      premiumBadge: "Premium",
+      attachedLabel: "Original PDF attached to generation",
+      remove: "Remove",
+      tooLarge: "That PDF is too large to attach. The maximum size is 3 MB.",
+    },
   },
   tailorRun: {
     queued: "Queued",
@@ -104,6 +111,7 @@ export const en: Dictionary = {
     title: "Unlock full access",
     exportLead: "Export is available on paid plans. Choose a plan to continue.",
     limitLead: "You have reached the free tailoring limit. Choose a plan to continue.",
+    attachLead: "Attaching the original PDF is available on paid plans. Choose a plan to continue.",
     dismissAction: "Not now",
   },
   upgrade: {

@@ -48,7 +48,7 @@ import {
   type ConfirmedAnswerEvidence,
   type DocumentAttachment,
 } from "@/shared/lib/llm";
-import { PDF_MIME, sniffDocumentType } from "@/shared/lib/parse-document";
+import { MAX_ATTACHMENT_BYTES, PDF_MIME, sniffDocumentType } from "@/shared/lib/parse-document";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 import type { CvProfile, Requirement } from "@/shared/lib/scoring";
 
@@ -73,16 +73,6 @@ function asCareerStage(value: unknown): CareerStage | undefined {
 }
 
 /**
- * Attachment size cap (add-premium-pdf-attach, T5). Deliberately smaller than
- * the CV-text upload cap: the PDF travels base64-encoded INSIDE this JSON body
- * (~4/3 its byte size) and a serverless request body is platform-capped
- * (Vercel: 4.5 MB). 3 MB decoded (~4 MB base64) stays safely under that with
- * the rest of the payload. Typical CVs are far smaller; larger originals need
- * the future at-rest/blob path (decision D1-persist), out of scope here.
- */
-const MAX_ATTACH_BYTES = 3 * 1024 * 1024;
-
-/**
  * Parse + FULLY validate the optional PDF attachment (T5). The client sends it
  * under a dedicated `attachment` field (never `attachments`), so it can NEVER
  * reach the generation phase unvalidated — parseGenerateBody ignores it and the
@@ -103,9 +93,9 @@ function parseAttachment(body: unknown): DocumentAttachment | null {
   if (mediaType !== PDF_MIME) return null;
   if (typeof dataBase64 !== "string" || dataBase64.length === 0) return null;
   // base64 is ~4/3 the byte size; reject before decoding (NFR-SEC-04).
-  if (dataBase64.length > Math.ceil((MAX_ATTACH_BYTES * 4) / 3) + 4) return null;
+  if (dataBase64.length > Math.ceil((MAX_ATTACHMENT_BYTES * 4) / 3) + 4) return null;
   const bytes = Buffer.from(dataBase64, "base64");
-  if (bytes.byteLength === 0 || bytes.byteLength > MAX_ATTACH_BYTES) return null;
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_ATTACHMENT_BYTES) return null;
   // Magic-byte sniff is the real trust boundary — a spoofed mediaType is out.
   if (sniffDocumentType(new Uint8Array(bytes.subarray(0, 8))) !== "pdf") return null;
   return { kind: "pdf", mediaType: "application/pdf", dataBase64 };

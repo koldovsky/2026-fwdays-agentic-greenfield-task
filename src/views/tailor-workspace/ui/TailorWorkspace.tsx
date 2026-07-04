@@ -32,7 +32,7 @@ import {
   type TailoringRunResult,
 } from "@/features/run-tailoring";
 import { UploadCvDropzone } from "@/features/upload-cv";
-import type { ConfirmedAnswerEvidence } from "@/shared/lib/llm";
+import type { ConfirmedAnswerEvidence, DocumentAttachment } from "@/shared/lib/llm";
 import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 import { BulletList } from "@/widgets/bullet-list";
@@ -64,6 +64,9 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
   const [result, setResult] = useState<TailoringRunResult | null>(null);
   const [bullets, setBullets] = useState<Bullet[]>([]);
   const [paywall, setPaywall] = useState<PaywallReason | null>(null);
+  // Original CV PDF for the paid multimodal generation pass (T5). Captured at
+  // the upload step; the server re-checks entitlement before honoring it.
+  const [attachment, setAttachment] = useState<DocumentAttachment | null>(null);
 
   const checklistRows: ChecklistPanelRow[] = useMemo(
     () =>
@@ -101,19 +104,25 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
     // A healthy run ends in a terminal `result` or `error`; a stream that closes
     // without one surfaces a calm failure rather than hanging (NFR-OBS-01).
     let sawTerminal = false;
+    const input = {
+      cvProfile: analysis.cvProfile,
+      requirements: analysis.requirements,
+      jobDescription: jdText,
+      confirmedAnswers,
+      checklist: analysis.checklist,
+      matchScore: analysis.matchScore,
+      // Echo the inferred stage from the analyze phase so the wizard flow also
+      // gets tone calibration (§3.5) — without this the seniority call runs in
+      // analysis and its result is silently dropped at the client boundary.
+      ...(analysis.careerStage !== undefined ? { careerStage: analysis.careerStage } : {}),
+    };
+    // Pass the paid original-PDF only when present, so the text-only path keeps
+    // the single-arg call. The server re-checks paid access before honoring it,
+    // so a non-paid client passing it changes nothing (NFR-SEC-04).
+    const stream =
+      attachment !== null ? streamGenerate(input, attachment) : streamGenerate(input);
     try {
-      for await (const event of streamGenerate({
-        cvProfile: analysis.cvProfile,
-        requirements: analysis.requirements,
-        jobDescription: jdText,
-        confirmedAnswers,
-        checklist: analysis.checklist,
-        matchScore: analysis.matchScore,
-        // Echo the inferred stage from the analyze phase so the wizard flow also
-        // gets tone calibration (§3.5) — without this the seniority call runs in
-        // analysis and its result is silently dropped at the client boundary.
-        ...(analysis.careerStage !== undefined ? { careerStage: analysis.careerStage } : {}),
-      })) {
+      for await (const event of stream) {
         if (event.type === "error") {
           sawTerminal = true;
           if (event.code === "rate_limited") {
@@ -161,6 +170,7 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
     setBullets([]);
     setJdText("");
     setPaywall(null);
+    setAttachment(null);
     setPhase("analyze");
   };
 
@@ -183,7 +193,13 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
       {phase === "analyze" && (
         <>
           <div className="mb-6">
-            <UploadCvDropzone locale={locale} onExtracted={setCvText} />
+            <UploadCvDropzone
+              locale={locale}
+              onExtracted={setCvText}
+              paid={paid}
+              onAttachmentChange={setAttachment}
+              onUpgrade={() => setPaywall("attach")}
+            />
           </div>
           <AnalyzeForm
             locale={locale}

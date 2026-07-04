@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
-import { MAX_UPLOAD_BYTES, PDF_MIME } from "@/shared/lib/parse-document";
+import { MAX_ATTACHMENT_BYTES, MAX_UPLOAD_BYTES, PDF_MIME } from "@/shared/lib/parse-document";
 
 import { UploadCvDropzone } from "./UploadCvDropzone";
 
@@ -118,5 +118,75 @@ describe("UploadCvDropzone (FR-CV-01)", () => {
     drop(zone, pdfFile());
     await waitFor(() => expect(onExtracted).toHaveBeenCalledWith("second try"));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+// add-premium-pdf-attach (T5): the attach control is server-gated on paid
+// entitlement, so the client only ever offers or advertises it (FR-PAYWALL-02).
+describe("UploadCvDropzone premium attach control (T5)", () => {
+  it("free/anon: shows a premium affordance that opens the upgrade surface, never attaches", async () => {
+    parseCvFileMock.mockResolvedValue({ ok: true, text: "text" });
+    const onAttachmentChange = vi.fn();
+    const onUpgrade = vi.fn();
+    render(
+      <UploadCvDropzone
+        onExtracted={vi.fn()}
+        paid={false}
+        onAttachmentChange={onAttachmentChange}
+        onUpgrade={onUpgrade}
+      />,
+    );
+
+    const control = screen.getByText(ua.uploadCv.attach.addOriginalPdf).closest("button")!;
+    expect(control).toBeInTheDocument();
+    expect(screen.getByText(ua.uploadCv.attach.premiumBadge)).toBeInTheDocument();
+
+    await userEvent.click(control);
+    expect(onUpgrade).toHaveBeenCalledTimes(1);
+
+    // Even after uploading a PDF, a non-paid user never produces an attachment.
+    drop(dropzone(), pdfFile());
+    await waitFor(() => expect(parseCvFileMock).toHaveBeenCalled());
+    expect(onAttachmentChange).not.toHaveBeenCalled();
+  });
+
+  it("paid: offers the uploaded PDF to generation and can remove it", async () => {
+    parseCvFileMock.mockResolvedValue({ ok: true, text: "text" });
+    const onAttachmentChange = vi.fn();
+    render(<UploadCvDropzone onExtracted={vi.fn()} paid onAttachmentChange={onAttachmentChange} />);
+
+    drop(dropzone(), pdfFile());
+
+    await waitFor(() =>
+      expect(onAttachmentChange).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "pdf", mediaType: "application/pdf" }),
+      ),
+    );
+    const call = onAttachmentChange.mock.calls[0][0];
+    expect(typeof call.dataBase64).toBe("string");
+    expect(call.dataBase64.length).toBeGreaterThan(0);
+    expect(screen.getByText(new RegExp(ua.uploadCv.attach.attachedLabel))).toBeInTheDocument();
+
+    // No premium affordance for a paid user.
+    expect(screen.queryByText(ua.uploadCv.attach.addOriginalPdf)).not.toBeInTheDocument();
+
+    // Remove clears the attachment.
+    await userEvent.click(screen.getByText(ua.uploadCv.attach.remove));
+    expect(onAttachmentChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it("paid: a PDF over the attachment cap is not attached and shows a calm note", async () => {
+    parseCvFileMock.mockResolvedValue({ ok: true, text: "text" });
+    const onAttachmentChange = vi.fn();
+    render(<UploadCvDropzone onExtracted={vi.fn()} paid onAttachmentChange={onAttachmentChange} />);
+
+    // Passes the 5 MB upload check but exceeds the 3 MB attachment cap.
+    drop(dropzone(), pdfFile({ size: MAX_ATTACHMENT_BYTES + 1 }));
+
+    expect(await screen.findByText(ua.uploadCv.attach.tooLarge)).toBeInTheDocument();
+    // Cleared, never attached with bytes.
+    expect(onAttachmentChange).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "pdf" }),
+    );
   });
 });

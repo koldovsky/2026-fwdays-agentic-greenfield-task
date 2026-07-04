@@ -65,6 +65,19 @@ export interface Dictionary {
       readonly unparseable: string;
       readonly failed: string;
     };
+    /** Premium "attach original PDF" control (add-premium-pdf-attach, T5, FR-PAYWALL-02). */
+    readonly attach: {
+      /** Label on the disabled control for free/anon users. */
+      readonly addOriginalPdf: string;
+      /** Small "premium" tag on the disabled control (BC-BRAND-01: no emoji). */
+      readonly premiumBadge: string;
+      /** Confirmation shown to a paid user once the original PDF is attached. */
+      readonly attachedLabel: string;
+      /** Remove-attachment control for a paid user. */
+      readonly remove: string;
+      /** Shown when a paid user's PDF exceeds the attachment cap. */
+      readonly tooLarge: string;
+    };
   };
   readonly tailorRun: {
     /** Visible progress states (FR-TAILOR-01): queued → processing → done. */
@@ -146,6 +159,8 @@ export interface Dictionary {
     readonly exportLead: string;
     /** Lead when the paywall intercepts a tailoring past the free limit. */
     readonly limitLead: string;
+    /** Lead when the paywall is opened from the premium attach control (T5). */
+    readonly attachLead: string;
     /** Dismiss control — the blocked action simply stays blocked. */
     readonly dismissAction: string;
   };

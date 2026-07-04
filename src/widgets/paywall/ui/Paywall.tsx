@@ -10,7 +10,14 @@ import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 
 /** Which gated action surfaced the paywall (FR-PAYWALL-01). */
-export type PaywallReason = "export" | "tailoring-limit";
+export type PaywallReason = "export" | "tailoring-limit" | "attach";
+
+/** Lead copy per reason — the calm one-line explanation above the plans. */
+const LEAD_BY_REASON: Record<PaywallReason, keyof ReturnType<typeof t>["paywall"]> = {
+  export: "exportLead",
+  "tailoring-limit": "limitLead",
+  attach: "attachLead",
+};
 
 export interface PaywallProps {
   readonly reason: PaywallReason;
@@ -34,7 +41,7 @@ export function Paywall({ reason, locale = "ua", returnTo, onDismiss, navigate }
     >
       <h2 className="font-display text-xl text-ink">{copy.paywall.title}</h2>
       <p className="mt-2 max-w-2xl text-sm text-ink-soft">
-        {reason === "export" ? copy.paywall.exportLead : copy.paywall.limitLead}
+        {copy.paywall[LEAD_BY_REASON[reason]]}
       </p>
 
       <div className="mt-5">
