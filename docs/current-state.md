@@ -24,6 +24,11 @@
   - **Task 6 red tests FIXED + committed (`7babd9d`).** 2 stale non-UUID fixtures in
     `tailoring/[id]/route.test.ts` collided with the route's UUID guard (404 before the mock). Now
     use valid UUIDs; IDOR case now genuinely tests ownership. **Full suite green: 102 files / 623.**
+  - **Latent broken build FIXED + committed (`e134db0`).** `yarn build` was red on the branch: the
+    `add-tailoring-history` "unverified" commit left a TS narrowing error in `tailor/generate` (a
+    mutable `let` narrowing lost across the `withTransaction` closure → `persistTailoring` saw
+    `string | null`). lint + vitest passed but `tsc` failed — the branch was undeployable. Fixed by
+    capturing the narrowed value in a const. **`yarn build` + `yarn lint` + 623 tests all green.**
 
 - **Prior (same day): registration 500 + `db:migrate` runner (`73dd267`).** Fresh Vercel deploy 500'd
   on register — no `DATABASE_URL` and **no prod migration step** (`runMigrations` only ran in tests +
