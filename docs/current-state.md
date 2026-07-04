@@ -6,10 +6,15 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-04, ~02:05 (Europe/Kyiv)
-- **Current phase:** **Phase 4 — slice S1 `slots` red→green DONE** (sections
-  1/4/5/6 of its tasks.md remain; section 4 spike is BLOCKED on the user
-  creating the DEMO calendar + service account)
+- **Date and time:** 2026-07-04, ~03:25 (Europe/Kyiv)
+- **Current phase:** **Phase 4 — slice S1 `slots` 41/44 tasks done**; only
+  6.8 (this update), 6.9 (manual real-DB smoke with the human — visual
+  calendar steps + screenshots for docs/qa/), 6.10 (archive, gated on 6.9)
+  remain. Spike verdict: **googleapis** (MCP disqualified empirically —
+  no service-account auth; evidence in packages/calendar/spike-mcp/).
+  Cadence all green: lint, 46/46 unit, 6/6 live integration (hermetic,
+  runs twice), build, openspec 6/6 strict, traceability 0 failures /
+  56 warnings. Next slice after archive = S2 `intake`.
 - **Active change:** none (baseline specs, not a change folder)
 - **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
   sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),

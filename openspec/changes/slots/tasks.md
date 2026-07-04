@@ -145,15 +145,15 @@
 
 ## 6. Validation, docs, and archive prep
 
-- [ ] 6.1 Run `npm run lint`.
-- [ ] 6.2 Run `npm run test:run` (all unit tests green, TC-TEST-01).
-- [ ] 6.3 Run `npm run test:integration` (5.3–5.5 green against the real
+- [x] 6.1 Run `npm run lint`.
+- [x] 6.2 Run `npm run test:run` (all unit tests green, TC-TEST-01).
+- [x] 6.3 Run `npm run test:integration` (5.3–5.5 green against the real
       DEMO calendar and real SQLite).
-- [ ] 6.4 Run `npm run build`.
-- [ ] 6.5 Run `npx openspec validate slots --strict`.
-- [ ] 6.6 Run `npx openspec validate --all --strict` (baseline specs stay
+- [x] 6.4 Run `npm run build`.
+- [x] 6.5 Run `npx openspec validate slots --strict`.
+- [x] 6.6 Run `npx openspec validate --all --strict` (baseline specs stay
       5/5, this change validates).
-- [ ] 6.7 Run `node scripts/check-traceability.mjs` (FR-SLOT-01..04,
+- [x] 6.7 Run `node scripts/check-traceability.mjs` (FR-SLOT-01..04,
       FR-GUARD-03 show implemented coverage, 0 failures).
 - [ ] 6.8 Update `docs/current-state.md` (phase, last-updated timestamp
       Europe/Kyiv, spike verdict summary, next slice = S2 `intake`) and
