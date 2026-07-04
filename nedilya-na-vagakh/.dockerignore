@@ -1,0 +1,15 @@
+.venv/
+data/
+.env
+tests/
+__pycache__/
+*.py[cod]
+*.db
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.git/
+README.md
+Makefile
+requirements-dev.txt
+pytest.ini

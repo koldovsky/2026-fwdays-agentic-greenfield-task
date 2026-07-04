@@ -1,0 +1,71 @@
+[project]
+name = "nedilya-na-vagakh"
+version = "0.1.0"
+description = "Private Ukrainian Telegram bot for body-composition weigh-in tracking"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Oleksandr Kalyna", email = "oleksandrkalyna@yahoo.com" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+src = ["bot", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+    "SIM",
+    "RUF",
+    "ASYNC",
+    "PIE",
+    "RET",
+    "PTH",
+]
+ignore = [
+    "RUF001", # Ukrainian user-facing strings intentionally use Cyrillic
+    "PTH123", # sqlite paths are intentionally plain strings in v1
+    "SIM108", # ternary is not always clearer in handlers
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PT011"] # broad pytest.raises() is fine in handler tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["bot"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_optional = true
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+strict_equality = true
+show_error_codes = true
+files = ["bot"]
+
+[[tool.mypy.overrides]]
+module = "telegram.*"
+ignore_missing_imports = true

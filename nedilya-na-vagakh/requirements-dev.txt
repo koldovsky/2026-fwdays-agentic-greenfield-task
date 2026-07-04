@@ -1,0 +1,4 @@
+# Dev / CI tooling — not required at runtime (see requirements.txt).
+ruff==0.11.2
+mypy==1.15.0
+pre-commit==4.2.0

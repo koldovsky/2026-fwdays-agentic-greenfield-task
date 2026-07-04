@@ -1,0 +1,48 @@
+---
+description: Maintain docs/current-state.md with the last 3 agent actions and timestamps
+alwaysApply: true
+---
+
+# Agent journal — `docs/current-state.md`
+
+Keep [`docs/current-state.md`](docs/current-state.md) as a rolling log of the **3 most recent agent actions**. Read it at the start of substantive work; update it before ending a turn when you changed code, docs, config, or tests.
+
+## When to update
+
+Update after any turn where you:
+
+- Implemented, fixed, or refactored code
+- Added or changed tests
+- Updated `docs/` (PRD, product overview, specs)
+- Made meaningful repo or tooling changes
+
+Skip updates for question-only turns, trivial one-line replies, or when the user explicitly says not to log.
+
+## Format
+
+- **Exactly 3 entries** — the file must contain the header plus **three** `##` timestamp sections, no more. Count before finishing; if there are 4+, delete the oldest until only 3 remain.
+- **Newest first** — prepend the new entry at the top (below the intro lines); never append.
+- **Rewrite, don't patch** — when updating, replace the whole file with the header, intro, and exactly 3 entries. Do not only insert a new block at the top and leave older ones in place.
+- **Timestamp** — `YYYY-MM-DD HH:MM` in local time (or UTC if unknown); include timezone when practical.
+- **Description** — one concise sentence (two only if needed): what changed, why, and key files or PRD IDs when relevant.
+
+```markdown
+# Current state
+
+Rolling log of the last 3 agent actions (newest first).
+
+## 2026-07-02 14:30 UTC
+Added comma-decimal weight parsing (`FR-LOG-03`) in `nedilya-na-vagakh/parse.py` with unit tests.
+
+## 2026-07-02 11:05 UTC
+Scaffolded SQLite schema and repository layer for weight entries.
+
+## 2026-07-01 16:40 UTC
+Drafted PRD logging requirements (`FR-LOG-*`) in `docs/prd.md`.
+```
+
+## Rules
+
+- Do not log secrets, tokens, or `.env` contents.
+- Do not duplicate OpenSpec change logs; this file is for **session-level** continuity across agents.
+- If the file is missing, create it with the template above and one entry for the current action.

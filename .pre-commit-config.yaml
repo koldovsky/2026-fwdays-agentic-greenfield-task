@@ -1,0 +1,47 @@
+# Quality gates for humans and agents. Install once:
+#   cd nedilya-na-vagakh && make dev-install
+
+default_language_version:
+  python: python3.11
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      - id: ruff
+        name: ruff lint (nedilya-na-vagakh)
+        args: [--config, nedilya-na-vagakh/pyproject.toml, --fix]
+        files: ^nedilya-na-vagakh/
+      - id: ruff-format
+        name: ruff format (nedilya-na-vagakh)
+        args: [--config, nedilya-na-vagakh/pyproject.toml]
+        files: ^nedilya-na-vagakh/
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (nedilya-na-vagakh)
+        entry: bash -c 'cd nedilya-na-vagakh && ./.venv/bin/python -m mypy bot'
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: ^nedilya-na-vagakh/
+
+      - id: pytest
+        name: pytest (nedilya-na-vagakh)
+        entry: bash -c 'cd nedilya-na-vagakh && ./.venv/bin/python -m pytest -q'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+        files: ^nedilya-na-vagakh/

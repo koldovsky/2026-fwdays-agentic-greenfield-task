@@ -1,0 +1,4 @@
+python-dotenv==1.1.0
+python-telegram-bot[job-queue]==21.10
+pytest==8.3.5
+pytest-asyncio==0.25.3

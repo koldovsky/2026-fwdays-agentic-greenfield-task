@@ -22,6 +22,19 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Python tooling (локальний кеш — не комітити)
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# AI-асистенти / редактори
+.qodo/
 target/
 bin/
 obj/
+data/
+*.db
+docs/current-state.md
