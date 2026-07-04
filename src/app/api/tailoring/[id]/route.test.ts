@@ -1,0 +1,93 @@
+// GET /api/tailoring/:id — owner-scoped re-open (FR-HISTORY-02, NFR-SEC-02 IDOR).
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const currentUserId = vi.hoisted(() => vi.fn());
+vi.mock("@/app/auth", () => ({ currentUserId }));
+
+const subscriptionRepo = vi.hoisted(() => ({ get: vi.fn() }));
+const tailoringRepo = vi.hoisted(() => ({ listByUser: vi.fn(), findById: vi.fn() }));
+vi.mock("@/shared/lib/db", () => ({
+  createSubscriptionRepo: () => subscriptionRepo,
+  createTailoringRepo: () => tailoringRepo,
+}));
+vi.mock("@/shared/lib/db/pg", () => ({ getDb: vi.fn(() => ({})) }));
+
+import { GET } from "./route";
+
+const PAID = {
+  id: "s1",
+  userId: "u-1",
+  plan: "pro",
+  status: "active",
+  currentPeriodEnd: "2999-01-01T00:00:00.000Z",
+};
+
+function record(userId: string) {
+  return {
+    id: "t-1",
+    userId,
+    cvProfileId: null,
+    jobDescriptionId: "jd-1",
+    jobTitle: "Senior Engineer",
+    matchScore: 80,
+    createdAt: "2026-07-01T00:00:00.000Z",
+    checklist: [{ requirement: "React", importance: "must", status: "met", rationale: "ok" }],
+    bullets: [{ text: "Shipped", grounding: "met", included: true }],
+  };
+}
+
+function ctx(id: string) {
+  return { params: Promise.resolve({ id }) };
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  currentUserId.mockResolvedValue("u-1");
+  subscriptionRepo.get.mockResolvedValue(PAID);
+});
+
+describe("GET /api/tailoring/:id", () => {
+  it("returns the full tailoring when the paid caller owns it", async () => {
+    tailoringRepo.findById.mockResolvedValue(record("u-1"));
+    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.tailoring.id).toBe("t-1");
+    expect(body.tailoring.bullets).toHaveLength(1);
+  });
+
+  it("404s a tailoring owned by another user without disclosing existence (IDOR)", async () => {
+    tailoringRepo.findById.mockResolvedValue(record("someone-else"));
+    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_found" });
+  });
+
+  it("404s a missing id (same response as not-owned)", async () => {
+    tailoringRepo.findById.mockResolvedValue(null);
+    const res = await GET(new Request("http://localhost/api/tailoring/missing"), ctx("missing"));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_found" });
+  });
+
+  it("401s an anonymous caller before any read", async () => {
+    currentUserId.mockResolvedValue(null);
+    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    expect(res.status).toBe(401);
+    expect(tailoringRepo.findById).not.toHaveBeenCalled();
+  });
+
+  it("402s a signed-in free user", async () => {
+    subscriptionRepo.get.mockResolvedValue(null);
+    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    expect(res.status).toBe(402);
+    expect(tailoringRepo.findById).not.toHaveBeenCalled();
+  });
+
+  it("returns a calm coded 500 on a read error (NFR-OBS-01)", async () => {
+    tailoringRepo.findById.mockRejectedValue(new Error("boom"));
+    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "history_failed" });
+  });
+});
