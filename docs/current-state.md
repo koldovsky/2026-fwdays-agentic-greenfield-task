@@ -7,7 +7,29 @@
 
 ## Last action
 
-- **13-item product roadmap analyzed, P0 bugs fixed, top-tier specs authored (2026-07-04).**
+- **T1 tailoring intelligence §3-5 IMPLEMENTED + committed (2026-07-04, ultracode).** Continued the
+  roadmap by rank; T1 (flagship P1) is the last big feature. Worked directly on `vouch` (user
+  directive: keep all changes on `vouch`, no worktree — `bgIsolation:none` in `.claude/settings.json`,
+  committed as a chore). Mapped the 9 code seams with a parallel-investigator workflow, then
+  implemented sequentially, committing per section:
+  - **§3 seniority inference** (`feat(tailoring): seniority inference`): CV-prose-only career-stage
+    signal (junior/mid/senior), **best-effort/non-fatal** analysis step (a flaky tone hint never
+    sinks an honest run — new `runOptional` records a step on success, nothing on exhaustion).
+    Threaded into generation tone, **never** grounding (structural: grounding input type has no
+    stage channel; `generate-bullet` names `careerStage`, `ground-bullet` never does).
+  - **§4 cover-letter export** (`feat(cover-letter): grounded cover-letter export`): new
+    `features/export-cover-letter` slice, `/api/export/cover-letter` route (server-side paywall,
+    calm 500), PT-Sans Cyrillic PDF renderer, stepper button, ua+en i18n. Shipped path = the
+    deterministic MVP (grounded `includedInExport` bullets reflowed to prose, overclaim can't leak —
+    decision #6); the grounded LLM prompt is authored as the richer future path.
+  - **§5 grounding-isolation guard** (`test(honesty): grounding-isolation regression guard`):
+    explicit `GROUNDING_FORBIDDEN` denylist + adversarial fixtures (careerStage/coverLetter both
+    trip `grounding-isolation`); grounding-prompt byte-stability test.
+  - Verified: `yarn lint` + `yarn build` clean, `yarn test` **92 files / 568 tests green** (+39).
+  - **§6 checker-review + verifier subagents running** (maker≠checker). Live honesty-eval (task 3.7)
+    remains **blocked on `ANTHROPIC_API_KEY`** — deterministic proxy tests shipped.
+
+- **Prior: 13-item roadmap analyzed, P0 bugs fixed, specs authored (2026-07-04).**
   User handed a 13-task batch. Added a **commit-on-the-fly rule** to `AGENTS.md`. Ran a 16-agent
   analysis workflow (`wf_ba635982-08a`) to root-cause the 2 GDPR 500 bugs + cross-reference all 13
   tasks against existing specs/changes/PRD → ranked roadmap in **`docs/roadmap-2026-07.md`**.
@@ -35,10 +57,10 @@
 
 ## Working on
 
-- **Implementing the roadmap by priority.** T4 header **DONE** (`2932654`). T12 legal **DONE**
-  (`a4ea87a`). T1 **partial: blue "info" checklist status DONE** (§0-2 of `add-tailoring-intelligence`).
-  Remaining T1: §3 seniority inference + §4 cover-letter generation + §5 grounding-isolation guard —
-  **need `ANTHROPIC_API_KEY`** for honesty-eval (new LLM prompts), so paused here for a checkpoint.
+- **T1 `add-tailoring-intelligence` — §0-6 essentially DONE.** §0-2 blue-info (`43db360`), §3-5
+  shipped this session (see Last action). Remaining: §6.1 verifier + §6.2 checker (subagents running
+  — apply any findings), then §6.3 openspec-archive the change. **Next roadmap target: T6 history**
+  (rank 7, unblocked) or **T5 premium PDF-attach** (rank 8, builds on T1's grounding model).
 
 ### Done — T1 blue "info" checklist status (add-tailoring-intelligence §0-2)
 
@@ -90,12 +112,18 @@
 
 ## Next steps
 
-1. **Commit this session's docs + specs** (5 OpenSpec packages, PRD edit, `.env.example`) — pending;
-   push `vouch`.
-2. Next build target by rank: **T4 header** (P1, M) or **T1 tailoring intelligence** (flagship, now
-   fully unblocked). Then T12 legal, T13 Stripe, T5 premium PDF.
-3. Install/validate `openspec` CLI, then `openspec validate <change>` on all 5 packages before
-   implementing each.
+1. **Apply §6 checker + verifier findings** (subagents running on `43db360..HEAD`); re-run
+   `yarn lint/build/test` after any fix; commit on the fly.
+2. **Archive T1**: `openspec-archive add-tailoring-intelligence` (fold `checklist`/`bullets` deltas +
+   new `cover-letter` spec into baselines) once §6 is clean.
+3. Next build target by rank: **T6 history** (P2, M, unblocked — IDOR-gated `GET /api/tailoring/:id`)
+   or **T5 premium PDF-attach** (P1, L — builds on T1 grounding). Then T8 landing (now unblocked by
+   T1). T13 Stripe still gated on key rotation.
+4. **T1 client echo (minor):** wizard view should echo `careerStage` from `/api/tailor/analyze` back
+   to `/api/tailor/generate` so the wizard path also gets tone calibration (one-shot `/api/tailor`
+   path already threads it; API plumbing done, view echo pending).
+5. **When `ANTHROPIC_API_KEY` lands:** run honesty-eval on the new seniority + cover-letter prompts
+   (task 3.7) — deterministic proxies already green.
 
 ## Blockers / open questions
 

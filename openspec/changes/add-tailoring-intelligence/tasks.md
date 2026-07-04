@@ -19,28 +19,28 @@
 
 ## 3. Seniority inference (NEW `cover-letter`)
 
-- [ ] 3.1 Add seniority types to `src/shared/lib/llm/types.ts` (`CareerStage = "junior" | "mid" | "senior"`, `SeniorityInput`, `SeniorityVerdict { stage, rationale }`) — BC-HONESTY-01
-- [ ] 3.2 Add `SENIORITY_SYSTEM_PROMPT` + `buildSeniorityPrompt` to `src/shared/lib/llm/prompts.ts`: infers stage from CV prose ONLY, forbids inventing skills/numbers/experience absent from the CV, Ukrainian rationale — BC-HONESTY-01, NFR-I18N-01
-- [ ] 3.3 Add `parseSeniorityResponse` (strict JSON, tolerant fail like the sibling parsers) — NFR-OBS-01
-- [ ] 3.4 Add an `infer-seniority` step to the analysis phase in `src/features/run-tailoring/lib/loop.ts`; its `contextKeys` are `["cvText"]` only; carry the verdict on the `analysis` event + `TailoringRunResult`; tag `src/entities/tailoring` with the career stage — BC-HONESTY-01
-- [ ] 3.5 Thread the seniority stage into `buildGenerationPrompt` (tone calibration only, still no new claims); do NOT thread it into `buildGroundingPrompt` — BC-HONESTY-01
-- [ ] 3.6 Assert grounding isolation: `infer-seniority`'s `contextKeys` never include jd/requirements/generation transcript; the grounding step's allowed context in `shared/lib/evals` trajectory rank stays CV+confirmedAnswers only (seniority is NOT added) — FR-BULLETS-03, BC-HONESTY-03
-- [ ] 3.7 Honesty eval (honesty-eval skill): a CV with weak signal never yields an inflated `senior`; seniority text never leaks into the grounding payload; a fabricated seniority claim cannot make an unsupported bullet read `grounded` — BC-HONESTY-01, BC-HONESTY-03
+- [x] 3.1 Add seniority types to `src/shared/lib/llm/types.ts` (`CareerStage = "junior" | "mid" | "senior"`, `SeniorityInput`, `SeniorityVerdict { stage, rationale }`) — BC-HONESTY-01
+- [x] 3.2 Add `SENIORITY_SYSTEM_PROMPT` + `buildSeniorityPrompt` to `src/shared/lib/llm/prompts.ts`: infers stage from CV prose ONLY, forbids inventing skills/numbers/experience absent from the CV, Ukrainian rationale — BC-HONESTY-01, NFR-I18N-01
+- [x] 3.3 Add `parseSeniorityResponse` (strict JSON, tolerant fail; unknown stage → `junior`, never inflate; missing rationale → typed error) — NFR-OBS-01
+- [x] 3.4 Add an `infer-seniority` step to the analysis phase in `src/features/run-tailoring/lib/loop.ts`; `contextKeys` `["cvText"]` only; **best-effort/non-fatal** (records a step on success, nothing on exhaustion, so a flaky tone signal never sinks an honest run); carry the verdict on the `analysis` event + `TailoringRunResult`; tag `src/entities/tailoring` with the career stage — BC-HONESTY-01, NFR-OBS-01
+- [x] 3.5 Thread the seniority stage into `buildGenerationPrompt` (tone-only block, byte-stable baseline when absent); do NOT thread it into `buildGroundingPrompt` — BC-HONESTY-01
+- [x] 3.6 Assert grounding isolation: `infer-seniority`'s `contextKeys` are cvText-only; `generate-bullet` names `careerStage`, `ground-bullet` never does; trajectory `GROUNDING_ALLOWED` unchanged + explicit `GROUNDING_FORBIDDEN` denylist — FR-BULLETS-03, BC-HONESTY-03
+- [ ] 3.7 **BLOCKED on `ANTHROPIC_API_KEY`.** Honesty eval (honesty-eval skill) over live prompts: weak CV never yields inflated `senior`; seniority never leaks into grounding; a fabricated seniority claim cannot make an unsupported bullet read `grounded`. Deterministic proxies shipped (loop/prompts/trajectory tests); live run pending key — BC-HONESTY-01, BC-HONESTY-03
 
 ## 4. Cover-letter generation (NEW `cover-letter`)
 
-- [ ] 4.1 Add cover-letter types to `src/shared/lib/llm/types.ts` (`CoverLetterInput` = requirements + CV sentences + confirmed answers + career stage; `CoverLetterOutput`) — FR-EXPORT-01, BC-HONESTY-01
-- [ ] 4.2 Add `COVER_LETTER_SYSTEM_PROMPT` + `buildCoverLetterPrompt` to `src/shared/lib/llm/prompts.ts`: grounded in CV evidence + confirmed answers only, same no-fabrication constraints as generation, Ukrainian-first, introduces no claim the tailored bullets did not already justify — BC-HONESTY-01, NFR-I18N-01
-- [ ] 4.3 Extend `src/entities/export-document/model/types.ts` with an optional `coverLetter` block (kept format-agnostic, framework-free) — FR-EXPORT-01, TC-PURE-01
-- [ ] 4.4 Scaffold `src/features/export-cover-letter` (fsd-scaffold) with `ui/model/api/lib` + `index.ts` public API; the `lib` builder assembles the cover-letter `ExportDocument` from grounded bullets + verdict, never re-deriving overclaim exclusion — FR-EXPORT-01, BC-HONESTY-02
-- [ ] 4.5 Add `src/app/api/export/cover-letter/route.ts` mirroring the pdf/docx routes: Node runtime, resolve `currentUserId()` + `hasPaidAccess`, return `402 payment_required` before any render (server-side paywall, no client-only gate) — FR-PAYWALL-01, NFR-OBS-01
-- [ ] 4.6 Offer the cover letter in `src/widgets/export-stepper` (copy/download); add ua + en copy in `src/shared/lib/i18n` — NFR-I18N-01
-- [ ] 4.7 Cyrillic round-trip test for the cover-letter export (render Ukrainian fixture → re-extract → assert glyphs + footer present/absent), matching the existing wizard export tests — FR-EXPORT-01, FR-EXPORT-04
+- [x] 4.1 Add cover-letter types to `src/shared/lib/llm/types.ts` (`CoverLetterInput` = requirements + CV sentences + confirmed answers + career stage; `CoverLetterOutput = { paragraphs }`) — FR-EXPORT-01, BC-HONESTY-01
+- [x] 4.2 Add `COVER_LETTER_SYSTEM_PROMPT` + `buildCoverLetterPrompt` + tolerant `parseCoverLetterResponse` to `src/shared/lib/llm`: grounded in CV + confirmed answers only, same no-fabrication as generation, Ukrainian-first, introduces no claim the tailored bullets did not already justify. (Authored as the richer LLM path; shipped route uses the deterministic MVP per decision #6.) — BC-HONESTY-01, NFR-I18N-01
+- [x] 4.3 Extend `src/entities/export-document` with an optional `coverLetter` paragraph block + plain-text render (framework-free) — FR-EXPORT-01, TC-PURE-01
+- [x] 4.4 Scaffold `src/features/export-cover-letter` (lib/api + `index.ts` public API); `buildCoverLetterDocument` assembles the cover-letter `ExportDocument` from the grounded, `includedInExport` bullets, **never re-deriving overclaim exclusion** — FR-EXPORT-01, BC-HONESTY-02
+- [x] 4.5 Add `src/app/api/export/cover-letter/route.ts` mirroring the pdf/docx routes: Node runtime, `currentUserId()` + `hasPaidAccess`, `402 payment_required` before any render (server-side paywall), calm coded 500 on failure — FR-PAYWALL-01, NFR-OBS-01
+- [x] 4.6 Offer the cover letter in `src/widgets/export-stepper` (paywall-gated download); add ua + en copy in `src/shared/lib/i18n` — NFR-I18N-01
+- [x] 4.7 Cyrillic round-trip test for the cover-letter PDF (render Ukrainian fixture → re-extract via pdf-parse → assert glyphs + footer present/absent), matching the résumé export test — FR-EXPORT-01, FR-EXPORT-04
 
 ## 5. Grounding-isolation regression guard (touches `bullets`)
 
-- [ ] 5.1 Add a test proving `buildGroundingPrompt`'s serialized output is byte-unchanged whether or not a seniority verdict and cover-letter context exist upstream — FR-BULLETS-03, BC-HONESTY-03
-- [ ] 5.2 Extend the `gradeTrajectory` honesty eval so any run whose grounding step's `contextKeys` include seniority or cover-letter keys fails the isolation check — BC-HONESTY-03
+- [x] 5.1 Test proving `buildGroundingPrompt`'s serialized output is byte-unchanged and carries no careerStage/cover-letter label — the grounding input type structurally has no channel for either — FR-BULLETS-03, BC-HONESTY-03
+- [x] 5.2 Extend `gradeTrajectory` with an explicit `GROUNDING_FORBIDDEN` denylist (careerStage/seniority/coverLetter) atop the allow-list; adversarial fixtures for careerStage + coverLetter both trip `grounding-isolation` — BC-HONESTY-03
 
 ## 6. Verify
 
