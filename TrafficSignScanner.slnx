@@ -7,7 +7,7 @@
     <Project Path="src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj" />
   </Folder>
   <Folder Name="/src/TrafficSignScanner.App/">
-    <Project Path="src/TrafficSignScanner.App/TrafficSignScanner.csproj" />
+    <Project Path="src/TrafficSignScanner.App/TrafficSignScanner.App.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj" />
