@@ -8,6 +8,7 @@ export {
 } from "./site";
 export {
   getDatabaseUrl,
+  getDatabaseSsl,
   getAnthropicApiKey,
   getOpenAiApiKey,
   getLlmProviderName,

@@ -10,6 +10,24 @@ export function getDatabaseUrl(): string {
   return url;
 }
 
+/**
+ * SSL setting for the pg Pool (`DATABASE_SSL`). Managed / serverless Postgres
+ * (Neon, Vercel Postgres, Render, Supabase) requires TLS; local dev (plain
+ * Postgres or the pglite socket) does not. Precedence: an explicit `DATABASE_SSL`
+ * wins, otherwise TLS is on in production and off elsewhere.
+ *   `require` | `true` | `on`  -> TLS, verify the server cert against its CA (secure default)
+ *   `no-verify`                 -> TLS without cert verification (self-signed hosts only)
+ *   `disable` | `false` | `off` -> no TLS
+ * Returning the value node-postgres expects for `ssl` (boolean or an options object).
+ */
+export function getDatabaseSsl(): boolean | { rejectUnauthorized: false } {
+  const raw = process.env.DATABASE_SSL?.trim().toLowerCase();
+  if (raw === "disable" || raw === "false" || raw === "off") return false;
+  if (raw === "no-verify") return { rejectUnauthorized: false };
+  if (raw === "require" || raw === "true" || raw === "on") return true;
+  return process.env.NODE_ENV === "production";
+}
+
 /** Anthropic API key (`ANTHROPIC_API_KEY`). Required by the Claude adapter. */
 export function getAnthropicApiKey(): string {
   const key = process.env.ANTHROPIC_API_KEY;
