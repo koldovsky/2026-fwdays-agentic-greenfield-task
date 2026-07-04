@@ -25,9 +25,16 @@
   - **§5 grounding-isolation guard** (`test(honesty): grounding-isolation regression guard`):
     explicit `GROUNDING_FORBIDDEN` denylist + adversarial fixtures (careerStage/coverLetter both
     trip `grounding-isolation`); grounding-prompt byte-stability test.
-  - Verified: `yarn lint` + `yarn build` clean, `yarn test` **92 files / 568 tests green** (+39).
-  - **§6 checker-review + verifier subagents running** (maker≠checker). Live honesty-eval (task 3.7)
-    remains **blocked on `ANTHROPIC_API_KEY`** — deterministic proxy tests shipped.
+  - Verified: `yarn lint` + `yarn build` clean, `yarn test` **92 files / 570 tests green** (+41).
+  - **§6 DONE (maker≠checker).** Verifier subagent: PASS (all gates + FR/NFR evidence). Checker
+    subagent found **1 major** — the split wizard flow (`TailorWorkspace`) dropped `careerStage`
+    before `/api/tailor/generate`, so §3 was **inert in production** (seniority call ran, result
+    discarded). **Fixed** (`fix(tailoring): thread careerStage through the wizard generate call`) +
+    regression test. Grounding isolation / hues / i18n all clean.
+  - **§6.3 DONE: change archived.** `openspec archive add-tailoring-intelligence` folded the
+    checklist/bullets deltas + new `cover-letter` spec into baselines (7/7 baseline specs validate);
+    moved to `archive/2026-07-04-add-tailoring-intelligence`. Task 3.7 (live honesty-eval) left open —
+    **blocked on `ANTHROPIC_API_KEY`**; behavior implemented + deterministically tested.
 
 - **Prior: 13-item roadmap analyzed, P0 bugs fixed, specs authored (2026-07-04).**
   User handed a 13-task batch. Added a **commit-on-the-fly rule** to `AGENTS.md`. Ran a 16-agent
@@ -57,10 +64,12 @@
 
 ## Working on
 
-- **T1 `add-tailoring-intelligence` — §0-6 essentially DONE.** §0-2 blue-info (`43db360`), §3-5
-  shipped this session (see Last action). Remaining: §6.1 verifier + §6.2 checker (subagents running
-  — apply any findings), then §6.3 openspec-archive the change. **Next roadmap target: T6 history**
-  (rank 7, unblocked) or **T5 premium PDF-attach** (rank 8, builds on T1's grounding model).
+- **T1 `add-tailoring-intelligence` — DONE + ARCHIVED** (§0-6 all complete; verified, checker-fixed,
+  specs folded into baselines). Only open thread: task 3.7 live honesty-eval, blocked on
+  `ANTHROPIC_API_KEY`.
+- **Next roadmap target: T6 history** (rank 7, P2/M, unblocked — `views/history` slice, `job_title`
+  column migration, IDOR-gated `GET /api/tailoring/:id`, list + re-open UI, wire the AccountMenu
+  "coming soon" link) OR **T5 premium PDF-attach** (rank 8, P1/L — builds on T1's grounding model).
 
 ### Done — T1 blue "info" checklist status (add-tailoring-intelligence §0-2)
 
@@ -112,18 +121,14 @@
 
 ## Next steps
 
-1. **Apply §6 checker + verifier findings** (subagents running on `43db360..HEAD`); re-run
-   `yarn lint/build/test` after any fix; commit on the fly.
-2. **Archive T1**: `openspec-archive add-tailoring-intelligence` (fold `checklist`/`bullets` deltas +
-   new `cover-letter` spec into baselines) once §6 is clean.
-3. Next build target by rank: **T6 history** (P2, M, unblocked — IDOR-gated `GET /api/tailoring/:id`)
-   or **T5 premium PDF-attach** (P1, L — builds on T1 grounding). Then T8 landing (now unblocked by
-   T1). T13 Stripe still gated on key rotation.
-4. **T1 client echo (minor):** wizard view should echo `careerStage` from `/api/tailor/analyze` back
-   to `/api/tailor/generate` so the wizard path also gets tone calibration (one-shot `/api/tailor`
-   path already threads it; API plumbing done, view echo pending).
-5. **When `ANTHROPIC_API_KEY` lands:** run honesty-eval on the new seniority + cover-letter prompts
-   (task 3.7) — deterministic proxies already green.
+1. **Start T6 history** (rank 7, P2/M, unblocked): `views/history` slice, `job_title` column
+   migration (extract JD title at save), IDOR-gated `GET /api/tailoring/:id` (verify `user_id`),
+   list + re-open UI, wire the "coming soon" AccountMenu link — FR-HISTORY-01/02, FR-TAILOR-04.
+   Spec first (openspec-propose). **Or T5 premium PDF-attach** (rank 8, P1/L, builds on T1 grounding).
+2. Then **T8 landing** (now unblocked by T1 — describe cover letters / blue-info / premium attach),
+   with `perf-audit` (~20 ms LCP margin). T13 Stripe still gated on key rotation.
+3. **When `ANTHROPIC_API_KEY` lands:** run honesty-eval on the new seniority + cover-letter prompts
+   (archived task 3.7) — deterministic proxies already green.
 
 ## Blockers / open questions
 
