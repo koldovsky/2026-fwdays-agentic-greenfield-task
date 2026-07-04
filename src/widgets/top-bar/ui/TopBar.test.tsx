@@ -37,9 +37,19 @@ describe("TopBar", () => {
     expect(screen.getByRole("button", { name: ua.auth.signOutAction })).toBeInTheDocument();
   });
 
-  it("keeps the primary nav (logo, features, pricing) in both states", () => {
+  it("always shows the logo", () => {
     render(<TopBar />);
     expect(screen.getByRole("link", { name: ua.topBar.homeLabel })).toHaveAttribute("href", "/");
+  });
+
+  it("hides the marketing nav by default (app-shell routes) and shows it only when enabled", () => {
+    const { rerender } = render(<TopBar />);
+    // Default: the Features/Pricing anchors do not leak into the app shell.
+    expect(screen.queryByRole("link", { name: ua.topBar.navFeatures })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: ua.topBar.navPricing })).not.toBeInTheDocument();
+
+    // Landing opts in via showMarketingNav.
+    rerender(<TopBar showMarketingNav />);
     expect(screen.getByRole("link", { name: ua.topBar.navFeatures })).toHaveAttribute(
       "href",
       "/#how",
@@ -48,5 +58,13 @@ describe("TopBar", () => {
       "href",
       "/#pricing",
     );
+  });
+
+  it("shows the signed-in user's first name in the header row (full name absent as text)", () => {
+    render(<TopBar user={{ name: "Olena Petrenko", email: "olena@example.com" }} />);
+    expect(screen.getByText("Olena")).toBeInTheDocument();
+    // Full name is only the hover title, not rendered text; email is not in the row.
+    expect(screen.queryByText("Olena Petrenko")).not.toBeInTheDocument();
+    expect(screen.queryByText("olena@example.com")).not.toBeInTheDocument();
   });
 });

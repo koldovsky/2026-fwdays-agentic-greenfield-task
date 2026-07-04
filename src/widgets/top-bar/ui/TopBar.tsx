@@ -17,10 +17,18 @@ export interface TopBarProps {
   readonly user?: TopBarUser | null;
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
+  /**
+   * Show the marketing nav (Features / Pricing) anchors. Landing-only — those
+   * anchors point at landing sections, so off the landing page they would jump
+   * the user out of the app shell. Defaults false so app routes never leak them.
+   */
+  readonly showMarketingNav?: boolean;
 }
 
-export function TopBar({ user = null, locale = "ua" }: TopBarProps) {
+export function TopBar({ user = null, locale = "ua", showMarketingNav = false }: TopBarProps) {
   const copy = t(locale);
+  // First name only — compact, and long Ukrainian names would overflow the row.
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? null;
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-surface-canvas/80 backdrop-blur-md backdrop-saturate-150">
       <div className="mx-auto flex h-16 w-full max-w-[1080px] items-center justify-between px-6">
@@ -35,20 +43,32 @@ export function TopBar({ user = null, locale = "ua" }: TopBarProps) {
           <span className="text-md font-semibold tracking-normal text-ink">Vouch</span>
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-7 sm:flex">
-          <Link href="/#how" className="text-sm text-ink-soft transition-colors hover:text-ink">
-            {copy.topBar.navFeatures}
-          </Link>
-          <Link
-            href="/#pricing"
-            className="text-sm text-ink-soft transition-colors hover:text-ink"
-          >
-            {copy.topBar.navPricing}
-          </Link>
-        </nav>
+        {showMarketingNav && (
+          <nav aria-label="Primary" className="hidden items-center gap-7 sm:flex">
+            <Link href="/#how" className="text-sm text-ink-soft transition-colors hover:text-ink">
+              {copy.topBar.navFeatures}
+            </Link>
+            <Link
+              href="/#pricing"
+              className="text-sm text-ink-soft transition-colors hover:text-ink"
+            >
+              {copy.topBar.navPricing}
+            </Link>
+          </nav>
+        )}
 
         {user !== null ? (
-          <AccountMenu user={user} locale={locale} />
+          <div className="flex items-center gap-3">
+            {firstName !== null && (
+              <span
+                title={user.name ?? undefined}
+                className="hidden max-w-[9rem] truncate text-sm text-ink-soft sm:inline"
+              >
+                {firstName}
+              </span>
+            )}
+            <AccountMenu user={user} locale={locale} />
+          </div>
         ) : (
           <div className="flex items-center gap-2">
             <Button href="/sign-in" variant="ghost" size="sm">

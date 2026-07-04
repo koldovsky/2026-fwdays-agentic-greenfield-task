@@ -35,8 +35,18 @@
 
 ## Working on
 
-- **Roadmap batch — analysis + P0 fixes + top-tier specs DONE this pass.** Feature implementation
-  not started; pick the next item per the ranking.
+- **Implementing the roadmap by priority.** T4 header **DONE** (`rework-app-header`, committed).
+  Next: continue down the ranking (T1 tailoring intelligence / T12 legal / …), committing each unit.
+
+### Done — T4 header (rework-app-header, app-shell MODIFIED)
+
+- `scroll-padding-top: 4rem` on `html` (anchors clear the sticky `h-16` header).
+- `TopBar` gained `showMarketingNav` (default **false**); marketing nav (`/#how`,`/#pricing`) now
+  landing-only via `TopBarSession`, no longer leaks into app routes.
+- Signed-in user's first name shown in the header row (truncated, full name as `title`).
+- Tests updated; lint+build clean, **521 tests** green. Not yet checker-reviewed / archived
+  (openspec CLI not installed here).
+- Footer dead Privacy link intentionally left to T12 `add-legal-pages` (owns footer/legal wiring).
 
 ## Decisions resolved 2026-07-04 (user)
 

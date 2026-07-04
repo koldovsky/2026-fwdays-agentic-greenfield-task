@@ -17,14 +17,17 @@ export interface TopBarSessionProps {
 export function TopBarSession({ locale = "ua" }: TopBarSessionProps) {
   const { data: session, status } = useSession();
 
+  // This island only renders on the landing page, so the marketing nav belongs
+  // here (its anchors point at landing sections).
   if (status === "authenticated") {
     return (
       <TopBar
         user={{ name: session.user?.name, email: session.user?.email }}
         locale={locale}
+        showMarketingNav
       />
     );
   }
 
-  return <TopBar user={null} locale={locale} />;
+  return <TopBar user={null} locale={locale} showMarketingNav />;
 }

@@ -122,9 +122,12 @@ body {
   font-family: var(--font-body);
 }
 
-/* Smooth in-page anchor scroll; disabled under reduced-motion below. */
+/* Smooth in-page anchor scroll; disabled under reduced-motion below.
+ * scroll-padding-top matches the sticky h-16 (64px) top bar so anchor targets
+ * land below it instead of hidden behind it (FR-SHELL-01, NFR-OBS-02). */
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
 }
 
 /* Visible keyboard focus on every interactive element (NFR-A11Y-01):

@@ -24,9 +24,13 @@ describe("TopBarSession", () => {
 
     render(<TopBarSession />);
 
-    // Signed-in: the account burger is shown; name + sign-out are in its dropdown.
-    fireEvent.click(screen.getByRole("button", { name: ua.accountMenu.triggerLabel }));
+    // Signed-in: the name shows in the header row, and the account burger opens a
+    // dropdown with the name + sign-out (so "Olena" then appears in both places).
     expect(screen.getByText("Olena")).toBeInTheDocument();
+    // Landing island shows the marketing nav.
+    expect(screen.getByRole("link", { name: ua.topBar.navPricing })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: ua.accountMenu.triggerLabel }));
+    expect(screen.getAllByText("Olena").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByRole("button", { name: ua.auth.signOutAction })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: ua.topBar.signIn })).not.toBeInTheDocument();
   });
