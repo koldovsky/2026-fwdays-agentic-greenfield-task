@@ -31,6 +31,7 @@ const SCRIPTED_ANALYSIS: AnalysisResult = {
     },
   ],
   clarifyingQuestions: [],
+  careerStage: "senior",
 };
 
 const SCRIPTED_RESULT: TailoringRunResult = {
@@ -109,6 +110,22 @@ describe("TailorWorkspace wizard (FR-WIZARD-01/05)", () => {
 
     // Generation completed → export step shows the bullets.
     expect(await screen.findByText(overclaimBullet.text)).toBeInTheDocument();
+  });
+
+  it("forwards the analyze-phase careerStage into the generate request (§3.5 wizard flow)", async () => {
+    // Regression: the split analyze→generate flow must not drop the inferred
+    // stage at the client boundary, or the seniority call runs in analysis and
+    // its result is silently discarded (generation gets no tone calibration).
+    streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
+    render(<TailorWorkspace />);
+
+    await analyze();
+    await proceed();
+    await screen.findByText(overclaimBullet.text);
+
+    // (mocks aren't cleared between tests in this file — assert the latest call).
+    const lastCall = streamGenerateMock.mock.calls.at(-1);
+    expect(lastCall?.[0]).toMatchObject({ careerStage: "senior" });
   });
 
   it("toggling an overclaim-risk bullet at export updates its included state", async () => {

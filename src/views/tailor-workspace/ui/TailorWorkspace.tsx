@@ -109,6 +109,10 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
         confirmedAnswers,
         checklist: analysis.checklist,
         matchScore: analysis.matchScore,
+        // Echo the inferred stage from the analyze phase so the wizard flow also
+        // gets tone calibration (§3.5) — without this the seniority call runs in
+        // analysis and its result is silently dropped at the client boundary.
+        ...(analysis.careerStage !== undefined ? { careerStage: analysis.careerStage } : {}),
       })) {
         if (event.type === "error") {
           sawTerminal = true;
