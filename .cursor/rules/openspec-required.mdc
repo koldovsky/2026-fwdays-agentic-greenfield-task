@@ -1,0 +1,53 @@
+---
+description: >-
+  MANDATORY: No feature/fix/API/UI code before OpenSpec change exists and validates.
+  Applies to every agent session on this repo.
+alwaysApply: true
+---
+
+# OpenSpec first — no exceptions
+
+**If the user asks for behavior, UI, API, data, or deployable feature work → OpenSpec BEFORE `src/**` edits.**
+
+The rule was skipped for confirmed bookings; that was wrong. Follow this order every time.
+
+## Required sequence
+
+```
+1. npx openspec new change <kebab-id>   (or create openspec/changes/<id>/ manually)
+2. proposal.md + design.md + specs/**/spec.md + tasks.md
+3. npx openspec validate <id> --strict   → must pass
+4. Implement tasks; mark [x] in tasks.md
+5. Tests per openspec-change-testing.mdc
+6. Update docs/requirements.md PRD IDs
+7. Archive when done (/opsx-archive, /opsx-sync)
+```
+
+## Hard stops
+
+- **Do NOT** create routes, components, stores, or APIs until step 3 passes.
+- **Do NOT** deploy feature work that never had a validated change.
+- If implementation already landed (user urgency, mistake) → **backfill** the change immediately with accurate specs and `[x]` tasks — do not skip artifacts.
+
+## What needs OpenSpec
+
+| Needs change | Skip |
+|--------------|------|
+| New pages, APIs, stores | Typos, comments only |
+| UX copy / nav / flows | Formatting |
+| Bug fixes changing behavior | Deps with zero behavior change |
+| Deploy script behavior | User says "skip spec" |
+| Cron, smoke tests for new features | |
+
+When unsure → **create the change**.
+
+## Validate command
+
+```bash
+npx openspec validate <change-id> --strict
+```
+
+## See also
+
+- `.cursor/rules/openspec-change-testing.mdc` — tests required per scenario
+- `openspec/config.yaml` — artifact rules and PRD traceability

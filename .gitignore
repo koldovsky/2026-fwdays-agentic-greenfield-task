@@ -5,19 +5,39 @@
 Thumbs.db
 .idea/
 .vscode/
+.agents/
 *.log
 
 # Секрети / змінні середовища
 .env
 .env.*
 !.env.example
+.secret
+!.secret.example
 
 # Залежності та артефакти збірки (типові для різних стеків)
 node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 dist/
 build/
 out/
-.next/
+/.next/
+/.deploy-staging/
+/coverage
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+/playwright-report/
+/test-results/
+/.playwright-mcp/
+/data/
+eng.traineddata
 __pycache__/
 *.pyc
 .venv/

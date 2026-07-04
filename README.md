@@ -1,46 +1,63 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# Colibri Book — Mahogany HOA outdoor booking concierge
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+**fwdays Academy · Agentic Engineering: Greenfield** — homework submission.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+Plain-language tennis (and future picnic) booking for [Mahogany HOA](https://mahoganyhoa.com/facilities/outdoor/): parse intent, show live court availability, submit MHOA forms with captcha OCR, queue bookings outside the 7-day window, and list confirmed reservations.
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+**Stack:** Next.js 16 · TypeScript · Playwright · Python (ddddocr) · OpenSpec · Playwright E2E
 
-## Що зробити
+## Quick start
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+```bash
+cp .secret.example .secret   # edit credentials
+cp .env.example .env           # optional local overrides
+npm ci && npm run dev          # http://localhost:3000
+npm test                       # unit + cron wrapper
+npm run test:e2e               # Playwright (stub submit)
+```
 
-## Як здати
+Live MHOA submit: `COLIBRI_SUBMIT_MODE=live` (see `.env.example`).
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+## Documentation
 
-## Як оцінюється
+| Document | Purpose |
+| -------- | ------- |
+| [docs/requirements.md](docs/requirements.md) | PRD — `FR-*` requirements, MHOA constraints |
+| [openspec/](openspec/changes/) | Spec-driven change proposals (OpenSpec) |
+| [AGENTS.md](AGENTS.md) | Agent / Next.js notes |
+| [.cursor/rules/](.cursor/rules/) | Cursor rules (OpenSpec-first, QA, testing) |
 
-Дивимось на **докази процесу**, а не на стек:
+## Agentic engineering (this project)
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+- **Context engineering** — PRD, Cursor rules, OpenSpec artifacts, skills
+- **Spec-driven development** — OpenSpec change per feature; validate before `src/**`
+- **Loop engineering** — deploy → smoke → fix cycles on STG
+- **Maker ≠ checker** — CodeRabbit on PR; separate QA browser rules; unit + E2E gates
+- **Verification** — 60+ unit tests, Playwright E2E, post-deploy smoke script
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+## Homework submission
+
+Fork: [github.com/mbugaiov/2026-fwdays-agentic-greenfield-task](https://github.com/mbugaiov/2026-fwdays-agentic-greenfield-task)  
+Upstream: [github.com/koldovsky/2026-fwdays-agentic-greenfield-task](https://github.com/koldovsky/2026-fwdays-agentic-greenfield-task)
+
+1. Push feature branch to your fork
+2. Open PR **into `koldovsky/2026-fwdays-agentic-greenfield-task`** using [.github/pull_request_template.md](.github/pull_request_template.md)
+3. Enable **CodeRabbit** on the fork
+4. Attach **1–2 min video** demo + practices write-up
+5. Submit the PR link in the course channel
+
+## Status
+
+| Phase | State |
+| ----- | ----- |
+| PRD / OpenSpec | Done (tennis MVP) |
+| Booking wizard + live submit | Done |
+| Availability preview | Done |
+| Scheduled queue + cron | Done |
+| Confirmed bookings | Done |
+| STG deploy | http://colibri.64.225.115.88.nip.io |
+| Demo video | Pending |
+| Homework PR | Pending |
 
 ---
 

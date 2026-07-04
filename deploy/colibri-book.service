@@ -1,0 +1,17 @@
+[Unit]
+Description=Colibri Book (Mahogany HOA booking concierge)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/colibri-book
+EnvironmentFile=/etc/colibri-book.env
+ExecStart=/usr/bin/node /opt/colibri-book/server.js
+Restart=on-failure
+RestartSec=5
+MemoryHigh=220M
+
+[Install]
+WantedBy=multi-user.target
