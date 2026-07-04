@@ -14,7 +14,7 @@ The full design system lives in [`docs/vouch-design-system/`](vouch-design-syste
 | Layer | Where | Notes |
 |-------|-------|-------|
 | Tokens | `src/app/globals.css` | Brand tokens live in `@theme` (Tailwind v4) so utilities are generated; spacing scale + semantic aliases in `:root`. |
-| Fonts | `src/app/layout.tsx` | `next/font/google` loads Bricolage Grotesque + Hanken Grotesk, exposed as `--font-bricolage` / `--font-hanken`, mapped to `--font-display` / `--font-body`. |
+| Fonts | `src/app/layout.tsx` | `next/font/google` loads Unbounded (display) + Golos Text (body) with `latin` + `cyrillic` subsets (Ukrainian-first), exposed as `--font-unbounded` / `--font-golos`, mapped to `--font-display` / `--font-body`. |
 | Source of truth | `docs/vouch-design-system/tokens/*.css` | Mirror token values here when they change; keep the two in sync. |
 
 Because tokens sit in `@theme`, you style with Tailwind utilities directly:
@@ -34,8 +34,9 @@ Available namespaces: `*-ink*` / `*-brand*` / `*-surface-*` / status colors
 - **Colors:** navy ink `#16243d`, brand blue `#3257c5`, warm paper `#faf7f2`.
   Never add new brand hues. Status colors are fixed: met `#2f8f5b`,
   partial `#c79a1e`, gap `#d05151`, overclaim-risk `#e08a3c`.
-- **Type:** Bricolage Grotesque for display/headlines, Hanken Grotesk for
-  body/UI. Display = tight tracking (`-0.02em`) + tight leading.
+- **Type:** Unbounded for display/headlines, Golos Text for body/UI (both carry a
+  Cyrillic subset, Ukrainian-first). Display = tight tracking (`-0.02em`) + tight
+  leading.
 - **Voice:** direct, calm, honest. No hype, **no exclamation points, no emoji**,
   no invented claims. Second person ("you/your"). Headings sentence case, no
   trailing period.

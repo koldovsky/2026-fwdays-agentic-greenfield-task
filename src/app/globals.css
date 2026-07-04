@@ -8,11 +8,12 @@
  * Font families resolve to next/font variables set in layout.tsx.
  */
 @theme inline {
-  /* ── Fonts (wired to next/font in layout.tsx) ── */
-  --font-display: var(--font-bricolage);
-  --font-body: var(--font-hanken);
+  /* ── Fonts (wired to next/font in layout.tsx). Display + body carry a Cyrillic
+   * subset so Ukrainian renders on-brand (add-language-toggle, NFR-I18N-01). ── */
+  --font-display: var(--font-unbounded);
+  --font-body: var(--font-golos);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-sans: var(--font-hanken);
+  --font-sans: var(--font-golos);
 
   /* ── Brand ── */
   --color-ink: #16243d;

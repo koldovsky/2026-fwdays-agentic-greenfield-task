@@ -71,7 +71,7 @@ The palette is navy ink + one brand blue. Warmth comes from paper surfaces and t
 | overclaim | `--color-overclaim` | `#e08a3c` |
 
 ### Typography
-Two families: **Bricolage Grotesque** (display, headlines, large numerals — warm, slightly characterful) and **Hanken Grotesk** (body, UI, labels — humanist, quietly readable). Both are Google Fonts. System monospace is used for code labels, requirement IDs, and uppercase eyebrows.
+Two families: **Unbounded** (display, headlines, large numerals — geometric, characterful) and **Golos Text** (body, UI, labels — humanist, quietly readable). Both are Google Fonts and carry a Cyrillic subset (Ukrainian-first). System monospace is used for code labels, requirement IDs, and uppercase eyebrows. (Earlier specimen HTML in this kit still shows the prior Bricolage/Hanken pairing.)
 
 Display headings: tight tracking (`−0.02em`), tight leading (`1.04–1.15`).
 Body copy: comfortable leading (`1.5–1.6`). No tracking on body text.

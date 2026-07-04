@@ -10,7 +10,7 @@ If creating visual artifacts (slides, mocks, throwaway prototypes, etc), copy as
 
 Key brand rules to always follow:
 - Colors: navy ink `#16243d`, brand blue `#3257c5`, warm paper `#faf7f2`. Never add new brand hues.
-- Type: Bricolage Grotesque for display/headlines, Hanken Grotesk for body/UI (both Google Fonts).
+- Type: Unbounded for display/headlines, Golos Text for body/UI (both Google Fonts, with Cyrillic subsets, Ukrainian-first).
 - Status colors are fixed: met `#2f8f5b`, partial `#c79a1e`, gap `#d05151`, overclaim-risk `#e08a3c`.
 - Copy is direct, calm, honest. No exclamation points. No emoji. No invented claims.
 - Cards: white bg, hairline border, 14–20px radius. No colored left-border accents.

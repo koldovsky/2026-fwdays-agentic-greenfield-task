@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+import { Golos_Text, Unbounded } from "next/font/google";
 import { siteDescription, siteName, siteUrl } from "@/shared/config";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin"],
+// Ukrainian-first (NFR-I18N-01): display + body faces include a Cyrillic subset so
+// Ukrainian renders on-brand, not in a latin-only fallback (add-language-toggle).
+const unbounded = Unbounded({
+  variable: "--font-unbounded",
+  subsets: ["latin", "cyrillic"],
   display: "swap",
 });
 
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
-  subsets: ["latin"],
+const golos = Golos_Text({
+  variable: "--font-golos",
+  subsets: ["latin", "cyrillic"],
   display: "swap",
 });
 
@@ -50,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${hanken.variable} h-full antialiased`}
+      className={`${unbounded.variable} ${golos.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
