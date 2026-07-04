@@ -29,9 +29,18 @@ import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { TailoringChecklistRow } from "@/entities/tailoring";
 import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT, type AccountKind } from "@/entities/usage-counter";
-import { runGenerationPhase } from "@/features/run-tailoring";
-import type { GenerationEvent, GenerationPhaseInput } from "@/features/run-tailoring";
-import { createSubscriptionRepo, createUsageCounterRepo } from "@/shared/lib/db";
+import { persistTailoring, runGenerationPhase } from "@/features/run-tailoring";
+import type {
+  GenerationEvent,
+  GenerationPhaseInput,
+  TailoringRunResult,
+} from "@/features/run-tailoring";
+import {
+  createJobDescriptionRepo,
+  createSubscriptionRepo,
+  createTailoringRepo,
+  createUsageCounterRepo,
+} from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { resolveLlmProvider, type CareerStage, type ConfirmedAnswerEvidence } from "@/shared/lib/llm";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
@@ -184,6 +193,7 @@ export async function POST(request: Request): Promise<Response> {
         // failure event still flows through the same reservation-release
         // path below as any other non-"result" run.
         let succeeded = false;
+        let finalResult: TailoringRunResult | null = null;
         if (!parsed.ok) {
           send({ type: "error", code: "failed" });
           send({ type: "status", phase: "failed" });
@@ -195,13 +205,39 @@ export async function POST(request: Request): Promise<Response> {
           // (NFR-SEC-02).
           const llm = resolveLlmProvider();
           for await (const event of runGenerationPhase({ llm }, parsed.value)) {
-            if (event.type === "result") succeeded = true;
+            if (event.type === "result") {
+              succeeded = true;
+              finalResult = event.result;
+            }
             send(event);
           }
         }
 
         if (succeeded) {
-          if (paidTallyUserId !== null) await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+          if (paidTallyUserId !== null) {
+            await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+            // History persistence (FR-TAILOR-04) is PAID-ONLY and best-effort:
+            // it runs after the result already streamed, so any failure is
+            // logged server-side and never touches the user's result or the
+            // stream (NFR-OBS-01, FR-TAILOR-03). Free/anon runs persist nothing.
+            if (finalResult !== null && parsed.ok) {
+              try {
+                await persistTailoring(
+                  {
+                    jobDescriptions: createJobDescriptionRepo(getDb()),
+                    tailorings: createTailoringRepo(getDb()),
+                  },
+                  {
+                    userId: paidTallyUserId,
+                    jobDescription: parsed.value.jobDescription,
+                    result: finalResult,
+                  },
+                );
+              } catch (persistError) {
+                console.error("[api/tailor/generate] history persistence failed", persistError);
+              }
+            }
+          }
         } else if (releaseReservation) {
           // The reservation already charged the budget up front; a run that
           // never produced a result must refund it (FR-TAILOR-03).

@@ -30,9 +30,14 @@ const usageCounterRepo = vi.hoisted(() => ({
   release: vi.fn(),
 }));
 const subscriptionRepo = vi.hoisted(() => ({ get: vi.fn() }));
+// add-tailoring-history: the paid path persists to history via these repos.
+const jobDescriptionRepo = vi.hoisted(() => ({ save: vi.fn() }));
+const tailoringRepo = vi.hoisted(() => ({ save: vi.fn() }));
 vi.mock("@/shared/lib/db", () => ({
   createUsageCounterRepo: () => usageCounterRepo,
   createSubscriptionRepo: () => subscriptionRepo,
+  createJobDescriptionRepo: () => jobDescriptionRepo,
+  createTailoringRepo: () => tailoringRepo,
 }));
 vi.mock("@/shared/lib/db/pg", () => ({ getDb: vi.fn(() => ({})) }));
 
@@ -89,7 +94,17 @@ beforeEach(() => {
   usageCounterRepo.reserve.mockResolvedValue(true);
   usageCounterRepo.release.mockResolvedValue(undefined);
   subscriptionRepo.get.mockResolvedValue(null); // default: never paid (Free)
+  jobDescriptionRepo.save.mockResolvedValue({ id: "jd-1" });
+  tailoringRepo.save.mockResolvedValue({ id: "t-1" });
 });
+
+const PAID_SUBSCRIPTION = {
+  id: "s1",
+  userId: "user-paid",
+  plan: "pro",
+  status: "active",
+  currentPeriodEnd: "2999-01-01T00:00:00.000Z",
+};
 
 describe("POST /api/tailor/generate", () => {
   it("streams NDJSON events ending in a result (FR-WIZARD-01/04)", async () => {
@@ -260,5 +275,67 @@ describe("POST /api/tailor/generate gating (NFR-COST-02, NFR-SEC-04)", () => {
     expect(events.find((e) => e.type === "result")).toBeDefined();
     expect(usageCounterRepo.reserve).not.toHaveBeenCalled();
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/tailor/generate history persistence (add-tailoring-history, FR-TAILOR-04)", () => {
+  it("persists a paid user's tailoring with mapped inputs and no CV linkage", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+
+    const res = await POST(post(VALID_BODY, "198.51.100.60"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    // JD row persisted for the FK, with the caller + the JD text.
+    expect(jobDescriptionRepo.save).toHaveBeenCalledWith("user-paid", VALID_BODY.jobDescription);
+    // Tailoring persisted: no CV linkage (cvProfileId null), score + mapped
+    // checklist importance (must-have→must) and bullet grounding (grounded→met).
+    expect(tailoringRepo.save).toHaveBeenCalledTimes(1);
+    const saved = tailoringRepo.save.mock.calls[0][0];
+    expect(saved).toMatchObject({
+      userId: "user-paid",
+      cvProfileId: null,
+      jobDescriptionId: "jd-1",
+      matchScore: 100,
+    });
+    expect(saved.checklist[0]).toMatchObject({ requirement: "React", importance: "must", status: "met" });
+    expect(saved.bullets[0]).toMatchObject({ grounding: "met", included: true });
+  });
+
+  it("does not persist history for a logged-in free user", async () => {
+    currentUserId.mockResolvedValue("user-free");
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+
+    const res = await POST(post(VALID_BODY, "198.51.100.61"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    expect(tailoringRepo.save).not.toHaveBeenCalled();
+    expect(jobDescriptionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("does not persist history for an anonymous run", async () => {
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+
+    const res = await POST(post(VALID_BODY, "198.51.100.62"));
+    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
+
+    expect(tailoringRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("still returns the full result when history persistence throws (best-effort, NFR-OBS-01)", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.save.mockRejectedValue(new Error("db down"));
+
+    const res = await POST(post(VALID_BODY, "198.51.100.63"));
+
+    const events = await readNdjson(res);
+    // The result already streamed — a save failure never turns it into a
+    // failure event, and the paid tally still ran.
+    expect(events.find((e) => e.type === "result")).toBeDefined();
+    expect(events.find((e) => e.type === "error")).toBeUndefined();
+    expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-paid");
   });
 });

@@ -25,3 +25,10 @@ export { AnalyzeForm, type AnalyzeFormProps } from "./ui/AnalyzeForm";
 // Wizard-phase stream clients (the view orchestrates analyze → generate).
 export { streamAnalyze } from "./api/stream-analyze";
 export { streamGenerate } from "./api/stream-generate";
+// Server-side history persistence (add-tailoring-history) — invoked by the
+// generate route after a paid user's terminal `result` event.
+export {
+  persistTailoring,
+  type PersistTailoringDeps,
+  type PersistTailoringArgs,
+} from "./api/persist-tailoring";
