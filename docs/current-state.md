@@ -7,6 +7,17 @@
 
 ## Last action
 
+- **Landing i18n extraction DONE (T9 remaining piece), spec-first + reviewed green (2026-07-05, ultracode).**
+  Change `extract-landing-i18n` (`86bdf7c` spec, `fc0446d` code, `3e275de` review fix). Moved all
+  ~130 landing strings (content.ts + hardcoded section heads, inline labels, final CTA, footer credit,
+  hero demo card) into the i18n `Dictionary`, authored in both en + ua. `content.ts` is now
+  locale-parameterized assemblers merging i18n text with local structural data (accent/status/
+  grounding/price/hrefs); collections keyed by stable id. Section components take a `locale` prop.
+  **Font-safety:** every landing call site passes explicit `"en"` (t() defaults to ua; display fonts
+  are latin-only), so the page still renders English until T10 wires Cyrillic. Checker verdict SHIP
+  (0 blockers, 2 minors; the real one fixed in `3e275de`). Gate green: lint + build + 103 files /
+  641 tests (i18n ua/en parity + no-emoji/exclamation guards cover the new keys). **UA copy flagged
+  for native marketing-voice review** before T10 makes it visible.
 - **Premium PDF-attach surfaced on landing (T8 last gap closed), spec-first + reviewed (2026-07-05, ultracode).**
   New change `surface-premium-attach-landing` (`1963fe0`): Pro pricing feature line + one FAQ item
   representing the shipped T5 attach honestly (enriches generation only, never grounding, never
@@ -47,37 +58,24 @@
 | 3 | GDPR export `export_failed` | **DONE (code)**; needs prod env set | P1 |
 | 4 | Header rework | **DONE**; openspec archive pending | P1 |
 | 5 | Premium PDF attach | **DONE** (`b341245`..`ac90fad`); §4 archive/live-eval sandbox-blocked | P1 |
-| 6 | Tailoring history | **DONE (E2E green)**; 0004 integ-test + archive pending | P2 |
+| 6 | Tailoring history | **DONE (E2E green)**; 0004 integ-test exists (green); archive pending | P2 |
 | 7 | Landing animations | **DONE** (`fe65f2f` + review fixes `f638efe`); Lighthouse + archive pending | P2 |
 | 8 | Landing → new flow (cover letter / info tag / attach / history) | **DONE** (`update-landing-flow` + attach `1963fe0`) | P1 |
-| 9 | Landing marketing/copy (enemy-centric) | **PARTIAL** — copy done (problem-first hero shipped); **~90-string i18n extraction deferred** | P2 |
-| 10 | Whole-app UA/EN toggle | **TODO**; **Cyrillic fonts unwired = blocker** | P2 |
+| 9 | Landing marketing/copy (enemy-centric) | **DONE** — copy + full i18n extraction (`extract-landing-i18n`); UA copy pending native review | P2 |
+| 10 | Whole-app UA/EN toggle | **TODO** — landing now i18n-ready (renders en); **Cyrillic fonts = the remaining blocker** | P2 |
 
 ## Working on
 
-- **Landing i18n extraction (T9 remaining piece), spec-first — IN PROGRESS 2026-07-05 (ultracode).**
-  Move all landing copy into `shared/lib/i18n` (ua+en), rewire components via `t(locale).landing`.
-  Change: `extract-landing-i18n` (NFR-I18N-01, BC-BRAND-01). Plan below.
+- Nothing in flight. Tree clean. All 10 tasks are DONE except T10 (blocked on Cyrillic fonts). The
+  landing is now fully i18n-backed (ua+en) and renders en; T10 is unblocked apart from the font
+  decision. Remaining work is environment-blocked (archives, ops, Lighthouse, live eval) or the T10
+  font decision. See next steps.
 
-### Plan — extract-landing-i18n
-
-1. **Spec-first:** new openspec change; delta adds an NFR-I18N-01 requirement to `marketing-landing`
-   (landing copy resolves through `shared/lib/i18n`, ua+en; no hardcoded UI strings in components).
-2. **Contract:** add a `landing` block to `i18n/types.ts` `Dictionary`. Translatable TEXT only; keyed
-   by stable ids (pillars/steps/plans/faq/checklistRows/beforeAfter/demoBullets as keyed objects, NOT
-   index-zipped arrays). Structural data (accent, status, grounding, price, featured, numbers, hrefs)
-   stays in `content.ts`.
-3. **en.ts + ua.ts:** author the full `landing` section. en = current copy verbatim. ua = faithful
-   Ukrainian (FLAG for native marketing review; product is Ukrainian-first but voice is the team's).
-4. **content.ts → assemblers:** convert the exported consts to `*(locale)` functions that merge
-   `t(locale).landing` text with the structural constants; extract FinalCta.tsx + Footer.tsx inline
-   strings too. Thread `locale` from Landing to each section, **default "en"** (font-safe: display
-   fonts are latin-only until T10 wires Cyrillic; do NOT let it fall back to the `ua` default).
-5. **Verify:** lint + build + test (update landing tests to source from i18n; add an i18n
-   landing-parity test ua-keys == en-keys). Then adversarial review workflow → fix → commit.
-
-**Font-safety invariant:** the landing must keep rendering EN until T10. `t()` defaults to `ua`, so
-every landing call site MUST pass an explicit locale ("en" for now). T10 later flips this + wires fonts.
+**T10 is now much smaller:** the landing i18n groundwork is done. What remains for T10 is (1) the real
+blocker: wire a Cyrillic font subset (Golos Text + Unbounded, or confirm/replace the current
+Bricolage+Hanken which are latin-only) in `layout.tsx` — a brand-font decision for the user; then
+(2) a locale cookie + dynamic `<html lang>` + a header `LanguageSwitch`, and flip the landing/app
+call sites off the pinned `"en"`. The app-shell/workspace already thread `locale`.
 
 ## Next steps (ranked: fastest x most critical)
 
@@ -122,4 +120,5 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
 - Open changes not archived: `rework-app-header` (4), `add-tailoring-history` (6),
   `add-premium-pdf-attach` (5), `landing-animations` (7, done + reviewed), `update-landing-flow` (8/9),
   `surface-premium-attach-landing` (8, done + reviewed; archive AFTER update-landing-flow),
-  `add-payments-emulator`, `add-stripe-payments`, `harden-sentry-privacy`, `add-legal-pages`.
+  `extract-landing-i18n` (9, done + reviewed SHIP), `add-payments-emulator`, `add-stripe-payments`,
+  `harden-sentry-privacy`, `add-legal-pages`.
