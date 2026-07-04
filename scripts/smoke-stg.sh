@@ -154,6 +154,8 @@ if [[ -n "${body:-}" && -f "$ROOT/data/scheduled-bookings.json" ]]; then
   if python3 -c "
 import json
 local = json.load(open('$ROOT/data/scheduled-bookings.json'))
+if not local:
+    raise SystemExit(0)
 remote = json.load(open('$body'))
 ids = {j['id'] for j in remote.get('jobs', [])}
 missing = [j['id'] for j in local if j['id'] not in ids]
@@ -161,7 +163,9 @@ if missing:
     print('missing job ids:', missing[:3], file=__import__('sys').stderr)
     raise SystemExit(1)
 " 2>/dev/null; then
-    pass "scheduled jobs synced from local data"
+    if python3 -c "import json; exit(0 if json.load(open('$ROOT/data/scheduled-bookings.json')) else 1)" 2>/dev/null; then
+      pass "scheduled jobs synced from local data"
+    fi
   else
     fail "scheduled jobs synced from local data" "local jobs not found on server"
   fi

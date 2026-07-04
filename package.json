@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/**/*.test.ts && ./scripts/test-cron-wrapper.sh",
+    "test": "node --import tsx --test src/**/*.test.ts && ./scripts/test-cron-wrapper.sh && ./scripts/test-deploy-schedule-sync.sh && ./scripts/test-confirmed-merge.sh",
     "test:e2e": "COLIBRI_SUBMIT_MODE=stub playwright test",
     "test:a11y": "COLIBRI_SUBMIT_MODE=stub playwright test a11y",
     "schedule:run": "node --import tsx scripts/run-scheduled-bookings.ts",

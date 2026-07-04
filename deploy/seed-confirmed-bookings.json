@@ -1,0 +1,47 @@
+[
+  {
+    "id": "90be6224-0e93-443b-8abe-4e5e3d6b9e34",
+    "residentId": "max",
+    "fullName": "Max Bugaiov",
+    "email": "maxbugaiov@gmail.com",
+    "facility": "Tennis Courts",
+    "date": "2026-07-11",
+    "court": "East Court",
+    "slot": "09:00 AM-09:45 AM",
+    "confirmedAt": "2026-07-04T02:03:11.516Z",
+    "expiresAt": "2026-07-11T15:45:00.000Z",
+    "runId": "live-1783130560932",
+    "source": "scheduled",
+    "mhoaApproved": true
+  },
+  {
+    "id": "265e4783-e27f-42fd-b039-5be677d58957",
+    "residentId": "yurii",
+    "fullName": "Yurii Smolin",
+    "email": "smolin.yurii93@gmail.com",
+    "facility": "Tennis Courts",
+    "date": "2026-07-11",
+    "court": "East Court",
+    "slot": "09:45 AM-10:30 AM",
+    "confirmedAt": "2026-07-04T02:04:31.550Z",
+    "expiresAt": "2026-07-11T16:30:00.000Z",
+    "runId": "live-1783130648885",
+    "source": "scheduled",
+    "mhoaApproved": true
+  },
+  {
+    "id": "a8f3c1d2-6b4e-4a9f-9c2d-1e5f7a8b9c0d",
+    "residentId": "nataliia",
+    "fullName": "Nataliia Pokotylo",
+    "email": "pokotylo.nataliia@gmail.com",
+    "facility": "Tennis Courts",
+    "date": "2026-07-11",
+    "court": "East Court",
+    "slot": "10:30 AM-11:15 AM",
+    "confirmedAt": "2026-07-04T01:52:29.703Z",
+    "expiresAt": "2026-07-11T17:15:00.000Z",
+    "runId": "live-1783129928043",
+    "source": "scheduled",
+    "mhoaApproved": true
+  }
+]

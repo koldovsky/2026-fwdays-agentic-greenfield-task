@@ -54,15 +54,84 @@ sshpass -p "$DO_PASS" rsync -az \
   -e "ssh -o StrictHostKeyChecking=accept-new" \
   "$ROOT/deploy/" "${DO_USER}@${DO_HOST}:${REMOTE_APP}/deploy/"
 
-# Sync local scheduled jobs to STG data dir (app code deploy does not include data/).
+# Sync local scheduled jobs to STG only when local queue is non-empty.
+# Empty local data/scheduled-bookings.json must NOT wipe the droplet queue on deploy.
 if [[ -f "$ROOT/data/scheduled-bookings.json" ]]; then
-  echo "==> Sync scheduled-bookings.json to ${DO_HOST}:${REMOTE_DATA}…"
+  if python3 -c "
+import json, sys
+with open('$ROOT/data/scheduled-bookings.json', encoding='utf-8') as f:
+    jobs = json.load(f)
+if isinstance(jobs, list) and jobs:
+    sys.exit(0)
+sys.exit(1)
+"; then
+    echo "==> Sync scheduled-bookings.json to ${DO_HOST}:${REMOTE_DATA}…"
+    LOCAL_COUNT="$(python3 -c "import json; print(len(json.load(open('$ROOT/data/scheduled-bookings.json'))))")"
+    echo "    Local queue: ${LOCAL_COUNT} job(s)"
+    sshpass -p "$DO_PASS" rsync -az \
+      -e "ssh -o StrictHostKeyChecking=accept-new" \
+      "$ROOT/data/scheduled-bookings.json" "${DO_USER}@${DO_HOST}:${REMOTE_DATA}/scheduled-bookings.json"
+    sshpass -p "$DO_PASS" ssh -o StrictHostKeyChecking=accept-new "${DO_USER}@${DO_HOST}" \
+      "chown deploy:deploy ${REMOTE_DATA}/scheduled-bookings.json && chmod 644 ${REMOTE_DATA}/scheduled-bookings.json"
+  else
+    echo "==> Skip scheduled-bookings.json sync (local queue empty — keeping STG queue unchanged)"
+  fi
+fi
+
+echo "==> Merge confirmed-bookings.json on ${DO_HOST} (upsert seed + local; never wipe with empty)…"
+sshpass -p "$DO_PASS" rsync -az \
+  -e "ssh -o StrictHostKeyChecking=accept-new" \
+  "$ROOT/deploy/seed-confirmed-bookings.json" "${DO_USER}@${DO_HOST}:/tmp/colibri-seed-confirmed.json"
+MERGE_LOCAL="/tmp/colibri-local-confirmed.json"
+if [[ -f "$ROOT/data/confirmed-bookings.json" ]] && python3 -c "
+import json, sys
+with open('$ROOT/data/confirmed-bookings.json', encoding='utf-8') as f:
+    d = json.load(f)
+sys.exit(0 if isinstance(d, list) and d else 1)
+"; then
   sshpass -p "$DO_PASS" rsync -az \
     -e "ssh -o StrictHostKeyChecking=accept-new" \
-    "$ROOT/data/scheduled-bookings.json" "${DO_USER}@${DO_HOST}:${REMOTE_DATA}/scheduled-bookings.json"
+    "$ROOT/data/confirmed-bookings.json" "${DO_USER}@${DO_HOST}:${MERGE_LOCAL}"
+else
   sshpass -p "$DO_PASS" ssh -o StrictHostKeyChecking=accept-new "${DO_USER}@${DO_HOST}" \
-    "chown deploy:deploy ${REMOTE_DATA}/scheduled-bookings.json && chmod 644 ${REMOTE_DATA}/scheduled-bookings.json"
+    "rm -f ${MERGE_LOCAL}"
 fi
+sshpass -p "$DO_PASS" ssh -o StrictHostKeyChecking=accept-new "${DO_USER}@${DO_HOST}" \
+  "python3 - ${REMOTE_DATA}/confirmed-bookings.json /tmp/colibri-seed-confirmed.json ${MERGE_LOCAL}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+def load(path):
+    p = Path(path)
+    if not p.is_file():
+        return []
+    data = json.loads(p.read_text(encoding="utf-8"))
+    return data if isinstance(data, list) else []
+
+def upsert(into, items):
+    by_run = {b["runId"]: b for b in into if isinstance(b, dict) and b.get("runId")}
+    for item in items:
+        if isinstance(item, dict) and item.get("runId"):
+            by_run[item["runId"]] = item
+    into.clear()
+    into.extend(sorted(by_run.values(), key=lambda b: (b.get("date", ""), b.get("slot", ""))))
+
+target = Path(sys.argv[1])
+merged = load(target)
+for src in sys.argv[2:]:
+    if src and Path(src).is_file():
+        upsert(merged, load(src))
+target.parent.mkdir(parents=True, exist_ok=True)
+target.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
+print(f"confirmed bookings: {len(merged)}")
+PY
+sshpass -p "$DO_PASS" ssh -o StrictHostKeyChecking=accept-new "${DO_USER}@${DO_HOST}" \
+  "chown deploy:deploy ${REMOTE_DATA}/confirmed-bookings.json && chmod 644 ${REMOTE_DATA}/confirmed-bookings.json; rm -f /tmp/colibri-seed-confirmed.json ${MERGE_LOCAL}"
+
+# Keep local dev store aligned with seed (does not affect deploy if data/ is empty).
+mkdir -p "$ROOT/data"
+"$ROOT/scripts/merge-confirmed-seed.sh" "$ROOT/data/confirmed-bookings.json" >/dev/null
 
 CRON_SECRET="$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)"
 SESSION_SECRET="$(openssl rand -base64 32)"
