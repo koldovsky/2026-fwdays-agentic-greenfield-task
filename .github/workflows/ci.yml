@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - serhiy-pop/traffic-sign-scanner
+
+jobs:
+  harness:
+    name: Harness
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore TrafficSignScanner.slnx
+
+      - name: Format
+        run: dotnet format TrafficSignScanner.slnx --verify-no-changes --no-restore
+
+      - name: Build Core
+        run: dotnet build src/TrafficSignScanner.Core/TrafficSignScanner.Core.csproj --no-restore
+
+      - name: Build MCP
+        run: dotnet build src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj --no-restore
+
+      - name: Test Core
+        run: dotnet test tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj --no-build
+
+      - name: Test eval harness
+        run: dotnet test evals/TrafficSignScanner.Evals/TrafficSignScanner.Evals.csproj --no-build
+
+      - name: Validate OpenSpec
+        run: npx -y @fission-ai/openspec validate --all --strict
+
+      - name: Check traceability
+        run: dotnet run scripts/check-traceability.cs
+
+      - name: Check eval ratchet
+        run: dotnet run scripts/check-eval-ratchet.cs
+
+      - name: Check coverage ratchet
+        run: dotnet run scripts/check-coverage-ratchet.cs
+
+      - name: Check gate status
+        run: dotnet run scripts/check-gate-status.cs
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+
+  maui-compile:
+    name: MAUI Windows Compile
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      - name: Restore app
+        run: dotnet restore src/TrafficSignScanner.App/TrafficSignScanner.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
+
+      - name: Build app
+        run: dotnet build src/TrafficSignScanner.App/TrafficSignScanner.csproj -f net10.0-windows10.0.19041.0 --no-restore

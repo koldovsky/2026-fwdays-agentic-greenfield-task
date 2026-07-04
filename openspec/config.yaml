@@ -1,0 +1,28 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+context: |
+  Tech stack: .NET 10, C#, .NET MAUI, xUnit, ONNX Runtime, SkiaSharp.
+  Domain: offline traffic-sign object detection using an Azure Custom Vision compact ONNX export.
+  Requirements source: docs/requirements.md.
+  Model contract source: docs/model-contract.md.
+  Core must stay UI-free and must not reference Microsoft.Maui.*.
+  Preprocessing must use center-crop, resize to 320x320, NCHW, and raw RGB 0..255 tensor values.
+  Detection must run without network calls.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours

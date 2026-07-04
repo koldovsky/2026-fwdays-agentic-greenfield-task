@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "traffic-sign-scanner": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj"
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+---
+description: Require red tests before implementation for each capability slice.
+alwaysApply: true
+---
+
+# Tests First
+
+- Start each implementation slice from accepted requirements and OpenSpec scenarios.
+- Add or update failing tests before production code, then confirm the failure is meaningful.
+- Do not weaken assertions, delete tests, skip tests, or lower thresholds to make a slice pass.
+- Keep tests deterministic and fast; isolate real-model evals in `evals/` rather than regular unit tests.
+- Cite requirement IDs in test names, traits, or `@trace FR-*` comments once the test projects exist.

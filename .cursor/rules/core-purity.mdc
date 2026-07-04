@@ -1,0 +1,14 @@
+---
+description: Keep TrafficSignScanner.Core pure, deterministic, and UI-free.
+globs:
+  - src/TrafficSignScanner.Core/**
+alwaysApply: false
+---
+
+# Core Purity
+
+- Do not reference `Microsoft.Maui.*`, app UI projects, platform folders, file pickers, camera APIs, Shell navigation, or UI controls.
+- Core owns deterministic image preprocessing, tensor creation, ONNX output parsing, thresholding, and overlay geometry.
+- Use abstractions for model execution and file access when tests need seams; keep platform-specific behavior outside Core.
+- Public Core behavior must be covered by xUnit tests and traceable to `FR-*` IDs.
+- Keep image math deterministic and allocation-conscious; prefer explicit dimensions and channel ordering over inferred conventions.
