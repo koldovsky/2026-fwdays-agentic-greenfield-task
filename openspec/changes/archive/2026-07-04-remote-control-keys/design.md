@@ -1,6 +1,6 @@
 ## Context
 
-Samsung IP Control ships a `remoteKeyControl` JSON-RPC method whose exact param shape is documented in the `samsung-ip-control-protocol` skill and in `docs/samsung-ip-control-protocol/IP CONTROL V2.postman_collection.json`. Do not re-derive from the PDF. `tv-connection-lifecycle` supplies the per-TV serialized queue and the domain error mapping. `device-list-ui` supplies the route from a `DeviceCard` click into `RemoteScreen`. The Orbit DS supplies `DPad`, `IconButton` — this change is almost entirely wiring.
+This change was originally drafted against Samsung's hotel-TV IP Control (JSON-RPC 2.0 with a `remoteKeyControl` method). `smart-view-ws-transport` (archived 2026-07-04) pivoted the transport to Samsung's consumer **Smart View WebSocket** on port 8001; `AGENTS.md` now names the Postman collection under `docs/samsung-ip-control-protocol/` as belonging to the *unrelated* hotel-TV protocol. Ground truth for the on-wire envelope for this change is `openspec/changes/archive/2026-07-04-smart-view-ws-transport/design.md` D1 — a text frame `JSON.stringify({ method, params })` sent through the existing `JsonRpcTransport.call(method, params)` primitive (the type name is a vestige of the JSON-RPC era; see D1 Non-Goals in that archive). `tv-connection-lifecycle` supplies the per-TV serialized queue and the domain error mapping. `device-list-ui` supplies the route from a `DeviceCard` click into `RemoteScreen`. The Orbit DS supplies `DPad`, `IconButton` — this change is almost entirely wiring.
 
 ## Goals / Non-Goals
 
@@ -33,7 +33,20 @@ Samsung IP Control ships a `remoteKeyControl` JSON-RPC method whose exact param 
 
 ### D2 — Serialization via `tv-connection-lifecycle` queue
 
-The route handler resolves the `Session` for the UDN and calls `session.enqueue(() => jsonrpc.call('remoteKeyControl', { KeyCode: key }))`. If the session is not `Connected`, the endpoint responds `409 Conflict` with `{ code: "SessionNotConnected", message, correlationId }` — this is a new front-end-facing code, not part of the `TvError` union (that union is for TV-side errors). Documented in the spec below.
+The route handler resolves the `Session` for the UDN and calls
+`session.enqueue((transport) => transport.call('ms.remote.control', keyControlParams(key)))`,
+where `keyControlParams(key)` returns the Samsung Smart View envelope's `params` shape:
+
+```ts
+{
+  Cmd: 'Click',
+  DataOfCmd: key,           // e.g. "KEY_UP"
+  Option: 'false',
+  TypeOfRemote: 'SendRemoteKey',
+}
+```
+
+This is the shape documented in `openspec/changes/archive/2026-07-04-smart-view-ws-transport/design.md` D1 — a single `Click` frame per user press; no separate press/release (see Non-Goals). Smart View is fire-and-forget for control frames, so the enqueued Promise resolves as soon as the frame is drained; the 204 the route returns confirms the frame was sent, not that the TV acted on it (per D1). If the session is not `Connected`, the endpoint responds `409 Conflict` with `{ code: "SessionNotConnected", message, correlationId }` — this is a new front-end-facing code, not part of the `TvError` union (that union is for TV-side errors). Documented in the spec below.
 
 ### D3 — Front-end wiring
 

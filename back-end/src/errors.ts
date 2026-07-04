@@ -1,4 +1,5 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
+import { TvError, toHttpEnvelope } from './tv/errors.js';
 
 export class HttpError extends Error {
   constructor(
@@ -39,6 +40,18 @@ export function errorHandler(
       correlationId,
     };
     reply.status(error.statusCode).send(envelope);
+    return;
+  }
+
+  if (error instanceof TvError) {
+    // Domain TV failures propagating out of a route (e.g. the session
+    // socket dropped between the `Connected` guard and the enqueued
+    // Smart View call) must land as a mapped domain envelope, never the
+    // generic `code: "internal"` (spec `remote-control-keys` scenario
+    // "TV failure surfaces to caller"; AGENTS.md house rule).
+    request.log.warn({ err: error, correlationId }, error.message);
+    const { status, body } = toHttpEnvelope(error, correlationId);
+    reply.status(status).send(body);
     return;
   }
 

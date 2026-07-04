@@ -10,6 +10,7 @@ import { registerStaticSpa } from './plugins/static-spa.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerDevicesRoute } from './routes/devices.js';
 import { registerSessionRoutes } from './routes/sessions.js';
+import { registerKeyRoute } from './routes/keys.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
 import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
 import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
@@ -225,6 +226,7 @@ export async function createApp(
       await registerHealthRoute(api);
       await registerDevicesRoute(api);
       await registerSessionRoutes(api);
+      await registerKeyRoute(api);
     },
     { prefix: '/api' },
   );

@@ -4,6 +4,35 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-04T20:25:33Z
+
+**What was done — implemented `remote-control-keys` (C6) via the `/next-change` Loop Engineering cycle**
+- First user-visible command capability: the SPA can now actually press remote-control keys and drive a paired TV over the Smart View WebSocket.
+- **Spec drift caught before implementing**: the change's own `design.md` D2 and `tasks.md` 1.1/1.2 were written pre-`smart-view-ws-transport` pivot and still called out `jsonrpc.call('remoteKeyControl', …)` + the hotel-TV Postman collection as the source of truth for the on-wire envelope. `AGENTS.md` and `docs/capabilities.md` C6 both explicitly override this (Smart View WS envelope, `ms.remote.control` method). Paused and got user confirmation, then rewrote design.md D2's Decision block and tasks.md 1.1/1.2 wording to point at `openspec/changes/archive/2026-07-04-smart-view-ws-transport/design.md` D1 as the authoritative envelope before writing any code.
+- Back-end:
+  - `back-end/src/tv/keys.ts` (new): `SamsungKeyCode` union (9-key MVP: 4 arrows, ENTER, RETURN, HOME, MENU, POWER), `SAMSUNG_KEY_CODES` array for Fastify schema use, `keyControlParams(key)` returning the Smart View `Click` envelope `{ Cmd, DataOfCmd, Option, TypeOfRemote }`.
+  - `back-end/src/routes/keys.ts` (new): `POST /api/devices/:udn/key`. Fastify body schema uses the enum → 400 `validation` on unknown keys. Guard on session state → 409 `SessionNotConnected` (new front-end-facing code, not part of `TvError` — the `TvError` union stays reserved for TV-side failures). On success enqueues through `session.enqueue((transport) => transport.call('ms.remote.control', {...keyControlParams(key)}))` and returns 204. Serialization is inherited from the C5 per-TV FIFO queue so rapid-fire clicks arrive in order.
+  - `back-end/src/app.ts`: registers the new route under `/api`.
+- Back-end tests:
+  - `back-end/src/tv/keys.test.ts` (new, 3 tests): shape guard for `KEY_UP`, `KEY_ENTER`, `KEY_POWER`.
+  - `back-end/src/routes/keys.test.ts` (new, 4 tests): 409 before connect, 400 on unknown key after connect, 204 records one `ms.remote.control` call with the correct params, three rapid POSTs land on the transport in order. Uses the same discovery-stub + stub-transport pattern as `session-integration.test.ts`.
+  - 66 → 73 tests total, all passing.
+- Front-end:
+  - `front-end/src/data/keys.ts` (new): client-side mirror of `SamsungKeyCode`.
+  - `front-end/src/data/useSendKey.ts` (new): `useSendKey(udn)` returns `sendKey(key)`; POSTs to `/api/devices/:udn/key`; re-throws `ApiError` after console-logging (toast/banner UI belongs to C9 `error-surfacing`).
+  - `front-end/src/screens/RemoteScreen.tsx` (new): the inline RemoteScreen previously living in `App.tsx` extracted into its own file so it can be unit-tested. Wired D-pad directions to arrow keys, D-pad center to `KEY_ENTER`, back/home/menu icons to `KEY_RETURN`/`KEY_HOME`/`KEY_MENU`, accent power button to `KEY_POWER`. Every command control passes `disabled={!isConnected}` — DS `IconButton` already supported it; `DPad` did not, so extended it.
+  - `docs/orbit-tv-remote-design-system/components/controls/DPad.{jsx,d.ts}`: added a `disabled` prop that propagates to every underlying `IconButton`, per tasks.md 3.3's "extend the DS with the flag" instruction (no inlined pointer-events/opacity on the primitive). Non-command elements (AppShortcut row, Slider) still use the pre-existing wrapper-with-opacity pattern because their DS components don't accept `disabled` and they're covered by later capabilities (C7 volume-control, and app-launching is future scope).
+  - `front-end/src/App.tsx`: now a thin router — imports `RemoteScreen` from its new location.
+- Front-end tests:
+  - `front-end/src/screens/RemoteScreen.test.tsx` (new, 2 tests): every command control disabled when session state is `Connecting`, and clicking the D-pad up arrow while `Connected` posts `sendKey('udn-1', 'KEY_UP')`.
+  - Hex-color grep guard on `front-end/src/**/*.{ts,tsx,css}` → no palette leaks.
+  - 7 → 9 tests total, all passing.
+- Verification: `npm run back:build` ✓, `npm run front:build` ✓, `npm run back:test` 73/73 ✓, `npm run front:test` 9/9 ✓.
+- **Not done / follow-up**: task 5.2 (live-hardware repro pressing every button on a real Samsung TV) not executed — no LAN or physical TV reachable from this environment. Before trusting C6 in production, run through each of the 9 keys on real hardware and confirm the TV reacts. task 5.3's screen recording is likewise skipped; the stub-driven integration test suite (`routes/keys.test.ts`) stands in as the machine-verifiable repro.
+- **Follow-up spotted, not fixed here**: `useSendKey`'s failure-mode toast belongs to `error-surfacing` (C9); until then failures are console-only.
+
+---
+
 ## 2026-07-04T16:01:58Z
 
 **What was done — implemented `smart-view-ws-transport` (protocol pivot for C5/C3), continuing from a partially-applied, uncommitted prior session**

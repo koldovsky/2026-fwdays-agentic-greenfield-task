@@ -7,12 +7,12 @@ The back-end SHALL expose `POST /api/devices/:udn/key` accepting a body of the s
 #### Scenario: Enter key succeeds on a connected TV
 
 - **WHEN** a client `POST`s `{ "key": "KEY_ENTER" }` to `/api/devices/:udn/key` and the session state is `Connected`
-- **THEN** the response is `204` and the TV received the corresponding `remoteKeyControl` JSON-RPC call
+- **THEN** the response is `204` and the TV received the corresponding `ms.remote.control` Smart View WebSocket frame
 
-#### Scenario: JSON-RPC ordering preserved for rapid input
+#### Scenario: Command ordering preserved for rapid input
 
 - **WHEN** a client sends `KEY_DOWN`, `KEY_DOWN`, `KEY_ENTER` in rapid succession
-- **THEN** the three `remoteKeyControl` calls hit the wire in that order via the per-session FIFO
+- **THEN** the three `ms.remote.control` frames hit the wire in that order via the per-session FIFO
 
 ### Requirement: Enumerated set of supported keys
 
@@ -35,8 +35,8 @@ Every command dispatched by the front-end SHALL result in either a success (204)
 
 #### Scenario: TV failure surfaces to caller
 
-- **WHEN** the TV returns `-32000` while the SPA is pressing `KEY_HOME`
-- **THEN** the endpoint responds `500` with an envelope whose `code` is `"TvFailed"`, and the SPA's `useSendKey` hook throws `ApiError`
+- **WHEN** the Smart View WebSocket to the TV drops (e.g. `TvError('TvNotReachable', …)` thrown from `session.enqueue`) while the SPA is pressing `KEY_HOME`
+- **THEN** the endpoint responds with the mapped domain envelope (`code: "TvNotReachable"`, HTTP `502`) — NOT the generic `code: "internal"` — and the SPA's `useSendKey` hook throws `ApiError` with the same code
 
 ### Requirement: Controls disabled while not Connected
 
@@ -52,11 +52,11 @@ Every remote-command button in the SPA SHALL be disabled unless the current sess
 - **WHEN** a client `POST`s to `/api/devices/:udn/key` while that session's state is not `Connected`
 - **THEN** the endpoint responds with an error envelope whose `code` is `"SessionNotConnected"` (HTTP 409) and does not enqueue any TV call
 
-### Requirement: Key set backed by Samsung IP Control protocol
+### Requirement: Key set backed by Samsung Smart View WebSocket protocol
 
-Every listed key value SHALL be a documented Samsung IP Control key code. The mapping between UI action and Samsung key SHALL live in a single file (`back-end/src/tv/keys.ts`) so it can be audited against the `samsung-ip-control-protocol` skill.
+Every listed key value SHALL be a documented Samsung Smart View `KEY_*` code sent under the `ms.remote.control` envelope. The mapping between UI action and Samsung key SHALL live in a single file (`back-end/src/tv/keys.ts`) so it can be audited against the archived Smart View transport design (`openspec/changes/archive/2026-07-04-smart-view-ws-transport/design.md` D1). The hotel-TV `samsung-ip-control-protocol` skill / Postman collection is explicitly NOT the authoritative source here (per `AGENTS.md` that protocol is unrelated to the consumer Tizen TVs this repo targets).
 
 #### Scenario: All keys have a protocol reference
 
 - **WHEN** an auditor lists the `SamsungKeyCode` union
-- **THEN** every value appears in the `samsung-ip-control-protocol` skill's method catalogue or in the Postman collection at `docs/samsung-ip-control-protocol/IP CONTROL V2.postman_collection.json`
+- **THEN** every value is a Samsung Smart View `KEY_*` code, and the `keyControlParams` helper wraps it in the exact `{ Cmd: 'Click', DataOfCmd: <key>, Option: 'false', TypeOfRemote: 'SendRemoteKey' }` envelope documented in `openspec/changes/archive/2026-07-04-smart-view-ws-transport/design.md` D1
