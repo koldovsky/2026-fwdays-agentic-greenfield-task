@@ -6,6 +6,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Product docs
 
+This project uses the Spec-Driven Development principle (openspec).
+
 Before planning or implementing features, read the docs in **`docs/`**:
 
 - **[docs/requirements.md](docs/requirements.md)** — numbered requirements (`FR-*`, `NFR-*`, `TC-*`, `BC-*`); the traceable source of truth for what to build and how to verify it.
