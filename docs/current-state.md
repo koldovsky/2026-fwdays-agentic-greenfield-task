@@ -20,11 +20,20 @@
   127.0.0.1, key chmod 600, secret-scan patterns hardened.
   Gates: lint, 47/47 unit, 6/6 live integration, build, openspec 5/5
   strict, traceability 0 failures.
+- **S2 `intake` in flight (PAUSED by the user, 2026-07-04 ~13:00):**
+  sections 1–4 DONE (schema; state machine + validators red→green
+  106/106; agent tool-loop red→green 122/122); section 5 nearly done
+  (`884eb90`): pipeline green 142/142, AnthropicModelPort (ambient auth
+  only), integration smoke (skipIf no auth; 6 passed + 1 skipped).
+  **Remaining:** 5.6 wire `packages/bot/src/index.ts` (real grammY +
+  AnthropicModelPort + GoogleCalendarPort + openDatabase, startable via
+  `node packages/bot/src/index.ts`); section 6: cadence 6.1–6.7 →
+  **review-gate BEFORE archive** (patch workflow args:
+  `typeof args==='string'?JSON.parse:...`, change='intake') → 6.9
+  manual smoke NEEDS THE USER (real bot + real Telegram chat) → archive.
 - **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
   (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
   chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
-  Next slice = **S2 `intake`** (change folder → red → green pattern
-  established by S1).
 - **Active change:** none (baseline specs, not a change folder)
 - **Progress:** G0 loop (`e8b4952`); PRD hardening (`2527fde`); decisions:
   sonnet-5 + user token (`acc9e64`), musical identity (`c33157a`),
