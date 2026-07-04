@@ -8,7 +8,16 @@ import { loggerOptions } from './logger.js';
 import { errorHandler } from './errors.js';
 import { registerStaticSpa } from './plugins/static-spa.js';
 import { registerHealthRoute } from './routes/health.js';
+import { registerDevicesRoute } from './routes/devices.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
+import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
+import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
+import {
+  startDiscovery,
+  type DiscoveryHandle,
+  type DiscoveryOptions,
+} from './discovery/index.js';
+import { createDevicesBroker, type DevicesBroker } from './ws/broker.js';
 
 export interface MdnsAppOptions {
   enabled?: boolean;
@@ -19,12 +28,25 @@ export interface MdnsAppOptions {
   hostname?: string;
 }
 
+export interface DiscoveryAppOptions {
+  enabled?: boolean;
+  /** Injectable SSDP transport (tests pass a stub). */
+  transport?: SsdpTransport;
+  searchIntervalMs?: number;
+  offlineSweepIntervalMs?: number;
+  offlineThresholdMs?: number;
+  fetchConcurrency?: number;
+  fetchDescription?: DiscoveryOptions['fetchDescription'];
+  st?: string;
+}
+
 export interface CreateAppOptions {
   staticRoot?: string;
   serveSpa?: boolean;
   /** Port advertised in the mDNS SRV record. Defaults to `PORT` / 80. */
   port?: number;
   mdns?: MdnsAppOptions;
+  discovery?: DiscoveryAppOptions;
 }
 
 const defaultStaticRoot = fileURLToPath(
@@ -34,6 +56,11 @@ const defaultStaticRoot = fileURLToPath(
 declare module 'fastify' {
   interface FastifyInstance {
     mdns: { handle: MdnsHandle | undefined };
+    discovery: {
+      registry: DeviceRegistry;
+      broker: DevicesBroker | undefined;
+      handle: DiscoveryHandle | undefined;
+    };
   }
 }
 
@@ -76,8 +103,50 @@ export async function createApp(
     });
   }
 
+  const registry = createDeviceRegistry();
+  const discoveryRef: FastifyInstance['discovery'] = {
+    registry,
+    broker: undefined,
+    handle: undefined,
+  };
+  app.decorate('discovery', discoveryRef);
+
+  const discoveryOptions = options.discovery ?? {};
+  const discoveryEnabled =
+    discoveryOptions.enabled ?? process.env.DISCOVERY_ENABLED !== '0';
+
+  if (discoveryEnabled) {
+    app.addHook('onReady', async () => {
+      const transport =
+        discoveryOptions.transport ?? createSsdpTransport({ logger: app.log });
+      const handle = await startDiscovery({
+        transport,
+        registry,
+        logger: app.log,
+        searchIntervalMs: discoveryOptions.searchIntervalMs,
+        offlineSweepIntervalMs: discoveryOptions.offlineSweepIntervalMs,
+        offlineThresholdMs: discoveryOptions.offlineThresholdMs,
+        fetchConcurrency: discoveryOptions.fetchConcurrency,
+        fetchDescription: discoveryOptions.fetchDescription,
+        st: discoveryOptions.st,
+      });
+      discoveryRef.handle = handle;
+    });
+
+    app.addHook('onClose', async () => {
+      await discoveryRef.handle?.stop();
+      discoveryRef.handle = undefined;
+      discoveryRef.broker?.close();
+      discoveryRef.broker = undefined;
+    });
+  }
+
   await app.register(websocket);
+  if (discoveryEnabled) {
+    discoveryRef.broker = createDevicesBroker(registry, app.log);
+  }
   app.get('/ws', { websocket: true }, (socket) => {
+    discoveryRef.broker?.register(socket);
     socket.on('message', (raw: RawData) => {
       if (raw.toString() === 'ping') socket.send('pong');
     });
@@ -86,6 +155,7 @@ export async function createApp(
   await app.register(
     async (api) => {
       await registerHealthRoute(api);
+      await registerDevicesRoute(api);
     },
     { prefix: '/api' },
   );

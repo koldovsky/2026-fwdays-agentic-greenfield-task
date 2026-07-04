@@ -17,6 +17,7 @@ before(async () => {
     staticRoot,
     serveSpa: false,
     mdns: { enabled: false },
+    discovery: { enabled: false },
   });
   await app.listen({ port: 0, host: '127.0.0.1' });
 
