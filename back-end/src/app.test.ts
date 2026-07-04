@@ -5,6 +5,21 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { createApp } from './app.js';
+import type { MdnsClient, MdnsService } from './mdns.js';
+
+function makeStubClient(): MdnsClient & {
+  published: Array<{ name: string; type: string; port: number; host?: string; txt?: Record<string, string> }>;
+} {
+  const stub = {
+    published: [] as Array<{ name: string; type: string; port: number; host?: string; txt?: Record<string, string> }>,
+    publish(opts: { name: string; type: string; port: number; host?: string; txt?: Record<string, string> }): MdnsService {
+      stub.published.push(opts);
+      return { stop: () => {} };
+    },
+    destroy(): void {},
+  };
+  return stub;
+}
 
 let app: FastifyInstance;
 let staticRoot: string;
@@ -17,7 +32,27 @@ before(async () => {
     '<!doctype html><title>mytv</title>',
   );
 
-  app = await createApp({ staticRoot, serveSpa: true });
+  app = await createApp({
+    staticRoot,
+    serveSpa: true,
+    mdns: {
+      client: makeStubClient(),
+      // No poll timer during the request tests; a fresh check is not needed.
+      pollIntervalMs: 0,
+      networkInterfaces: () => ({
+        eth0: [
+          {
+            address: '192.168.1.42',
+            netmask: '255.255.255.0',
+            family: 'IPv4',
+            mac: 'aa:bb:cc:dd:ee:ff',
+            internal: false,
+            cidr: '192.168.1.42/24',
+          },
+        ],
+      }),
+    },
+  });
   await app.listen({ port: 0, host: '127.0.0.1' });
 
   const address = app.server.address();
@@ -32,11 +67,23 @@ after(async () => {
   await rm(staticRoot, { recursive: true, force: true });
 });
 
-test('GET /api/health returns the ok envelope', async () => {
+test('GET /api/health returns the ok envelope with mdns state', async () => {
   const response = await fetch(`${baseUrl}/api/health`);
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type') ?? '', /application\/json/);
-  assert.deepEqual(await response.json(), { status: 'ok' });
+  const body = (await response.json()) as Record<string, unknown>;
+  assert.equal(body.status, 'ok');
+  assert.equal(typeof body.mdns, 'object');
+  const mdns = body.mdns as Record<string, unknown>;
+  assert.equal(typeof mdns.state, 'string');
+});
+
+test('GET /api/health reports mdns.state === "advertising" once ready', async () => {
+  const response = await fetch(`${baseUrl}/api/health`);
+  const body = (await response.json()) as { mdns: { state: string; hostname: string; address: string } };
+  assert.equal(body.mdns.state, 'advertising');
+  assert.equal(body.mdns.hostname, 'mytv.local');
+  assert.equal(body.mdns.address, '192.168.1.42');
 });
 
 test('GET /deep/route falls back to the SPA shell', async () => {

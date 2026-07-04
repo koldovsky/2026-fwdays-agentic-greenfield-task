@@ -13,7 +13,11 @@ let wsUrl: string;
 
 before(async () => {
   staticRoot = await mkdtemp(join(tmpdir(), 'mytv-spa-'));
-  app = await createApp({ staticRoot, serveSpa: false });
+  app = await createApp({
+    staticRoot,
+    serveSpa: false,
+    mdns: { enabled: false },
+  });
   await app.listen({ port: 0, host: '127.0.0.1' });
 
   const address = app.server.address();
