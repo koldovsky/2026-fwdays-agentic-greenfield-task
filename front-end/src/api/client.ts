@@ -38,7 +38,8 @@ export const apiClient = {
   post<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers:
+        body === undefined ? undefined : { 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   },

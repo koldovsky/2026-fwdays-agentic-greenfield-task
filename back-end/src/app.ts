@@ -94,6 +94,27 @@ export async function createApp(
 
   app.setErrorHandler(errorHandler);
 
+  // Some clients send `Content-Type: application/json` on POSTs that
+  // carry no body (e.g. `/connect`, `/disconnect`). Fastify's built-in
+  // JSON parser rejects that with 400; treat empty payloads as no body.
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (_req, body, done) => {
+      const text = typeof body === 'string' ? body : body.toString();
+      if (text.length === 0) {
+        done(null, undefined);
+        return;
+      }
+      try {
+        done(null, JSON.parse(text));
+      } catch (err) {
+        done(err as Error);
+      }
+    },
+  );
+
   const mdnsRef: { handle: MdnsHandle | undefined } = { handle: undefined };
   app.decorate('mdns', mdnsRef);
 
