@@ -69,7 +69,8 @@
     {
       "id": "FR-INTAKE-01",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -78,7 +79,8 @@
     {
       "id": "FR-INTAKE-02",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -87,7 +89,8 @@
     {
       "id": "FR-INTAKE-03",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -96,7 +99,8 @@
     {
       "id": "FR-INTAKE-04",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -105,7 +109,8 @@
     {
       "id": "FR-INTAKE-05",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -115,7 +120,8 @@
       "id": "FR-INTAKE-06",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -126,7 +132,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -136,7 +143,8 @@
       "id": "FR-INTAKE-08",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -145,7 +153,8 @@
     {
       "id": "FR-GUARD-04",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -154,7 +163,8 @@
     {
       "id": "FR-GUARD-05",
       "specs": [
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -353,7 +363,8 @@
       "id": "FR-HITL-04",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -375,7 +386,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -612,6 +624,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-DASH-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"intake\" is not archived"
     }
   ]
 }

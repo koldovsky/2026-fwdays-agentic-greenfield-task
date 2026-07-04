@@ -10,7 +10,7 @@ Result: PASS
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
-| 2026-07-04-slots | clean | 16 | yes | src |
+| 2026-07-04-slots | clean | 17 | yes | src |
 
 ## Cross-slice module overlap
 
