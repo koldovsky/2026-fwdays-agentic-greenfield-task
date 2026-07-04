@@ -4,11 +4,11 @@ Handoff log for agent sessions. Update at the end of each meaningful work sessio
 
 ## Last updated
 
-`17:35 4 July` (Europe/Kyiv)
+`18:10 4 July` (Europe/Kyiv)
 
 ## Last action
 
-OpenSpec change `quality-gate` archived to `openspec/changes/archive/2026-07-04-quality-gate/`; main spec synced at `openspec/specs/quality-gate/spec.md`.
+Fixed km constraint fields misalignment in the route sidebar — labels share one grid row so inputs line up when label text wraps.
 
 ## Current focus
 
@@ -16,10 +16,8 @@ MVP complete (phases 1–8). Ready for demo recording and PR submission.
 
 ## Completed this session
 
-- Quality-gate archived; all OpenSpec phases done
-- Main spec: `openspec/specs/quality-gate/spec.md` (7 requirements)
-- CI: `npm run check`, `.github/workflows/quality.yml`
-- Docs: `docs/test-plan.md`, all MVP requirements `shipped`
+- Aligned rest/day km inputs in `constraint-fields.tsx` via shared-label-row CSS grid (FR-INPUT-01)
+- Hybrid geocoding (Photon prefix search + Nominatim Ukrainian labels) for partial city names
 
 ## Open items / blockers
 

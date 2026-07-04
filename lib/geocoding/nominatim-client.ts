@@ -87,7 +87,7 @@ function dedupePlaces(places: GeocodedPlace[]): GeocodedPlace[] {
   return unique;
 }
 
-export async function searchPlaces(
+export async function searchNominatim(
   query: string,
   signal: AbortSignal,
 ): Promise<GeocodedPlace[]> {

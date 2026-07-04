@@ -12,12 +12,12 @@ import { createPortal } from "react-dom";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { searchPlaces } from "@/lib/geocoding/nominatim-client";
+import { searchPlaces } from "@/lib/geocoding/search-places";
 import type { GeocodedPlace } from "@/lib/geocoding/types";
 import { t, type I18nKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const DEBOUNCE_MS = 1000;
+const DEBOUNCE_MS = 400;
 const MIN_QUERY_LENGTH = 2;
 
 type DropdownPosition = {
@@ -105,6 +105,9 @@ export function LocationField({
           if (controller.signal.aborted) {
             return;
           }
+          if (results.length > 0) {
+            updateDropdownPosition();
+          }
           setSuggestions(results);
           setIsOpen(results.length > 0);
           setShowNoResults(results.length === 0);
@@ -128,7 +131,7 @@ export function LocationField({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [query, value]);
+  }, [query, value, updateDropdownPosition]);
 
   useEffect(() => {
     return () => {
@@ -287,13 +290,17 @@ export function LocationField({
       </div>
       <span className="sr-only">{t("route.autocompleteHint")}</span>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("route.searching")}</p>
-      ) : null}
-
-      {showNoResults && !isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("route.noResults")}</p>
-      ) : null}
+      <p
+        className="min-h-5 text-sm text-muted-foreground"
+        aria-live="polite"
+        aria-busy={isLoading}
+      >
+        {isLoading
+          ? t("route.searching")
+          : showNoResults
+            ? t("route.noResults")
+            : null}
+      </p>
 
       {typeof document !== "undefined" && suggestionsList
         ? createPortal(suggestionsList, document.body)

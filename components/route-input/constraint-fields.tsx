@@ -30,10 +30,18 @@ export function ConstraintFields({
   onRestBlur,
   onDayBlur,
 }: ConstraintFieldsProps) {
+  const inputClassName =
+    "h-10 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="rest-km">{t("route.restLabel")}</Label>
+    <div className="grid grid-cols-1 gap-y-1.5 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-1.5">
+      <Label
+        htmlFor="rest-km"
+        className="leading-snug sm:col-start-1 sm:row-start-1 sm:self-end"
+      >
+        {t("route.restLabel")}
+      </Label>
+      <div className="flex flex-col gap-1.5 sm:col-start-1 sm:row-start-2">
         <Input
           id="rest-km"
           inputMode="numeric"
@@ -48,15 +56,20 @@ export function ConstraintFields({
           onBlur={() => {
             onRestBlur?.();
           }}
-          className="h-10 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className={inputClassName}
         />
         {restError ? (
           <p className="text-sm text-destructive">{t(restError)}</p>
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="day-km">{t("route.dayLabel")}</Label>
+      <Label
+        htmlFor="day-km"
+        className="mt-2.5 leading-snug sm:col-start-2 sm:row-start-1 sm:mt-0 sm:self-end"
+      >
+        {t("route.dayLabel")}
+      </Label>
+      <div className="flex flex-col gap-1.5 sm:col-start-2 sm:row-start-2">
         <Input
           id="day-km"
           inputMode="numeric"
@@ -71,7 +84,7 @@ export function ConstraintFields({
           onBlur={() => {
             onDayBlur?.();
           }}
-          className="h-10 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className={inputClassName}
         />
         {dayError ? (
           <p className="text-sm text-destructive">{t(dayError)}</p>
