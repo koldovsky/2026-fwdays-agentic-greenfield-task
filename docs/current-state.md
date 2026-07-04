@@ -4,6 +4,17 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-04T12:54:05Z
+
+**What was done — implemented `default-port-80` via the `/next-change` Loop Engineering cycle**
+- Flipped the back-end HTTP default port from `3000` to `80` so the reachable URL matches `http://mytv.local/` without an override, aligning the code with `FR-HOSTING-02`. Two literal call sites (`back-end/src/index.ts:3` and `back-end/src/app.ts:57`) plus the JSDoc on `CreateAppOptions.port` at `back-end/src/app.ts:25`.
+- `openspec/specs/platform-foundation/spec.md`: the "Single-origin Fastify server" requirement now pins the default port at `80`, cites `FR-HOSTING-02` alongside `FR-HOSTING-01`/`NFR-01`/`NFR-04`, and adds two scenarios — `Default port is 80` and `PORT env var overrides the default`. Synced from the change's delta at `openspec/changes/default-port-80/specs/platform-foundation/spec.md`.
+- `back-end/README.md`: env-var table row for `PORT` shows default `80` with a pointer to the deploy-time capability requirement; the old "Running on port 80 (Orange Pi)" section is now "Running on the default port 80 (Linux)" — same `setcap 'cap_net_bind_service=+ep'` command, reframed as unlocking the *default* rather than opting into it. Added a "Development on macOS / non-privileged shells" subsection documenting `PORT=3000` as the standard opt-out; the Vite dev proxy already reads `VITE_BACK_PORT ?? 3000`, so no front-end change is needed.
+- `back-end/.env.example`: kept `PORT=3000` (it's still the correct dev opt-out on macOS) but added a header comment clarifying that the app default is `80` and this file describes the local-dev override, not the app defaults.
+- Verification: `npm run back:build` clean; `npm run back:test` 11/11 green (tests bind `port: 0`, insensitive to the default). Live smoke ran against the compiled `dist/index.js`: with `PORT` unset the process logged `mytv back-end listening on http://0.0.0.0:80`, `curl http://localhost/api/health` returned `200 {"status":"ok",...}`, and mDNS advertised `port:80`. With `PORT=3000` the same run bound `:3000` end-to-end, including the SRV record — proving both call sites read the same resolved value.
+- **Note for the next session**: on macOS the Node binary on this box was already permitted to bind low ports; other dev environments may need to either set `PORT=3000` in `.env` or run `sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which node)")"` before `npm --prefix back-end start` works. On Orange Pi, the `setcap` line is a one-time deploy step.
+- **Follow-ups for the next session**: none blocking. Next capability per `docs/capabilities.md` is `upnp-tv-discovery` (C3 — Phase 1, only depends on `platform-foundation`).
+
 ## 2026-07-04T11:33:05Z
 
 **What was done — hotfix on top of `mdns-advertisement` (C2): silence bonjour-service probe noise and wire real shutdown signals**

@@ -23,22 +23,32 @@ npm run back:dev | npx pino-pretty
 
 | Variable    | Default   | Purpose                                                                 |
 | ----------- | --------- | ------------------------------------------------------------------------ |
-| `PORT`      | `3000`    | TCP port to listen on.                                                   |
+| `PORT`      | `80`      | TCP port to listen on. Matches the reachable URL `http://mytv.local/`. See "Running on the default port 80" below for the Linux capability requirement, and "Development on macOS / non-privileged shells" for the standard opt-out. |
 | `HOST`      | `0.0.0.0` | Interface to bind.                                                       |
 | `LOG_LEVEL` | `info`    | Pino log level.                                                          |
 | `SERVE_SPA` | on        | Set to `0` to disable serving `front-end/dist/` (e.g. running the back-end alone during front-end development via `npm run front:dev`'s own dev server). |
 
 Copy `.env.example` to `.env` to override locally; `tsx`/`node` do not auto-load `.env` files here, so export these into your shell or use a tool like `dotenv-cli` if you want file-based overrides.
 
-## Running on port 80 (Orange Pi)
+## Running on the default port 80 (Linux)
 
-Binding to `PORT=80` requires either running as root or granting the Node binary the capability to bind low ports without root:
+The default `PORT=80` matches the URL the product surfaces (`http://mytv.local/`). Binding a low port on Linux requires either running as root or granting the Node binary the capability to bind low ports without root — the standard deploy step on the Orange Pi:
 
 ```bash
 sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which node)")"
 ```
 
-Alternative: keep `PORT=8080` (or similar) and redirect port 80 with `iptables`/`nftables`.
+Alternative: set `PORT=8080` (or similar) and redirect port 80 with `iptables`/`nftables`.
+
+## Development on macOS / non-privileged shells
+
+On a developer laptop where the Node binary cannot be granted `cap_net_bind_service` (e.g. macOS, or a Linux user without `sudo`), the standard opt-out is to pick any high port and pass it through the env:
+
+```bash
+PORT=3000 npm run back:dev
+```
+
+The Vite dev proxy reads the same value from `VITE_BACK_PORT` (defaulting to `3000`), so `npm run front:dev` keeps working with no further configuration.
 
 ## mDNS
 

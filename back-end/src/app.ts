@@ -22,7 +22,7 @@ export interface MdnsAppOptions {
 export interface CreateAppOptions {
   staticRoot?: string;
   serveSpa?: boolean;
-  /** Port advertised in the mDNS SRV record. Defaults to `PORT` / 3000. */
+  /** Port advertised in the mDNS SRV record. Defaults to `PORT` / 80. */
   port?: number;
   mdns?: MdnsAppOptions;
 }
@@ -54,7 +54,7 @@ export async function createApp(
   const mdnsEnabled =
     mdnsOptions.enabled ?? process.env.MDNS_ENABLED !== '0';
   const advertisedPort =
-    options.port ?? Number(process.env.PORT ?? 3000);
+    options.port ?? Number(process.env.PORT ?? 80);
 
   if (mdnsEnabled) {
     app.addHook('onReady', async () => {
