@@ -156,7 +156,7 @@
 - [x] 4.2 Write `packages/agent/src/testing/fake-model-port.ts`: a scripted
       `FakeModelPort` (queue of canned `ModelResponse`s) for deterministic
       loop tests.
-- [ ] 4.3 Write `packages/agent/src/tools.ts` tests FIRST
+- [x] 4.3 Write `packages/agent/src/tools.ts` tests FIRST
       (`tools.test.ts`): the tool set is exactly the closed list from
       design.md Decision 2 (`save_name`, `save_age`, `save_format`,
       `save_goal`, `skip_goal`, `save_tastes`, `skip_tastes`,
@@ -167,7 +167,13 @@
       `@trace FR-GUARD-06`); `save_format`'s JSON schema enum is exactly
       `["individual","group","unsure","instrument"]`. Confirm red, then
       implement `tools.ts` to green.
-- [ ] 4.4 Write `packages/agent/src/loop.test.ts` FIRST (red), against
+      **Confirmed:** both `tools.ts` and `tools.test.ts` already existed,
+      pre-shipped with real content per the file's own header comment (the
+      same "plain data literal, no behaviour to fake" precedent as 2.4's
+      `copy.test.ts`/S1 `propose.ts`) — green-by-nature, not a red round
+      this pass owed. Verified all 6 assertions pass against the existing
+      `TOOLS` array; left byte-identical, untouched.
+- [x] 4.4 Write `packages/agent/src/loop.test.ts` FIRST (red), against
       `FakeModelPort`:
       - a scripted `save_name` tool-use response advances state and is
         deterministically logged regardless of the model's accompanying
@@ -191,11 +197,36 @@
         `MODEL_CONFIG` (thinking disabled, `claude-sonnet-5`) — a config
         assertion (`@trace TC-STACK-02`, `@trace NFR-UX-01`).
       Confirm every case red, then implement `loop.ts` to green.
-- [ ] 4.5 Write `packages/agent/src/apology.ts` (Anthropic-call-failure
+      **Confirmed:** all 7 tests in `loop.test.ts` were red against the
+      `Not implemented` throwing stub (verified before implementing);
+      implemented `runIntakeTurn` (message → `ports.model.send(messages,
+      TOOLS, MODEL_CONFIG)` → dispatch each `tool_use` block through
+      `transition()`, defense-in-depth per the reducer's own
+      `validateAge`/`validateFormat` calls, never trusting the model's
+      accompanying text; persist only the reducer's own validated
+      `fields`/`conversationState` via `ports.persistence`; orchestrate
+      `cancel_request`'s booking-release via `ports.bookingStore`/
+      `ports.releaseHold`; a plain-text response short-circuits before ever
+      calling `transition()`, returning the SAME `state` reference). All 7
+      tests now green; no test file touched.
+- [x] 4.5 Write `packages/agent/src/apology.ts` (Anthropic-call-failure
       Ukrainian apology constant, design.md Decision 3) and a test
       confirming the loop returns this constant (no crash, state preserved)
       when `ModelPort.send()` rejects (`@trace NFR-REL-01`). Red then green.
-- [ ] 4.6 Run `npm run test:run`; confirm 4.3–4.5 green with no regressions.
+      **Confirmed:** `apology.ts` already existed with real content (same
+      "no behaviour to fake" precedent noted in its own header); its
+      content assertions were already green. The genuinely red half —
+      `apology.test.ts`'s "`runIntakeTurn` returns
+      `ANTHROPIC_UNAVAILABLE_APOLOGY`, state preserved, no crash, when
+      `ModelPort.send()` rejects" — is now green: `runIntakeTurn` wraps only
+      the `ports.model.send()` call in try/catch (validation
+      errors/rejections from the reducer are never thrown, only returned as
+      `TransitionResult.error` — no over-broad catch). Left `apology.ts`
+      untouched.
+- [x] 4.6 Run `npm run test:run`; confirm 4.3–4.5 green with no regressions.
+      **Confirmed:** 122/122 passed (20 test files), zero regressions in S1
+      `slots` or S2 `lib/intake`/db suites. `tsc --noEmit` and `npm run
+      lint` both clean.
 
 ## 5. Bot wiring and integration tests
 

@@ -116,13 +116,29 @@
 //        conversation resumes exactly where it left off on the next
 //        message.
 
-import type { ModelConfig, ModelPort } from "./model-port.ts";
 import type {
+  ContentBlock,
+  ModelConfig,
+  ModelMessage,
+  ModelPort,
+  TextBlock,
+  ToolUseBlock,
+} from "./model-port.ts";
+import { MODEL_CONFIG } from "./model-port.ts";
+import { TOOLS } from "./tools.ts";
+import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "./apology.ts";
+import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
+import type {
+  AmendableField,
+  CandidateFormat,
   ConversationState,
   Detour,
+  GoalTag,
+  IntakeEvent,
   IntakeFields,
   IntakeState,
   TransitionErrorCode,
+  TransitionResult,
 } from "@kamerton/lib/src/intake/state-machine.ts";
 
 /** The seam this loop uses to make a validator-approved field save or
@@ -233,10 +249,210 @@ export type { ModelConfig };
  * `IntakeState`, and the deterministic tool-call log for this turn.
  *
  * See this file's header comment for the full pinned contract (tasks.md
- * 4.4's six behavioural bullets) — this is a TYPED THROWING STUB; the body
- * is implemented in tasks.md section 4's green half.
+ * 4.4's six behavioural bullets, implemented below).
  */
 export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
-  void input; // referenced only to keep the pinned signature lint-clean while unimplemented
-  throw new Error("Not implemented");
+  const { state, message, ports } = input;
+  const messages: ModelMessage[] = [{ role: "user", content: message }];
+
+  let response;
+  try {
+    // ALWAYS the closed TOOLS list and the fixed MODEL_CONFIG — never a
+    // subset, never a call-site override (tasks.md 4.4's sixth bullet,
+    // `@trace TC-STACK-02`, `@trace NFR-UX-01`).
+    response = await ports.model.send(messages, TOOLS, MODEL_CONFIG);
+  } catch {
+    // Only a model-port failure is caught here — validation errors are
+    // results (TransitionResult.error), never exceptions, and are handled
+    // below via the reducer's own return value, not a catch block
+    // (`@trace NFR-REL-01`).
+    return { reply: ANTHROPIC_UNAVAILABLE_APOLOGY, state, toolCalls: [] };
+  }
+
+  const toolUseBlocks = response.content.filter(isToolUseBlock);
+  const narratedText = response.content.filter(isTextBlock).map((block) => block.text).join("\n");
+
+  if (toolUseBlocks.length === 0) {
+    // FR-GUARD-05: a plain-text (off-topic-shaped or otherwise) response
+    // never reaches transition() — the SAME state reference is returned so
+    // callers can prove structurally that no mutation happened at all.
+    return { reply: narratedText, state, toolCalls: [] };
+  }
+
+  let currentState = state;
+  const toolCalls: ToolCallLogEntry[] = [];
+  for (const block of toolUseBlocks) {
+    const applied = await applyToolUse(block, currentState, ports);
+    currentState = applied.state;
+    toolCalls.push(applied.logEntry);
+  }
+
+  return { reply: narratedText, state: currentState, toolCalls };
+}
+
+function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {
+  return block.type === "tool_use";
+}
+
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === "text";
+}
+
+/** Maps one tool-use block onto the reducer's closed `IntakeEvent` set.
+ *  `explain_scope`/`explain_format` (deterministic, stateless explanations)
+ *  and any tool this loop's pinned `LoopPorts` does not yet wire a reducer
+ *  event for (`propose_slots`/`request_hold` — they need a `CalendarPort`
+ *  seam this contract does not expose, a later task) return `null`: they
+ *  never reach `transition()`, by design, not by omission. */
+function toIntakeEvent(block: ToolUseBlock): IntakeEvent | null {
+  const input = block.input;
+  switch (block.name) {
+    case "save_name":
+      return { type: "save_name", name: input.name as string };
+    case "save_age":
+      return { type: "save_age", age: input.age as number };
+    case "save_format":
+      return { type: "save_format", format: input.format as CandidateFormat };
+    case "save_goal":
+      return {
+        type: "save_goal",
+        goalTag: input.goalTag as GoalTag,
+        goalText: input.goalText as string,
+      };
+    case "skip_goal":
+      return { type: "skip_goal" };
+    case "save_tastes":
+      return {
+        type: "save_tastes",
+        tastes: input.tastes as string,
+        ...(input.dreamSong !== undefined ? { dreamSong: input.dreamSong as string } : {}),
+      };
+    case "skip_tastes":
+      return { type: "skip_tastes" };
+    case "save_experience_comfort":
+      return {
+        type: "save_experience_comfort",
+        experience: input.experience as string,
+        comfort: input.comfort as string,
+      };
+    case "save_weekdays":
+      return { type: "save_weekdays", weekdays: input.weekdays as string };
+    case "save_time_range":
+      return { type: "save_time_range", timeRange: input.timeRange as string };
+    case "amend_field":
+      // The per-field discriminated `AmendEvent` shape is enforced at
+      // runtime by `transition()`'s own field-by-field handling (and, for
+      // `studentAge`, `validateAge`) — defense in depth, same as
+      // `save_format`'s schema-enum-plus-validator pattern (tasks.md 4.4's
+      // second bullet). The model's own tool schema enum already constrains
+      // `field` to a real `AmendableField`.
+      return {
+        type: "amend",
+        field: input.field as AmendableField,
+        value: input.value,
+      } as unknown as IntakeEvent;
+    case "cancel_request":
+      return { type: "cancel" };
+    default:
+      return null;
+  }
+}
+
+/** The validator-approved field patch to persist for a successfully applied
+ *  event — always read back off the reducer's OWN resulting `fields`, never
+ *  the model's raw tool input, so a persisted row can never reflect a value
+ *  the reducer itself rejected or renormalized away from (design.md
+ *  Decision 2's "deterministic tool-result logging"). Returns `null` for
+ *  events with no field to persist (`skip_*`, `cancel`). */
+function fieldPatchForEvent(event: IntakeEvent, fields: IntakeFields): Partial<IntakeFields> | null {
+  switch (event.type) {
+    case "save_name":
+      return { studentName: fields.studentName };
+    case "save_age":
+      return { studentAge: fields.studentAge };
+    case "save_format":
+      return { format: fields.format };
+    case "save_goal":
+      return { goalTag: fields.goalTag, goalText: fields.goalText };
+    case "save_tastes":
+      return fields.dreamSong !== undefined
+        ? { tastes: fields.tastes, dreamSong: fields.dreamSong }
+        : { tastes: fields.tastes };
+    case "save_experience_comfort":
+      return { experience: fields.experience, comfort: fields.comfort };
+    case "save_weekdays":
+      return { preferredWeekdays: fields.preferredWeekdays };
+    case "save_time_range":
+      return { preferredTimeRange: fields.preferredTimeRange };
+    case "amend":
+      return { [event.field]: fields[event.field] } as Partial<IntakeFields>;
+    default:
+      return null;
+  }
+}
+
+interface AppliedToolUse {
+  state: IntakeState;
+  logEntry: ToolCallLogEntry;
+}
+
+/** Runs one tool-use block through the reducer (or, for `explain_*`/
+ *  not-yet-wired tools, past it entirely), persists validator-approved
+ *  changes, and orchestrates `cancel_request`'s booking-release side effect
+ *  — the loop's own deterministic tool-result log entry (ADR-0001 §5
+ *  analog) is built here, independent of the model's narration. */
+async function applyToolUse(
+  block: ToolUseBlock,
+  state: IntakeState,
+  ports: LoopPorts,
+): Promise<AppliedToolUse> {
+  const event = toIntakeEvent(block);
+  if (event === null) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "applied" },
+    };
+  }
+
+  const result: TransitionResult = transition(state, event);
+  const stateChanged = result.state.conversationState !== state.conversationState;
+  if (stateChanged) {
+    await ports.persistence.saveState(result.state.conversationState);
+  }
+
+  let outcome: ToolCallOutcome;
+  if (result.error !== undefined) {
+    outcome = "rejected";
+  } else if (result.detour) {
+    outcome = "detour";
+  } else {
+    outcome = "applied";
+    const patch = fieldPatchForEvent(event, result.state.fields);
+    if (patch !== null) {
+      await ports.persistence.saveFields(patch);
+    }
+  }
+
+  // FR-INTAKE-07: a successfully applied cancel also releases the calendar
+  // hold and marks the booking cancelled — a conversation-state move alone
+  // is not enough.
+  if (event.type === "cancel" && outcome === "applied") {
+    const pending = await ports.bookingStore.findPendingBookingForCurrentRequest();
+    if (pending !== undefined) {
+      if (pending.calendarEventId !== null) {
+        await ports.releaseHold(pending.calendarEventId);
+      }
+      await ports.bookingStore.markBookingCancelled(pending.id);
+    }
+  }
+
+  const logEntry: ToolCallLogEntry = {
+    tool: block.name,
+    input: block.input,
+    outcome,
+    ...(result.detour ? { detour: result.detour } : {}),
+    ...(result.error !== undefined ? { error: result.error } : {}),
+  };
+
+  return { state: result.state, logEntry };
 }
