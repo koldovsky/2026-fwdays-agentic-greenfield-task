@@ -10,6 +10,11 @@ declare module '@ds/components/core/Button.jsx' {
   export const Button: ComponentType<ButtonProps>
 }
 
+declare module '@ds/components/core/Card.jsx' {
+  import type { CardProps } from '@ds/components/core/Card'
+  export const Card: ComponentType<CardProps>
+}
+
 declare module '@ds/components/core/DeviceCard.jsx' {
   import type { DeviceCardProps } from '@ds/components/core/DeviceCard'
   export const DeviceCard: ComponentType<DeviceCardProps>

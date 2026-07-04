@@ -1,104 +1,12 @@
-import { useEffect, useState } from 'react'
-import { apiClient } from './api/client.ts'
-import { Button } from '@ds/components/core/Button.jsx'
-import { DeviceCard } from '@ds/components/core/DeviceCard.jsx'
+import { useState } from 'react'
 import { IconButton } from '@ds/components/core/IconButton.jsx'
 import { Badge } from '@ds/components/core/Badge.jsx'
-import { Input } from '@ds/components/forms/Input.jsx'
 import { Slider } from '@ds/components/forms/Slider.jsx'
 import { DPad } from '@ds/components/controls/DPad.jsx'
 import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx'
-import { Modal } from '@ds/components/feedback/Modal.jsx'
-
-type Status = 'online' | 'offline' | 'connecting'
-type Device = { id: string; name: string; model: string; ip: string; status: Status }
-
-const SAMPLE_DEVICES: Device[] = [
-  { id: '1', name: 'Living Room', model: 'Samsung QN90A', ip: '192.168.1.42', status: 'online' },
-  { id: '2', name: 'Bedroom', model: 'Samsung Q60B', ip: '192.168.1.58', status: 'online' },
-  { id: '3', name: 'Kitchen', model: 'Samsung The Frame', ip: '192.168.1.61', status: 'connecting' },
-  { id: '4', name: 'Guest Room', model: 'Samsung Crystal UHD', ip: '192.168.1.77', status: 'offline' },
-]
-
-function DeviceListScreen({ onOpenDevice }: { onOpenDevice: (d: Device) => void }) {
-  const [devices, setDevices] = useState<Device[]>(SAMPLE_DEVICES)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [ip, setIp] = useState('')
-
-  function addDevice() {
-    const value = ip.trim()
-    if (!value) return
-    setDevices((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name: 'New TV', model: 'Unknown model', ip: value, status: 'connecting' },
-    ])
-    setIp('')
-    setModalOpen(false)
-  }
-
-  return (
-    <div style={{ minHeight: '100%', padding: '40px 48px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ marginBottom: 32 }}>
-          <div
-            style={{
-              fontSize: 'var(--text-caption)',
-              letterSpacing: 'var(--tracking-overline)',
-              textTransform: 'uppercase',
-              color: 'var(--fg-3)',
-              fontWeight: 700,
-              marginBottom: 6,
-            }}
-          >
-            Local network
-          </div>
-          <h1 style={{ margin: 0, fontSize: 'var(--text-h1)', fontWeight: 800, color: 'var(--fg-1)' }}>Your TVs</h1>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 28 }}>
-          {devices.map((d) => (
-            <DeviceCard
-              key={d.id}
-              name={d.name}
-              model={d.model}
-              ip={d.ip}
-              status={d.status}
-              onClick={() => onOpenDevice(d)}
-            />
-          ))}
-        </div>
-
-        <Button variant="primary" icon="add" onClick={() => setModalOpen(true)}>
-          Add a TV
-        </Button>
-      </div>
-
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Add a TV by IP"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={addDevice}>
-              Connect
-            </Button>
-          </>
-        }
-      >
-        <Input
-          value={ip}
-          onChange={setIp}
-          placeholder="192.168.1.100"
-          icon="lan"
-          label="IP address"
-        />
-      </Modal>
-    </div>
-  )
-}
+import { DeviceListScreen } from './screens/DeviceListScreen.tsx'
+import { useDevices } from './data/useDevices.ts'
+import type { Device } from './data/types.ts'
 
 function RemoteScreen({ device, onBack }: { device: Device; onBack: () => void }) {
   const [volume, setVolume] = useState(38)
@@ -154,18 +62,10 @@ function RemoteScreen({ device, onBack }: { device: Device; onBack: () => void }
 
 function App() {
   const [device, setDevice] = useState<Device | null>(null)
-
-  // Temporary wiring smoke test for platform-foundation; removed once a
-  // real feature consumes apiClient.
-  useEffect(() => {
-    apiClient
-      .get('/api/health')
-      .then((health) => console.log('back-end health', health))
-      .catch((error) => console.error('back-end health check failed', error))
-  }, [])
+  const { devices } = useDevices()
 
   if (device) return <RemoteScreen device={device} onBack={() => setDevice(null)} />
-  return <DeviceListScreen onOpenDevice={setDevice} />
+  return <DeviceListScreen devices={devices} onOpenDevice={setDevice} />
 }
 
 export default App
