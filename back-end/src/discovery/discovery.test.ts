@@ -113,7 +113,12 @@ before(async () => {
   // *is* an EventEmitter (Object.assign(emitter, ...)), even though the
   // public interface only exposes `on`/`off`.
   const firstAdded = once(app.discovery.registry as unknown as EventEmitter, 'added');
-  transport.emitHit({ location: SAMSUNG_LOCATION, st: 'urn:test', usn: 'usn-1', source: 'msearch' });
+  transport.emitHit({
+    location: SAMSUNG_LOCATION,
+    st: 'urn:test',
+    usn: 'uuid:samsung-1::urn:samsung.com:device:MediaRenderer:1',
+    source: 'msearch',
+  });
   transport.emitHit({ location: SONOS_LOCATION, st: 'urn:test', usn: 'usn-2', source: 'msearch' });
   await firstAdded;
 });
@@ -164,7 +169,7 @@ test('WebSocket client receives a snapshot on connect then an added event for a 
           transport.emitHit({
             location: SECOND_SAMSUNG_LOCATION,
             st: 'urn:test',
-            usn: 'usn-3',
+            usn: 'uuid:samsung-2::urn:samsung.com:device:MediaRenderer:1',
             source: 'notify',
           });
         }

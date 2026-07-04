@@ -10,6 +10,25 @@ import type { SsdpHit, SsdpLogger, SsdpTransport } from './ssdp.js';
 /** Service Type Samsung TVs advertise; captured by `docs/samsung-ip-control-protocol` skill. */
 export const SAMSUNG_ST = 'urn:schemas-upnp-org:device:MediaRenderer:1';
 
+/**
+ * Cheap pre-fetch filter: skip the description-XML fetch for hits whose
+ * SSDP headers carry no Samsung signature. Post-fetch `isSamsungTv`
+ * stays as a defensive backstop for firmware that hides the vendor in
+ * headers but exposes it in the XML.
+ */
+export function shouldFetch(hit: {
+  usn?: string;
+  st?: string;
+  server?: string;
+}): boolean {
+  const haystack = [hit.usn, hit.st, hit.server]
+    .filter((v): v is string => typeof v === 'string' && v.length > 0)
+    .join(' ')
+    .toLowerCase();
+  if (!haystack) return true; // no headers → fall through to post-fetch filter
+  return haystack.includes('samsung');
+}
+
 const DEFAULT_SEARCH_INTERVAL_MS = 30_000;
 const DEFAULT_OFFLINE_SWEEP_INTERVAL_MS = 30_000;
 const DEFAULT_OFFLINE_THRESHOLD_MS = 60_000;
@@ -106,16 +125,35 @@ export async function startDiscovery(
       return;
     }
 
-    registry.upsert({
+    const stored = registry.upsert({
       udn: description.udn,
       name: description.name,
       model: description.model,
       ip,
       port,
     });
+    if (!stored) {
+      logger.debug(
+        { udn: description.udn, ip, port },
+        'ssdp hit dropped: another online Samsung UDN already owns this IP',
+      );
+    }
   }
 
   transport.on('hit', (hit) => {
+    if (!shouldFetch(hit)) {
+      logger.debug(
+        {
+          location: hit.location,
+          usn: hit.usn,
+          st: hit.st,
+          server: hit.server,
+          source: hit.source,
+        },
+        'ssdp hit dropped: no Samsung signature in headers',
+      );
+      return;
+    }
     void queue.add(() => handleHit(hit));
   });
 

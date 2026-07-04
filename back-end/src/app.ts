@@ -21,7 +21,6 @@ import {
 import { createDevicesBroker, type DevicesBroker } from './ws/broker.js';
 import { createSessionManager, type SessionManager } from './tv/manager.js';
 import { createTokenStore, type TokenStore } from './tv/token-store.js';
-import type { JsonRpcTransport } from './tv/jsonrpc.js';
 import type { SessionOptions } from './tv/session.js';
 
 export interface MdnsAppOptions {
@@ -48,12 +47,7 @@ export interface DiscoveryAppOptions {
 export interface SessionsAppOptions {
   enabled?: boolean;
   tokenStore?: TokenStore;
-  createTransport?: (opts: {
-    ip: string;
-    port: number;
-    accessToken?: string;
-    logger: Parameters<NonNullable<SessionOptions['createTransport']>>[0]['logger'];
-  }) => JsonRpcTransport;
+  createTransport?: SessionOptions['createTransport'];
   sessionOptions?: SessionManagerAppSessionOptions;
 }
 

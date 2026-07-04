@@ -5,6 +5,21 @@ import { createSession, type Session, type SessionOptions } from './session.js';
 import type { TokenStore } from './token-store.js';
 import type { SessionState } from './types.js';
 
+/**
+ * Samsung Smart View control port for Tizen TVs from 2016 onward (the
+ * target hardware family). Not derived from year/model — the failure
+ * mode of guessing wrong (connect timeout) is worse than a constant with
+ * an env escape hatch. `device.port` from the UPnP description is the
+ * *description* port, not the control port, and is deliberately ignored
+ * here. See design.md D3.
+ */
+const SMART_VIEW_PORT = 8001;
+
+function resolveControlPort(udn: string): number {
+  const override = process.env[`MYTV_CONTROL_PORT_${udn}`];
+  return override ? Number(override) : SMART_VIEW_PORT;
+}
+
 export interface SessionSnapshot {
   udn: string;
   state: SessionState;
@@ -62,7 +77,7 @@ export function createSessionManager(
     if (!device) return undefined;
     let session = sessions.get(udn);
     if (!session) {
-      session = factory(udn, device.ip, device.port);
+      session = factory(udn, device.ip, resolveControlPort(udn));
       sessions.set(udn, session);
     }
     return session;

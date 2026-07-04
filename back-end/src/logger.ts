@@ -1,7 +1,12 @@
 import pino, { type DestinationStream, type LoggerOptions } from 'pino';
 
-const SENSITIVE_KEYS = new Set(['AccessToken', 'authorization']);
+const SENSITIVE_KEYS = new Set(['AccessToken', 'authorization', 'token']);
 const MAX_DEPTH = 8;
+// Smart View pairing tokens can also ride along inside a plain string
+// value (e.g. the transport's own `ws://.../?name=...&token=SECRET`
+// connection URL, logged whole). Strip the query fragment wherever it
+// appears rather than only at the `token` key.
+const TOKEN_QUERY_FRAGMENT = /([?&]token=)[^&\s]*/gi;
 
 function isPlainObject(value: object): boolean {
   const proto = Object.getPrototypeOf(value);
@@ -35,6 +40,9 @@ function stripSensitive(
       result[key] = stripSensitive(entryValue, seen, depth + 1);
     }
     return result;
+  }
+  if (typeof value === 'string') {
+    return value.replace(TOKEN_QUERY_FRAGMENT, '$1[REDACTED]');
   }
   return value;
 }

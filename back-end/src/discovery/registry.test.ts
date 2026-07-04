@@ -74,3 +74,58 @@ test('a second sweep does not re-emit `offline` for the same device', () => {
 
   assert.equal(offlineEvents.length, 1);
 });
+
+test('IP-based dedup: a second UDN at an already-online IP is dropped', () => {
+  const registry = createDeviceRegistry();
+
+  const first = registry.upsert(
+    { udn: 'udn-a', name: 'Living Room', model: 'UN65', ip: '10.0.0.42', port: 9197 },
+    1_000,
+  );
+  assert.ok(first, 'first upsert at a fresh IP must succeed');
+
+  const second = registry.upsert(
+    { udn: 'udn-b', name: 'Living Room', model: 'UN65', ip: '10.0.0.42', port: 9119 },
+    2_000,
+  );
+  assert.equal(second, undefined, 'a second UDN at the same online IP must be dropped');
+
+  const snap = registry.snapshot();
+  assert.equal(snap.length, 1);
+  assert.equal(snap[0]!.udn, 'udn-a');
+});
+
+test('IP-based dedup: once the winner ages offline, a new UDN at the same IP is accepted', () => {
+  const registry = createDeviceRegistry();
+
+  registry.upsert(
+    { udn: 'udn-a', name: 'Living Room', model: 'UN65', ip: '10.0.0.42', port: 9197 },
+    0,
+  );
+  registry.markOfflineOlderThan(60_000, 120_000);
+
+  const second = registry.upsert(
+    { udn: 'udn-b', name: 'Living Room', model: 'UN65', ip: '10.0.0.42', port: 9119 },
+    120_000,
+  );
+  assert.ok(second, 'a new UDN may take over an IP once the previous holder is offline');
+
+  const snap = registry.snapshot();
+  assert.equal(snap.length, 2);
+  const a = snap.find((d) => d.udn === 'udn-a')!;
+  const b = snap.find((d) => d.udn === 'udn-b')!;
+  assert.equal(a.status, 'offline');
+  assert.equal(b.status, 'online');
+});
+
+test('IP-based dedup does not block same-UDN updates (IP change on the same TV)', () => {
+  const registry = createDeviceRegistry();
+
+  registry.upsert({ udn: 'udn-a', name: 'n', model: null, ip: '10.0.0.42', port: 9197 }, 0);
+  const updated = registry.upsert(
+    { udn: 'udn-a', name: 'n', model: null, ip: '10.0.0.99', port: 9197 },
+    1_000,
+  );
+  assert.ok(updated, 'updating the same UDN must never be dropped by the dedup guard');
+  assert.equal(updated!.ip, '10.0.0.99');
+});

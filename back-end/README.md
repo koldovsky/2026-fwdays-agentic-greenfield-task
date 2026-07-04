@@ -73,7 +73,28 @@ Both should list an instance called `mytv` and resolve `mytv.local` to the host'
 
 ## TV connection lifecycle
 
-Per-TV IP Control sessions are managed by `src/tv/manager.ts` (creates one `Session` per discovered UDN, subscribes to the discovery registry so an `offline` device tears its session down, `online` puts it back in `Disconnected`). Each session owns exactly one `undici.Pool` to `https://<ip>:<port>` and a per-TV FIFO queue for state-changing commands (`p-queue` concurrency 1 — batching is not supported by the Samsung protocol).
+Per-TV sessions are managed by `src/tv/manager.ts` (creates one `Session` per discovered UDN, subscribes to the discovery registry so an `offline` device tears its session down, `online` puts it back in `Disconnected`). Each session owns exactly one Samsung **Smart View WebSocket** connection and a per-TV FIFO queue for state-changing commands (`p-queue` concurrency 1 — batching is not supported).
+
+**Transport**: consumer Tizen TVs (2016+) do not speak the hotel-TV IP Control protocol (`docs/samsung-ip-control-protocol/` — that reference is for commercial/hotel hardware, not the consumer sets this repo targets). They speak the **Samsung Smart View WebSocket API** on port `8001`:
+
+```
+ws://<ip>:8001/api/v2/channels/samsung.remote.control?name=<base64(client-name)>[&token=<token>]
+```
+
+Commands are fire-and-forget text frames — no per-call response id:
+
+```json
+{ "method": "ms.remote.control", "params": { "Cmd": "Click", "DataOfCmd": "KEY_VOLUP" } }
+```
+
+**Pairing**: first connect for a UDN with no stored token opens the WS with only `name=<...>` (no `token`) and logs `"awaiting pairing confirmation on TV screen"` — the user must accept the on-screen prompt on the physical remote. The TV then sends `{"event":"ms.channel.connect","data":{"token":"..."}}`, which is persisted (see "Token storage" below). A declined prompt sends `{"event":"ms.channel.unauthorized"}`; both outcomes are mapped to the domain error union via `mapWsError` (`src/tv/errors.ts`). Subsequent connects append `&token=<token>`; the TV re-confirms without issuing a new one. Heartbeat is a WebSocket-level `ping()`/`pong()`, not an application-layer command.
+
+**Control port is a constant, not derived** from the UPnP description (`device.port` is the *description* port, not the control port — the manager ignores it): `SMART_VIEW_PORT = 8001` in `src/tv/manager.ts`, overridable per-UDN via `MYTV_CONTROL_PORT_<UDN>` for firmware that needs a different port (e.g. `8002`'s TLS variant, not implemented — see Non-Goals in `openspec/changes/archive/*-smart-view-ws-transport/design.md` once archived).
+
+| Variable                 | Default        | Purpose                                                                                   |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------ |
+| `MYTV_TOKEN_<UDN>`       | (none)         | Preload a pairing token for a specific TV, bypassing the on-screen accept and the on-disk store. Takes precedence over the token store. |
+| `MYTV_CONTROL_PORT_<UDN>`| `8001`         | Override the Smart View control port for a specific TV (e.g. a firmware that only accepts `8002`'s TLS variant — not implemented, connection would still fail without a WSS-capable transport). |
 
 HTTP surface (all under `/api`, all client-visible state collapses `Reconnecting` to `Connecting`):
 
@@ -85,19 +106,17 @@ HTTP surface (all under `/api`, all client-visible state collapses `Reconnecting
 
 WebSocket: the `/ws` `devices` topic now also carries `{ event: 'session', udn, state }` on every transition.
 
-### AccessToken storage
+### Token storage
 
-Tokens live in `$XDG_CONFIG_HOME/mytv/tokens.json` (or `~/.mytv/tokens.json`) with mode `0600` — the file is written atomically (`.tmp` sibling + chmod + rename) so no reader ever sees a world-readable copy. The token is loaded once at connect time and merged into every JSON-RPC `params` object; the redacting logger strips it from every log line regardless of nesting depth. The token NEVER leaves the back-end — no HTTP response body, WebSocket message, or log carries it. If you need to preload a token per TV, set `MYTV_TOKEN_<UDN>=<token>` in the environment; the env value takes precedence over the on-disk store.
+Tokens live in `$XDG_CONFIG_HOME/mytv/tokens.json` (or `~/.mytv/tokens.json`) with mode `0600` — the file is written atomically (`.tmp` sibling + chmod + rename) so no reader ever sees a world-readable copy. The token is loaded once at connect time and passed in the Smart View WS connection URL; the redacting logger strips the `token` key (any depth) and `token=...` query fragments from every log line. The token NEVER leaves the back-end — no HTTP response body, WebSocket message, or log carries it. If you need to preload a token per TV, set `MYTV_TOKEN_<UDN>=<token>` in the environment; the env value takes precedence over the on-disk store.
 
 ### Manual repro without a real TV
-
-Samsung's IP Control protocol provisions the AccessToken out-of-band and has no documented `getAccessToken` JSON-RPC method (the current design uses `getAccessToken` speculatively; on a stock TV the call maps to `TvNotSupported` and the session ends in `Disconnected`). Practical smoke testing without a paired TV goes through the stub integration suite:
 
 ```bash
 npm run back:test
 ```
 
-`src/tv/session-integration.test.ts` boots the full Fastify app with a stub SSDP transport + a stub JSON-RPC transport, exercises `POST /connect` → `Connected`, `GET /session`, the WebSocket `session` events, and the `heartbeat fails → Reconnecting → Disconnected after cap` flow. That's the documented manual gate — the assertions cover the state transitions, the `Reconnecting → Connecting` client-side collapse, and the "no AccessToken in the wire payload" contract.
+`src/tv/session-integration.test.ts` boots the full Fastify app with a stub SSDP transport and a real `ws.WebSocketServer` standing in for the TV (mimicking the `ms.channel.connect` pairing ack) — exercising `POST /connect` → `Connected`, `GET /session`, the WebSocket `session` events, and the `heartbeat fails → Reconnecting → Disconnected after cap` flow through the *actual* transport, not a hand-rolled stub. `src/tv/jsonrpc.test.ts` covers the transport itself the same way (real `ws.WebSocketServer` on `127.0.0.1:0`). That's the documented manual gate — the assertions cover the state transitions, the `Reconnecting → Connecting` client-side collapse, and the "no token in the wire payload" contract.
 
 On real hardware you can drive the routes directly (Samsung UE40KU6000 verified reachable in the implementer's environment):
 
@@ -105,8 +124,11 @@ On real hardware you can drive the routes directly (Samsung UE40KU6000 verified 
 UDN=<uuid from GET /api/devices>
 curl http://localhost:3000/api/devices/$UDN/session       # → {"state":"Disconnected"}
 curl -X POST http://localhost:3000/api/devices/$UDN/connect
-# Expect: {"state":"Disconnected"} for now — the pairing method is protocol-speculative;
-# preload a real token via MYTV_TOKEN_$UDN=<token> to get past this and reach Connected.
+# Watch the TV screen for the pairing prompt and accept it; the log prints
+# "awaiting pairing confirmation on TV screen" while it waits (30 s timeout).
+# After accept: {"state":"Connected"}, and the token is persisted to
+# ~/.mytv/tokens.json. MYTV_TOKEN_$UDN=<token> still preloads a token to
+# skip the on-screen step entirely.
 ```
 
 ## Logging

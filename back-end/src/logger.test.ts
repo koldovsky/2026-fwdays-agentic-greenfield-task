@@ -45,3 +45,21 @@ test('redacts AccessToken inside a JSON-RPC params payload', () => {
   assert.ok(output().includes('"rpcId":42'));
   assert.ok(output().includes('powerControl'));
 });
+
+test('redacts a lower-case `token` key (Smart View pairing token)', () => {
+  const { logger, output } = captureLogger();
+  logger.info({ event: 'ms.channel.connect', data: { token: 'SMART-VIEW-T0K3N' } }, 'pairing ack');
+  assert.ok(!output().includes('SMART-VIEW-T0K3N'));
+});
+
+test('elides a token=... query fragment inside a logged URL string', () => {
+  const { logger, output } = captureLogger();
+  logger.info(
+    { url: 'ws://10.0.0.42:8001/api/v2/channels/samsung.remote.control?name=bXl0dg==&token=SECRET-URL-T0K3N' },
+    'connecting',
+  );
+  assert.ok(!output().includes('SECRET-URL-T0K3N'));
+  // The rest of the URL — including the other query param — must survive.
+  assert.ok(output().includes('samsung.remote.control'));
+  assert.ok(output().includes('name=bXl0dg=='));
+});

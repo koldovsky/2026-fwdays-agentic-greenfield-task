@@ -14,6 +14,9 @@ export interface SsdpHit {
   st: string;
   /** Unique Service Name (USN). */
   usn: string;
+  /** SERVER header — used by the pre-fetch Samsung filter to skip
+   * obviously-not-Samsung hits before an `undici` fetch runs. */
+  server?: string;
   /** Where the hit originated so callers can debug transport bugs. */
   source: 'msearch' | 'notify';
 }
@@ -70,7 +73,14 @@ export function createSsdpTransport(
       const location = typeof headers.LOCATION === 'string' ? headers.LOCATION : '';
       const st = typeof headers.ST === 'string' ? headers.ST : '';
       const usn = typeof headers.USN === 'string' ? headers.USN : '';
-      handleHit({ location, st, usn, source: 'msearch' });
+      const server = typeof headers.SERVER === 'string' ? headers.SERVER : undefined;
+      handleHit({
+        location,
+        st,
+        usn,
+        ...(server !== undefined && { server }),
+        source: 'msearch',
+      });
     });
     await client.start();
     logger.info('SSDP client started');
@@ -147,7 +157,7 @@ export function createSsdpTransport(
  */
 export function parseNotify(
   raw: string,
-): { location: string; st: string; usn: string } | null {
+): { location: string; st: string; usn: string; server?: string } | null {
   const lines = raw.split(/\r\n|\n/);
   const first = lines.shift();
   if (!first || !/^NOTIFY\s+\*\s+HTTP\/1\.1/i.test(first)) return null;
@@ -165,9 +175,11 @@ export function parseNotify(
   const nts = headers['NTS'] ?? '';
   if (nts.toLowerCase() !== 'ssdp:alive') return null;
 
+  const server = headers['SERVER'];
   return {
     location: headers['LOCATION'] ?? '',
     st: headers['NT'] ?? '',
     usn: headers['USN'] ?? '',
+    ...(server !== undefined && { server }),
   };
 }

@@ -21,7 +21,15 @@ export interface RegistryUpsertInput {
 }
 
 export interface DeviceRegistry {
-  upsert(input: RegistryUpsertInput, now?: number): Device;
+  /**
+   * Idempotent write. Returns the device (existing or new). Returns
+   * `undefined` when the input was dropped by the IP-based dedup guard
+   * (see `openspec/specs/upnp-tv-discovery/spec.md` "IP-based device
+   * dedup"): a single physical Samsung TV publishes multiple UPnP root
+   * devices under distinct UDNs, and the SPA's device list must show
+   * exactly one row per IP.
+   */
+  upsert(input: RegistryUpsertInput, now?: number): Device | undefined;
   snapshot(): Device[];
   markOfflineOlderThan(thresholdMs: number, now?: number): Device[];
   on(event: RegistryEvent, listener: (device: Device) => void): this;
@@ -41,8 +49,18 @@ export function createDeviceRegistry(): DeviceRegistry {
   const devices = new Map<string, Device>();
   const emitter = new EventEmitter();
 
-  function upsert(input: RegistryUpsertInput, now = Date.now()): Device {
+  function upsert(input: RegistryUpsertInput, now = Date.now()): Device | undefined {
     const existing = devices.get(input.udn);
+    if (!existing) {
+      // IP-based dedup: a fresh UDN cannot land on an IP that already
+      // holds a different online UDN. Same-UDN updates are unaffected —
+      // they take the `existing` branch below.
+      for (const [otherUdn, other] of devices) {
+        if (otherUdn === input.udn) continue;
+        if (other.status !== 'online') continue;
+        if (other.ip === input.ip) return undefined;
+      }
+    }
     const next: Device = {
       udn: input.udn,
       name: input.name,

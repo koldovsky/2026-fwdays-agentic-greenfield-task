@@ -1,5 +1,5 @@
-import { Pool, Agent } from 'undici';
-import { mapRpcErrorCode, mapTransportError, TvError } from './errors.js';
+import { WebSocket } from 'ws';
+import { mapWsError, TvError } from './errors.js';
 
 export interface JsonRpcLogger {
   info: (obj: Record<string, unknown> | string, msg?: string) => void;
@@ -9,13 +9,27 @@ export interface JsonRpcLogger {
 }
 
 /**
- * Injectable transport for a per-TV JSON-RPC connection. Tests pass a
- * stub; production wires up a real `undici.Pool`. `call` returns the raw
- * `result` value on success and throws a mapped `TvError` on any
- * transport or JSON-RPC error.
+ * Injectable transport for a per-TV Samsung Smart View WebSocket
+ * connection. Tests pass a stub; production wires up a real
+ * `ws.WebSocket`. Named `JsonRpcTransport`/`createHttpsTransport` to
+ * minimise diff churn from the previous (JSON-RPC over HTTPS) cycle —
+ * see `openspec/changes/smart-view-ws-transport/design.md` Non-Goals;
+ * renaming is a follow-up.
  */
 export interface JsonRpcTransport {
+  /** Fire-and-forget: Smart View reserves no per-call response id. The
+   * promise resolves once the frame is drained, not once the TV acts on
+   * it. */
   call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
+  /** Waits for the TV's pairing ack. Resolves with a token when the TV
+   * issues a new one (first-time pairing); resolves with `{}` when the
+   * TV just re-confirms an already-trusted token. Rejects with a mapped
+   * `TvError` on `unauthorized`, `timeOut`, a socket error/close before
+   * the ack, or its own timeout. */
+  connectHandshake(): Promise<{ token?: string }>;
+  /** Keep-alive probe: `ws.ping()`, resolving on `pong`. Rejects with a
+   * `TvError` if no `pong` arrives before the timeout. */
+  ping(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -23,143 +37,173 @@ export interface CreateTransportOptions {
   ip: string;
   port: number;
   logger: JsonRpcLogger;
-  /** Optional AccessToken merged into every `params`. Never logged. */
-  accessToken?: string;
-  /** Per-call timeout in ms. Default 3 s (spec: Wi-Fi TVs can lag). */
-  timeoutMs?: number;
+  /** Stored/preloaded Smart View pairing token, if any. Never logged. */
+  token?: string;
+  /** Pairing handshake timeout in ms. Default 30 s — the user has to look
+   * at the TV and accept the on-screen prompt. */
+  handshakeTimeoutMs?: number;
+  /** Heartbeat ping timeout in ms. Default 5 s. */
+  pingTimeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 3_000;
+const DEFAULT_HANDSHAKE_TIMEOUT_MS = 30_000;
+const DEFAULT_PING_TIMEOUT_MS = 5_000;
+const SMART_VIEW_PATH = '/api/v2/channels/samsung.remote.control';
+const CLIENT_NAME = 'mytv';
 
-let nextRpcId = 1;
-function allocRpcId(): number {
-  const id = nextRpcId;
-  nextRpcId = nextRpcId >= Number.MAX_SAFE_INTEGER ? 1 : nextRpcId + 1;
-  return id;
+function buildUrl(ip: string, port: number, token?: string): string {
+  const name = Buffer.from(CLIENT_NAME).toString('base64');
+  const params = new URLSearchParams({ name });
+  if (token) params.set('token', token);
+  return `ws://${ip}:${port}${SMART_VIEW_PATH}?${params.toString()}`;
 }
 
-interface JsonRpcSuccess<T> {
-  jsonrpc: '2.0';
-  result: T;
-  id: number;
+interface SmartViewEvent {
+  event: string;
+  data?: { token?: string; [key: string]: unknown };
 }
 
-interface JsonRpcFailure {
-  jsonrpc: '2.0';
-  error: { code: number; message: string; data?: unknown };
-  id: number | null;
+function parseSmartViewEvent(raw: unknown): SmartViewEvent | undefined {
+  try {
+    const text = typeof raw === 'string' ? raw : String(raw);
+    const parsed = JSON.parse(text) as unknown;
+    if (
+      parsed !== null &&
+      typeof parsed === 'object' &&
+      typeof (parsed as { event?: unknown }).event === 'string'
+    ) {
+      return parsed as SmartViewEvent;
+    }
+  } catch {
+    /* not JSON — not a Smart View event, ignore */
+  }
+  return undefined;
 }
 
 /**
- * Real transport backed by `undici.Pool` (one pool per TV, keep-alive
- * hard-capped to 30 s idle / 300 s max — spec §1.3 / §1.4). Samsung TVs
- * present self-signed certs on the LAN; production uses
- * `rejectUnauthorized: false` scoped to the pool. The AccessToken is
- * merged into every request's `params` but never appears on the log
- * lines — the redacting formatter in `logger.ts` strips it.
+ * Real transport backed by the `ws` package — one WebSocket per session
+ * (design.md D1), connecting to
+ * `ws://<ip>:<SMART_VIEW_PORT>/api/v2/channels/samsung.remote.control`.
+ * The pairing token travels in the connection URL and in `ms.channel.*`
+ * event payloads but never appears on a log line — `logger.ts`'s
+ * redacting formatter strips the `token` key (any depth) and `token=`
+ * query fragments from logged strings.
  */
 export function createHttpsTransport(
   options: CreateTransportOptions,
 ): JsonRpcTransport {
   const { ip, port, logger } = options;
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const origin = `https://${ip}:${port}`;
+  const handshakeTimeoutMs =
+    options.handshakeTimeoutMs ?? DEFAULT_HANDSHAKE_TIMEOUT_MS;
+  const pingTimeoutMs = options.pingTimeoutMs ?? DEFAULT_PING_TIMEOUT_MS;
+  const socket = new WebSocket(buildUrl(ip, port, options.token));
+  let handshakeSettled = false;
 
-  const pool = new Pool(origin, {
-    connect: { rejectUnauthorized: false },
-    keepAliveTimeout: 30_000,
-    keepAliveMaxTimeout: 300_000,
-    pipelining: 1,
+  socket.on('message', (raw) => {
+    const parsed = parseSmartViewEvent(raw);
+    if (parsed?.event === 'ms.error') {
+      logger.warn({ ip, port, data: parsed.data }, 'ms.error received from TV');
+    }
   });
+
+  socket.on('error', (error) => {
+    logger.warn({ ip, port, err: error }, 'smart view socket error');
+  });
+
+  async function connectHandshake(): Promise<{ token?: string }> {
+    if (handshakeSettled) {
+      throw new TvError('TvUnknown', 'connectHandshake called more than once');
+    }
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        settle(() => reject(mapWsError({ kind: 'event', event: 'ms.channel.timeOut' })));
+      }, handshakeTimeoutMs);
+      timer.unref?.();
+
+      function cleanup(): void {
+        clearTimeout(timer);
+        socket.off('message', onMessage);
+        socket.off('error', onError);
+        socket.off('close', onClose);
+      }
+
+      function settle(fn: () => void): void {
+        if (handshakeSettled) return;
+        handshakeSettled = true;
+        cleanup();
+        fn();
+      }
+
+      function onMessage(raw: unknown): void {
+        const parsed = parseSmartViewEvent(raw);
+        if (!parsed) return;
+        if (parsed.event === 'ms.channel.connect') {
+          settle(() => resolve({ token: parsed.data?.token }));
+        } else if (parsed.event === 'ms.channel.unauthorized') {
+          settle(() => reject(mapWsError({ kind: 'event', event: parsed.event })));
+        } else if (parsed.event === 'ms.channel.timeOut') {
+          settle(() => reject(mapWsError({ kind: 'event', event: parsed.event })));
+        }
+      }
+      function onError(error: unknown): void {
+        settle(() => reject(mapWsError({ kind: 'socket-error', error })));
+      }
+      function onClose(code: number): void {
+        settle(() => reject(mapWsError({ kind: 'close', code })));
+      }
+
+      socket.on('message', onMessage);
+      socket.on('error', onError);
+      socket.on('close', onClose);
+    });
+  }
 
   async function call<T = unknown>(
     method: string,
     params: Record<string, unknown> = {},
   ): Promise<T> {
-    const rpcId = allocRpcId();
-    const paramsWithToken = options.accessToken
-      ? { ...params, AccessToken: options.accessToken }
-      : params;
-    const body = JSON.stringify({
-      jsonrpc: '2.0',
-      method,
-      params: paramsWithToken,
-      id: rpcId,
-    });
-    logger.info(
-      { rpcId, method, params: paramsWithToken, origin },
-      'jsonrpc request',
-    );
-
-    let statusCode: number;
-    let responseText: string;
-    try {
-      const res = await pool.request({
-        path: '/',
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          accept: 'application/json',
-        },
-        body,
-        bodyTimeout: timeoutMs,
-        headersTimeout: timeoutMs,
+    logger.info({ ip, port, method }, 'smart view command sent');
+    return new Promise((resolve, reject) => {
+      socket.send(JSON.stringify({ method, params }), (error) => {
+        if (error) {
+          reject(mapWsError({ kind: 'socket-error', error }));
+          return;
+        }
+        resolve(undefined as T);
       });
-      statusCode = res.statusCode;
-      responseText = await res.body.text();
-    } catch (err) {
-      logger.warn({ rpcId, method, err }, 'jsonrpc transport error');
-      throw mapTransportError(err, rpcId);
-    }
+    });
+  }
 
-    if (statusCode !== 200) {
-      logger.warn(
-        { rpcId, method, statusCode, body: responseText },
-        'jsonrpc non-200 response',
-      );
-      throw new TvError('TvFailed', `HTTP ${statusCode}`, undefined, rpcId);
+  async function ping(): Promise<void> {
+    if (socket.readyState !== WebSocket.OPEN) {
+      throw new TvError('TvNotReachable', 'socket is not open');
     }
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        socket.off('pong', onPong);
+        reject(new TvError('TvNotReachable', 'heartbeat ping timed out'));
+      }, pingTimeoutMs);
+      timer.unref?.();
 
-    let payload: JsonRpcSuccess<T> | JsonRpcFailure;
-    try {
-      payload = JSON.parse(responseText) as JsonRpcSuccess<T> | JsonRpcFailure;
-    } catch {
-      logger.warn(
-        { rpcId, method, body: responseText },
-        'jsonrpc response was not valid JSON',
-      );
-      throw new TvError('TvUnknown', 'malformed response', undefined, rpcId);
-    }
-
-    if ('error' in payload && payload.error) {
-      const code = payload.error.code;
-      const mapped = mapRpcErrorCode(code);
-      logger.warn(
-        { rpcId, method, rawCode: code, mappedCode: mapped, data: payload.error.data },
-        'jsonrpc application error',
-      );
-      throw new TvError(mapped, payload.error.message ?? 'jsonrpc error', code, rpcId);
-    }
-
-    logger.info(
-      { rpcId, method, hasResult: 'result' in payload },
-      'jsonrpc response',
-    );
-    return (payload as JsonRpcSuccess<T>).result;
+      function onPong(): void {
+        clearTimeout(timer);
+        resolve();
+      }
+      socket.once('pong', onPong);
+      socket.ping();
+    });
   }
 
   async function close(): Promise<void> {
-    try {
-      await pool.close();
-    } catch {
-      /* pool may have already been destroyed */
-    }
+    return new Promise((resolve) => {
+      if (socket.readyState === WebSocket.CLOSED) {
+        resolve();
+        return;
+      }
+      socket.once('close', () => resolve());
+      socket.close(1000);
+    });
   }
 
-  return { call, close };
-}
-
-/** Small helper for callers that want a fresh Agent (e.g. one-off tools). */
-export function createSharedAgent(): Agent {
-  return new Agent({ connect: { rejectUnauthorized: false } });
+  return { call, connectHandshake, ping, close };
 }

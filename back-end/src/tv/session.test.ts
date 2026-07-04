@@ -11,22 +11,29 @@ import { createTokenStore } from './token-store.js';
 interface StubTransport extends JsonRpcTransport {
   calls: Array<{ method: string; params: Record<string, unknown> }>;
   closed: boolean;
+  pings: number;
 }
 
-interface StubHandlers {
-  [method: string]: (params: Record<string, unknown>) => Promise<unknown> | unknown;
+interface StubBehavior {
+  handshake: () => Promise<{ token?: string }> | { token?: string };
+  ping?: () => Promise<void> | void;
 }
 
-function makeStub(handlers: StubHandlers): StubTransport {
+function makeStub(behavior: StubBehavior): StubTransport {
   const stub: StubTransport = {
     calls: [],
     closed: false,
+    pings: 0,
     async call<T>(method: string, params: Record<string, unknown> = {}) {
       stub.calls.push({ method, params });
-      const handler = handlers[method];
-      if (!handler) throw new TvError('TvNotSupported', method);
-      const result = await handler(params);
-      return result as T;
+      return undefined as T;
+    },
+    async connectHandshake() {
+      return behavior.handshake();
+    },
+    async ping() {
+      stub.pings += 1;
+      if (behavior.ping) await behavior.ping();
     },
     async close() {
       stub.closed = true;
@@ -43,10 +50,8 @@ const silentLogger = {
 };
 
 let tmp: string;
-let tokenPath: string;
 before(async () => {
   tmp = await mkdtemp(join(tmpdir(), 'mytv-session-'));
-  tokenPath = join(tmp, 'tokens.json');
 });
 after(async () => {
   await rm(tmp, { recursive: true, force: true });
@@ -58,15 +63,12 @@ test('connect pairs (no token) and transitions Disconnected → Connecting → C
   const session = createSession({
     udn: 'udn-1',
     ip: '10.0.0.1',
-    port: 1516,
+    port: 8001,
     logger: silentLogger,
     tokenStore: store,
     heartbeatIntervalMs: 60_000,
     createTransport: () => {
-      stub = makeStub({
-        getAccessToken: () => ({ AccessToken: 'freshly-paired-token' }),
-        getSystemInfo: () => ({ ok: true }),
-      });
+      stub = makeStub({ handshake: () => ({ token: 'freshly-paired-token' }) });
       return stub;
     },
   });
@@ -81,28 +83,30 @@ test('connect pairs (no token) and transitions Disconnected → Connecting → C
   assert.equal(tokens['udn-1'], 'freshly-paired-token');
 });
 
-test('connect using a stored token skips pairing', async () => {
+test('connect using a stored token passes it to the transport and re-confirms without changing it', async () => {
   const store = createTokenStore({ path: join(tmp, 'test2.json') });
   await store.saveToken('udn-2', 'preloaded-token');
+  let receivedToken: string | undefined;
   const stub = makeStub({
-    getSystemInfo: () => ({ ok: true }),
+    handshake: () => ({}), // TV re-confirms an already-trusted token: no new token returned
   });
   const session = createSession({
     udn: 'udn-2',
     ip: '10.0.0.2',
-    port: 1516,
+    port: 8001,
     logger: silentLogger,
     tokenStore: store,
     heartbeatIntervalMs: 60_000,
-    createTransport: () => stub,
+    createTransport: (opts) => {
+      receivedToken = opts.token;
+      return stub;
+    },
   });
   await session.connect();
   assert.equal(session.getState().kind, 'Connected');
-  // Only the pair call is skipped — no `getAccessToken` should ever be issued.
-  assert.equal(
-    stub.calls.some((c) => c.method === 'getAccessToken'),
-    false,
-  );
+  assert.equal(receivedToken, 'preloaded-token');
+  const tokens = await store.loadTokens();
+  assert.equal(tokens['udn-2'], 'preloaded-token');
 });
 
 test('heartbeat failure transitions Connected → Reconnecting; recovery returns to Connected', async () => {
@@ -110,15 +114,15 @@ test('heartbeat failure transitions Connected → Reconnecting; recovery returns
   await store.saveToken('udn-3', 'token-3');
   let failNext = false;
   const stub = makeStub({
-    getSystemInfo: () => {
+    handshake: () => ({}),
+    ping: () => {
       if (failNext) throw new TvError('TvNotReachable', 'socket dropped');
-      return { ok: true };
     },
   });
   const session = createSession({
     udn: 'udn-3',
     ip: '10.0.0.3',
-    port: 1516,
+    port: 8001,
     logger: silentLogger,
     tokenStore: store,
     heartbeatIntervalMs: 15, // fast for the test
@@ -146,15 +150,15 @@ test('reconnect gives up and transitions to Disconnected after cap', async () =>
   await store.saveToken('udn-4', 'token-4');
   let alwaysFail = false;
   const stub = makeStub({
-    getSystemInfo: () => {
+    handshake: () => ({}),
+    ping: () => {
       if (alwaysFail) throw new TvError('TvNotReachable', 'stays broken');
-      return { ok: true };
     },
   });
   const session = createSession({
     udn: 'udn-4',
     ip: '10.0.0.4',
-    port: 1516,
+    port: 8001,
     logger: silentLogger,
     tokenStore: store,
     heartbeatIntervalMs: 10,
@@ -173,13 +177,11 @@ test('reconnect gives up and transitions to Disconnected after cap', async () =>
 test('markOffline tears down the session and returns to Disconnected via markBackOnline', async () => {
   const store = createTokenStore({ path: join(tmp, 'test5.json') });
   await store.saveToken('udn-5', 'token-5');
-  const stub = makeStub({
-    getSystemInfo: () => ({ ok: true }),
-  });
+  const stub = makeStub({ handshake: () => ({}) });
   const session = createSession({
     udn: 'udn-5',
     ip: '10.0.0.5',
-    port: 1516,
+    port: 8001,
     logger: silentLogger,
     tokenStore: store,
     heartbeatIntervalMs: 60_000,
@@ -192,4 +194,25 @@ test('markOffline tears down the session and returns to Disconnected via markBac
 
   session.markBackOnline();
   assert.equal(session.getState().kind, 'Disconnected');
+});
+
+test('connectHandshake rejection (e.g. unauthorized) leaves the session Disconnected', async () => {
+  const store = createTokenStore({ path: join(tmp, 'test6.json') });
+  const stub = makeStub({
+    handshake: () => {
+      throw new TvError('TvNotSupported', 'pairing declined on the TV');
+    },
+  });
+  const session = createSession({
+    udn: 'udn-6',
+    ip: '10.0.0.6',
+    port: 8001,
+    logger: silentLogger,
+    tokenStore: store,
+    heartbeatIntervalMs: 60_000,
+    createTransport: () => stub,
+  });
+  await session.connect();
+  assert.equal(session.getState().kind, 'Disconnected');
+  assert.equal(stub.closed, true);
 });

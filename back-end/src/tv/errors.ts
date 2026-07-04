@@ -41,6 +41,11 @@ export class TvError extends Error {
  * Map a raw JSON-RPC error code from a Samsung TV into the domain union.
  * Table from `openspec/changes/tv-connection-lifecycle/design.md` D5,
  * cross-checked against `docs/samsung-ip-control-protocol/` §1.6.
+ *
+ * @deprecated The transport is Samsung Smart View WebSocket now, not
+ * JSON-RPC over HTTPS — there are no more `-32xxx` codes on the wire.
+ * Kept until the JSON-RPC-era unit tests referencing it are rewritten.
+ * Use `mapWsError` for the current transport.
  */
 export function mapRpcErrorCode(rawCode: number): TvErrorCode {
   if (rawCode === -32601 || rawCode === -32001) return 'TvNotSupported';
@@ -62,6 +67,54 @@ export function mapTransportError(err: unknown, rpcId?: number): TvError {
       ? String((err as { message: unknown }).message)
       : 'unknown transport error';
   return new TvError('TvNotReachable', message, undefined, rpcId);
+}
+
+/**
+ * A failure signal from the Samsung Smart View WebSocket transport.
+ * `event`/`data` mirror the TV's own frames (e.g.
+ * `{event: "ms.channel.unauthorized"}`); `close`/`socket-error` cover the
+ * raw `ws` client lifecycle. Callers must special-case a deliberate
+ * `close` with code `1000` themselves — that is a normal shutdown, not a
+ * failure, so it should never reach `mapWsError`.
+ */
+export type WsErrorSignal =
+  | { kind: 'close'; code: number }
+  | { kind: 'socket-error'; error: unknown }
+  | { kind: 'event'; event: string; data?: unknown };
+
+/** RFC 6455 close code for "protocol error." */
+const WS_CLOSE_PROTOCOL_ERROR = 1002;
+
+/**
+ * Map a Samsung Smart View WebSocket failure signal into the domain
+ * union. Table from
+ * `openspec/changes/smart-view-ws-transport/specs/tv-connection-lifecycle/spec.md`
+ * "Domain error mapping".
+ */
+export function mapWsError(signal: WsErrorSignal): TvError {
+  if (signal.kind === 'close') {
+    if (signal.code === WS_CLOSE_PROTOCOL_ERROR) {
+      return new TvError('TvFailed', 'WebSocket closed with a protocol error (code 1002)');
+    }
+    return new TvError('TvNotReachable', `WebSocket closed unexpectedly (code ${signal.code})`);
+  }
+  if (signal.kind === 'socket-error') {
+    const message =
+      signal.error && typeof signal.error === 'object' && 'message' in signal.error
+        ? String((signal.error as { message: unknown }).message)
+        : 'websocket error';
+    return new TvError('TvNotReachable', message);
+  }
+  switch (signal.event) {
+    case 'ms.channel.unauthorized':
+      return new TvError('TvNotSupported', 'pairing declined on the TV');
+    case 'ms.channel.timeOut':
+      return new TvError('TvNotReachable', 'pairing timed out waiting for the TV');
+    case 'ms.error':
+      return new TvError('TvFailed', 'TV reported ms.error');
+    default:
+      return new TvError('TvUnknown', `unrecognized Smart View event: ${signal.event}`);
+  }
 }
 
 export interface TvErrorEnvelope {
