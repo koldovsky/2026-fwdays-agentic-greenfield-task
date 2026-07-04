@@ -11,9 +11,13 @@ import { useMemo, useState } from "react";
 
 import type { Bullet } from "@/entities/bullet";
 import { renderPlainText } from "@/entities/export-document";
+import { buildCoverLetterDocument, requestCoverLetter } from "@/features/export-cover-letter";
 import { buildExportDocument, requestExport, type ExportFormat } from "@/features/export-resume";
 import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
+
+/** Download states: the résumé formats plus the cover-letter export (§4). */
+type PendingExport = ExportFormat | "cover-letter";
 
 export interface ExportStepperProps {
   readonly bullets: readonly Bullet[];
@@ -51,7 +55,7 @@ export function ExportStepper({
 }: ExportStepperProps) {
   const copy = t(locale);
   const [copied, setCopied] = useState(false);
-  const [pending, setPending] = useState<ExportFormat | null>(null);
+  const [pending, setPending] = useState<PendingExport | null>(null);
   const [error, setError] = useState(false);
 
   // Free-tier footer unless paid (FR-EXPORT-04); only included bullets, in
@@ -63,6 +67,20 @@ export function ExportStepper({
         footer: paid ? undefined : copy.export.footer,
       }),
     [bullets, paid, copy.export.headline, copy.export.footer],
+  );
+
+  // Cover-letter document (§4): grounded, kept bullets reflowed to Ukrainian
+  // prose with neutral framing; same free-tier footer rule (FR-EXPORT-04).
+  const coverLetterDoc = useMemo(
+    () =>
+      buildCoverLetterDocument(bullets, {
+        headline: copy.export.coverLetter.headline,
+        greeting: copy.export.coverLetter.greeting,
+        intro: copy.export.coverLetter.intro,
+        closing: copy.export.coverLetter.closing,
+        footer: paid ? undefined : copy.export.footer,
+      }),
+    [bullets, paid, copy.export.coverLetter, copy.export.footer],
   );
 
   const handleCopy = async () => {
@@ -91,6 +109,21 @@ export function ExportStepper({
     }
   };
 
+  const handleCoverLetter = async () => {
+    if (!paid) return onPaywall();
+    setError(false);
+    setCopied(false);
+    setPending("cover-letter");
+    try {
+      const blob = await requestCoverLetter(coverLetterDoc);
+      onDownload(blob, "vouch-cover-letter.pdf");
+    } catch {
+      setError(true);
+    } finally {
+      setPending(null);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -112,6 +145,14 @@ export function ExportStepper({
           onClick={() => handleDownload("docx", "vouch-resume.docx")}
         >
           {pending === "docx" ? copy.export.pending : copy.export.docxAction}
+        </Button>
+        <Button
+          variant="secondary"
+          size="md"
+          disabled={pending !== null}
+          onClick={handleCoverLetter}
+        >
+          {pending === "cover-letter" ? copy.export.pending : copy.export.coverLetter.action}
         </Button>
         <Button variant="ghost" size="md" onClick={onStartOver}>
           {copy.wizard.startOverAction}

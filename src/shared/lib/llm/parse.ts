@@ -4,6 +4,7 @@
 
 import type {
   CareerStage,
+  CoverLetterOutput,
   ExtractionResult,
   GeneratedBullet,
   GenerationResult,
@@ -155,6 +156,33 @@ export function parseSeniorityResponse(
   const stage = normalizeStage(root["stage"]) ?? "junior";
 
   return ok({ stage, rationale });
+}
+
+// --- Cover-letter response (end of flow) ----------------------------------
+
+/**
+ * Parse the cover-letter response into ordered non-empty paragraphs. Malformed
+ * JSON, a missing `paragraphs` array, or an all-empty array yields a typed
+ * error so the caller can fail honestly (NFR-OBS-01) rather than export a blank.
+ */
+export function parseCoverLetterResponse(
+  raw: string,
+): ParseResult<CoverLetterOutput> {
+  const root = extractJson(raw);
+  if (root === undefined) return fail("Відповідь не містить валідного JSON");
+  if (!isObject(root)) return fail("Очікувався JSON-обʼєкт з полем paragraphs");
+
+  const rawParagraphs = root["paragraphs"];
+  if (!Array.isArray(rawParagraphs)) {
+    return fail("Поле paragraphs відсутнє або не є масивом");
+  }
+
+  const paragraphs = rawParagraphs
+    .map((p) => asString(p)?.trim())
+    .filter((p): p is string => Boolean(p));
+  if (paragraphs.length === 0) return fail("Список paragraphs порожній");
+
+  return ok({ paragraphs });
 }
 
 // --- Pass 1: generation response ------------------------------------------

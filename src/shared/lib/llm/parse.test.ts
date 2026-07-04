@@ -1,10 +1,33 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseCoverLetterResponse,
   parseGenerationResponse,
   parseGroundingResponse,
   parseSeniorityResponse,
 } from "./index";
+
+describe("parseCoverLetterResponse (§4, NFR-OBS-01)", () => {
+  it("parses ordered non-empty paragraphs", () => {
+    const res = parseCoverLetterResponse('{"paragraphs":["Доброго дня","Маю досвід з React"]}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.paragraphs).toEqual(["Доброго дня", "Маю досвід з React"]);
+  });
+
+  it("drops empty/whitespace paragraphs and trims", () => {
+    const res = parseCoverLetterResponse('{"paragraphs":["  Текст  ","","   "]}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.paragraphs).toEqual(["Текст"]);
+  });
+
+  it("fails when paragraphs is missing, all-empty, or malformed (no blank export)", () => {
+    expect(parseCoverLetterResponse('{"paragraphs":[]}').ok).toBe(false);
+    expect(parseCoverLetterResponse('{"paragraphs":["",""]}').ok).toBe(false);
+    expect(parseCoverLetterResponse("garbage").ok).toBe(false);
+  });
+});
 
 describe("parseSeniorityResponse (§3, BC-HONESTY-01, NFR-OBS-01)", () => {
   it("parses a valid stage + rationale", () => {

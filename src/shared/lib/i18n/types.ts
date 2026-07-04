@@ -288,6 +288,19 @@ export interface Dictionary {
     readonly pending: string;
     /** Calm failure copy when an export could not be produced (NFR-OBS-01). */
     readonly error: string;
+    /** Cover-letter export (add-tailoring-intelligence §4, FR-COVERLETTER-02). */
+    readonly coverLetter: {
+      /** Download-cover-letter button label. */
+      readonly action: string;
+      /** Title placed at the top of the cover-letter document. */
+      readonly headline: string;
+      /** Neutral opening line — framing, not a claim. */
+      readonly greeting: string;
+      /** Connective line introducing the grounded highlights. */
+      readonly intro: string;
+      /** Neutral closing line. */
+      readonly closing: string;
+    };
   };
   /** Legal pages (add-legal-pages): Privacy Policy + public offer, BC-PRIVACY-01/02, NFR-GDPR-01/02. */
   readonly legal: {

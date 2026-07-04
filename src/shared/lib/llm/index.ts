@@ -2,16 +2,19 @@
 // Pure prompt core (TC-PURE-01) + the provider port. SDK/network code is
 // isolated in the adapters (claude.ts, chatgpt.ts) behind the port.
 export {
+  COVER_LETTER_SYSTEM_PROMPT,
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
+  buildCoverLetterPrompt,
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
   buildSeniorityPrompt,
 } from "./prompts";
 export {
+  parseCoverLetterResponse,
   parseExtractionResponse,
   parseGenerationResponse,
   parseGroundingResponse,
@@ -24,6 +27,8 @@ export { resolveLlmProvider } from "./factory";
 export type {
   CareerStage,
   ConfirmedAnswerEvidence,
+  CoverLetterInput,
+  CoverLetterOutput,
   ExtractionInput,
   ExtractionResult,
   GeneratedBullet,

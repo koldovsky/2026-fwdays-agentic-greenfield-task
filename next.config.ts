@@ -52,6 +52,8 @@ const nextConfig: NextConfig = {
   // the function on Vercel (they are otherwise CDN-only static assets).
   outputFileTracingIncludes: {
     "/api/export/pdf": ["./public/fonts/ptsans/**"],
+    // The cover-letter export embeds the same Cyrillic PT Sans (§4).
+    "/api/export/cover-letter": ["./public/fonts/ptsans/**"],
   },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

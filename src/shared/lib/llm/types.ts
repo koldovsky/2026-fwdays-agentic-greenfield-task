@@ -66,6 +66,27 @@ export interface SeniorityVerdict {
   readonly rationale: string;
 }
 
+// --- Cover letter (end of flow, grounded like generation) ------------------
+
+/**
+ * Input to grounded cover-letter generation (§4). Carries the ranked
+ * requirements to address, the candidate's own CV sentences, the confirmed
+ * wizard answers (second evidence lane, BC-HONESTY-03), and the inferred career
+ * stage as a TONE signal only. The letter it produces must introduce no claim
+ * the tailored, grounded bullets did not already justify (BC-HONESTY-01/02).
+ */
+export interface CoverLetterInput {
+  readonly requirements: readonly Requirement[];
+  readonly cvSentences: readonly string[];
+  readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
+  readonly careerStage?: CareerStage;
+}
+
+/** The generated cover letter: ordered Ukrainian-first prose paragraphs. */
+export interface CoverLetterOutput {
+  readonly paragraphs: readonly string[];
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {

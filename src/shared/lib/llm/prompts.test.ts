@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COVER_LETTER_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
+  buildCoverLetterPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
   buildSeniorityPrompt,
@@ -194,6 +196,48 @@ describe("careerStage tone calibration in generation (§3.5, BC-HONESTY-01)", ()
     const explicitUndefined = buildGenerationPrompt({ ...genInput, careerStage: undefined });
     expect(explicitUndefined).toEqual(noField);
     expect(textOf(noField.messages)).not.toContain("Рівень кандидата");
+  });
+});
+
+describe("buildCoverLetterPrompt (§4, BC-HONESTY-01/02, NFR-I18N-01)", () => {
+  const clInput = {
+    requirements,
+    cvSentences: cv.sentences,
+  };
+
+  it("has a system message then a user message", () => {
+    const prompt = buildCoverLetterPrompt(clInput);
+    expect(prompt.messages.map((m) => m.role)).toEqual(["system", "user"]);
+  });
+
+  it("grounds only in CV sentences + confirmed answers; requirements steer emphasis", () => {
+    const all = textOf(buildCoverLetterPrompt(clInput).messages);
+    for (const s of cv.sentences) expect(all).toContain(s);
+    expect(all).toContain("єдине джерело фактів");
+  });
+
+  it("forbids fabrication and pins Ukrainian output", () => {
+    expect(COVER_LETTER_SYSTEM_PROMPT).toContain("BC-HONESTY-01");
+    expect(COVER_LETTER_SYSTEM_PROMPT).toContain("BC-HONESTY-02");
+    expect(COVER_LETTER_SYSTEM_PROMPT).toMatch(CYRILLIC);
+    expect(COVER_LETTER_SYSTEM_PROMPT.toLowerCase()).toContain("українськ");
+  });
+
+  it("absent confirmedAnswers/careerStage is byte-identical to the bare input", () => {
+    const bare = buildCoverLetterPrompt(clInput);
+    const explicit = buildCoverLetterPrompt({
+      ...clInput,
+      confirmedAnswers: undefined,
+      careerStage: undefined,
+    });
+    expect(explicit).toEqual(bare);
+    const text = textOf(bare.messages);
+    expect(text).not.toContain("Підтверджені відповіді");
+    expect(text).not.toContain("Рівень кандидата");
+  });
+
+  it("is pure — same input yields identical output (TC-PURE-01)", () => {
+    expect(buildCoverLetterPrompt(clInput)).toEqual(buildCoverLetterPrompt(clInput));
   });
 });
 

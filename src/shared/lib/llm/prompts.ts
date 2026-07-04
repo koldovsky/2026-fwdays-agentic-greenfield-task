@@ -6,6 +6,7 @@
 import type {
   CareerStage,
   ConfirmedAnswerEvidence,
+  CoverLetterInput,
   ExtractionInput,
   GenerationInput,
   GroundingInput,
@@ -92,6 +93,26 @@ export const SENIORITY_SYSTEM_PROMPT = [
   "Обґрунтування пиши українською і спирайся лише на сигнали з резюме.",
   "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
   '{"stage":"mid","rationale":"..."}',
+].join("\n");
+
+/**
+ * Cover-letter system prompt (end of flow, §4). Carries the SAME no-fabrication
+ * constraint as generation (BC-HONESTY-01): grounded only in the candidate's CV
+ * sentences and confirmed answers, introducing no claim the tailored grounded
+ * bullets did not already justify (BC-HONESTY-02). Ukrainian-first (NFR-I18N-01).
+ */
+export const COVER_LETTER_SYSTEM_PROMPT = [
+  "Ти — асистент, що пише супровідний лист кандидата під конкретну вакансію.",
+  "Пиши українською мовою (NFR-I18N-01).",
+  "Категорично заборонено вигадувати навички, цифри, компанії чи досвід,",
+  "яких немає в реченнях резюме або підтверджених відповідях кандидата",
+  "(BC-HONESTY-01). Не додавай жодного твердження, яке не спирається на ці",
+  "джерела (BC-HONESTY-02).",
+  "Використай наведені вимоги вакансії лише щоб обрати, який наявний досвід",
+  "підкреслити — не як джерело нових фактів.",
+  "Пиши стисло: 2–4 абзаци живою професійною мовою.",
+  "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
+  '{"paragraphs":["...","..."]}',
 ].join("\n");
 
 // --- Helpers --------------------------------------------------------------
@@ -206,6 +227,38 @@ export function buildSeniorityPrompt(input: SeniorityInput): Prompt {
 
   const messages: readonly PromptMessage[] = [
     { role: "system", content: SENIORITY_SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ];
+
+  return { messages };
+}
+
+// --- Cover-letter prompt (end of flow) ------------------------------------
+
+/**
+ * Build the cover-letter prompt (§4). Grounded like generation: the candidate's
+ * CV sentences and confirmed answers are the only sources of fact; requirements
+ * only steer emphasis; the career stage calibrates tone (never adds claims). The
+ * confirmed-answers/career-stage blocks stay empty when absent, so the baseline
+ * output is byte-stable (mirrors buildGenerationPrompt).
+ */
+export function buildCoverLetterPrompt(input: CoverLetterInput): Prompt {
+  const { requirements, cvSentences, confirmedAnswers, careerStage } = input;
+
+  const userContent = [
+    "## Ранжовані вимоги вакансії",
+    formatRequirements(requirements),
+    "",
+    "## Речення з резюме кандидата (єдине джерело фактів)",
+    formatSentences(cvSentences),
+    ...formatConfirmedAnswersBlock(confirmedAnswers),
+    ...formatCareerStageBlock(careerStage),
+    "",
+    "Напиши супровідний лист, спираючись лише на наведені джерела.",
+  ].join("\n");
+
+  const messages: readonly PromptMessage[] = [
+    { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
     { role: "user", content: userContent },
   ];
 

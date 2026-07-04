@@ -212,6 +212,13 @@ export const en: Dictionary = {
     copiedNotice: "Copied",
     pending: "Preparing file",
     error: "Export failed. Try again.",
+    coverLetter: {
+      action: "Cover letter",
+      headline: "Cover letter",
+      greeting: "Hello,",
+      intro: "Here is a short summary of the experience relevant to this role.",
+      closing: "I would be glad to discuss the details. Best regards.",
+    },
   },
   legal: {
     draftNote: "Draft: this copy is pending legal-counsel sign-off and is not final.",
