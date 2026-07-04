@@ -501,7 +501,7 @@ export const en: Dictionary = {
       pass: {
         question: "What's the Job-hunt Pass?",
         answer:
-          "A one-time 30-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts, and the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
+          "A one-time 30-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts, the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
       },
     },
     finalCta: {
