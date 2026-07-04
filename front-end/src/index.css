@@ -1,4 +1,13 @@
-@import url('@ds/styles.css');
+/* Every DS token file except tokens/fonts.css, which @imports Montserrat
+   and Material Symbols Rounded live from Google Fonts — that violates
+   this app's "no internet required at runtime" rule (AGENTS.md). Our own
+   self-hosted equivalent is in ./fonts.css. */
+@import url('@ds/tokens/colors.css');
+@import url('@ds/tokens/typography.css');
+@import url('@ds/tokens/spacing.css');
+@import url('@ds/tokens/shadows.css');
+@import url('@ds/tokens/base.css');
+@import url('./fonts.css');
 
 html,
 body,

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiClient } from './api/client.ts'
 import { Button } from '@ds/components/core/Button.jsx'
 import { DeviceCard } from '@ds/components/core/DeviceCard.jsx'
 import { IconButton } from '@ds/components/core/IconButton.jsx'
@@ -153,6 +154,16 @@ function RemoteScreen({ device, onBack }: { device: Device; onBack: () => void }
 
 function App() {
   const [device, setDevice] = useState<Device | null>(null)
+
+  // Temporary wiring smoke test for platform-foundation; removed once a
+  // real feature consumes apiClient.
+  useEffect(() => {
+    apiClient
+      .get('/api/health')
+      .then((health) => console.log('back-end health', health))
+      .catch((error) => console.error('back-end health check failed', error))
+  }, [])
+
   if (device) return <RemoteScreen device={device} onBack={() => setDevice(null)} />
   return <DeviceListScreen onOpenDevice={setDevice} />
 }

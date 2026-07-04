@@ -10,14 +10,14 @@ The design language is provided by the **Orbit TV Remote design system**, shippe
 - **Two themes, one palette shape.** Light default (`--base-100: #e0e5ec`); dark via `[data-theme="dark"]` on `<html>` (`--base-100: #2b2f38`). Same token names in both.
 - **Accent: warm orange.** `--accent: #ff8a3d`. Reserved for **one** primary action per screen and live/active states — nothing else.
 - **Typography: Montserrat only.** Weight (400–800) and letter-spacing carry hierarchy more than dramatic size jumps. Overline labels uppercase with `--tracking-overline`. Numbers share the same family — no monospace secondary face.
-- **Icons: Material Symbols Rounded only.** Loaded from Google Fonts via `tokens/fonts.css`. Rendered with `<span className="material-symbols-rounded">icon_name</span>`. No emoji, no custom SVGs, no logo.
+- **Icons: Material Symbols Rounded only.** Self-hosted (see Wiring below, not loaded from Google Fonts at runtime). Rendered with `<span className="material-symbols-rounded">icon_name</span>`. No emoji, no custom SVGs, no logo.
 - **Copy.** English, sentence case, second person ("Your TVs", "Add a TV", "Connect"). Button labels 1–3 words. Helper text one sentence. Overlines uppercase and wide-tracked ("LOCAL NETWORK").
 
 ## Wiring
 
 - **Alias.** `@ds` → `docs/orbit-tv-remote-design-system/`, configured in `front-end/vite.config.ts` and `front-end/tsconfig.app.json`.
 - **Skill symlink.** `.claude/skills/orbit-tv-remote-design` → the same directory, so agents can load the DS as a skill.
-- **Global stylesheet.** `front-end/src/index.css` imports `@ds/styles.css`, which in turn imports every token file and both fonts. The `body` uses `var(--base-100)`, `var(--fg-1)`, and `var(--font-sans)` — nothing hard-coded.
+- **Global stylesheet.** `front-end/src/index.css` imports every DS token file (`colors`, `typography`, `spacing`, `shadows`, `base`) individually — **except** `@ds/tokens/fonts.css`, which `@import`s Montserrat and Material Symbols Rounded live from Google Fonts. That would require internet access at runtime, which violates this app's "no cloud, no internet required" rule (`AGENTS.md`, `docs/product-brief.md`). Instead, `front-end/src/fonts.css` declares the same two font families via `@font-face` pointing at woff2 files vendored into `front-end/public/fonts/` (Montserrat 400/500/600/700/800 latin subset, Material Symbols Rounded). The `body` uses `var(--base-100)`, `var(--fg-1)`, and `var(--font-sans)` — nothing hard-coded.
 - **Type shims.** `front-end/src/ds.d.ts` declares the `@ds/components/**/*.jsx` module exports. Extend it when the app imports a new DS primitive.
 - **Serving.** The Fastify back-end serves the compiled SPA (`front-end/dist/`) at `/` on the same origin as the API and WebSocket — the whole product lives at `http://mytv.local/`. Front-end HTTP calls use relative paths (`/api/…`, `/ws`); never hard-code a host or a separate port. In dev, `npm run front:dev` runs Vite with HMR and proxies `/api` + `/ws` to the back-end.
 
