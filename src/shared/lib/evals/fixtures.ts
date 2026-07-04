@@ -154,11 +154,40 @@ export const goldenTraceWithSeniority: RunTrace = mutateTrace((t) => {
   ];
 });
 
+/**
+ * A well-formed PAID run that attaches the original CV PDF to the generation
+ * pass (add-premium-pdf-attach, T5). The `attachment` key appears ONLY on
+ * generate-bullet, never on any ground-bullet step — proving the multimodal
+ * generation pass grades clean and honesty isolation holds (BC-HONESTY-01/02).
+ */
+export const goldenTraceWithAttachment: RunTrace = mutateTrace((t) => {
+  t.steps = replaceStep(t.steps, 4, {
+    skill: "generate-bullet",
+    attempts: 1,
+    contextKeys: ["cvText", "jd", "requirements", "attachment"],
+    llmPayload: "generate for req 1 (+pdf document block)",
+  });
+});
+
 export const adversarialTraces: ReadonlyArray<{
   readonly name: string;
   readonly trace: RunTrace;
   readonly expectFail: string;
 }> = [
+  {
+    // T5 regression: the paid original-PDF feeds generation only; if it ever
+    // reaches the text-only verifier a claim read off the document could
+    // launder to "grounded" (BC-HONESTY-01/02).
+    name: "grounding pass sees the attached PDF (T5)",
+    trace: mutateTrace((t) => {
+      t.steps = replaceStep(t.steps, 5, {
+        skill: "ground-bullet",
+        attempts: 1,
+        contextKeys: ["bullet", "cvText", "attachment"],
+      });
+    }),
+    expectFail: "grounding-isolation",
+  },
   {
     name: "grounding pass sees the JD/requirements",
     trace: mutateTrace((t) => {

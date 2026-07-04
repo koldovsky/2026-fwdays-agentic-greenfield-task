@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   adversarialTraces,
   goldenTrace,
+  goldenTraceWithAttachment,
   goldenTraceWithConfirmedAnswers,
   goldenTraceWithSeniority,
 } from "./fixtures";
@@ -34,6 +35,16 @@ describe("gradeTrajectory — golden", () => {
   // pipeline still grades clean.
   it("passes every check when the run infers seniority", () => {
     const grade = gradeTrajectory(goldenTraceWithSeniority);
+    expect(grade.passed).toBe(true);
+    expect(grade.score).toBe(1);
+  });
+
+  // add-premium-pdf-attach T5: a paid run attaches the original PDF to the
+  // generation pass only. The `attachment` key is legitimate on generate-bullet
+  // and must not perturb any honesty check — the multimodal run grades clean.
+  it("passes every check when the paid generation pass attaches the original PDF", () => {
+    const grade = gradeTrajectory(goldenTraceWithAttachment);
+    expect(grade.checks.find((c) => c.id === "grounding-isolation")).toMatchObject({ ok: true });
     expect(grade.passed).toBe(true);
     expect(grade.score).toBe(1);
   });

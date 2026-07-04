@@ -25,13 +25,17 @@ const GROUNDING_ALLOWED = new Set(["bullet", "cvText", "confirmedAnswers"]);
  * the whitelist is later widened: seniority is a generation-tone signal and the
  * cover letter is a downstream artifact — letting either into grounding would
  * let an inferred/derived claim launder an unsupported bullet to "grounded"
- * (BC-HONESTY-03).
+ * (BC-HONESTY-03). `attachment` joins the list for the same reason
+ * (add-premium-pdf-attach, T5): the paid original-PDF feeds generation only —
+ * letting the document into grounding would let a claim the model read off the
+ * PDF launder past the text-only verifier (BC-HONESTY-01/02).
  */
 const GROUNDING_FORBIDDEN = new Set([
   "careerStage",
   "seniority",
   "coverLetter",
   "coverLetterContext",
+  "attachment",
 ]);
 
 function grade(checks: Check[]): Grade {
