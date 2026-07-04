@@ -22,6 +22,31 @@ export const legalLinks: readonly NavLink[] = [
   { href: "/oferta", label: "Public offer" },
 ];
 
+/** Hero copy (FR-SALES-01). Problem-first framing: name the broken status quo,
+ * then position Vouch as the honest alternative. The headline renders as
+ * lead + emphasized fragment + tail so the emphasis carries the brand color. */
+export interface Hero {
+  readonly kicker: string;
+  readonly headlineLead: string;
+  readonly headlineEmphasis: string;
+  readonly headlineTail: string;
+  readonly lead: string;
+  readonly ctaPrimary: string;
+  readonly ctaSecondary: string;
+  readonly note: string;
+}
+
+export const hero: Hero = {
+  kicker: "Honest resume tailoring",
+  headlineLead: "Generic AI writes resumes you ",
+  headlineEmphasis: "can't defend",
+  headlineTail: " in the interview.",
+  lead: "It invents skills, numbers, and roles you never had, and you find out when a recruiter asks. Vouch tailors your resume to each job and grounds every line in your real experience, so what you send is what you can stand behind.",
+  ctaPrimary: "Tailor my CV, free",
+  ctaSecondary: "See how it works",
+  note: "First tailoring is free. No account needed to try it.",
+};
+
 export interface Pillar {
   readonly title: string;
   readonly body: string;
@@ -104,9 +129,9 @@ export interface ChecklistPreviewRow {
 }
 
 export const checklistScore = 82;
-export const checklistHeadline = "Strong fit, two real gaps";
+export const checklistHeadline = "Strong fit, honestly scored";
 export const checklistSubtext =
-  "7 of 9 requirements met. The gaps are honest — close them or speak to them.";
+  "Met, coverable, partial, gap. Blue is coverable: adjacent evidence you can raise in a cover letter, not a hard miss.";
 
 export const checklistRows: readonly ChecklistPreviewRow[] = [
   {
@@ -120,6 +145,12 @@ export const checklistRows: readonly ChecklistPreviewRow[] = [
     priority: "must",
     status: "met",
     rationale: "Primary language on Konnect and side projects.",
+  },
+  {
+    requirement: "GraphQL",
+    priority: "nice",
+    status: "info",
+    rationale: "No direct GraphQL, but your REST and Apollo-client work is adjacent. Raise it in a cover letter.",
   },
   {
     requirement: "Node / backend ownership",
@@ -160,8 +191,8 @@ export const steps: readonly Step[] = [
   },
   {
     number: "03",
-    title: "Get vouched bullets",
-    body: "In seconds you get the checklist, grounded rewrites, and a clean export — overclaims left out.",
+    title: "Export what you can defend",
+    body: "In seconds you get the checklist, grounded rewrites, and clean PDF or DOCX exports, plus a grounded cover letter. Overclaims stay out, and every run is saved to your history to reopen later.",
   },
 ];
 
@@ -231,6 +262,11 @@ export const faqItems: readonly FaqItem[] = [
     question: "Do you train on my resume?",
     answer:
       "No. Your CV is personal data. It's encrypted at rest, never used to train models, and deletable on request. We don't load third-party trackers on any page.",
+  },
+  {
+    question: "Can it write my cover letter too?",
+    answer:
+      "Yes. Pro turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
   },
   {
     question: "How is this different from ChatGPT?",

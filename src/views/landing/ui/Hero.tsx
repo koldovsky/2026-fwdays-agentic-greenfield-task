@@ -1,7 +1,7 @@
 // Hero: positioning copy + primary CTA, alongside the signature static demo card
 // (FR-SALES-01/02). Demo uses example data only — no network, no sign-in.
 import { Button, GroundingBadge } from "@/shared/ui";
-import { demoBullets, demoRequirement, demoScore } from "../lib/content";
+import { demoBullets, demoRequirement, demoScore, hero } from "../lib/content";
 import { Kicker, Wrap } from "./primitives";
 
 function DemoCard() {
@@ -46,26 +46,22 @@ export function Hero() {
     <section className="py-16 sm:py-20">
       <Wrap className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
-          <Kicker>Honest resume tailoring</Kicker>
+          <Kicker>{hero.kicker}</Kicker>
           <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight text-ink sm:text-5xl">
-            We won&apos;t write what you <span className="text-brand">can&apos;t defend</span>
+            {hero.headlineLead}
+            <span className="text-brand">{hero.headlineEmphasis}</span>
+            {hero.headlineTail}
           </h1>
-          <p className="mt-5 max-w-[30em] text-lg leading-relaxed text-ink-soft">
-            Vouch tailors your resume to each job and grounds every line in your real
-            experience. You get a requirement-by-requirement checklist — and anything we
-            can&apos;t back from your CV gets flagged, not slipped in.
-          </p>
+          <p className="mt-5 max-w-[32em] text-lg leading-relaxed text-ink-soft">{hero.lead}</p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Button href="/tailor" variant="primary" size="lg">
-              Tailor my CV — free
+              {hero.ctaPrimary}
             </Button>
             <Button href="#how" variant="ghost" size="lg">
-              See how it works
+              {hero.ctaSecondary}
             </Button>
           </div>
-          <p className="mt-[14px] text-sm text-ink-muted">
-            First tailoring is free. No account needed to try it.
-          </p>
+          <p className="mt-[14px] text-sm text-ink-muted">{hero.note}</p>
         </div>
 
         <DemoCard />
