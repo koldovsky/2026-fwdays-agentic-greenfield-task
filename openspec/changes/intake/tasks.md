@@ -43,15 +43,15 @@
 
 ## 2. Domain logic — write failing unit tests FIRST (red), from the baseline spec
 
-- [ ] 2.1 `lib/src/intake/age.test.ts`: `validateAge(9)` passes;
+- [x] 2.1 `lib/src/intake/age.test.ts`: `validateAge(9)` passes;
       `validateAge(3)` returns `{ ok: false, code: "AGE_BELOW_MIN" }`
       deterministically, no LLM involved (`@trace FR-GUARD-04`,
       `@trace FR-INTAKE-02`, BC-AGE-01). Confirm red.
-- [ ] 2.2 `lib/src/intake/format.test.ts`: `validateFormat("individual")`
+- [x] 2.2 `lib/src/intake/format.test.ts`: `validateFormat("individual")`
       and `("group")` pass; `("unsure")` returns `FORMAT_UNSURE`;
       `("instrument")` returns `SCOPE_VIOLATION` (`@trace FR-INTAKE-02`,
       BC-SCOPE-01/02, BC-FORMAT-01). Confirm red.
-- [ ] 2.3 `lib/src/intake/audience.test.ts`: `addressesParent(7) === true`,
+- [x] 2.3 `lib/src/intake/audience.test.ts`: `addressesParent(7) === true`,
       `addressesParent(10) === false`, `addressesParent(14) === false`
       (`@trace FR-INTAKE-04`, BC-AGE-02). Confirm red.
 - [x] 2.4 `lib/src/intake/copy.test.ts`: the age-refusal, scope-explanation,
@@ -113,8 +113,15 @@
       construction (a fresh `initialIntakeState()` call has empty fields
       regardless of any other instance's history) (`@trace FR-INTAKE-08`).
       Confirm red.
-- [ ] 2.15 Run `npm run test:run` and confirm every test added in
+- [x] 2.15 Run `npm run test:run` and confirm every test added in
       2.1–2.14 fails (red) before writing any implementation.
+      **Confirmed:** 28 failed | 78 passed (106) — all 28 behavior tests
+      (2.1–2.3, 2.5–2.14) fail on their stubs' Not-implemented throws;
+      2.4's `copy.test.ts` content assertions are legitimately green
+      because copy constants are plain literals with no behavior to stub
+      (S1 precedent: `slots/propose.ts`'s apology constant shipped real
+      text in its own red round); the 78 green are S1 `slots` + section-1
+      db suites, untouched.
 
 ## 3. Domain logic — implement to green
 
