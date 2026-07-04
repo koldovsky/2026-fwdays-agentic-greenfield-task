@@ -8,6 +8,19 @@
 > **Created:** 2026-07-04. Derived from a 16-agent analysis workflow
 > (`wf_ba635982-08a`): 2 bug root-causers + 13 task mappers + synthesis.
 
+## Update 2026-07-04 (batch 2 — 10-task re-scope)
+
+User re-handed the batch as 10 tasks. A 10-agent evidence workflow (`wf_c452a9aa-e02`) re-checked each
+against real code. Net: **T1, T4, T6 are DONE** since this table was written; two new deploy/DB bugs
+were found and fixed. Live status now lives in `docs/current-state.md` (source of truth). Delta:
+
+- **NEW P0 — `read ECONNRESET` on delete/export** (deeper than BUG-1/2's uncaught-500 catch): bare pg
+  `Pool` with no SSL/idle-timeout/error-handler. **Fixed** `fcf39c5` (pool hardening + retry-once).
+- **NEW — registration 500 on fresh deploy:** no prod migration step. **Fixed** `73dd267` (`db:migrate`).
+- **T1 tailoring intelligence — DONE** (shipped + archived). **T4 header — DONE** (archive pending).
+- **T6 history — DONE in code** (suite green after `7babd9d`; openspec archive + 0004 integ-test pending).
+- Ordering unchanged for the rest: landing (T8+T9) → premium attach (T5) → animations (T7) → i18n (T10).
+
 ## Security callout (act first)
 
 A live **Stripe secret key** (`sk_test_…`) was shared in plaintext during
