@@ -7,6 +7,7 @@ import type {
   CareerStage,
   ConfirmedAnswerEvidence,
   CoverLetterInput,
+  DocumentAttachment,
   ExtractionInput,
   GenerationInput,
   GroundingInput,
@@ -188,6 +189,28 @@ function formatCareerStageBlock(
   ];
 }
 
+/**
+ * A note block for the paid multimodal generation pass (T5). Tells the model
+ * the attached PDF is the SAME résumé the sentences above came from — a richer
+ * source, never a new one — and repeats the no-fabrication rule so widening the
+ * input cannot widen the claims (BC-HONESTY-01). Empty when no attachment is
+ * present, so the baseline prompt stays byte-for-byte unchanged. NEVER used by
+ * the grounding builder (it has no attachment input).
+ */
+function formatAttachmentBlock(
+  attachments: readonly DocumentAttachment[] | undefined,
+): readonly string[] {
+  if (!attachments || attachments.length === 0) return [];
+  return [
+    "",
+    "## Оригінал резюме (PDF)",
+    "До запиту додано оригінальний PDF того самого резюме — те саме джерело",
+    "фактів, що й речення вище, лише з повним форматуванням і таблицями.",
+    "Використай його, щоб не втратити деталей, але НЕ додавай навичок, цифр,",
+    "компаній чи досвіду понад те, що є в резюме (BC-HONESTY-01).",
+  ];
+}
+
 // --- Pass 0: extraction prompt ---------------------------------------------
 
 /**
@@ -274,7 +297,8 @@ export function buildCoverLetterPrompt(input: CoverLetterInput): Prompt {
  * labeled evidence lane (BC-HONESTY-03).
  */
 export function buildGenerationPrompt(input: GenerationInput): Prompt {
-  const { cvProfile, requirements, jobDescription, confirmedAnswers, careerStage } = input;
+  const { cvProfile, requirements, jobDescription, confirmedAnswers, careerStage, attachments } =
+    input;
 
   const userContent = [
     "## Опис вакансії",
@@ -292,13 +316,21 @@ export function buildGenerationPrompt(input: GenerationInput): Prompt {
     formatSentences(cvProfile.sentences),
     ...formatConfirmedAnswersBlock(confirmedAnswers),
     ...formatCareerStageBlock(careerStage),
+    ...formatAttachmentBlock(attachments),
     "",
     "Переформулюй досвід кандидата у пункти, адаптовані під вимоги вакансії.",
   ].join("\n");
 
+  // Attach the document block to the user message only when present, so a
+  // text-only run produces the exact same message shape as before T5.
+  const userMessage: PromptMessage =
+    attachments && attachments.length > 0
+      ? { role: "user", content: userContent, attachments }
+      : { role: "user", content: userContent };
+
   const messages: readonly PromptMessage[] = [
     { role: "system", content: GENERATION_SYSTEM_PROMPT },
-    { role: "user", content: userContent },
+    userMessage,
   ];
 
   return { messages };

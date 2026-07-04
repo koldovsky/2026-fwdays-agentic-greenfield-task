@@ -29,6 +29,7 @@ export type {
   ConfirmedAnswerEvidence,
   CoverLetterInput,
   CoverLetterOutput,
+  DocumentAttachment,
   ExtractionInput,
   ExtractionResult,
   GeneratedBullet,

@@ -4,7 +4,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 import type { LlmCallOptions, LlmEffort, LlmProvider } from "./provider";
-import type { Prompt } from "./types";
+import type { Prompt, PromptMessage } from "./types";
 
 /** Latest Claude model (design.md: "Claude (default, latest Claude model)"). */
 export const DEFAULT_CLAUDE_MODEL = "claude-opus-4-8";
@@ -30,6 +30,23 @@ export interface ClaudeProviderConfig {
   readonly model?: string;
 }
 
+/**
+ * Map one user message onto the Messages API content. Plain text stays a bare
+ * string (byte-identical to pre-T5 requests); a message carrying attachments
+ * becomes a content array with each PDF as a `document` block followed by the
+ * text (add-premium-pdf-attach, T5). Only the paid generation pass ever sets
+ * attachments — grounding messages have none, so they always take the string
+ * path (BC-HONESTY-01/02).
+ */
+function toUserContent(m: PromptMessage): string | Anthropic.ContentBlockParam[] {
+  if (!m.attachments || m.attachments.length === 0) return m.content;
+  const documents: Anthropic.ContentBlockParam[] = m.attachments.map((a) => ({
+    type: "document",
+    source: { type: "base64", media_type: a.mediaType, data: a.dataBase64 },
+  }));
+  return [...documents, { type: "text", text: m.content }];
+}
+
 /** Map the provider-agnostic Prompt onto the Messages API shape. */
 function toApiRequest(prompt: Prompt): {
   system: string | undefined;
@@ -41,7 +58,7 @@ function toApiRequest(prompt: Prompt): {
     .join("\n\n");
   const messages: Anthropic.MessageParam[] = prompt.messages
     .filter((m) => m.role === "user")
-    .map((m) => ({ role: "user" as const, content: m.content }));
+    .map((m) => ({ role: "user" as const, content: toUserContent(m) }));
   return { system: system === "" ? undefined : system, messages };
 }
 

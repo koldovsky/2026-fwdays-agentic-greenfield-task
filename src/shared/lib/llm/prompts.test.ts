@@ -12,6 +12,7 @@ import {
 } from "./index";
 import type {
   ConfirmedAnswerEvidence,
+  DocumentAttachment,
   GeneratedBullet,
   GenerationInput,
   GroundingInput,
@@ -196,6 +197,44 @@ describe("careerStage tone calibration in generation (§3.5, BC-HONESTY-01)", ()
     const explicitUndefined = buildGenerationPrompt({ ...genInput, careerStage: undefined });
     expect(explicitUndefined).toEqual(noField);
     expect(textOf(noField.messages)).not.toContain("Рівень кандидата");
+  });
+});
+
+describe("PDF attachment in generation (add-premium-pdf-attach T5, BC-HONESTY-01/02)", () => {
+  const attachment: DocumentAttachment = {
+    kind: "pdf",
+    mediaType: "application/pdf",
+    dataBase64: "JVBERi0xLjQK", // "%PDF-1.4\n"
+  };
+  const attachments = [attachment] as const;
+
+  it("attaches the document block to the user message and renders a no-fabrication note", () => {
+    const prompt = buildGenerationPrompt({ ...genInput, attachments });
+    const userMsg = prompt.messages.find((m) => m.role === "user");
+    expect(userMsg?.attachments).toEqual(attachments);
+    const text = textOf(prompt.messages);
+    expect(text).toContain("## Оригінал резюме (PDF)");
+    // The block is an instruction not to add facts, not a new fact itself.
+    expect(text).toContain("НЕ додавай");
+    expect(text).toContain("BC-HONESTY-01");
+  });
+
+  it("absent/empty attachments is byte-identical to no attachments field (baseline unchanged)", () => {
+    const noField = buildGenerationPrompt(genInput);
+    const explicitUndefined = buildGenerationPrompt({ ...genInput, attachments: undefined });
+    const explicitEmpty = buildGenerationPrompt({ ...genInput, attachments: [] });
+    expect(explicitUndefined).toEqual(noField);
+    expect(explicitEmpty).toEqual(noField);
+    // No attachment key leaks onto a text-only user message.
+    const userMsg = noField.messages.find((m) => m.role === "user");
+    expect(userMsg && "attachments" in userMsg).toBe(false);
+    expect(textOf(noField.messages)).not.toContain("Оригінал резюме (PDF)");
+  });
+
+  it("is pure — same input yields identical output (TC-PURE-01)", () => {
+    expect(buildGenerationPrompt({ ...genInput, attachments })).toEqual(
+      buildGenerationPrompt({ ...genInput, attachments }),
+    );
   });
 });
 

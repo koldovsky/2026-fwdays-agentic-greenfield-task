@@ -11,6 +11,29 @@ export type PromptRole = "system" | "user";
 export interface PromptMessage {
   readonly role: PromptRole;
   readonly content: string;
+  /**
+   * Optional non-text parts (e.g. an attached PDF document block). Carried by
+   * the GENERATION pass's user message ONLY (add-premium-pdf-attach, T5): the
+   * grounding Prompt is built from a GroundingInput that has no attachment
+   * field, so a document can never reach grounding by construction
+   * (BC-HONESTY-01/02). Absent for every text-only prompt, so those stay
+   * byte-for-byte unchanged.
+   */
+  readonly attachments?: readonly DocumentAttachment[];
+}
+
+/**
+ * A non-text prompt part — an attached document (the candidate's original CV
+ * PDF). Framework-free (TC-PURE-01): raw base64 + media type, no SDK type; the
+ * Claude adapter maps it onto a document content block. The bytes are the same
+ * CV the parsed text came from — a richer source, never a new one — and are
+ * NEVER logged (NFR-SEC-01/02).
+ */
+export interface DocumentAttachment {
+  readonly kind: "pdf";
+  readonly mediaType: "application/pdf";
+  /** base64-encoded PDF bytes. */
+  readonly dataBase64: string;
 }
 
 /** A ready-to-send prompt: an ordered list of messages. */
@@ -103,6 +126,18 @@ export interface GenerationInput {
    * introduces no claim the CV did not already support (BC-HONESTY-01).
    */
   readonly careerStage?: CareerStage;
+  /**
+   * The candidate's original CV document(s) for the PAID multimodal generation
+   * pass (add-premium-pdf-attach, T5). The generation prompt attaches these to
+   * its user message so the model sees the real layout/tables the text
+   * extractor may have flattened. The grounding pass's GroundingInput has NO
+   * attachment field, so honesty isolation holds by construction
+   * (BC-HONESTY-01/02): a bullet is still grounded against the candidate's own
+   * CV TEXT and flagged overclaim-risk when it cannot be, with no exemption for
+   * content sourced from the attachment. Absent leaves the baseline prompt
+   * byte-for-byte unchanged.
+   */
+  readonly attachments?: readonly DocumentAttachment[];
 }
 
 export interface GeneratedBullet {
