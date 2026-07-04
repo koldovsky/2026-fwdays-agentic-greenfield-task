@@ -1,0 +1,56 @@
+export const uk = {
+  shell: {
+    title: "MotoRoute",
+    description: "Планувальник мото-маршрутів для довгих поїздок",
+  },
+  empty: {
+    heading: "Планування мото-маршруту",
+    helper: "Вкажіть початок і кінець поїздки",
+  },
+  footer: {
+    osm: "OpenStreetMap",
+    osrm: "OSRM",
+    separator: "·",
+  },
+  theme: {
+    switchToLight: "Світла тема",
+    switchToDark: "Темна тема",
+  },
+  clock: {
+    label: "Поточний місцевий час",
+  },
+  route: {
+    startLabel: "Початок",
+    endLabel: "Кінець",
+    restLabel: "Відстань між зупинками, км",
+    dayLabel: "Максимум за день, км",
+    startPlaceholder: "Місто або населений пункт",
+    endPlaceholder: "Місто або населений пункт",
+    submit: "Побудувати маршрут",
+    searching: "Пошук…",
+    noResults: "Місць не знайдено",
+    autocompleteHint: "Почніть вводити назву місця",
+    errorRestRange: "Вкажіть відстань між зупинками від 50 до 300 км",
+    errorDayRange: "Вкажіть максимум за день від 100 до 1000 км",
+    errorStartRequired: "Вкажіть початкову точку маршруту",
+    errorEndRequired: "Вкажіть кінцеву точку маршруту",
+    planning: "Побудова маршруту…",
+    errorRoutingFailed:
+      "Не вдалося побудувати маршрут. Спробуйте ще раз пізніше",
+    summaryHeading: "Маршрут готовий",
+    summaryDistance: "Загальна відстань",
+    summaryDays: "Днів у дорозі",
+  },
+  itinerary: {
+    overviewTitle: "Загальний огляд",
+    distance: "Відстань",
+    duration: "Час у дорозі",
+    days: "Днів у дорозі",
+    dayTitle: "День",
+    stopStart: "Початок",
+    stopEnd: "Кінець",
+    stopRest: "Зупинка",
+    stopOvernight: "Ночівля",
+    distanceFromStart: "від старту",
+  },
+} as const;
