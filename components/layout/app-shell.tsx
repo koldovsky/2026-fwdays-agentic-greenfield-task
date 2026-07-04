@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { Folder, Tag } from "@prisma/client";
 import { IconButton } from "@notely-design/components";
 import {
   readSidebarCollapsed,
@@ -22,9 +23,11 @@ import {
 
 type AppShellProps = {
   children: ReactNode;
+  folders: Folder[];
+  tags: Tag[];
 };
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, folders, tags }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return readSidebarCollapsed();
@@ -65,7 +68,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-dvh overflow-hidden bg-[var(--color-bg)]">
       {/* Desktop / tablet sidebar */}
       <div className="hidden md:flex md:shrink-0">
-        <Sidebar collapsed={collapsed} />
+        <Sidebar collapsed={collapsed} folders={folders} tags={tags} />
       </div>
 
       {/* Mobile drawer */}
@@ -83,7 +86,13 @@ export function AppShell({ children }: AppShellProps) {
             aria-modal="true"
             aria-label="Navigation menu"
           >
-            <Sidebar collapsed={false} mobile onNavigate={closeMobile} />
+            <Sidebar
+              collapsed={false}
+              mobile
+              onNavigate={closeMobile}
+              folders={folders}
+              tags={tags}
+            />
           </div>
         </div>
       )}

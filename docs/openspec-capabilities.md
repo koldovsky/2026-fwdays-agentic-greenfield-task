@@ -276,24 +276,181 @@ folders-tags   markdown-editor   note-actions
 
 ---
 
-## Suggested OpenSpec workflow per change
+## Step-by-step implementation workflow
 
-For each change in order:
+Repeat the cycle below for **each capability in phase order** (0 → 8). Do not start the
+next capability until the current one passes the exit gate (step 9).
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  FOR EACH CAPABILITY (phases 0–8)                               │
+│                                                                 │
+│  1 Prepare ──▶ 2 Propose ──▶ 3 Plan artifacts ──▶ 4 Review      │
+│       │                                              │          │
+│       │         ┌────────────────────────────────────┘          │
+│       │         ▼                                               │
+│       │    5 Implement ──▶ 6 Verify ──▶ 7 Sync specs            │
+│       │         │                          │                    │
+│       │         ▼                          ▼                    │
+│       │    8 Archive ──▶ 9 Exit gate ──▶ NEXT CAPABILITY        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 1 — Prepare
+
+**Goal:** Confirm prerequisites and scope before opening a change.
+
+1. Read [docs/current-state.md](current-state.md) — pick up where the last session stopped.
+2. Identify the **next capability** from the [Capability map](#capability-map) (first row
+   without a synced spec in `openspec/specs/<capability>/spec.md`).
+3. Read the matching **Implementation phase** section in this document (deliverables,
+   depends-on, requirement IDs).
+4. Read affected sections in [requirements.md](requirements.md) and [PRD.md](PRD.md).
+5. Confirm **dependencies are done** — archived changes exist for every capability listed
+   under "Depends on" in that phase.
+6. Start local services if needed (e.g. `docker compose up -d` for PostgreSQL from phase 1).
+
+**Exit:** Scope is clear; blockers are recorded in `docs/current-state.md`.
+
+---
+
+### Step 2 — Create the OpenSpec change
+
+**Goal:** Scaffold the change directory.
 
 ```bash
 openspec new change "<change-name>"
-# Generate: proposal.md → design.md → tasks.md
-# Implement via /opsx:apply
-# Archive when done: openspec archive <change-name>
 ```
 
-After archiving, sync capability specs:
+Use the **OpenSpec change name** from the capability map (e.g. `add-app-foundation`).
+
+Verify:
 
 ```bash
-openspec sync-specs   # or /opsx:sync
+openspec status --change "<change-name>"
+openspec list
 ```
 
-Target spec paths:
+**Exit:** Change exists under `openspec/changes/<change-name>/` with `.openspec.yaml`.
+
+---
+
+### Step 3 — Generate planning artifacts
+
+**Goal:** Produce proposal, design, and tasks before writing feature code.
+
+**Cursor:** run `/opsx:propose` (or ask the agent to use the `openspec-propose` skill).
+
+Artifact order (spec-driven schema):
+
+| Order | Artifact | Purpose |
+|-------|----------|---------|
+| 1 | `proposal.md` | What and why; scope and non-goals |
+| 2 | `design.md` | How — architecture, data flow, key decisions |
+| 3 | `tasks.md` | Checkbox list of implementation steps |
+
+Check progress:
+
+```bash
+openspec status --change "<change-name>" --json
+```
+
+All artifacts in `applyRequires` must be `done` before step 5.
+
+**Exit:** `proposal.md`, `design.md`, and `tasks.md` exist and list requirement IDs from this capability.
+
+---
+
+### Step 4 — Review artifacts (human gate)
+
+**Goal:** Catch scope drift before implementation.
+
+Review checklist:
+
+- [ ] Every requirement ID for this capability appears in proposal or tasks
+- [ ] Design matches project stack (Next.js, Prisma, Auth.js, Notely design system)
+- [ ] Tasks are ordered and each is completable in one session
+- [ ] No out-of-scope features from later phases
+- [ ] Non-goals are explicit
+
+If something is wrong, edit artifacts in `openspec/changes/<change-name>/` or re-run
+`/opsx:propose` with corrections. Do **not** skip to implementation with a broken plan.
+
+**Exit:** Artifacts approved (explicit sign-off or no open review comments).
+
+---
+
+### Step 5 — Implement tasks
+
+**Goal:** Execute `tasks.md` one checkbox at a time.
+
+**Cursor:** run `/opsx:apply` (or ask the agent to use the `openspec-apply-change` skill).
+
+Per-task loop:
+
+1. Read context files from `openspec instructions apply --change "<change-name>" --json`
+2. Pick the next `- [ ]` task
+3. Implement minimal code for that task only
+4. Mark task `- [x]` in `tasks.md`
+5. Repeat until all tasks are checked or a blocker appears
+
+Useful commands during implementation:
+
+```bash
+npm run dev          # manual smoke test
+npm run lint         # ESLint
+npm run build        # type-check + production build
+npx prisma migrate dev   # when schema changes (phase 1+)
+```
+
+**Pause rules:** Stop and update `design.md` / `tasks.md` if implementation reveals a
+design gap — do not hack around a bad plan.
+
+**Exit:** All tasks in `tasks.md` marked `- [x]`.
+
+---
+
+### Step 6 — Verify against requirements
+
+**Goal:** Prove this capability satisfies its requirement IDs before archiving.
+
+Capability-specific checks:
+
+| Capability | Minimum verification |
+|------------|---------------------|
+| `app-foundation` | Theme toggle persists; sidebar collapses; layout works at 320px and 1920px |
+| `data-model` | Migrations apply; seed runs; DATA-004 purge/query documented |
+| `auth` | Register, login, logout; session survives refresh; invalid creds rejected |
+| `notes-core` | Create, edit, autosave after 1 s idle, soft-delete to trash |
+| `folders-tags` | Folder/tag CRUD; assign on note; list filtered by folder or tag |
+| `markdown-editor` | Markdown renders; shortcuts work; XSS payload sanitized |
+| `note-actions` | Duplicate creates copy with folder and tags |
+| `search` | Full-text + filters; results update while typing; spot-check NFR-002 |
+| `quality-hardening` | Lighthouse ≥ 95; WCAG spot-check; load time spot-check |
+
+Record verification notes in the change's `tasks.md` or a short comment in the PR.
+
+**Exit:** Every requirement ID for this capability has a passing manual or automated check.
+
+---
+
+### Step 7 — Sync specs to main
+
+**Goal:** Merge delta specs into permanent capability specs.
+
+**Cursor:** run `/opsx:sync` (or use the `openspec-sync-specs` skill).
+
+```bash
+openspec status --change "<change-name>" --json   # find delta spec paths
+```
+
+Apply deltas to:
+
+```
+openspec/specs/<capability>/spec.md
+```
+
+Main spec paths for this project:
 
 ```
 openspec/specs/
@@ -307,6 +464,86 @@ openspec/specs/
 ├── search/spec.md
 └── quality-hardening/spec.md
 ```
+
+**Exit:** `openspec/specs/<capability>/spec.md` reflects what was built.
+
+---
+
+### Step 8 — Archive the change
+
+**Goal:** Close the change and move it out of active work.
+
+**Cursor:** run `/opsx:archive` (or use the `openspec-archive-change` skill).
+
+Pre-archive checklist:
+
+- [ ] All artifacts `done` (`openspec status --change "<change-name>"`)
+- [ ] All tasks `- [x]`
+- [ ] Specs synced (step 7)
+- [ ] App builds (`npm run build`)
+
+```bash
+openspec archive "<change-name>"
+```
+
+Archived changes live under `openspec/changes/archive/YYYY-MM-DD-<change-name>/`.
+
+**Exit:** Change no longer appears in `openspec list` as active.
+
+---
+
+### Step 9 — Exit gate (before next capability)
+
+**Goal:** Leave the repo in a merge-ready state for the next cycle.
+
+1. Update [docs/current-state.md](current-state.md):
+   - **Last updated** — ISO 8601 UTC timestamp
+   - **Last session summary** — what was done
+   - **Current focus** — next capability / change name
+   - **Completed recently** — add archived change
+   - **Blockers / open questions**
+   - **Files touched**
+2. Confirm no active OpenSpec change remains unless intentionally paused mid-capability.
+3. Look up the **next row** in the [Capability map](#capability-map) and return to **Step 1**.
+
+**Hard stops — do not proceed to the next capability if:**
+
+| Condition | Action |
+|-----------|--------|
+| Depends-on capability not archived | Finish or archive the dependency first |
+| Active change with incomplete tasks | Resume `/opsx:apply` or explicitly pause in `current-state.md` |
+| Build or lint fails | Fix before archiving |
+| Requirement ID untested | Complete step 6 |
+
+---
+
+### Quick reference — Cursor commands
+
+| Step | Command / skill |
+|------|-----------------|
+| 3 — Plan | `/opsx:propose` → `openspec-propose` |
+| 5 — Implement | `/opsx:apply` → `openspec-apply-change` |
+| 7 — Sync | `/opsx:sync` → `openspec-sync-specs` |
+| 8 — Archive | `/opsx:archive` → `openspec-archive-change` |
+| Explore / spike | `/opsx:explore` → `openspec-explore` |
+
+---
+
+### Capability sequence checklist
+
+Track progress by checking off each full cycle (steps 1–9):
+
+- [x] **Phase 0** — `add-app-foundation` → `app-foundation`
+- [x] **Phase 1** — `add-data-model` → `data-model`
+- [x] **Phase 2** — `add-auth` → `auth`
+- [x] **Phase 3** — `add-notes-core` → `notes-core`
+- [x] **Phase 4** — `add-folders-tags` → `folders-tags`
+- [x] **Phase 5** — `add-markdown-editor` → `markdown-editor`
+- [x] **Phase 6** — `add-note-actions` → `note-actions`
+- [x] **Phase 7** — `add-search` → `search`
+- [ ] **Phase 8** — `add-quality-hardening` → `quality-hardening`
+
+**MVP milestone:** phases 0–3 checked = shippable core product.
 
 ---
 
@@ -342,10 +579,10 @@ No requirement ID from [requirements.md](requirements.md) is orphaned.
 
 ## Next step
 
-Start with:
+Follow [Step-by-step implementation workflow](#step-by-step-implementation-workflow), starting at **Step 1**:
 
 ```bash
 openspec new change "add-app-foundation"
 ```
 
-Then run `/opsx:propose` or `/opsx:apply` for that change.
+Then `/opsx:propose` → review → `/opsx:apply` → verify → `/opsx:sync` → `/opsx:archive`.

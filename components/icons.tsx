@@ -148,12 +148,117 @@ export function IconFolder(props: IconProps) {
   );
 }
 
+export function IconPencil(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </svg>
+  );
+}
+
+export function IconCopy(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <rect width="14" height="14" x="8" y="8" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
+export function IconCheck(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+export function IconHeading1(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M4 12h8" />
+      <path d="M4 18V6" />
+      <path d="M12 18V6" />
+      <path d="m17 12 3-2v8" />
+    </svg>
+  );
+}
+
+export function IconHeading2(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M4 12h8" />
+      <path d="M4 18V6" />
+      <path d="M12 18V6" />
+      <path d="M21 18h-4c0-4 4-3 4-6 0-1.3-1.6-2.2-4-1.5" />
+    </svg>
+  );
+}
+
+export function IconListBullet(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M3 6h.01" />
+      <path d="M3 12h.01" />
+      <path d="M3 18h.01" />
+      <path d="M8 6h13" />
+      <path d="M8 12h13" />
+      <path d="M8 18h13" />
+    </svg>
+  );
+}
+
+export function IconListOrdered(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M10 6h11" />
+      <path d="M10 12h11" />
+      <path d="M10 18h11" />
+      <path d="M4 6h1v4" />
+      <path d="M4 10h2" />
+      <path d="M6 18H4c0-1 2-1.5 2-3s-1-1.5-2-1" />
+    </svg>
+  );
+}
+
+export function IconListChecks(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="M11 6h11" />
+      <path d="M11 12h11" />
+      <path d="M11 18h11" />
+      <path d="m3 6 1.5 1.5L7 5" />
+      <path d="m3 12 1.5 1.5L7 11" />
+      <path d="m3 18 1.5 1.5L7 17" />
+    </svg>
+  );
+}
+
+export function IconCode(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <path d="m8 6-6 6 6 6" />
+      <path d="m16 6 6 6-6 6" />
+    </svg>
+  );
+}
+
 export function IconLogout(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...defaults} {...props}>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+export function IconSearch(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...defaults} {...props}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
     </svg>
   );
 }
@@ -165,4 +270,5 @@ export const navIconMap = {
   archive: IconArchive,
   "trash-2": IconTrash,
   settings: IconSettings,
+  search: IconSearch,
 } as const;

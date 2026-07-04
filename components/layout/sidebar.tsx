@@ -1,27 +1,32 @@
 "use client";
 
 import Link from "next/link";
+import type { Folder, Tag } from "@prisma/client";
 import { Button } from "@notely-design/components";
-import {
-  bottomNavItems,
-  placeholderFolders,
-  placeholderTags,
-  primaryNavItems,
-} from "@/lib/nav-items";
-import { navIconMap, IconFolder, IconPlus } from "@/components/icons";
-import {
-  SidebarNavLink,
-  SidebarPlaceholderRow,
-  SidebarSection,
-} from "@/components/layout/sidebar-nav";
+import { bottomNavItems, primaryNavItems } from "@/lib/nav-items";
+import { navIconMap, IconPlus } from "@/components/icons";
+import { SidebarNavLink, SidebarSection } from "@/components/layout/sidebar-nav";
+import { SidebarFolderRow } from "@/components/layout/sidebar-folder-row";
+import { SidebarTagRow } from "@/components/layout/sidebar-tag-row";
+import { SidebarCreateRow } from "@/components/layout/sidebar-create-row";
+import { createFolder } from "@/app/actions/folders";
+import { createTag } from "@/app/actions/tags";
 
 type SidebarProps = {
   collapsed: boolean;
   mobile?: boolean;
   onNavigate?: () => void;
+  folders: Folder[];
+  tags: Tag[];
 };
 
-export function Sidebar({ collapsed, mobile = false, onNavigate }: SidebarProps) {
+export function Sidebar({
+  collapsed,
+  mobile = false,
+  onNavigate,
+  folders,
+  tags,
+}: SidebarProps) {
   const showLabels = mobile || !collapsed;
 
   return (
@@ -83,32 +88,31 @@ export function Sidebar({ collapsed, mobile = false, onNavigate }: SidebarProps)
       </nav>
 
       <SidebarSection label="Folders" collapsed={!showLabels}>
-        {placeholderFolders.map((folder) => (
-          <SidebarPlaceholderRow
-            key={folder.name}
-            label={folder.name}
-            color={folder.color}
+        {folders.map((folder) => (
+          <SidebarFolderRow
+            key={folder.id}
+            id={folder.id}
+            name={folder.name}
             collapsed={!showLabels}
           />
         ))}
-        <SidebarPlaceholderRow
+        <SidebarCreateRow
           label="New folder"
-          icon={<IconFolder />}
           collapsed={!showLabels}
+          onCreate={createFolder}
         />
       </SidebarSection>
 
       <SidebarSection label="Tags" collapsed={!showLabels}>
-        {placeholderTags.map((tag) => (
-          <SidebarPlaceholderRow
-            key={tag}
-            label={tag}
-            icon={
-              <span style={{ color: "var(--color-text-tertiary)" }}>#</span>
-            }
+        {tags.map((tag) => (
+          <SidebarTagRow
+            key={tag.id}
+            id={tag.id}
+            name={tag.name}
             collapsed={!showLabels}
           />
         ))}
+        <SidebarCreateRow label="New tag" collapsed={!showLabels} onCreate={createTag} />
       </SidebarSection>
 
       <div className="mt-auto pt-3">

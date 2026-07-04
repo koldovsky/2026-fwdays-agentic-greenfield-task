@@ -96,37 +96,3 @@ export function SidebarSection({
     </div>
   );
 }
-
-type PlaceholderRowProps = {
-  label: string;
-  icon?: ReactNode;
-  color?: string;
-  collapsed?: boolean;
-};
-
-export function SidebarPlaceholderRow({
-  label,
-  icon,
-  color,
-  collapsed = false,
-}: PlaceholderRowProps) {
-  if (collapsed) return null;
-
-  return (
-    <div
-      className="flex items-center gap-2 px-2.5 py-[7px] text-sm"
-      style={{ color: "var(--color-text-secondary)" }}
-      aria-hidden
-    >
-      {color ? (
-        <span
-          className="size-[9px] shrink-0 rounded-full"
-          style={{ background: color }}
-        />
-      ) : (
-        <span className="shrink-0 opacity-60">{icon}</span>
-      )}
-      <span className="truncate">{label}</span>
-    </div>
-  );
-}

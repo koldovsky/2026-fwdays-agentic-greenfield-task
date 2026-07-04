@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { AutoCreateNoteForm } from "@/components/notes/auto-create-note-form";
 
 export default function NewNotePage() {
-  return (
-    <PlaceholderPage
-      title="New note"
-      description="Start writing when notes are connected"
-      icon="inbox"
-    />
-  );
+  return <AutoCreateNoteForm />;
 }
