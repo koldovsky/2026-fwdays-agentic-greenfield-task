@@ -215,7 +215,10 @@ export async function POST(request: Request): Promise<Response> {
 
         if (succeeded) {
           if (paidTallyUserId !== null) {
-            await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+            // Capture the narrowed value: TS cannot keep the `!== null` narrowing
+            // for a mutable `let` across the withTransaction closure below.
+            const paidUserId: string = paidTallyUserId;
+            await createUsageCounterRepo(getDb()).increment(paidUserId);
             // History persistence (FR-TAILOR-04) is PAID-ONLY and best-effort:
             // it runs after the result already streamed, so any failure is
             // logged server-side and never touches the user's result or the
@@ -232,7 +235,7 @@ export async function POST(request: Request): Promise<Response> {
                       jobDescriptions: createJobDescriptionRepo(tx),
                       tailorings: createTailoringRepo(tx),
                     },
-                    { userId: paidTallyUserId, jobDescription, result: finalResult },
+                    { userId: paidUserId, jobDescription, result: finalResult },
                   ),
                 );
               } catch (persistError) {
