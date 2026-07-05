@@ -1,0 +1,28 @@
+<!-- @dsCard group="Colors" viewport="700x170" name="Surfaces — Light & Dark" subtitle="bg / surface / card / text in both themes" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin:0; padding:20px; background:#e8eaef; display:flex; gap:16px; }
+  .pane { flex:1; border-radius:var(--radius-lg); padding:16px; border:1px solid var(--color-border); }
+  .card { border-radius:var(--radius-md); padding:12px; box-shadow:var(--shadow-1); border:1px solid var(--color-border); }
+  .ttl { font-size:14px; font-weight:600; color:var(--color-text); }
+  .sub { font-size:12px; color:var(--color-text-secondary); margin-top:4px; }
+  .tag { display:inline-block; margin-top:10px; font-size:11px; font-family:var(--font-mono); color:var(--color-text-tertiary); }
+</style></head>
+<body>
+  <div class="pane" data-theme="light" style="background:var(--color-bg)">
+    <div class="card" style="background:var(--color-card)">
+      <div class="ttl">Light surface</div>
+      <div class="sub">Secondary text on a card</div>
+      <div class="tag">bg · surface · card</div>
+    </div>
+  </div>
+  <div class="pane" data-theme="dark" style="background:var(--color-bg)">
+    <div class="card" style="background:var(--color-card)">
+      <div class="ttl">Dark surface</div>
+      <div class="sub">Secondary text on a card</div>
+      <div class="tag">bg · surface · card</div>
+    </div>
+  </div>
+</body></html>

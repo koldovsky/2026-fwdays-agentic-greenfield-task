@@ -1,0 +1,10 @@
+/* Notely Design System — global entry point.
+   Consumers link THIS file only. Import list only; no rules here. */
+@import "./tokens/fonts.css";
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/shadow.css";
+@import "./tokens/motion.css";
+@import "./tokens/base.css";

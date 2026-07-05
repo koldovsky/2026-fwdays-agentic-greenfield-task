@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  notes   Note[]
+  folders Folder[]
+  tags    Tag[]
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id])
+  notes Note[]
+
+  @@index([userId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User      @relation(fields: [userId], references: [id])
+  notes NoteTag[]
+
+  @@index([userId])
+}
+
+model Note {
+  id           String                   @id @default(cuid())
+  userId       String
+  folderId     String?
+  title        String
+  content      String
+  color        String?
+  isFavorite   Boolean                  @default(false)
+  isPinned     Boolean                  @default(false)
+  isArchived   Boolean                  @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+  // Generated column (title weighted over content) + GIN index, hand-written in
+  // migrations/20260704173453_add_search_vector. Declared here (but otherwise untouched)
+  // so `prisma migrate dev` doesn't treat it as drift to drop; queried via $queryRaw only.
+  searchVector Unsupported("tsvector")? @default(dbgenerated("(setweight(to_tsvector('english'::regconfig, COALESCE(title, ''::text)), 'A'::\"char\") || setweight(to_tsvector('english'::regconfig, COALESCE(content, ''::text)), 'B'::\"char\"))"))
+
+  user   User      @relation(fields: [userId], references: [id])
+  folder Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags   NoteTag[]
+
+  @@index([userId])
+  @@index([folderId])
+  @@index([deletedAt])
+  @@index([userId, isArchived])
+  @@index([searchVector], type: Gin)
+}
+
+model NoteTag {
+  noteId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@index([tagId])
+}

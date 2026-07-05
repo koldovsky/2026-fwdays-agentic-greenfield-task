@@ -1,0 +1,27 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Neutral Ramp" subtitle="Cool grays — surfaces, text, borders" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin:0; padding:20px; background:var(--color-card); }
+  .ramp { display:flex; gap:0; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--color-border); }
+  .cell { flex:1; height:64px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-family:var(--font-mono); font-size:9px; }
+  .lbl { margin-top:10px; font-size:11px; color:var(--color-text-secondary); display:flex; justify-content:space-between; }
+</style></head>
+<body>
+  <div class="ramp">
+    <div class="cell" style="background:var(--gray-0);color:#777">0</div>
+    <div class="cell" style="background:var(--gray-50);color:#777">50</div>
+    <div class="cell" style="background:var(--gray-100);color:#777">100</div>
+    <div class="cell" style="background:var(--gray-200);color:#777">200</div>
+    <div class="cell" style="background:var(--gray-300);color:#555">300</div>
+    <div class="cell" style="background:var(--gray-400);color:#fff">400</div>
+    <div class="cell" style="background:var(--gray-500);color:#fff">500</div>
+    <div class="cell" style="background:var(--gray-600);color:#fff">600</div>
+    <div class="cell" style="background:var(--gray-700);color:#fff">700</div>
+    <div class="cell" style="background:var(--gray-800);color:#fff">800</div>
+    <div class="cell" style="background:var(--gray-900);color:#fff">900</div>
+    <div class="cell" style="background:var(--gray-950);color:#fff">950</div>
+  </div>
+  <div class="lbl"><span>Card / surface ←</span><span>→ Text / ink</span></div>
+</body></html>

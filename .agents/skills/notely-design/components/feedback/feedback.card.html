@@ -1,0 +1,33 @@
+<!-- @dsCard group="Components" viewport="700x340" name="Feedback — Toast, Alert, Progress, Skeleton" subtitle="Status and loading" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style> body { margin:0; padding:20px; background:var(--color-bg); } .stack{display:flex;flex-direction:column;gap:14px;} .row{display:flex;gap:16px;align-items:center;} </style></head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { Toast, Alert, ProgressBar, Skeleton, Spinner } = window.NotelyDesignSystem_fd4cb3;
+    function Demo(){
+      return (<div className="stack">
+        <div className="row">
+          <Toast message="Note moved to Trash" tone="neutral" actionLabel="Undo" onDismiss={()=>{}}/>
+          <Toast message="All changes saved" tone="success"/>
+        </div>
+        <Alert tone="warning" title="You're offline">Changes will sync when you reconnect.</Alert>
+        <ProgressBar value={68}/>
+        <div className="row" style={{gap:10}}>
+          <Skeleton circle height={36}/>
+          <div style={{flex:1}}><Skeleton width="60%" style={{marginBottom:8}}/><Skeleton width="90%"/></div>
+          <Spinner/>
+        </div>
+      </div>);
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+    setTimeout(()=>window.lucide && window.lucide.createIcons(), 50);
+  </script>
+</body></html>

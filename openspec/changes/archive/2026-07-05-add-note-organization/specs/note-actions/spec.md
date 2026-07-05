@@ -1,0 +1,60 @@
+## ADDED Requirements
+
+### Requirement: Favorite a note (FR-025)
+The system SHALL allow an authenticated user to mark one of their own, non-deleted notes as a
+favorite, and to unmark it, without affecting the note's pinned or archived state.
+
+#### Scenario: Marking a note as a favorite
+- **WHEN** an authenticated user marks one of their own notes as a favorite
+- **THEN** the note's `isFavorite` flag is set to true and the note continues to appear in the
+  active notes list
+
+#### Scenario: Unmarking a favorite
+- **WHEN** an authenticated user unmarks a note that is currently marked as a favorite
+- **THEN** the note's `isFavorite` flag is set to false
+
+#### Scenario: Cannot favorite another user's note
+- **WHEN** an authenticated user attempts to mark a note that belongs to a different user as a
+  favorite
+- **THEN** the request is rejected and the note's `isFavorite` flag is unchanged
+
+### Requirement: Pin a note (FR-026)
+The system SHALL allow an authenticated user to pin one of their own, non-deleted notes, and to
+unpin it, without affecting the note's favorite or archived state.
+
+#### Scenario: Pinning a note
+- **WHEN** an authenticated user pins one of their own notes
+- **THEN** the note's `isPinned` flag is set to true and the note continues to appear in the
+  active notes list
+
+#### Scenario: Unpinning a note
+- **WHEN** an authenticated user unpins a note that is currently pinned
+- **THEN** the note's `isPinned` flag is set to false
+
+#### Scenario: Cannot pin another user's note
+- **WHEN** an authenticated user attempts to pin a note that belongs to a different user
+- **THEN** the request is rejected and the note's `isPinned` flag is unchanged
+
+### Requirement: Archive a note (FR-027)
+The system SHALL allow an authenticated user to archive one of their own, non-deleted notes,
+and to unarchive it. Archiving a note removes it from the active notes list, folder views, tag
+views, and search results, without deleting it, and independently of its favorite or pinned
+state.
+
+#### Scenario: Archiving a note removes it from the active list
+- **WHEN** an authenticated user archives one of their own notes
+- **THEN** the note's `isArchived` flag is set to true, and the note no longer appears in the
+  active notes list, its folder's notes, its tags' notes, or search results
+
+#### Scenario: Unarchiving restores a note to the active list
+- **WHEN** an authenticated user unarchives a note that is currently archived
+- **THEN** the note's `isArchived` flag is set to false, and the note reappears in the active
+  notes list (and any folder/tag/search views it would otherwise match)
+
+#### Scenario: Archiving does not affect favorite or pinned state
+- **WHEN** an authenticated user archives a note that is favorited and/or pinned
+- **THEN** the note's `isFavorite` and `isPinned` flags are unchanged
+
+#### Scenario: Cannot archive another user's note
+- **WHEN** an authenticated user attempts to archive a note that belongs to a different user
+- **THEN** the request is rejected and the note's `isArchived` flag is unchanged

@@ -1,0 +1,40 @@
+/* Notely — base element styles + helpful utility/type classes.
+   Light reset; sets page background and default text. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv05" 1, "ss01" 1; /* Inter: nicer l/g */
+}
+
+::selection { background: var(--color-primary-subtle); }
+
+@keyframes notely-spin { to { transform: rotate(360deg); } }
+@keyframes notely-fade-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes notely-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes notely-scale-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+@keyframes notely-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes notely-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+/* ---- Type specimen classes (mirror the scale) ---- */
+.t-display { font-size: var(--fs-display); font-weight: var(--fw-bold);     line-height: var(--lh-tight);  letter-spacing: var(--ls-tight); }
+.t-h1 { font-size: var(--fs-h1); font-weight: var(--fw-bold);     line-height: var(--lh-tight);  letter-spacing: var(--ls-tight); }
+.t-h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); line-height: var(--lh-snug);   letter-spacing: var(--ls-snug); }
+.t-h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); line-height: var(--lh-snug);   letter-spacing: var(--ls-snug); }
+.t-h4 { font-size: var(--fs-h4); font-weight: var(--fw-semibold); line-height: var(--lh-snug); }
+.t-h5 { font-size: var(--fs-h5); font-weight: var(--fw-semibold); line-height: var(--lh-normal); }
+.t-h6 { font-size: var(--fs-h6); font-weight: var(--fw-semibold); line-height: var(--lh-normal); letter-spacing: var(--ls-wide); text-transform: uppercase; }
+.t-body-lg { font-size: var(--fs-body-lg); line-height: var(--lh-relaxed); }
+.t-body    { font-size: var(--fs-body);    line-height: var(--lh-normal); }
+.t-body-sm { font-size: var(--fs-body-sm); line-height: var(--lh-normal); }
+.t-caption { font-size: var(--fs-caption); line-height: var(--lh-normal); color: var(--color-text-secondary); }
+.t-label   { font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.t-code    { font-family: var(--font-mono); font-size: var(--fs-code); }

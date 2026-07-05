@@ -1,0 +1,30 @@
+/* Notely — Motion, opacity, z-index tokens */
+:root {
+  /* Durations */
+  --duration-instant: 80ms;  /* @kind other */
+  --duration-fast:    140ms; /* @kind other */
+  --duration-base:    200ms; /* @kind other */
+  --duration-slow:    320ms; /* @kind other */
+  --duration-slower:  480ms; /* @kind other */
+
+  /* Easing */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);     /* @kind other */
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);   /* @kind other */
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);   /* @kind other */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2); /* @kind other */
+
+  /* Opacity */
+  --opacity-disabled: 0.45; /* @kind other */
+  --opacity-muted:    0.65; /* @kind other */
+  --opacity-backdrop: 0.45; /* @kind other */
+  --opacity-hover-veil: 0.06; /* @kind other */
+
+  /* Z-index scale */
+  --z-base:      0;    /* @kind other */
+  --z-sticky:    100;  /* @kind other */
+  --z-dropdown:  1000; /* @kind other */
+  --z-overlay:   1100; /* @kind other */
+  --z-modal:     1200; /* @kind other */
+  --z-toast:     1300; /* @kind other */
+  --z-tooltip:   1400; /* @kind other */
+}
