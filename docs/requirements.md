@@ -60,6 +60,15 @@ Refer to [docs/PRD.md](PRD.md) for narrative context.
 
   FR-024     Users shall be able to soft-delete High
              notes.                                  
+
+  FR-025     Users shall be able to mark notes  Medium
+             as favorite and unmark them.        
+
+  FR-026     Users shall be able to pin notes   Medium
+             and unpin them.                     
+
+  FR-027     Users shall be able to archive     Medium
+             notes and unarchive them.           
   ------------------------------------------------------------------------
 
 ## Search

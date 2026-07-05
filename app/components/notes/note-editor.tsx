@@ -11,8 +11,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { Input, IconButton, Button } from "@notely-design/components";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Toast } from "@/app/components/ui/toast";
-import { IconTrash, IconCopy } from "@/app/components/icons";
-import { updateNote, softDeleteNote, duplicateNote } from "@/app/actions/notes";
+import { IconTrash, IconCopy, IconStar, IconPin, IconArchive } from "@/app/components/icons";
+import {
+  updateNote,
+  softDeleteNote,
+  duplicateNote,
+  toggleNoteFavorite,
+  toggleNotePinned,
+  toggleNoteArchived,
+} from "@/app/actions/notes";
 import { FolderPicker } from "@/app/components/notes/folder-picker";
 import { TagPicker } from "@/app/components/notes/tag-picker";
 import { EditorToolbar, type ToolbarAction } from "@/app/components/notes/editor-toolbar";
@@ -35,6 +42,9 @@ type NoteEditorProps = {
   allTags: { id: string; name: string }[];
   initialFolderId: string | null;
   initialTagIds: string[];
+  initialFavorite: boolean;
+  initialPinned: boolean;
+  initialArchived: boolean;
   showDuplicateToast: boolean;
 };
 
@@ -57,6 +67,9 @@ export function NoteEditor({
   allTags,
   initialFolderId,
   initialTagIds,
+  initialFavorite,
+  initialPinned,
+  initialArchived,
   showDuplicateToast,
 }: NoteEditorProps) {
   const router = useRouter();
@@ -66,8 +79,14 @@ export function NoteEditor({
   const [mode, setMode] = useState<EditorMode>("write");
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [showToast, setShowToast] = useState(showDuplicateToast);
+  const [isFavorite, setIsFavorite] = useState(initialFavorite);
+  const [isPinned, setIsPinned] = useState(initialPinned);
+  const [isArchived, setIsArchived] = useState(initialArchived);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [isDuplicating, startDuplicateTransition] = useTransition();
+  const [isTogglingFavorite, startFavoriteTransition] = useTransition();
+  const [isTogglingPinned, startPinnedTransition] = useTransition();
+  const [isTogglingArchived, startArchivedTransition] = useTransition();
 
   // Show the duplicate-confirmation toast once, then strip the query param so a
   // reload of this URL doesn't re-trigger it.
@@ -184,6 +203,27 @@ export function NoteEditor({
     });
   };
 
+  const handleToggleFavorite = () => {
+    setIsFavorite((current) => !current);
+    startFavoriteTransition(async () => {
+      await toggleNoteFavorite(noteId);
+    });
+  };
+
+  const handleTogglePinned = () => {
+    setIsPinned((current) => !current);
+    startPinnedTransition(async () => {
+      await toggleNotePinned(noteId);
+    });
+  };
+
+  const handleToggleArchived = () => {
+    setIsArchived((current) => !current);
+    startArchivedTransition(async () => {
+      await toggleNoteArchived(noteId);
+    });
+  };
+
   const handleToolbarAction = useCallback(
     (action: ToolbarAction) => {
       const textarea = textareaRef.current;
@@ -254,6 +294,30 @@ export function NoteEditor({
           </span>
         )}
         <div className="flex items-center gap-1">
+          <IconButton
+            icon={<IconStar />}
+            label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            variant="ghost"
+            active={isFavorite}
+            onClick={handleToggleFavorite}
+            disabled={isTogglingFavorite}
+          />
+          <IconButton
+            icon={<IconPin />}
+            label={isPinned ? "Unpin note" : "Pin note"}
+            variant="ghost"
+            active={isPinned}
+            onClick={handleTogglePinned}
+            disabled={isTogglingPinned}
+          />
+          <IconButton
+            icon={<IconArchive />}
+            label={isArchived ? "Unarchive note" : "Archive note"}
+            variant="ghost"
+            active={isArchived}
+            onClick={handleToggleArchived}
+            disabled={isTogglingArchived}
+          />
           <IconButton
             icon={<IconCopy />}
             label="Duplicate note"

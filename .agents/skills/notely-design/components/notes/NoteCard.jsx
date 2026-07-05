@@ -72,11 +72,11 @@ export function NoteCard({
         </div>
       </div>
       <div style={{ display: "flex", gap: 2, opacity: hover || favorite || pinned ? 1 : 0, transition: "opacity var(--duration-fast)", alignSelf: isList ? "center" : "flex-start", position: isList ? "static" : "absolute", top: 12, right: 12 }}>
-        <button type="button" aria-label="Favorite" onClick={(e) => { e.stopPropagation(); if (onToggleFavorite) onToggleFavorite(); }}
+        <button type="button" aria-label="Favorite" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (onToggleFavorite) onToggleFavorite(); }}
           style={{ border: "none", background: "transparent", cursor: "pointer", color: favorite ? "var(--color-warning)" : "var(--color-text-tertiary)", padding: 4, display: "inline-flex" }}>
           <i data-lucide="star" style={{ width: 16, height: 16, fill: favorite ? "var(--color-warning)" : "none" }} />
         </button>
-        <button type="button" aria-label="Pin" onClick={(e) => { e.stopPropagation(); if (onTogglePin) onTogglePin(); }}
+        <button type="button" aria-label="Pin" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (onTogglePin) onTogglePin(); }}
           style={{ border: "none", background: "transparent", cursor: "pointer", color: pinned ? "var(--color-primary)" : "var(--color-text-tertiary)", padding: 4, display: "inline-flex" }}>
           <i data-lucide="pin" style={{ width: 16, height: 16, fill: pinned ? "var(--color-primary)" : "none" }} />
         </button>

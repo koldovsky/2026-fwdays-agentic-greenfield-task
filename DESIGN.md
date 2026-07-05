@@ -98,6 +98,15 @@ re-apply:
    `sanitizeServerHtml` pipeline as the note editor's Preview. Companion CSS
    (`.note-card-snippet` in `app/globals.css`) keeps headings/lists/code at the card's
    compact body size instead of full heading scale.
+6. `NoteCard`: the Favorite/Pin buttons' `onClick` handlers now call `e.preventDefault()`
+   in addition to the existing `e.stopPropagation()`. Found via real browser testing
+   (`add-note-organization`): the notes list wraps each `NoteCard` in a Next.js `<Link>` so
+   cards are real anchors (keeps ctrl/cmd-click "open in new tab" working); `stopPropagation`
+   alone only stops React's synthetic event from reaching the card's own `onClick`, it does
+   not stop the browser's native default action of following the enclosing `<a href>`.
+   Without `preventDefault()`, clicking the star/pin on a card in the list correctly toggled
+   the flag but also navigated into the note editor — not what a quick list-view toggle
+   should do.
 
 ## Component inventory (26)
 

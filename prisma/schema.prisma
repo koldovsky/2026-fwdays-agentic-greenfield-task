@@ -54,6 +54,7 @@ model Note {
   color        String?
   isFavorite   Boolean                  @default(false)
   isPinned     Boolean                  @default(false)
+  isArchived   Boolean                  @default(false)
   deletedAt    DateTime?
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt
@@ -69,6 +70,7 @@ model Note {
   @@index([userId])
   @@index([folderId])
   @@index([deletedAt])
+  @@index([userId, isArchived])
   @@index([searchVector], type: Gin)
 }
 

@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { Button } from "@notely-design/components";
-import { IconInbox, IconTrash, IconSearch } from "@/app/components/icons";
+import {
+  IconInbox,
+  IconTrash,
+  IconSearch,
+  IconStar,
+  IconPin,
+  IconArchive,
+} from "@/app/components/icons";
 
 const icons = {
   inbox: IconInbox,
   "trash-2": IconTrash,
   search: IconSearch,
+  star: IconStar,
+  pin: IconPin,
+  archive: IconArchive,
 } as const;
 
 type NoteEmptyStateAction =

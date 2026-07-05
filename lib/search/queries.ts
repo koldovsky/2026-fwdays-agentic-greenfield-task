@@ -12,8 +12,8 @@ export type SearchFilters = {
 
 const NOTE_COLUMNS = Prisma.sql`
   "Note"."id", "Note"."userId", "Note"."folderId", "Note"."title", "Note"."content",
-  "Note"."color", "Note"."isFavorite", "Note"."isPinned", "Note"."deletedAt",
-  "Note"."createdAt", "Note"."updatedAt"
+  "Note"."color", "Note"."isFavorite", "Note"."isPinned", "Note"."isArchived",
+  "Note"."deletedAt", "Note"."createdAt", "Note"."updatedAt"
 `;
 
 // Escapes ILIKE wildcards so a query like "50%" or "a_b" is matched literally.
@@ -37,6 +37,7 @@ export function searchNotes(userId: string, filters: SearchFilters) {
   const conditions: Prisma.Sql[] = [
     Prisma.sql`"Note"."userId" = ${userId}`,
     Prisma.sql`"Note"."deletedAt" IS NULL`,
+    Prisma.sql`"Note"."isArchived" = false`,
   ];
 
   if (folderId) {

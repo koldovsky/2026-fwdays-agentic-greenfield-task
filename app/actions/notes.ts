@@ -193,6 +193,72 @@ export async function createAndAssignTag(
   return { ok: true, tag: { id: tag.id, name: tag.name } };
 }
 
+export async function toggleNoteFavorite(id: string): Promise<NoteRelationResult> {
+  await assertSameOrigin();
+  const { userId } = await verifySession();
+
+  const existing = await prisma.note.findFirst({
+    where: { id, userId, deletedAt: null },
+    select: { isFavorite: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Note not found." };
+  }
+
+  await prisma.note.update({
+    where: { id },
+    data: { isFavorite: !existing.isFavorite },
+  });
+
+  revalidatePath("/notes", "layout");
+  revalidatePath("/favorites");
+  return { ok: true };
+}
+
+export async function toggleNotePinned(id: string): Promise<NoteRelationResult> {
+  await assertSameOrigin();
+  const { userId } = await verifySession();
+
+  const existing = await prisma.note.findFirst({
+    where: { id, userId, deletedAt: null },
+    select: { isPinned: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Note not found." };
+  }
+
+  await prisma.note.update({
+    where: { id },
+    data: { isPinned: !existing.isPinned },
+  });
+
+  revalidatePath("/notes", "layout");
+  revalidatePath("/pinned");
+  return { ok: true };
+}
+
+export async function toggleNoteArchived(id: string): Promise<NoteRelationResult> {
+  await assertSameOrigin();
+  const { userId } = await verifySession();
+
+  const existing = await prisma.note.findFirst({
+    where: { id, userId, deletedAt: null },
+    select: { isArchived: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Note not found." };
+  }
+
+  await prisma.note.update({
+    where: { id },
+    data: { isArchived: !existing.isArchived },
+  });
+
+  revalidatePath("/notes", "layout");
+  revalidatePath("/archive");
+  return { ok: true };
+}
+
 export async function duplicateNote(id: string) {
   await assertSameOrigin();
   const { userId } = await verifySession();

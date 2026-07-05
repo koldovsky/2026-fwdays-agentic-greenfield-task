@@ -4,72 +4,75 @@ Agent-maintained snapshot of the last session. Read at session start; update at 
 
 ## Last updated
 
-2026-07-04T22:55:00Z
+2026-07-05T09:56:00Z
 
 ## Last session summary
 
-Ran the full propose → review → implement → verify → sync → archive cycle for phase 8,
-`add-quality-hardening` — the last capability in `docs/openspec-capabilities.md`'s
-sequence. This was a measure-and-fix pass, not a feature change. Baselined the app first:
-this Next.js version emits `.next/diagnostics/route-bundle-stats.json` with per-route
-first-load JS; `/notes/[id]` was the heaviest route (630.3K) because `marked` + `dompurify`
-(used only for the Markdown preview) loaded unconditionally. Ran real Lighthouse
-(production build, via `npx lighthouse`, with a session cookie obtained through an actual
-login for protected routes) rather than trusting assumptions: `/login` and `/notes/[id]`
-already scored Performance 97/99 and Accessibility 98/96 *before* any fixes — but the
-Accessibility runs surfaced two genuine, previously-unnoticed WCAG failures: opacity-dimmed
-tag chips (`TagPicker`'s unassigned chips, `SearchView`'s unselected filter chips) dropping
-contrast to 2.79:1, and `app/(auth)/layout.tsx` having no `<main>` landmark at all. Both got
-folded into the change's scope and fixed, alongside the originally-planned work: lazy-load
-the Markdown preview via dynamic `import()` gated on Preview mode (dropped `/notes/[id]`'s
-first-load JS to 565.4K, ~65K saved, matching the isolated 28K preview chunk); fixed real
-keyboard-inaccessibility in the vendored `Tag` component (bare `<span onClick>`, no
-keyboard semantics — added `role="button"`/`tabIndex`/`onKeyDown`, recorded as a Local
-adaptation in `DESIGN.md`); fixed `SidebarFolderRow`/`SidebarTagRow`'s rename/delete
-actions being *absent from the DOM* unless mouse-hovered (`group-focus-within` now reveals
-them for keyboard focus too); added a skip-to-content link (`tabIndex={-1}` on `<main>` so
-focus actually moves there, not just scrolls); added `aria-pressed` to the editor's
-Write/Preview toggle. Final re-measurement: `/login`, `/notes`, `/notes/[id]`, `/search` all
-score Accessibility **100** with zero failing audits; Performance 97/99 on `/login`/
-`/notes/[id]`. Verified with a real keyboard-only walkthrough (Playwright driving only
-Tab/Enter) covering skip link → login → create/edit note → Preview toggle → tag-chip
-assignment → sidebar rename → search tag filter, confirming no focus traps and everything
-actually keyboard-reachable — not just Lighthouse-passing.
+Implemented note organization — favorite, pinned, and archived — as a new OpenSpec change,
+`add-note-organization` (archived at
+`openspec/changes/archive/2026-07-05-add-note-organization/`), the first piece of work since
+all 9 original roadmap phases completed. This was mostly wiring up scaffolding that already
+existed but was never connected: the Prisma `Note` model already had unused `isFavorite`/
+`isPinned` columns, the sidebar already had Favorites/Pinned/Archive nav items and routes, and
+those routes rendered a static `PlaceholderPage`. Added `isArchived` (new migration
+`20260705094141_add_is_archived_to_note`, plus `@@index([userId, isArchived])`); three new
+ownership-scoped server actions (`toggleNoteFavorite`/`toggleNotePinned`/`toggleNoteArchived`
+in `app/actions/notes.ts`, following the existing `assignNoteFolder` pattern); new query
+functions (`listFavoriteNotes`/`listPinnedNotes`/`listArchivedNotes` in
+`lib/notes/queries.ts`); archived notes now excluded from `listActiveNotes`,
+`listNotesByFolder`, `listNotesByTag`, and `searchNotes` (same base-condition treatment as
+`deletedAt IS NULL`). Favorite/pin got a quick-toggle directly on the note card in
+`NoteList` (the design-system `NoteCard` already had `favorite`/`pinned`/`onToggleFavorite`/
+`onTogglePin` props sitting unused); archive is editor-only, consistent with the existing
+precedent that delete/duplicate never appear on the card. All three also got toggle buttons
+in the note editor's action toolbar using `IconButton`'s existing `active` prop. Replaced the
+three placeholder pages with real server components reusing `NoteList` (added an optional
+`emptyState` override prop rather than writing three near-duplicate list components) —
+`app/components/layout/placeholder-page.tsx` was deleted as dead code once nothing referenced
+it anymore. Added new FR-025/026/027 to `docs/requirements.md` (the PRD had anticipated this
+feature — sidebar IA, DB fields — but requirements.md never assigned it requirement IDs until
+now); extended `openspec/specs/note-actions/spec.md` and `openspec/specs/notes-core/spec.md`
+accordingly.
 
-Lost real time to a self-inflicted measurement bug worth flagging for future sessions: a
-stale `next start` process survived a `pkill -f "next start"` (its argv shows as
-`next-server (v16.2.9)`, which doesn't match that pattern) and kept serving an old build's
-HTML/chunk-hash mapping through several rebuilds, causing `ChunkLoadError`s that looked
-like real regressions. Root-caused by checking `ps aux | grep next-server` directly and
-confirming only one PID before trusting any Lighthouse/Playwright result. `tsc --noEmit`,
-`npm run lint`, `npm run build` all clean at every step. Test users/notes created during
-verification (including two "Keyboard test note" notes on the demo account) cleaned up
-from the dev DB; production `next start` server stopped.
+Found and fixed a real bug via Playwright verification, not just typechecking: `NoteCard`'s
+Favorite/Pin buttons called `e.stopPropagation()` but not `e.preventDefault()`. Harmless in
+isolation, but `NoteList` wraps each card in a real `<Link href>` (kept intentionally, so
+ctrl/cmd-click "open in new tab" still works) — clicking the star/pin correctly toggled the
+flag but *also* navigated into the note editor, since `stopPropagation` only stops React's
+synthetic bubbling, not the browser's native default action of following the enclosing
+anchor. Fixed in the vendored design-system source
+(`.agents/skills/notely-design/components/notes/NoteCard.jsx`) and recorded as Local
+adaptation #6 in `DESIGN.md`. Verified end-to-end via a real login + Playwright script
+(demo@notely.dev): favorite/pin/archive toggling from both the card and the editor, all three
+new views showing the right notes, archived notes disappearing from All Notes/folder/tag/
+search and reappearing on unarchive, rapid-triple-click toggle settling correctly, and
+duplicating a favorited+pinned+archived note correctly starting the duplicate with fresh
+(false) flags. Test notes cleaned up from the dev DB afterward; dev server stopped by PID.
+`tsc --noEmit`, `npm run lint` (pre-existing unrelated warnings only), `npm run build` all
+clean.
 
 ## Current focus
 
-**All 9 phases (0–8) in `docs/openspec-capabilities.md` are now archived — the planned
-implementation sequence is complete.** No active OpenSpec change. Next steps are
-product-driven, not roadmap-driven: revisit the open items below (pagination, restore-from-
-trash, nested folders, etc.) if/when product asks, or start a new capability outside the
-original sequence if scope expands. If picking this back up, read this file plus
-`docs/openspec-capabilities.md`'s "Requirement coverage checklist" (all FR/NFR/UI/SEC/DATA
-IDs from `requirements.md` are covered) as the starting point.
+No active OpenSpec change. `add-note-organization` is the first post-roadmap capability;
+further work is still product-driven — see open items below.
 
 ## Completed recently
 
+- Implemented and archived `add-note-organization` →
+  `openspec/changes/archive/2026-07-05-add-note-organization/`; extended
+  `openspec/specs/note-actions/spec.md` (FR-025/026/027) and
+  `openspec/specs/notes-core/spec.md` (Favorites/Pinned/Archive view requirements, and
+  "Notes list view" now also excludes archived notes)
+- Fixed a real `NoteCard` bug (missing `preventDefault` on Favorite/Pin buttons causing
+  unwanted navigation when the card is wrapped in a `Link`) — Local adaptation #6 in
+  `DESIGN.md`
+- Deleted `app/components/layout/placeholder-page.tsx` (dead code once Favorites/Pinned/
+  Archive became real views)
 - Implemented and archived `add-quality-hardening` →
-  `openspec/changes/archive/2026-07-04-add-quality-hardening/` (19/19 tasks, including 3
-  tasks added mid-implementation from real Lighthouse findings); synced new
+  `openspec/changes/archive/2026-07-04-add-quality-hardening/` (19/19 tasks); synced
   `openspec/specs/quality-hardening/spec.md`
 - Implemented and archived `add-search` → `openspec/changes/archive/2026-07-04-add-search/`
-  (17/17 tasks); synced new `openspec/specs/search/spec.md`
-- Checked off phases 0–8 (all of them) in `docs/openspec-capabilities.md`'s capability
-  sequence checklist
-- Noted: at some point this session, the entire `components/` directory was moved to
-  `app/components/` (all imports updated to match) — already done and consistent
-  repo-wide by the time this session picked it up; not something this session initiated,
-  just verified clean (`tsc`/lint/build all passed against the new layout)
+  (17/17 tasks); synced `openspec/specs/search/spec.md`
 
 ## Blockers / open questions
 
@@ -78,54 +81,63 @@ IDs from `requirements.md` are covered) as the starting point.
   schedule yet. Open since `data-model`, unrelated to any phase since.
 - Local dev Postgres runs via `docker-compose.yml` (port 5453, `notely`/`notely`);
   `DATABASE_URL` lives in `.env` (gitignored) mirroring `.env.example`.
-- `demo@notely.dev`'s `passwordHash` in the local dev DB had been a literal placeholder
-  string (not a real bcrypt hash); repaired locally (this is the second session to touch
-  this — repair should already be in place from the `add-search` session unless the DB was
-  reset since).
-- Pagination on `/notes` and `/search` remains unimplemented — flagged, not fixed, in both
-  the `add-search` and `add-quality-hardening` sessions. Acceptable at current/seed data
-  volume; revisit if note counts grow large enough to threaten NFR-001/003 for real.
-- Cosmetic, still open: several vendored design-system components render icons via
-  `<i data-lucide>` (not this project's problem to fully solve — `Tag.jsx`'s clickable-chip
-  fix this session only touched the keyboard-semantics half, not its icon rendering, which
-  wasn't in scope). Worth a real fix (install `lucide` and call `createIcons()` once,
-  globally) if it keeps mattering.
+- Pagination on `/notes` and `/search` remains unimplemented — flagged, not fixed, across
+  multiple sessions now. Acceptable at current/seed data volume; revisit if note counts grow
+  large enough to threaten NFR-001/003 for real.
+- Search deliberately excludes archived notes (same base condition as `deletedAt IS NULL`),
+  by design decision this session — a user who forgets they archived something and searches
+  for it won't find it. No filter UI to include archived notes in search; out of scope unless
+  product asks. Same applies to `isFavorite`/`isPinned` — selected in `NOTE_COLUMNS` for years
+  now but still no filter UI/params in `SearchFilters` for either.
+- Cosmetic, still open (unrelated to this session, but now affects more surface area):
+  several vendored design-system components render icons via `<i data-lucide>`, which never
+  render as actual glyphs without `lucide`'s `createIcons()` being called — this includes the
+  new Favorite/Pin star/pin icons on `NoteCard` (functionally works — toggling, `aria-label`,
+  and persisted state all verified via Playwright — but the icon glyph itself won't be
+  visible in the browser). Worth a real fix (install `lucide`, call `createIcons()` once,
+  globally) if it keeps mattering; the custom SVG icons in `app/components/icons.tsx` (used
+  by the editor toolbar and sidebar) are unaffected since they don't rely on `data-lucide`.
 - Restore-from-trash and permanent-delete remain out of scope (not in FR-024's wording).
 - Sidebar has no per-folder/per-tag note counts by design decision.
 - No nested/hierarchical folders (`data-model`'s `Folder` has no `parentId`) — flat by design.
+- No manual reordering among pinned notes — pinned notes sort by `updatedAt` like everything
+  else, by design decision this session.
 - Bold, italic, links, images, tables, syntax highlighting, drag-drop image upload, and slash
-  commands remain explicitly out of scope for the Markdown editor (confirmed with the user
-  in the `markdown-editor` phase; re-confirmed indirectly this session — `**bold**` still
-  gets sanitizer-stripped after the preview lazy-load refactor, exactly as before).
+  commands remain explicitly out of scope for the Markdown editor.
 - No duplicate entry point from the notes list — editor-only, by design decision.
 - Testing/ops gotchas for future sessions:
   - Playwright's default `text=` selector is case-insensitive substring match — assert
     exact text for anything that's a substring of another possible value.
   - Scope result-list assertions to `main` (e.g. `page.locator("main").getByText(...)`) —
-    the sidebar shares text/link patterns with page content (e.g. "New note" links to
-    `/notes/new` from the sidebar, separate from the page's own create-note button/form).
-  - **Before trusting any Lighthouse/browser-automation result against a locally-run
-    `next start`, run `ps aux | grep next-server` and confirm exactly one PID.**
+    the sidebar shares text/link patterns with page content.
+  - Playwright isn't in `package.json` — it's cached under
+    `~/.npm/_npx/e41f203b7505f1fb/node_modules/playwright` from an earlier `npx playwright`
+    invocation. Running an ad hoc verification script needs to live in (or resolve modules
+    from) that directory, since plain `node script.mjs` elsewhere fails with
+    `ERR_MODULE_NOT_FOUND`.
+  - Before trusting any Lighthouse/browser-automation result against a locally-run
+    `next start`, run `ps aux | grep next-server` and confirm exactly one PID.
     `pkill -f "next start"` does **not** match the actual process (`next-server
     (v16.2.9)`) — a stale server from an earlier build can silently keep serving through
-    several rebuilds, producing `ChunkLoadError`s and stale accessibility/performance
-    numbers that look like real regressions but aren't. Kill by PID, or fully verify the
-    process list, not just the command you used to start it.
+    several rebuilds, producing stale/misleading results. Kill by PID.
 
 ## Files touched
 
-- `docs/openspec-capabilities.md` (checked off phases 0–8 — all complete)
-- `openspec/specs/quality-hardening/spec.md` (new, synced from `add-quality-hardening`)
-- `openspec/changes/archive/2026-07-04-add-quality-hardening/`
-- `app/components/notes/note-editor.tsx` (lazy-loaded Markdown preview via dynamic
-  `import()`; `aria-pressed` on Write/Preview toggle)
-- `.agents/skills/notely-design/components/core/Tag.jsx` (keyboard semantics for clickable
-  chips; recorded in `DESIGN.md`'s Local adaptations)
-- `app/components/notes/tag-picker.tsx`, `app/components/notes/search-view.tsx` (replaced
-  opacity-based dimming with non-opacity styling — real contrast fix)
-- `app/components/layout/sidebar-folder-row.tsx`, `app/components/layout/sidebar-tag-row.tsx`
-  (rename/delete actions now keyboard-reachable via `group-focus-within`)
-- `app/components/layout/app-shell.tsx` (skip-to-content link; `<main>` gets
-  `id="main-content"` + `tabIndex={-1}`)
-- `app/(auth)/layout.tsx` (added `<main>` landmark)
-- `DESIGN.md` (Local adaptations list entry for `Tag.jsx`)
+- `prisma/schema.prisma`, `prisma/migrations/20260705094141_add_is_archived_to_note/`
+- `docs/requirements.md` (FR-025/026/027)
+- `app/actions/notes.ts` (`toggleNoteFavorite`/`toggleNotePinned`/`toggleNoteArchived`)
+- `lib/notes/queries.ts` (`listFavoriteNotes`/`listPinnedNotes`/`listArchivedNotes`; archived
+  exclusion added to `listActiveNotes`/`listNotesByFolder`/`listNotesByTag`)
+- `lib/search/queries.ts` (`isArchived` column + base-condition exclusion)
+- `app/components/notes/note-list.tsx` (favorite/pin card wiring; optional `emptyState` prop)
+- `app/components/notes/note-editor.tsx` (favorite/pin/archive toolbar buttons + state)
+- `app/components/notes/note-empty-state.tsx` (star/pin/archive icon support)
+- `app/(dashboard)/notes/[id]/page.tsx` (passes `initialFavorite`/`initialPinned`/
+  `initialArchived` to the editor)
+- `app/(dashboard)/favorites/page.tsx`, `pinned/page.tsx`, `archive/page.tsx` (real views,
+  replacing `PlaceholderPage`)
+- `app/components/layout/placeholder-page.tsx` (deleted — dead code)
+- `.agents/skills/notely-design/components/notes/NoteCard.jsx` (`preventDefault` fix),
+  `DESIGN.md` (Local adaptation #6)
+- `openspec/specs/note-actions/spec.md`, `openspec/specs/notes-core/spec.md` (synced)
+- `openspec/changes/archive/2026-07-05-add-note-organization/`

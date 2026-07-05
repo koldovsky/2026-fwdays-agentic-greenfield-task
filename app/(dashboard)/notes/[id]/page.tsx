@@ -41,6 +41,9 @@ export default async function NotePage({
       allTags={tags}
       initialFolderId={note.folderId}
       initialTagIds={note.tags.map((noteTag) => noteTag.tagId)}
+      initialFavorite={note.isFavorite}
+      initialPinned={note.isPinned}
+      initialArchived={note.isArchived}
       showDuplicateToast={duplicated === "true"}
     />
   );
