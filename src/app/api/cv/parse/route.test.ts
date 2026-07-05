@@ -24,7 +24,10 @@ function upload(
 ): Request {
   const body = new FormData();
   if (file !== null) {
-    body.append("file", new File([file.bytes], file.name, { type: file.mime }));
+    // Uint8Array<ArrayBufferLike> is not structurally a BlobPart under the current
+    // TS lib (SharedArrayBuffer in the union); a plain ArrayBuffer copy is.
+    const buffer = file.bytes.slice().buffer as ArrayBuffer;
+    body.append("file", new File([buffer], file.name, { type: file.mime }));
   }
   return new Request("http://localhost/api/cv/parse", {
     method: "POST",
