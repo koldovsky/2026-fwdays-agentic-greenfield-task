@@ -81,7 +81,9 @@ Hooks never render a toast; they call `push()`. This keeps rendering and error s
 
 ### D5 — WebSocket-health chip
 
-`useWsHealth()` returns `'connected' | 'reconnecting' | 'offline'` from the same WebSocket connection the `useDevices` hook manages. A small `Badge`-shaped chip in each screen's header shows the state — muted grey when connected, connecting-amber during reconnect, offline-red when we've given up. Text: "Live" / "Reconnecting…" / "Offline". Sub-modal; sub-toast.
+`useWsHealth()` returns `'connected' | 'reconnecting' | 'offline'`. A small `Badge`-shaped chip in each screen's header shows the state — muted grey when connected, connecting-amber during reconnect, offline-red when we've given up. Text: "Live" / "Reconnecting…" / "Offline". Sub-modal; sub-toast.
+
+**Connection strategy:** the hook opens its own dedicated `/ws` connection matching the "one WS per hook" pattern the rest of the SPA already ships (`useDevices`, `useDeviceSession`, `useVolume`, `useInputs`). Sharing a single WS across hooks would require a broker context and would touch every existing consumer — deferred as scope creep. The trade-off is +1 concurrent WS per screen that mounts the chip; per the back-end `/ws` handler, multiple concurrent clients are already supported by the broker.
 
 ### D6 — `ErrorBoundary`
 

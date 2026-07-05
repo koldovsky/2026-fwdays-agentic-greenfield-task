@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { apiClient, ApiError } from '../api/client.ts';
+import { messageFor } from '../errors/messages.ts';
+import { useToast } from '../ui/useToast.ts';
 import type { SamsungKeyCode } from './keys.ts';
 
 export interface UseSendKeyResult {
@@ -12,15 +14,18 @@ export interface UseSendKeyOptions {
 }
 
 /**
- * `sendKey(key)` POSTs to `/api/devices/:udn/key` with `{ key }`. Re-throws
- * `ApiError` on failure and console-logs. Toast/banner surfacing arrives
- * with the `error-surfacing` capability — for now failures are silent to
- * the user beyond the button not visibly committing.
+ * `sendKey(key)` POSTs to `/api/devices/:udn/key` with `{ key }`. On
+ * failure it pushes a toast via `useToast()` (mapped from the error's
+ * domain `code` through `messageFor`), console-logs the raw envelope
+ * for correlation, and re-throws — callers can still branch on the
+ * error type if they need to (e.g. RemoteScreen swallows the throw
+ * since the toast is enough user-facing signal).
  */
 export function useSendKey(
   udn: string,
   options: UseSendKeyOptions = {},
 ): UseSendKeyResult {
+  const { push } = useToast();
   const sendKey = useCallback(
     async (key: SamsungKeyCode) => {
       const post =
@@ -40,13 +45,15 @@ export function useSendKey(
             code: err.code,
             correlationId: err.correlationId,
           });
+          push(messageFor(err));
         } else {
           console.warn('useSendKey: send failed (non-ApiError)', { udn, key, err });
+          push({ tone: 'error', message: 'Something went wrong.' });
         }
         throw err;
       }
     },
-    [udn, options.post],
+    [udn, options.post, push],
   );
   return { sendKey };
 }

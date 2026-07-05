@@ -35,6 +35,8 @@ import { Slider } from '@ds/components/forms/Slider.jsx'
 import { DPad } from '@ds/components/controls/DPad.jsx'
 import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx'
 import { Modal } from '@ds/components/feedback/Modal.jsx'
+import { ListRow } from '@ds/components/core/ListRow.jsx'
+import { Toast } from '@ds/components/feedback/Toast.jsx'
 ```
 
 | Group    | Component      | Purpose                                                      |
@@ -49,7 +51,9 @@ import { Modal } from '@ds/components/feedback/Modal.jsx'
 | forms    | `Slider`       | Groove slider (volume/brightness)                            |
 | controls | `DPad`         | Directional pad — 4 arrows + centre OK                       |
 | controls | `AppShortcut`  | Square app-shortcut tile                                     |
+| core     | `ListRow`      | Neomorphic row for vertical pickers (inputs modal, settings) |
 | feedback | `Modal`        | Centered dialog on blurred scrim (Add-TV flow)               |
+| feedback | `Toast`        | Transient error/warning surface; consumed by `<ToastHost>` in `main.tsx`. Copy mapping lives in `front-end/src/errors/messages.ts`; hooks push via `useToast()`. |
 
 `docs/orbit-tv-remote-design-system/ui_kits/tv-remote/` ships a two-screen click-through demo (Device List ↔ Remote). The `.jsx` files there attach to `window.*` for the standalone HTML — read them for reference layouts, but **do not import them** in the app. Compose the screens from primitives instead (see `front-end/src/App.tsx`).
 

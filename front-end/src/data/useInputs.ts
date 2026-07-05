@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, ApiError } from '../api/client.ts';
+import { messageFor } from '../errors/messages.ts';
+import { useToast } from '../ui/useToast.ts';
 import type { InputCatalogueEntry, SamsungInputKey } from './inputs.ts';
 
 export interface UseInputsResult {
@@ -32,6 +34,7 @@ export function useInputs(
   options: UseInputsOptions = {},
 ): UseInputsResult {
   const [inputs, setInputs] = useState<readonly InputCatalogueEntry[]>([]);
+  const { push } = useToast();
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -79,13 +82,15 @@ export function useInputs(
             code: err.code,
             correlationId: err.correlationId,
           });
+          push(messageFor(err));
         } else {
           console.warn('useInputs: setInput failed (non-ApiError)', { udn, key, err });
+          push({ tone: 'error', message: 'Something went wrong.' });
         }
         throw err;
       }
     },
-    [udn],
+    [udn, push],
   );
 
   return { inputs, setInput };

@@ -1,4 +1,4 @@
-<!-- @dsCard group="Components" viewport="700x400" name="Feedback" subtitle="Modal (Add TV dialog)" -->
+<!-- @dsCard group="Components" viewport="700x520" name="Feedback" subtitle="Modal + Toast" -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,12 +12,12 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Modal, Input, Button } = window.OrbitTVRemoteDesignSystem_08e5b7;
+const { Modal, Input, Button, Toast } = window.OrbitTVRemoteDesignSystem_08e5b7;
 
 function Demo() {
   const [ip, setIp] = React.useState('');
   return (
-    <div style={{ position: 'relative', width: 700, height: 400 }}>
+    <div style={{ position: 'relative', width: 700, height: 520 }}>
       <Modal
         open={true}
         title="Add a TV"
@@ -25,6 +25,16 @@ function Demo() {
       >
         <Input label="IP Address" icon="lan" placeholder="192.168.1.42" value={ip} onChange={setIp} />
       </Modal>
+      {Toast && (
+        <div style={{ position: 'absolute', bottom: 32, right: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Toast tone="error" onDismiss={() => {}}>
+            Can't reach the TV. Check that it's on and on the same network.
+          </Toast>
+          <Toast tone="warning" onDismiss={() => {}}>
+            Your TV doesn't support this action.
+          </Toast>
+        </div>
+      )}
     </div>
   );
 }

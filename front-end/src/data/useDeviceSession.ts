@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiClient } from '../api/client.ts';
+import { apiClient, ApiError } from '../api/client.ts';
+import { messageFor } from '../errors/messages.ts';
+import { useToast } from '../ui/useToast.ts';
 
 /**
  * Client-visible session states — mirrors `back-end/src/tv/types.ts`
@@ -48,6 +50,7 @@ export function useDeviceSession(
   options: UseDeviceSessionOptions = {},
 ): UseDeviceSessionResult {
   const [state, setState] = useState<ClientSessionState>('Disconnected');
+  const { push } = useToast();
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -124,8 +127,14 @@ export function useDeviceSession(
           `/api/devices/${encodeURIComponent(u)}/connect`,
         );
       });
-    await post(udn);
-  }, [udn]);
+    try {
+      await post(udn);
+    } catch (err) {
+      if (err instanceof ApiError) push(messageFor(err));
+      else push({ tone: 'error', message: 'Something went wrong.' });
+      throw err;
+    }
+  }, [udn, push]);
 
   const disconnect = useCallback(async () => {
     const post =
@@ -135,7 +144,14 @@ export function useDeviceSession(
           `/api/devices/${encodeURIComponent(u)}/disconnect`,
         );
       });
-    await post(udn);
+    try {
+      await post(udn);
+    } catch (err) {
+      // Silent for disconnect — the user asked to leave anyway; a toast
+      // during navigation is noisy. The error still propagates so the
+      // caller can react (e.g. navigate anyway).
+      throw err;
+    }
   }, [udn]);
 
   return { state, connect, disconnect };

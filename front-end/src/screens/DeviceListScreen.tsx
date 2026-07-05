@@ -1,6 +1,7 @@
 import { Button } from '@ds/components/core/Button.jsx';
 import { Card } from '@ds/components/core/Card.jsx';
 import { DeviceCard } from '@ds/components/core/DeviceCard.jsx';
+import { WsHealthChip } from '../ui/WsHealthChip.tsx';
 import type { Device } from '../data/types.ts';
 
 interface DeviceListScreenProps {
@@ -12,29 +13,32 @@ export function DeviceListScreen({ devices, onOpenDevice }: DeviceListScreenProp
   return (
     <div style={{ minHeight: '100%', padding: '40px 48px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ marginBottom: 32 }}>
-          <div
-            style={{
-              fontSize: 'var(--text-caption)',
-              letterSpacing: 'var(--tracking-overline)',
-              textTransform: 'uppercase',
-              color: 'var(--fg-3)',
-              fontWeight: 700,
-              marginBottom: 6,
-            }}
-          >
-            Local network
+        <div style={{ marginBottom: 32, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div
+              style={{
+                fontSize: 'var(--text-caption)',
+                letterSpacing: 'var(--tracking-overline)',
+                textTransform: 'uppercase',
+                color: 'var(--fg-3)',
+                fontWeight: 700,
+                marginBottom: 6,
+              }}
+            >
+              Local network
+            </div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 'var(--text-h1)',
+                fontWeight: 800,
+                color: 'var(--fg-1)',
+              }}
+            >
+              Your TVs
+            </h1>
           </div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 'var(--text-h1)',
-              fontWeight: 800,
-              color: 'var(--fg-1)',
-            }}
-          >
-            Your TVs
-          </h1>
+          <WsHealthChip />
         </div>
 
         {devices.length === 0 ? (

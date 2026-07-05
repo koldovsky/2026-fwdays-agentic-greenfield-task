@@ -9,6 +9,7 @@ import { useSendKey, type UseSendKeyOptions } from '../data/useSendKey.ts';
 import { useVolume, type UseVolumeOptions } from '../data/useVolume.ts';
 import { useInputs, type UseInputsOptions } from '../data/useInputs.ts';
 import { InputsModal } from './InputsModal.tsx';
+import { WsHealthChip } from '../ui/WsHealthChip.tsx';
 import type { SamsungKeyCode } from '../data/keys.ts';
 import type { Device } from '../data/types.ts';
 
@@ -126,7 +127,10 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
             <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 700, color: 'var(--fg-1)' }}>{device.name}</div>
             <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--fg-2)' }}>{device.ip}</div>
           </div>
-          <Badge status={sessionToBadgeStatus(state)} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <WsHealthChip />
+            <Badge status={sessionToBadgeStatus(state)} />
+          </div>
         </div>
 
         <div

@@ -4,6 +4,39 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-05T14:11:25Z
+
+**What was done — implemented `error-surfacing` (C9) via the `/next-change` Loop Engineering cycle, closing out the MVP backlog**
+- C9 is the Phase-4 UX polish pass that gives the SPA a real voice for the domain error union C5 established. Every command hook (`useSendKey`, `useVolume`, `useInputs`, `useDeviceSession`) already threw `ApiError`; nothing user-facing happened. This cycle turns those throws into human-readable toasts with tone-appropriate copy, adds a WebSocket-health chip so the user can see when the SPA is stale, and wraps the app in an `ErrorBoundary` as the last-resort backstop.
+- **No spec drift this cycle** — this is a UI-only capability, so the pre-pivot artifacts didn't hard-code any Samsung protocol assumptions the way C7 and C8 did. Design.md was implementable as written.
+- Design system extension:
+  - `docs/orbit-tv-remote-design-system/components/feedback/Toast.{jsx,d.ts,prompt.md}` (new): neomorphic transient surface with `tone: 'info' | 'warning' | 'error'`, tone-tinted left band (uses `--connecting` / `--offline` — the same status tokens `Badge` uses), Material Symbols glyph, close IconButton. Tokens throughout; no hex.
+  - `docs/orbit-tv-remote-design-system/components/feedback/feedback.card.html`: updated the DS specimen to include Toast examples alongside the Modal demo (once the DS bundle regens).
+  - `front-end/src/ds.d.ts`: added the `@ds/components/feedback/Toast.jsx` shim — same pattern C8's `ListRow` established.
+- Toast host:
+  - `front-end/src/ui/useToast.ts` (new): `ToastProvider` + `useToast()` context. Reducer with `push` / `dismiss` / `pause` / `resume`. 5s auto-dismiss timer, hover pauses (via `pause(id)` on `mouseenter` + `resume(id)` on `mouseleave` in the host), 500 ms dedup on identical `message`, cap 3 with oldest-dropped overflow. Injectable `now()` clock + `nextId()` generator for deterministic tests. Uses `React.createElement` so the file stays `.ts` per the tasks.md file layout.
+  - `front-end/src/ui/ToastHost.tsx` (new): reads state via `useToastState`, renders DS `Toast` primitives in a `position: fixed` bottom-right stack (offset by `--space-8`, gap `--space-3`, `zIndex: 1100` above the Modal scrim). Container has `pointer-events: none`; individual toasts re-enable so the stack doesn't swallow clicks meant for the app underneath.
+  - `front-end/src/main.tsx`: wraps `<App/>` in `<ToastProvider>` → `<ErrorBoundary>` → `<App/>` + `<ToastHost/>` inside the provider so the host reads the same context.
+- Copy mapping + hook wiring:
+  - `front-end/src/errors/messages.ts` (new): pure `messageFor(err: ApiError)` returning `{ tone, message }`. Mapping table matches design.md D3 verbatim — one place to change copy, testable in isolation.
+  - `useSendKey`, `useVolume` (both `delta` and `toggleMute`), `useInputs.setInput`, `useDeviceSession.connect` all catch, call `push(messageFor(err))`, and re-throw. `useDeviceSession.disconnect` intentionally does NOT toast — the user asked to leave anyway, a toast during navigation is noisy; the error still propagates.
+- Error boundary + WS health:
+  - `front-end/src/ui/ErrorBoundary.tsx` (new): class-based boundary. Fallback composed from DS `Card` + Material Symbols `error_outline` + "Try again" `Button` that calls `window.location.reload()`. `componentDidCatch` logs the raw error to console with the component stack; user never sees it.
+  - `front-end/src/data/useWsHealth.ts` (new): dedicated `/ws` connection with 3 states (`connected` / `reconnecting` / `offline`). Exponential-backoff reconnect (1s doubling to 30s cap); transitions to `offline` after 5 failed attempts. Matches the "one WS per hook" pattern the rest of the SPA already ships; sharing a single WS across hooks would require a broker context — deferred as scope creep.
+  - `front-end/src/ui/WsHealthChip.tsx` (new): small dot + label, one of "Live" / "Reconnecting…" / "Offline". Uses the same idiom as DS `Badge` but without the wash background so it reads as ambient rather than a callout.
+  - `DeviceListScreen` and `RemoteScreen`: chip mounted in each screen's header (right-aligned above the existing status Badge on `RemoteScreen`).
+- DESIGN.md: added Toast + ListRow rows to the primitive table under "Component surface"; imports block updated.
+- Tests:
+  - `front-end/src/errors/messages.test.ts` (9 tests): one per code + fallback + a sweep that verifies no toast copy contains raw `-32xxx` codes or `code:` substrings (the "No raw code shown to user" spec scenario).
+  - `front-end/src/ui/ToastHost.test.tsx` (4 tests): push renders one; four consecutive pushes cap at three (oldest dropped); dedup within 500ms; hover pause + resume-with-remaining-time behavior (verified end-to-end with vi fake timers).
+  - `front-end/src/data/useSendKey.test.tsx` (1 test): `useSendKey` failing with `TvNotSupported` re-throws AND surfaces a warning toast whose text is the mapped friendly copy — not the raw wire message.
+  - Existing 18 tests continue to pass unchanged; `useToast()` has a safe no-op fallback outside a Provider so tests that don't wrap don't need updating.
+- Verification: `npm run back:build` ✓ (unchanged surface, sanity check), `npm run front:build` ✓, `npm run back:test` 98/98 ✓, `npm run front:test` 18→32 ✓. Hex-color grep guard on `front-end/src/**` and `docs/orbit-tv-remote-design-system/components/feedback/**` returns nothing.
+- **Not done / follow-up**: task 5.5 (manual QA unplugging TV mid-session) is honestly deferred — no LAN/TV reachable. Stub-driven tests cover the same paths but a real physical unplug is the only way to observe the chip actually flip through Live → Reconnecting → Offline on real hardware. Also deferred: task 2.3's narrow-viewport pin-to-bottom-edge media query for the toast stack — the DS's inline-style pattern doesn't take `@media`, so a small follow-up needs to add either a scoped `<style>` inside `Toast.jsx` or a CSS class in the DS `styles.css`. No spec scenario depends on it. Reviewer-driven fixes in this cycle: (1) `useWsHealth` off-by-one (`attempts > giveUpAfter` → `>=`) so the chip transitions to `offline` on the 5th failed attempt as the option name promises. (2) Reworded the "Hover pauses timer" spec scenario to match the implementation's "resume with remaining budget" semantics (which the test at `ToastHost.test.tsx` already codifies). (3) Three inline styles referenced `var(--text-body-md)` — a token that doesn't exist in the DS (real tokens are `--text-body` / `--text-body-sm` / `--text-body-lg`). Silent visual regression: font-size fell through to inherited default. Fixed in `Toast.jsx` (this cycle), `ErrorBoundary.tsx` (this cycle), and `ListRow.jsx` (**pre-existing from C8; fixed in-cycle since it's the same underlying bug**). (4) Updated design.md D5 to describe the dedicated-WS strategy the code actually implements, rather than the pre-implementation "same WebSocket as useDevices" language.
+- **MVP backlog is now empty.** All nine capabilities C1–C9 from `docs/capabilities.md` are shipped and archived. Remaining follow-ups tracked in prior session-log entries: (a) real-hardware smoke tests for C6/C7/C8/C9 (no LAN/TV in this environment), (b) UPnP `RenderingControl` / SmartThings for actual volume level + active-input display (deferred through C7 and C8 as separate future capability).
+
+---
+
 ## 2026-07-05T08:25:17Z
 
 **What was done — implemented `input-management` (C8) via the `/next-change` Loop Engineering cycle, with the same descoping artifact rewrite pattern C7 established**

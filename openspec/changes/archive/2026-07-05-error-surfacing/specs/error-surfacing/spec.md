@@ -31,7 +31,7 @@ Toasts SHALL auto-dismiss after 5 seconds. Hovering a toast SHALL pause its time
 #### Scenario: Hover pauses timer
 
 - **WHEN** the user hovers a toast for 3 seconds and moves off
-- **THEN** the toast is still present, and dismisses 5 seconds after the pointer moved off (not from initial appearance)
+- **THEN** the toast is still present, and its remaining auto-dismiss budget (5 s minus the time already elapsed before the hover started) resumes from the mouse-leave moment
 
 ### Requirement: Toast host is capacity-bounded
 

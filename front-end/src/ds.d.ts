@@ -59,3 +59,8 @@ declare module '@ds/components/feedback/Modal.jsx' {
   import type { ModalProps } from '@ds/components/feedback/Modal'
   export const Modal: ComponentType<ModalProps>
 }
+
+declare module '@ds/components/feedback/Toast.jsx' {
+  import type { ToastProps } from '@ds/components/feedback/Toast'
+  export const Toast: ComponentType<ToastProps>
+}

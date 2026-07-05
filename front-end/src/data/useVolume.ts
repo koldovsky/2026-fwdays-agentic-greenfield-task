@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, ApiError } from '../api/client.ts';
+import { messageFor } from '../errors/messages.ts';
+import { useToast } from '../ui/useToast.ts';
 
 /**
  * Client-visible volume state — mirrors `back-end/src/tv/volume.ts`
@@ -47,6 +49,7 @@ export function useVolume(
   options: UseVolumeOptions = {},
 ): UseVolumeResult {
   const [muted, setMuted] = useState(false);
+  const { push } = useToast();
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -135,13 +138,15 @@ export function useVolume(
             code: err.code,
             correlationId: err.correlationId,
           });
+          push(messageFor(err));
         } else {
           console.warn('useVolume: delta failed (non-ApiError)', { udn, steps, err });
+          push({ tone: 'error', message: 'Something went wrong.' });
         }
         throw err;
       }
     },
-    [udn],
+    [udn, push],
   );
 
   const toggleMute = useCallback(async () => {
@@ -164,12 +169,14 @@ export function useVolume(
           code: err.code,
           correlationId: err.correlationId,
         });
+        push(messageFor(err));
       } else {
         console.warn('useVolume: mute failed (non-ApiError)', { udn, err });
+        push({ tone: 'error', message: 'Something went wrong.' });
       }
       throw err;
     }
-  }, [udn]);
+  }, [udn, push]);
 
   return { level: null, muted, delta, toggleMute };
 }

@@ -32,7 +32,7 @@ export function ListRow({ label, onClick, disabled = false, trailingIcon, leadin
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.4 : 1,
         fontFamily: 'var(--font-sans)',
-        fontSize: 'var(--text-body-md)',
+        fontSize: 'var(--text-body)',
         fontWeight: 600,
         color: 'var(--fg-1)',
         textAlign: 'left',
