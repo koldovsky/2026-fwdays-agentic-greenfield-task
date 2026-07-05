@@ -7,6 +7,12 @@
 
 ## Last action
 
+- **T6 DONE + committed (`990fb97`, 2026-07-06).** `fix-checklist-pill-i18n`: locale threaded through
+  StatusPill + ChecklistRow + ChecklistPreview AND ChecklistPanel (checker caught tailor-workspace +
+  history-detail still rendering UA pills once ChecklistRow gained the prop). UA default preserved.
+  +36 tests. Gate green: lint + build + 107 files / 677 tests. Maker→test-author→checker→verifier all
+  separate contexts per the separation-of-duties rule; checker blocker (ChecklistPanel) fixed. Spec
+  tasks ticked. GroundingBadge = documented follow-up. **Next: T1.**
 - **NEW 6-task batch — investigation DONE + decisions locked, entering spec phase (2026-07-06, ultracode).**
   6-agent investigation workflow (`wn9s3sx77`) root-caused every task (see per-task plan below).
   User decisions:
@@ -116,7 +122,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 (in progress) → T1 → T3 → T2 → T4 → T5**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 (in progress) → T3 → T2 → T4 → T5**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends
