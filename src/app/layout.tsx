@@ -8,15 +8,20 @@ import { Providers } from "./providers";
 
 // Ukrainian-first (NFR-I18N-01): display + body faces include a Cyrillic subset so
 // Ukrainian renders on-brand, not in a latin-only fallback (add-language-toggle).
+// Weights pinned to those actually used (Tailwind font-normal/medium/semibold/
+// bold) so the variable-axis payload stays lean against the LCP budget
+// (NFR-PERF-04). Display only ever renders semibold/bold.
 const unbounded = Unbounded({
   variable: "--font-unbounded",
   subsets: ["latin", "cyrillic"],
+  weight: ["600", "700"],
   display: "swap",
 });
 
 const golos = Golos_Text({
   variable: "--font-golos",
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

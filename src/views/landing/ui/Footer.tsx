@@ -5,7 +5,7 @@ import { type Locale } from "@/shared/lib/i18n";
 import { footerContent, legalLinks, navLinks } from "../lib/content";
 import { Wrap } from "./primitives";
 
-export function Footer({ locale = "en" }: { readonly locale?: Locale }) {
+export function Footer({ locale = "ua" }: { readonly locale?: Locale }) {
   const nav = navLinks(locale);
   const legal = legalLinks(locale);
   const { anthropicCredit } = footerContent(locale);

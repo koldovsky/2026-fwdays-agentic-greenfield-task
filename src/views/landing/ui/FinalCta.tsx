@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui";
 import { finalCtaContent } from "../lib/content";
 import { Wrap } from "./primitives";
 
-export function FinalCta({ locale = "en" }: { readonly locale?: Locale }) {
+export function FinalCta({ locale = "ua" }: { readonly locale?: Locale }) {
   const copy = finalCtaContent(locale);
   return (
     <section className="py-16">

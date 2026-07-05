@@ -2,10 +2,9 @@
 // sections in order (FR-SALES-01/02/03, FR-SHELL-03). No tailoring job or data
 // request runs on load; the FAQ is the only interactive piece.
 //
-// Copy is localized via shared/lib/i18n. Locale is pinned to "en" for now
-// (extract-landing-i18n): t() defaults to `ua` and the display fonts are
-// latin-only, so passing an explicit locale keeps the page in English until
-// task 10 wires a Cyrillic subset + the language toggle.
+// Copy is localized via shared/lib/i18n. The page renders the cookie-resolved
+// locale passed by app/page.tsx (Ukrainian-first default); the fonts carry a
+// Cyrillic subset and the top bar exposes the language toggle (add-language-toggle).
 import { type Locale } from "@/shared/lib/i18n";
 import { Reveal } from "@/shared/ui";
 import { TopBarSession } from "@/widgets/top-bar";
@@ -20,7 +19,7 @@ import { Pillars } from "./Pillars";
 import { Pricing } from "./Pricing";
 import { StructuredData } from "./StructuredData";
 
-export function Landing({ locale = "en" }: { readonly locale?: Locale }) {
+export function Landing({ locale = "ua" }: { readonly locale?: Locale }) {
   return (
     <>
       <StructuredData />

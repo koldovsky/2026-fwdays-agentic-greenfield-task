@@ -3,7 +3,7 @@ import { type Locale } from "@/shared/lib/i18n";
 import { stepsSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function HowItWorks({ locale = "en" }: { readonly locale?: Locale }) {
+export function HowItWorks({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, items } = stepsSection(locale);
   return (
     <section id="how" className="scroll-mt-16 border-y border-hairline bg-surface-card py-16">

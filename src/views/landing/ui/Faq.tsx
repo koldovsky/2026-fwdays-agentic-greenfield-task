@@ -25,7 +25,7 @@ function FaqRow({ question, answer }: { readonly question: string; readonly answ
   );
 }
 
-export function Faq({ locale = "en" }: { readonly locale?: Locale }) {
+export function Faq({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, items } = faqSection(locale);
   return (
     <section id="faq" className="scroll-mt-16 border-y border-hairline bg-surface-card py-16">

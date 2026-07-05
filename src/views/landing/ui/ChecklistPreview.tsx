@@ -5,7 +5,7 @@ import { ChecklistRow, MatchScore } from "@/shared/ui";
 import { checklistSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function ChecklistPreview({ locale = "en" }: { readonly locale?: Locale }) {
+export function ChecklistPreview({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, score, headline, subtext, rows } = checklistSection(locale);
   return (
     <section className="py-16">

@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 import { faqSection } from "../lib/content";
 import { Faq } from "./Faq";
 
-// The landing renders English (locale pinned to "en" until task 10).
-const faqItems = faqSection("en").items;
+// Faq defaults to the Ukrainian-first locale (NFR-I18N-01); assert against it.
+const faqItems = faqSection("ua").items;
 
 describe("Faq", () => {
   it("renders every question as a collapsed disclosure", () => {

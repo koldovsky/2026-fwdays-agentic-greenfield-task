@@ -5,7 +5,7 @@ import { GroundingBadge } from "@/shared/ui";
 import { beforeAfterSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function BeforeAfter({ locale = "en" }: { readonly locale?: Locale }) {
+export function BeforeAfter({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, yourCvLabel, tailoredLabel, rows } = beforeAfterSection(locale);
   return (
     <section className="border-y border-hairline bg-surface-card py-16">

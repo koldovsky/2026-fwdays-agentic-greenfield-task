@@ -16,7 +16,7 @@ const accentDot: Record<Pillar["accent"], string> = {
   overclaim: "bg-overclaim",
 };
 
-export function Pillars({ locale = "en" }: { readonly locale?: Locale }) {
+export function Pillars({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, items } = pillarsSection(locale);
   return (
     <section className="py-16">

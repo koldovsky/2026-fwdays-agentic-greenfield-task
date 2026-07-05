@@ -51,7 +51,7 @@ function DemoCard({ demo }: { readonly demo: DemoContent }) {
   );
 }
 
-export function Hero({ locale = "en" }: { readonly locale?: Locale }) {
+export function Hero({ locale = "ua" }: { readonly locale?: Locale }) {
   const hero = heroContent(locale);
   const demo = demoContent(locale);
   return (

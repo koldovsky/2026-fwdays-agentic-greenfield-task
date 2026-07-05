@@ -6,7 +6,7 @@ import { Button } from "@/shared/ui";
 import { pricingSection } from "../lib/content";
 import { SectionHead, Wrap } from "./primitives";
 
-export function Pricing({ locale = "en" }: { readonly locale?: Locale }) {
+export function Pricing({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, plans } = pricingSection(locale);
   return (
     <section id="pricing" className="scroll-mt-16 py-16">

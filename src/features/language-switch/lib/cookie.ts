@@ -6,7 +6,9 @@ import { LOCALE_COOKIE, type Locale } from "@/shared/lib/i18n";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
-/** Persist the chosen locale for a year, path-wide, lax so navigations carry it. */
+/** Persist the chosen locale for a year, path-wide, lax so navigations carry it.
+ * Adds Secure over HTTPS (defense-in-depth) but not on plain-http local dev. */
 export function persistLocaleCookie(locale: Locale): void {
-  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${ONE_YEAR_SECONDS}; samesite=lax`;
+  const secure = window.location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${ONE_YEAR_SECONDS}; samesite=lax${secure}`;
 }
