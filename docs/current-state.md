@@ -7,6 +7,26 @@
 
 ## Last action
 
+- **NEW 6-task batch — investigation DONE + decisions locked, entering spec phase (2026-07-06, ultracode).**
+  6-agent investigation workflow (`wn9s3sx77`) root-caused every task (see per-task plan below).
+  User decisions:
+  - **T5 scoring:** heuristics now + LLM coverage judge behind a feature flag (flag off until
+    ANTHROPIC_API_KEY + honesty-eval fixtures land). Relax FR-CHECKLIST-01 to "deterministic scorer
+    over LLM-cited, CV-grounded evidence" ONLY for the flagged path; pure heuristic path stays default.
+  - **T5 scope:** BOTH — promote grounded LLM cover letter (deterministic reflow = fail-honest
+    fallback) AND build a real structured resume doc (contact/summary/experience+dates/skills/edu).
+  - **T1 history:** persist on START for ALL logged-in users (not paid-only), update the row on EACH
+    step (analyze→generate→done); enforce the 1-free-tailoring cap SERVER-SIDE for free/anon.
+  - **T2 JobHunt Pass:** 14-day period (per-plan period, emulator is a single 30-day constant today).
+- **NEW 6-task batch started — investigation phase (2026-07-06, ultracode).** Pre-build gate:
+  launched a read-only investigation workflow (`vouch-batch6-investigate`, 6 parallel investigators,
+  task 5 on Fable 5) to root-cause + map each task against code + PRD BEFORE any code. The 6 tasks:
+  1. [bug] Tailoring not saved to history — persist record on tailoring START (link JD+CV+answers+score), match mocked flow.
+  2. [rework] Plans across app (account/billing + landing): benefit bullets on plan list + current plan; new tiers (Pro/Ultra/JobHunt Pass), improved names+copy (enemy-centric, no emoji/!/em-dash), ua+en.
+  3. [bug] "Download my data" still shows export_failed in web.
+  4. [rework] Upload-CV premium banner: text-paste zone works; separate blurred file-drop zone gated by a semi-transparent Premium banner; **server-side enforcement** so devtools can't bypass.
+  5. [rework, Fable 5] Scoring/seniority/honesty + cover letter + downloadable resume doc. Stop the false 30/100 + false 'unsafe' flags; infer seniority from whole resume; ask only about fully-uncovered fields; natural senior cover letter; real resume document (not bullet dump).
+  6. [bug] Landing "Know exactly where you stand" checklist demo renders UA labels when EN selected.
 - **Model-routing enforcement hook added (2026-07-06).** New `PreToolUse` hook
   `.claude/hooks/model-routing-reminder.sh` (matcher `Agent|Workflow`, registered in
   `.claude/settings.json`). Advisory + non-blocking: injects a complexity-grading reminder when a
@@ -95,8 +115,60 @@
 
 ## Working on
 
-- Nothing in flight. Tree clean. **All 10 batch tasks are DONE.** What remains is
-  environment-blocked (see below), not implementation.
+**NEW 6-task batch — spec phase.** Per-task plan (root causes grounded in `wn9s3sx77`). Implement
+order: T6 → T1 → T3 → T2 → T4 → T5. Each task = spec delta → maker → checker subagent → verifier →
+commit → update this doc. Task 5 runs on Fable 5.
+
+- **T6 [bug] landing checklist pill i18n** (change `fix-checklist-pill-i18n`; caps: shared-ui/marketing-landing; NFR-I18N-01, FR-SALES-02).
+  Root cause: `shared/ui/status-pill/ui/StatusPill.tsx:32` hard-imports `ua` dict, no `locale` prop.
+  Fix: add `locale?: Locale` to StatusPill + ChecklistRow, thread from ChecklistPreview; resolve via
+  `t(locale).checklist.statusLabel`. 3 files, no new strings. (GroundingBadge has same latent pattern
+  — follow-up note.)
+- **T1 [bug] tailoring history** (change `persist-tailoring-lifecycle`; caps: tailoring-history[new], paywall; FR-TAILOR-04, FR-HISTORY-*, FR-ONBOARD-01, FR-PAYWALL-01, NFR-COST-02, NFR-OBS-01).
+  Root cause: (a) live wizard persists only on COMPLETION + paid-only (`api/tailor/generate/route.ts:285-303`);
+  (b) migration 0004 unapplied in prod; (c) one-shot `/api/tailor` never persists.
+  Fix (per decision): persist a PENDING row at generate START for ALL logged-in users, update on each
+  step (status column: pending→complete/failed), read path opens to all logged-in users. Enforce the
+  1-free-tailoring cap server-side (usage-counter, FR-ONBOARD-01/NFR-COST-02) so free users can't
+  re-run. Cleanup for abandoned pending rows. New migration for status col + CHECK.
+- **T3 [bug] GDPR export "export_failed"** (change `harden-account-export-ux`; caps: account/gdpr; NFR-GDPR-01/02, NFR-OBS-01, NFR-SEC-01).
+  Root cause: PRIMARY env (CV_ENCRYPTION_KEY/DATABASE_URL unset in prod → 500 `export_failed`);
+  plus code gaps — plain `<a href>` navigates to raw JSON on 500 (no in-page error), no per-profile
+  decrypt resilience. Fix (code, env stays ops-blocked): fetch-based download + inline `exportError`
+  i18n (ua+en) mirroring delete-profile 2-phase; per-profile decrypt try/catch → `rawText:null` +
+  `decryptionFailed` flag (GDPR-graceful). Env set + `yarn db:migrate` remain ops.
+- **T2 [rework] subscription plans** (change `rework-subscription-plans`; caps: billing/pricing, marketing-landing; FR-SALES-03, FR-PAYWALL-02, FR-BILLING-*, NFR-I18N-01, BC-BRAND-01).
+  Add `ultra` tier across: entities/subscription Plan, payments PaymentsPlan+PAYMENTS_PLANS,
+  subscription-repo SubscriptionPlan, DB CHECK (new migration), PAID_PLANS set, invoices
+  PLAN_AMOUNT_USD (pro 12 / ultra 30 / job_hunt_pass 20), per-plan period (pass=14d). i18n: change
+  `upgrade.planFeature` string→`string[]` (benefit bullets) + add `ultra` to every plan-keyed Record
+  (ua+en). UI: UpgradePlans (3 paid, bullets `<ul>`), BillingPortal (benefit list on current plan +
+  ultra renewal branch), landing Pricing (4 cards layout). Proposed NAMES + enemy-centric copy in the
+  spec for review before wiring live (outward-facing). Fix pass price 19→20.
+- **T4 [rework] premium upload zone** (change `gate-premium-upload-zone`; caps: upload-cv, paywall; FR-CV-01, FR-ONBOARD-01, FR-PAYWALL-01/02, NFR-SEC-04, BC-HONESTY-01).
+  Interpretation (default): zone A = free resume-TEXT input + upload/parse button (`/api/cv/parse`
+  stays UNGATED, FR-ONBOARD-01); zone B = the original-PDF-attach drop area, rendered blurred under a
+  semi-transparent Premium banner for !paid. Split `UploadCvDropzone` into TextUploadZone +
+  PremiumAttachZone. `paid` comes from the server (`tailor/page.tsx`→view). SECURITY: gate stays
+  server-side in `api/tailor/generate` (attachmentAllowed default false, flipped only after
+  hasPaidAccess) — CSS blur is cosmetic only; overlay also disables the input. New banner i18n (ua+en).
+- **T5 [rework, FABLE 5] tailoring quality** (change `improve-tailoring-quality`; caps: checklist, wizard, cover-letter, resume-export[new]; FR-CHECKLIST-*, FR-BULLETS-*, FR-WIZARD-02, FR-COVERLETTER-*, FR-EXPORT-*, BC-HONESTY-*, TC-PURE-01, NFR-COST-01, NFR-PERF-02).
+  Four defects (roots): (a) verbatim substring match + AND-aggregation + 0-credit gap in
+  `shared/lib/scoring/checklist.ts`; inferred `careerStage` (loop.ts:257-270) never reaches the
+  scorer; (b) skills-list-only → `overclaim-risk` for everyone; (c) `derive.ts` ELIGIBLE_STATUSES
+  `{partial,gap}` over-asks; (d) deterministic bullet-reflow letter (`export-cover-letter/lib/build-document.ts`),
+  dead LLM prompt; (e) ExportDocument model has only headline+bullets+footer.
+  Fix (per decision): HEURISTICS now (thread careerStage into checklist; mid/senior skills-list =
+  covered not overclaim; infer tenure from parsed dates for duration reqs; soften AND; derive.ts →
+  gap-only, must-have-first; junior keeps strict rule; unknown seniority defaults strict). LLM
+  coverage judge behind a FLAG (batched 1-call, cited evidence, CV+reqs only, extend
+  GROUNDING_FORBIDDEN). Promote LLM cover letter with its own grounding verify + deterministic
+  fallback; honesty-eval fixtures (user's example = target). Structured resume doc (extend
+  normalizeCvText→sectioned, extend ExportDocument, merge kept bullets into roles, update pdf/docx
+  renderers) — exports only grounded/kept content; contact PII included, untouched sections keep CV's
+  original language.
+
+Residual from prior 10-task batch: DONE; env/tooling/human items below unchanged.
 
 ## Remaining (all blocked on environment/tooling or a human review, no code)
 
