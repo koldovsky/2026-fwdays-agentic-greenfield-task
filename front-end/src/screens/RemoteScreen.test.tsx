@@ -13,8 +13,21 @@ vi.mock('../data/useDeviceSession.ts', () => {
   return { useDeviceSession: stub };
 });
 
-// Mutable ambient state the mock reads. Tests set this before render.
+vi.mock('../data/useVolume.ts', () => {
+  const stub = vi.fn(() => ({
+    level: null,
+    muted: mockMuted,
+    delta: mockVolumeDelta,
+    toggleMute: mockVolumeToggle,
+  }));
+  return { useVolume: stub };
+});
+
+// Mutable ambient state the mocks read. Tests set these before render.
 let mockState: ClientSessionState = 'Disconnected';
+let mockMuted = false;
+let mockVolumeDelta = vi.fn(async () => undefined);
+let mockVolumeToggle = vi.fn(async () => undefined);
 
 function device(overrides: Partial<Device> = {}): Device {
   return {
@@ -29,23 +42,17 @@ function device(overrides: Partial<Device> = {}): Device {
   };
 }
 
-function commandButtons(container: HTMLElement): HTMLButtonElement[] {
-  return Array.from(
-    container.querySelectorAll<HTMLButtonElement>(
-      'button[aria-label="Up"], button[aria-label="Down"], button[aria-label="Left"], button[aria-label="Right"], button[aria-label="Select"], button[aria-label="Back"]:not([aria-label="Back"]:first-of-type), button[aria-label="Home"], button[aria-label="Menu"], button[aria-label="Power"]',
-    ),
-  );
-}
-
 describe('RemoteScreen', () => {
   it('renders every command control as disabled when the session is Connecting', () => {
     mockState = 'Connecting';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
     const post = vi.fn().mockResolvedValue(undefined);
     const { container } = render(
       <RemoteScreen device={device()} onBack={vi.fn()} sendKeyOptions={{ post }} />,
     );
 
-    // Check the specific command controls — every arrow, select, back/home/menu, power.
     const labels = ['Up', 'Down', 'Left', 'Right', 'Select', 'Home', 'Menu', 'Power'];
     for (const label of labels) {
       const btn = container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
@@ -53,7 +60,6 @@ describe('RemoteScreen', () => {
       expect(btn?.disabled).toBe(true);
     }
 
-    // Click a disabled button — no POST should fire.
     const up = container.querySelector<HTMLButtonElement>('button[aria-label="Up"]');
     up?.click();
     expect(post).not.toHaveBeenCalled();
@@ -61,6 +67,9 @@ describe('RemoteScreen', () => {
 
   it('clicking the D-pad up arrow while Connected calls sendKey with KEY_UP', () => {
     mockState = 'Connected';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
     const post = vi.fn().mockResolvedValue(undefined);
     const { container } = render(
       <RemoteScreen device={device()} onBack={vi.fn()} sendKeyOptions={{ post }} />,
@@ -71,7 +80,74 @@ describe('RemoteScreen', () => {
     fireEvent.click(up!);
     expect(post).toHaveBeenCalledWith('udn-1', 'KEY_UP');
   });
-});
 
-// Referenced to silence "unused" warning in the loop through container query.
-void commandButtons;
+  it('renders the Slider without erroring and defaults to the local starting position', () => {
+    mockState = 'Connected';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
+    expect(range, 'slider input not found').not.toBeNull();
+    expect(range?.disabled).toBe(false);
+    // Default local slider position is 38 (per SLIDER_START in RemoteScreen.tsx).
+    expect(Number(range?.value)).toBe(38);
+  });
+
+  it('renders volume_off with active prop when muted: true', () => {
+    mockState = 'Connected';
+    mockMuted = true;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const mute = container.querySelector<HTMLButtonElement>('button[aria-label="Mute"]');
+    expect(mute, 'mute button not found').not.toBeNull();
+    // DS IconButton renders the icon glyph as the button's text content.
+    expect(mute?.textContent).toContain('volume_off');
+    // `active` prop drives an inset shadow via var(--nm-inset-md).
+    const shadow = mute?.style.boxShadow ?? '';
+    expect(shadow).toContain('--nm-inset-md');
+  });
+
+  it('committing the slider while Connecting fires no delta call', () => {
+    mockState = 'Connecting';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
+    expect(range?.disabled).toBe(true);
+    // Try to drive a change + commit; both should be no-ops.
+    if (range) {
+      fireEvent.change(range, { target: { value: '55' } });
+      fireEvent.mouseUp(range);
+      fireEvent.keyUp(range);
+    }
+    expect(mockVolumeDelta).not.toHaveBeenCalled();
+  });
+
+  it('committing the slider while Connected fires a delta call with the position diff', () => {
+    mockState = 'Connected';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
+    expect(range).not.toBeNull();
+    // Drag from the default (38) up to 41.
+    fireEvent.change(range!, { target: { value: '41' } });
+    fireEvent.mouseUp(range!);
+    expect(mockVolumeDelta).toHaveBeenCalledWith(3);
+  });
+
+  it('clicking mute while Connected calls toggleMute', () => {
+    mockState = 'Connected';
+    mockMuted = false;
+    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeToggle = vi.fn(async () => undefined);
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const mute = container.querySelector<HTMLButtonElement>('button[aria-label="Mute"]');
+    fireEvent.click(mute!);
+    expect(mockVolumeToggle).toHaveBeenCalledTimes(1);
+  });
+});

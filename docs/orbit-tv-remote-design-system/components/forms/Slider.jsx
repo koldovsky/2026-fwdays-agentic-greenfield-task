@@ -4,10 +4,31 @@ import React from 'react';
  * Slider — neumorphic groove slider for volume/brightness. Inset track,
  * raised circular thumb, accent-filled progress within the groove.
  */
-export function Slider({ value = 50, min = 0, max = 100, onChange, icon }) {
+export function Slider({
+  value = 50,
+  min = 0,
+  max = 100,
+  onChange,
+  onCommit,
+  disabled = false,
+  icon,
+}) {
   const pct = ((value - min) / (max - min)) * 100;
+  const commit = (e) => {
+    if (disabled || !onCommit) return;
+    onCommit(Number(e.currentTarget.value));
+  };
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%' }}>
+    <div
+      aria-disabled={disabled}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        width: '100%',
+        opacity: disabled ? 0.55 : 1,
+      }}
+    >
       {icon && (
         <span className="material-symbols-rounded" style={{ fontSize: 22, color: 'var(--fg-2)', flexShrink: 0 }}>
           {icon}
@@ -52,8 +73,20 @@ export function Slider({ value = 50, min = 0, max = 100, onChange, icon }) {
           min={min}
           max={max}
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange && onChange(Number(e.target.value))}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', margin: 0 }}
+          onMouseUp={commit}
+          onTouchEnd={commit}
+          onKeyUp={commit}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            margin: 0,
+          }}
         />
       </div>
       <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--fg-2)', width: 28, textAlign: 'right', flexShrink: 0 }}>

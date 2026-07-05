@@ -19,8 +19,18 @@ export type SamsungKeyCode =
   | 'KEY_RETURN'
   | 'KEY_HOME'
   | 'KEY_MENU'
-  | 'KEY_POWER';
+  | 'KEY_POWER'
+  | 'KEY_VOLUP'
+  | 'KEY_VOLDOWN'
+  | 'KEY_MUTE';
 
+/**
+ * Keys exposed by the C6 `POST /api/devices/:udn/key` route. Volume keys
+ * are intentionally NOT in this list — C7 `volume-control` owns them via
+ * `POST /volume/delta` + `POST /mute` so the volume module can also flip
+ * its optimistic mute tracker and emit `changed` events. Keeping the two
+ * routes' vocabularies separate honours C6's own Non-Goals boundary.
+ */
 export const SAMSUNG_KEY_CODES: readonly SamsungKeyCode[] = [
   'KEY_UP',
   'KEY_DOWN',
@@ -31,6 +41,14 @@ export const SAMSUNG_KEY_CODES: readonly SamsungKeyCode[] = [
   'KEY_HOME',
   'KEY_MENU',
   'KEY_POWER',
+];
+
+/** Volume keys — used internally by `back-end/src/tv/volume.ts`. Not part
+ *  of the C6 public `/key` schema. */
+export const VOLUME_KEY_CODES: readonly SamsungKeyCode[] = [
+  'KEY_VOLUP',
+  'KEY_VOLDOWN',
+  'KEY_MUTE',
 ];
 
 export interface SmartViewKeyParams {

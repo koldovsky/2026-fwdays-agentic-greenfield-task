@@ -11,6 +11,7 @@ import { registerHealthRoute } from './routes/health.js';
 import { registerDevicesRoute } from './routes/devices.js';
 import { registerSessionRoutes } from './routes/sessions.js';
 import { registerKeyRoute } from './routes/keys.js';
+import { registerVolumeRoutes } from './routes/volume.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
 import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
 import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
@@ -22,6 +23,7 @@ import {
 import { createDevicesBroker, type DevicesBroker } from './ws/broker.js';
 import { createSessionManager, type SessionManager } from './tv/manager.js';
 import { createTokenStore, type TokenStore } from './tv/token-store.js';
+import { createVolumeModule, type VolumeModule } from './tv/volume.js';
 import type { SessionOptions } from './tv/session.js';
 
 export interface MdnsAppOptions {
@@ -81,6 +83,7 @@ declare module 'fastify' {
       broker: DevicesBroker | undefined;
       handle: DiscoveryHandle | undefined;
       sessions: SessionManager | undefined;
+      volume: VolumeModule | undefined;
     };
   }
 }
@@ -151,6 +154,7 @@ export async function createApp(
     broker: undefined,
     handle: undefined,
     sessions: undefined,
+    volume: undefined,
   };
   app.decorate('discovery', discoveryRef);
 
@@ -170,7 +174,10 @@ export async function createApp(
         ? { sessionOptions: sessionsOptions.sessionOptions }
         : {}),
     });
+    discoveryRef.volume = createVolumeModule(discoveryRef.sessions);
     app.addHook('onClose', async () => {
+      discoveryRef.volume?.close();
+      discoveryRef.volume = undefined;
       await discoveryRef.sessions?.close();
       discoveryRef.sessions = undefined;
     });
@@ -212,6 +219,7 @@ export async function createApp(
       registry,
       app.log,
       discoveryRef.sessions,
+      discoveryRef.volume,
     );
   }
   app.get('/ws', { websocket: true }, (socket) => {
@@ -227,6 +235,9 @@ export async function createApp(
       await registerDevicesRoute(api);
       await registerSessionRoutes(api);
       await registerKeyRoute(api);
+      if (discoveryRef.volume) {
+        await registerVolumeRoutes(discoveryRef.volume)(api);
+      }
     },
     { prefix: '/api' },
   );

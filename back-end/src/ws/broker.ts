@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from 'ws';
 import type { Device, DeviceRegistry, RegistryEvent } from '../discovery/registry.js';
 import type { SessionManager, SessionSnapshot } from '../tv/manager.js';
+import type { VolumeModule, VolumeSnapshot, VolumeState } from '../tv/volume.js';
 import { toClientSessionState, type ClientSessionState } from '../tv/types.js';
 
 export type DevicesTopicEvent =
@@ -10,10 +11,12 @@ export type DevicesTopicEvent =
   | 'updated'
   | 'removed'
   | 'offline'
-  | 'session';
+  | 'session'
+  | 'volume';
 
 interface SnapshotDevice extends Device {
   session?: ClientSessionState;
+  volume?: VolumeState;
 }
 
 interface DevicesMessage {
@@ -23,6 +26,8 @@ interface DevicesMessage {
   devices?: SnapshotDevice[];
   udn?: string;
   state?: ClientSessionState;
+  level?: VolumeState['level'];
+  muted?: VolumeState['muted'];
 }
 
 export interface DevicesBroker {
@@ -41,6 +46,7 @@ export function createDevicesBroker(
   registry: DeviceRegistry,
   logger: FastifyInstance['log'],
   sessionManager?: SessionManager,
+  volumeModule?: VolumeModule,
 ): DevicesBroker {
   const clients = new Set<WebSocket>();
 
@@ -75,6 +81,15 @@ export function createDevicesBroker(
       state: toClientSessionState(snapshot.state),
     });
   };
+  const onVolume = (snapshot: VolumeSnapshot): void => {
+    broadcast({
+      topic: 'devices',
+      event: 'volume',
+      udn: snapshot.udn,
+      level: snapshot.state.level,
+      muted: snapshot.state.muted,
+    });
+  };
 
   const registryListeners: Array<[RegistryEvent, (device: Device) => void]> = [
     ['added', onAdded],
@@ -88,6 +103,9 @@ export function createDevicesBroker(
   if (sessionManager) {
     sessionManager.on('state', onSession);
   }
+  if (volumeModule) {
+    volumeModule.on('changed', onVolume);
+  }
 
   function buildSnapshot(): SnapshotDevice[] {
     const sessionByUdn = new Map<string, ClientSessionState>();
@@ -96,9 +114,19 @@ export function createDevicesBroker(
         sessionByUdn.set(udn, toClientSessionState(state));
       }
     }
+    const volumeByUdn = new Map<string, VolumeState>();
+    if (volumeModule) {
+      for (const { udn, state } of volumeModule.snapshot()) {
+        volumeByUdn.set(udn, state);
+      }
+    }
     return registry.snapshot().map((d) => {
       const session = sessionByUdn.get(d.udn);
-      return session === undefined ? d : { ...d, session };
+      const volume = volumeByUdn.get(d.udn);
+      const enriched: SnapshotDevice = { ...d };
+      if (session !== undefined) enriched.session = session;
+      if (volume !== undefined) enriched.volume = volume;
+      return enriched;
     });
   }
 
@@ -124,6 +152,7 @@ export function createDevicesBroker(
         registry.off(event, listener);
       }
       if (sessionManager) sessionManager.off('state', onSession);
+      if (volumeModule) volumeModule.off('changed', onVolume);
       clients.clear();
     },
   };

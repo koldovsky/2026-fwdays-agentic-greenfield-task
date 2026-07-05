@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconButton } from '@ds/components/core/IconButton.jsx';
 import { Badge } from '@ds/components/core/Badge.jsx';
 import { Slider } from '@ds/components/forms/Slider.jsx';
@@ -6,6 +6,7 @@ import { DPad } from '@ds/components/controls/DPad.jsx';
 import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx';
 import { useDeviceSession, type ClientSessionState } from '../data/useDeviceSession.ts';
 import { useSendKey, type UseSendKeyOptions } from '../data/useSendKey.ts';
+import { useVolume, type UseVolumeOptions } from '../data/useVolume.ts';
 import type { SamsungKeyCode } from '../data/keys.ts';
 import type { Device } from '../data/types.ts';
 
@@ -36,13 +37,22 @@ export interface RemoteScreenProps {
   onBack: () => void;
   /** Injectable for tests. */
   sendKeyOptions?: UseSendKeyOptions;
+  /** Injectable for tests. */
+  useVolumeOptions?: UseVolumeOptions;
 }
 
-export function RemoteScreen({ device, onBack, sendKeyOptions }: RemoteScreenProps) {
-  const [volume, setVolume] = useState(38);
-  const [muted, setMuted] = useState(false);
+// Smart View can't report the TV's actual volume level (see
+// `openspec/specs/volume-control/spec.md`), so the slider is purely a
+// local write-only control. This is where it starts each mount — the
+// value has no meaning beyond "somewhere in the middle."
+const SLIDER_START = 38;
+
+export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions }: RemoteScreenProps) {
+  const [sliderPosition, setSliderPosition] = useState(SLIDER_START);
+  const lastCommittedRef = useRef(SLIDER_START);
   const { state, connect, disconnect } = useDeviceSession(device.udn);
   const { sendKey } = useSendKey(device.udn, sendKeyOptions);
+  const { muted, delta: sendDelta, toggleMute } = useVolume(device.udn, useVolumeOptions);
 
   useEffect(() => {
     void connect().catch(() => {
@@ -51,9 +61,10 @@ export function RemoteScreen({ device, onBack, sendKeyOptions }: RemoteScreenPro
   }, [connect]);
 
   const isConnected = state === 'Connected';
-  // AppShortcut + Slider don't accept `disabled` (they're placeholders for
-  // C7 volume-control / a future app-launch capability); wrap them in a
-  // token-consistent overlay instead of inlining CSS on the primitive.
+  // AppShortcut still lacks a `disabled` prop (it's placeholder art for a
+  // future app-launch capability). Slider now accepts `disabled` directly
+  // (extended in C7 per tasks.md 3.3). Only the AppShortcut row falls back
+  // to the token-consistent overlay pattern.
   const disabledStyle = isConnected
     ? undefined
     : { opacity: 0.55, pointerEvents: 'none' as const };
@@ -70,6 +81,24 @@ export function RemoteScreen({ device, onBack, sendKeyOptions }: RemoteScreenPro
   function send(key: SamsungKeyCode): void {
     void sendKey(key).catch(() => {
       /* useSendKey already logged; UI-level surfacing lives in error-surfacing */
+    });
+  }
+
+  function handleSliderCommit(value: number): void {
+    // The slider is a write-only control (Smart View can't report actual
+    // level). Fire `commitValue - lastCommittedValue` steps to the TV;
+    // the per-TV FIFO queue on the back-end handles ordering.
+    const steps = value - lastCommittedRef.current;
+    lastCommittedRef.current = value;
+    if (steps === 0) return;
+    void sendDelta(steps).catch(() => {
+      /* useVolume already logged */
+    });
+  }
+
+  function handleMuteClick(): void {
+    void toggleMute().catch(() => {
+      /* useVolume already logged */
     });
   }
 
@@ -130,12 +159,18 @@ export function RemoteScreen({ device, onBack, sendKeyOptions }: RemoteScreenPro
             icon={muted ? 'volume_off' : 'volume_up'}
             active={muted}
             size="sm"
-            onClick={() => setMuted((m) => !m)}
+            onClick={handleMuteClick}
             aria-label="Mute"
             disabled={!isConnected}
           />
-          <div style={{ flex: 1, ...disabledStyle }} aria-disabled={!isConnected}>
-            <Slider value={volume} onChange={setVolume} />
+          <div style={{ flex: 1 }}>
+            <Slider
+              value={sliderPosition}
+              onChange={setSliderPosition}
+              onCommit={(v: number) => handleSliderCommit(v)}
+              disabled={!isConnected}
+              icon="volume_up"
+            />
           </div>
         </div>
 
