@@ -61,6 +61,7 @@ export function ChecklistPanel({ score, rows, locale = "ua" }: ChecklistPanelPro
             status={toRowStatus[row.status]}
             rationale={row.rationale}
             last={index === rows.length - 1}
+            locale={locale}
           />
         ))}
       </div>

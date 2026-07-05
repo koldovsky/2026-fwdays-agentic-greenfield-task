@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { Requirement } from "@/entities/requirement";
-import { ua } from "@/shared/lib/i18n";
+import { en, ua } from "@/shared/lib/i18n";
 
 import { ChecklistPanel, type ChecklistPanelRow } from "./ChecklistPanel";
 
@@ -48,5 +48,15 @@ describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
     render(<ChecklistPanel score={50} rows={rows} />);
     expect(screen.getByText(ua.checklist.statusLabel.info)).toBeInTheDocument();
     expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
+  });
+
+  it("forwards locale to the status pills so EN visitors see English labels (NFR-I18N-01)", () => {
+    render(<ChecklistPanel score={50} rows={rows} locale="en" />);
+    // The overclaim-risk row's pill must resolve to the English label, proving
+    // locale threads Panel -> ChecklistRow -> StatusPill on the workspace/history paths.
+    expect(screen.getByText(en.checklist.statusLabel["overclaim-risk"])).toBeInTheDocument();
+    expect(
+      screen.queryByText(ua.checklist.statusLabel["overclaim-risk"]),
+    ).not.toBeInTheDocument();
   });
 });

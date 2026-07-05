@@ -24,6 +24,7 @@ export function ChecklistPreview({ locale = "ua" }: { readonly locale?: Locale }
                 status={row.status}
                 rationale={row.rationale}
                 last={i === rows.length - 1}
+                locale={locale}
               />
             ))}
           </div>

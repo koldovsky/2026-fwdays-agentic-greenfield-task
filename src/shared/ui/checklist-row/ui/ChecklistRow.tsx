@@ -1,6 +1,8 @@
 // One requirement row in the Vouch compliance checklist (FR-CHECKLIST-02):
 // leading status dot, requirement title + priority Badge, one-sentence rationale,
-// and a right-aligned StatusPill (Ukrainian label). Presentational, server-safe.
+// and a right-aligned StatusPill (locale-aware label, defaults to Ukrainian).
+// Presentational, server-safe.
+import type { Locale } from "@/shared/lib/i18n";
 import type { ChecklistStatus } from "@/shared/lib/scoring";
 import { Badge } from "@/shared/ui/badge";
 import { StatusPill } from "@/shared/ui/status-pill";
@@ -19,6 +21,8 @@ export interface ChecklistRowProps {
   readonly rationale?: string;
   /** Set true on the final row to suppress the bottom border. */
   readonly last?: boolean;
+  /** Visitor locale forwarded to StatusPill. Defaults to "ua" (Ukrainian-first). */
+  readonly locale?: Locale;
 }
 
 const dotClass: Record<ChecklistRowStatus, string> = {
@@ -44,6 +48,7 @@ export function ChecklistRow({
   status = "met",
   rationale,
   last = false,
+  locale,
 }: ChecklistRowProps) {
   return (
     <div
@@ -64,7 +69,7 @@ export function ChecklistRow({
         )}
       </div>
       <div className="self-center shrink-0">
-        <StatusPill status={toPillStatus[status]} />
+        <StatusPill status={toPillStatus[status]} locale={locale} />
       </div>
     </div>
   );

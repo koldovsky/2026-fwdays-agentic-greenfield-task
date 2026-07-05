@@ -2,7 +2,7 @@
 // met | partial | info | gap | overclaim-risk to their token colors + Ukrainian
 // labels. "info" reuses the existing brand blue (no new hue — DESIGN.md).
 // Ukrainian-first copy comes from the shared i18n dictionary (NFR-I18N-01).
-import { ua } from "@/shared/lib/i18n";
+import { t, type Locale } from "@/shared/lib/i18n";
 import type { ChecklistStatus } from "@/shared/lib/scoring";
 
 export interface StatusPillProps {
@@ -10,6 +10,8 @@ export interface StatusPillProps {
   readonly status: ChecklistStatus;
   /** Override the default Ukrainian label for this status. */
   readonly label?: string;
+  /** Visitor locale. Defaults to "ua" (Ukrainian-first). */
+  readonly locale?: Locale;
 }
 
 const pillClass: Record<ChecklistStatus, string> = {
@@ -28,8 +30,8 @@ const dotClass: Record<ChecklistStatus, string> = {
   "overclaim-risk": "bg-overclaim",
 };
 
-export function StatusPill({ status, label }: StatusPillProps) {
-  const text = label ?? ua.checklist.statusLabel[status];
+export function StatusPill({ status, label, locale }: StatusPillProps) {
+  const text = label ?? t(locale ?? "ua").checklist.statusLabel[status];
   return (
     <span
       className={
