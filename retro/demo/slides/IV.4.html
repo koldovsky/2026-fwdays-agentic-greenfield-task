@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">Deterministic gates</div>
+<div id="gates" style="display:flex;gap:20px;margin-bottom:60px">
+  <span class="chip" style="opacity:0">✓ round-trip corpus</span>
+  <span class="chip" style="opacity:0">✓ engine parity</span>
+  <span class="chip" style="opacity:0">✓ byte-equal regen</span>
+  <span class="chip" style="opacity:0">✓ traceability</span>
+</div>
+<div style="display:flex;align-items:flex-end;gap:56px;height:480px" id="bars"></div>
+<h1 style="font-size:44px;margin-top:56px"><span id="count" class="hl" style="font-variant-numeric:tabular-nums">0</span> tests across six milestones</h1>
+<script>
+const dur = (parseFloat(new URLSearchParams(location.search).get('dur')) || 18) * 1000;
+const data = [['M0', 13], ['M1', 133], ['M2', 763], ['M3', 1387], ['M4', 1477], ['M5', 1551], ['now', 1616]];
+const bars = document.getElementById('bars');
+for (const [label, n] of data) bars.innerHTML +=
+  `<div style="text-align:center"><div style="color:var(--dim);font-size:26px;margin-bottom:10px" class="n">0</div>
+   <div class="bar-el" style="width:130px;height:0;background:linear-gradient(180deg,var(--accent),#2c5c8f);border-radius:10px 10px 0 0"></div>
+   <div style="font-size:28px;margin-top:12px;color:var(--dim)">${label}</div></div>`;
+const gates = [...document.querySelectorAll('#gates .chip')];
+gates.forEach((g, i) => setTimeout(() => { g.style.opacity = 1; g.style.borderColor = 'var(--green)'; g.style.color = 'var(--green)'; }, (i + 1) * dur * 0.08));
+const t0 = performance.now(), grow = dur * 0.55, delay = dur * 0.38;
+(function step(t) {
+  const k = Math.min(Math.max((t - t0 - delay) / grow, 0), 1), e = 1 - Math.pow(1 - k, 3);
+  document.querySelectorAll('.bar-el').forEach((b, i) => { b.style.height = `${(data[i][1] / 1616) * 420 * e}px`; });
+  document.querySelectorAll('.n').forEach((n, i) => { n.textContent = Math.round(data[i][1] * e); });
+  document.getElementById('count').textContent = Math.round(1616 * e).toLocaleString();
+  if (k < 1) requestAnimationFrame(step); else document.getElementById('count').textContent = '1,616';
+})(performance.now());
+</script>
+</body></html>

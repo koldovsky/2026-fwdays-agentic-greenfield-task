@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">Checked by a script, not by trust</div>
+<h1 style="font-size:52px">requirement → test → <span class="hl">traceability</span>, gated on every commit</h1>
+<div class="term" style="width:1440px;margin-top:56px">
+  <div class="bar"><i></i><i></i><i></i><span style="color:var(--dim);font-size:20px;margin-left:12px">pre-commit · CI</span></div>
+  <pre id="t" style="min-height:330px;font-size:30px"></pre>
+</div>
+<script>
+const dur = (parseFloat(new URLSearchParams(location.search).get('dur')) || 11) * 1000;
+const lines = [
+  ['$ python harness/scripts/check_traceability.py', 'cmd'],
+  ['traceability: consistent.', 'ok'],
+  ['$ python harness/scripts/check_engine_parity.py', 'cmd'],
+  ['engine-parity: consistent (22 rules, 28 operator tokens,', 'ok'],
+  ['                           4 functions; source: export).', 'ok'],
+  ['$ git commit -m "editor: FR-111 accepted-edit sync"', 'cmd'],
+  ['[gates green — commit accepted]', 'ok'],
+];
+const el = document.getElementById('t'); let i = 0;
+const step = dur / (lines.length + 1);
+(function next() { if (i >= lines.length) return;
+  const [txt, cls] = lines[i++];
+  el.innerHTML += `<span style="color:${cls === 'ok' ? 'var(--green)' : 'var(--text)'}">${txt}</span>\n`;
+  setTimeout(next, step); })();
+</script>
+</body></html>

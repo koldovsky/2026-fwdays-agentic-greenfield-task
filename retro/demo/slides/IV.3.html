@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">Maker ≠ checker</div>
+<h1 style="font-size:52px">The agent that writes the code <span class="hl">never reviews it</span></h1>
+<div class="term" style="width:1520px;margin-top:56px">
+  <div class="bar"><i></i><i></i><i></i><span style="color:var(--dim);font-size:20px;margin-left:12px">round-trip-reviewer — a real pre-merge finding (M4)</span></div>
+  <pre id="t" style="min-height:400px;font-size:27px;line-height:1.55"></pre>
+</div>
+<script>
+const dur = (parseFloat(new URLSearchParams(location.search).get('dur')) || 13) * 1000;
+const lines = [
+  ['[reviewer]  adversarial probe: §7.15 surface check, 5 counterfactuals…', 'dim'],
+  ['[reviewer]  ✗ FINDING (MUST-FIX): surface check matches the bare token', 'red'],
+  ['            "transon_unsupported" ANYWHERE in the serialized block —', 'red'],
+  ['            an in-surface document whose DATA contains that string', 'red'],
+  ['            is wrongly rejected. Breaks FR-111.', 'red'],
+  ['[maker]     fix 98e70eb: structural block-type walk + 4-case regression', 'text'],
+  ['[reviewer]  re-verified: PASS — safe to merge', 'green'],
+];
+const el = document.getElementById('t'); let i = 0;
+const colors = { dim: 'var(--dim)', red: 'var(--red)', green: 'var(--green)', text: 'var(--text)' };
+const step = dur / (lines.length + 1.5);
+(function next() { if (i >= lines.length) return;
+  const [txt, c] = lines[i++];
+  el.innerHTML += `<span style="color:${colors[c]}">${txt}</span>\n`;
+  setTimeout(next, step); })();
+</script>
+</body></html>

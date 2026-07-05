@@ -1,47 +1,94 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# Transon Visual Editor
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+An embeddable, engine-free [Blockly](https://developers.google.com/blockly) editor for authoring
+**[Transon](https://github.com/lig/transon)** templates — JSON-to-JSON transformations built
+visually, exported as canonical Transon JSON.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+## What it is
 
-## Що зробити
+Transon templates are JSON documents that describe JSON-to-JSON transformations. This project
+gives them a visual, drag-and-drop authoring surface:
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+- **JSON is canonical.** The Blockly workspace is a *projection* of the Transon template, never a
+  second source of truth. Import → edit → export strictly preserves meaning for supported
+  templates; anything outside the supported surface takes an explicit unsupported path instead of
+  silently changing meaning.
+- **Engine-free.** The editor ships no Transon runtime. Validation, execution, `include`
+  resolution, and file capture all cross a single host-provided `EngineProvider` boundary — the
+  engine is authoritative.
+- **Metadata-driven.** Blocks, palette, toolbox, and the workspace⇄JSON codec are derived from the
+  engine's `get_editor_metadata()` export (rules, params, operators, functions). No hand-maintained
+  parallel catalog, so the editor tracks the engine instead of drifting from it.
+- **Bidirectional editing.** Edit the JSON directly and, when the result is valid and in-surface,
+  it syncs back to the canvas; otherwise you get an error and the workspace stays unchanged.
 
-## Як здати
+## Packages
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+| Package | What it is |
+| --- | --- |
+| `@transon/editor-core` | Pure TypeScript core: the `EngineProvider` port, typed metadata, and the projection codec. Headless — usable without any UI. |
+| `@transon/editor-blockly` | Blockly rendering layer (thrasos renderer): metadata-projected palette/toolbox and the rule-agnostic block behavior runtime. |
+| `@transon/editor-element` | Framework-agnostic public surface: `createTransonEditor()` plus the `<transon-editor>` custom element (ESM + a self-contained IIFE build). |
+| `@transon/editor-react` | Native React surface: `<TransonEditor />` with React as a peer dependency. |
+| `editor-ui` | Internal React UI (panels, sandbox/compact modes, session store). Not published — bundled by the element and React packages. |
 
-## Як оцінюється
+## Quick start (embedding)
 
-Дивимось на **докази процесу**, а не на стек:
+```ts
+import { createTransonEditor } from '@transon/editor-element';
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+const editor = createTransonEditor(document.getElementById('app')!, {
+  host: { engine: myEngineProvider }, // you supply the Transon engine
+});
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+const template = editor.getTemplate();   // current canonical Transon JSON
+await editor.setTemplate(existingDoc);   // import a template
+await editor.validate();                 // validate via the host engine
+await editor.run();                      // execute against the sample input
+```
 
----
+The editor never bundles an engine — the host supplies an `EngineProvider`. The reference host in
+[`examples/reference-host`](examples/reference-host) shows a complete wiring: it runs the Python
+`transon` engine in the browser via Pyodide.
 
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+## Running the demo
+
+Requires Node ≥ 20 and [pnpm](https://pnpm.io).
+
+```sh
+pnpm install
+pnpm --filter @transon/reference-host dev   # or: make demo
+```
+
+## Development
+
+```sh
+pnpm build       # build all packages (Turborepo)
+pnpm test        # run all tests (Vitest)
+pnpm typecheck   # typecheck all packages
+```
+
+Run `make` for the full menu of workspace and verification targets.
+
+The contract lives in [`docs/`](docs/) — read the relevant section before changing behavior:
+
+- [`docs/SPEC.md`](docs/SPEC.md) — the *what*: requirements, use cases, supported surface, round-trip semantics.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the *how*: architecture decisions, packages, host boundary, projection codec.
+- [`docs/metadata-contract.md`](docs/metadata-contract.md) — the engine↔editor metadata shape.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — milestone sequencing and locked decisions.
+- [`docs/traceability.md`](docs/traceability.md) — requirement→test coverage.
+
+Contributors should start with [AGENTS.md](AGENTS.md) (the always-on rules and development loop)
+and enable the repo's git hooks: `git config core.hooksPath harness/githooks`.
+
+## Status
+
+Pre-release. All roadmap milestones (M0–M5) are implemented — headless round-trip core, full rule
+catalog, Blockly rendering, UI shell with host execution, and embedding/self-hosting — but the
+packages are not yet published to npm.
+
+## License
+
+[MIT](LICENSE)

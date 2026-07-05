@@ -1,0 +1,36 @@
+/* Shared slide styles — 1920×1080, dark; bottom ~140px kept clear for burned captions. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #14181d; --card: #1c232b; --edge: #2c3642;
+  --text: #e9edf2; --dim: #8b96a5;
+  --accent: #56a8ff; --green: #58c07a; --amber: #e0b352; --red: #e06c5c;
+  --mono: "SF Mono", "Menlo", monospace;
+}
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Helvetica Neue", sans-serif;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 120px 140px;
+}
+.kicker { font-size: 26px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 28px; }
+h1 { font-size: 64px; font-weight: 700; line-height: 1.15; text-align: center; max-width: 1500px; }
+h1 .hl { color: var(--accent); }
+.sub { font-size: 32px; color: var(--dim); margin-top: 24px; text-align: center; }
+.card {
+  background: var(--card); border: 1px solid var(--edge); border-radius: 14px;
+  padding: 32px 40px; box-shadow: 0 12px 40px rgba(0,0,0,.35);
+}
+pre, code { font-family: var(--mono); }
+pre { font-size: 28px; line-height: 1.5; }
+.k { color: #79b8ff; } .s { color: #9ecb88; } .p { color: #6a737d; } .m { color: #e0b352; }
+.term { background: #10141a; border-radius: 12px; border: 1px solid var(--edge); }
+.term .bar { display: flex; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--edge); }
+.term .bar i { width: 14px; height: 14px; border-radius: 50%; background: #3a4552; }
+.term pre { padding: 24px 30px; }
+.row { display: flex; gap: 48px; align-items: center; justify-content: center; }
+.arrow { font-size: 56px; color: var(--dim); }
+.chip {
+  display: inline-block; padding: 10px 26px; border-radius: 999px; font-size: 30px;
+  border: 1px solid var(--edge); background: var(--card); color: var(--text); margin: 8px;
+}

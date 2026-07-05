@@ -1,0 +1,7 @@
+# generated media is regenerable (make video) — except the two committed deliverables below
+out/*
+!out/video.mp4
+!out/video-nocap.mp4
+node_modules/
+.env
+.DS_Store

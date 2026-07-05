@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div class="kicker">The generative architecture</div>
+<h1>No hand-written code per rule — <span class="hl">the editor is generated</span></h1>
+<div class="row" style="margin-top:80px;gap:28px">
+  <div class="card pipe" style="text-align:center">
+    <div style="font-size:30px;font-weight:600">engine</div>
+    <div style="color:var(--dim);font-size:24px;margin-top:10px">exports its catalog<br>as <b style="color:var(--text)">metadata</b></div>
+    <pre style="font-size:21px;margin-top:16px;color:var(--dim)">22 rules · 28 operators
+4 functions · 121 examples</pre>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card pipe" style="text-align:center;border-color:var(--accent)">
+    <div style="font-size:30px;font-weight:600;color:var(--accent)">generators</div>
+    <pre style="font-size:24px;margin-top:14px">G_palette
+G_toolbox
+G_encode · G_decode</pre>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card pipe" style="text-align:center">
+    <div style="font-size:30px;font-weight:600">artifacts</div>
+    <pre style="font-size:24px;margin-top:14px;color:var(--dim)">block palette
+toolbox
+blocks ⇄ JSON codec</pre>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card pipe" style="text-align:center">
+    <div style="font-size:30px;font-weight:600">the editor</div>
+    <div style="color:var(--dim);font-size:24px;margin-top:10px">every block, menu, tooltip — projected from metadata</div>
+  </div>
+</div>
+<style>
+  .pipe { width: 336px; min-height: 300px; padding: 24px 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+</style>
+</body></html>
