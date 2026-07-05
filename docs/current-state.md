@@ -7,6 +7,10 @@
 
 ## Last action
 
+- **Strict pre-build gate added to `AGENTS.md` (2026-07-05).** "Before you build": no new feature
+  implemented until (1) requirements analyzed → PRD IDs mapped, ask if unclear; (2) specs authored
+  (OpenSpec delta, WHEN/THEN); (3) architecture stated (FSD slice, data/pipeline, NFR risk);
+  (4) `current-state.md` plan written. Code before gate = hard violation. Docs-only.
 - **Strict separation-of-duties rule added to `AGENTS.md` (2026-07-05).** Declares maker ≠ checker ≠
   test author: code review and unit/integration/e2e test authoring MUST run in a separate sub agent
   with clean context + its own skill/settings, never the maker's. Review → `checker`; verify →

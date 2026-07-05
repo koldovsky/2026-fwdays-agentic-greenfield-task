@@ -105,6 +105,24 @@ Gap to close: `.claude/agents/` ships **`checker`** + **`verifier`** but **no de
 `test-author` subagent/skill yet** — this rule mandates one. Until it exists, spawn a general sub
 agent with a clean context + explicit test-authoring brief; do not let the maker write the tests.
 
+## Before you build (STRICT — requirements → spec → architecture → plan, then code)
+
+**No new feature is implemented before this gate passes.** Code written ahead of it is rejected on
+review regardless of quality. Order is fixed:
+
+1. **Analyze requirements.** Map the ask to PRD IDs (`FR-*` / `NFR-*` / `TC-*` / `BC-*`). If intent,
+   scope, edge cases, or acceptance criteria are unclear or missing, **STOP and ask** — do not guess
+   or infer silently. Surface AI-leverage and integration opportunities here.
+2. **Prepare specs.** Author the OpenSpec change delta (`openspec-propose`) with `WHEN/THEN`
+   scenarios, each citing its PRD ID. Spec before code (see SDD below).
+3. **Prepare architecture.** State the FSD layer(s)/slice(s) touched, data model + pipeline impact,
+   and the import-rule/`shared/lib`-purity implications. Note NFR risks (perf, security, i18n).
+4. **Update `docs/current-state.md`.** Write the plan (numbered steps + requirement IDs) into the
+   handoff BEFORE the first line of code — this is the plan-first workflow the hooks enforce.
+
+Only after 1–4 does implementation start (`fsd-scaffold` → build). Skipping straight to code, or
+building past an unanswered requirement question, is a hard violation.
+
 ## Spec-Driven Development (SDD)
 
 This project is spec-driven (OpenSpec, `schema: spec-driven`). **Spec before code** for any new or changed capability.
