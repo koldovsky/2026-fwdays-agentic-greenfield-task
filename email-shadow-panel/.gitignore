@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build and generated output
+dist/
+dist-ssr/
+.output/
+.tanstack/
+.wrangler/
+.vercel/
+.vinxi/
+.nitro/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local overrides
+*.local
+
+# Future provider and feasibility state
+.provider-state/
+.probe-state/
+*.session.enc
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

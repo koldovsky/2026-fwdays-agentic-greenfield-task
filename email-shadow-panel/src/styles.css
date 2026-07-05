@@ -1,0 +1,475 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Email Shadow Panel — design system
+ *
+ * Modern dark SaaS × subtle DOS control panel.
+ * Near-black navy base, muted cyan/green highlights, soft amber accent.
+ * Retro cues (grid, mono type, scanlines) applied through utilities, never
+ * as hard-coded colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-hairline: var(--hairline);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-amber: var(--amber);
+  --color-danger: var(--destructive);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --shadow-panel:
+    0 1px 0 0 color-mix(in oklab, var(--signal) 8%, transparent) inset,
+    0 30px 60px -30px rgb(0 0 0 / 0.55), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --shadow-glow:
+    0 0 0 1px color-mix(in oklab, var(--signal) 30%, transparent),
+    0 0 40px -8px color-mix(in oklab, var(--signal) 55%, transparent);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  --background: oklch(0.17 0.03 245);
+  --foreground: oklch(0.94 0.01 220);
+
+  --surface: oklch(0.205 0.028 245);
+  --surface-raised: oklch(0.235 0.03 245);
+  --hairline: oklch(0.32 0.02 240);
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.82 0.14 175);
+  --primary-foreground: oklch(0.16 0.03 245);
+
+  --secondary: oklch(0.28 0.028 245);
+  --secondary-foreground: var(--foreground);
+
+  --muted: oklch(0.25 0.02 245);
+  --muted-foreground: oklch(0.66 0.02 235);
+
+  --accent: oklch(0.3 0.05 190);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.66 0.19 25);
+  --destructive-foreground: oklch(0.98 0.01 220);
+
+  --border: oklch(0.3 0.02 240);
+  --input: oklch(0.28 0.02 240);
+  --ring: oklch(0.7 0.12 175);
+
+  --signal: oklch(0.82 0.14 175);
+  --signal-soft: oklch(0.72 0.08 175);
+  --amber: oklch(0.82 0.14 75);
+
+  --chart-1: var(--signal);
+  --chart-2: var(--amber);
+  --chart-3: oklch(0.7 0.12 220);
+  --chart-4: oklch(0.6 0.14 300);
+  --chart-5: oklch(0.7 0.14 145);
+
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-image:
+      radial-gradient(
+        1200px 600px at 15% -10%,
+        color-mix(in oklab, var(--signal) 12%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at 100% 110%,
+        color-mix(in oklab, var(--amber) 8%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(180deg, var(--background), color-mix(in oklab, var(--background) 90%, black));
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--signal) 35%, transparent);
+    color: var(--foreground);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilities: retro cues, subtly applied                              */
+/* ------------------------------------------------------------------ */
+
+@utility font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+@utility panel {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--surface-raised) 100%, transparent),
+    color-mix(in oklab, var(--surface) 100%, transparent)
+  );
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  position: relative;
+}
+
+@utility panel-inset {
+  background: color-mix(in oklab, var(--background) 60%, black);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+@utility grid-lines {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--signal) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--signal) 6%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 32px 32px;
+}
+
+@utility scanlines {
+  position: relative;
+}
+@utility scanlines-overlay {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    color-mix(in oklab, white 3%, transparent) 3px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+  border-radius: inherit;
+}
+
+@utility corner-ticks {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: color-mix(in oklab, var(--signal) 55%, transparent);
+    pointer-events: none;
+  }
+  &::before {
+    top: 8px;
+    left: 8px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  &::after {
+    bottom: 8px;
+    right: 8px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+}
+
+@utility cursor-blink {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  background: var(--signal);
+  vertical-align: -0.15em;
+  margin-left: 0.15ch;
+  animation: esp-blink 1.05s steps(1) infinite;
+  box-shadow: 0 0 12px color-mix(in oklab, var(--signal) 60%, transparent);
+}
+
+@keyframes esp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes esp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@utility fade-up {
+  animation: esp-fade-up 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes esp-scan-sweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+@utility scan-sweep {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in oklab, var(--signal) 22%, transparent),
+      transparent
+    );
+    animation: esp-scan-sweep 1.2s ease-out;
+    pointer-events: none;
+  }
+}
+
+@keyframes esp-warp-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.06);
+    filter: blur(10px) brightness(1.4);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0) brightness(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}
+@utility warp-in {
+  animation: esp-warp-in 0.7s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+
+@keyframes esp-warp-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(8px) brightness(1.4);
+  }
+}
+@utility warp-out {
+  animation: esp-warp-out 0.6s cubic-bezier(0.6, 0, 0.8, 0.3) both;
+}
+
+@utility text-signal {
+  color: var(--signal);
+  text-shadow: 0 0 18px color-mix(in oklab, var(--signal) 40%, transparent);
+}
+@utility text-amber {
+  color: var(--amber);
+}
+
+/* ESP app polish helpers */
+.esp-panel-scanline {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    color-mix(in oklab, white 3%, transparent) 3px 4px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.28;
+}
+
+.esp-stage-glow {
+  background: radial-gradient(
+    ellipse at 60% 35%,
+    color-mix(in oklab, var(--signal) 12%, transparent),
+    transparent 65%
+  );
+}
+
+.esp-signal-line {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--signal) 60%, transparent),
+    transparent
+  );
+}
+
+.esp-selection-sweep {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--signal) 18%, transparent),
+    transparent
+  );
+  animation: esp-selection-sweep 620ms linear;
+}
+
+@keyframes esp-selection-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.esp-envelope-lines {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 49%,
+      color-mix(in oklab, var(--signal) 25%, transparent) 50%,
+      transparent 51%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 49%,
+      color-mix(in oklab, var(--signal) 20%, transparent) 50%,
+      transparent 51%
+    );
+  mask-image: linear-gradient(180deg, black 30%, transparent 75%);
+}
+
+.esp-envelope-flap {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--signal) 20%, var(--surface)),
+    var(--surface)
+  );
+  border-bottom: 1px solid var(--hairline);
+}
+
+.esp-transition-scrim {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, var(--background) 70%, black) 0%,
+    color-mix(in oklab, var(--background) 92%, black) 60%,
+    black 100%
+  );
+}
+
+.esp-transition-scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 3px,
+    color-mix(in oklab, var(--signal) 4%, transparent) 4px 5px
+  );
+  opacity: 0.35;
+}
+
+.esp-transition-sweep {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--signal) 20%, transparent),
+    transparent
+  );
+  animation: esp-transition-sweep 0.65s ease-out forwards;
+}
+
+@keyframes esp-transition-sweep {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(120vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .cursor-blink {
+    animation: none;
+  }
+}
