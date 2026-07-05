@@ -123,6 +123,28 @@ review regardless of quality. Order is fixed:
 Only after 1–4 does implementation start (`fsd-scaffold` → build). Skipping straight to code, or
 building past an unanswered requirement question, is a hard violation.
 
+## Model routing (analyze → grade complexity → pick model, optimize tokens)
+
+**After analyzing requirements, grade the task's complexity and route it to the cheapest model that
+can do it right.** Reasoning-heavy work earns a big model; mechanical work must not burn one. This
+runs as part of the pre-build gate (step 1) and on every subagent dispatch.
+
+1. **Grade complexity.** Trivial/mechanical (rename, typo, format, single-line, obvious lookup) →
+   **low**. Standard slice/bugfix/test with clear scope → **medium**. Multi-file design, honesty
+   pipeline, security-sensitive, ambiguous, or cross-cutting → **high**.
+2. **Route the model.** Pass `model` on the `Agent`/`Workflow` call to match:
+   - **low** → `haiku` (Haiku 4.5) — locate/edit/mechanical (`cavecrew-investigator`, `cavecrew-builder`).
+   - **medium** → `sonnet` (Sonnet 4.6) — most slices, tests, reviews.
+   - **high** → `opus` (Opus 4.8) — architecture, honesty-core, security, adversarial review.
+   - Default: omit `model` and inherit the session model. `fork` ignores `model` (inherits parent).
+3. **Optimize tokens regardless of tier.** Prefer read-only locator subagents
+   (`cavecrew-investigator`) over dumping files into main context; delegate broad searches to
+   `Explore`; let compressed subagent output keep main context lean. Don't run a search inline and
+   in a subagent both.
+
+Guideline, not dogma: when unsure, size up one tier rather than risk a wrong cheap answer — a
+re-do costs more tokens than the bigger model saved.
+
 ## Spec-Driven Development (SDD)
 
 This project is spec-driven (OpenSpec, `schema: spec-driven`). **Spec before code** for any new or changed capability.

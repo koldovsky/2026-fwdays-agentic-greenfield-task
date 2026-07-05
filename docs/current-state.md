@@ -7,6 +7,10 @@
 
 ## Last action
 
+- **Model-routing rule added to `AGENTS.md` (2026-07-05).** After analyzing requirements, grade
+  complexity (low/medium/high) and route to cheapest capable model: low→`haiku`, medium→`sonnet`,
+  high→`opus`; omit `model` to inherit session (fork ignores it). Plus token-lean dispatch
+  (locator/Explore subagents, no double search). Size up one tier when unsure. Docs-only.
 - **Strict pre-build gate added to `AGENTS.md` (2026-07-05).** "Before you build": no new feature
   implemented until (1) requirements analyzed → PRD IDs mapped, ask if unclear; (2) specs authored
   (OpenSpec delta, WHEN/THEN); (3) architecture stated (FSD slice, data/pipeline, NFR risk);
