@@ -30,6 +30,11 @@ declare module '@ds/components/core/Badge.jsx' {
   export const Badge: ComponentType<BadgeProps>
 }
 
+declare module '@ds/components/core/ListRow.jsx' {
+  import type { ListRowProps } from '@ds/components/core/ListRow'
+  export const ListRow: ComponentType<ListRowProps>
+}
+
 declare module '@ds/components/forms/Input.jsx' {
   import type { InputProps } from '@ds/components/forms/Input'
   export const Input: ComponentType<InputProps>

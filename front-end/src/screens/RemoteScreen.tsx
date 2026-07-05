@@ -7,6 +7,8 @@ import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx';
 import { useDeviceSession, type ClientSessionState } from '../data/useDeviceSession.ts';
 import { useSendKey, type UseSendKeyOptions } from '../data/useSendKey.ts';
 import { useVolume, type UseVolumeOptions } from '../data/useVolume.ts';
+import { useInputs, type UseInputsOptions } from '../data/useInputs.ts';
+import { InputsModal } from './InputsModal.tsx';
 import type { SamsungKeyCode } from '../data/keys.ts';
 import type { Device } from '../data/types.ts';
 
@@ -39,6 +41,8 @@ export interface RemoteScreenProps {
   sendKeyOptions?: UseSendKeyOptions;
   /** Injectable for tests. */
   useVolumeOptions?: UseVolumeOptions;
+  /** Injectable for tests. */
+  useInputsOptions?: UseInputsOptions;
 }
 
 // Smart View can't report the TV's actual volume level (see
@@ -47,12 +51,23 @@ export interface RemoteScreenProps {
 // value has no meaning beyond "somewhere in the middle."
 const SLIDER_START = 38;
 
-export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions }: RemoteScreenProps) {
+export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions, useInputsOptions }: RemoteScreenProps) {
   const [sliderPosition, setSliderPosition] = useState(SLIDER_START);
   const lastCommittedRef = useRef(SLIDER_START);
+  const [isInputsModalOpen, setInputsModalOpen] = useState(false);
   const { state, connect, disconnect } = useDeviceSession(device.udn);
   const { sendKey } = useSendKey(device.udn, sendKeyOptions);
   const { muted, delta: sendDelta, toggleMute } = useVolume(device.udn, useVolumeOptions);
+  const { inputs, setInput } = useInputs(device.udn, useInputsOptions);
+
+  // Auto-close the inputs modal if the session state leaves Connected —
+  // the rows would be non-actionable anyway (disabled), so the friendlier
+  // behaviour is to close and let the user reopen after reconnect.
+  useEffect(() => {
+    if (isInputsModalOpen && state !== 'Connected') {
+      setInputsModalOpen(false);
+    }
+  }, [isInputsModalOpen, state]);
 
   useEffect(() => {
     void connect().catch(() => {
@@ -152,6 +167,12 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions 
             disabled={!isConnected}
             onClick={() => send('KEY_MENU')}
           />
+          <IconButton
+            icon="input"
+            aria-label="Inputs"
+            disabled={!isConnected}
+            onClick={() => setInputsModalOpen(true)}
+          />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -185,6 +206,14 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions 
           />
         </div>
       </div>
+
+      <InputsModal
+        open={isInputsModalOpen}
+        onClose={() => setInputsModalOpen(false)}
+        state={state}
+        inputs={inputs}
+        setInput={setInput}
+      />
     </div>
   );
 }

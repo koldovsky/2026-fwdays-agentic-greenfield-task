@@ -3,6 +3,7 @@ import type { WebSocket } from 'ws';
 import type { Device, DeviceRegistry, RegistryEvent } from '../discovery/registry.js';
 import type { SessionManager, SessionSnapshot } from '../tv/manager.js';
 import type { VolumeModule, VolumeSnapshot, VolumeState } from '../tv/volume.js';
+import type { InputsModule, InputSwitchEvent, SamsungInputKey } from '../tv/inputs.js';
 import { toClientSessionState, type ClientSessionState } from '../tv/types.js';
 
 export type DevicesTopicEvent =
@@ -12,7 +13,8 @@ export type DevicesTopicEvent =
   | 'removed'
   | 'offline'
   | 'session'
-  | 'volume';
+  | 'volume'
+  | 'input';
 
 interface SnapshotDevice extends Device {
   session?: ClientSessionState;
@@ -28,6 +30,7 @@ interface DevicesMessage {
   state?: ClientSessionState;
   level?: VolumeState['level'];
   muted?: VolumeState['muted'];
+  key?: SamsungInputKey;
 }
 
 export interface DevicesBroker {
@@ -47,6 +50,7 @@ export function createDevicesBroker(
   logger: FastifyInstance['log'],
   sessionManager?: SessionManager,
   volumeModule?: VolumeModule,
+  inputsModule?: InputsModule,
 ): DevicesBroker {
   const clients = new Set<WebSocket>();
 
@@ -90,6 +94,14 @@ export function createDevicesBroker(
       muted: snapshot.state.muted,
     });
   };
+  const onInputSwitched = (event: InputSwitchEvent): void => {
+    broadcast({
+      topic: 'devices',
+      event: 'input',
+      udn: event.udn,
+      key: event.key,
+    });
+  };
 
   const registryListeners: Array<[RegistryEvent, (device: Device) => void]> = [
     ['added', onAdded],
@@ -105,6 +117,9 @@ export function createDevicesBroker(
   }
   if (volumeModule) {
     volumeModule.on('changed', onVolume);
+  }
+  if (inputsModule) {
+    inputsModule.on('switched', onInputSwitched);
   }
 
   function buildSnapshot(): SnapshotDevice[] {
@@ -153,6 +168,7 @@ export function createDevicesBroker(
       }
       if (sessionManager) sessionManager.off('state', onSession);
       if (volumeModule) volumeModule.off('changed', onVolume);
+      if (inputsModule) inputsModule.off('switched', onInputSwitched);
       clients.clear();
     },
   };

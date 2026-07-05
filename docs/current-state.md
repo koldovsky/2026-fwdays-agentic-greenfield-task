@@ -4,6 +4,32 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-05T08:25:17Z
+
+**What was done — implemented `input-management` (C8) via the `/next-change` Loop Engineering cycle, with the same descoping artifact rewrite pattern C7 established**
+- Third and last Phase-3 command capability. Unblocks C9 error-surfacing.
+- **Same shape of spec drift as C7, discovered pre-implementation**: the change was written pre-Smart-View-pivot and required Samsung's hotel-TV IP Control `directSourceControl` for listing available inputs, reading the active input, and setting a specific input. Smart View WebSocket exposes **none** of that — it's remote-key-only. What Smart View WS DOES support: individual input-selection keys (`KEY_HDMI1`..`KEY_HDMI4`, `KEY_TV`, `KEY_SOURCE`, `KEY_AV1`, `KEY_COMPONENT1`, `KEY_HDMI`) sent as `ms.remote.control` frames.
+- **Descope** (confirmed by user before touching code): ship a curated static catalogue of common Samsung input keys, `POST /input { key }` fires that Smart View frame, drop `GET /inputs` cache (nothing to cache), drop `POST /inputs/refresh` (nothing to refresh), drop `activeId` (unknowable), drop initial-Connected WS push (no snapshot to send). Modal shows the picker; no active checkmark. Rewrote `design.md` (all Decisions), `spec.md` (all requirements + scenarios), and `tasks.md` (all 17 items → 19 with the two DS extensions) up front.
+- Back-end:
+  - `back-end/src/tv/keys.ts`: extended the shared `SamsungKeyCode` union with `KEY_SOURCE` / `KEY_HDMI` / `KEY_HDMI1..4` / `KEY_TV` / `KEY_AV1` / `KEY_COMPONENT1` so `keyControlParams` handles them. C6's `SAMSUNG_KEY_CODES` and C7's `VOLUME_KEY_CODES` arrays unchanged — each capability's route only accepts its own subset per the boundary pattern established by C6/C7.
+  - `back-end/src/tv/inputs.ts` (new): `SamsungInputKey` (narrowed subset of `SamsungKeyCode`), `INPUT_CATALOGUE` static constant, `createInputsModule(sessionManager)` returning `{ list, switch, on/off }` with a `switched` event emitter. `switch(udn, key)` guards on `Connected` (throws 409 `SessionNotConnected` otherwise) and enqueues one `ms.remote.control` frame through the C5 per-TV FIFO, then emits `switched`.
+  - `back-end/src/routes/inputs.ts` (new): `GET /inputs` returns `{ inputs: INPUT_CATALOGUE }` always (no session required — the catalogue is a constant). `POST /input { key }` uses a Fastify enum schema against `INPUT_KEYS`; unknown keys → `code: "validation"` via `errorHandler`'s `error.validation` branch (same technique C7 used after review). This also correctly rejects valid Samsung keys from OTHER capabilities (e.g. `KEY_UP`, `KEY_VOLUP`) since they aren't in the input enum — capability boundaries preserved.
+  - `back-end/src/ws/broker.ts`: extended `DevicesTopicEvent` with `input`, `DevicesMessage` with `key`. Optional `inputsModule` parameter; subscribes to `switched` and fans out `{ topic:"devices", event:"input", udn, key }`.
+  - `back-end/src/app.ts`: instantiates `createInputsModule(sessionManager)` alongside the volume module, passes it to `createDevicesBroker`, registers `registerInputRoutes` under `/api`, cleans up on `onClose`.
+- Back-end tests: 3 catalogue unit tests + 5 route integration tests (GET returns catalogue and has no `activeId`, POST while Disconnected → 409, POST after connect sends the KEY_HDMI1 frame and pushes the WS `input` event, unknown key → 400 validation, cross-capability key like `KEY_UP` → 400 validation). **88 → 98 back-end tests, all passing.**
+- Front-end:
+  - `docs/orbit-tv-remote-design-system/components/core/ListRow.{jsx,d.ts}` (new): neomorphic row primitive with `{ label, onClick, disabled, trailingIcon, leadingIcon }` props. Extended per `frontend-design-check` — no inline row styles in the app. Also added a shim entry to `front-end/src/ds.d.ts` because the DS's own `.d.ts` files only export props interfaces, not the component itself; the shim declares the ComponentType so TypeScript can resolve `import { ListRow } from '@ds/components/core/ListRow.jsx'` (documented pattern from prior DS extensions in this repo).
+  - `front-end/src/data/inputs.ts` (new): mirror `SamsungInputKey` + `InputCatalogueEntry` types for the front-end.
+  - `front-end/src/data/useInputs.ts` (new): `useInputs(udn)` returning `{ inputs, setInput }`. Initial `GET /api/devices/:udn/inputs` on mount (catches a back-end/front-end catalogue drift). `setInput(key)` POSTs and re-throws `ApiError` after console-logging. No `activeId`, no `refresh` — nothing to track or fetch.
+  - `front-end/src/screens/InputsModal.tsx` (new): composed from DS `Modal` + a vertical stack of `ListRow` primitives. Tapping a row calls `setInput(row.id)` then closes.
+  - `front-end/src/screens/RemoteScreen.tsx`: added an `IconButton icon="input"` next to the Menu button on the transport row. Local `isInputsModalOpen` boolean; auto-closes via `useEffect` when session state leaves `Connected`.
+- Front-end tests: `InputsModal.test.tsx` (3 tests — renders rows, tapping fires setInput+onClose, disabled while Connecting fires nothing) + one new integration test in `RemoteScreen.test.tsx` covering the modal auto-close on state change. **14 → 18 front-end tests, all passing.**
+- Verification: `npm run back:build` ✓, `npm run front:build` ✓, `npm run back:test` 98/98 ✓, `npm run front:test` 18/18 ✓. Hex-color grep guard on `front-end/src/**/*.{ts,tsx,css}` returns nothing.
+- **Not done / follow-up**: task 5.2 (real-hardware repro pressing each input key) and 5.3 (dark-mode eyeball) not executed — no LAN/TV reachable in this environment. Stub-driven integration suite covers the wire. The picker shows more input rows than a given TV physically has (e.g. `KEY_HDMI4` on a TV with only 2 HDMI ports) — documented trade-off per design.md D2 Risks; the TV silently ignores unsupported keys, so the failure mode is a no-op, not an error. Adding real UPnP `AVTransport` / SmartThings integration for actual listing + active-input display remains a separate future capability.
+- **Phase 3 is now complete.** C6 (remote-control-keys), C7 (volume-control), and C8 (input-management) all shipped. Phase 4 has only C9 (error-surfacing) left, which depends on C6/C7/C8 for real content to surface.
+
+---
+
 ## 2026-07-05T06:27:55Z
 
 **What was done — implemented `volume-control` (C7) via the `/next-change` Loop Engineering cycle, with a scope-shrinking artifact rewrite up front**

@@ -22,7 +22,16 @@ export type SamsungKeyCode =
   | 'KEY_POWER'
   | 'KEY_VOLUP'
   | 'KEY_VOLDOWN'
-  | 'KEY_MUTE';
+  | 'KEY_MUTE'
+  | 'KEY_SOURCE'
+  | 'KEY_HDMI'
+  | 'KEY_HDMI1'
+  | 'KEY_HDMI2'
+  | 'KEY_HDMI3'
+  | 'KEY_HDMI4'
+  | 'KEY_TV'
+  | 'KEY_AV1'
+  | 'KEY_COMPONENT1';
 
 /**
  * Keys exposed by the C6 `POST /api/devices/:udn/key` route. Volume keys

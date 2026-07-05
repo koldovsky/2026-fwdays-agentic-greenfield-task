@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RemoteScreen } from './RemoteScreen.tsx';
 import type { Device } from '../data/types.ts';
+import type { InputCatalogueEntry } from '../data/inputs.ts';
 import type { ClientSessionState } from '../data/useDeviceSession.ts';
 
 vi.mock('../data/useDeviceSession.ts', () => {
@@ -23,11 +24,35 @@ vi.mock('../data/useVolume.ts', () => {
   return { useVolume: stub };
 });
 
+vi.mock('../data/useInputs.ts', () => {
+  const stub = vi.fn(() => ({
+    inputs: mockInputs,
+    setInput: mockSetInput,
+  }));
+  return { useInputs: stub };
+});
+
 // Mutable ambient state the mocks read. Tests set these before render.
 let mockState: ClientSessionState = 'Disconnected';
 let mockMuted = false;
 let mockVolumeDelta = vi.fn(async () => undefined);
 let mockVolumeToggle = vi.fn(async () => undefined);
+let mockInputs: readonly InputCatalogueEntry[] = [
+  { id: 'KEY_SOURCE', label: 'Source picker' },
+  { id: 'KEY_HDMI1', label: 'HDMI 1' },
+];
+let mockSetInput = vi.fn(async () => undefined);
+
+function resetMocks() {
+  mockMuted = false;
+  mockVolumeDelta = vi.fn(async () => undefined);
+  mockVolumeToggle = vi.fn(async () => undefined);
+  mockInputs = [
+    { id: 'KEY_SOURCE', label: 'Source picker' },
+    { id: 'KEY_HDMI1', label: 'HDMI 1' },
+  ];
+  mockSetInput = vi.fn(async () => undefined);
+}
 
 function device(overrides: Partial<Device> = {}): Device {
   return {
@@ -142,12 +167,35 @@ describe('RemoteScreen', () => {
 
   it('clicking mute while Connected calls toggleMute', () => {
     mockState = 'Connected';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
+    resetMocks();
     const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
     const mute = container.querySelector<HTMLButtonElement>('button[aria-label="Mute"]');
     fireEvent.click(mute!);
     expect(mockVolumeToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('opening the inputs modal then flipping state to Connecting auto-closes it', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container, rerender } = render(
+      <RemoteScreen device={device()} onBack={vi.fn()} />,
+    );
+    // Modal is closed initially; find and click the Inputs button.
+    const inputsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Inputs"]',
+    );
+    expect(inputsButton, 'Inputs button not found').not.toBeNull();
+    fireEvent.click(inputsButton!);
+
+    // After opening, the modal renders the input labels somewhere in the tree.
+    expect(container.textContent ?? '').toContain('HDMI 1');
+
+    // Flip the ambient state and force a re-render.
+    mockState = 'Connecting';
+    rerender(<RemoteScreen device={device()} onBack={vi.fn()} />);
+
+    // The auto-close effect should have unmounted the modal — the input
+    // labels should no longer be in the DOM.
+    expect(container.textContent ?? '').not.toContain('HDMI 1');
   });
 });

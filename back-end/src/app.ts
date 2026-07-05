@@ -12,6 +12,7 @@ import { registerDevicesRoute } from './routes/devices.js';
 import { registerSessionRoutes } from './routes/sessions.js';
 import { registerKeyRoute } from './routes/keys.js';
 import { registerVolumeRoutes } from './routes/volume.js';
+import { registerInputRoutes } from './routes/inputs.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
 import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
 import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
@@ -24,6 +25,7 @@ import { createDevicesBroker, type DevicesBroker } from './ws/broker.js';
 import { createSessionManager, type SessionManager } from './tv/manager.js';
 import { createTokenStore, type TokenStore } from './tv/token-store.js';
 import { createVolumeModule, type VolumeModule } from './tv/volume.js';
+import { createInputsModule, type InputsModule } from './tv/inputs.js';
 import type { SessionOptions } from './tv/session.js';
 
 export interface MdnsAppOptions {
@@ -84,6 +86,7 @@ declare module 'fastify' {
       handle: DiscoveryHandle | undefined;
       sessions: SessionManager | undefined;
       volume: VolumeModule | undefined;
+      inputs: InputsModule | undefined;
     };
   }
 }
@@ -155,6 +158,7 @@ export async function createApp(
     handle: undefined,
     sessions: undefined,
     volume: undefined,
+    inputs: undefined,
   };
   app.decorate('discovery', discoveryRef);
 
@@ -175,9 +179,11 @@ export async function createApp(
         : {}),
     });
     discoveryRef.volume = createVolumeModule(discoveryRef.sessions);
+    discoveryRef.inputs = createInputsModule(discoveryRef.sessions);
     app.addHook('onClose', async () => {
       discoveryRef.volume?.close();
       discoveryRef.volume = undefined;
+      discoveryRef.inputs = undefined;
       await discoveryRef.sessions?.close();
       discoveryRef.sessions = undefined;
     });
@@ -220,6 +226,7 @@ export async function createApp(
       app.log,
       discoveryRef.sessions,
       discoveryRef.volume,
+      discoveryRef.inputs,
     );
   }
   app.get('/ws', { websocket: true }, (socket) => {
@@ -237,6 +244,9 @@ export async function createApp(
       await registerKeyRoute(api);
       if (discoveryRef.volume) {
         await registerVolumeRoutes(discoveryRef.volume)(api);
+      }
+      if (discoveryRef.inputs) {
+        await registerInputRoutes(discoveryRef.inputs)(api);
       }
     },
     { prefix: '/api' },
