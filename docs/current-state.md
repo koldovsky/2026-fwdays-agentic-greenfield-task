@@ -115,9 +115,18 @@
 
 ## Working on
 
-**NEW 6-task batch — spec phase.** Per-task plan (root causes grounded in `wn9s3sx77`). Implement
-order: T6 → T1 → T3 → T2 → T4 → T5. Each task = spec delta → maker → checker subagent → verifier →
-commit → update this doc. Task 5 runs on Fable 5.
+**NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
+Implement order: **T6 (in progress) → T1 → T3 → T2 → T4 → T5**. Each task = maker → test-author →
+checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
+
+Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends
+on `add-tailoring-history` (archive that first or fold in); `harden-account-export-ux` MODIFIES the
+account spec from `fix-gdpr-account-endpoints` (archive that first). `rework-subscription-plans`,
+`gate-premium-upload-zone`, `fix-checklist-pill-i18n` are archive-independent.
+
+T2 proposed plan copy authored (Pro/Ultra/Job-Hunt Pass, ua+en) — enemy-centric, but the draft has
+em-dashes that MUST be swapped for colons/commas before wiring (BC-BRAND-01). UA copy still needs
+native marketing review.
 
 - **T6 [bug] landing checklist pill i18n** (change `fix-checklist-pill-i18n`; caps: shared-ui/marketing-landing; NFR-I18N-01, FR-SALES-02).
   Root cause: `shared/ui/status-pill/ui/StatusPill.tsx:32` hard-imports `ua` dict, no `locale` prop.
