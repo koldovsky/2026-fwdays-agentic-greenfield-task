@@ -54,10 +54,16 @@ export function NoteCard({
           <span style={{ fontSize: 15, fontWeight: "var(--fw-semibold)", color: "var(--color-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
         </div>
         {snippet && (
-          <p style={{
-            margin: 0, fontSize: 13, color: "var(--color-text-secondary)", lineHeight: "var(--lh-normal)",
-            display: "-webkit-box", WebkitLineClamp: isList ? 1 : 3, WebkitBoxOrient: "vertical", overflow: "hidden",
-          }}>{snippet}</p>
+          <div
+            className="note-card-snippet"
+            style={{
+              margin: 0, fontSize: 13, color: "var(--color-text-secondary)", lineHeight: "var(--lh-normal)",
+              display: "-webkit-box", WebkitLineClamp: isList ? 1 : 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+            }}
+            // `snippet` is pre-sanitized HTML (rendered from Markdown via
+            // lib/markdown/snippet.ts) — never raw user content.
+            dangerouslySetInnerHTML={{ __html: snippet }}
+          />
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: isList ? 4 : 12, flexWrap: "wrap" }}>
           {date && <span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{date}</span>}

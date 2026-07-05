@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -27,12 +28,20 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
+  // Starts at "light" on both server and client so the first client render matches
+  // the server-rendered HTML exactly — reading localStorage here (during render)
+  // would make the client's first paint diverge from SSR whenever a theme was
+  // already stored, causing a hydration mismatch in anything that renders
+  // differently per theme (e.g. ThemeToggle's icon/label). The stored theme is
+  // applied post-mount instead, matching the inline bootstrap script in
+  // app/layout.tsx that already avoids a flash of the wrong theme colors.
+  const [theme, setThemeState] = useState<Theme>("light");
+
+  useEffect(() => {
     const stored = readTheme();
+    setThemeState(stored);
     applyTheme(stored);
-    return stored;
-  });
+  }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

@@ -90,6 +90,14 @@ re-apply:
    `IconButton`/`Button`'s pattern. Found via a real accessibility audit
    (`add-quality-hardening`, phase 8) — a genuine WCAG 2.1.1 (Keyboard) failure, not a
    style preference.
+5. `NoteCard`: `snippet` now renders via `dangerouslySetInnerHTML` instead of as plain
+   React text, so note previews on cards (notes list, folders, tags, search, trash) show
+   rendered Markdown (headings, lists, checklists, code) instead of literal Markdown syntax
+   like `# Heading`. Callers must pass pre-sanitized HTML — see `lib/markdown/snippet.ts`,
+   which truncates the raw Markdown then runs it through the same `renderMarkdown` +
+   `sanitizeServerHtml` pipeline as the note editor's Preview. Companion CSS
+   (`.note-card-snippet` in `app/globals.css`) keeps headings/lists/code at the card's
+   compact body size instead of full heading scale.
 
 ## Component inventory (26)
 

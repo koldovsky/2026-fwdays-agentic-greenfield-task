@@ -1,16 +1,12 @@
 import type { Note } from "@prisma/client";
 import { NoteCard } from "@notely-design/components";
 import { NoteEmptyState } from "@/app/components/notes/note-empty-state";
+import { renderSnippetHtml } from "@/lib/markdown/snippet";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",
   day: "numeric",
 });
-
-function snippetOf(content: string) {
-  const trimmed = content.trim();
-  return trimmed.length > 160 ? `${trimmed.slice(0, 160)}…` : trimmed;
-}
 
 export function TrashedNoteList({ notes }: { notes: Note[] }) {
   if (notes.length === 0) {
@@ -29,7 +25,7 @@ export function TrashedNoteList({ notes }: { notes: Note[] }) {
         <NoteCard
           key={note.id}
           title={note.title || "Untitled"}
-          snippet={snippetOf(note.content)}
+          snippet={renderSnippetHtml(note.content)}
           date={note.deletedAt ? dateFormatter.format(note.deletedAt) : undefined}
           style={{ cursor: "default" }}
         />

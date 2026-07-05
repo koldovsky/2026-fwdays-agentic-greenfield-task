@@ -97,3 +97,25 @@
 .note-preview > :last-child {
   margin-bottom: 0;
 }
+
+/* NoteCard's snippet (app/components/notes/note-list.tsx, trashed-note-list.tsx) renders
+   the same sanitized Markdown HTML as note-preview, but line-clamped into a compact card —
+   so headings/lists/code inherit the card's small body size instead of full heading scale. */
+.note-card-snippet * {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+}
+.note-card-snippet h1,
+.note-card-snippet h2 {
+  font-weight: var(--fw-semibold);
+}
+.note-card-snippet ul,
+.note-card-snippet ol {
+  padding-left: var(--space-16);
+}
+.note-card-snippet code,
+.note-card-snippet pre {
+  font-family: var(--font-mono);
+}

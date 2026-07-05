@@ -6,6 +6,7 @@ export type NoteTag = string | { label: string; color?: string };
  */
 export interface NoteCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title?: string;
+  /** Pre-sanitized HTML (e.g. rendered Markdown) — rendered via dangerouslySetInnerHTML, never raw/untrusted content. */
   snippet?: string;
   date?: string;
   folder?: string;

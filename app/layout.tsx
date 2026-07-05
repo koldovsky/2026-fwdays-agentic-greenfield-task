@@ -34,7 +34,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col" suppressHydrationWarning>
+      <body className="flex min-h-full flex-col">
         {/*<script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />*/}
         <ThemeProvider>{children}</ThemeProvider>
       </body>
