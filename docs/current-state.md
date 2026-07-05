@@ -7,6 +7,17 @@
 
 ## Last action
 
+- **T10 whole-app UA/EN language toggle DONE (2026-07-05, ultracode). ALL 10 TASKS COMPLETE.**
+  Change `add-language-toggle` (`d9e0f0b` fonts, `215cd31` locale infra, `463aa9d` review fixes).
+  User-approved Cyrillic font swap **Unbounded + Golos Text** (fixes broken Cyrillic across the app,
+  weights pinned for payload). Locale cookie (Ukrainian-first default) + `parseLocale` (pure) +
+  `LanguageSwitch` (UA|EN, a11y, sets cookie + `router.refresh()`); root layout sets `<html lang>`
+  (`uk`/`en`); every page threads the resolved locale to its view + top bar; landing now renders the
+  cookie locale (defaults ua). Gate green: **lint + build + 104 files / 646 tests.** 4-lens adversarial
+  review (maker≠checker) → all findings fixed. **Two documented perf tradeoffs need `perf-audit`
+  before prod:** heavier Cyrillic fonts + the landing is now dynamic (`ƒ`, was static) because the
+  cookie read at the root opts routes into per-request rendering (inherent to cookie i18n without URL
+  prefixes). **UA landing copy is now visible by default and still awaits native marketing review.**
 - **Landing i18n extraction DONE (T9 remaining piece), spec-first + reviewed green (2026-07-05, ultracode).**
   Change `extract-landing-i18n` (`86bdf7c` spec, `fc0446d` code, `3e275de` review fix). Moved all
   ~130 landing strings (content.ts + hardcoded section heads, inline labels, final CTA, footer credit,
@@ -62,35 +73,29 @@
 | 7 | Landing animations | **DONE** (`fe65f2f` + review fixes `f638efe`); Lighthouse + archive pending | P2 |
 | 8 | Landing → new flow (cover letter / info tag / attach / history) | **DONE** (`update-landing-flow` + attach `1963fe0`) | P1 |
 | 9 | Landing marketing/copy (enemy-centric) | **DONE** — copy + full i18n extraction (`extract-landing-i18n`); UA copy pending native review | P2 |
-| 10 | Whole-app UA/EN toggle | **TODO** — landing now i18n-ready (renders en); **Cyrillic fonts = the remaining blocker** | P2 |
+| 10 | Whole-app UA/EN toggle | **DONE** (`add-language-toggle`: Unbounded+Golos fonts, cookie locale, LanguageSwitch); perf-audit + archive pending | P2 |
 
 ## Working on
 
-- **T10 whole-app UA/EN toggle — IN PROGRESS 2026-07-05 (ultracode).** User chose the Cyrillic
-  font swap: **Unbounded (display) + Golos Text (body)**, replacing Bricolage + Hanken app-wide, both
-  with cyrillic subsets. Spec-first change `add-language-toggle`. Plan below.
+- Nothing in flight. Tree clean. **All 10 batch tasks are DONE.** What remains is
+  environment-blocked (see below), not implementation.
 
-### Plan — T10 add-language-toggle
+## Remaining (all blocked on environment/tooling or a human review, no code)
 
-Note: the app views (account/history/auth/checkout) already default `locale="ua"`, so they render
-Ukrainian today but in a latin-only fallback font (broken Cyrillic). The font swap fixes that
-immediately; the landing is the only surface pinned to `"en"`.
+1. **`perf-audit` (needs Chrome, unavailable here):** run Lighthouse on the landing for the T10
+   regressions (heavier Cyrillic fonts + landing now dynamic `ƒ`) and T7 animations vs NFR-PERF-04.
+   If LCP regresses, options: trim font weights/subsets further, or keep the root layout static and
+   set `<html lang>` via middleware/client-effect so `/` re-prerenders.
+2. **UA marketing-copy native review:** the Ukrainian landing copy (authored in `extract-landing-i18n`,
+   now visible by default) needs a native marketing-voice pass. It is faithful but not team-reviewed.
+3. **openspec archives (CLI not installed here):** archive in dependency order — `update-landing-flow`
+   → `surface-premium-attach-landing`; plus `rework-app-header`, `add-tailoring-history`,
+   `add-premium-pdf-attach`, `landing-animations`, `extract-landing-i18n`, `add-language-toggle`.
+4. **Ops (task 3):** set prod env (`CV_ENCRYPTION_KEY`, `DATABASE_URL`, `AUTH_SECRET`,
+   `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`), run `yarn db:migrate`, redeploy.
+5. **Live honesty-eval (needs `ANTHROPIC_API_KEY`):** tasks 1 + 5 generation-prompt changes.
 
-1. **Spec-first:** `add-language-toggle` change (NFR-I18N-01, BC-BRAND-01, NFR-PERF-04). Modifies
-   design-system (font tokens) + app-shell (locale resolution + switch).
-2. **Phase 1 — fonts:** `layout.tsx` swap to `Unbounded` + `Golos_Text`, `subsets:["latin","cyrillic"]`;
-   repoint `globals.css` `@theme` `--font-display`/`--font-body`/`--font-sans`; DESIGN.md + tokens sync.
-   PERF: font payload grows (Cyrillic + a display face) against the ~20ms LCP margin, unmeasurable in
-   sandbox (no Chrome) — flag for perf-audit before prod.
-3. **Phase 2 — locale infra:** a `locale` cookie helper (server read + a client setter), resolve
-   locale in the root layout for `<html lang>` (dynamic), and a `LanguageSwitch` in the top bar that
-   sets the cookie + refreshes. Default stays Ukrainian-first (t() default ua).
-4. **Phase 3 — flip call sites:** resolve the cookie locale in each page and pass to its view; flip
-   the landing off the pinned `"en"` to the resolved locale. UA copy still pending native review.
-5. **Verify:** lint + build + test (LanguageSwitch + cookie-helper tests); adversarial review → fix →
-   commit per phase. perf-audit deferred (no Chrome).
-
-## Next steps (ranked: fastest x most critical)
+## Superseded plan / next steps (kept for context)
 
 1. **Ops (task 3, no code):** once prod DB provisioned, set `CV_ENCRYPTION_KEY` + `DATABASE_URL`
    (+ `AUTH_SECRET`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`), run `yarn db:migrate`, redeploy.
@@ -133,5 +138,5 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
 - Open changes not archived: `rework-app-header` (4), `add-tailoring-history` (6),
   `add-premium-pdf-attach` (5), `landing-animations` (7, done + reviewed), `update-landing-flow` (8/9),
   `surface-premium-attach-landing` (8, done + reviewed; archive AFTER update-landing-flow),
-  `extract-landing-i18n` (9, done + reviewed SHIP), `add-payments-emulator`, `add-stripe-payments`,
-  `harden-sentry-privacy`, `add-legal-pages`.
+  `extract-landing-i18n` (9, done + reviewed SHIP), `add-language-toggle` (10, done + reviewed),
+  `add-payments-emulator`, `add-stripe-payments`, `harden-sentry-privacy`, `add-legal-pages`.
