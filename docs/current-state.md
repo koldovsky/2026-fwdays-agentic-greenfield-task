@@ -7,6 +7,11 @@
 
 ## Last action
 
+- **Strict separation-of-duties rule added to `AGENTS.md` (2026-07-05).** Declares maker ≠ checker ≠
+  test author: code review and unit/integration/e2e test authoring MUST run in a separate sub agent
+  with clean context + its own skill/settings, never the maker's. Review → `checker`; verify →
+  `verifier`; tests → dedicated **test-author** subagent (does NOT exist yet — flagged as a gap to
+  build; until then use a clean-context general sub agent with an explicit test brief). Docs-only.
 - **T10 whole-app UA/EN language toggle DONE (2026-07-05, ultracode). ALL 10 TASKS COMPLETE.**
   Change `add-language-toggle` (`d9e0f0b` fonts, `215cd31` locale infra, `463aa9d` review fixes).
   User-approved Cyrillic font swap **Unbounded + Golos Text** (fixes broken Cyrillic across the app,

@@ -78,6 +78,33 @@ Subagents (Claude Code, `.claude/agents/`): **checker** (fresh-context maker≠c
 
 Guardrails wired into tooling: the FSD downward-only import rule, slice public-API rule, and `shared/lib` framework-free rule (TC-PURE-01) are **enforced by ESLint** (`eslint.config.mjs`) — `yarn lint` fails on violations.
 
+## Separation of duties (STRICT — maker ≠ checker ≠ test author)
+
+**The agent that wrote the code MUST NOT review it or write its tests in the same context.** Code
+review and test authoring (unit / integration / e2e) are **independent responsibilities** that run
+in a **separate sub agent with a clean context** and its own review/test skill and settings. The
+maker's context is contaminated by its own intent; a clean context catches what the maker cannot
+see. This is non-negotiable — no self-review, no self-authored tests passed off as independent
+verification.
+
+Rules:
+- **Code review → separate sub agent, clean context.** Never review your own diff inline. Dispatch
+  the fresh-context **`checker`** subagent (or the **`checker-review`** skill run in a *separate*
+  agent, never the maker's). Review is against PRD IDs + DESIGN + FSD rules + NFRs. Read-only.
+- **Test authoring → separate sub agent, clean context.** Unit, integration, and e2e tests are
+  written by a dedicated **test-author** subagent with its own skill/settings, not by the maker.
+  The maker states *what* must be covered (FR/NFR IDs, edge cases); the test author independently
+  decides *how* and writes them against the spec, not the implementation. (Honesty-core evals use
+  the **`honesty-eval`** skill, likewise in a separate context.)
+- **Verification → `verifier` subagent.** Build/lint/test + FR/NFR evidence gate runs fresh-context
+  (`verifier`), never in the maker's context.
+- **One role per context.** A single agent context is maker *or* checker *or* test author — never
+  two. If a context already made the change, it is disqualified from reviewing/testing it.
+
+Gap to close: `.claude/agents/` ships **`checker`** + **`verifier`** but **no dedicated
+`test-author` subagent/skill yet** — this rule mandates one. Until it exists, spawn a general sub
+agent with a clean context + explicit test-authoring brief; do not let the maker write the tests.
+
 ## Spec-Driven Development (SDD)
 
 This project is spec-driven (OpenSpec, `schema: spec-driven`). **Spec before code** for any new or changed capability.
