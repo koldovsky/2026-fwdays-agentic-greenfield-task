@@ -16,6 +16,20 @@ const NOTE_COLUMNS = Prisma.sql`
   "Note"."createdAt", "Note"."updatedAt"
 `;
 
+// Escapes ILIKE wildcards so a query like "50%" or "a_b" is matched literally.
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+// End-of-day (UTC) boundary for an inclusive "to" date filter. Date-only strings
+// (e.g. "2026-07-05") parse to UTC midnight, so without this a "to" of today would
+// exclude nearly the entire day instead of including it.
+function endOfDayUtc(date: Date) {
+  const end = new Date(date);
+  end.setUTCHours(23, 59, 59, 999);
+  return end;
+}
+
 export function searchNotes(userId: string, filters: SearchFilters) {
   const { folderId, tagIds, from, to } = filters;
   const query = filters.query?.trim();
@@ -43,17 +57,24 @@ export function searchNotes(userId: string, filters: SearchFilters) {
   }
 
   if (to) {
-    conditions.push(Prisma.sql`"Note"."updatedAt" <= ${to}`);
+    conditions.push(Prisma.sql`"Note"."updatedAt" <= ${endOfDayUtc(to)}`);
   }
 
   if (query) {
+    const likePattern = `%${escapeLikePattern(query)}%`;
     conditions.push(
-      Prisma.sql`"Note"."searchVector" @@ websearch_to_tsquery('english', ${query})`
+      Prisma.sql`(
+        "Note"."searchVector" @@ websearch_to_tsquery('english', ${query})
+        OR "Note"."title" ILIKE ${likePattern} ESCAPE '\\'
+      )`
     );
   }
 
   const orderBy = query
-    ? Prisma.sql`ORDER BY ts_rank("Note"."searchVector", websearch_to_tsquery('english', ${query})) DESC, "Note"."updatedAt" DESC`
+    ? Prisma.sql`ORDER BY
+        (CASE WHEN "Note"."title" ILIKE ${`%${escapeLikePattern(query)}%`} ESCAPE '\\' THEN 1 ELSE 0 END) DESC,
+        ts_rank("Note"."searchVector", websearch_to_tsquery('english', ${query})) DESC,
+        "Note"."updatedAt" DESC`
     : Prisma.sql`ORDER BY "Note"."updatedAt" DESC`;
 
   return prisma.$queryRaw<Note[]>`
