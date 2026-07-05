@@ -10,7 +10,14 @@ import { createCvProfileRepo, createTailoringRepo, createUserRepo } from "@/shar
 import { getDb } from "@/shared/lib/db/pg";
 
 export async function DELETE(): Promise<NextResponse> {
-  const userId = await currentUserId();
+  // auth() itself can throw (tampered JWT, unset AUTH_SECRET) — degrade to
+  // anonymous -> 401 rather than a raw 500 that leaks a stack (NFR-OBS-01).
+  let userId: string | null = null;
+  try {
+    userId = await currentUserId();
+  } catch (cause) {
+    console.error("[api/account] session read failed", cause);
+  }
   if (userId === null) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

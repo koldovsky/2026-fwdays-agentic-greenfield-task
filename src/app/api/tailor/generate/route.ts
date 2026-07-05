@@ -270,7 +270,14 @@ export async function POST(request: Request): Promise<Response> {
             // Capture the narrowed value: TS cannot keep the `!== null` narrowing
             // for a mutable `let` across the withTransaction closure below.
             const paidUserId: string = paidTallyUserId;
-            await createUsageCounterRepo(getDb()).increment(paidUserId);
+            // Best-effort, non-gating tally (runs AFTER the result streamed): a DB
+            // blip here must not fall into the outer catch and flip a successful,
+            // honesty-checked run to "failed" for the user (NFR-OBS-01).
+            try {
+              await createUsageCounterRepo(getDb()).increment(paidUserId);
+            } catch (tallyError) {
+              console.error("[api/tailor/generate] paid tally increment failed", tallyError);
+            }
             // History persistence (FR-TAILOR-04) is PAID-ONLY and best-effort:
             // it runs after the result already streamed, so any failure is
             // logged server-side and never touches the user's result or the

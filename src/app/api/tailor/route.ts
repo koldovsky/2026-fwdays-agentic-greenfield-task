@@ -141,7 +141,16 @@ export async function POST(request: Request): Promise<Response> {
           send(event);
         }
         if (succeeded) {
-          if (paidTallyUserId !== null) await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+          // Best-effort, non-gating tally (runs AFTER the result streamed): a DB
+          // blip must not reach the outer catch and report a successful run as
+          // "failed" to the user (NFR-OBS-01).
+          if (paidTallyUserId !== null) {
+            try {
+              await createUsageCounterRepo(getDb()).increment(paidTallyUserId);
+            } catch (tallyError) {
+              console.error("[api/tailor] paid tally increment failed", tallyError);
+            }
+          }
         } else if (releaseReservation) {
           // The reservation already charged the budget up front; a run that
           // never produced a result must refund it (FR-TAILOR-03).

@@ -4,8 +4,10 @@
 //
 // JD text is not PII the way CV text is (NFR-SEC-01 encrypts CV at rest; the JD
 // is the employer's public posting), so it is stored as plaintext per the
-// 0001_init schema. It flows into the user's GDPR export and is removed on
-// account delete via FK cascade (NFR-GDPR-01/02).
+// 0001_init schema. It is removed on account delete via FK cascade
+// (NFR-GDPR-02, verified in account.integration.test.ts). It is retained user
+// input but is NOT currently surfaced in the GDPR export (NFR-GDPR-01 covers the
+// CV profile + tailoring history); the export carries only job_description_id.
 import type { Queryable } from "./port";
 
 export interface JobDescriptionRecord {

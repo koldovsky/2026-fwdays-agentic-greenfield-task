@@ -29,8 +29,15 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "payments_unconfigured" }, { status: 503 });
   }
 
-  // Verify over the RAW body — the exact bytes the sender signed.
-  const raw = await request.text();
+  // Verify over the RAW body — the exact bytes the sender signed. An aborted or
+  // malformed body makes text() reject; degrade to a calm 400, never a raw 500
+  // (NFR-OBS-01), consistent with the other body-reading routes.
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return Response.json({ error: "invalid_body" }, { status: 400 });
+  }
   const signature = request.headers.get("x-payments-signature") ?? "";
   if (!verifySignature(raw, signature, secret)) {
     return Response.json({ error: "invalid_signature" }, { status: 401 });
