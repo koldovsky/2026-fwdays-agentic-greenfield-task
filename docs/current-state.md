@@ -7,6 +7,11 @@
 
 ## Last action
 
+- **Model-routing enforcement hook added (2026-07-06).** New `PreToolUse` hook
+  `.claude/hooks/model-routing-reminder.sh` (matcher `Agent|Workflow`, registered in
+  `.claude/settings.json`). Advisory + non-blocking: injects a complexity-grading reminder when a
+  dispatch omits `model` and is not a `fork`; silent when `model` set / fork / other tools. All 5
+  branches smoke-tested green. AGENTS.md model-routing section notes the enforcement.
 - **Model-routing rule added to `AGENTS.md` (2026-07-05).** After analyzing requirements, grade
   complexity (low/medium/high) and route to cheapest capable model: low→`haiku`, medium→`sonnet`,
   high→`opus`; omit `model` to inherit session (fork ignores it). Plus token-lean dispatch

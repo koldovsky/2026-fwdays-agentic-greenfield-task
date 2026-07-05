@@ -145,6 +145,10 @@ runs as part of the pre-build gate (step 1) and on every subagent dispatch.
 Guideline, not dogma: when unsure, size up one tier rather than risk a wrong cheap answer — a
 re-do costs more tokens than the bigger model saved.
 
+Enforcement: a `PreToolUse` hook (`.claude/hooks/model-routing-reminder.sh`, matcher
+`Agent|Workflow`) injects an **advisory** reminder when a dispatch omits `model` and is not a
+`fork`. Non-blocking — it never denies the call, just prompts a conscious complexity grade.
+
 ## Spec-Driven Development (SDD)
 
 This project is spec-driven (OpenSpec, `schema: spec-driven`). **Spec before code** for any new or changed capability.
