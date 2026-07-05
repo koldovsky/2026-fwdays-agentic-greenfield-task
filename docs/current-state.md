@@ -66,16 +66,29 @@
 
 ## Working on
 
-- Nothing in flight. Tree clean. All 10 tasks are DONE except T10 (blocked on Cyrillic fonts). The
-  landing is now fully i18n-backed (ua+en) and renders en; T10 is unblocked apart from the font
-  decision. Remaining work is environment-blocked (archives, ops, Lighthouse, live eval) or the T10
-  font decision. See next steps.
+- **T10 whole-app UA/EN toggle — IN PROGRESS 2026-07-05 (ultracode).** User chose the Cyrillic
+  font swap: **Unbounded (display) + Golos Text (body)**, replacing Bricolage + Hanken app-wide, both
+  with cyrillic subsets. Spec-first change `add-language-toggle`. Plan below.
 
-**T10 is now much smaller:** the landing i18n groundwork is done. What remains for T10 is (1) the real
-blocker: wire a Cyrillic font subset (Golos Text + Unbounded, or confirm/replace the current
-Bricolage+Hanken which are latin-only) in `layout.tsx` — a brand-font decision for the user; then
-(2) a locale cookie + dynamic `<html lang>` + a header `LanguageSwitch`, and flip the landing/app
-call sites off the pinned `"en"`. The app-shell/workspace already thread `locale`.
+### Plan — T10 add-language-toggle
+
+Note: the app views (account/history/auth/checkout) already default `locale="ua"`, so they render
+Ukrainian today but in a latin-only fallback font (broken Cyrillic). The font swap fixes that
+immediately; the landing is the only surface pinned to `"en"`.
+
+1. **Spec-first:** `add-language-toggle` change (NFR-I18N-01, BC-BRAND-01, NFR-PERF-04). Modifies
+   design-system (font tokens) + app-shell (locale resolution + switch).
+2. **Phase 1 — fonts:** `layout.tsx` swap to `Unbounded` + `Golos_Text`, `subsets:["latin","cyrillic"]`;
+   repoint `globals.css` `@theme` `--font-display`/`--font-body`/`--font-sans`; DESIGN.md + tokens sync.
+   PERF: font payload grows (Cyrillic + a display face) against the ~20ms LCP margin, unmeasurable in
+   sandbox (no Chrome) — flag for perf-audit before prod.
+3. **Phase 2 — locale infra:** a `locale` cookie helper (server read + a client setter), resolve
+   locale in the root layout for `<html lang>` (dynamic), and a `LanguageSwitch` in the top bar that
+   sets the cookie + refreshes. Default stays Ukrainian-first (t() default ua).
+4. **Phase 3 — flip call sites:** resolve the cookie locale in each page and pass to its view; flip
+   the landing off the pinned `"en"` to the resolved locale. UA copy still pending native review.
+5. **Verify:** lint + build + test (LanguageSwitch + cookie-helper tests); adversarial review → fix →
+   commit per phase. perf-audit deferred (no Chrome).
 
 ## Next steps (ranked: fastest x most critical)
 

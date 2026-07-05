@@ -159,6 +159,7 @@ export const ua: Dictionary = {
     tryFree: "Спробувати",
     navFeatures: "Можливості",
     navPricing: "Тарифи",
+    languageLabel: "Мова",
   },
   accountMenu: {
     triggerLabel: "Меню акаунта",

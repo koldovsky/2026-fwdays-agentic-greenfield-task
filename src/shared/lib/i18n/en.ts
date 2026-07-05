@@ -156,6 +156,7 @@ export const en: Dictionary = {
     tryFree: "Try free",
     navFeatures: "Features",
     navPricing: "Pricing",
+    languageLabel: "Language",
   },
   accountMenu: {
     triggerLabel: "Account menu",

@@ -24,7 +24,7 @@ export function Landing({ locale = "en" }: { readonly locale?: Locale }) {
   return (
     <>
       <StructuredData />
-      <TopBarSession />
+      <TopBarSession locale={locale} />
       <main id="top">
         <Hero locale={locale} />
         {/* Below-the-fold sections reveal on scroll. Each stays server-rendered

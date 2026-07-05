@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { siteDescription, siteKeywords } from "@/shared/config";
+import { LOCALE_COOKIE, parseLocale } from "@/shared/lib/i18n";
 import { Landing } from "@/views/landing";
 
 // Home = public marketing landing. Canonical + OG resolved against metadataBase
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
-  return <Landing />;
+export default async function Home() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  return <Landing locale={locale} />;
 }

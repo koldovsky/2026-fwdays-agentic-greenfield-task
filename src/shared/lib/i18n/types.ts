@@ -217,6 +217,8 @@ export interface Dictionary {
     readonly tryFree: string;
     readonly navFeatures: string;
     readonly navPricing: string;
+    /** Accessible label for the language switch (add-language-toggle). */
+    readonly languageLabel: string;
   };
   /** Signed-in account dropdown in the top bar (FR-SHELL-01). */
   readonly accountMenu: {

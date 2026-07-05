@@ -4,10 +4,11 @@
 // view renders pure state. An unreadable subscription degrades to Free — calm,
 // never granting access it can't verify (NFR-OBS-01).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/auth";
 import type { SubscriptionAccess } from "@/entities/subscription";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { createSubscriptionRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { AccountProfileView } from "@/views/account-profile";
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountProfilePage() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (userId === null) redirect("/sign-in");
@@ -32,8 +34,8 @@ export default async function AccountProfilePage() {
 
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar user={session?.user ?? null} />
-      <AccountProfileView user={session?.user ?? { email: null }} subscription={subscription} />
+      <TopBar user={session?.user ?? null} locale={locale} />
+      <AccountProfileView user={session?.user ?? { email: null }} subscription={subscription} locale={locale} />
     </div>
   );
 }

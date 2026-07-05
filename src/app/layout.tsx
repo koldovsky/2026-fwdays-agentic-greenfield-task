@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Golos_Text, Unbounded } from "next/font/google";
+import { cookies } from "next/headers";
 import { siteDescription, siteName, siteUrl } from "@/shared/config";
+import { HTML_LANG, LOCALE_COOKIE, parseLocale } from "@/shared/lib/i18n";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -44,14 +46,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Ukrainian-first (NFR-I18N-01): resolve the visitor locale from the cookie so
+  // <html lang> is correct. Reading the cookie opts routes into dynamic rendering
+  // (the accepted cost of cookie-based i18n without URL prefixes).
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   return (
     <html
-      lang="en"
+      lang={HTML_LANG[locale]}
       className={`${unbounded.variable} ${golos.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

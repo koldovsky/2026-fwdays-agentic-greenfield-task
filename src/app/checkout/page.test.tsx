@@ -7,6 +7,9 @@ import { describe, expect, it, vi } from "vitest";
 const notFound = vi.hoisted(() => vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }));
 vi.mock("next/navigation", () => ({ notFound }));
 
+// The page resolves the visitor locale from the cookie past the 404 guards.
+vi.mock("next/headers", () => ({ cookies: () => ({ get: () => undefined }) }));
+
 const isPaymentsEmulatorEnabled = vi.hoisted(() => vi.fn());
 const getPaymentsWebhookSecret = vi.hoisted(() => vi.fn());
 vi.mock("@/shared/config", () => ({ isPaymentsEmulatorEnabled, getPaymentsWebhookSecret }));

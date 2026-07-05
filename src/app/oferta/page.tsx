@@ -2,8 +2,9 @@
 // views/legal public offer (публічна оферта). Static + crawlable
 // (add-legal-pages, FR-PAYWALL-02, BC-PRIVACY-01).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { absoluteUrl } from "@/shared/config";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { LegalView } from "@/views/legal";
 
 const copy = t("ua").legal.offer;
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl("/oferta") },
 };
 
-export default function OfertaPage() {
-  return <LegalView doc="offer" />;
+export default async function OfertaPage() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  return <LegalView doc="offer" locale={locale} />;
 }

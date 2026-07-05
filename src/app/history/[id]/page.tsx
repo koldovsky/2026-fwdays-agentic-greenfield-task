@@ -4,13 +4,14 @@
 // (or a missing id) resolves to Next's 404 — existence is never disclosed
 // (IDOR, NFR-SEC-02).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import { createSubscriptionRepo, createTailoringRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { getHistoryItem } from "@/shared/lib/tailoring-history";
 import { HistoryDetailView, HistoryLockedView } from "@/views/history";
 import { TopBar } from "@/widgets/top-bar";
@@ -25,6 +26,7 @@ export default async function HistoryDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (userId === null) redirect("/sign-in");
@@ -40,8 +42,8 @@ export default async function HistoryDetailPage({
   if (!paid) {
     return (
       <div className="flex flex-1 flex-col bg-surface-warm font-body">
-        <TopBar user={session?.user ?? null} />
-        <HistoryLockedView />
+        <TopBar user={session?.user ?? null} locale={locale} />
+        <HistoryLockedView locale={locale} />
       </div>
     );
   }
@@ -58,8 +60,8 @@ export default async function HistoryDetailPage({
 
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar user={session?.user ?? null} />
-      <HistoryDetailView record={record} />
+      <TopBar user={session?.user ?? null} locale={locale} />
+      <HistoryDetailView record={record} locale={locale} />
     </div>
   );
 }

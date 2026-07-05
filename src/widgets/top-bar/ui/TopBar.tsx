@@ -3,6 +3,7 @@
 // widget stays server-renderable and below the app boundary; sign-out is the
 // client control from features/sign-in.
 import Link from "next/link";
+import { LanguageSwitch } from "@/features/language-switch";
 import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 import { AccountMenu } from "./AccountMenu";
@@ -67,10 +68,12 @@ export function TopBar({ user = null, locale = "ua", showMarketingNav = false }:
                 {firstName}
               </span>
             )}
+            <LanguageSwitch locale={locale} />
             <AccountMenu user={user} locale={locale} />
           </div>
         ) : (
           <div className="flex items-center gap-2">
+            <LanguageSwitch locale={locale} />
             <Button href="/sign-in" variant="ghost" size="sm">
               {copy.topBar.signIn}
             </Button>

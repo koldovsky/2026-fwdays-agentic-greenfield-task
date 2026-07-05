@@ -5,13 +5,14 @@
 // history service (same code the API route uses). An unreadable subscription
 // degrades to the free (locked) surface, never a failure page (NFR-OBS-01).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import { createSubscriptionRepo, createTailoringRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { listHistory } from "@/shared/lib/tailoring-history";
 import { HistoryListView, HistoryLockedView } from "@/views/history";
 import { TopBar } from "@/widgets/top-bar";
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HistoryPage() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (userId === null) redirect("/sign-in");
@@ -34,7 +36,7 @@ export default async function HistoryPage() {
     paid = false;
   }
 
-  let content = <HistoryLockedView />;
+  let content = <HistoryLockedView locale={locale} />;
   if (paid) {
     let summaries: Awaited<ReturnType<typeof listHistory>> = [];
     try {
@@ -44,12 +46,12 @@ export default async function HistoryPage() {
       // the cause is logged server-side only.
       console.error("[history] list failed", cause);
     }
-    content = <HistoryListView summaries={summaries} />;
+    content = <HistoryListView summaries={summaries} locale={locale} />;
   }
 
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar user={session?.user ?? null} />
+      <TopBar user={session?.user ?? null} locale={locale} />
       {content}
     </div>
   );

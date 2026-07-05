@@ -2,8 +2,9 @@
 // views/legal Privacy Policy. Static + crawlable (add-legal-pages, BC-PRIVACY-01,
 // NFR-GDPR-01/02).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { absoluteUrl } from "@/shared/config";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { LegalView } from "@/views/legal";
 
 const copy = t("ua").legal.privacy;
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl("/privacy") },
 };
 
-export default function PrivacyPage() {
-  return <LegalView doc="privacy" />;
+export default async function PrivacyPage() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  return <LegalView doc="privacy" locale={locale} />;
 }

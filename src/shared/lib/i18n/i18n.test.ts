@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dictionaries, en, t, ua } from "./index";
+import { dictionaries, en, parseLocale, t, ua } from "./index";
 
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/u;
 
@@ -34,5 +34,16 @@ describe("i18n (NFR-I18N-01, BC-BRAND-01)", () => {
     expect(t("ua")).toBe(ua);
     expect(t("en")).toBe(en);
     expect(dictionaries.ua).toBe(ua);
+  });
+
+  it("parseLocale coerces cookie values Ukrainian-first (add-language-toggle)", () => {
+    expect(parseLocale("en")).toBe("en");
+    expect(parseLocale("ua")).toBe("ua");
+    // Anything unrecognized falls back to Ukrainian (default), never throws.
+    expect(parseLocale(undefined)).toBe("ua");
+    expect(parseLocale(null)).toBe("ua");
+    expect(parseLocale("")).toBe("ua");
+    expect(parseLocale("fr")).toBe("ua");
+    expect(parseLocale("EN")).toBe("ua");
   });
 });

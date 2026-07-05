@@ -5,9 +5,10 @@
 // token is verified server-side so the client only ever renders a session the
 // server vouched for.
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPaymentsWebhookSecret, isPaymentsEmulatorEnabled } from "@/shared/config";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { verifyCheckoutToken } from "@/shared/lib/payments";
 import { CheckoutView } from "@/views/checkout";
 import { TopBar } from "@/widgets/top-bar";
@@ -38,11 +39,13 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   }
   if (session === null) notFound();
 
+  // Resolve locale only once past the 404 guards (no cookie read on 404 paths).
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar />
+      <TopBar locale={locale} />
       <main className="flex flex-1 justify-center px-6 py-12">
-        <CheckoutView plan={session.plan} returnTo={session.returnTo} token={raw} />
+        <CheckoutView locale={locale} plan={session.plan} returnTo={session.returnTo} token={raw} />
       </main>
     </div>
   );
