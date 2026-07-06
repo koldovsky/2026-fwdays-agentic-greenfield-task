@@ -39,9 +39,16 @@ export function applyBookingDecision(
   currentStatus: BookingStatus,
   decision: BookingDecision,
 ): BookingDecisionResult {
-  void currentStatus;
-  void decision;
-  throw new Error(
-    "Not implemented — lib/src/booking/transitions.ts applyBookingDecision (booking-hitl task A.4)",
-  );
+  if (currentStatus !== "pending") {
+    return { ok: false, error: "NOT_PENDING" };
+  }
+
+  switch (decision) {
+    case "confirm":
+      return { ok: true, nextStatus: "confirmed" };
+    case "decline":
+      return { ok: true, nextStatus: "declined" };
+    case "propose_another_time":
+      return { ok: true, nextStatus: "cancelled" };
+  }
 }

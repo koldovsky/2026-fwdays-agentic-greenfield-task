@@ -71,8 +71,27 @@ function toDateStr(utcMidnight: Date): string {
  * 60 minutes after `start` on the same calendar date (BC-SCHEDULE-01).
  */
 export function isSlotOnGrid(slot: Slot): boolean {
-  void slot;
-  throw new Error("Not implemented — lib/src/slots/grid.ts isSlotOnGrid (booking-hitl task A.2)");
+  const date = slot.start.slice(0, 10);
+  const startTime = slot.start.slice(11, 16);
+  const endDate = slot.end.slice(0, 10);
+  const endTime = slot.end.slice(11, 16);
+
+  if (endDate !== date) {
+    return false;
+  }
+
+  const dow = weekdayOf(date);
+  if (dow === 0 || dow === 6) {
+    return false;
+  }
+
+  if (!HOUR_STARTS.includes(startTime)) {
+    return false;
+  }
+
+  const startHour = Number(startTime.slice(0, 2));
+  const expectedEnd = `${String(startHour + 1).padStart(2, "0")}:00`;
+  return endTime === expectedEnd;
 }
 
 export function generateGrid(from: string, days: number): Slot[] {

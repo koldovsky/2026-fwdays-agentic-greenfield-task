@@ -34,7 +34,7 @@
 //     on its own (spec.md "Holds never expire automatically").
 
 import type { Slot } from "./grid.ts";
-import type { CalendarPort } from "./calendar-port.ts";
+import { CalendarApiError, type CalendarPort } from "./calendar-port.ts";
 import { overlaps } from "./subtract.ts";
 import { kyivWallClockToUtc, utcToKyivWallClock } from "./timezone.ts";
 
@@ -78,5 +78,15 @@ export async function createHold(
 }
 
 export async function releaseHold(port: CalendarPort, eventId: string): Promise<void> {
-  await port.deleteEvent(eventId);
+  try {
+    await port.deleteEvent(eventId);
+  } catch (error) {
+    // booking-hitl design.md Decision 6, item 2: a 404/410 means the event
+    // is already gone — treat as an already-satisfied delete, not a
+    // failure. Every other CalendarError still propagates unchanged.
+    if (error instanceof CalendarApiError && (error.status === 404 || error.status === 410)) {
+      return;
+    }
+    throw error;
+  }
 }

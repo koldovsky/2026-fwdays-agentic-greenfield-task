@@ -277,6 +277,10 @@ const OWNING_STATE: Partial<Record<IntakeEvent["type"], ConversationState>> = {
   save_experience_comfort: "profiling",
   save_weekdays: "collecting",
   save_time_range: "collecting",
+  // booking-hitl design.md Decision 2 (task A.12) — both owned by
+  // "proposing", same field-ownership gate every other event goes through.
+  offer_slots: "proposing",
+  pick_slot: "proposing",
 };
 
 /** The reducer's own "no-op rejection" helper — always the SAME `state`
@@ -491,17 +495,24 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
       return { state: { conversationState, fields }, detour: null };
     }
 
-    // booking-hitl design.md Decision 2 — TYPED THROWING STUB (task A.11's
-    // red half, task A.12 implements the real field-ownership/index-bounds
-    // logic). Deliberately NOT wired into OWNING_STATE yet, so A.11's
-    // "offer_slots from any OTHER non-terminal state is rejected
-    // FIELD_NOT_OWNED_BY_STATE" case fails here (throws) rather than
-    // returning the expected rejection — still red, for the right reason.
-    case "offer_slots":
-    case "pick_slot":
-      throw new Error(
-        `Not implemented — lib/src/intake/state-machine.ts transition() "${event.type}" branch (booking-hitl task A.12)`,
-      );
+    // booking-hitl design.md Decision 2 (task A.12) — both owned by
+    // "proposing" (OWNING_STATE above already rejected any other non-terminal
+    // state with FIELD_NOT_OWNED_BY_STATE before this switch is reached).
+    case "offer_slots": {
+      const fields: IntakeFields = { ...state.fields, offeredSlots: event.slots };
+      return { state: { conversationState: "proposing", fields }, detour: null };
+    }
+
+    case "pick_slot": {
+      const offeredSlots = state.fields.offeredSlots;
+      if (offeredSlots === undefined || event.slotIndex < 0 || event.slotIndex >= offeredSlots.length) {
+        return rejected(state, "INVALID_SLOT_INDEX");
+      }
+      return {
+        state: { conversationState: "awaiting_admin", fields: state.fields },
+        detour: null,
+      };
+    }
 
     default: {
       const exhaustive: never = event;

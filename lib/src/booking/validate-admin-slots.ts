@@ -16,8 +16,8 @@
 // other-pending overlap. A slot that is BOTH off-grid and busy MUST report
 // OFF_GRID (grid membership is checked before availability).
 
-import type { Slot } from "../slots/grid.ts";
-import type { BusyInterval } from "../slots/subtract.ts";
+import { isSlotOnGrid, type Slot } from "../slots/grid.ts";
+import { overlaps, type BusyInterval } from "../slots/subtract.ts";
 
 export type AdminSlotValidationResult =
   | { ok: true }
@@ -41,8 +41,25 @@ export interface ValidateAdminProposedSlotsInput {
 export function validateAdminProposedSlots(
   input: ValidateAdminProposedSlotsInput,
 ): AdminSlotValidationResult {
-  void input;
-  throw new Error(
-    "Not implemented — lib/src/booking/validate-admin-slots.ts validateAdminProposedSlots (booking-hitl task A.6)",
-  );
+  const { slots, busy, otherPendingSlots } = input;
+
+  if (slots.length === 0) {
+    return { ok: false, code: "NO_SLOTS_SELECTED" };
+  }
+
+  for (const slot of slots) {
+    if (!isSlotOnGrid(slot)) {
+      return { ok: false, code: "OFF_GRID", slot };
+    }
+  }
+
+  for (const slot of slots) {
+    const isBusy = busy.some((b) => overlaps(slot, b));
+    const isHeldByOther = otherPendingSlots.some((other) => overlaps(slot, other));
+    if (isBusy || isHeldByOther) {
+      return { ok: false, code: "SLOT_UNAVAILABLE", slot };
+    }
+  }
+
+  return { ok: true };
 }

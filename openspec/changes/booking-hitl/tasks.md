@@ -3,15 +3,15 @@
 Write every test in this section FIRST and confirm it FAILS (red) against a
 typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
-- [ ] A.1 `lib/src/slots/grid.test.ts` additions: a new exported
+- [x] A.1 `lib/src/slots/grid.test.ts` additions: a new exported
       `isSlotOnGrid(slot: Slot): boolean` returns `true` for every slot
       `generateGrid` itself produces and `false` for a Saturday/Sunday date,
       a 21:00 start, a non-hour-aligned start, and a slot whose `end` is not
       exactly 60 minutes after `start` (`@trace BC-SCHEDULE-01`,
       `@trace FR-HITL-03`). Confirm red.
-- [ ] A.2 Implement `isSlotOnGrid` in `grid.ts` (design.md Decision 3 — "one
+- [x] A.2 Implement `isSlotOnGrid` in `grid.ts` (design.md Decision 3 — "one
       shared predicate, never re-derived") to pass A.1.
-- [ ] A.3 `lib/src/booking/transitions.test.ts` FIRST (red):
+- [x] A.3 `lib/src/booking/transitions.test.ts` FIRST (red):
       `applyBookingDecision("pending", "confirm")` → `{ok:true,
       nextStatus:"confirmed"}`; `("pending","decline")` →
       `{ok:true,nextStatus:"declined"}`; `("pending","propose_another_time")`
@@ -19,9 +19,9 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       `"confirmed"`/`"declined"`/`"cancelled"` → `{ok:false,
       error:"NOT_PENDING"}` (`@trace FR-HITL-03`, baseline spec's "Decision
       on a request no longer pending is rejected" scenario). Confirm red.
-- [ ] A.4 Implement `lib/src/booking/transitions.ts` (design.md Decision 3)
+- [x] A.4 Implement `lib/src/booking/transitions.ts` (design.md Decision 3)
       to pass A.3.
-- [ ] A.5 `lib/src/booking/validate-admin-slots.test.ts` FIRST (red):
+- [x] A.5 `lib/src/booking/validate-admin-slots.test.ts` FIRST (red):
       zero slots → `NO_SLOTS_SELECTED`; a Saturday slot and a 21:00-start
       slot → `OFF_GRID` naming the offending slot; a slot overlapping a
       fresh busy interval, and a slot overlapping another lead's
@@ -30,28 +30,28 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       availability) so a slot that is BOTH off-grid and busy reports
       `OFF_GRID` (`@trace FR-HITL-03`, `@trace BC-SCHEDULE-01`, baseline
       spec's three "Admin-proposed slot" scenarios). Confirm red.
-- [ ] A.6 Implement `lib/src/booking/validate-admin-slots.ts` (reusing
+- [x] A.6 Implement `lib/src/booking/validate-admin-slots.ts` (reusing
       `isSlotOnGrid` from A.2 and `overlaps` from `subtract.ts`, design.md
       Decision 3) to pass A.5.
-- [ ] A.7 `lib/src/booking/copy.test.ts` FIRST (red): the confirmation
+- [x] A.7 `lib/src/booking/copy.test.ts` FIRST (red): the confirmation
       constant/composer contains a `{date}`/`{time}`-shaped placeholder (or
       is a function taking a slot and interpolating it) and contains AT MOST
       one `!` and one 🎵 and no other emoji; the decline constant contains NO
       `!` and no emoji and explicitly invites the lead to return; the
       re-proposal composer contains no `!` and no emoji (`@trace FR-HITL-02`,
       `@trace BC-BRAND-01`, `@trace BC-LANG-01`). Confirm red.
-- [ ] A.8 Implement `lib/src/booking/copy.ts` (design.md Decision 3) to pass
+- [x] A.8 Implement `lib/src/booking/copy.ts` (design.md Decision 3) to pass
       A.7 — may ship real content immediately in this red round (no
       behavior to stub, same precedent as `intake/copy.ts`).
-- [ ] A.9 `lib/src/booking/validate-preferences.test.ts` FIRST (red):
+- [x] A.9 `lib/src/booking/validate-preferences.test.ts` FIRST (red):
       `validatePreferences({weekdays:[], timeWindow:{start:"10:00",
       end:"20:00"}})` is rejected (empty weekdays); an out-of-enum weekday
       string is rejected; `start >= end` is rejected; a valid
       `{weekdays:["Tue","Thu"], timeWindow:{start:"17:00",end:"20:00"}}`
       passes (`@trace FR-SLOT-01`, design.md Decision 2's sub-decision).
       Confirm red.
-- [ ] A.10 Implement `lib/src/booking/validate-preferences.ts` to pass A.9.
-- [ ] A.11 `lib/src/intake/state-machine.test.ts` additions FIRST (red):
+- [x] A.10 Implement `lib/src/booking/validate-preferences.ts` to pass A.9.
+- [x] A.11 `lib/src/intake/state-machine.test.ts` additions FIRST (red):
       `offer_slots` from `proposing` records `fields.offeredSlots` and
       leaves `conversationState` at `proposing`; `offer_slots` from any
       OTHER non-terminal state is rejected `FIELD_NOT_OWNED_BY_STATE`;
@@ -63,22 +63,22 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       `@trace FR-SLOT-02`, `@trace FR-HITL-03`'s "booking returns to
       `proposing`" language read in reverse — this is the FIRST arrival at
       `awaiting_admin`). Confirm red.
-- [ ] A.12 Implement the `OfferedSlot` type, `IntakeFields.offeredSlots`, the
+- [x] A.12 Implement the `OfferedSlot` type, `IntakeFields.offeredSlots`, the
       `offer_slots`/`pick_slot` `IntakeEvent` members, the
       `"INVALID_SLOT_INDEX"` error code, and the `OWNING_STATE` entries
       (both owned by `"proposing"`) in `lib/src/intake/state-machine.ts`
       (design.md Decision 2) to pass A.11.
-- [ ] A.13 `lib/src/slots/hold.test.ts` additions FIRST (red): `releaseHold`
+- [x] A.13 `lib/src/slots/hold.test.ts` additions FIRST (red): `releaseHold`
       resolves (does not throw) when `port.deleteEvent` rejects with a
       `CalendarApiError` whose `status` is `404` or `410`; it still
       propagates every other `CalendarError` (auth, timeout, a non-404/410
       `CalendarApiError`) unchanged (`@trace NFR-REL-01`, design.md
       Decision 6 item 2 — the S3 carryover "Delete-lead is not idempotent
       across >1 pending booking"). Confirm red.
-- [ ] A.14 Implement the 404/410-idempotent branch in `releaseHold`
+- [x] A.14 Implement the 404/410-idempotent branch in `releaseHold`
       (`hold.ts`) to pass A.13, without changing `createHold`'s existing
       behavior or its own 5 tests.
-- [ ] A.15 Run `npm run test:run`; confirm A.1–A.14 green with zero
+- [x] A.15 Run `npm run test:run`; confirm A.1–A.14 green with zero
       regressions in the S1/S2/S3 suites.
 
 ## B. Database — notification outbox, schema additions, new query helpers

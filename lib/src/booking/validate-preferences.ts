@@ -33,8 +33,21 @@ export type PreferencesValidationResult =
  * checks this function must implement (A.10).
  */
 export function validatePreferences(input: PreferencesInput): PreferencesValidationResult {
-  void input;
-  throw new Error(
-    "Not implemented — lib/src/booking/validate-preferences.ts validatePreferences (booking-hitl task A.10)",
-  );
+  const { weekdays, timeWindow } = input;
+
+  if (weekdays.length === 0) {
+    return { ok: false, code: "EMPTY_WEEKDAYS" };
+  }
+
+  for (const weekday of weekdays) {
+    if (!(WEEKDAYS as readonly string[]).includes(weekday)) {
+      return { ok: false, code: "INVALID_WEEKDAY", weekday };
+    }
+  }
+
+  if (timeWindow.start >= timeWindow.end) {
+    return { ok: false, code: "INVALID_TIME_RANGE" };
+  }
+
+  return { ok: true };
 }
