@@ -65,3 +65,6 @@ Codex completed the following offline deterministic checks in the local workspac
 The local `npm run build` and `npm run verify:phase4` commands failed in this Windows-managed sandbox because Vite could not load the native `@tailwindcss/oxide-win32-x64-msvc` binding and hit `spawn EPERM` while resolving dependencies. That limitation was recorded separately and not treated as a product defect.
 
 The phase remains `PHASE 4 DEPLOYMENT READINESS: PENDING HUMAN CLOUD SETUP` until the human completes Vercel, Upstash, Preview, and Production checks.
+## Namespace Correction
+
+Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`. When both environments use the same Upstash database, they must not share a namespace. Changing the namespace makes existing records unreachable under the new namespace without deleting them.

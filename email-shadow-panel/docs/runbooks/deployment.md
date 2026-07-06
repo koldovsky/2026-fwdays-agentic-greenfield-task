@@ -1,4 +1,4 @@
-﻿# Deployment Runbook
+# Deployment Runbook
 
 ## Scope
 
@@ -61,7 +61,7 @@ Use the exact variable names below, derived from the implemented config loaders 
 | `SESSION_TTL_SECONDS`                       | Non-secret | Yes          | Yes         | `900`                                                | Positive integer, max `86400`                                                                                                   | Changes session lifetime                                                      | Yes                |
 | `UPSTASH_REDIS_REST_URL`                    | Secret     | Yes          | Yes         | `https://example.upstash.io`                         | Valid HTTPS URL                                                                                                                 | Rotating it switches the backing Redis endpoint                               | Yes                |
 | `UPSTASH_REDIS_REST_TOKEN`                  | Secret     | Yes          | Yes         | `replace-with-upstash-redis-rest-token`              | Non-empty string                                                                                                                | Rotating it revokes Redis API access                                          | Yes                |
-| `REDIS_KEY_NAMESPACE`                       | Non-secret | Yes          | Yes         | `email-shadow-panel`                                 | Lowercase safe Redis-key charset: `a-z0-9:_-`                                                                                   | Changing it moves the app to a new key namespace                              | Yes                |
+| `REDIS_KEY_NAMESPACE`                       | Non-secret | Yes          | Yes         | `email-shadow-panel-preview` (Preview), `email-shadow-panel-production` (Production) | Lowercase safe Redis-key charset: `a-z0-9:_-`                                                                                   | Changing it makes previously stored records unreachable under the new namespace; it does not delete them | Yes                |
 | `EMAILNATOR_PROVIDER_ENABLED`               | Non-secret | Yes          | Yes         | `true` or `false`                                    | Boolean string                                                                                                                  | Turning it off disables create/list/detail and leaves delete/health available | Yes                |
 | `PUBLIC_API_REQUEST_TIMEOUT_MS`             | Non-secret | Yes          | Yes         | `12000`                                              | Integer `1000` to `60000`                                                                                                       | Changes request deadline behavior                                             | Yes                |
 | `PUBLIC_API_MAX_ACTIVE_INBOXES_PER_VISITOR` | Non-secret | Yes          | Yes         | `3`                                                  | Integer `1` to `20`                                                                                                             | Changes concurrent inbox capacity per visitor                                 | Yes                |
@@ -74,6 +74,12 @@ Use the exact variable names below, derived from the implemented config loaders 
 | `PUBLIC_VISITOR_COOKIE_NAME`                | Non-secret | Yes          | Yes         | `esp_anon_v1`                                        | Cookie-safe charset: `A-Za-z0-9_-`, length `1` to `64`                                                                          | Changing it invalidates existing browser visitor cookies                      | Yes                |
 | `PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS`     | Non-secret | Yes          | Yes         | `2592000`                                            | Integer `300` to `31536000`                                                                                                     | Changes browser cookie lifetime                                               | Yes                |
 
+Namespace rule:
+
+- Preview namespace: `email-shadow-panel-preview`
+- Production namespace: `email-shadow-panel-production`
+- Preview and Production must not share a namespace when they use the same Upstash database.
+- Changing the namespace makes previously stored records unreachable under the new namespace, but it does not delete them.
 ## Key Generation Commands
 
 Generate random material locally and paste the result directly into Vercel's environment UI.

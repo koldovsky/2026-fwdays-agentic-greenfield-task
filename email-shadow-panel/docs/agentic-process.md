@@ -125,6 +125,7 @@ Selected tools for Phases 0 and 1:
   - `scripts/*`
   - `tests/phase0/*`
 - Principal implementation decisions:
+  - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - introduced a formal `InboxProvider` contract and a production Emailnator provider wrapper around the proven Phase 0 transport;
   - kept provider cookies, XSRF handling, and opaque provider message IDs provider-specific and server-only;
   - introduced a server-only anonymous session model with capability-token hashes, HMAC visitor hashes, encrypted internal session state, optimistic-concurrency versioning, and TTL-based expiration;
@@ -187,6 +188,7 @@ Selected tools for Phases 0 and 1:
   - `tests/phase0/*`
   - `tests/phase1/*`
 - Principal implementation decisions:
+  - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - added a public transport layer under `server/api/` with stable public success and error contracts;
   - accepted bearer capabilities only through `Authorization: Bearer` and rejected malformed, duplicated, query-string, and oversized variants;
   - implemented a server-generated anonymous visitor cookie with rotation for malformed values and immediate keyed visitor hashing;
@@ -254,6 +256,7 @@ Selected tools for Phases 0 and 1:
   - `package.json`
   - current `src/`, `api/`, `server/`, and existing test files
 - Principal implementation decisions:
+  - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - replaced the mock production inbox flow with one typed same-origin browser API client over the Phase 2 public routes;
   - introduced a versioned bounded browser-local recent-inbox repository that stores only capability tokens, safe inbox metadata, and selected-inbox identity;
   - introduced a focused inbox controller to own startup restoration, selected-inbox switching, cancellable list and detail loading, polling timers, overlap prevention, and local-storage synchronization;
@@ -335,6 +338,7 @@ Selected tools for Phases 0 and 1:
   - `tests/phase2/*`
   - `tests/phase3/*`
 - Principal implementation decisions:
+  - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - preserved the TanStack Start + Vite deployment path without adding `vercel.json` or a new adapter layer;
   - documented the Vercel Hobby footprint as five API function entries plus one SSR entry;
   - created a bounded, opt-in smoke verifier for Preview only;

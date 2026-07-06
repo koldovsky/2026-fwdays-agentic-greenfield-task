@@ -53,3 +53,5 @@ provider-output.log
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*
