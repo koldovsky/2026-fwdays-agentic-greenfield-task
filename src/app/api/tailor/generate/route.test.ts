@@ -30,9 +30,15 @@ const usageCounterRepo = vi.hoisted(() => ({
   release: vi.fn(),
 }));
 const subscriptionRepo = vi.hoisted(() => ({ get: vi.fn() }));
-// add-tailoring-history: the paid path persists to history via these repos.
+// persist-tailoring-lifecycle: the route now calls createPending+updateStatus
+// for all logged-in users (not save); save is kept in the mock for backward
+// compat with any test that may still reference it.
 const jobDescriptionRepo = vi.hoisted(() => ({ save: vi.fn() }));
-const tailoringRepo = vi.hoisted(() => ({ save: vi.fn() }));
+const tailoringRepo = vi.hoisted(() => ({
+  save: vi.fn(),
+  createPending: vi.fn(),
+  updateStatus: vi.fn(),
+}));
 vi.mock("@/shared/lib/db", () => ({
   createUsageCounterRepo: () => usageCounterRepo,
   createSubscriptionRepo: () => subscriptionRepo,
@@ -101,6 +107,8 @@ beforeEach(() => {
   subscriptionRepo.get.mockResolvedValue(null); // default: never paid (Free)
   jobDescriptionRepo.save.mockResolvedValue({ id: "jd-1" });
   tailoringRepo.save.mockResolvedValue({ id: "t-1" });
+  tailoringRepo.createPending.mockResolvedValue("t-pending-1");
+  tailoringRepo.updateStatus.mockResolvedValue(undefined);
 });
 
 const PAID_SUBSCRIPTION = {
@@ -284,7 +292,13 @@ describe("POST /api/tailor/generate gating (NFR-COST-02, NFR-SEC-04)", () => {
 });
 
 describe("POST /api/tailor/generate history persistence (add-tailoring-history, FR-TAILOR-04)", () => {
-  it("persists a paid user's tailoring with mapped inputs and no CV linkage", async () => {
+  // persist-tailoring-lifecycle: paid users now persist via createPending at
+  // START + updateStatus('complete') on result — not via save. The JD row is
+  // still created first (required for the FK). Detailed payload assertions for
+  // the new lifecycle path (createPending/updateStatus) live in
+  // generate-lifecycle.route.test.ts; this test verifies the wiring is active
+  // for paid users and that the JD row is still saved.
+  it("persists a paid user's tailoring via createPending+updateStatus (not save)", async () => {
     currentUserId.mockResolvedValue("user-paid");
     subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
     resolveLlmProvider.mockReturnValue(groundedProvider());
@@ -292,53 +306,62 @@ describe("POST /api/tailor/generate history persistence (add-tailoring-history, 
     const res = await POST(post(VALID_BODY, "198.51.100.60"));
     expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
 
-    // JD row persisted for the FK, with the caller + the JD text.
+    // JD row still persisted (FK for the pending row).
     expect(jobDescriptionRepo.save).toHaveBeenCalledWith("user-paid", VALID_BODY.jobDescription);
-    // Tailoring persisted: no CV linkage (cvProfileId null), score + mapped
-    // checklist importance (must-have→must) and bullet grounding (grounded→met).
-    expect(tailoringRepo.save).toHaveBeenCalledTimes(1);
-    const saved = tailoringRepo.save.mock.calls[0][0];
-    expect(saved).toMatchObject({
-      userId: "user-paid",
-      cvProfileId: null,
-      jobDescriptionId: "jd-1",
+    // New lifecycle path: createPending called at START, updateStatus('complete') on result.
+    expect(tailoringRepo.createPending).toHaveBeenCalledTimes(1);
+    expect(tailoringRepo.updateStatus).toHaveBeenCalledWith("t-pending-1", "complete", expect.objectContaining({
       matchScore: 100,
-    });
-    expect(saved.checklist[0]).toMatchObject({ requirement: "React", importance: "must", status: "met" });
-    expect(saved.bullets[0]).toMatchObject({ grounding: "met", included: true });
+    }));
+    // save is never called on the new path.
+    expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
 
-  it("does not persist history for a logged-in free user", async () => {
+  // persist-tailoring-lifecycle: persistence is now for ALL logged-in users,
+  // including free users — the old paid-only guard is removed (FR-TAILOR-04).
+  it("persists history for a logged-in free user via createPending+updateStatus", async () => {
     currentUserId.mockResolvedValue("user-free");
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(VALID_BODY, "198.51.100.61"));
     expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
 
+    // JD row created (FK for pending row) and createPending called at START.
+    expect(jobDescriptionRepo.save).toHaveBeenCalledWith("user-free", VALID_BODY.jobDescription);
+    expect(tailoringRepo.createPending).toHaveBeenCalledTimes(1);
+    // Completed run: updateStatus flipped to 'complete'.
+    expect(tailoringRepo.updateStatus).toHaveBeenCalledWith("t-pending-1", "complete", expect.objectContaining({
+      matchScore: 100,
+    }));
+    // Old save path is gone.
     expect(tailoringRepo.save).not.toHaveBeenCalled();
-    expect(jobDescriptionRepo.save).not.toHaveBeenCalled();
   });
 
+  // persist-tailoring-lifecycle: anonymous runs (no userId) never create a
+  // pending row — persistence requires a userId for ownership.
   it("does not persist history for an anonymous run", async () => {
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(VALID_BODY, "198.51.100.62"));
     expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
 
+    expect(tailoringRepo.createPending).not.toHaveBeenCalled();
     expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
 
+  // persist-tailoring-lifecycle: updateStatus (not save) is the new best-effort
+  // persistence call; a throw from it must not alter the result already streamed.
   it("still returns the full result when history persistence throws (best-effort, NFR-OBS-01)", async () => {
     currentUserId.mockResolvedValue("user-paid");
     subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
     resolveLlmProvider.mockReturnValue(groundedProvider());
-    tailoringRepo.save.mockRejectedValue(new Error("db down"));
+    tailoringRepo.updateStatus.mockRejectedValue(new Error("db down"));
 
     const res = await POST(post(VALID_BODY, "198.51.100.63"));
 
     const events = await readNdjson(res);
-    // The result already streamed — a save failure never turns it into a
-    // failure event, and the paid tally still ran.
+    // The result already streamed — an updateStatus failure never turns it into
+    // a failure event, and the paid tally still ran.
     expect(events.find((e) => e.type === "result")).toBeDefined();
     expect(events.find((e) => e.type === "error")).toBeUndefined();
     expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-paid");

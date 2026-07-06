@@ -23,11 +23,39 @@ import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT, type AccountKind } from "@/entities/usage-counter";
 import { runTailoringLoop } from "@/features/run-tailoring";
-import type { TailorRunEvent, TailoringRunInput } from "@/features/run-tailoring";
-import { createSubscriptionRepo, createUsageCounterRepo } from "@/shared/lib/db";
-import { getDb } from "@/shared/lib/db/pg";
+import type { TailorRunEvent, TailoringRunInput, TailoringRunResult } from "@/features/run-tailoring";
+import {
+  createJobDescriptionRepo,
+  createSubscriptionRepo,
+  createTailoringRepo,
+  createUsageCounterRepo,
+  type BulletInput,
+  type ChecklistItemInput,
+  type CompletePayload,
+} from "@/shared/lib/db";
+import { getDb, withTransaction } from "@/shared/lib/db/pg";
 import { resolveLlmProvider } from "@/shared/lib/llm";
 import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
+import { extractJobTitle } from "@/shared/lib/scoring";
+
+/**
+ * Map a streamed tailoring result to the repo's completion payload
+ * (persist-tailoring-lifecycle). Same mapping as /api/tailor/generate.
+ */
+function toCompletePayload(result: TailoringRunResult): CompletePayload {
+  const checklist: ChecklistItemInput[] = result.checklist.map((row) => ({
+    requirement: row.requirement.text,
+    importance: row.requirement.importance === "must-have" ? "must" : "nice",
+    status: row.item.status,
+    rationale: row.item.rationale,
+  }));
+  const bullets: BulletInput[] = result.bullets.map((bullet) => ({
+    text: bullet.text,
+    grounding: bullet.grounding === "grounded" ? "met" : "overclaim",
+    included: bullet.includedInExport,
+  }));
+  return { matchScore: result.matchScore, checklist, bullets };
+}
 
 export const runtime = "nodejs";
 /**
@@ -84,13 +112,23 @@ export async function POST(request: Request): Promise<Response> {
         send({ type: "status", phase: "failed" });
       };
 
-      // Set only when a reservation was actually granted; used to roll it
-      // back if the run doesn't end in a `result` event.
+      // Set only when a reservation was actually granted. Released ONLY on a
+      // clean pre-LLM failure. Once the LLM loop starts, a non-result outcome is
+      // a mid-run abandon that CONSUMES the slot (persist-tailoring-lifecycle,
+      // FR-ONBOARD-01, NFR-COST-02) — the pending row + TTL cleanup close the
+      // probe-the-cap window, so we do not refund it.
       let releaseReservation: (() => Promise<void>) | null = null;
+      // Flips true the instant the LLM loop begins; after that, releasing the
+      // reservation is forbidden (mid-run abandon keeps the slot).
+      let llmStarted = false;
       // Set only for a paid user — their runs aren't gated by the counter,
       // but a successful one is still tallied (unconditional, non-gating
       // increment; no atomicity concerns since nothing depends on the value).
       let paidTallyUserId: string | null = null;
+      // Persisted pending-row id for ALL logged-in users (free + paid), created
+      // at run START before the LLM. null when creation was skipped (anonymous)
+      // or failed best-effort — the run continues either way (NFR-OBS-01).
+      let pendingId: string | null = null;
       try {
         // Gate before the provider is even resolved, so a throttled request
         // never touches the LLM (NFR-COST-02). Each branch reserves budget
@@ -130,14 +168,43 @@ export async function POST(request: Request): Promise<Response> {
           }
         }
 
+        // Persist a PENDING row at run START for ALL logged-in users (free +
+        // paid), before the LLM (persist-tailoring-lifecycle, FR-TAILOR-04).
+        // Best-effort: a failure is logged and the run continues with
+        // pendingId=null — persistence NEVER blocks the result stream
+        // (NFR-OBS-01). Only the JD row + non-PII job title are written; no CV
+        // text / PII reaches the pending row (NFR-SEC-01).
+        if (userId !== null) {
+          const startUserId: string = userId;
+          try {
+            pendingId = await withTransaction(async (tx) => {
+              const jd = await createJobDescriptionRepo(tx).save(startUserId, input.jdText);
+              return createTailoringRepo(tx).createPending(
+                startUserId,
+                jd.id,
+                extractJobTitle(input.jdText),
+              );
+            });
+          } catch (pendingError) {
+            console.error("[api/tailor] createPending failed", pendingError);
+            pendingId = null;
+          }
+        }
+
         // Resolve the provider inside the stream: a missing key / bad config
         // throws here, and must surface as a calm failure event on the open
         // stream — never a raw 500 or a blank body (NFR-OBS-01). No user id
         // or account metadata is ever passed to the loop (NFR-SEC-02).
         const llm = resolveLlmProvider();
         let succeeded = false;
+        let finalResult: TailoringRunResult | null = null;
+        // Past this point the LLM budget is spent — no refund on abandon.
+        llmStarted = true;
         for await (const event of runTailoringLoop({ llm }, input)) {
-          if (event.type === "result") succeeded = true;
+          if (event.type === "result") {
+            succeeded = true;
+            finalResult = event.result;
+          }
           send(event);
         }
         if (succeeded) {
@@ -151,21 +218,55 @@ export async function POST(request: Request): Promise<Response> {
               console.error("[api/tailor] paid tally increment failed", tallyError);
             }
           }
-        } else if (releaseReservation) {
-          // The reservation already charged the budget up front; a run that
-          // never produced a result must refund it (FR-TAILOR-03).
-          await releaseReservation();
+          // Move the pending row to `complete` with score + children, for ALL
+          // logged-in users (persist-tailoring-lifecycle, FR-TAILOR-04).
+          // Best-effort: runs AFTER the result streamed (NFR-OBS-01).
+          if (pendingId !== null && finalResult !== null) {
+            const completeId: string = pendingId;
+            const payload = toCompletePayload(finalResult);
+            try {
+              await withTransaction((tx) =>
+                createTailoringRepo(tx).updateStatus(completeId, "complete", payload),
+              );
+            } catch (persistError) {
+              console.error("[api/tailor] complete-status persistence failed", persistError);
+            }
+          }
+        } else {
+          // Non-result outcome. The LLM already ran (llmStarted) so this is a
+          // mid-run abandon that keeps the slot (NFR-COST-02) — no refund. Mark
+          // the pending row failed so history never lists an unfinished run.
+          if (pendingId !== null) {
+            const failedId: string = pendingId;
+            try {
+              await createTailoringRepo(getDb()).updateStatus(failedId, "failed");
+            } catch (persistError) {
+              console.error("[api/tailor] failed-status persistence failed", persistError);
+            }
+          }
         }
       } catch (error) {
         // Server-side only — the client always gets the same calm coded
         // event regardless of cause (NFR-OBS-01 protects the end user, not
         // the operator debugging a report of "it just says failed").
         console.error("[api/tailor] run failed", error);
-        if (releaseReservation) {
+        // Refund ONLY if the LLM never started (clean pre-LLM throw, e.g. a
+        // provider-resolution error). A throw after llmStarted is a mid-run
+        // abandon that consumes the slot (NFR-COST-02).
+        if (releaseReservation && !llmStarted) {
           try {
             await releaseReservation();
           } catch {
             // Best-effort refund; the calm failure event below still fires.
+          }
+        }
+        // Mark any pending row failed (best-effort, never rethrows).
+        if (pendingId !== null) {
+          const failedId: string = pendingId;
+          try {
+            await createTailoringRepo(getDb()).updateStatus(failedId, "failed");
+          } catch (persistError) {
+            console.error("[api/tailor] failed-status persistence failed", persistError);
           }
         }
         send({ type: "error", code: "failed" });

@@ -36,6 +36,18 @@ export interface SaveTailoringInput {
   readonly bullets: readonly BulletInput[];
 }
 
+/**
+ * The score + children written when a `pending` tailoring completes
+ * (persist-tailoring-lifecycle, FR-TAILOR-04). Carries only the non-PII result
+ * metadata — the JD row and job title are set on the `pending` insert
+ * (`createPending`) so the completion path never re-touches them.
+ */
+export interface CompletePayload {
+  readonly matchScore: number | null;
+  readonly checklist: readonly ChecklistItemInput[];
+  readonly bullets: readonly BulletInput[];
+}
+
 export interface TailoringSummary {
   readonly id: string;
   readonly jobTitle: string | null;
@@ -63,36 +75,85 @@ function toIso(value: string | Date): string {
  * stays transaction-agnostic so any driver can supply one.
  */
 export function createTailoringRepo(db: Queryable) {
-  return {
-    async save(input: SaveTailoringInput): Promise<TailoringRecord> {
-      const { rows } = await db.query<{ id: string; created_at: string | Date }>(
-        `INSERT INTO tailorings (user_id, cv_profile_id, job_description_id, job_title, match_score)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, created_at`,
-        [
-          input.userId,
-          input.cvProfileId,
-          input.jobDescriptionId,
-          input.jobTitle,
-          input.matchScore,
-        ],
+  const repo = {
+    /**
+     * Insert a `pending` tailoring at generation START (persist-tailoring-lifecycle,
+     * FR-TAILOR-04, NFR-OBS-01). Carries only the JD linkage + extracted job title
+     * (non-PII) + status; the score and children arrive later via `updateStatus`.
+     * No CV text or PII is written here (NFR-SEC-01). Returns the new UUID.
+     */
+    async createPending(
+      userId: string,
+      jobDescriptionId: string,
+      jobTitle: string | null,
+      cvProfileId: string | null = null,
+    ): Promise<string> {
+      const { rows } = await db.query<{ id: string }>(
+        `INSERT INTO tailorings (user_id, cv_profile_id, job_description_id, job_title, match_score, status)
+         VALUES ($1, $4, $2, $3, NULL, 'pending')
+         RETURNING id`,
+        [userId, jobDescriptionId, jobTitle, cvProfileId],
       );
-      const id = rows[0].id;
+      return rows[0].id;
+    },
 
-      for (const item of input.checklist) {
-        await db.query(
-          `INSERT INTO checklist_items (tailoring_id, requirement, importance, status, rationale)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [id, item.requirement, item.importance, item.status, item.rationale],
-        );
+    /**
+     * Move a `pending` tailoring to its terminal state (persist-tailoring-lifecycle).
+     *
+     * - `'complete'` with a `payload`: set status + match_score, then insert the
+     *   checklist items and bullets. All statements run on the passed `db`; wrap it
+     *   in a tx-scoped Queryable at the call site for all-or-nothing writes (the
+     *   port stays transaction-agnostic).
+     * - `'complete'` with no `payload`: set status only — a safe partial completion
+     *   for a run that produced no children.
+     * - `'failed'`: set status only.
+     */
+    async updateStatus(
+      id: string,
+      status: "complete" | "failed",
+      payload?: CompletePayload,
+    ): Promise<void> {
+      if (status === "complete" && payload) {
+        await db.query(`UPDATE tailorings SET status = 'complete', match_score = $2 WHERE id = $1`, [
+          id,
+          payload.matchScore,
+        ]);
+        for (const item of payload.checklist) {
+          await db.query(
+            `INSERT INTO checklist_items (tailoring_id, requirement, importance, status, rationale)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [id, item.requirement, item.importance, item.status, item.rationale],
+          );
+        }
+        for (const bullet of payload.bullets) {
+          await db.query(
+            `INSERT INTO bullets (tailoring_id, text, grounding, included)
+             VALUES ($1, $2, $3, $4)`,
+            [id, bullet.text, bullet.grounding, bullet.included],
+          );
+        }
+        return;
       }
-      for (const bullet of input.bullets) {
-        await db.query(
-          `INSERT INTO bullets (tailoring_id, text, grounding, included)
-           VALUES ($1, $2, $3, $4)`,
-          [id, bullet.text, bullet.grounding, bullet.included],
-        );
-      }
+      await db.query(`UPDATE tailorings SET status = $2 WHERE id = $1`, [id, status]);
+    },
+
+    /**
+     * Persist a completed tailoring in one call (backward-compatible wrapper over
+     * `createPending` + `updateStatus('complete', payload)`). No behavior change for
+     * existing callers: the returned record reflects the inserted row. Wrap the
+     * passed `db` in a transaction at the call site for all-or-nothing writes.
+     */
+    async save(input: SaveTailoringInput): Promise<TailoringRecord> {
+      const id = await repo.createPending(input.userId, input.jobDescriptionId, input.jobTitle, input.cvProfileId);
+      await repo.updateStatus(id, "complete", {
+        matchScore: input.matchScore,
+        checklist: input.checklist,
+        bullets: input.bullets,
+      });
+      const { rows } = await db.query<{ created_at: string | Date }>(
+        `SELECT created_at FROM tailorings WHERE id = $1`,
+        [id],
+      );
 
       return {
         id,
@@ -107,7 +168,11 @@ export function createTailoringRepo(db: Queryable) {
       };
     },
 
-    /** History list for a user — summaries only, newest first (FR-HISTORY-01). */
+    /**
+     * History list for a user — summaries only, newest first (FR-HISTORY-01).
+     * Only `complete` tailorings appear; `pending`/`failed` rows are lifecycle
+     * bookkeeping and are filtered out (persist-tailoring-lifecycle).
+     */
     async listByUser(userId: string): Promise<TailoringSummary[]> {
       const { rows } = await db.query<{
         id: string;
@@ -116,7 +181,7 @@ export function createTailoringRepo(db: Queryable) {
         created_at: string | Date;
       }>(
         `SELECT id, job_title, match_score, created_at
-         FROM tailorings WHERE user_id = $1 ORDER BY created_at DESC`,
+         FROM tailorings WHERE user_id = $1 AND status = 'complete' ORDER BY created_at DESC`,
         [userId],
       );
       return rows.map((r) => ({
@@ -173,6 +238,7 @@ export function createTailoringRepo(db: Queryable) {
       await db.query(`DELETE FROM tailorings WHERE id = $1`, [id]);
     },
   };
+  return repo;
 }
 
 export type TailoringRepo = ReturnType<typeof createTailoringRepo>;

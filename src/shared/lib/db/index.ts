@@ -13,11 +13,13 @@ export {
   type TailoringRecord,
   type TailoringSummary,
   type SaveTailoringInput,
+  type CompletePayload,
   type ChecklistItemInput,
   type BulletInput,
   type Importance,
   type Grounding,
 } from "./tailoring-repo";
+export { markAbandonedPending } from "./tailoring-cleanup";
 export {
   createJobDescriptionRepo,
   type JobDescriptionRepo,

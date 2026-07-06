@@ -245,6 +245,11 @@ export const en: Dictionary = {
       "Saved tailoring history is available on the Pro and Job-hunt Pass plans. The free plan shows only your current result.",
     lockedCta: "Upgrade to Pro",
     loadError: "Could not load your history. Please try again later.",
+    tailoringStatus: {
+      pending: "In progress",
+      complete: "Complete",
+      failed: "Did not finish",
+    },
   },
   legal: {
     draftNote: "Draft: this copy is pending legal-counsel sign-off and is not final.",

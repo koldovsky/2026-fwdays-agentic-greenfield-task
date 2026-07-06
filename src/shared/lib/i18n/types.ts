@@ -343,6 +343,16 @@ export interface Dictionary {
     readonly lockedCta: string;
     /** Calm failure copy (NFR-OBS-01). */
     readonly loadError: string;
+    /**
+     * Lifecycle status labels for a stored tailoring (persist-tailoring-lifecycle):
+     * shown if the history view surfaces a run's `pending` / `complete` / `failed`
+     * state. Ukrainian-first, no emoji / exclamation (NFR-I18N-01, BC-BRAND-01).
+     */
+    readonly tailoringStatus: {
+      readonly pending: string;
+      readonly complete: string;
+      readonly failed: string;
+    };
   };
   /** Legal pages (add-legal-pages): Privacy Policy + public offer, BC-PRIVACY-01/02, NFR-GDPR-01/02. */
   readonly legal: {

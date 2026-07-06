@@ -3,10 +3,22 @@
 > Live handoff between agent sessions. Read first, update before finishing.
 > Keep short, overwrite stale content, don't append endlessly.
 
-**Updated:** 2026-07-05
+**Updated:** 2026-07-06
 
 ## Last action
 
+- **T1 DONE + gate green (2026-07-06, ultracode).** `persist-tailoring-lifecycle`: migration 0005
+  (status col pending|complete|failed, CHECK, back-fill existing→complete, auto-registered by the
+  dir-scanning runner); repo `createPending`+`updateStatus`(+`cvProfileId` threaded)+`save` delegates
+  +`listByUser` filters status='complete'; `tailoring-cleanup.ts markAbandonedPending` (pure over
+  Queryable); BOTH gen routes persist a PENDING row at START for ALL logged-in users (best-effort,
+  never blocks stream), update on result/failure; counter reserved before LLM, released only on clean
+  pre-LLM failure (mid-run abandon keeps slot); read routes drop paid gate (auth-only, IDOR 404),
+  `tailoringStatus` i18n (ua+en). Maker(opus)→test-author(sonnet)→verifier+checker(opus) all separate
+  contexts. Checker ship, 0 blockers; 1 major fixed (cvProfileId drop); 7 stale old-contract tests
+  reconciled by a fresh test-author (none deleted). Gate: lint + build + **111 files / 730 tests green.**
+  Spec tasks ticked except 8.4 (manual dev trace) + 9.2 (openspec archive — CLI unavailable here).
+  **Next: T3 (harden-account-export-ux).**
 - **T6 DONE + committed (`990fb97`, 2026-07-06).** `fix-checklist-pill-i18n`: locale threaded through
   StatusPill + ChecklistRow + ChecklistPreview AND ChecklistPanel (checker caught tailor-workspace +
   history-detail still rendering UA pills once ChecklistRow gained the prop). UA default preserved.
@@ -122,7 +134,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 (in progress) → T3 → T2 → T4 → T5**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 ✅ → T3 (next) → T2 → T4 → T5**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends
@@ -196,7 +208,13 @@ Residual from prior 10-task batch: DONE; env/tooling/human items below unchanged
 3. **openspec archives (CLI not installed here):** archive in dependency order — `update-landing-flow`
    → `surface-premium-attach-landing`; plus `rework-app-header`, `add-tailoring-history`,
    `add-premium-pdf-attach`, `landing-animations`, `extract-landing-i18n`, `add-language-toggle`.
-4. **Ops (task 3):** set prod env (`CV_ENCRYPTION_KEY`, `DATABASE_URL`, `AUTH_SECRET`,
+4. **Ops (T1 cleanup sweep):** `markAbandonedPending(db, olderThanMs)` ships in
+   `shared/lib/db/tailoring-cleanup.ts` but has NO wired invoker. Wire a cron/route or run it as a
+   periodic maintenance job so abandoned `pending` rows (which consume a free user's lifetime slot,
+   intended non-refund) get swept (default TTL 30 min). Non-blocking; owner-scoped, no data risk.
+   NOTE: `GET /api/tailoring` list+detail are now open to all logged-in users (matches the locked T1
+   decision); the history PAGE still gates on `hasPaidAccess` (paywall stays at the view layer).
+5. **Ops (task 3):** set prod env (`CV_ENCRYPTION_KEY`, `DATABASE_URL`, `AUTH_SECRET`,
    `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`), run `yarn db:migrate`, redeploy.
 5. **Live honesty-eval (needs `ANTHROPIC_API_KEY`):** tasks 1 + 5 generation-prompt changes.
 

@@ -1,21 +1,24 @@
-// Shared session + paid-entitlement gate for the tailoring-history routes
-// (FR-HISTORY-01/02, FR-TAILOR-04). Not a route file (Next only treats
-// `route.ts` as an endpoint), so it is safe to co-locate here.
+// Shared session gate for the tailoring-history routes (FR-HISTORY-01/02,
+// FR-TAILOR-04). Not a route file (Next only treats `route.ts` as an endpoint),
+// so it is safe to co-locate here.
 //
-// History is a paid feature: an anonymous caller gets 401, a signed-in free
-// caller gets 402 (the client maps this to the upgrade paywall). An unreadable
-// session or subscription degrades to the stricter outcome (no history), never a
+// History read is OPEN TO ALL LOGGED-IN USERS (persist-tailoring-lifecycle): the
+// free-tier cap and the upgrade paywall live at run START and at export, not at
+// history access. An anonymous caller gets 401; owner-scoping (IDOR, NFR-SEC-02)
+// is enforced downstream in the read service (cross-user reads return 404). An
+// unreadable session degrades to the stricter outcome (unauthorized), never a
 // raw 500 (NFR-OBS-01).
 import { currentUserId } from "@/app/auth";
-import { hasPaidAccess } from "@/entities/subscription";
-import { createSubscriptionRepo } from "@/shared/lib/db";
-import { getDb } from "@/shared/lib/db/pg";
 
-export type PaidUserResult =
+export type AuthedUserResult =
   | { readonly ok: true; readonly userId: string }
-  | { readonly ok: false; readonly status: 401 | 402 };
+  | { readonly ok: false; readonly status: 401 };
 
-export async function resolvePaidUser(): Promise<PaidUserResult> {
+/**
+ * Resolve the signed-in caller for a history route. Any authenticated user is
+ * admitted; only an anonymous / unreadable session is rejected (401).
+ */
+export async function resolveAuthedUser(): Promise<AuthedUserResult> {
   let userId: string | null = null;
   try {
     userId = await currentUserId();
@@ -23,21 +26,10 @@ export async function resolvePaidUser(): Promise<PaidUserResult> {
     userId = null;
   }
   if (userId === null) return { ok: false, status: 401 };
-
-  try {
-    const subscription = await createSubscriptionRepo(getDb()).get(userId);
-    if (!hasPaidAccess(subscription, new Date().toISOString())) {
-      return { ok: false, status: 402 };
-    }
-  } catch {
-    // An unreadable subscription is treated as not-paid (no history), never a
-    // failure — the strict-degradation rule the rest of the app follows.
-    return { ok: false, status: 402 };
-  }
   return { ok: true, userId };
 }
 
-/** Map a gate rejection to its calm coded JSON body. */
-export function paidGateError(status: 401 | 402): { error: string } {
-  return { error: status === 401 ? "unauthorized" : "payment_required" };
+/** The calm coded JSON body for an unauthenticated history request. */
+export function authGateError(): { error: string } {
+  return { error: "unauthorized" };
 }

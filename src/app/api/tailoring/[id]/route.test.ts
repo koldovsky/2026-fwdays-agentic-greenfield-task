@@ -93,11 +93,17 @@ describe("GET /api/tailoring/:id", () => {
     expect(tailoringRepo.findById).not.toHaveBeenCalled();
   });
 
-  it("402s a signed-in free user", async () => {
+  // persist-tailoring-lifecycle: history is open to ALL logged-in users; the
+  // paid gate is removed. A free caller (no subscription) is admitted — they
+  // get 200 if they own the row, or 404 if the row is missing/not theirs.
+  it("admits a signed-in free user — history is auth-only, not paid-only", async () => {
     subscriptionRepo.get.mockResolvedValue(null);
-    const res = await GET(new Request("http://localhost/api/tailoring/t-1"), ctx("t-1"));
-    expect(res.status).toBe(402);
-    expect(tailoringRepo.findById).not.toHaveBeenCalled();
+    tailoringRepo.findById.mockResolvedValue(record("u-1"));
+    const res = await GET(new Request(`http://localhost/api/tailoring/${VALID_ID}`), ctx(VALID_ID));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.tailoring.id).toBe(VALID_ID);
+    expect(tailoringRepo.findById).toHaveBeenCalledWith(VALID_ID);
   });
 
   it("returns a calm coded 500 on a read error (NFR-OBS-01)", async () => {

@@ -54,18 +54,25 @@ describe("GET /api/tailoring", () => {
     expect(tailoringRepo.listByUser).not.toHaveBeenCalled();
   });
 
-  it("402s a signed-in free user (history is paid-only)", async () => {
+  // persist-tailoring-lifecycle: history is open to ALL logged-in users; the
+  // paid gate is removed. A free caller (no subscription) gets 200 + their list.
+  it("returns the free user's history summaries — history is auth-only, not paid-only", async () => {
     subscriptionRepo.get.mockResolvedValue(null);
     const res = await GET();
-    expect(res.status).toBe(402);
-    expect(await res.json()).toEqual({ error: "payment_required" });
-    expect(tailoringRepo.listByUser).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ tailorings: [SUMMARY] });
+    expect(tailoringRepo.listByUser).toHaveBeenCalledWith("u-1");
   });
 
-  it("degrades an unreadable subscription to the strict no-history gate", async () => {
+  // persist-tailoring-lifecycle: the history read path no longer consults the
+  // subscription repo at all — it is auth-only. A broken subscription lookup
+  // is irrelevant here; the read succeeds for any authenticated user regardless
+  // of subscription state.
+  it("succeeds when subscription repo is unavailable — read path is auth-only, not subscription-gated", async () => {
     subscriptionRepo.get.mockRejectedValue(new Error("db down"));
     const res = await GET();
-    expect(res.status).toBe(402);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ tailorings: [SUMMARY] });
   });
 
   it("returns a calm coded 500 on a read error (NFR-OBS-01)", async () => {

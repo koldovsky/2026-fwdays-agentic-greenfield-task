@@ -11,7 +11,7 @@ import { createTailoringRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { getHistoryItem } from "@/shared/lib/tailoring-history";
 
-import { paidGateError, resolvePaidUser } from "../paid-user";
+import { authGateError, resolveAuthedUser } from "../paid-user";
 
 export const runtime = "nodejs";
 
@@ -22,8 +22,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const gate = await resolvePaidUser();
-  if (!gate.ok) return NextResponse.json(paidGateError(gate.status), { status: gate.status });
+  const gate = await resolveAuthedUser();
+  if (!gate.ok) return NextResponse.json(authGateError(), { status: gate.status });
 
   const { id } = await params;
   // Reject a malformed id up front: querying with a non-uuid throws in Postgres
