@@ -6,9 +6,31 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-06, ~17:05 (Europe/Kyiv)
-- **Current phase:** **Slice S2 `intake` COMPLETE and ARCHIVED — next is S3
-  `dashboard`.** All 6 task sections done incl. 6.9 real-DB smoke PASSED and
+- **Date and time:** 2026-07-06, ~19:40 (Europe/Kyiv)
+- **Current phase:** **Slice S3 `dashboard` CODE-COMPLETE + REVIEW-GATED;
+  archive tail remaining.** OpenSpec change `openspec/changes/dashboard/`
+  (2 human decisions in design.md: Bot→Next ingest→SSE publisher seam;
+  lean AG-UI/SSE client, no CopilotKit). Stages A–D done red→green
+  (lib core + deleteLeadCascade; AG-UI publisher seam on the bot,
+  regression-guarded no-op; ingest/SSE-stream/delete-lead/decision-stub
+  routes; UI tokens+components/ds+SSE-client+page). **332 tests green**,
+  lint + tsc (root + apps/dashboard) clean, dashboard builds, openspec 6/6.
+  **Review-gate ran BEFORE archive** (3 reviewers, maker≠checker; guardrail
+  check PASS): 7 confirmed findings fixed test-first (`00a1fcc` — CRITICAL
+  publisher-hang; conversation-panel snapshot seeding; STATE_DELTA
+  unknown-thread guard; json-patch proto-pollution; ingest/delete input
+  validation; +DashboardApp reconnect/dedup tests), 4 deferred to S4 with
+  owner (all unreachable in S3: no live pending path), in
+  `openspec/changes/dashboard/review-findings.json` (clean:true).
+  **REMAINING before archive (Stage E + F, tasks §7–8):** Playwright stills
+  (empty + populated) + axe light+dark + a fresh vision-judge on the settled
+  populated still + recording manifest; the scripted manual real-DB smoke
+  (`scripts/qa/manual-smoke-dashboard.mjs`, drive pipeline→HttpAguiPublisher
+  →running dashboard SSE, assert receipt + DB); then `npx openspec archive
+  dashboard --yes` + post-archive gates. chrome-devtools MCP is NOT connected
+  this session → use Playwright (browsers cached; declare @playwright/test +
+  @axe-core/playwright per task 1.3). The PR demo video is the user's.
+- **Prior phase (archived):** **Slice S2 `intake` COMPLETE and ARCHIVED.** All 6 task sections done incl. 6.9 real-DB smoke PASSED and
   6.11 archive. 221 unit tests green, lint + build (tsc) clean, openspec 6/6
   strict, traceability 0 failures, trajectory 0 failures (review-findings
   clean). Live real-model 6.9 testing surfaced 3 bugs fakes could not (age
