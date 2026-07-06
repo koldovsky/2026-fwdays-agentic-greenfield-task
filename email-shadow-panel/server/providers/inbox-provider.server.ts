@@ -31,14 +31,16 @@ export interface GetInboxMessageDetailResult<TProviderState> {
 export interface InboxProvider<TProviderState> {
   readonly providerId: string;
 
-  createInbox(): Promise<CreateInboxResult<TProviderState>>;
+  createInbox(input?: { signal?: AbortSignal }): Promise<CreateInboxResult<TProviderState>>;
 
   listMessages(input: {
     providerState: TProviderState;
+    signal?: AbortSignal;
   }): Promise<ListInboxMessagesResult<TProviderState>>;
 
   getMessageDetail(input: {
     providerState: TProviderState;
     providerMessageId: string;
+    signal?: AbortSignal;
   }): Promise<GetInboxMessageDetailResult<TProviderState>>;
 }

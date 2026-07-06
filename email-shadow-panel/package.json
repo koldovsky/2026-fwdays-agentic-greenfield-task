@@ -10,13 +10,15 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc -p tsconfig.json \u0026\u0026 tsc -p tsconfig.phase0.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.phase0.json",
     "probe:emailnator": "node --experimental-transform-types ./scripts/emailnator-probe.ts",
-    "test:phase0": "node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase0/**/*.test.ts \u0026\u0026 node --experimental-transform-types ./scripts/capsule-cross-process-write.ts \u0026\u0026 node --experimental-transform-types ./scripts/capsule-cross-process-read.ts",
-    "verify:phase0": "npm run lint \u0026\u0026 npm run typecheck \u0026\u0026 npm run test:phase0 \u0026\u0026 npm run build \u0026\u0026 node --experimental-transform-types ./scripts/verify-phase0.ts",
+    "test:phase0": "node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase0/**/*.test.ts && node --experimental-transform-types ./scripts/capsule-cross-process-write.ts && node --experimental-transform-types ./scripts/capsule-cross-process-read.ts",
+    "verify:phase0": "npm run lint && npm run typecheck && npm run test:phase0 && npm run build && node --experimental-transform-types ./scripts/verify-phase0.ts",
     "test:phase1": "node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase1/**/*.test.ts",
-    "test:deterministic": "npm run test:phase0 \u0026\u0026 npm run test:phase1",
-    "verify:phase1": "npm run lint \u0026\u0026 npm run typecheck \u0026\u0026 npm run test:phase0 \u0026\u0026 npm run test:phase1 \u0026\u0026 npm run build \u0026\u0026 node --experimental-transform-types ./scripts/verify-phase1.ts"
+    "test:deterministic": "npm run test:phase0 && npm run test:phase1 && npm run test:phase2",
+    "verify:phase1": "npm run lint && npm run typecheck && npm run test:phase0 && npm run test:phase1 && npm run build && node --experimental-transform-types ./scripts/verify-phase1.ts",
+    "test:phase2": "node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase2/**/*.test.ts",
+    "verify:phase2": "npm run lint && npm run typecheck && npm run test:phase0 && npm run test:phase1 && npm run test:phase2 && npm run build && node --experimental-transform-types ./scripts/verify-phase2.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

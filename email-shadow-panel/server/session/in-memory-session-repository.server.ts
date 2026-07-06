@@ -8,6 +8,7 @@ import type { Clock } from "./clock.server.ts";
 import { systemClock } from "./clock.server.ts";
 import { DomainError } from "./errors.server.ts";
 import type {
+  ActiveSessionReservationResult,
   SessionLookupResult,
   SessionRepository,
   SessionStateUpdateResult,
@@ -26,6 +27,7 @@ export class InMemorySessionRepository implements SessionRepository {
   private readonly clock: Clock;
   private readonly sessions = new Map<string, StoredSession>();
   private readonly visitorIndex = new Map<string, Map<string, number>>();
+  private readonly visitorReservations = new Map<string, Map<string, number>>();
 
   constructor(options?: { clock?: Clock }) {
     this.clock = options?.clock ?? systemClock;
@@ -117,14 +119,7 @@ export class InMemorySessionRepository implements SessionRepository {
       return 0;
     }
 
-    const nowMs = this.clock.now().getTime();
-    for (const [capabilityTokenHash, expiresAtMs] of bucket.entries()) {
-      if (expiresAtMs <= nowMs) {
-        this.sessions.delete(capabilityTokenHash);
-        bucket.delete(capabilityTokenHash);
-      }
-    }
-
+    this.pruneVisitorSessions(parsedHash, bucket);
     if (bucket.size === 0) {
       this.visitorIndex.delete(parsedHash);
       return 0;
@@ -133,9 +128,48 @@ export class InMemorySessionRepository implements SessionRepository {
     return bucket.size;
   }
 
+  async reserveActiveSessionSlot(input: {
+    anonymousVisitorHash: string;
+    limit: number;
+    reservationId: string;
+    ttlMs: number;
+  }): Promise<ActiveSessionReservationResult> {
+    const visitorHash = anonymousVisitorHashSchema.parse(input.anonymousVisitorHash);
+    const sessionBucket = this.visitorIndex.get(visitorHash) ?? new Map<string, number>();
+    const reservationBucket =
+      this.visitorReservations.get(visitorHash) ?? new Map<string, number>();
+    this.pruneVisitorSessions(visitorHash, sessionBucket);
+    this.pruneReservations(visitorHash, reservationBucket);
+
+    if (sessionBucket.size + reservationBucket.size >= input.limit) {
+      return { status: "limit_reached" };
+    }
+
+    reservationBucket.set(input.reservationId, this.clock.now().getTime() + input.ttlMs);
+    this.visitorReservations.set(visitorHash, reservationBucket);
+    return { status: "reserved" };
+  }
+
+  async releaseActiveSessionSlotReservation(input: {
+    anonymousVisitorHash: string;
+    reservationId: string;
+  }): Promise<void> {
+    const visitorHash = anonymousVisitorHashSchema.parse(input.anonymousVisitorHash);
+    const bucket = this.visitorReservations.get(visitorHash);
+    if (!bucket) {
+      return;
+    }
+
+    bucket.delete(input.reservationId);
+    if (bucket.size === 0) {
+      this.visitorReservations.delete(visitorHash);
+    }
+  }
+
   debugSnapshot(): {
     sessions: PersistedAnonymousSession[];
     visitorIndex: Array<{ anonymousVisitorHash: string; capabilityTokenHashes: string[] }>;
+    reservations: Array<{ anonymousVisitorHash: string; reservationIds: string[] }>;
   } {
     return {
       sessions: [...this.sessions.values()].map(({ session }) => cloneSession(session)),
@@ -143,6 +177,12 @@ export class InMemorySessionRepository implements SessionRepository {
         anonymousVisitorHash,
         capabilityTokenHashes: [...entries.keys()].sort(),
       })),
+      reservations: [...this.visitorReservations.entries()].map(
+        ([anonymousVisitorHash, entries]) => ({
+          anonymousVisitorHash,
+          reservationIds: [...entries.keys()].sort(),
+        }),
+      ),
     };
   }
 
@@ -185,6 +225,29 @@ export class InMemorySessionRepository implements SessionRepository {
     bucket.delete(capabilityTokenHash);
     if (bucket.size === 0) {
       this.visitorIndex.delete(anonymousVisitorHash);
+    }
+  }
+
+  private pruneVisitorSessions(visitorHash: string, bucket: Map<string, number>): void {
+    const nowMs = this.clock.now().getTime();
+    for (const [capabilityTokenHash, expiresAtMs] of bucket.entries()) {
+      if (expiresAtMs <= nowMs) {
+        this.sessions.delete(capabilityTokenHash);
+        bucket.delete(capabilityTokenHash);
+      }
+    }
+  }
+
+  private pruneReservations(visitorHash: string, bucket: Map<string, number>): void {
+    const nowMs = this.clock.now().getTime();
+    for (const [reservationId, expiresAtMs] of bucket.entries()) {
+      if (expiresAtMs <= nowMs) {
+        bucket.delete(reservationId);
+      }
+    }
+
+    if (bucket.size === 0) {
+      this.visitorReservations.delete(visitorHash);
     }
   }
 }

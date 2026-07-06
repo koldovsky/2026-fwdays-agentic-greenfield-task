@@ -11,6 +11,8 @@ export type SessionStateUpdateResult =
   | { status: "expired" }
   | { status: "missing" };
 
+export type ActiveSessionReservationResult = { status: "reserved" } | { status: "limit_reached" };
+
 export interface SessionRepository {
   create(session: PersistedAnonymousSession, ttlMs: number): Promise<void>;
   findByCapabilityTokenHash(capabilityTokenHash: string): Promise<SessionLookupResult>;
@@ -22,4 +24,14 @@ export interface SessionRepository {
   }): Promise<SessionStateUpdateResult>;
   deleteByCapabilityTokenHash(capabilityTokenHash: string): Promise<boolean>;
   countActiveSessionsByVisitorHash(anonymousVisitorHash: string): Promise<number>;
+  reserveActiveSessionSlot(input: {
+    anonymousVisitorHash: string;
+    limit: number;
+    reservationId: string;
+    ttlMs: number;
+  }): Promise<ActiveSessionReservationResult>;
+  releaseActiveSessionSlotReservation(input: {
+    anonymousVisitorHash: string;
+    reservationId: string;
+  }): Promise<void>;
 }

@@ -58,9 +58,9 @@ export function createEmailnatorInboxProvider(
 ): InboxProvider<EmailnatorProviderState> {
   return {
     providerId: "emailnator",
-    async createInbox() {
+    async createInbox(input) {
       try {
-        const result = await generateInboxAddress(runtime);
+        const result = await generateInboxAddress(runtime, input?.signal);
         return {
           address: result.address,
           providerState: result.state,
@@ -69,9 +69,9 @@ export function createEmailnatorInboxProvider(
         throw normalizeEmailnatorError(error);
       }
     },
-    async listMessages({ providerState }) {
+    async listMessages({ providerState, signal }) {
       try {
-        const result = await listInboxMessages(providerState, runtime);
+        const result = await listInboxMessages(providerState, runtime, signal);
         return {
           providerState: result.state,
           messages: result.messages.map((message) => ({
@@ -85,9 +85,9 @@ export function createEmailnatorInboxProvider(
         throw normalizeEmailnatorError(error);
       }
     },
-    async getMessageDetail({ providerState, providerMessageId }) {
+    async getMessageDetail({ providerState, providerMessageId, signal }) {
       try {
-        const result = await getMessageDetail(providerState, providerMessageId, runtime);
+        const result = await getMessageDetail(providerState, providerMessageId, runtime, signal);
         return {
           providerState: result.state,
           detail: result.detail,

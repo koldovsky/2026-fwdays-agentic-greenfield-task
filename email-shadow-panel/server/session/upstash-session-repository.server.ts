@@ -8,6 +8,7 @@ import type { Clock } from "./clock.server.ts";
 import { systemClock } from "./clock.server.ts";
 import { DomainError } from "./errors.server.ts";
 import type {
+  ActiveSessionReservationResult,
   SessionLookupResult,
   SessionRepository,
   SessionStateUpdateResult,
@@ -60,6 +61,27 @@ end
 return deleted
 `.trim();
 
+const RESERVE_ACTIVE_SESSION_SLOT_SCRIPT = `
+redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", ARGV[1])
+redis.call("ZREMRANGEBYSCORE", KEYS[2], "-inf", ARGV[1])
+local active = redis.call("ZCOUNT", KEYS[1], ARGV[1], "+inf")
+local reserved = redis.call("ZCOUNT", KEYS[2], ARGV[1], "+inf")
+if tonumber(active) + tonumber(reserved) >= tonumber(ARGV[2]) then
+  return cjson.encode({ status = "limit_reached" })
+end
+redis.call("ZADD", KEYS[2], ARGV[3], ARGV[4])
+redis.call("PEXPIRE", KEYS[2], ARGV[5])
+return cjson.encode({ status = "reserved" })
+`.trim();
+
+const RELEASE_ACTIVE_SESSION_SLOT_SCRIPT = `
+redis.call("ZREM", KEYS[1], ARGV[1])
+if redis.call("ZCARD", KEYS[1]) == 0 then
+  redis.call("DEL", KEYS[1])
+end
+return 1
+`.trim();
+
 function parseSession(value: string): PersistedAnonymousSession {
   try {
     return persistedAnonymousSessionSchema.parse(JSON.parse(value));
@@ -94,6 +116,13 @@ export function buildUpstashSessionKey(namespace: string, capabilityTokenHash: s
 
 export function buildUpstashVisitorKey(namespace: string, anonymousVisitorHash: string): string {
   return `${namespace}:visitors:${anonymousVisitorHash}`;
+}
+
+export function buildUpstashVisitorReservationKey(
+  namespace: string,
+  anonymousVisitorHash: string,
+): string {
+  return `${namespace}:visitor-reservations:${anonymousVisitorHash}`;
 }
 
 export class UpstashSessionRepository implements SessionRepository {
@@ -179,6 +208,13 @@ export class UpstashSessionRepository implements SessionRepository {
       ]),
     );
 
+    if ((result as { status?: string }).status === undefined) {
+      return {
+        status: "updated",
+        session: persistedAnonymousSessionSchema.parse(result),
+      };
+    }
+
     if (result.status === "updated") {
       return {
         status: "updated",
@@ -197,18 +233,21 @@ export class UpstashSessionRepository implements SessionRepository {
   }
 
   async deleteByCapabilityTokenHash(capabilityTokenHash: string): Promise<boolean> {
-    const lookup = await this.findByCapabilityTokenHash(capabilityTokenHash);
-    if (lookup.status !== "active") {
+    const parsedHash = capabilityTokenHashSchema.parse(capabilityTokenHash);
+    const sessionKey = buildUpstashSessionKey(this.namespace, parsedHash);
+    const raw = await this.client.command<string | null>(["GET", sessionKey]);
+    if (raw === null) {
       return false;
     }
 
+    const session = parseSession(raw);
     const deleted = await this.client.command<number>([
       "EVAL",
       DELETE_SESSION_SCRIPT,
       "2",
-      buildUpstashSessionKey(this.namespace, lookup.session.capabilityTokenHash),
-      buildUpstashVisitorKey(this.namespace, lookup.session.anonymousVisitorHash),
-      lookup.session.capabilityTokenHash,
+      sessionKey,
+      buildUpstashVisitorKey(this.namespace, session.anonymousVisitorHash),
+      session.capabilityTokenHash,
     ]);
 
     return Number(deleted) > 0;
@@ -225,10 +264,49 @@ export class UpstashSessionRepository implements SessionRepository {
 
     return Number(results[1] ?? 0);
   }
+
+  async reserveActiveSessionSlot(input: {
+    anonymousVisitorHash: string;
+    limit: number;
+    reservationId: string;
+    ttlMs: number;
+  }): Promise<ActiveSessionReservationResult> {
+    const visitorHash = anonymousVisitorHashSchema.parse(input.anonymousVisitorHash);
+    return parseJsonResult<ActiveSessionReservationResult>(
+      await this.client.command([
+        "EVAL",
+        RESERVE_ACTIVE_SESSION_SLOT_SCRIPT,
+        "2",
+        buildUpstashVisitorKey(this.namespace, visitorHash),
+        buildUpstashVisitorReservationKey(this.namespace, visitorHash),
+        String(this.clock.now().getTime()),
+        String(input.limit),
+        String(this.clock.now().getTime() + input.ttlMs),
+        input.reservationId,
+        String(input.ttlMs),
+      ]),
+    );
+  }
+
+  async releaseActiveSessionSlotReservation(input: {
+    anonymousVisitorHash: string;
+    reservationId: string;
+  }): Promise<void> {
+    const visitorHash = anonymousVisitorHashSchema.parse(input.anonymousVisitorHash);
+    await this.client.command([
+      "EVAL",
+      RELEASE_ACTIVE_SESSION_SLOT_SCRIPT,
+      "1",
+      buildUpstashVisitorReservationKey(this.namespace, visitorHash),
+      input.reservationId,
+    ]);
+  }
 }
 
 export const __testables = {
   CREATE_SESSION_SCRIPT,
   UPDATE_SESSION_SCRIPT,
   DELETE_SESSION_SCRIPT,
+  RESERVE_ACTIVE_SESSION_SLOT_SCRIPT,
+  RELEASE_ACTIVE_SESSION_SLOT_SCRIPT,
 };

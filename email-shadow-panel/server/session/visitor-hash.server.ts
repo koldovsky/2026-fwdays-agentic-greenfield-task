@@ -28,6 +28,7 @@ function decodeKeyMaterial(secret: string, envName: string): Buffer {
 
 export interface VisitorHashService {
   hashVisitorIdentifier(visitorIdentifier: string): string;
+  hashClientIpAddress(ipAddress: string): string;
 }
 
 export function createVisitorHashService(options: {
@@ -46,7 +47,25 @@ export function createVisitorHashService(options: {
       }
 
       return anonymousVisitorHashSchema.parse(
-        createHmac("sha256", keyMaterial).update(parsed.data, "utf8").digest("base64url"),
+        createHmac("sha256", keyMaterial)
+          .update("visitor:", "utf8")
+          .update(parsed.data, "utf8")
+          .digest("base64url"),
+      );
+    },
+    hashClientIpAddress(ipAddress: string): string {
+      const parsed = visitorIdentifierSchema.safeParse(ipAddress);
+      if (!parsed.success) {
+        throw new DomainError("CONFIGURATION_INVALID", "Client IP validation failed.", {
+          safeMessage: "The supplied client address is invalid.",
+        });
+      }
+
+      return anonymousVisitorHashSchema.parse(
+        createHmac("sha256", keyMaterial)
+          .update("client-ip:", "utf8")
+          .update(parsed.data, "utf8")
+          .digest("base64url"),
       );
     },
   };

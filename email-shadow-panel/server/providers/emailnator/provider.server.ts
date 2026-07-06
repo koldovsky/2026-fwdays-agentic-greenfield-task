@@ -201,6 +201,7 @@ async function performRequest(
     jsonBody?: Record<string, unknown>;
     timeoutMs?: number;
     maxBytes?: number;
+    signal?: AbortSignal;
   },
   runtime?: EmailnatorRuntime,
 ): Promise<{
@@ -236,6 +237,16 @@ async function performRequest(
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const externalSignal = options.signal;
+    const externalAbortListener = () => controller.abort(externalSignal?.reason);
+
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort(externalSignal.reason);
+      } else {
+        externalSignal.addEventListener("abort", externalAbortListener, { once: true });
+      }
+    }
 
     try {
       const response = await fetchImpl(url, {
@@ -289,6 +300,7 @@ async function performRequest(
       });
     } finally {
       clearTimeout(timeout);
+      externalSignal?.removeEventListener("abort", externalAbortListener);
     }
   }
 
@@ -363,6 +375,7 @@ export function createEmptyProviderState(): EmailnatorProviderState {
 export async function bootstrapProviderSession(
   inputState?: EmailnatorProviderState,
   runtime?: EmailnatorRuntime,
+  signal?: AbortSignal,
 ): Promise<EmailnatorProviderState> {
   const state = inputState ?? createEmptyProviderState();
   const result = await performRequest(
@@ -371,6 +384,7 @@ export async function bootstrapProviderSession(
     {
       accept: "text/html,application/xhtml+xml",
       method: "GET",
+      signal,
     },
     runtime,
   );
@@ -415,6 +429,7 @@ async function requestGeneratedInboxAddress(
   state: EmailnatorProviderState,
   mode: EmailnatorGenerationMode,
   runtime?: EmailnatorRuntime,
+  signal?: AbortSignal,
 ): Promise<{ address: string | null; state: EmailnatorProviderState }> {
   const result = await performRequest(
     state,
@@ -425,6 +440,7 @@ async function requestGeneratedInboxAddress(
       jsonBody: {
         email: [mode],
       },
+      signal,
     },
     runtime,
   );
@@ -455,12 +471,14 @@ async function requestGeneratedInboxAddress(
 
 export async function generateInboxAddress(
   runtime?: EmailnatorRuntime,
+  signal?: AbortSignal,
 ): Promise<GeneratedInboxResult> {
-  const bootstrapped = await bootstrapProviderSession(undefined, runtime);
+  const bootstrapped = await bootstrapProviderSession(undefined, runtime, signal);
   const primaryAttempt = await requestGeneratedInboxAddress(
     bootstrapped,
     EMAILNATOR_DEFAULT_GENERATION_MODE,
     runtime,
+    signal,
   );
 
   if (primaryAttempt.address) {
@@ -475,6 +493,7 @@ export async function generateInboxAddress(
     primaryAttempt.state,
     EMAILNATOR_FALLBACK_GENERATION_MODE,
     runtime,
+    signal,
   );
 
   if (fallbackAttempt.address) {
@@ -495,6 +514,7 @@ export async function generateInboxAddress(
 export async function listInboxMessages(
   state: EmailnatorProviderState,
   runtime?: EmailnatorRuntime,
+  signal?: AbortSignal,
 ): Promise<ListedInboxResult> {
   if (!state.address) {
     throw new EmailnatorError(
@@ -515,6 +535,7 @@ export async function listInboxMessages(
       jsonBody: {
         email: state.address,
       },
+      signal,
     },
     runtime,
   );
@@ -576,6 +597,7 @@ export async function getMessageDetail(
   state: EmailnatorProviderState,
   messageId: string,
   runtime?: EmailnatorRuntime,
+  signal?: AbortSignal,
 ): Promise<MessageDetailResult> {
   if (!state.address) {
     throw new EmailnatorError(
@@ -597,6 +619,7 @@ export async function getMessageDetail(
         email: state.address,
         messageID: messageId,
       },
+      signal,
     },
     runtime,
   );

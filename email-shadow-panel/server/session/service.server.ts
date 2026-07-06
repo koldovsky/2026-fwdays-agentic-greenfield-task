@@ -75,6 +75,17 @@ function mapLookupError(status: "missing" | "expired"): DomainError {
   });
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) {
+    return;
+  }
+
+  throw new DomainError("TIMEOUT", "The request was aborted before completion.", {
+    safeMessage: "The request timed out.",
+    cause: signal.reason,
+  });
+}
+
 export class AnonymousSessionService {
   private readonly provider: InboxProvider<AnonymousSessionState["providerState"]>;
   private readonly repository: SessionRepository;
@@ -105,7 +116,10 @@ export class AnonymousSessionService {
     this.stateSchema = options.stateSchema ?? anonymousSessionStateSchema;
   }
 
-  async createSession(input: { visitorIdentifier: string }): Promise<CreateAnonymousSessionResult> {
+  async createSession(input: {
+    visitorIdentifier: string;
+    signal?: AbortSignal;
+  }): Promise<CreateAnonymousSessionResult> {
     const parsed = createAnonymousSessionInputSchema.parse(input);
     const now = this.clock.now();
     const visitorHash = this.visitorHashService.hashVisitorIdentifier(parsed.visitorIdentifier);
@@ -113,7 +127,9 @@ export class AnonymousSessionService {
     const capabilityTokenHash = validateAndHashCapabilityToken(capabilityToken);
 
     try {
-      const createdInbox = await this.provider.createInbox();
+      throwIfAborted(input.signal);
+      const createdInbox = await this.provider.createInbox({ signal: input.signal });
+      throwIfAborted(input.signal);
       const state = createEmptyAnonymousSessionState(
         emailnatorProviderStateSchema.parse(createdInbox.providerState),
       );
@@ -146,7 +162,10 @@ export class AnonymousSessionService {
     }
   }
 
-  async listMessages(capabilityToken: string): Promise<ListSessionMessagesResult> {
+  async listMessages(
+    capabilityToken: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ListSessionMessagesResult> {
     const capabilityTokenHash = validateAndHashCapabilityToken(capabilityToken);
     const lookup = await this.repository.findByCapabilityTokenHash(capabilityTokenHash);
     if (lookup.status !== "active") {
@@ -157,9 +176,12 @@ export class AnonymousSessionService {
       this.encryption.decrypt(lookup.session.encryptedSessionState, this.stateSchema),
     );
 
+    throwIfAborted(options?.signal);
     const listed = await this.provider.listMessages({
       providerState: decryptedState.providerState,
+      signal: options?.signal,
     });
+    throwIfAborted(options?.signal);
     const reconciled = reconcileMessageReferences(
       decryptedState.messageReferenceState,
       listed.messages,
@@ -202,6 +224,7 @@ export class AnonymousSessionService {
   async getMessageDetail(
     capabilityToken: string,
     messageReference: string,
+    options?: { signal?: AbortSignal },
   ): Promise<GetSessionMessageDetailResult> {
     const capabilityTokenHash = validateAndHashCapabilityToken(capabilityToken);
     const lookup = await this.repository.findByCapabilityTokenHash(capabilityTokenHash);
@@ -216,10 +239,14 @@ export class AnonymousSessionService {
       decryptedState.messageReferenceState,
       messageReference,
     );
+
+    throwIfAborted(options?.signal);
     const detail = await this.provider.getMessageDetail({
       providerState: decryptedState.providerState,
       providerMessageId,
+      signal: options?.signal,
     });
+    throwIfAborted(options?.signal);
     const nextState = this.stateSchema.parse({
       ...decryptedState,
       providerState: emailnatorProviderStateSchema.parse(detail.providerState),

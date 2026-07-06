@@ -164,3 +164,74 @@ Selected tools for Phases 0 and 1:
 - No separate Phase 1 checker was used.
 - CodeRabbit remains the final broad PR checker.
 - No auto-commit occurred.
+
+### Phase 2 - Public API and abuse protection
+
+- Status: implemented and locally verified for deterministic review.
+- Actor: maker Codex.
+- Context and specification files used:
+  - `../AGENTS.md`
+  - `AGENTS.md`
+  - `docs/specs/001-mvp-specification.md`
+  - `docs/specs/002-architecture.md`
+  - `docs/adr/001-vercel-http-adapter.md`
+  - `docs/adr/002-anonymous-session-persistence.md`
+  - `docs/tasks/phase-1-production-provider-session-core.md`
+  - `docs/verification/phase-1.md`
+  - `docs/agentic-process.md`
+  - `.env.example`
+  - `package.json`
+  - `api/*`
+  - `server/providers/*`
+  - `server/session/*`
+  - `tests/phase0/*`
+  - `tests/phase1/*`
+- Principal implementation decisions:
+  - added a public transport layer under `server/api/` with stable public success and error contracts;
+  - accepted bearer capabilities only through `Authorization: Bearer` and rejected malformed, duplicated, query-string, and oversized variants;
+  - implemented a server-generated anonymous visitor cookie with rotation for malformed values and immediate keyed visitor hashing;
+  - extracted the client IP from the trusted forwarded boundary and hashed it immediately with domain separation;
+  - introduced deterministic fixed-window rate limiters, repository-backed active-slot reservations, and per-capability operation locks;
+  - threaded abort signals through the session service and provider boundary so timeouts cancel provider work and avoid late state writes;
+  - added a provider kill switch, stable error mapping, and minimal redacted diagnostics;
+  - kept the frontend unmodified and unconnected to the new API in this phase.
+- Deterministic checks run by Codex:
+  - `npm run lint`: PASS with the same 6 pre-existing frontend warnings
+  - `npm run typecheck`: PASS
+  - `npm run test:phase0`: PASS
+  - `npm run test:phase1`: PASS
+  - `npm run test:phase2`: PASS
+  - `node --experimental-transform-types ./scripts/verify-phase2.ts`: PASS
+  - `npm run verify:phase2`: FAIL only at `npm run build` in the managed environment after lint, typecheck, Phase 0 tests, Phase 1 tests, and Phase 2 tests had already passed
+  - `npm run build`: FAIL in the managed environment with the known Vite or Tailwind native-module and `spawn EPERM` issue
+- Environment-specific failures separated from implementation defects:
+  - the managed-environment build failure was recorded separately because all deterministic lint, typecheck, Phase 0, Phase 1, and Phase 2 checks passed before build execution stopped;
+  - no live Upstash, live Emailnator-through-service, or Vercel action was attempted in this phase.
+- Documentation changes:
+  - added `docs/tasks/phase-2-public-api-abuse-protection.md`
+  - added `docs/verification/phase-2.md`
+  - added `docs/adr/003-public-api-abuse-controls.md`
+  - updated `docs/specs/002-architecture.md`
+  - updated `.env.example`
+  - updated `package.json`
+  - updated this process record
+- Network and infrastructure boundary:
+  - no real Emailnator requests were made by Codex for Phase 2;
+  - no real Upstash connection was made;
+  - no Vercel deployment was performed.
+- Checker behavior:
+  - no separate checker artifact was created because the user explicitly requested a maker-only consolidated pass for this phase;
+  - CodeRabbit remains the final broad PR checker after a later push.
+- Commit behavior:
+  - no automatic commit or push was performed.
+
+### Phase 2 - Final documentation closure
+
+- Maker: Codex.
+- Human actor: final local verification and diff review.
+- One consolidated implementation pass was used.
+- All deterministic tests and builds passed locally.
+- The earlier managed-environment build limitation was separated from implementation defects.
+- No separate Phase 2 checker was used.
+- CodeRabbit remains the final broad PR checker.
+- No auto-commit occurred.
