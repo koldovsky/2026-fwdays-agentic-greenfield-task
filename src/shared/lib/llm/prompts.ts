@@ -7,6 +7,7 @@ import type {
   CareerStage,
   ConfirmedAnswerEvidence,
   CoverLetterInput,
+  CoverLetterVerificationInput,
   DocumentAttachment,
   ExtractionInput,
   GenerationInput,
@@ -282,6 +283,63 @@ export function buildCoverLetterPrompt(input: CoverLetterInput): Prompt {
 
   const messages: readonly PromptMessage[] = [
     { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ];
+
+  return { messages };
+}
+
+// --- Cover-letter VERIFICATION pass (second, isolated) --------------------
+
+/**
+ * Verification system prompt (T5 §3.2). The letter's grounding pass: the SAME
+ * strict, no-fabrication stance as bullet grounding, but for prose. It receives
+ * ONLY the finished paragraphs and the candidate's own evidence — never the JD,
+ * requirements, or career stage — and judges whether every FACTUAL claim traces
+ * to that evidence. Neutral connective/politeness prose that asserts no fact is
+ * "supported". Any unverifiable factual claim makes the whole letter unsupported
+ * so the caller falls back to the deterministic reflow (BC-HONESTY-01/02).
+ */
+export const COVER_LETTER_VERIFICATION_SYSTEM_PROMPT = [
+  "Ти — суворий перевіряч супровідного листа кандидата.",
+  "Тобі дано абзаци листа та ЄДИНІ джерела фактів: речення з резюме кандидата",
+  "і підтверджені відповіді. Іншого контексту немає і бути не може.",
+  "Перевір КОЖЕН фактичний підтвердний факт у листі: навички, цифри, роки досвіду,",
+  "назви компаній, посади, досягнення. Він має однозначно спиратися на джерела.",
+  "Ввічливі чи звʼязні фрази без фактів (привітання, готовність обговорити) —",
+  "вважаються підтвердженими.",
+  "Якщо будь-який фактичний факт не підтверджується джерелами — лист НЕ підтверджено.",
+  "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
+  '{"supported": true|false, "unsupportedClaims": ["<дослівна цитата непідтвердженого факту>", "..."]}',
+].join("\n");
+
+/**
+ * Build the cover-letter verification prompt (pass 2, T5 §3.2). Mirrors
+ * buildGroundingPrompt's isolation: ONLY the generated paragraphs, the CV
+ * sentences, and the confirmed answers — no requirements, JD, or career stage.
+ * The confirmed-answers block stays empty when absent so the baseline output is
+ * byte-stable.
+ */
+export function buildCoverLetterVerificationPrompt(
+  input: CoverLetterVerificationInput,
+): Prompt {
+  const { paragraphs, cvSentences, confirmedAnswers } = input;
+
+  const userContent = [
+    "## Речення з резюме кандидата (єдине джерело істини)",
+    formatSentences(cvSentences),
+    ...formatConfirmedAnswersBlock(confirmedAnswers),
+    "",
+    "## Абзаци супровідного листа для перевірки",
+    paragraphs.length > 0
+      ? paragraphs.map((p, i) => `${i + 1}. ${p}`).join("\n")
+      : "(абзаців немає)",
+    "",
+    "Познач, чи кожен фактичний факт листа підтверджено джерелами вище.",
+  ].join("\n");
+
+  const messages: readonly PromptMessage[] = [
+    { role: "system", content: COVER_LETTER_VERIFICATION_SYSTEM_PROMPT },
     { role: "user", content: userContent },
   ];
 

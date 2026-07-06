@@ -3,11 +3,13 @@
 // isolated in the adapters (claude.ts, chatgpt.ts) behind the port.
 export {
   COVER_LETTER_SYSTEM_PROMPT,
+  COVER_LETTER_VERIFICATION_SYSTEM_PROMPT,
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
   buildCoverLetterPrompt,
+  buildCoverLetterVerificationPrompt,
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
@@ -15,6 +17,7 @@ export {
 } from "./prompts";
 export {
   parseCoverLetterResponse,
+  parseCoverLetterVerdict,
   parseExtractionResponse,
   parseGenerationResponse,
   parseGroundingResponse,
@@ -29,6 +32,8 @@ export type {
   ConfirmedAnswerEvidence,
   CoverLetterInput,
   CoverLetterOutput,
+  CoverLetterVerdict,
+  CoverLetterVerificationInput,
   DocumentAttachment,
   ExtractionInput,
   ExtractionResult,

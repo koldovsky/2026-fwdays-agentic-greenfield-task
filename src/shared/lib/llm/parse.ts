@@ -5,6 +5,7 @@
 import type {
   CareerStage,
   CoverLetterOutput,
+  CoverLetterVerdict,
   ExtractionResult,
   GeneratedBullet,
   GenerationResult,
@@ -183,6 +184,37 @@ export function parseCoverLetterResponse(
   if (paragraphs.length === 0) return fail("Список paragraphs порожній");
 
   return ok({ paragraphs });
+}
+
+/**
+ * Parse the cover-letter VERIFICATION verdict (T5 §3.2). Requires a boolean
+ * `supported`; a missing/non-boolean value is a typed error so the caller falls
+ * back to the deterministic letter (never trusts an unparseable verdict). A
+ * "supported: true" that still lists `unsupportedClaims` is treated as
+ * UNSUPPORTED — a contradiction must never let an overclaim through
+ * (BC-HONESTY-01, fail-honest).
+ */
+export function parseCoverLetterVerdict(
+  raw: string,
+): ParseResult<CoverLetterVerdict> {
+  const root = extractJson(raw);
+  if (root === undefined) return fail("Відповідь не містить валідного JSON");
+  if (!isObject(root)) return fail("Очікувався JSON-обʼєкт з полем supported");
+
+  const supportedRaw = root["supported"];
+  if (typeof supportedRaw !== "boolean") {
+    return fail("Поле supported відсутнє або не булеве");
+  }
+
+  const claimsRaw = root["unsupportedClaims"];
+  const unsupportedClaims = Array.isArray(claimsRaw)
+    ? claimsRaw
+        .map((c) => asString(c)?.trim())
+        .filter((c): c is string => Boolean(c))
+    : [];
+
+  const supported = supportedRaw && unsupportedClaims.length === 0;
+  return ok({ supported, unsupportedClaims });
 }
 
 // --- Pass 1: generation response ------------------------------------------

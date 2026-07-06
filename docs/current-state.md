@@ -7,7 +7,14 @@
 
 ## Last action
 
-- **T5 STARTED — `improve-tailoring-quality` Group 1 slice A DONE + reviewed green (2026-07-06).**
+- **T5 Group 1 slice A committed `b5b0c90`; starting Group 3 (LLM cover letter) — `ANTHROPIC_API_KEY`
+  now available in `.env` (2026-07-06).** Key unblocks live honesty-eval. Taking Group 3 before Group 2
+  (flagged judge, off-by-default = lower impact) because the natural senior cover letter is a direct
+  user ask and now fully evaluable. Mapping the existing cover-letter + two-pass LLM path with a
+  read-only investigator before implementing (reuse `parseCoverLetterResponse`/`CoverLetterOutput` +
+  any dead letter prompt). Plan lands after the map. NOTE: `.env` is secret — do not read/print it.
+
+- **T5 Group 1 slice A DONE + reviewed green (2026-07-06).**
   verifier PASS; checker fix-first: **1 blocker FIXED** — short aliases were substring-matched so
   `ts`→"results"/`aws`→"laws"/`ui`→"build" fabricated `met` (score inflation = honesty failure). Fix:
   alias matching is now WORD-BOUNDARY (`containsToken`), keyword itself still substring (backward-compat);

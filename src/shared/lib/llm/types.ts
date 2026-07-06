@@ -110,6 +110,31 @@ export interface CoverLetterOutput {
   readonly paragraphs: readonly string[];
 }
 
+/**
+ * Input to the cover-letter VERIFICATION pass (T5 §3.2). A second, isolated
+ * check that mirrors the two-pass bullet model: it receives ONLY the generated
+ * paragraphs, the candidate's CV sentences, and the confirmed wizard answers —
+ * NEVER the requirements, JD, or career stage. The isolation widens, never
+ * loosens, so nothing that could seed a new claim reaches the verifier
+ * (BC-HONESTY-01/03).
+ */
+export interface CoverLetterVerificationInput {
+  readonly paragraphs: readonly string[];
+  readonly cvSentences: readonly string[];
+  readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
+}
+
+/**
+ * The verification verdict. `supported` is true only when every factual claim in
+ * the letter traces to a CV sentence or a confirmed answer; any unverifiable
+ * claim makes it false and is listed in `unsupportedClaims`, so the caller
+ * rejects the letter and falls back to the deterministic reflow (T5 §3.3).
+ */
+export interface CoverLetterVerdict {
+  readonly supported: boolean;
+  readonly unsupportedClaims: readonly string[];
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {
