@@ -181,14 +181,16 @@ Unexpected protocol messages shall be logged.
 ## Deployment
 
 **FR-DEPLOY-01**\
-A single Bash script shall build both packages (`npm install`, back-end
-`tsc`, and front-end Vite build) so the compiled SPA is on disk before
-the service starts.
+The deploy story shall ship a single build script (`scripts/build.sh`,
+covered by `FR-BUILD-01`) whose output — the compiled back-end and
+front-end `dist/` directories — is the artefact the install script
+consumes. Build and install are separate scripts; running the install
+script does not compile anything.
 
 **FR-DEPLOY-02**\
-The script shall install a systemd service unit that runs the back-end
-(`node back-end/dist/index.js`) with the production environment the
-back-end expects (`PORT=80`, `NODE_ENV=production`, `SERVE_SPA=1`).
+The install script shall install a systemd service unit that runs the
+back-end (`node back-end/dist/index.js`) with the production environment
+the back-end expects (`PORT=80`, `NODE_ENV=production`, `SERVE_SPA=1`).
 
 **FR-DEPLOY-03**\
 The installed service shall start automatically on boot
@@ -196,9 +198,31 @@ The installed service shall start automatically on boot
 failure.
 
 **FR-DEPLOY-04**\
-The script shall be idempotent: re-running it on an already-installed
-host shall update the build, reload the systemd unit only if it changed,
+The install script shall be idempotent: re-running it on an
+already-installed host shall reload the systemd unit only if it changed
 and restart the service without leaving orphan state.
+
+**FR-DEPLOY-05**\
+The install script shall refuse to run — with a clear error naming the
+missing path and pointing at `scripts/build.sh` — if either
+`back-end/dist/index.js` or `front-end/dist/index.html` is not present
+on disk. No systemd state shall be modified on this failure path.
+
+**FR-DEPLOY-06**\
+The install script shall install production-only runtime dependencies
+for the back-end via `npm ci --omit=dev` inside `back-end/`, so the dev
+toolchain (TypeScript, Vite, vitest, bats) is not required on the target
+host.
+
+## Build
+
+**FR-BUILD-01**\
+A single Bash script (`scripts/build.sh`) shall build both packages
+(`npm run install:all`, back-end `tsc`, and front-end Vite build) and
+produce `back-end/dist/index.js` and `front-end/dist/index.html`. The
+build script shall not require root, shall not touch systemd state, and
+shall be runnable on macOS or Linux — build artefacts are pure JS and
+portable across architectures.
 
 ------------------------------------------------------------------------
 

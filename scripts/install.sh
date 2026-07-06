@@ -76,21 +76,25 @@ resolve_paths() {
   log "NODE_BIN=$NODE_BIN"
 }
 
-install_deps() {
-  log "installing dependencies (npm run install:all)"
-  npm --prefix "$REPO_ROOT" run install:all
+verify_artifacts() {
+  local be="$REPO_ROOT/back-end/dist/index.js"
+  local fe="$REPO_ROOT/front-end/dist/index.html"
+  local missing=()
+  [[ -s "$be" ]] || missing+=("$be")
+  [[ -s "$fe" ]] || missing+=("$fe")
+  if (( ${#missing[@]} > 0 )); then
+    for m in "${missing[@]}"; do
+      printf '[install] ERROR: missing artefact: %s\n' "$m" >&2
+    done
+    die "run ./scripts/build.sh from a machine with node >= 20 (locally, or rsync the dists in from a dev laptop) and try again"
+  fi
+  log "artefacts present: $be"
+  log "artefacts present: $fe"
 }
 
-build() {
-  log "building back-end (tsc)"
-  npm --prefix "$REPO_ROOT" run back:build
-  log "building front-end (vite)"
-  npm --prefix "$REPO_ROOT" run front:build
-
-  [[ -f "$REPO_ROOT/back-end/dist/index.js" ]] \
-    || die "back-end build did not produce back-end/dist/index.js"
-  [[ -f "$REPO_ROOT/front-end/dist/index.html" ]] \
-    || die "front-end build did not produce front-end/dist/index.html"
+install_prod_deps() {
+  log "installing production runtime deps (npm ci --omit=dev in back-end/)"
+  npm ci --omit=dev --prefix "$REPO_ROOT/back-end"
 }
 
 grant_port_capability() {
@@ -209,12 +213,15 @@ parse_args() {
         cat <<'HELP'
 Usage: install.sh [--dry-run]
 
-Builds both packages, grants cap_net_bind_service to node, installs and
-enables the mytv systemd service. Idempotent — re-run to update.
+Verifies back-end/dist/index.js + front-end/dist/index.html are present
+(build first via ./scripts/build.sh), installs production-only runtime
+deps via `npm ci --omit=dev`, grants cap_net_bind_service to node,
+installs and enables the mytv systemd service. Idempotent — re-run to
+update. Build is a separate step; see ./scripts/build.sh.
 
   --dry-run   Print mutating commands (useradd, setcap, install into /etc,
               systemctl) without executing them. Non-mutating steps
-              (npm install, build) still run.
+              (verify_artifacts, npm ci) still run.
 HELP
         exit 0
         ;;
@@ -226,12 +233,14 @@ HELP
 main() {
   parse_args "$@"
   if (( DRY_RUN )); then
-    log "[DRY-RUN] no mutating command will be executed"
+    log "[DRY-RUN] no systemd/setcap/useradd command will be executed"
+    log "[DRY-RUN] verify_artifacts and npm ci --omit=dev still run (non-mutating wrt systemd)"
+    log "[DRY-RUN] build is a separate step — run ./scripts/build.sh first if dists are missing"
   fi
   check_prereqs
   resolve_paths
-  install_deps
-  build
+  verify_artifacts
+  install_prod_deps
   grant_port_capability
   create_service_user
   write_unit

@@ -32,25 +32,55 @@ Copy `.env.example` to `.env` to override locally; `tsx`/`node` do not auto-load
 
 ## Production install (Orange Pi)
 
-The supported deploy path for the Orange Pi (or any systemd-based Linux host) is a single script that builds both packages, grants port-80 capability, writes a systemd unit, and starts the service:
+Two steps. Build is deliberately separate from install so the target device does not need the dev toolchain (TypeScript, Vite, vitest, bats, eslint) — only `node >= 20`, `npm`, and `systemctl`.
+
+**Step 1 — build both packages.** No root, runnable on any machine with `node >= 20`:
+
+```bash
+./scripts/build.sh
+```
+
+Produces `back-end/dist/index.js` and `front-end/dist/index.html`.
+
+**Step 2 — install the systemd service.** On the target Pi, as root:
 
 ```bash
 sudo ./scripts/install.sh
 ```
 
-The script is idempotent — re-running it is also the "update after `git pull`" path. Preview what it will do without touching systemd state:
+`install.sh` verifies the two dists are present (fails loud pointing at `build.sh` if not), runs `npm ci --omit=dev` inside `back-end/`, grants port-80 capability, installs the systemd unit, and starts the service. It is idempotent — re-running is also the "update after `git pull` + rebuild" path. Preview what it will do without touching systemd state:
 
 ```bash
 ./scripts/install.sh --dry-run
 ```
 
-Rollback (stops + disables + removes the unit; keeps the `mytv` user and `/var/lib/mytv/` so a re-install preserves stored pairing tokens):
+### Build once, ship dist (CI / dev-laptop workflow)
+
+Build on any machine, then push only what `install.sh` consumes to the Pi:
+
+```bash
+./scripts/build.sh
+rsync -av --relative \
+  back-end/dist back-end/package.json back-end/package-lock.json \
+  front-end/dist \
+  scripts/ \
+  mytv-op@pi.local:mytv/
+
+ssh mytv-op@pi.local
+sudo ./mytv/scripts/install.sh
+```
+
+The Pi never sees the source or the dev toolchain.
+
+### Rollback
+
+Stops + disables + removes the unit; keeps the `mytv` user and `/var/lib/mytv/` so a re-install preserves stored pairing tokens:
 
 ```bash
 sudo ./scripts/uninstall.sh
 ```
 
-See `openspec/changes/archive/*-systemd-installer/design.md` for the full decision set (service-user posture, `Restart=on-failure`, `network-online.target` ordering).
+See `openspec/changes/archive/*-systemd-installer/design.md` and `openspec/changes/archive/*-build-install-split/design.md` for the full decision set (service-user posture, `Restart=on-failure`, `network-online.target` ordering, build/install seam).
 
 ## Running on the default port 80 (Linux)
 

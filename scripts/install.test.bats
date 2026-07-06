@@ -132,3 +132,113 @@ source_install() {
   [[ "$output" == *"[DRY-RUN]"* ]]
   [[ "$output" == *"systemctl daemon-reload"* ]]
 }
+
+# --- C12 build-install-split: build.sh prereq gate + install.sh dist gate ---
+
+# 5.1: build.sh refuses when node is not on PATH.
+@test "build.sh refuses when node is not on PATH" {
+  local BUILD_SH="$SCRIPT_DIR/build.sh"
+  [ -f "$BUILD_SH" ] || { echo "build.sh missing at $BUILD_SH"; return 1; }
+
+  # Isolate PATH to a shim dir that has bash and mktemp but NO node.
+  local realbash realmktemp
+  realbash="$(command -v bash)"
+  realmktemp="$(command -v mktemp)"
+  local shim="$TMPDIR_TEST/bin-nonode"
+  mkdir -p "$shim"
+  ln -s "$realbash" "$shim/bash"
+  [ -n "$realmktemp" ] && ln -s "$realmktemp" "$shim/mktemp"
+
+  run env -i HOME="$HOME" PATH="$shim" bash "$BUILD_SH"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"node"* ]]
+}
+
+# 5.2: install.sh refuses when back-end/dist/index.js is absent.
+@test "install.sh verify_artifacts refuses when back-end dist is absent" {
+  source_install
+  # Point REPO_ROOT at a synthetic tree with only the front-end dist present.
+  REPO_ROOT="$TMPDIR_TEST/repo"
+  mkdir -p "$REPO_ROOT/back-end/dist" "$REPO_ROOT/front-end/dist"
+  # Front-end dist only.
+  echo "<!doctype html>" > "$REPO_ROOT/front-end/dist/index.html"
+
+  run verify_artifacts
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"back-end/dist/index.js"* ]]
+  [[ "$output" == *"build.sh"* ]]
+}
+
+# 5.3: install.sh refuses when front-end/dist/index.html is absent.
+@test "install.sh verify_artifacts refuses when front-end dist is absent" {
+  source_install
+  REPO_ROOT="$TMPDIR_TEST/repo"
+  mkdir -p "$REPO_ROOT/back-end/dist" "$REPO_ROOT/front-end/dist"
+  # Back-end dist only.
+  echo "console.log('boot')" > "$REPO_ROOT/back-end/dist/index.js"
+
+  run verify_artifacts
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"front-end/dist/index.html"* ]]
+  [[ "$output" == *"build.sh"* ]]
+}
+
+# 5.3b: install.sh verify_artifacts passes when both dists are present.
+@test "install.sh verify_artifacts accepts when both dists are present" {
+  source_install
+  REPO_ROOT="$TMPDIR_TEST/repo"
+  mkdir -p "$REPO_ROOT/back-end/dist" "$REPO_ROOT/front-end/dist"
+  echo "console.log('boot')" > "$REPO_ROOT/back-end/dist/index.js"
+  echo "<!doctype html>" > "$REPO_ROOT/front-end/dist/index.html"
+
+  run verify_artifacts
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"artefacts present"* ]]
+}
+
+# 5.4: build.sh error message names the artefact path on tsc/vite failure.
+@test "build.sh back:build failure names back-end/dist/index.js" {
+  local BUILD_SH="$SCRIPT_DIR/build.sh"
+  # Fake npm that only fails on `run back:build`; succeeds otherwise so
+  # install_deps and the leading front:build pass through.
+  local shim="$TMPDIR_TEST/bin-fake-be"
+  mkdir -p "$shim"
+  cat > "$shim/npm" <<'EOF'
+#!/usr/bin/env bash
+for a in "$@"; do
+  if [[ "$a" == "back:build" ]]; then
+    echo "TS1005: fake back-end compile error" >&2
+    exit 2
+  fi
+done
+exit 0
+EOF
+  chmod +x "$shim/npm"
+
+  run env PATH="$shim:$PATH" bash "$BUILD_SH"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"back-end build failed"* ]]
+  [[ "$output" == *"back-end/dist/index.js"* ]]
+}
+
+@test "build.sh front:build failure names front-end/dist/index.html" {
+  local BUILD_SH="$SCRIPT_DIR/build.sh"
+  local shim="$TMPDIR_TEST/bin-fake-fe"
+  mkdir -p "$shim"
+  cat > "$shim/npm" <<'EOF'
+#!/usr/bin/env bash
+for a in "$@"; do
+  if [[ "$a" == "front:build" ]]; then
+    echo "Vite build failed: fake error" >&2
+    exit 2
+  fi
+done
+exit 0
+EOF
+  chmod +x "$shim/npm"
+
+  run env PATH="$shim:$PATH" bash "$BUILD_SH"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"front-end build failed"* ]]
+  [[ "$output" == *"front-end/dist/index.html"* ]]
+}

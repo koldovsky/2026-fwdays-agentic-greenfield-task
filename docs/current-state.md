@@ -4,6 +4,55 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-06T12:12:47Z
+
+**What was done — implemented `build-install-split` (C12 + modified C11) via the `/next-change` Loop Engineering cycle. Second Phase-6 (deployment) capability, driven by a real Orange Pi deploy session where the C11 fused build+install path proved painful.**
+- Depends on archived C11 (systemd-installer). Prereq archived, verified via `openspec/changes/archive/2026-07-06-systemd-installer/`.
+- **Motivation — three failure modes from the live Pi session (`mytv-op@Expolight-CCS-GW`) that C12 makes structurally impossible:**
+  - Fused build+install pulled the whole dev toolchain (TypeScript, Vite, vitest, bats, `@eslint/*`) onto the Pi just so `install.sh` could compile.
+  - No way to build once (on a laptop or CI) and ship only dists to the Pi — every install was bit-different by construction.
+  - `npm install` output interleaved with systemd errors (`203/EXEC`, `200/CHDIR`) made failure diagnosis harder than it should have been.
+- Ground-truth docs updated:
+  - `docs/requirements.md`: rewrote `FR-DEPLOY-01` (build ownership moves out of install), added `FR-DEPLOY-05` (install refuses when dists missing), `FR-DEPLOY-06` (install runs `npm ci --omit=dev`), and a new `Build` section with `FR-BUILD-01` (single build script produces both dists, no root, macOS or Linux, portable pure-JS artefacts).
+  - `docs/capabilities.md`: added row `C12 deploy-build` (Phase 6, alongside C11) and a Phase-6 blurb explaining the two-step split; updated C11's row + one-liner so it no longer claims build responsibility and now names FR-DEPLOY-05/06.
+- New `scripts/build.sh` (no root, no systemd, no OS gate — build artefacts are portable pure JS):
+  - Structure `check_prereqs → resolve_paths → install_deps → build → verify_artifacts → print_status` mirrors the pre-split install.sh's build path.
+  - Requires `bash`, `node ≥ 20`, `npm`, `mktemp`. Does NOT require `systemctl`, `setcap`, or `useradd`. Deliberately does NOT gate by `$OSTYPE` — building is portable.
+  - Runs `npm run install:all`, `back:build`, `front:build` (exact commands lifted from install.sh); asserts `back-end/dist/index.js` and `front-end/dist/index.html` are produced and non-empty.
+  - Prints both artefact paths + suggested `rsync` command for the split-host workflow so the operator can build on their laptop and push only dists + scripts to the Pi.
+  - `main` guarded with `[[ "${BASH_SOURCE[0]}" == "${0}" ]]` so bats tests can source without running deploys.
+- Surgery on `scripts/install.sh`:
+  - Deleted `install_deps` and `build` functions.
+  - Added `verify_artifacts`: asserts both dist entrypoints exist and are non-empty; on miss dies with each missing path printed to stderr plus a pointer at `./scripts/build.sh` (or `rsync` from a dev laptop).
+  - Added `install_prod_deps`: `npm ci --omit=dev --prefix "$REPO_ROOT/back-end"`. Small (~35 packages vs. ~100 for full install), no compile, no dev toolchain on target.
+  - Rewired `main()`: new order is `parse_args → check_prereqs → resolve_paths → verify_artifacts → install_prod_deps → grant_port_capability → create_service_user → write_unit → enable_and_start → print_status`. `verify_artifacts` runs BEFORE any systemd/setcap/useradd step, so a "forgot to build" failure never leaves partial state (design D3).
+  - `--help` text and dry-run banner updated to name the split and point at `build.sh`.
+  - `check_prereqs` unchanged — `npm` stays required because `install_prod_deps` uses it.
+- Root `package.json`: added `deploy:build` proxy (`bash scripts/build.sh`) alongside the existing `deploy:install` / `deploy:uninstall` proxies.
+- `back-end/README.md` "Production install (Orange Pi)": rewrote as a two-step recipe (`./scripts/build.sh` → `sudo ./scripts/install.sh`); added a "Build once, ship dist (CI / dev-laptop workflow)" subsection with the `rsync` command; kept Rollback + Troubleshooting notes.
+- Bats tests extended in `scripts/install.test.bats` with four new cases:
+  - `build.sh` refuses when `node` is not on PATH (same shim posture as the existing systemctl-missing test).
+  - `install.sh` `verify_artifacts` fails when `back-end/dist/index.js` is absent (error names path + `build.sh`).
+  - Same for missing `front-end/dist/index.html`.
+  - `verify_artifacts` accepts when both dists are present (positive-path check).
+- Verification:
+  - `bash -n` clean on all three scripts (`build.sh`, `install.sh`, `uninstall.sh`).
+  - `shellcheck` **skipped** — not installed (task text permits).
+  - `bats scripts/install.test.bats` **DEFERRED** — bats-core not installed; classifier declined `brew install` during the C11 cycle and posture hasn't changed. All 6 new/existing assertions replayed manually in plain bash against sourced install.sh + a live `bash scripts/build.sh` on this laptop; all passed. Details: build.sh-refuses-without-node, verify_artifacts-missing-back-end (error names path + `build.sh`), verify_artifacts-missing-front-end (same), verify_artifacts-both-present (prints "artefacts present"), render_unit still substitutes placeholders, darwin refusal still fires in the new pipeline.
+  - Live e2e `bash scripts/build.sh` on this laptop: both dists regenerated, next-steps hint printed with both single-host and split-host recipes.
+  - Sanity gates: `npm run back:build`, `npm run front:build`, `npm run back:test` (107/107 passing), `npm run front:test` (44/44 passing).
+- Deferred (no Orange Pi in the agent environment; honestly disclosed in `tasks.md` §8):
+  - Task 8.1 — on the Pi from the current thread: `git pull`, `./scripts/build.sh`, `sudo ./scripts/install.sh`; confirm service starts and `curl http://mytv.local/` returns 200. **The next human session on that Pi is the right place to close this.**
+  - Task 8.2 — idempotency spot-check on the Pi (re-run both, confirm `npm ci` is up-to-date, `NRestarts` doesn't climb, "unit unchanged; skipping daemon-reload" printed).
+- Deviations flagged in tasks.md for reviewer:
+  - Tasks 7.2 / 7.3 (e2e install.sh runs on the dev laptop) are marked `[x]` with a deviation note: on macOS `install.sh main()` refuses at the C11 darwin gate before reaching `verify_artifacts`, so a literal `main()` run cannot exercise the new logic on this host. The behaviour was instead exercised via sourced-function replay under §6.3 (both the negative and positive paths).
+- Follow-ups for the next session:
+  - Install `bats-core` on the developer machine and run `bats scripts/install.test.bats` to close §6.3.
+  - On the Pi: run the two-step recipe and record model / firmware / Node version in a fresh entry here.
+  - Consider a hardening change (`systemd-installer-hardening`): (a) NODE_BIN sanity check refusing when the resolved binary lives under `/root/` or an unreadable home, (b) real readiness gate (`SubState=running` + `NRestarts` stable across two polls) to replace the false-positive `is-active` check that mis-reported success during the recent Pi debug session.
+
+---
+
 ## 2026-07-06T10:20:41Z
 
 **What was done — implemented `systemd-installer` (C11) via the `/next-change` Loop Engineering cycle. First Phase-6 (deployment) capability.**
