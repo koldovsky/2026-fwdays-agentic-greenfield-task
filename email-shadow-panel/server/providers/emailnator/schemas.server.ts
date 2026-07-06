@@ -9,21 +9,45 @@ export const EMAILNATOR_DEFAULT_TIMEOUT_MS = 10_000;
 export const EMAILNATOR_MAX_RESPONSE_BYTES = 512 * 1024;
 export const PHASE0_CAPSULE_TTL_MS = 15 * 60 * 1000;
 export const PHASE0_CAPSULE_VERSION = "v1";
-export const EMAILNATOR_ALLOWED_EMAIL_OPTIONS = [
+export const EMAILNATOR_SUPPORTED_GENERATION_MODES = [
   "domain",
   "plusGmail",
   "dotGmail",
   "googleMail",
 ] as const;
+export const EMAILNATOR_DEFAULT_GENERATION_MODE = "dotGmail";
+export const EMAILNATOR_FALLBACK_GENERATION_MODE = "googleMail";
 export const KNOWN_TEST_MARKERS = ["Shadow Panel Phase 0", "482731"] as const;
 
-export const emailOptionSchema = z.enum(EMAILNATOR_ALLOWED_EMAIL_OPTIONS);
+function hasAsciiControlCharacter(value: string): boolean {
+  for (const character of value) {
+    const codePoint = character.charCodeAt(0);
+    if (codePoint <= 0x1f || codePoint === 0x7f) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export const emailOptionSchema = z.enum(EMAILNATOR_SUPPORTED_GENERATION_MODES);
+export type EmailnatorGenerationMode = z.infer<typeof emailOptionSchema>;
+
+export const phase0MessageIdSchema = z
+  .string()
+  .min(1)
+  .max(200)
+  .refine(
+    (value) => !hasAsciiControlCharacter(value),
+    "messageId must be a bounded opaque identifier without ASCII control characters.",
+  );
 
 export const emailnatorProviderStateSchema = z.object({
   version: z.literal(1),
   address: z.string().email().optional(),
   cookieJar: z.record(z.string(), z.unknown()),
   observedCookieNames: z.array(z.string()).default([]),
+  lastListedMessageIds: z.array(phase0MessageIdSchema).max(100).default([]),
   xsrfCookieName: z.string().default("XSRF-TOKEN"),
   xsrfHeaderName: z.string().default("X-XSRF-TOKEN"),
   lastBootstrapAt: z.string().datetime().optional(),
@@ -33,14 +57,14 @@ export const emailnatorProviderStateSchema = z.object({
 export type EmailnatorProviderState = z.infer<typeof emailnatorProviderStateSchema>;
 
 export const emailnatorGenerateResponseSchema = z.object({
-  email: z.union([z.string().email(), z.array(z.string().email()).min(1)]),
+  email: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
 });
 
 export const emailnatorMessageSummarySchema = z.object({
   from: z.string().min(1),
   subject: z.string().min(1),
   time: z.string().min(1),
-  messageID: z.string().min(1).max(200),
+  messageID: phase0MessageIdSchema,
 });
 
 export type EmailnatorMessageSummary = z.infer<typeof emailnatorMessageSummarySchema>;
@@ -48,12 +72,6 @@ export type EmailnatorMessageSummary = z.infer<typeof emailnatorMessageSummarySc
 export const emailnatorMessageListResponseSchema = z.object({
   messageData: z.array(emailnatorMessageSummarySchema).optional(),
 });
-
-export const phase0MessageIdSchema = z
-  .string()
-  .min(1)
-  .max(200)
-  .regex(/^[A-Za-z0-9._:-]+$/, "messageId must be a bounded opaque identifier.");
 
 export const phase0CapsuleSchema = z.string().min(24).max(4096);
 

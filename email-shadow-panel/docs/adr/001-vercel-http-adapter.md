@@ -2,79 +2,77 @@
 
 ## Status
 
-Proposed - PENDING HUMAN VERIFICATION
+Accepted for local feasibility. Vercel Preview compatibility is deferred to Phase 4.
 
 ## Context
 
-Email Shadow Panel needs server-side access to Emailnator so the public React app can generate temporary inboxes and read messages without exposing provider internals to the browser. Emailnator's internal HTTP interface is undocumented, so feasibility must be proven before production implementation.
+Email Shadow Panel needs server-side access to Emailnator so the public React app can generate temporary inboxes and read messages without exposing provider internals to the browser. Emailnator's internal HTTP interface is undocumented, so feasibility had to be proven before production implementation.
 
-## Problem With the Previous Playwright/Oracle Approach
+## Decision
 
-A persistent browser automation worker would add operational cost, deployment complexity, fragile browser state, and a larger security surface. It also conflicts with the approved production constraints: no Playwright, Chromium, Oracle infrastructure, persistent workers, queues, or browser automation.
+Accept the direct HTTP Emailnator compatibility adapter for the MVP architecture.
 
-## Proposed Decision
-
-Use Vercel Node.js Functions with native `fetch` and an isolated Emailnator compatibility adapter, if Phase 0 proves the full workflow. Pin the runtime to Node 22.x to match the observed local environment (`node --version` returned `v22.20.0`) and rely on the same major through `package.json` for local and Vercel execution.
+Use Vercel Node.js Functions with native `fetch` and an isolated provider adapter.
+Pin the runtime to Node 22.x to match the observed local environment and the pinned `package.json` engine.
+Use Gmail-style generation through `dotGmail` by default.
+Allow at most one bounded `googleMail` fallback when the initial `dotGmail` result is not compatible.
+Reject custom-domain generation for the MVP.
+Reject the production Playwright worker architecture for the MVP.
+Treat Vercel Preview runtime compatibility as a later Phase 4 deployment gate rather than a Phase 0 blocker.
 
 ## Alternatives Considered
 
-- Oracle plus Playwright worker: rejected for the target architecture because it violates production constraints and adds persistent automation.
-- Vercel HTTP compatibility adapter: preferred if feasibility evidence proves bootstrap, generation, listing, detail, session restoration, and Preview compatibility.
-- Local-only prototype: useful for learning but insufficient for a public Vercel deployment.
-- Abandoning Emailnator integration: fallback if the provider cannot be used safely or reliably within constraints.
+- Oracle plus Playwright worker: rejected because it violates the approved production constraints and adds persistent automation.
+- Direct HTTP compatibility adapter: accepted for local feasibility after deterministic and human live verification.
+- Local-only prototype: insufficient for the intended MVP direction.
+- Abandoning Emailnator integration: fallback only if later deployment-specific gates fail.
 
-## Expected Benefits
+## Evidence Supporting Acceptance
 
-- Fits Vercel Hobby.
-- Avoids production browser automation.
-- Keeps provider details isolated.
-- Preserves the existing React frontend.
-- Keeps future operating cost low.
+Codex-run deterministic evidence established:
 
-## Known Risks
+- cookie and XSRF handling
+- capsule sealing and restoration
+- request classification
+- structural detail sanitization
+- preview auth gates
+- boundary checks between browser and server code
+- Gmail-style generation and bounded fallback behavior
+- opaque message-ID compatibility and safe local selection behavior
 
-- Emailnator endpoints and response shapes may change.
-- Provider traffic from Vercel may be blocked.
-- Cookie and XSRF handling may be brittle.
-- Session restoration may be impossible or unsafe.
-- Message detail may require undiscovered state.
+Human-run local verification established:
 
-## Evidence Collected So Far
+- Gmail-style generation succeeded
+- external inbound delivery succeeded
+- cross-process capsule restoration succeeded
+- real message listing succeeded
+- real detail retrieval succeeded
+- local detail output remained restricted to structural evidence only
+- no sensitive message content was printed
 
-- A Vercel-style Preview probe was implemented as `api/_probe/emailnator.ts` with a named `POST(request: Request): Promise<Response>` export and Preview-only guards.
-- A single tested helper now owns multi-cookie extraction and fails clearly when `Headers.getSetCookie()` is unavailable.
-- Deterministic validation covers cookie handling, capsule sealing and restoration, request classification, structural detail sanitization, Preview auth gates, and a boundary check that `src/` does not import `server/`, `api/`, or `scripts/`.
-- Public-reference-derived research from Emailnator's public page and client bundle indicates cookie names `XSRF-TOKEN` and `gmailnator_session`, `POST /generate-email`, and `POST /message-list` with detail keyed by `messageID`.
-- The public-reference-derived research above is not proof of the live provider contract.
+## Constraints That Remain
 
-## Evidence Still Required Before Acceptance
+- Vercel Preview deployment and runtime compatibility remain deferred to Phase 4.
+- Provider behavior can still change over time.
+- Rate limits, blocking, or deployment-environment differences could still affect later phases.
 
-- Live provider-session bootstrap evidence.
-- Live cookie and XSRF handling evidence.
-- Live address generation evidence.
-- Live message-list evidence.
-- Live individual message-detail evidence.
-- Live session serialization and restoration evidence from a new process or invocation.
-- Vercel Preview compatibility evidence from an actual Preview deployment.
-- Separate checker review and CodeRabbit remediation evidence after changes are committed in a future step.
+## Consequences
 
-## GO Criteria
+Accepted for the MVP direction:
 
-The HTTP adapter can be accepted only if all required workflow steps succeed without CAPTCHA bypass, challenge bypass, browser automation, high-volume probing, generic proxying, or committed sensitive data.
+- direct HTTP Emailnator adapter
+- Gmail-style `dotGmail` default
+- bounded `googleMail` fallback
+- no production Playwright worker
 
-## NO-GO Criteria
+Rejected for the MVP direction:
 
-Reject the adapter if message detail, session restoration, or Vercel Preview access cannot be demonstrated within the approved constraints.
-
-## Consequences If Accepted
-
-Later phases may implement production API endpoints, temporary encrypted Redis state, capability-token hashes, rate limits, refresh locks, and frontend integration around the adapter.
-
-## Fallback If Rejected
-
-Do not proceed with the full HTTP-proxy architecture. Re-scope the product, choose a different approved provider, or keep the project as a frontend prototype with documented limitations.
+- custom-domain generation
+- production Playwright worker architecture
 
 ## Decision History
 
-- 2026-07-05: Proposed before Phase 0 implementation. Evidence not collected yet.
-- 2026-07-05: Phase 0 implementation and deterministic validation completed locally. Live inbox generation, live message retrieval, Vercel Preview probing, and final GO or NO-GO determination remain pending human verification.
+- 2026-07-05: Proposed before Phase 0 implementation.
+- 2026-07-05: Deterministic Phase 0 implementation and validation completed locally.
+- 2026-07-06: Human live checks confirmed Gmail-style generation, inbound delivery, capsule restoration, indexed listing, and structural-only detail retrieval.
+- 2026-07-06: Decision accepted for local feasibility with Vercel Preview verification deferred to Phase 4.

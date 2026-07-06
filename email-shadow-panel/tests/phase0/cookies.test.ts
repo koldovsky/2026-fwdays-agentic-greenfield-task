@@ -59,6 +59,7 @@ test("redacted diagnostics omit raw cookie and inbox values", async () => {
     address: "shadow.panel.001@gmail.com",
     cookieJar: serializeCookieJar(jar),
     observedCookieNames: ["gmailnator_session", "XSRF-TOKEN"],
+    lastListedMessageIds: [],
     xsrfCookieName: "XSRF-TOKEN",
     xsrfHeaderName: "X-XSRF-TOKEN",
   };

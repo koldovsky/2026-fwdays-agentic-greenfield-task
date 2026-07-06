@@ -12,9 +12,10 @@ import {
 } from "./cookies.server.ts";
 import { EmailnatorError } from "./errors.server.ts";
 import {
-  EMAILNATOR_ALLOWED_EMAIL_OPTIONS,
   EMAILNATOR_BOOTSTRAP_PATH,
+  EMAILNATOR_DEFAULT_GENERATION_MODE,
   EMAILNATOR_DEFAULT_TIMEOUT_MS,
+  EMAILNATOR_FALLBACK_GENERATION_MODE,
   EMAILNATOR_GENERATE_PATH,
   EMAILNATOR_MAX_RESPONSE_BYTES,
   EMAILNATOR_MESSAGE_LIST_PATH,
@@ -23,6 +24,7 @@ import {
   emailnatorGenerateResponseSchema,
   emailnatorMessageListResponseSchema,
   emailnatorProviderStateSchema,
+  type EmailnatorGenerationMode,
   type EmailnatorMessageSummary,
   type EmailnatorProviderState,
 } from "./schemas.server.ts";
@@ -384,18 +386,44 @@ export async function bootstrapProviderSession(
   );
 }
 
-export async function generateInboxAddress(
+function expectedGeneratedAddressDomain(mode: EmailnatorGenerationMode): string | null {
+  switch (mode) {
+    case "dotGmail":
+    case "plusGmail":
+      return "gmail.com";
+    case "googleMail":
+      return "googlemail.com";
+    case "domain":
+      return null;
+  }
+}
+
+function isCompatibleGeneratedAddress(address: string, mode: EmailnatorGenerationMode): boolean {
+  if (!z.string().email().safeParse(address).success) {
+    return false;
+  }
+
+  const expectedDomain = expectedGeneratedAddressDomain(mode);
+  if (!expectedDomain) {
+    return false;
+  }
+
+  return addressDomain(address) === expectedDomain;
+}
+
+async function requestGeneratedInboxAddress(
+  state: EmailnatorProviderState,
+  mode: EmailnatorGenerationMode,
   runtime?: EmailnatorRuntime,
-): Promise<GeneratedInboxResult> {
-  const bootstrapped = await bootstrapProviderSession(undefined, runtime);
+): Promise<{ address: string | null; state: EmailnatorProviderState }> {
   const result = await performRequest(
-    bootstrapped,
+    state,
     EMAILNATOR_GENERATE_PATH,
     {
       accept: "application/json, text/plain, */*",
       method: "POST",
       jsonBody: {
-        email: [...EMAILNATOR_ALLOWED_EMAIL_OPTIONS],
+        email: [mode],
       },
     },
     runtime,
@@ -407,30 +435,61 @@ export async function generateInboxAddress(
     "Generate response",
   );
   const addresses = Array.isArray(parsed.email) ? parsed.email : [parsed.email];
-  const address = addresses.find((candidate) => z.string().email().safeParse(candidate).success);
-
-  if (!address) {
-    throw new EmailnatorError(
-      "PROVIDER_RESPONSE_INVALID",
-      "The provider did not return a syntactically valid inbox address.",
-      { status: 502 },
-    );
-  }
-
-  const nextState = parseWithSchema(
-    emailnatorProviderStateSchema,
-    {
-      ...result.state,
-      address,
-    },
-    "Generated provider state",
-  );
+  const address =
+    addresses.find((candidate) => isCompatibleGeneratedAddress(candidate, mode)) ?? null;
 
   return {
     address,
-    state: nextState,
-    diagnostics: await redactStateDiagnostics(nextState),
+    state: parseWithSchema(
+      emailnatorProviderStateSchema,
+      address
+        ? {
+            ...result.state,
+            address,
+          }
+        : result.state,
+      "Generated provider state",
+    ),
   };
+}
+
+export async function generateInboxAddress(
+  runtime?: EmailnatorRuntime,
+): Promise<GeneratedInboxResult> {
+  const bootstrapped = await bootstrapProviderSession(undefined, runtime);
+  const primaryAttempt = await requestGeneratedInboxAddress(
+    bootstrapped,
+    EMAILNATOR_DEFAULT_GENERATION_MODE,
+    runtime,
+  );
+
+  if (primaryAttempt.address) {
+    return {
+      address: primaryAttempt.address,
+      state: primaryAttempt.state,
+      diagnostics: await redactStateDiagnostics(primaryAttempt.state),
+    };
+  }
+
+  const fallbackAttempt = await requestGeneratedInboxAddress(
+    primaryAttempt.state,
+    EMAILNATOR_FALLBACK_GENERATION_MODE,
+    runtime,
+  );
+
+  if (fallbackAttempt.address) {
+    return {
+      address: fallbackAttempt.address,
+      state: fallbackAttempt.state,
+      diagnostics: await redactStateDiagnostics(fallbackAttempt.state),
+    };
+  }
+
+  throw new EmailnatorError(
+    "PROVIDER_RESPONSE_INVALID",
+    "The provider did not return a Gmail-style inbox address compatible with the MVP.",
+    { status: 502 },
+  );
 }
 
 export async function listInboxMessages(
@@ -465,7 +524,10 @@ export async function listInboxMessages(
     parseJsonBody(result.body, "Message-list response"),
     "Message-list response",
   );
-  const nextState = emailnatorProviderStateSchema.parse(result.state);
+  const nextState = emailnatorProviderStateSchema.parse({
+    ...result.state,
+    lastListedMessageIds: (parsed.messageData ?? []).map((message) => message.messageID),
+  });
 
   return {
     messages: parsed.messageData ?? [],

@@ -7,13 +7,18 @@ import {
   isEmailnatorError,
 } from "../server/providers/emailnator/errors.server.ts";
 import {
+  restoreStateFromCapsule,
   runGenerateAction,
   runListAction,
   runLocalDetailAction,
   type LocalDetailEvidence,
 } from "../server/providers/emailnator/phase0.server.ts";
+import { phase0MessageIdSchema } from "../server/providers/emailnator/schemas.server.ts";
 
 const STATE_PATH = resolve(process.cwd(), ".local/phase0/emailnator-session.capsule.enc");
+
+type SessionEnv = ReturnType<typeof getSessionEnv>;
+type ProbeListMessage = Awaited<ReturnType<typeof runListAction>>["messages"][number];
 
 function ensureStateDirectory(): void {
   mkdirSync(resolve(process.cwd(), ".local/phase0"), { recursive: true });
@@ -50,22 +55,98 @@ function getSessionEnv() {
   };
 }
 
-function getMessageIdArgument(args: string[]): string {
-  const named = args.find((arg) => arg.startsWith("--messageId="));
-  if (named) {
-    return named.slice("--messageId=".length);
-  }
+function getNamedArgument(args: string[], prefix: string): string | undefined {
+  return args.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+}
 
-  const positional = args.find((arg) => !arg.startsWith("--"));
-  if (!positional) {
+function validateMessageId(messageId: string): string {
+  const parsed = phase0MessageIdSchema.safeParse(messageId);
+  if (!parsed.success) {
     throw new EmailnatorError(
       "VALIDATION_FAILED",
-      "detail requires a bounded opaque messageId argument.",
+      parsed.error.issues[0]?.message ?? "messageId must be a bounded opaque identifier.",
       { status: 400 },
     );
   }
 
-  return positional;
+  return parsed.data;
+}
+
+function parseIndex(value: string): number {
+  if (!/^[1-9]\d*$/.test(value)) {
+    throw new EmailnatorError(
+      "VALIDATION_FAILED",
+      "index must be a positive integer that matches the current list output.",
+      { status: 400 },
+    );
+  }
+
+  return Number(value);
+}
+
+export function resolveLocalMessageSelection(
+  args: string[],
+  capsule: string,
+  env: SessionEnv,
+): string {
+  const index = getNamedArgument(args, "--index=");
+  const messageId = getNamedArgument(args, "--messageId=");
+  const positional = args.find((arg) => !arg.startsWith("--"));
+  const provided = [index, messageId, positional].filter((value) => value != null);
+
+  if (provided.length > 1) {
+    throw new EmailnatorError(
+      "VALIDATION_FAILED",
+      "detail accepts exactly one selector: either --index=<number> or --messageId=<id>.",
+      { status: 400 },
+    );
+  }
+
+  if (index != null) {
+    const resolvedIndex = parseIndex(index);
+    const state = restoreStateFromCapsule(capsule, env);
+    const storedMessageIds = state.lastListedMessageIds ?? [];
+
+    if (storedMessageIds.length === 0) {
+      throw new EmailnatorError(
+        "STATE_INVALID",
+        "No stored message list is available. Run list first, then choose an index.",
+        { status: 400 },
+      );
+    }
+
+    const resolvedMessageId = storedMessageIds[resolvedIndex - 1];
+    if (!resolvedMessageId) {
+      throw new EmailnatorError(
+        "VALIDATION_FAILED",
+        `index ${resolvedIndex} is out of range for the current stored list (1-${storedMessageIds.length}).`,
+        { status: 400 },
+      );
+    }
+
+    return resolvedMessageId;
+  }
+
+  if (messageId != null) {
+    return validateMessageId(messageId);
+  }
+
+  if (positional != null) {
+    return validateMessageId(positional);
+  }
+
+  throw new EmailnatorError(
+    "VALIDATION_FAILED",
+    "detail requires either --index=<number> or a bounded opaque messageId argument.",
+    { status: 400 },
+  );
+}
+
+export function formatListMessageLines(messages: ProbeListMessage[]): string[] {
+  return messages.map(
+    (message, index) =>
+      `[${index + 1}] ${message.time} | ${message.fromPreview} | ${message.subjectPreview}`,
+  );
 }
 
 export function formatLocalDetailEvidenceLines(detail: LocalDetailEvidence): string[] {
@@ -94,17 +175,16 @@ export async function main(): Promise<void> {
       const result = await runListAction(readCapsule(), getSessionEnv());
       writeCapsule(result.capsule);
       console.log(`Restored session. ${result.messages.length} message(s) found.`);
-      for (const message of result.messages) {
-        console.log(
-          `${message.messageId} | ${message.time} | ${message.fromPreview} | ${message.subjectPreview}`,
-        );
+      for (const line of formatListMessageLines(result.messages)) {
+        console.log(line);
       }
       return;
     }
     case "detail": {
+      const capsule = readCapsule();
       const result = await runLocalDetailAction(
-        readCapsule(),
-        getMessageIdArgument(rest),
+        capsule,
+        resolveLocalMessageSelection(rest, capsule, getSessionEnv()),
         getSessionEnv(),
       );
       writeCapsule(result.capsule);
@@ -120,7 +200,7 @@ export async function main(): Promise<void> {
     }
     default:
       console.log(
-        "Usage: npm run probe:emailnator -- <generate|list|detail|clear> [--messageId=<id>]",
+        "Usage: npm run probe:emailnator -- <generate|list|detail|clear> [--index=<n>|--messageId=<id>]",
       );
       process.exitCode = 1;
   }
