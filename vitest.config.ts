@@ -1,16 +1,33 @@
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 // Unit layer (TC-TEST-01): pure lib/ + packages. E2E layers arrive with
 // their slices.
 //
-// "apps/**/*.test.ts" (dashboard tasks.md §5, Stage C) picks up
-// `apps/dashboard/lib/*.test.ts` and `apps/dashboard/app/api/**/route.test.ts`
-// co-located next to their source — same convention as `lib/`/`packages/`,
-// no separate test runner for the dashboard (its own `package.json` has no
-// `test` script; this root config is the only one that ever runs these
-// files). These are route-handler/server-side tests (plain Node, real
-// `better-sqlite3`), never a jsdom/browser suite, so no extra `environment`
-// setting is needed here.
+// "apps/**/*.test.{ts,tsx}" (dashboard tasks.md §5/§6) picks up
+// `apps/dashboard/lib/*.test.ts`, `apps/dashboard/app/api/**/route.test.ts`,
+// and (Stage D) `apps/dashboard/components/**/*.test.tsx` — co-located next
+// to their source — same convention as `lib/`/`packages/`, no separate test
+// runner for the dashboard (its own `package.json` has no `test` script;
+// this root config is the only one that ever runs these files). Most of
+// these are route-handler/server-side tests (plain Node, real
+// `better-sqlite3`), never a jsdom/browser suite; the default `environment`
+// stays "node" for exactly that reason.
+//
+// DOM TEST ENVIRONMENT (dashboard tasks.md §6, Stage D): component
+// `*.test.tsx` files opt INTO jsdom individually via a per-file
+// `// @vitest-environment jsdom` docblock (Vitest's own supported
+// mechanism — https://vitest.dev/guide/environment.html#test-environment)
+// rather than a global `environment: "jsdom"` or `environmentMatchGlobs`
+// (the latter does not exist in this installed Vitest 4.1.9 — verified
+// empirically against `node_modules/vitest/dist`, not assumed from older
+// docs). This keeps every existing Node-hosted suite (lib/, packages/,
+// route handlers) running in the fast default "node" environment — proven
+// below by the untouched `fileParallelism`/`include` shape for those files
+// — while `apps/dashboard/components/**/*.test.tsx` and any other
+// DOM-rendering test opts in per file, self-documenting which tests need a
+// DOM. `@vitejs/plugin-react` is registered globally (cheap no-op for
+// non-JSX files) so the `.tsx` component tests transform correctly.
 //
 // The third/fourth/fifth include entries ("slots/**/*.test.ts",
 // "agent/**/*.test.ts") look odd at the repo root but are deliberate: Vitest
@@ -35,11 +52,16 @@ import { defineConfig } from "vitest/config";
 // raised repo-wide to accommodate them; unit tests stay far under the
 // ceiling so this has no practical effect on `npm run test:run`'s speed.
 export default defineConfig({
+  plugins: [react()],
   test: {
+    // See vitest.setup.ts's own header comment: inert for every Node-hosted
+    // suite, required for `apps/dashboard/components/**/*.test.tsx`'s
+    // `render()`-based tests to clean up between tests/files.
+    setupFiles: ["./vitest.setup.ts"],
     include: [
       "lib/**/*.test.ts",
       "packages/**/*.test.ts",
-      "apps/**/*.test.ts",
+      "apps/**/*.test.{ts,tsx}",
       "slots/**/*.test.ts",
       "agent/**/*.test.ts",
     ],

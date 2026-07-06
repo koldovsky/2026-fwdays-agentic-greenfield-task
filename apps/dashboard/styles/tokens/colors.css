@@ -1,0 +1,101 @@
+/* apps/dashboard — colour tokens (dashboard tasks.md §6.1, DESIGN.md
+ * "Tokens" + "Theming (light + dark)" sections).
+ *
+ * Light is the default (`:root`); dark is opt-in via an EXPLICIT
+ * `data-theme="dark"` attribute on `<html>` — DESIGN.md is explicit that
+ * this is never a `prefers-color-scheme` media query. Components read only
+ * the semantic aliases below (`--bg`, `--surface`, `--text`, `--status-*`),
+ * never a raw ramp value, so they recolour automatically when the
+ * attribute flips (`app/layout.tsx` / a `ThemeToggle` sets it).
+ *
+ * The four status roles are the dashboard's signature semantic decision
+ * (DESIGN.md): `pending` warm amber (waiting, never alarming), `confirmed`
+ * deep green (the only state a human produces, FR-GUARD-01), `declined`
+ * muted rose (quiet, respectful, no red-alert theatrics), `cancelled` quiet
+ * slate (the lead withdrew, never blamed). Each role ships THREE tokens —
+ * `-bg` (a soft tint, badge/seat background), `-fg` (readable text/icon on
+ * that tint), `-solid` (a saturated fill for e.g. a HallMap seat dot) — all
+ * meeting WCAG AA in both themes.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: #f0ece3;
+
+  /* Text */
+  --text: #1f231f;
+  --text-secondary: #4d5249;
+  --text-muted: #83887c;
+  --text-on-brand: #ffffff;
+
+  /* Brand (the tuning-fork teal) + accent */
+  --brand: #1f6f61;
+  --brand-hover: #175a4f;
+  --brand-soft: rgba(31, 111, 97, 0.28);
+  --accent: #b98a2e;
+
+  /* Borders */
+  --border: #e4dfd2;
+  --border-strong: #c9c1ac;
+
+  /* Status: pending — warm amber */
+  --status-pending-bg: #fbf0d6;
+  --status-pending-fg: #7a5710;
+  --status-pending-solid: #c98a1c;
+
+  /* Status: confirmed — deep green */
+  --status-confirmed-bg: #e2f1e6;
+  --status-confirmed-fg: #1c6b3c;
+  --status-confirmed-solid: #1f8a4d;
+
+  /* Status: declined — muted rose */
+  --status-declined-bg: #f7e8ea;
+  --status-declined-fg: #8a3f47;
+  --status-declined-solid: #b15862;
+
+  /* Status: cancelled — quiet slate */
+  --status-cancelled-bg: #eae8e2;
+  --status-cancelled-fg: #55584f;
+  --status-cancelled-solid: #85887d;
+
+  /* Focus ring (--focus-ring in motion.css references this via brand-soft) */
+}
+
+[data-theme="dark"] {
+  --bg: #14181a;
+  --surface: #1b2023;
+  --surface-raised: #212729;
+  --surface-hover: #272e30;
+
+  --text: #edf1ee;
+  --text-secondary: #b7bfb9;
+  --text-muted: #838a84;
+  --text-on-brand: #09140f;
+
+  --brand: #4fd1a5;
+  --brand-hover: #6adfb8;
+  --brand-soft: rgba(79, 209, 165, 0.35);
+  --accent: #f2c14e;
+
+  --border: #2a3130;
+  --border-strong: #3c4543;
+
+  --status-pending-bg: #3a2c10;
+  --status-pending-fg: #f5c869;
+  --status-pending-solid: #e0a83a;
+
+  --status-confirmed-bg: #123322;
+  --status-confirmed-fg: #7fe3ab;
+  --status-confirmed-solid: #34c485;
+
+  --status-declined-bg: #3a1e22;
+  --status-declined-fg: #f0a8ae;
+  --status-declined-solid: #d97883;
+
+  --status-cancelled-bg: #292d2d;
+  --status-cancelled-fg: #c3c7c1;
+  --status-cancelled-solid: #8f948b;
+}

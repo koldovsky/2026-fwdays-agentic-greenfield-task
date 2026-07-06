@@ -1,0 +1,25 @@
+/* apps/dashboard — type tokens (dashboard tasks.md §6.1, DESIGN.md "Type").
+ *
+ * The `--font-sans`/`--font-mono` SEMANTIC names are declared in
+ * `app/globals.css`'s `@theme inline` block, not here — they must reference
+ * the RAW variables `next/font` generates on `<html>` in `app/layout.tsx`
+ * (`--font-golos`/`--font-jetbrains-mono`), and Tailwind's own theme-key
+ * name for the "sans"/"mono" utility namespace already IS `--font-sans`/
+ * `--font-mono` — declaring the same name twice with one side `var()`-ing
+ * the other would be a circular self-reference. This file only owns the
+ * text-size SCALE, which never varies by theme or font loader.
+ *
+ * Scale: `--text-2xs` (11px) through `--text-3xl` (40px, reserved for the
+ * pending-queue count in the dashboard header per DESIGN.md).
+ */
+
+:root {
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 40px;
+}

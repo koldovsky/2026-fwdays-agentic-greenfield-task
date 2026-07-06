@@ -1,0 +1,24 @@
+/* apps/dashboard — motion tokens (dashboard tasks.md §6.1, DESIGN.md
+ * "Accessibility & motion": "Fast (140ms) feedback... All durations
+ * collapse to 0 under `prefers-reduced-motion`, and no animation ever
+ * blocks interaction.").
+ *
+ * `--focus-ring` is DESIGN.md's own name for the always-visible
+ * `:focus-visible` treatment ("a 3px soft ring in `--brand-soft`") — the
+ * actual `:focus-visible` rule lives in `app/globals.css` (it needs to
+ * apply globally, once, not be redeclared per component).
+ */
+
+:root {
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --focus-ring: 0 0 0 3px var(--brand-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

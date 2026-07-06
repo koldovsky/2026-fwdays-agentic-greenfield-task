@@ -1,0 +1,9 @@
+/* apps/dashboard — single entry point for every design token file
+ * (dashboard tasks.md §6.1). Imported once from `app/globals.css`, before
+ * the `@theme inline` Tailwind bridge. */
+
+@import "./colors.css";
+@import "./type.css";
+@import "./spacing.css";
+@import "./radius.css";
+@import "./motion.css";

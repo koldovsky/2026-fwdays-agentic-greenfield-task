@@ -1,0 +1,22 @@
+/* apps/dashboard — radius tokens (dashboard tasks.md §6.1, DESIGN.md
+ * "Tokens": "inputs/buttons 12px, cards 16px, the request card 20px,
+ * status badges pill").
+ *
+ * `--radius-md`/`--radius-lg`/`--radius-xl` are intentionally duplicated
+ * (same literal values) in `app/globals.css`'s `@theme` block — Tailwind's
+ * `rounded-{md,lg,xl}` utilities need a theme key of that EXACT name, and
+ * these are static design constants (never theme-dependent), so a plain,
+ * literal `@theme` declaration is correct there (see that file's own
+ * comment) rather than a `var()` indirection back to this file. This file
+ * remains the source components read directly (`var(--radius-xl)` for the
+ * request card, `var(--radius-pill)` for status badges) and
+ * `--radius-sm`/`--radius-pill` stay UN-bridged per DESIGN.md.
+ */
+
+:root {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+}

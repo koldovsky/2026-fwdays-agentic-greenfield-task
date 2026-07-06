@@ -183,14 +183,14 @@
 
 ## 6. UI — tokens, `components/ds/`, the SSE client, and pages
 
-- [ ] 6.1 Add `apps/dashboard/styles/tokens/` (colors, type, spacing, radius,
+- [x] 6.1 Add `apps/dashboard/styles/tokens/` (colors, type, spacing, radius,
       motion per DESIGN.md's token table, including the four
       `--status-{pending,confirmed,declined,cancelled}-{bg,fg,solid}` role
       sets) and wire them into `app/globals.css`'s Tailwind 4 `@theme inline`
       bridge; add `data-theme="dark"` support on `<html>`. No requirement
       text to test here (design tokens are structurally verified in section
       8's axe/vision-verify gates, not a unit test).
-- [ ] 6.2 Write `apps/dashboard/lib/agui-client.test.ts` FIRST (red, jsdom or
+- [x] 6.2 Write `apps/dashboard/lib/agui-client.test.ts` FIRST (red, jsdom or
       a fake `EventSource`): `safeParseAguiEvent` returns `null` (never
       throws) for non-JSON data and for a recognized-shape-but-unknown
       `type`; `applyAguiEvent(state, event)` reducer cases — `STATE_SNAPSHOT`
@@ -201,16 +201,16 @@
       for an unknown request id is dropped without crashing or corrupting
       existing state (`@trace TC-PROTO-01`). Confirm red, implement
       `apps/dashboard/lib/agui-client.ts` to green.
-- [ ] 6.3 Build `components/ds/` core primitives (`Button`, `IconButton`,
+- [x] 6.3 Build `components/ds/` core primitives (`Button`, `IconButton`,
       `Input`, `Badge`, `Card`, `Chip`, `Icon` via `lucide-react`) per
       DESIGN.md — thin, token-driven, no business logic, so no dedicated
       test beyond a smoke render in section 8's E2E pass.
-- [ ] 6.4 Build `StatusBadge` (+ `statusTone`) as the single source of truth
+- [x] 6.4 Build `StatusBadge` (+ `statusTone`) as the single source of truth
       mapping `pending/confirmed/declined/cancelled` → icon + color — write
       `StatusBadge.test.tsx` FIRST (red, React Testing Library or an
       equivalent already-available test runner) asserting the four
       status→token mappings, then implement to green.
-- [ ] 6.5 Build `ChatStream` (streamed text + typing shimmer,
+- [x] 6.5 Build `ChatStream` (streamed text + typing shimmer,
       `prefers-reduced-motion`-safe per DESIGN.md), `RequestCard` +
       `LessonBrief` (fields fill in live; oversized/long-text fields
       line-clamped or scrollable per the baseline spec's "Oversized and
@@ -218,32 +218,32 @@
       multi-thousand-character field does not grow the card's own bounding
       box), `SlotChip`, `EmptyState`, and a `ConnectionIndicator` (visible
       "disconnected" state per the baseline spec's reconnect requirement).
-- [ ] 6.6 Build `DecisionBar` per design.md Decision 4 — all three actions
+- [x] 6.6 Build `DecisionBar` per design.md Decision 4 — all three actions
       rendered, `onClick` posts to `/api/decisions/:requestId` (section 5.7's
       stub), surfaces the stub's "не підключено" response inline rather than
       silently — write `DecisionBar.test.tsx` FIRST (red) asserting the three
       buttons render and the stub response renders inline, not as a thrown
       error. Confirm red, implement to green.
-- [ ] 6.7 Build `HallMap` — write `HallMap.test.tsx` FIRST (red, given a
+- [x] 6.7 Build `HallMap` — write `HallMap.test.tsx` FIRST (red, given a
       fixture week of bookings via `lib/src/dashboard`'s pure functions):
       exactly 5 rows × 10 seats render; each seat's rendered status-token
       class matches `hallSeatStatus`'s verdict; clicking a `pending` seat
       opens the corresponding request card with `DecisionBar` visible;
       clicking a free seat opens nothing (`@trace FR-DASH-03`,
       `@trace BC-SCHEDULE-01`). Confirm red, implement to green.
-- [ ] 6.8 Build the "Delete lead" confirmation flow on the lead/request card
+- [x] 6.8 Build the "Delete lead" confirmation flow on the lead/request card
       (an explicit two-step confirm, never a single click) — write a test
       FIRST (red) asserting a single click does not call the delete route,
       confirming does, and dismissing the confirmation leaves the lead
       exactly as before (`@trace NFR-PRIV-02`). Confirm red, implement to
       green.
-- [ ] 6.9 Wire `apps/dashboard/app/page.tsx`: connects via `connectAgui`
+- [x] 6.9 Wire `apps/dashboard/app/page.tsx`: connects via `connectAgui`
       (6.2), renders the conversation panel (`ChatStream` + `RequestCard`),
       the pending queue (empty state when zero, per the baseline spec),
       `HallMap`, and the `ConnectionIndicator` — hydrated on load from the
       server-rendered initial snapshot (`dashboard-db.ts`, 5.5) so the page
       never shows a blank flash before the first SSE frame arrives.
-- [ ] 6.10 Run `npm run test:run`; confirm 6.2/6.4/6.6/6.7/6.8 green with no
+- [x] 6.10 Run `npm run test:run`; confirm 6.2/6.4/6.6/6.7/6.8 green with no
       regressions.
 
 ## 7. E2E, accessibility, and demo-proof recording
