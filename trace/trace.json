@@ -74,7 +74,13 @@
       ],
       "planned": true,
       "tests": [
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/db/src/leads.test.ts",
+        "packages/db/src/requests.test.ts"
       ],
       "recordings": []
     },
@@ -96,7 +102,13 @@
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/db/src/requests.test.ts"
       ],
       "recordings": []
     },
@@ -109,7 +121,10 @@
       "planned": true,
       "tests": [
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -126,7 +141,8 @@
         "lib/src/intake/audience.test.ts",
         "lib/src/intake/audience.test.ts",
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -138,7 +154,8 @@
       ],
       "planned": true,
       "tests": [
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -151,7 +168,8 @@
       ],
       "planned": true,
       "tests": [
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -168,7 +186,12 @@
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/db/src/requests.test.ts"
       ],
       "recordings": []
     },
@@ -182,7 +205,12 @@
       "planned": true,
       "tests": [
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/db/src/leads.test.ts",
+        "packages/db/src/requests.test.ts",
+        "packages/db/src/requests.test.ts"
       ],
       "recordings": []
     },
@@ -201,7 +229,8 @@
         "lib/src/intake/copy.test.ts",
         "lib/src/intake/copy.test.ts",
         "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts"
+        "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -212,7 +241,10 @@
         "openspec/changes/intake/specs/intake/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -285,7 +317,10 @@
         "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -324,6 +359,10 @@
         "lib/src/slots/propose.test.ts",
         "lib/src/slots/propose.test.ts",
         "lib/src/slots/propose.test.ts",
+        "packages/db/src/bookings.test.ts",
+        "packages/db/src/bookings.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
         "tests/integration/slots/bookings-lifecycle.test.ts",
         "tests/integration/slots/bookings-lifecycle.test.ts",
         "tests/integration/slots/bookings-lifecycle.test.ts"
@@ -423,7 +462,10 @@
         "openspec/specs/slots/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -450,10 +492,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-05 has no test annotated \"@trace FR-GUARD-05\""
-    },
     {
       "check": "test-trace",
       "msg": "FR-FAQ-01 has no test annotated \"@trace FR-FAQ-01\""
@@ -484,10 +522,6 @@
     },
     {
       "check": "test-trace",
-      "msg": "FR-GUARD-06 has no test annotated \"@trace FR-GUARD-06\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-HITL-01 has no test annotated \"@trace FR-HITL-01\""
     },
     {
@@ -501,10 +535,6 @@
     {
       "check": "test-trace",
       "msg": "FR-HITL-04 has no test annotated \"@trace FR-HITL-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-01 has no test annotated \"@trace FR-GUARD-01\""
     },
     {
       "check": "test-trace",

@@ -34,7 +34,7 @@ const PATHS = {
   specsDir: "openspec/specs",
   changesDir: "openspec/changes",
   qaDir: "docs/qa",
-  testDirs: ["lib", "tests", "app", "src", "components", "evals"],
+  testDirs: ["lib", "packages", "tests", "app", "src", "components", "evals"],
   reportOut: "docs/qa/traceability-report.md",
   jsonOut: "trace/trace.json",
 };

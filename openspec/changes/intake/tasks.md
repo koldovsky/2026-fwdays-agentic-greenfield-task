@@ -334,15 +334,15 @@
 
 ## 6. Validation, review gate, and archive prep
 
-- [ ] 6.1 Run `npm run lint`.
-- [ ] 6.2 Run `npm run test:run` (all unit tests green, TC-TEST-01).
-- [ ] 6.3 Run `npm run test:integration` (5.4–5.5 green against real
+- [x] 6.1 Run `npm run lint`.
+- [x] 6.2 Run `npm run test:run` (all unit tests green, TC-TEST-01).
+- [x] 6.3 Run `npm run test:integration` (5.4–5.5 green against real
       SQLite; the real-Anthropic smoke green or cleanly skipped).
-- [ ] 6.4 Run `npm run build`.
-- [ ] 6.5 Run `npx openspec validate intake --strict`.
-- [ ] 6.6 Run `npx openspec validate --all --strict` (baseline specs stay
+- [x] 6.4 Run `npm run build`.
+- [x] 6.5 Run `npx openspec validate intake --strict`.
+- [x] 6.6 Run `npx openspec validate --all --strict` (baseline specs stay
       green, this change validates).
-- [ ] 6.7 Run `node scripts/check-traceability.mjs` (FR-INTAKE-01..08,
+- [x] 6.7 Run `node scripts/check-traceability.mjs` (FR-INTAKE-01..08,
       FR-GUARD-04/05 show implemented coverage, 0 failures).
 - [ ] 6.8 **Review gate — run BEFORE archive** (S1 process-deviation
       lesson, `docs/current-state.md`: "review-gate ran post-archive —
