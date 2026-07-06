@@ -6,18 +6,19 @@
 // connected dashboard tab and forwards whatever it receives, unsubscribing
 // on client disconnect.
 //
-// TYPED THROWING STUB — red state for Stage C of this slice. The shape below
-// (a MODULE-LEVEL singleton, not a factory/class) is the contract pinned by
-// `agui-hub.test.ts`: every import of this module anywhere in one Node
-// process shares the SAME subscriber list, exactly like a real Next.js dev
-// server keeps ONE module instance per route-handler process — this is a
-// deliberate choice (documented here per tasks.md §5.1's "your call, document
-// it"), not an accident of the throwing-stub state. The body is implemented
-// once `agui-hub.test.ts` is confirmed red.
+// The shape below (a MODULE-LEVEL singleton, not a factory/class) is the
+// contract pinned by `agui-hub.test.ts`: every import of this module
+// anywhere in one Node process shares the SAME subscriber list, exactly
+// like a real Next.js dev server keeps ONE module instance per
+// route-handler process — this is a deliberate choice (documented here per
+// tasks.md §5.1's "your call, document it"), not an accident.
 
-import type { AguiEvent } from "@kamerton/bot/src/agui-publisher.ts";
+import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 
 export type AguiEventListener = (event: AguiEvent) => void;
+
+// Module-level singleton subscriber list — see this file's header comment.
+const listeners = new Set<AguiEventListener>();
 
 /**
  * Fans `event` out to every currently-subscribed listener, in subscription
@@ -26,7 +27,9 @@ export type AguiEventListener = (event: AguiEvent) => void;
  * normal startup case, not an error).
  */
 export function publish(event: AguiEvent): void {
-  throw new Error("apps/dashboard/lib/agui-hub.ts: publish() not implemented");
+  for (const listener of listeners) {
+    listener(event);
+  }
 }
 
 /**
@@ -35,7 +38,13 @@ export function publish(event: AguiEvent): void {
  * the returned function more than once is a no-op (never throws).
  */
 export function subscribe(onEvent: AguiEventListener): () => void {
-  throw new Error("apps/dashboard/lib/agui-hub.ts: subscribe() not implemented");
+  listeners.add(onEvent);
+  let unsubscribed = false;
+  return () => {
+    if (unsubscribed) return;
+    unsubscribed = true;
+    listeners.delete(onEvent);
+  };
 }
 
 /**
@@ -46,5 +55,5 @@ export function subscribe(onEvent: AguiEventListener): () => void {
  * behind a test-only build flag.
  */
 export function subscriberCount(): number {
-  throw new Error("apps/dashboard/lib/agui-hub.ts: subscriberCount() not implemented");
+  return listeners.size;
 }

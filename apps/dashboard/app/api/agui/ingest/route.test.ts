@@ -16,7 +16,7 @@
 
 import { describe, expect, it } from "vitest";
 import { subscribe } from "../../../../lib/agui-hub.ts";
-import type { AguiEvent } from "@kamerton/bot/src/agui-publisher.ts";
+import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 import { POST } from "./route.ts";
 
 const INGEST_URL = "http://127.0.0.1:3000/api/agui/ingest";

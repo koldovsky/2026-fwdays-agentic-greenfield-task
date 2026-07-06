@@ -33,7 +33,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { openDatabase, insertLead, insertRequest, updateRequestState } from "@kamerton/db";
 import { publish, subscriberCount } from "../../../../lib/agui-hub.ts";
-import type { AguiEvent } from "@kamerton/bot/src/agui-publisher.ts";
+import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 import { GET } from "./route.ts";
 
 const STREAM_URL = "http://127.0.0.1:3000/api/agui/stream";

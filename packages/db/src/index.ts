@@ -26,8 +26,10 @@ export {
 export {
   insertLead,
   findLeadByTelegramUserId,
+  deleteLeadCascade,
   type InsertLeadInput,
   type LeadRow,
+  type DeleteLeadCascadeResult,
 } from "./leads.ts";
 export {
   insertRequest,

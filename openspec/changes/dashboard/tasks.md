@@ -121,27 +121,27 @@
 
 ## 5. Services — AG-UI ingest + SSE stream + delete-lead route (red → green)
 
-- [ ] 5.1 Write `apps/dashboard/lib/agui-hub.test.ts` FIRST (red): an
+- [x] 5.1 Write `apps/dashboard/lib/agui-hub.test.ts` FIRST (red): an
       in-memory pub/sub (`publish(event)`, `subscribe(onEvent) -> unsubscribe`)
       fans one published event out to all current subscribers, in order; a
       subscriber that unsubscribes stops receiving further events; publishing
       with zero subscribers does not throw. Confirm red, implement
       `apps/dashboard/lib/agui-hub.ts` to green.
-- [ ] 5.2 Write `apps/dashboard/lib/dashboard-state.test.ts` FIRST (red): a
+- [x] 5.2 Write `apps/dashboard/lib/dashboard-state.test.ts` FIRST (red): a
       pure `buildStateSnapshot(rows)` function assembling a `DashboardState`
       (active-ish requests, the pending queue, the HallMap's week-of-bookings
       input) from raw `leads`/`requests`/`bookings` row arrays — no I/O
       itself, so it is testable with plain fixture arrays even though its
       caller (5.3) does the actual `better-sqlite3` read. Confirm red,
       implement to green.
-- [ ] 5.3 Write `apps/dashboard/app/api/agui/ingest/route.test.ts` FIRST
+- [x] 5.3 Write `apps/dashboard/app/api/agui/ingest/route.test.ts` FIRST
       (red, against a real Next route-handler test harness or an equivalent
       in-process call): `POST` with a well-formed AG-UI event body publishes
       it to the hub (assert via a subscribed test listener) and responds
       `200`; a malformed JSON body responds `400` without touching the hub
       (never a raw 500). Confirm red, implement
       `apps/dashboard/app/api/agui/ingest/route.ts` to green.
-- [ ] 5.4 Write `apps/dashboard/app/api/agui/stream/route.test.ts` FIRST
+- [x] 5.4 Write `apps/dashboard/app/api/agui/stream/route.test.ts` FIRST
       (red): `GET` opens an SSE response whose FIRST frame is a
       `STATE_SNAPSHOT` built from the real (temp-file or `:memory:`, per
       Next's route-handler process constraints — document whichever this
@@ -151,7 +151,7 @@
       order; closing the client connection unsubscribes from the hub (no
       leak — assert `agui-hub`'s subscriber count drops). Confirm red,
       implement `apps/dashboard/app/api/agui/stream/route.ts` to green.
-- [ ] 5.5 Write `apps/dashboard/lib/dashboard-db.test.ts` FIRST (red, real
+- [x] 5.5 Write `apps/dashboard/lib/dashboard-db.test.ts` FIRST (red, real
       SQLite via `openDatabase(":memory:")` + `@kamerton/db` row helpers to
       seed fixtures): `readDashboardSnapshot(db)` returns the rows
       `buildStateSnapshot` (5.2) needs — active requests, `pending` requests
@@ -159,7 +159,7 @@
       (`compileFirstLessonBrief`, reused from `packages/bot/src/pipeline.ts`,
       not duplicated), and the current week's bookings for the HallMap.
       Confirm red, implement to green.
-- [ ] 5.6 Write `apps/dashboard/app/api/leads/[id]/route.test.ts` FIRST (red,
+- [x] 5.6 Write `apps/dashboard/app/api/leads/[id]/route.test.ts` FIRST (red,
       real SQLite + a `FakeCalendarPort`): `DELETE` on a lead with a
       `pending` booking (tentative calendar event) cascades the DB delete
       (via 1.2's `deleteLeadCascade`) AND calls
@@ -173,12 +173,12 @@
       why, e.g. calendar-delete-before-DB-delete so a failure never leaves an
       orphaned tentative event) (`@trace NFR-PRIV-02`). Confirm red, implement
       `apps/dashboard/app/api/leads/[id]/route.ts` to green.
-- [ ] 5.7 Write `apps/dashboard/app/api/decisions/[requestId]/route.test.ts`
+- [x] 5.7 Write `apps/dashboard/app/api/decisions/[requestId]/route.test.ts`
       FIRST (red): `POST` to the stub decision route responds with a
       deterministic, Ukrainian, non-500 "не підключено" payload (design.md
       Decision 4) — never a 404/500 a real user action could be confused
       with a bug. Confirm red, implement the stub to green.
-- [ ] 5.8 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] 5.8 Run `npm run test:run` and `npm run test:integration`; confirm
       5.1–5.7 green with no regressions.
 
 ## 6. UI — tokens, `components/ds/`, the SSE client, and pages

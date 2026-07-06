@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { publish, subscribe, subscriberCount } from "./agui-hub.ts";
-import type { AguiEvent } from "@kamerton/bot/src/agui-publisher.ts";
+import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 
 function runStarted(threadId: string, runId: string): AguiEvent {
   return { type: "RUN_STARTED", threadId, runId };
@@ -21,20 +21,27 @@ describe("agui-hub (apps/dashboard/lib/agui-hub.ts, dashboard tasks.md §5.1)", 
   it("fans one published event out to all current subscribers, in order", () => {
     const receivedA: AguiEvent[] = [];
     const receivedB: AguiEvent[] = [];
-    subscribe((event) => receivedA.push(event));
-    subscribe((event) => receivedB.push(event));
+    const unsubscribeA = subscribe((event) => receivedA.push(event));
+    const unsubscribeB = subscribe((event) => receivedB.push(event));
 
     const event = runStarted("tg-chat-1", "run-1");
     publish(event);
 
     expect(receivedA).toEqual([event]);
     expect(receivedB).toEqual([event]);
+
+    // Module-singleton hub (agui-hub.ts's own header comment): every test
+    // in this file shares the SAME subscriber list, so cleanup here is
+    // required for the "subscriber count" test below to observe a correct
+    // starting count, not a test isolation gap this file leaves for others.
+    unsubscribeA();
+    unsubscribeB();
   });
 
   // @trace TC-PROTO-01
   it("delivers multiple published events to a subscriber in publish order", () => {
     const received: AguiEvent[] = [];
-    subscribe((event) => received.push(event));
+    const unsubscribe = subscribe((event) => received.push(event));
 
     const first = runStarted("tg-chat-1", "run-1");
     const second: AguiEvent = { type: "RUN_FINISHED", threadId: "tg-chat-1", runId: "run-1" };
@@ -42,6 +49,8 @@ describe("agui-hub (apps/dashboard/lib/agui-hub.ts, dashboard tasks.md §5.1)", 
     publish(second);
 
     expect(received).toEqual([first, second]);
+
+    unsubscribe();
   });
 
   // @trace TC-PROTO-01

@@ -5,13 +5,11 @@
 // `@kamerton/db` directly — mirrors `packages/bot/src/pipeline.ts`'s own
 // "one module owns the DB touchpoints" discipline (TC-DATA-01).
 //
-// TYPED THROWING STUB — red state for Stage C of this slice. The signature
-// below is the contract pinned by `dashboard-db.test.ts`; the body (reading
-// `leads`/`requests`/`bookings` rows and calling `buildStateSnapshot`, §5.2)
-// is implemented once that suite is confirmed red.
-
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type Database from "better-sqlite3";
-import type { DashboardState } from "./dashboard-state.ts";
+import type { LeadRow, RequestRow } from "@kamerton/db";
+import { buildStateSnapshot, type DashboardBookingRow, type DashboardState } from "./dashboard-state.ts";
 
 /**
  * Reads the current `leads`/`requests`/`bookings` rows from `db` and
@@ -22,5 +20,42 @@ import type { DashboardState } from "./dashboard-state.ts";
  * one place allowed to resolve "today" for the caller (the SSE route, §5.4).
  */
 export function readDashboardSnapshot(db: Database.Database, weekStartIso: string): DashboardState {
-  throw new Error("apps/dashboard/lib/dashboard-db.ts: readDashboardSnapshot() not implemented");
+  const leads = db.prepare(`SELECT * FROM leads`).all() as LeadRow[];
+  const requests = db.prepare(`SELECT * FROM requests`).all() as RequestRow[];
+  const bookings = db.prepare(`SELECT * FROM bookings`).all() as DashboardBookingRow[];
+
+  return buildStateSnapshot({ leads, requests, bookings }, weekStartIso);
+}
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+
+/**
+ * Resolves the ONE physical SQLite file both the bot and this dashboard
+ * read/write, from `KAMERTON_DB_PATH` — the SAME env var
+ * `packages/bot/src/index.ts` reads (route.ts's own header comment:
+ * "deliberately reused, not a second name"). Falls back to the repo-root
+ * `kamerton.db`, mirroring the bot's own default.
+ */
+export function resolveDbPath(env: NodeJS.ProcessEnv = process.env): string {
+  return env.KAMERTON_DB_PATH ?? path.join(repoRoot, "kamerton.db");
+}
+
+/**
+ * "YYYY-MM-DD" for "today" in Europe/Kyiv wall-clock time (BC-SCHEDULE-01) —
+ * the one non-pure "now" resolution the SSE route (§5.4) needs, isolated
+ * here (server-only glue) so `dashboard-state.ts`/`weekSeatGrid` (lib/) stay
+ * pure and deterministically testable via an explicit `weekStartIso`.
+ */
+export function currentWeekStartIso(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Kyiv",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const map: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") map[part.type] = part.value;
+  }
+  return `${map.year}-${map.month}-${map.day}`;
 }

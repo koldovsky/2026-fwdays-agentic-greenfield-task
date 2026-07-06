@@ -15,3 +15,4 @@ export * from "./intake/first-lesson-brief";
 export * from "./dashboard/hall-status";
 export * from "./dashboard/week-grid";
 export * from "./dashboard/json-patch";
+export * from "./agui/events";

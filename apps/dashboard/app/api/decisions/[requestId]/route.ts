@@ -17,15 +17,20 @@
 // the Ukrainian, kind, non-alarming copy a teacher actually reads
 // (BC-BRAND-01/BC-LANG-01).
 //
-// TYPED THROWING STUB — red state for Stage C of this slice. The signature
-// below is the contract pinned by `route.test.ts`; the body (returning the
-// pinned shape above, unconditionally, for ANY action/requestId — this
-// route never actually inspects them, S4 replaces the whole handler) is
-// implemented once that suite is confirmed red.
+export const runtime = "nodejs";
 
 export async function POST(
-  request: Request,
-  context: { params: Promise<{ requestId: string }> },
+  _request: Request,
+  _context: { params: Promise<{ requestId: string }> },
 ): Promise<Response> {
-  throw new Error("apps/dashboard/app/api/decisions/[requestId]/route.ts: POST not implemented");
+  // This route never inspects its request/params — the pinned response is
+  // unconditional, for ANY action/requestId, per this file's own header
+  // comment. S4 (`booking-hitl`) replaces the whole handler.
+  return Response.json(
+    {
+      status: "not_connected",
+      message: "Ще не підключено — рішення поки що не передається адміністратору автоматично.",
+    },
+    { status: 200 },
+  );
 }

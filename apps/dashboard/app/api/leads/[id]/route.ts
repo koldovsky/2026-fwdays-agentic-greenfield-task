@@ -25,15 +25,83 @@
 // against an already-gone DB row on manual retry, which the second-DELETE
 // "not found" path below already handles deterministically.
 //
-// TYPED THROWING STUB — red state for Stage C of this slice. The signature
-// below (dynamic segment `params` as a `Promise`, per Next.js 15+/16's async
-// route params — verified via `ctx7`'s `/vercel/next.js` v16.2.9 docs before
-// writing this file) is the contract pinned by `route.test.ts`; the body is
-// implemented once that suite is confirmed red.
+// Dynamic segment `params` as a `Promise`, per Next.js 15+/16's async route
+// params — verified via `ctx7`'s `/vercel/next.js` v16.2.9 docs before
+// writing this file.
+//
+// CALENDAR-PORT SEAM: `resolveCalendarPort()` (`../../../../lib/calendar-port.ts`)
+// — a real `GoogleCalendarPort` in production, a test-installed override
+// (`setCalendarPortForTesting`) in `route.test.ts`. See that module's own
+// header comment for the full rationale (a Route Handler's fixed
+// `(request, context)` signature has no room for constructor injection, and
+// the test needs object-IDENTITY access to the exact `FakeCalendarPort` it
+// seeded a tentative event on).
+
+import { openDatabase, deleteLeadCascade } from "@kamerton/db";
+import { publish } from "../../../../lib/agui-hub.ts";
+import { resolveCalendarPort } from "../../../../lib/calendar-port.ts";
+import { currentWeekStartIso, readDashboardSnapshot, resolveDbPath } from "../../../../lib/dashboard-db.ts";
+import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
+
+export const runtime = "nodejs";
+
+interface PendingEventRow {
+  calendar_event_id: string;
+}
 
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  throw new Error("apps/dashboard/app/api/leads/[id]/route.ts: DELETE not implemented");
+  const { id } = await context.params;
+  const leadId = Number(id);
+
+  const db = openDatabase(resolveDbPath());
+  try {
+    const lead = db.prepare(`SELECT id FROM leads WHERE id = ?`).get(leadId);
+    if (lead === undefined) {
+      return Response.json({ error: "Лід не знайдений або вже видалений." }, { status: 404 });
+    }
+
+    // Plain SELECT, no delete yet (this file's own header comment: "a
+    // calendar failure must never orphan a tentative event").
+    const pendingEventRows = db
+      .prepare(
+        `SELECT b.calendar_event_id AS calendar_event_id
+         FROM bookings b
+         JOIN requests r ON r.id = b.request_id
+         WHERE r.lead_id = ?
+           AND b.status = 'pending'
+           AND b.calendar_event_id IS NOT NULL`,
+      )
+      .all(leadId) as PendingEventRow[];
+
+    const calendar = resolveCalendarPort();
+    try {
+      for (const row of pendingEventRows) {
+        await calendar.deleteEvent(row.calendar_event_id);
+      }
+    } catch {
+      // Calendar-before-DB ordering: bail out BEFORE touching the DB — the
+      // lead's rows (and the still-live tentative event) are untouched, a
+      // safe, retryable state (never an orphaned calendar event).
+      return Response.json(
+        { error: "Не вдалося видалити подію в календарі. Спробуйте ще раз." },
+        { status: 502 },
+      );
+    }
+
+    deleteLeadCascade(db, leadId);
+
+    // State-removal event: a fresh full `STATE_SNAPSHOT` (never a raw
+    // `STATE_DELTA` guessing at array indices) so every connected dashboard
+    // tab converges on "this lead is gone" without a reload.
+    const snapshot = readDashboardSnapshot(db, currentWeekStartIso());
+    const removalEvent: AguiEvent = { type: "STATE_SNAPSHOT", threadId: "dashboard", snapshot };
+    publish(removalEvent);
+
+    return Response.json({ status: "ok" }, { status: 200 });
+  } finally {
+    db.close();
+  }
 }

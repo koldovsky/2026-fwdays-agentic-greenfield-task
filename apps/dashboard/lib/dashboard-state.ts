@@ -5,10 +5,6 @@
 // `DashboardState` the SSE stream's `STATE_SNAPSHOT` frame carries and the
 // UI (section 6, not this pass) renders from.
 //
-// TYPED THROWING STUB — red state for Stage C of this slice. Types below are
-// the contract pinned by `dashboard-state.test.ts`; the body is implemented
-// once that suite is confirmed red.
-//
 // `DashboardBookingRow` extends `@kamerton/db`'s `BookingRow` with
 // `request_id` — the column `packages/db/src/schema.ts`'s
 // `ensureBookingsRequestIdColumn()` adds at the SQL level (S2 `intake`
@@ -19,11 +15,9 @@
 // extension is the accurate row shape this layer receives, not a guess.
 
 import type { BookingRow, LeadRow, RequestRow } from "@kamerton/db";
-// `compileFirstLessonBrief` (`@kamerton/lib`) is the green half's brief
-// source for `PendingQueueEntry.brief` below — not imported yet since this
-// stub's body never runs it (nothing here would use it before green).
-import type { SeatStatus } from "@kamerton/lib/src/dashboard/hall-status.ts";
-import type { SeatCoordinate } from "@kamerton/lib/src/dashboard/week-grid.ts";
+import { compileFirstLessonBrief } from "@kamerton/lib/src/intake/first-lesson-brief.ts";
+import { hallSeatStatus, type SeatStatus } from "@kamerton/lib/src/dashboard/hall-status.ts";
+import { weekSeatGrid, type SeatCoordinate } from "@kamerton/lib/src/dashboard/week-grid.ts";
 
 /** See this file's header comment: `BookingRow` plus the `request_id` column
  *  its own TS interface omits. */
@@ -74,6 +68,30 @@ export interface DashboardState {
   hallMap: HallMapSeat[];
 }
 
+const TERMINAL_REQUEST_STATES = new Set(["done", "soft_decline"]);
+
+/** "YYYY-MM-DDTHH:mm:ss[+offset|Z]" (or any prefix-compatible ISO string) ->
+ *  its "YYYY-MM-DD" calendar-date and hour-of-day components, read as
+ *  literal characters (never parsed through `Date`/a timezone library) —
+ *  `bookings.slot_start`/`slot_end` are already Europe/Kyiv wall-clock
+ *  timestamps (BC-SCHEDULE-01), so slicing the string is the correct,
+ *  timezone-safe way to recover "which HallMap seat is this". */
+function dateAndHourOf(isoLike: string): { dateStr: string; hour: number } {
+  return { dateStr: isoLike.slice(0, 10), hour: Number(isoLike.slice(11, 13)) };
+}
+
+/** Builds a "YYYY-MM-DD" -> ISO weekday (1 = Monday .. 5 = Friday) lookup for
+ *  the target week's 5 weekdays, derived from `weekSeatGrid`'s own seats so
+ *  the date span this function uses to bucket bookings can never drift from
+ *  the grid's own week-boundary logic. */
+function weekdayByDate(seats: SeatCoordinate[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const seat of seats) {
+    map.set(seat.slotStartIso.slice(0, 10), seat.weekday);
+  }
+  return map;
+}
+
 /**
  * Assembles a `DashboardState` from plain row arrays — PURE, no I/O of its
  * own (the actual `better-sqlite3` read is `dashboard-db.ts`'s job, §5.5).
@@ -83,5 +101,49 @@ export interface DashboardState {
  * week.
  */
 export function buildStateSnapshot(rows: DashboardRows, weekStartIso: string): DashboardState {
-  throw new Error("apps/dashboard/lib/dashboard-state.ts: buildStateSnapshot() not implemented");
+  const activeRequests = rows.requests.filter((request) => !TERMINAL_REQUEST_STATES.has(request.state));
+
+  const pendingQueue: PendingQueueEntry[] = [];
+  for (const request of rows.requests) {
+    if (request.state !== "awaiting_admin") continue;
+    const booking = rows.bookings.find(
+      (b) => b.request_id === request.id && b.status === "pending",
+    );
+    if (booking === undefined) continue;
+
+    pendingQueue.push({
+      requestId: request.id,
+      leadId: request.lead_id,
+      telegramChatId: request.telegram_chat_id,
+      studentName: request.student_name,
+      studentAge: request.student_age,
+      brief: compileFirstLessonBrief(request),
+      bookingId: booking.id,
+      calendarEventId: booking.calendar_event_id,
+      slotStart: booking.slot_start,
+      slotEnd: booking.slot_end,
+    });
+  }
+
+  const seats = weekSeatGrid(weekStartIso);
+  const weekdayForDate = weekdayByDate(seats);
+
+  const bookingsBySeatKey = new Map<string, { status: DashboardBookingRow["status"] }[]>();
+  for (const booking of rows.bookings) {
+    const { dateStr, hour } = dateAndHourOf(booking.slot_start);
+    const weekday = weekdayForDate.get(dateStr);
+    if (weekday === undefined) continue; // outside this week's Mon-Fri span
+    const key = `${weekday}-${hour}`;
+    const bucket = bookingsBySeatKey.get(key) ?? [];
+    bucket.push({ status: booking.status });
+    bookingsBySeatKey.set(key, bucket);
+  }
+
+  const hallMap: HallMapSeat[] = seats.map((seat) => {
+    const key = `${seat.weekday}-${seat.hour}`;
+    const seatBookings = bookingsBySeatKey.get(key) ?? [];
+    return { ...seat, status: hallSeatStatus(seatBookings) };
+  });
+
+  return { activeRequests, pendingQueue, hallMap };
 }

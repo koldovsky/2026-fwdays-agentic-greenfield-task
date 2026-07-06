@@ -18,11 +18,16 @@
 // this test's seeding connection, and only an on-disk file is visible across
 // two separate `better-sqlite3` connections) + a real `FakeCalendarPort`
 // (`@kamerton/lib/src/slots/fake-calendar.ts`) — the concrete calendar
-// implementation the green route will need some seam to substitute in tests
-// for (e.g. module mocking or an env-selected fake) is an open GREEN-phase
-// decision this RED pass deliberately does not resolve; the fake is
-// constructed here regardless so this file documents (and will exercise,
-// once that seam exists) exactly what the real route must call.
+// implementation the green route needs a seam to substitute in tests for.
+//
+// SEAM (resolved, see `../../../../lib/calendar-port.ts`'s own header
+// comment): `setCalendarPortForTesting(port)` installs the EXACT
+// `FakeCalendarPort` instance this file constructs as what the route's own
+// `resolveCalendarPort()` returns — required for object-identity assertions
+// like `calendar.getEvent(eventId)` below to actually observe what the
+// route did. Cleared in `afterEach` so no test leaks its override into the
+// next one (module-level singleton, same discipline as `agui-hub.ts`'s own
+// subscriber-list cleanup).
 //
 // Dynamic route params as a `Promise` verified via `ctx7`'s
 // `/vercel/next.js` v16.2.9 docs before writing this file.
@@ -33,6 +38,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { openDatabase, insertLead, insertRequest, updateRequestState } from "@kamerton/db";
 import { FakeCalendarPort } from "@kamerton/lib/src/slots/fake-calendar.ts";
+import { setCalendarPortForTesting } from "../../../../lib/calendar-port.ts";
 import { DELETE } from "./route.ts";
 
 function leadsUrl(id: number): string {
@@ -59,12 +65,14 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     if (previousDbPathEnv === undefined) delete process.env.KAMERTON_DB_PATH;
     else process.env.KAMERTON_DB_PATH = previousDbPathEnv;
     rmSync(dbDir, { recursive: true, force: true });
+    setCalendarPortForTesting(undefined);
   });
 
   // @trace NFR-PRIV-02
   it("deletes the lead's tentative calendar event AND cascades the DB rows, then publishes a removal event", async () => {
     const db = openDatabase(dbPath);
     const calendar = new FakeCalendarPort();
+    setCalendarPortForTesting(calendar);
     const { eventId } = await calendar.createTentative(
       { start: "2026-07-06T07:00:00Z", end: "2026-07-06T08:00:00Z" },
       "itest hold",
@@ -111,16 +119,24 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
 
   // @trace NFR-PRIV-02
   it("a calendar.deleteEvent rejection surfaces a deterministic inline-error JSON, never a raw 500, and never touches the DB (calendar-before-DB ordering)", async () => {
+    // Simulates a calendar outage — mirrors `packages/bot/src/pipeline.test.ts`'s
+    // own `ThrowingCalendarPort` precedent (a `FakeCalendarPort` subclass
+    // overriding `deleteEvent` to reject), since the real adapter's
+    // `deleteEvent` rejects on any Google Calendar API failure
+    // (`packages/calendar/src/google-calendar.ts`'s `mapCalendarError`).
+    class ThrowingCalendarPort extends FakeCalendarPort {
+      override async deleteEvent(): Promise<void> {
+        throw new Error("Calendar unavailable (simulated)");
+      }
+    }
+
     const db = openDatabase(dbPath);
-    const calendar = new FakeCalendarPort();
+    const calendar = new ThrowingCalendarPort();
+    setCalendarPortForTesting(calendar);
     const { eventId } = await calendar.createTentative(
       { start: "2026-07-06T07:00:00Z", end: "2026-07-06T08:00:00Z" },
       "itest hold",
     );
-    // Simulate a calendar outage: delete the event out from under the route
-    // so its own `deleteEvent` call would reject/no-op-fail in a real
-    // adapter — the green implementation's exact fake-injection seam is a
-    // GREEN-phase decision (see this file's header comment).
 
     const lead = insertLead(db, {
       telegramUserId: "tg-user-2",
