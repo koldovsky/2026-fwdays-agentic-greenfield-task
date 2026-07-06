@@ -293,7 +293,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## F. The four S3 `dashboard` review-gate carryovers
 
-- [ ] F.1 `apps/dashboard/app/api/agui/ingest/route.test.ts` additions FIRST
+- [x] F.1 `apps/dashboard/app/api/agui/ingest/route.test.ts` additions FIRST
       (red): a `CUSTOM`/`BOOKING_PENDING` event POSTed to the ingest route
       is forwarded to the hub verbatim AND triggers exactly one additional
       fresh `{type:"STATE_SNAPSHOT", threadId:"dashboard", ...}` publish,
@@ -301,9 +301,9 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       and 3 — "BOOKING_PENDING for a request created AFTER the dashboard
       connected is dropped" and "HallMap does not update... in real time").
       Confirm red.
-- [ ] F.2 Implement the re-read-and-republish branch in
+- [x] F.2 Implement the re-read-and-republish branch in
       `apps/dashboard/app/api/agui/ingest/route.ts` to pass F.1.
-- [ ] F.3 Cross-capability idempotent-delete assertion (design.md Decision 6
+- [x] F.3 Cross-capability idempotent-delete assertion (design.md Decision 6
       item 2 — "Delete-lead is not idempotent across >1 pending booking"):
       add a case to BOTH `apps/dashboard/app/api/leads/[id]/route.test.ts`
       and this change's own `decisions/[requestId]/route.test.ts` (D.5/D.6)
@@ -315,7 +315,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       behavior conceptually, then green once A.13/A.14 land (this task may
       be done alongside section A if convenient; kept here for traceability
       to its named carryover).
-- [ ] F.4 Kyiv-offset `slot_start` write contract (design.md Decision 6 item
+- [x] F.4 Kyiv-offset `slot_start` write contract (design.md Decision 6 item
       4): confirm B.5's `bookings.test.ts` assertion plus C.5's pipeline
       integration assertion together cover BOTH the unit-level write AND the
       end-to-end hold-creation path — add a `dashboard-state.test.ts`
@@ -324,7 +324,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       and asserting the seat buckets correctly, closing the loop from write
       to render. No new production code expected here if B/C are already
       green — this task is the cross-check.
-- [ ] F.5 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] F.5 Run `npm run test:run` and `npm run test:integration`; confirm
       F.1–F.4 green, zero regressions.
 
 ## G. Integration and real-DB smoke

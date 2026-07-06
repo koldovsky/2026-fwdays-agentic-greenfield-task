@@ -38,6 +38,7 @@
 // seeded a tentative event on).
 
 import { openDatabase, deleteLeadCascade } from "@kamerton/db";
+import { releaseHold } from "@kamerton/lib/src/slots/hold.ts";
 import { publish } from "../../../../lib/agui-hub.ts";
 import { resolveCalendarPort } from "../../../../lib/calendar-port.ts";
 import { currentWeekStartIso, readDashboardSnapshot, resolveDbPath } from "../../../../lib/dashboard-db.ts";
@@ -96,7 +97,14 @@ export async function DELETE(
       if (pendingEventRows.length > 0) {
         const calendar = resolveCalendarPort();
         for (const row of pendingEventRows) {
-          await calendar.deleteEvent(row.calendar_event_id);
+          // booking-hitl design.md Decision 6 item 2 / F.3: route the
+          // delete through the ONE shared idempotent-delete path
+          // (`releaseHold`) rather than a raw `calendar.deleteEvent` — a
+          // 404/410 on an already-gone tentative event (e.g. a previous
+          // partial retry) is treated as an already-satisfied delete, not a
+          // failure. Every other `CalendarError` still propagates
+          // unchanged into the `catch` below.
+          await releaseHold(calendar, row.calendar_event_id);
         }
       }
     } catch {

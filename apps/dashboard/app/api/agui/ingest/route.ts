@@ -5,7 +5,9 @@
 // in-memory fan-out for every connected dashboard tab's SSE stream (§5.4) to
 // forward.
 //
+import { openDatabase } from "@kamerton/db";
 import { publish } from "../../../../lib/agui-hub.ts";
+import { currentWeekStartIso, readDashboardSnapshot, resolveDbPath } from "../../../../lib/dashboard-db.ts";
 import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 
 // Node runtime (not edge): this route touches no native module directly,
@@ -50,6 +52,37 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   publish(parsed);
+
+  // booking-hitl design.md Decision 6, items 1 and 3 (F.1/F.2): a
+  // `CUSTOM`/`BOOKING_PENDING` event means a NEW pending booking just landed
+  // in SQLite (the bot's pipeline publishes it the moment `HoldStorePort.
+  // holdSlot` succeeds). `agui-client.ts` already replaces `state.dashboard`
+  // wholesale on any `STATE_SNAPSHOT` with `threadId === "dashboard"` — so a
+  // fresh re-read-and-republish right here is enough to make the new
+  // request/seat "known" to every connected dashboard tab the instant it
+  // re-renders, with no client-side registration logic to get wrong. Only
+  // triggered for THIS event name — every other event (including the
+  // regression-pinned `RUN_STARTED`/`RUN_FINISHED` cases above) forwards
+  // exactly once, unchanged.
+  if (parsed.type === "CUSTOM" && (parsed as { name?: unknown }).name === "BOOKING_PENDING") {
+    try {
+      const db = openDatabase(resolveDbPath());
+      try {
+        const snapshot = readDashboardSnapshot(db, currentWeekStartIso());
+        const snapshotEvent: AguiEvent = { type: "STATE_SNAPSHOT", threadId: "dashboard", snapshot };
+        publish(snapshotEvent);
+      } finally {
+        db.close();
+      }
+    } catch {
+      // Best-effort, same posture as the rest of this route's error
+      // handling: a snapshot-read failure must never turn the primary
+      // forward (already published above) into a 500 — the original event
+      // still reached the hub; only the extra live-refresh is skipped, and
+      // the next SSE (re)connect's own server-side read (dashboard tasks.md
+      // §5.5) will pick up the fresh state anyway.
+    }
+  }
 
   return Response.json({ status: "ok" }, { status: 200 });
 }
