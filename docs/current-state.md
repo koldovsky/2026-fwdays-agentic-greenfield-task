@@ -48,13 +48,29 @@
   429. RISK: CLI-spawn latency ~5–12s/turn vs NFR-UX-01 p90≤5s (warm-
   subprocess follow-up flagged). 187 unit green; integration 4 passed +
   1 skipped (Anthropic smoke, no API key here).
-  **Remaining: 6.9 manual smoke — IN PROGRESS with the user.** The real
-  bot is running (long polling, Agent-SDK model); user is walking a live
-  Telegram chat (happy path age 9, age-3 refusal, piano detour, amend,
-  cancel, returning lead). Note: live slot proposal is deferred to S4, so
-  the flow collects the full profile then stops before proposing. After
-  the chat: capture transcript/DB evidence to `docs/qa/intake-manual-
-  smoke.md`, then 6.10 archive. Bot start: `node packages/bot/src/index.ts`.
+  **6.9 manual smoke — IN PROGRESS; live testing found two real
+  conversational bugs (the payoff of real-model testing over fakes):**
+  1. FIXED (`6b3dc35`): bot re-asked the age on a bare number — the
+     system prompt's age instruction told the model to re-ask "ambiguous"
+     answers, and it treated "7" as ambiguous. Reworded so any number
+     form → save_age immediately; verified 5/5 live + pipeline persists.
+  2. IN PROGRESS (agent `a35cdddbe081b9798`, sonnet): after a text-less
+     save_* tool call the bot sent only the bare ack "Дякую, я це
+     записала." and never asked the NEXT question → flow stalls. Fix:
+     the CODE asks the next question deterministically (model only
+     extracts the answer); lead-facing question copy per field + reply
+     assembly in loop.ts, test-first. NOT yet committed.
+  **Background processes live right now** (survive a compact): the bot is
+  running with the age fix (PID ~62691; restart: `node packages/bot/src/
+  index.ts`) but does NOT yet have fix #2 — RESTART it after fix #2
+  commits. Scripted-6.9 agent `a6304a9c72104eacc` is (or was) running —
+  its transcript may be stale after these two fixes; likely re-run it.
+  **After both fixes + restart:** finish the 6.9 transcript to
+  `docs/qa/intake-manual-smoke.md`, tick 6.9, then 6.10 (review-evidence
+  is already clean → `npx openspec archive intake --yes` + post-archive
+  gates), stop the bot, then S3 dashboard. Live slot proposal stays
+  deferred to S4 (flow collects full profile then a deterministic
+  "we'll follow up with times" close).
 - **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
   (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
   chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
