@@ -113,6 +113,19 @@ export type ValidFormat = "individual" | "group";
 export type CandidateFormat = ValidFormat | "unsure" | "instrument";
 
 /**
+ * One slot offered to the lead, Kyiv wall-clock local `"YYYY-MM-DDTHH:mm"`
+ * strings (booking-hitl design.md Decision 2) — the same shape as
+ * `../slots/grid.ts`'s `Slot`, declared here as its own literal interface
+ * (not imported) so this module stays self-contained, mirroring
+ * `intake/first-lesson-brief.ts`'s own "zero dependency, even type-only"
+ * reasoning for cross-module shapes.
+ */
+export interface OfferedSlot {
+  start: string;
+  end: string;
+}
+
+/**
  * Values the reducer has itself validated. One property per `requests`
  * schema column this slice owns (design.md Decision 4) — no field is ever
  * present here that a validator has not approved.
@@ -129,6 +142,12 @@ export interface IntakeFields {
   comfort?: string;
   preferredWeekdays?: string;
   preferredTimeRange?: string;
+  /** The slot(s) currently offered to this lead (booking-hitl design.md
+   *  Decision 2) — set by `offer_slots`, read by `pick_slot`. Serves BOTH
+   *  origins of "slots currently offered": the agent's own proposal AND an
+   *  administrator's "Propose another time" re-offer (design.md Decision 4
+   *  item 2). */
+  offeredSlots?: OfferedSlot[];
 }
 
 /** The reducer's full state shape. */
@@ -171,7 +190,14 @@ export type IntakeEvent =
   | { type: "save_weekdays"; weekdays: string }
   | { type: "save_time_range"; timeRange: string }
   | AmendEvent
-  | { type: "cancel" };
+  | { type: "cancel" }
+  // booking-hitl design.md Decision 2 — TYPED THROWING STUB (task A.11's
+  // red half): both events are owned by "proposing" (task A.12 adds the
+  // OWNING_STATE entries and the real reducer branches); the switch below
+  // currently throws Not-implemented for both, deliberately NOT
+  // implementing the field-ownership/index-bounds logic yet.
+  | { type: "offer_slots"; slots: OfferedSlot[] }
+  | { type: "pick_slot"; slotIndex: number };
 
 /** The side-channel detour signal (design.md Decision 1's chosen option) —
  *  `conversationState` is never mutated for these; the caller reads this
@@ -185,7 +211,13 @@ export type TransitionErrorCode =
   | "FIELD_NOT_OWNED_BY_STATE"
   | "AGE_BELOW_MIN"
   | "TERMINAL_STATE"
-  | "INVALID_GOAL_TAG";
+  | "INVALID_GOAL_TAG"
+  // booking-hitl design.md Decision 2: `pick_slot` with an index outside
+  // `fields.offeredSlots`'s bounds (or called before any `offer_slots`) is
+  // rejected with this code, state/fields byte-identical to the input — the
+  // same "reject in code, never trust the caller" shape
+  // `FIELD_NOT_OWNED_BY_STATE` already has (task A.12, red for now).
+  | "INVALID_SLOT_INDEX";
 
 /**
  * `transition()`'s return shape. `state` is always the FULL resulting
@@ -458,6 +490,18 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
       const conversationState = collectingComplete(fields) ? "proposing" : state.conversationState;
       return { state: { conversationState, fields }, detour: null };
     }
+
+    // booking-hitl design.md Decision 2 — TYPED THROWING STUB (task A.11's
+    // red half, task A.12 implements the real field-ownership/index-bounds
+    // logic). Deliberately NOT wired into OWNING_STATE yet, so A.11's
+    // "offer_slots from any OTHER non-terminal state is rejected
+    // FIELD_NOT_OWNED_BY_STATE" case fails here (throws) rather than
+    // returning the expected rejection — still red, for the right reason.
+    case "offer_slots":
+    case "pick_slot":
+      throw new Error(
+        `Not implemented — lib/src/intake/state-machine.ts transition() "${event.type}" branch (booking-hitl task A.12)`,
+      );
 
     default: {
       const exhaustive: never = event;

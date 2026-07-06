@@ -60,6 +60,21 @@ function toDateStr(utcMidnight: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+// TYPED THROWING STUB (booking-hitl tasks.md A.2, design.md Decision 3) —
+// `isSlotOnGrid` is the "one shared predicate, never re-derived" grid-
+// membership check `validate-admin-slots.ts` reuses. Body implemented in
+// A.2's green half; this red round only pins the signature.
+/**
+ * True iff `slot` is a member of the deterministic Mon–Fri grid this same
+ * file's `generateGrid` produces: Europe/Kyiv wall-clock local, Mon–Fri
+ * only, a start in `HOUR_STARTS` (10:00–19:00 inclusive), and `end` exactly
+ * 60 minutes after `start` on the same calendar date (BC-SCHEDULE-01).
+ */
+export function isSlotOnGrid(slot: Slot): boolean {
+  void slot;
+  throw new Error("Not implemented — lib/src/slots/grid.ts isSlotOnGrid (booking-hitl task A.2)");
+}
+
 export function generateGrid(from: string, days: number): Slot[] {
   const [y, m, d] = from.split("-").map(Number) as [number, number, number];
   const baseMillis = Date.UTC(y, m - 1, d);

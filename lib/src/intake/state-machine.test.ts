@@ -38,6 +38,7 @@ import {
   transition,
   type IntakeEvent,
   type IntakeState,
+  type OfferedSlot,
   type TransitionResult,
 } from "./state-machine";
 
@@ -471,6 +472,74 @@ describe("transition() — terminal-state rejection (FR-INTAKE-08)", () => {
     expect(amendAttempt.error).toBe("TERMINAL_STATE");
     expect(amendAttempt.state).toBe(done);
     expect(amendAttempt.state.fields.studentAge).toBe(11);
+  });
+});
+
+// Test-first (red): `offer_slots`/`pick_slot` are typed throwing stubs in
+// transition()'s switch (booking-hitl tasks.md A.11's red half) — every
+// case below is expected to FAIL (throw) against the stub until A.12
+// implements the real field-ownership/index-bounds logic.
+describe("transition() — offer_slots / pick_slot (booking-hitl design.md Decision 2)", () => {
+  function proposing(fields: IntakeState["fields"] = {}): IntakeState {
+    return { conversationState: "proposing", fields };
+  }
+
+  const SAMPLE_SLOTS: OfferedSlot[] = [
+    { start: "2026-07-07T15:00", end: "2026-07-07T16:00" },
+    { start: "2026-07-08T17:00", end: "2026-07-08T18:00" },
+  ];
+
+  // @trace FR-SLOT-01
+  it("offer_slots from proposing records fields.offeredSlots, conversationState stays proposing", () => {
+    const state = proposing();
+
+    const result = transition(state, { type: "offer_slots", slots: SAMPLE_SLOTS });
+
+    expect(result.error).toBeUndefined();
+    expect(result.state.conversationState).toBe("proposing");
+    expect(result.state.fields.offeredSlots).toEqual(SAMPLE_SLOTS);
+  });
+
+  // @trace FR-SLOT-01
+  it("offer_slots from any OTHER non-terminal state is rejected FIELD_NOT_OWNED_BY_STATE, state unchanged", () => {
+    const state = qualifying();
+
+    const result = transition(state, { type: "offer_slots", slots: SAMPLE_SLOTS });
+
+    expect(result.error).toBe("FIELD_NOT_OWNED_BY_STATE");
+    expect(result.state).toBe(state);
+  });
+
+  // @trace FR-SLOT-02
+  // @trace FR-HITL-03
+  it("pick_slot with an index inside fields.offeredSlots's bounds moves proposing -> awaiting_admin (first arrival)", () => {
+    const offered = transition(proposing(), { type: "offer_slots", slots: SAMPLE_SLOTS });
+    expect(offered.state.conversationState).toBe("proposing");
+
+    const result = transition(offered.state, { type: "pick_slot", slotIndex: 1 });
+
+    expect(result.error).toBeUndefined();
+    expect(result.state.conversationState).toBe("awaiting_admin");
+  });
+
+  // @trace FR-SLOT-02
+  it("pick_slot with an out-of-range index is rejected INVALID_SLOT_INDEX, state/fields byte-identical", () => {
+    const offered = transition(proposing(), { type: "offer_slots", slots: SAMPLE_SLOTS });
+
+    const result = transition(offered.state, { type: "pick_slot", slotIndex: 5 });
+
+    expect(result.error).toBe("INVALID_SLOT_INDEX");
+    expect(result.state).toBe(offered.state);
+  });
+
+  // @trace FR-SLOT-02
+  it("pick_slot called before any offer_slots (fields.offeredSlots undefined) is rejected INVALID_SLOT_INDEX", () => {
+    const state = proposing();
+
+    const result = transition(state, { type: "pick_slot", slotIndex: 0 });
+
+    expect(result.error).toBe("INVALID_SLOT_INDEX");
+    expect(result.state).toBe(state);
   });
 });
 

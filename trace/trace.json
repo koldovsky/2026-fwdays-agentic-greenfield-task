@@ -374,6 +374,13 @@
       ],
       "planned": true,
       "tests": [
+        "lib/src/booking/validate-preferences.test.ts",
+        "lib/src/booking/validate-preferences.test.ts",
+        "lib/src/booking/validate-preferences.test.ts",
+        "lib/src/booking/validate-preferences.test.ts",
+        "lib/src/booking/validate-preferences.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
         "lib/src/slots/grid.test.ts",
         "lib/src/slots/subtract.test.ts",
         "lib/src/slots/subtract.test.ts",
@@ -394,6 +401,9 @@
       ],
       "planned": true,
       "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
         "lib/src/slots/hold.test.ts",
         "lib/src/slots/hold.test.ts",
         "lib/src/slots/hold.test.ts",
@@ -477,7 +487,12 @@
         "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/booking/copy.test.ts",
+        "lib/src/booking/copy.test.ts",
+        "lib/src/booking/copy.test.ts",
+        "lib/src/booking/copy.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -488,7 +503,20 @@
         "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/booking/transitions.test.ts",
+        "lib/src/booking/transitions.test.ts",
+        "lib/src/booking/transitions.test.ts",
+        "lib/src/booking/transitions.test.ts",
+        "lib/src/booking/validate-admin-slots.test.ts",
+        "lib/src/booking/validate-admin-slots.test.ts",
+        "lib/src/booking/validate-admin-slots.test.ts",
+        "lib/src/booking/validate-admin-slots.test.ts",
+        "lib/src/booking/validate-admin-slots.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/slots/grid.test.ts",
+        "lib/src/slots/grid.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -585,14 +613,6 @@
     {
       "check": "test-trace",
       "msg": "FR-HITL-01 has no test annotated \"@trace FR-HITL-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-HITL-02 has no test annotated \"@trace FR-HITL-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-HITL-03 has no test annotated \"@trace FR-HITL-03\""
     },
     {
       "check": "test-trace",

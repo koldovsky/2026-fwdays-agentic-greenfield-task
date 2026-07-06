@@ -21,6 +21,12 @@ import { describe, expect, it } from "vitest";
 import { createHold, releaseHold } from "./hold.ts";
 import { FakeCalendarPort } from "./fake-calendar.ts";
 import { kyivWallClockToUtc } from "./timezone.ts";
+import {
+  CalendarApiError,
+  CalendarAuthError,
+  CalendarTimeoutError,
+  type CalendarPort,
+} from "./calendar-port.ts";
 
 describe("createHold", () => {
   // @trace FR-SLOT-02
@@ -131,5 +137,67 @@ describe("releaseHold", () => {
     // interval must succeed (no lingering collision from the cancelled hold).
     const rebooked = await createHold(port, { slot, summary: "Інший лід" });
     expect(rebooked.status).toBe("held");
+  });
+});
+
+// Test-first (red): booking-hitl tasks.md A.13/A.14, design.md Decision 6
+// item 2 ("Delete-lead is not idempotent across >1 pending booking... a
+// retry re-attempts the already-deleted event"). `releaseHold`'s CURRENT
+// body just awaits `port.deleteEvent(eventId)` and propagates any
+// rejection unchanged — so the 404/410 cases below are expected to FAIL
+// (reject instead of resolve) until A.14 adds the idempotent-delete catch.
+// The "propagates every OTHER CalendarError unchanged" cases already hold
+// against the current implementation (releaseHold does nothing but await
+// and rethrow today) — they are asserted here so A.14's fix cannot
+// regress them (design.md Risks: "strictly more permissive").
+function portWithFailingDelete(error: unknown): CalendarPort {
+  return {
+    freeBusy: () => {
+      throw new Error("portWithFailingDelete: freeBusy not used by this test");
+    },
+    createTentative: () => {
+      throw new Error("portWithFailingDelete: createTentative not used by this test");
+    },
+    upgradeToConfirmed: () => {
+      throw new Error("portWithFailingDelete: upgradeToConfirmed not used by this test");
+    },
+    deleteEvent: () => Promise.reject(error),
+  };
+}
+
+describe("releaseHold — idempotent delete (booking-hitl design.md Decision 6, item 2)", () => {
+  // @trace NFR-REL-01
+  it("resolves (does not throw) when deleteEvent rejects with a CalendarApiError status 404", async () => {
+    const port = portWithFailingDelete(new CalendarApiError("already gone", { status: 404 }));
+
+    await expect(releaseHold(port, "evt-already-deleted")).resolves.toBeUndefined();
+  });
+
+  // @trace NFR-REL-01
+  it("resolves (does not throw) when deleteEvent rejects with a CalendarApiError status 410", async () => {
+    const port = portWithFailingDelete(new CalendarApiError("gone", { status: 410 }));
+
+    await expect(releaseHold(port, "evt-already-deleted")).resolves.toBeUndefined();
+  });
+
+  // @trace NFR-REL-01
+  it("propagates a CalendarAuthError unchanged", async () => {
+    const port = portWithFailingDelete(new CalendarAuthError());
+
+    await expect(releaseHold(port, "evt-1")).rejects.toBeInstanceOf(CalendarAuthError);
+  });
+
+  // @trace NFR-REL-01
+  it("propagates a CalendarTimeoutError unchanged", async () => {
+    const port = portWithFailingDelete(new CalendarTimeoutError());
+
+    await expect(releaseHold(port, "evt-1")).rejects.toBeInstanceOf(CalendarTimeoutError);
+  });
+
+  // @trace NFR-REL-01
+  it("propagates a non-404/410 CalendarApiError unchanged", async () => {
+    const port = portWithFailingDelete(new CalendarApiError("server error", { status: 500 }));
+
+    await expect(releaseHold(port, "evt-1")).rejects.toBeInstanceOf(CalendarApiError);
   });
 });

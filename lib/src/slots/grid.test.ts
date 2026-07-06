@@ -16,7 +16,7 @@
 //     lexicographic string comparison agree with chronological order).
 //   - `end` is always exactly `start` + 60 minutes, same calendar date.
 import { describe, expect, it } from "vitest";
-import { generateGrid } from "./grid.ts";
+import { generateGrid, isSlotOnGrid } from "./grid.ts";
 
 const HOUR_STARTS = [
   "10:00",
@@ -112,5 +112,48 @@ describe("generateGrid", () => {
     }
     // The out-of-grid fixture data introduced no Sunday slot into the result.
     expect(free.some((s) => s.start.startsWith("2026-07-12"))).toBe(false);
+  });
+});
+
+// Test-first (red): `isSlotOnGrid` does not exist as behavior yet — a typed
+// throwing stub only (booking-hitl tasks.md A.1/A.2, design.md Decision 3
+// "one shared predicate, never re-derived"). Every case below is expected to
+// FAIL against the stub until A.2 implements the real body.
+describe("isSlotOnGrid", () => {
+  // @trace BC-SCHEDULE-01
+  // @trace FR-HITL-03
+  it("returns true for every slot generateGrid itself produces", () => {
+    const grid = generateGrid("2026-07-06", 14); // Monday
+    expect(grid.length).toBeGreaterThan(0);
+    for (const slot of grid) {
+      expect(isSlotOnGrid(slot)).toBe(true);
+    }
+  });
+
+  // @trace BC-SCHEDULE-01
+  it("returns false for a Saturday slot", () => {
+    // 2026-07-11 is a Saturday (2026-07-06 is the reference Monday above).
+    expect(isSlotOnGrid({ start: "2026-07-11T15:00", end: "2026-07-11T16:00" })).toBe(false);
+  });
+
+  // @trace BC-SCHEDULE-01
+  it("returns false for a Sunday slot", () => {
+    expect(isSlotOnGrid({ start: "2026-07-12T15:00", end: "2026-07-12T16:00" })).toBe(false);
+  });
+
+  // @trace BC-SCHEDULE-01
+  // @trace FR-HITL-03
+  it("returns false for a 21:00 start (outside the 10:00-19:00 inclusive starts)", () => {
+    expect(isSlotOnGrid({ start: "2026-07-06T21:00", end: "2026-07-06T22:00" })).toBe(false);
+  });
+
+  // @trace BC-SCHEDULE-01
+  it("returns false for a non-hour-aligned start", () => {
+    expect(isSlotOnGrid({ start: "2026-07-06T15:30", end: "2026-07-06T16:30" })).toBe(false);
+  });
+
+  // @trace BC-SCHEDULE-01
+  it("returns false for a slot whose end is not exactly 60 minutes after start", () => {
+    expect(isSlotOnGrid({ start: "2026-07-06T15:00", end: "2026-07-06T16:30" })).toBe(false);
   });
 });
