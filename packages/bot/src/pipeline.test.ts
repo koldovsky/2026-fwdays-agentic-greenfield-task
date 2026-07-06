@@ -346,6 +346,32 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(request2.format).toBe("individual");
   });
 
+  // --- Live-Telegram bug B sibling (docs/qa/intake-manual-smoke.md scenario
+  // --- 3): the model calls the DEDICATED `explain_scope` tool (not
+  // --- `save_format({format:"instrument"})`) for a scope question -- the
+  // --- lead must still get SCOPE_EXPLANATION_COPY, never the generic
+  // --- "Дякую, я це записала." fallback, and conversationState must not move.
+  // @trace BC-SCOPE-01
+  // @trace BC-SCOPE-02
+  // @trace FR-INTAKE-02
+  it("explain_scope tool-use path fires SCOPE_EXPLANATION_COPY (not the generic fallback) without moving conversationState", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded } = seedNewLeadRequest(db);
+    seedRequestAt(db, seeded.id, "qualifying", { studentName: "Тарас", studentAge: 8 });
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([toolUseResponse("explain_scope", {})]);
+    const deps = makeDeps({ transport, model, db });
+
+    await handleUpdate(textUpdate({ text: "А фортепіано викладаєте?" }), deps);
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const request2 = findLatestRequestForLead(db, lead!.id)!;
+    expect(request2.state).toBe("qualifying");
+    expect(request2.format).toBeNull();
+    expect(transport.sentTexts[transport.sentTexts.length - 1]).toBe(SCOPE_EXPLANATION_COPY);
+  });
+
   // --- bullet 7: off-topic mid-profiling -----------------------------------
   // @trace FR-GUARD-05
   it("off-topic-mid-profiling path leaves the requests row unchanged across two off-topic turns, goal fields still null", async () => {

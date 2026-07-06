@@ -164,6 +164,66 @@ describe("runIntakeTurn", () => {
     expect(persistence.fieldSaves).toContainEqual({ studentAge: 7 });
   });
 
+  // --- Live-Telegram bug A (docs/qa/intake-manual-smoke.md scenario 4, ------
+  // --- CRITICAL): `amend_field.value` has no type constraint in tools.ts, --
+  // --- so the model reliably sends a numeric-string age correction -------
+  // Regression coverage: `value: "7"` (a JSON string, not a number) used to
+  // flow straight through `toIntakeEvent`'s `amend_field` case into
+  // `validateAge`, whose defensive `typeof age !== "number"` guard (a
+  // deliberate, KEPT review-gate fix) then read the string as
+  // "not a number" -> AGE_BELOW_MIN -> the lead was driven into terminal
+  // `soft_decline` with fields wiped, even though 7 is a perfectly compliant
+  // age. The fix coerces a numeric string to a number at the tool -> event
+  // boundary (`toIntakeEvent`), ONLY for the `studentAge` amend path, BEFORE
+  // it ever reaches `validateAge` — `validateAge`'s own type guard is left
+  // untouched.
+  // @trace FR-INTAKE-07
+  // @trace FR-GUARD-04
+  // @trace BC-AGE-01
+  it('a scripted amend_field studentAge tool-use response carrying a numeric-STRING value ("7") is coerced to a number before validateAge — applied, not soft-declined', async () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: { studentName: "Богдан", studentAge: 6, format: "individual" },
+    };
+    const model = new FakeModelPort([toolUseResponse("amend_field", { field: "studentAge", value: "7" })]);
+    const persistence = new FakePersistencePort();
+    const ports = makePorts(model, { persistence });
+
+    const result = await runIntakeTurn({
+      state,
+      message: "Насправді їй 7, а не 6",
+      ports,
+    });
+
+    expect(result.toolCalls[0]).toMatchObject({ tool: "amend_field", outcome: "applied" });
+    expect(result.state.fields.studentAge).toBe(7);
+    expect(result.state.conversationState).toBe("profiling");
+    expect(result.state.conversationState).not.toBe("soft_decline");
+    expect(persistence.fieldSaves).toContainEqual({ studentAge: 7 });
+  });
+
+  // Guardrail-preservation sibling of the test above: a genuinely
+  // non-numeric amended age (e.g. a lead who "doesn't remember") must NOT be
+  // coerced into something bogus by the fix — it must still be rejected by
+  // the existing AGE_BELOW_MIN guardrail, exactly as before.
+  // @trace FR-GUARD-04
+  // @trace BC-AGE-01
+  it("a scripted amend_field studentAge tool-use response carrying a non-numeric string is NOT coerced and still triggers AGE_BELOW_MIN", async () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: { studentName: "Богдан", studentAge: 6, format: "individual" },
+    };
+    const model = new FakeModelPort([
+      toolUseResponse("amend_field", { field: "studentAge", value: "не пам'ятаю" }),
+    ]);
+    const ports = makePorts(model);
+
+    const result = await runIntakeTurn({ state, message: "Не пам'ятаю скільки їй", ports });
+
+    expect(result.state.conversationState).toBe("soft_decline");
+    expect(result.toolCalls[0]).toMatchObject({ tool: "amend_field", error: "AGE_BELOW_MIN" });
+  });
+
   // --- review-gate finding #4 (CRITICAL/MAJOR): booking-release must not --
   // --- let an uncaught exception (Calendar/DB failure) crash the turn -----
   // Regression coverage: the `cancel_request` orchestration
@@ -230,17 +290,38 @@ describe("runIntakeTurn", () => {
 
   // --- review-gate finding #5 (MINOR): "applied" must mean a genuine ------
   // --- reducer-approved mutation, never a pass-through tool -------------
-  // Regression coverage: `explain_scope`/`explain_format`/`propose_slots`/
-  // `request_hold` never reach `transition()` at all (`toIntakeEvent`
-  // returns `null` for them by design — they are deterministic/
-  // stateless explanations or not-yet-wired tools, see this file's own
-  // header comment) — yet the tool-call log used to mark them
-  // `outcome: "applied"`, exactly the same label a genuine `save_name`
-  // mutation gets. That is a mislabel, not intended behaviour: "applied"
-  // must mean "the reducer accepted a state/field mutation", so a tool the
-  // reducer never even saw gets its own distinct outcome instead.
+  // Regression coverage: `propose_slots`/`request_hold` never reach
+  // `transition()` at all (`toIntakeEvent` returns `null` for them by
+  // design — not-yet-wired tools, see this file's own header comment) — yet
+  // the tool-call log used to mark them `outcome: "applied"`, exactly the
+  // same label a genuine `save_name` mutation gets. That is a mislabel, not
+  // intended behaviour: "applied" must mean "the reducer accepted a
+  // state/field mutation", so a tool the reducer never even saw gets its own
+  // distinct outcome instead ("pass_through").
   // @trace FR-INTAKE-02 (defense-in-depth logging integrity, ADR-0001 §5 analog)
-  it('a scripted explain_scope tool-use response (never dispatched to transition()) is logged with outcome "pass_through", not "applied"', async () => {
+
+  // --- Live-Telegram bug B (docs/qa/intake-manual-smoke.md scenario 3, ----
+  // --- MAJOR): the piano/instrument scope question never got the scope ----
+  // --- explanation ---------------------------------------------------------
+  // Regression coverage: for a scope question ("чи вчите на піаніно?") the
+  // model reliably calls the DEDICATED `explain_scope` tool rather than
+  // `save_format({format:"instrument"})`. `explain_scope`/`explain_format`
+  // are stateless/deterministic explanations that never reach
+  // `transition()` (`toIntakeEvent` returns `null` for them) — they used to
+  // be logged as a bare `outcome: "pass_through"` with NO `detour`, so
+  // `packages/bot/src/pipeline.ts`'s `guardrailOverrideFor` never saw a
+  // `scope_violation`/`format_unsure` detour and fell back to the generic
+  // "Дякую, я це записала." copy — telling the lead something was recorded
+  // when nothing was, and never surfacing `SCOPE_EXPLANATION_COPY`/
+  // `FORMAT_UNSURE_COPY`. The fix makes `applyToolUse` dispatch
+  // `explain_scope`/`explain_format` with `outcome: "detour"` and the
+  // MATCHING existing `Detour` value directly (reusing the existing detour
+  // vocabulary and the existing pipeline override — no reducer mutation, no
+  // new copy string) rather than leaving them a bare pass-through.
+  // @trace BC-SCOPE-01
+  // @trace BC-SCOPE-02
+  // @trace FR-INTAKE-02
+  it('a scripted explain_scope tool-use response never reaches transition() but is logged as a "detour" (scope_violation), state unchanged', async () => {
     const state = initialIntakeState();
     const model = new FakeModelPort([toolUseResponse("explain_scope", {})]);
     const persistence = new FakePersistencePort();
@@ -248,9 +329,35 @@ describe("runIntakeTurn", () => {
 
     const result = await runIntakeTurn({ state, message: "А на гітарі вчите?", ports });
 
-    expect(result.state).toBe(state); // no mutation happened at all
+    expect(result.state).toBe(state); // stateless explanation — no mutation happened at all
     expect(result.toolCalls).toHaveLength(1);
-    expect(result.toolCalls[0]).toMatchObject({ tool: "explain_scope", outcome: "pass_through" });
+    expect(result.toolCalls[0]).toMatchObject({
+      tool: "explain_scope",
+      outcome: "detour",
+      detour: "scope_violation",
+    });
+    expect(result.toolCalls[0]!.outcome).not.toBe("applied");
+    expect(persistence.fieldSaves).toEqual([]);
+  });
+
+  // Symmetric sibling: `explain_format` is the exact same bug class for the
+  // format-unsure detour.
+  // @trace FR-INTAKE-02
+  it('a scripted explain_format tool-use response never reaches transition() but is logged as a "detour" (format_unsure), state unchanged', async () => {
+    const state = initialIntakeState();
+    const model = new FakeModelPort([toolUseResponse("explain_format", {})]);
+    const persistence = new FakePersistencePort();
+    const ports = makePorts(model, { persistence });
+
+    const result = await runIntakeTurn({ state, message: "Не знаю, який формат обрати", ports });
+
+    expect(result.state).toBe(state); // stateless explanation — no mutation happened at all
+    expect(result.toolCalls).toHaveLength(1);
+    expect(result.toolCalls[0]).toMatchObject({
+      tool: "explain_format",
+      outcome: "detour",
+      detour: "format_unsure",
+    });
     expect(result.toolCalls[0]!.outcome).not.toBe("applied");
     expect(persistence.fieldSaves).toEqual([]);
   });

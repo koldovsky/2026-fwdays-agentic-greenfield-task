@@ -401,6 +401,25 @@ function isTextBlock(block: ContentBlock): block is TextBlock {
  *  event for (`propose_slots`/`request_hold` — they need a `CalendarPort`
  *  seam this contract does not expose, a later task) return `null`: they
  *  never reach `transition()`, by design, not by omission. */
+/** Coerces an `amend_field` `studentAge` tool-call value to a number when it
+ *  is a numeric string (e.g. `"7"`, `" 7 "`) — the seam this loop uses to
+ *  stop a stringly-typed model tool call from ever reaching `validateAge`'s
+ *  `typeof age !== "number"` guard as a string. A value that does not parse
+ *  to a finite number is returned UNCHANGED (never coerced to `NaN` or some
+ *  other bogus number) so the existing AGE_BELOW_MIN guardrail still rejects
+ *  it exactly as before — this is a narrow type fix-up, not new leniency. */
+function coerceAmendedAge(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return value;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : value;
+}
+
 function toIntakeEvent(block: ToolUseBlock): IntakeEvent | null {
   const input = block.input;
   switch (block.name) {
@@ -436,18 +455,30 @@ function toIntakeEvent(block: ToolUseBlock): IntakeEvent | null {
       return { type: "save_weekdays", weekdays: input.weekdays as string };
     case "save_time_range":
       return { type: "save_time_range", timeRange: input.timeRange as string };
-    case "amend_field":
+    case "amend_field": {
       // The per-field discriminated `AmendEvent` shape is enforced at
       // runtime by `transition()`'s own field-by-field handling (and, for
       // `studentAge`, `validateAge`) — defense in depth, same as
       // `save_format`'s schema-enum-plus-validator pattern (tasks.md 4.4's
       // second bullet). The model's own tool schema enum already constrains
       // `field` to a real `AmendableField`.
-      return {
-        type: "amend",
-        field: input.field as AmendableField,
-        value: input.value,
-      } as unknown as IntakeEvent;
+      const field = input.field as AmendableField;
+      // Live-Telegram bug fix (docs/qa/intake-manual-smoke.md scenario 4,
+      // CRITICAL): `amend_field.value` carries no type constraint in
+      // tools.ts, so the model reliably sends a numeric-STRING age
+      // correction (e.g. `value: "7"`), reproduced 6/6 even when explicitly
+      // asked for a number. Left as a string, that value reaches
+      // `validateAge`'s defensive `typeof age !== "number"` guard (a
+      // deliberate, KEPT review-gate fix — never loosened here) and is read
+      // as "not a number" -> AGE_BELOW_MIN, soft-declining a compliant lead.
+      // The fix coerces a numeric string to a number at this tool -> event
+      // boundary, ONLY for the `studentAge` field, BEFORE the event ever
+      // reaches `transition()`/`validateAge`. A value that does not parse to
+      // a finite number (e.g. "не пам'ятаю") is left untouched — the
+      // existing AGE_BELOW_MIN guardrail still rejects it, unchanged.
+      const value = field === "studentAge" ? coerceAmendedAge(input.value) : input.value;
+      return { type: "amend", field, value } as unknown as IntakeEvent;
+    }
     case "cancel_request":
       return { type: "cancel" };
     default:
@@ -505,13 +536,38 @@ async function applyToolUse(
 ): Promise<AppliedToolUse> {
   const event = toIntakeEvent(block);
   if (event === null) {
-    // Review-gate finding #5 (MINOR): `explain_scope`/`explain_format`/
-    // `propose_slots`/`request_hold` (and any tool this pinned `LoopPorts`
-    // contract does not yet wire an event for) never reach `transition()`
-    // at all — nothing was ever offered to the reducer to accept or reject,
-    // so this is NOT "applied" (that label is reserved for a genuine
-    // reducer-approved mutation). "pass_through" names what actually
-    // happened: the tool call was logged and passed straight through.
+    // Live-Telegram bug fix (docs/qa/intake-manual-smoke.md scenario 3,
+    // MAJOR): `explain_scope`/`explain_format` are stateless/deterministic
+    // explanations that never reach `transition()` — but a scope/format
+    // question routed through these DEDICATED tools (rather than through
+    // `save_format("instrument"|"unsure")`) used to be logged as a bare
+    // `outcome: "pass_through"` with NO `detour`, so `packages/bot/src/
+    // pipeline.ts`'s `guardrailOverrideFor` never saw a `scope_violation`/
+    // `format_unsure` detour and fell back to the generic "Дякую, я це
+    // записала." copy instead of `SCOPE_EXPLANATION_COPY`/
+    // `FORMAT_UNSURE_COPY`. These two tools now dispatch straight to the
+    // EXISTING detour vocabulary/pipeline override — still no reducer call,
+    // no state/field mutation, only the log entry's `outcome`/`detour`
+    // change.
+    if (block.name === "explain_scope") {
+      return {
+        state,
+        logEntry: { tool: block.name, input: block.input, outcome: "detour", detour: "scope_violation" },
+      };
+    }
+    if (block.name === "explain_format") {
+      return {
+        state,
+        logEntry: { tool: block.name, input: block.input, outcome: "detour", detour: "format_unsure" },
+      };
+    }
+    // Review-gate finding #5 (MINOR): `propose_slots`/`request_hold` (and
+    // any tool this pinned `LoopPorts` contract does not yet wire an event
+    // for) never reach `transition()` at all — nothing was ever offered to
+    // the reducer to accept or reject, so this is NOT "applied" (that label
+    // is reserved for a genuine reducer-approved mutation). "pass_through"
+    // names what actually happened: the tool call was logged and passed
+    // straight through.
     return {
       state,
       logEntry: { tool: block.name, input: block.input, outcome: "pass_through" },
