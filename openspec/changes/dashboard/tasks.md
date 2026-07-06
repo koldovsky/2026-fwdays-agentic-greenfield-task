@@ -290,25 +290,25 @@
 
 ## 8. Validation, review gate, and archive prep
 
-- [ ] 8.1 Run `npm run lint`.
-- [ ] 8.2 Run `npm run test:run` (all unit tests green, lib/ + component
+- [x] 8.1 Run `npm run lint`.
+- [x] 8.2 Run `npm run test:run` (all unit tests green, lib/ + component
       tests).
-- [ ] 8.3 Run `npm run test:integration` (sections 4/5's real-SQLite/real-SSE
+- [x] 8.3 Run `npm run test:integration` (sections 4/5's real-SQLite/real-SSE
       suites green, including the S2 pipeline regression guard).
-- [ ] 8.4 Run `npm run test:e2e` (chrome-devtools/Playwright pass from
+- [x] 8.4 Run `npm run test:e2e` (chrome-devtools/Playwright pass from
       section 7).
-- [ ] 8.5 Run `npm run build` (root `tsc --noEmit` and `apps/dashboard`'s
+- [x] 8.5 Run `npm run build` (root `tsc --noEmit` and `apps/dashboard`'s
       Next build).
-- [ ] 8.6 Run `npx openspec validate dashboard --strict`.
-- [ ] 8.7 Run `npx openspec validate --all --strict` (baseline specs stay
+- [x] 8.6 Run `npx openspec validate dashboard --strict`.
+- [x] 8.7 Run `npx openspec validate --all --strict` (baseline specs stay
       green, this change validates).
-- [ ] 8.8 Run `node scripts/check-traceability.mjs` (FR-DASH-01/03,
+- [x] 8.8 Run `node scripts/check-traceability.mjs` (FR-DASH-01/03,
       NFR-LOCAL-01, NFR-PRIV-02, TC-PROTO-01, BC-SCHEDULE-01, BC-BRAND-01
       show implemented coverage, 0 failures).
-- [ ] 8.9 Run `node scripts/check-a11y.mjs` and `node scripts/check-recordings.mjs`
+- [x] 8.9 Run `node scripts/check-a11y.mjs` and `node scripts/check-recordings.mjs`
       one more time against the final build (not just the dev server used
       mid-implementation).
-- [ ] 8.10 **Review gate — run BEFORE archive** (S1/S2 process lesson,
+- [x] 8.10 **Review gate — run BEFORE archive** (S1/S2 process lesson,
       `docs/current-state.md`): a fresh reviewer pass (maker ≠ checker) over
       the full diff against `openspec/specs/dashboard/spec.md`, this change's
       `design.md` (both locked decisions, the streaming-honesty note, the
@@ -318,7 +318,7 @@
       contested/fixed) in `openspec/changes/dashboard/review-findings.json`,
       same shape as the archived `slots`/`intake` changes' files. Fix or
       explicitly disposition every confirmed finding before proceeding.
-- [ ] 8.11 Manual real-DB smoke test (scripted + rerunnable, mirroring
+- [x] 8.11 Manual real-DB smoke test (scripted + rerunnable, mirroring
       `scripts/qa/manual-smoke-intake.mjs`'s convention as
       `scripts/qa/manual-smoke-dashboard.mjs`, transcript
       `docs/qa/dashboard-manual-smoke.md`):
