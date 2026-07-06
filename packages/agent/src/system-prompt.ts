@@ -33,6 +33,7 @@
 //      comment at the call site) — not invented here, no new DB table or
 //      message log added by this pass.
 import { addressesParent } from "@kamerton/lib/src/intake/audience.ts";
+import { nextNeededField } from "@kamerton/lib/src/intake/next-field.ts";
 import type { IntakeFields, IntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 
 /**
@@ -85,86 +86,6 @@ function formatCollectedFields(fields: IntakeFields): string {
     return "ще нічого не зібрано.";
   }
   return entries.map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(", ");
-}
-
-/** One next-needed-field verdict: the field key (named literally so the
- *  model — and this module's own tests — can see exactly which
- *  `IntakeFields` property is next) plus a Ukrainian instruction sentence.
- *  `null` means this conversationState has nothing left for the model to
- *  actively collect this turn (terminal states, `awaiting_admin`, or a
- *  fully-collected state waiting on a different tool, e.g. `propose_slots`
- *  in `proposing`). This mirrors `state-machine.ts`'s own per-state field
- *  ownership (design.md Decision 1) DESCRIPTIVELY ONLY — it never mutates or
- *  re-validates anything; `transition()` remains the sole source of truth
- *  for what is actually allowed. */
-function nextNeededField(state: IntakeState): { field: string; instruction: string } | null {
-  const { conversationState, fields } = state;
-
-  if (conversationState === "greeting" || conversationState === "qualifying") {
-    if (fields.studentName === undefined) {
-      return { field: "studentName", instruction: "запитайте ім'я учня/учениці (FR-INTAKE-01)." };
-    }
-    if (fields.studentAge === undefined) {
-      return {
-        field: "studentAge",
-        instruction:
-          "запитайте вік учня/учениці (FR-INTAKE-02). Коли лід називає число — навіть коротко, як-от «7», «сім» чи «7 років» — це і Є відповідь: одразу запишіть його інструментом save_age, не перепитуйте. Перепитуйте текстом (без виклику інструменту) ЛИШЕ справді нечислову чи незрозумілу відповідь («не пам'ятаю», «скоро буде»). Перевірку меж (вік < 4) робить код, не ви.",
-      };
-    }
-    if (fields.format === undefined) {
-      return {
-        field: "format",
-        instruction: "запитайте формат занять — індивідуальний чи груповий (FR-INTAKE-02).",
-      };
-    }
-    return null;
-  }
-
-  if (conversationState === "profiling") {
-    if (fields.goalTag === undefined) {
-      return {
-        field: "goalTag",
-        instruction:
-          "запитайте мету занять (FR-INTAKE-03) — куди зверніться, лід може завжди пропустити (skip_goal).",
-      };
-    }
-    if (fields.tastes === undefined) {
-      return {
-        field: "tastes",
-        instruction:
-          "запитайте музичні смаки та, за бажанням, пісню-мрію (FR-INTAKE-04) — можна пропустити (skip_tastes).",
-      };
-    }
-    if (fields.experience === undefined || fields.comfort === undefined) {
-      return {
-        field: "experienceComfort",
-        instruction: "запитайте попередній досвід і рівень комфорту зі співом (FR-INTAKE-05).",
-      };
-    }
-    return null;
-  }
-
-  if (conversationState === "collecting") {
-    if (fields.preferredWeekdays === undefined) {
-      return { field: "preferredWeekdays", instruction: "запитайте бажані дні тижня (FR-INTAKE-06)." };
-    }
-    if (fields.preferredTimeRange === undefined) {
-      return { field: "preferredTimeRange", instruction: "запитайте бажаний часовий проміжок (FR-INTAKE-06)." };
-    }
-    return null;
-  }
-
-  if (conversationState === "proposing") {
-    return {
-      field: "slots",
-      instruction: "профіль зібрано повністю — запропонуйте вільні слоти інструментом propose_slots.",
-    };
-  }
-
-  // "awaiting_admin", "done", "soft_decline": nothing left to actively
-  // collect — only amend_request/cancel_request (non-terminal) remain live
-  // tools, and even those are refused by the reducer once terminal.
-  return null;
 }
 
 /** BC-AGE-02, wired via `addressesParent` (lib/src/intake/audience.ts) —

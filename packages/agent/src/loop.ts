@@ -135,6 +135,15 @@ import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
 // also the right copy for a Calendar failure surfacing through this loop's
 // own `cancel_request` booking-release orchestration.
 import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts";
+// Conversational-flow bugfix (live Telegram testing, S2 intake): one model
+// call per user message, and `ClaudeAgentModelPort` captures the model's
+// first tool_use via `canUseTool` and aborts BEFORE the model ever narrates
+// a follow-up question — a bare `save_*`/`skip_*`/`amend_field` tool-use
+// response therefore (almost) never carries accompanying text. The CODE, not
+// the model, must own asking the next question so the conversation can never
+// stall on "Дякую, я це записала." with nothing to answer next. See
+// `assembleReply`, below, for the reply-assembly rule this drives.
+import { DEFAULT_ACK_COPY, nextLeadFacingStep } from "@kamerton/lib/src/intake/questions.ts";
 import type {
   AmendableField,
   CandidateFormat,
@@ -336,7 +345,46 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
     toolCalls.push(applied.logEntry);
   }
 
-  return { reply: narratedText, state: currentState, toolCalls };
+  // Conversational-flow bugfix: the CODE, not the model, owns asking the
+  // next question — see the import comment above and `assembleReply`'s own
+  // header comment for the full rule. Only a genuinely field-recording/
+  // advancing turn (an "applied" outcome, OR a conversationState move —
+  // e.g. the AGE_BELOW_MIN guardrail, which is logged "rejected" yet still
+  // moves the state to the terminal `soft_decline`) gets the deterministic
+  // ack+question/closing treatment; a detour/rejected-with-no-state-change/
+  // pass-through turn's reply is left as the model's own (possibly empty)
+  // narration, unchanged from this loop's pre-existing behaviour — those
+  // outcomes already have their own deterministic guardrail-copy override
+  // one layer up, in `packages/bot/src/pipeline.ts`'s `guardrailOverrideFor`.
+  const stateAdvanced = currentState.conversationState !== state.conversationState;
+  const hasAppliedToolCall = toolCalls.some((call) => call.outcome === "applied");
+  const reply =
+    hasAppliedToolCall || stateAdvanced ? assembleReply(narratedText, currentState) : narratedText;
+
+  return { reply, state: currentState, toolCalls };
+}
+
+/** Assembles the deterministic lead-facing reply for a turn whose tool-use
+ *  dispatch actually recorded a field or advanced/ended the conversation
+ *  (see the call site's comment for exactly which outcomes qualify). When
+ *  another field is still needed, the reply is a warm acknowledgement —
+ *  the model's own accompanying text if it gave any (rare, per this
+ *  bugfix's root cause, but never discarded when present), else the
+ *  deterministic `DEFAULT_ACK_COPY` — followed by the deterministic
+ *  Ukrainian question for the NEXT needed field of the RESULTING state
+ *  (`nextLeadFacingStep`, `@kamerton/lib/src/intake/questions.ts`). When the
+ *  resulting state has no next field (reached `proposing`, or a
+ *  terminal/`awaiting_admin` state), the closing copy is used standalone —
+ *  never composed with the model's narration, so the deterministic control
+ *  in `questions.ts` can never be second-guessed by an off-script model
+ *  sentence at exactly the moment the conversation ends. */
+function assembleReply(narratedText: string, resultState: IntakeState): string {
+  const step = nextLeadFacingStep(resultState);
+  if (step.kind === "closing") {
+    return step.text;
+  }
+  const ack = narratedText.trim().length > 0 ? narratedText.trim() : DEFAULT_ACK_COPY;
+  return `${ack} ${step.text}`;
 }
 
 function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {

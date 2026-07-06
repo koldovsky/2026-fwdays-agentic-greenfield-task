@@ -22,6 +22,11 @@ import {
 } from "./testing/fake-loop-ports.ts";
 import { initialIntakeState, type IntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts";
+import {
+  CANCELLED_CLOSING_COPY,
+  DEFAULT_ACK_COPY,
+  PROFILE_COMPLETE_CLOSING_COPY,
+} from "@kamerton/lib/src/intake/questions.ts";
 
 function makePorts(model: FakeModelPort, overrides: Partial<LoopPorts> = {}): LoopPorts {
   return {
@@ -344,6 +349,144 @@ describe("runIntakeTurn", () => {
 
       expect(model.lastCall?.config).toEqual(MODEL_CONFIG);
       expect(model.lastCall?.system).toBeTruthy();
+    });
+  });
+
+  // --- Conversational-flow bugfix (live Telegram testing, S2 intake): -----
+  // --- the CODE, not the model, must own asking the next question ---------
+  // BUG: a bare `save_*` tool-use response with NO accompanying text used to
+  // leave `reply` as the empty string, and `packages/bot/src/pipeline.ts`'s
+  // own `EMPTY_NARRATION_FALLBACK_COPY` ("Дякую, я це записала.") was the
+  // lead's ENTIRE reply — no next question, the conversation stalled. The
+  // fix: `runIntakeTurn` now assembles a deterministic ack+question (or
+  // closing note) reply itself whenever a turn's tool dispatch actually
+  // recorded a field or advanced/ended the conversation, so the bot can
+  // never leave the lead with nothing to answer.
+  describe("reply assembly owns asking the next question deterministically (conversational-flow bugfix)", () => {
+    // @trace FR-INTAKE-02
+    it("a save_name tool-use with NO accompanying text advances state AND the reply asks the deterministic age question next", async () => {
+      const state = initialIntakeState();
+      const model = new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
+
+      expect(result.state.conversationState).toBe("qualifying");
+      expect(result.reply).toContain(DEFAULT_ACK_COPY);
+      expect(result.reply).toContain("Скільки років");
+      // Never a dangling bare ack with nothing else to answer.
+      expect(result.reply).not.toBe(DEFAULT_ACK_COPY);
+    });
+
+    // @trace FR-INTAKE-02
+    it("a save_age tool-use with NO accompanying text asks the deterministic format question next", async () => {
+      const state: IntakeState = {
+        conversationState: "qualifying",
+        fields: { studentName: "Богдан" },
+      };
+      const model = new FakeModelPort([toolUseResponse("save_age", { age: 9 })]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Йому дев'ять", ports });
+
+      expect(result.state.fields.studentAge).toBe(9);
+      expect(result.reply).toContain("формат");
+    });
+
+    // @trace FR-INTAKE-03
+    it("a save_format tool-use that completes qualifying asks the first profiling question (goal) next", async () => {
+      const state: IntakeState = {
+        conversationState: "qualifying",
+        fields: { studentName: "Богдан", studentAge: 9 },
+      };
+      const model = new FakeModelPort([toolUseResponse("save_format", { format: "individual" })]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Індивідуальні, будь ласка", ports });
+
+      expect(result.state.conversationState).toBe("profiling");
+      expect(result.reply).toContain("мета занять");
+    });
+
+    // @trace FR-GUARD-05
+    it("an off-topic text-only turn (no tool-use) replies with ONLY the model's text — no deterministic question is appended", async () => {
+      const state: IntakeState = {
+        conversationState: "profiling",
+        fields: { studentName: "Богдан", studentAge: 9, format: "individual" },
+      };
+      const offTopicReply =
+        "Розуміємо ваш інтерес до цієї теми, але наша школа спеціалізується на вокалі. Повернімось до питання про мету занять — чого хотілося б досягти?";
+      const model = new FakeModelPort([textResponse(offTopicReply)]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({
+        state,
+        message: "Що ви думаєте про останні вибори?",
+        ports,
+      });
+
+      expect(result.reply).toBe(offTopicReply);
+    });
+
+    // @trace FR-INTAKE-07
+    it("a cancel_request tool-use reaching the terminal done state replies with the deterministic closing note, never a dangling ack", async () => {
+      const state: IntakeState = {
+        conversationState: "awaiting_admin",
+        fields: { studentName: "Богдан", studentAge: 9, format: "individual" },
+      };
+      const model = new FakeModelPort([toolUseResponse("cancel_request", {})]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Скасуйте, будь ласка", ports });
+
+      expect(result.state.conversationState).toBe("done");
+      expect(result.reply).toBe(CANCELLED_CLOSING_COPY);
+      expect(result.reply.length).toBeGreaterThan(0);
+    });
+
+    // @trace FR-INTAKE-06
+    it("a save_time_range tool-use that completes collecting (reaches proposing) replies with the profile-complete closing note", async () => {
+      const state: IntakeState = {
+        conversationState: "collecting",
+        fields: {
+          studentName: "Оксана",
+          studentAge: 9,
+          format: "individual",
+          preferredWeekdays: "вівторок, четвер",
+        },
+      };
+      const model = new FakeModelPort([toolUseResponse("save_time_range", { timeRange: "після 16:00" })]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Після 16:00", ports });
+
+      expect(result.state.conversationState).toBe("proposing");
+      expect(result.reply).toBe(PROFILE_COMPLETE_CLOSING_COPY);
+    });
+
+    // @trace FR-GUARD-04
+    it("the model's own accompanying text (when present) is used as the ack prefix, not discarded, ahead of the deterministic question", async () => {
+      const state = initialIntakeState();
+      const model = new FakeModelPort([
+        toolUseResponse("save_name", { name: "Оксана" }, { text: "Записала ім'я." }),
+      ]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
+
+      expect(result.reply.startsWith("Записала ім'я.")).toBe(true);
+      expect(result.reply).toContain("Скільки років");
+    });
+
+    // @trace BC-LANG-01
+    it("the deterministic reply is Ukrainian-only (no stray Latin-script narration)", async () => {
+      const state = initialIntakeState();
+      const model = new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]);
+      const ports = makePorts(model);
+
+      const result = await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
+
+      expect(result.reply).toMatch(/^[^a-zA-Z]*$/);
     });
   });
 });
