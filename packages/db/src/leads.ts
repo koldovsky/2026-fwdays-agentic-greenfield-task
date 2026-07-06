@@ -54,3 +54,33 @@ export function findLeadByTelegramUserId(
     | LeadRow
     | undefined;
 }
+
+export interface DeleteLeadCascadeResult {
+  /** `calendar_event_id` of every `bookings` row that was `pending` (with a
+   *  non-null `calendar_event_id`) for this lead BEFORE the delete — the
+   *  caller deletes these tentative events from the DEMO Google Calendar as
+   *  part of the same admin action (NFR-PRIV-02). */
+  deletedPendingEventIds: string[];
+}
+
+// TYPED THROWING STUB — red state for `dashboard` tasks.md section 1.2. The
+// signature below is the contract pinned by leads.test.ts's
+// `deleteLeadCascade` suite; the body is implemented once that suite is
+// confirmed red.
+//
+// SCHEMA CORRECTION (tasks.md 1.2's own text is wrong about this — verified
+// against packages/db/src/schema.ts): `requests.lead_id` is `ON DELETE
+// CASCADE` (a lead delete does remove its `requests` rows), BUT
+// `bookings.request_id` is `ON DELETE SET NULL`, and `bookings` has NO
+// direct foreign key to `leads` at all. A plain `DELETE FROM leads` would
+// therefore cascade to `requests` but only NULL the lead's bookings'
+// `request_id` — the bookings ROWS THEMSELVES would survive, which violates
+// NFR-PRIV-02's "all of its bookings rows are deleted". The real
+// implementation (tasks.md section 3) must therefore explicitly delete the
+// lead's `bookings` rows (joined via `requests.lead_id`) BEFORE deleting the
+// `leads` row, rather than relying on the schema's cascades alone.
+export function deleteLeadCascade(db: Database.Database, leadId: number): DeleteLeadCascadeResult {
+  void db; // referenced only to satisfy no-unused-vars until this is implemented
+  void leadId;
+  throw new Error("not implemented");
+}
