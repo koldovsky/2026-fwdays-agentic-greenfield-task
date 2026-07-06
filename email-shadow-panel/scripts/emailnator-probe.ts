@@ -1,14 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import {
   EmailnatorError,
   isEmailnatorError,
 } from "../server/providers/emailnator/errors.server.ts";
 import {
-  runDetailAction,
   runGenerateAction,
   runListAction,
+  runLocalDetailAction,
+  type LocalDetailEvidence,
 } from "../server/providers/emailnator/phase0.server.ts";
 
 const STATE_PATH = resolve(process.cwd(), ".local/phase0/emailnator-session.capsule.enc");
@@ -66,7 +68,15 @@ function getMessageIdArgument(args: string[]): string {
   return positional;
 }
 
-async function main(): Promise<void> {
+export function formatLocalDetailEvidenceLines(detail: LocalDetailEvidence): string[] {
+  return [
+    `Content-Type: ${detail.contentType}`,
+    `Body length: ${detail.bodyLength}`,
+    `Known marker found: ${detail.markerFound}`,
+  ];
+}
+
+export async function main(): Promise<void> {
   const [subcommand, ...rest] = process.argv.slice(2);
 
   switch (subcommand) {
@@ -92,17 +102,15 @@ async function main(): Promise<void> {
       return;
     }
     case "detail": {
-      const result = await runDetailAction(
+      const result = await runLocalDetailAction(
         readCapsule(),
         getMessageIdArgument(rest),
         getSessionEnv(),
       );
       writeCapsule(result.capsule);
-      console.log(`Content-Type: ${result.detail.contentType}`);
-      console.log(`Body length: ${result.detail.bodyLength}`);
-      console.log(`Known marker found: ${result.detail.markerFound}`);
-      console.log("Message text:");
-      console.log(result.localText);
+      for (const line of formatLocalDetailEvidenceLines(result.detail)) {
+        console.log(line);
+      }
       return;
     }
     case "clear": {
@@ -118,11 +126,16 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  if (isEmailnatorError(error)) {
-    console.error(`${error.code}: ${error.message}`);
-  } else {
-    console.error(error);
-  }
-  process.exitCode = 1;
-});
+const isMain =
+  Boolean(process.argv[1]) && import.meta.url === pathToFileURL(resolve(process.argv[1]!)).href;
+
+if (isMain) {
+  main().catch((error: unknown) => {
+    if (isEmailnatorError(error)) {
+      console.error(`${error.code}: ${error.message}`);
+    } else {
+      console.error(error);
+    }
+    process.exitCode = 1;
+  });
+}

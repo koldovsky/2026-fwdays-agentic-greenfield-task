@@ -34,7 +34,10 @@ test("tampered capsules are rejected", () => {
   const state = createEmptyProviderState();
   const secret = "phase0-test-secret";
   const capsule = sealSessionCapsule(state, secret);
-  const tampered = `${capsule.slice(0, -1)}${capsule.endsWith("A") ? "B" : "A"}`;
+  const [version, ivPart, ciphertextPart, tagPart] = capsule.split(".");
+  const tag = Buffer.from(tagPart, "base64url");
+  tag[0] = tag[0] ^ 0x01;
+  const tampered = [version, ivPart, ciphertextPart, tag.toString("base64url")].join(".");
 
   assert.throws(() => openSessionCapsule(tampered, secret), /Invalid session capsule/);
 });

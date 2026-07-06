@@ -6,6 +6,7 @@ import {
   listInboxMessages,
   summarizeMessagesForProbe,
   type EmailnatorRuntime,
+  type SanitizedDetailResult,
 } from "./provider.server.ts";
 import { PHASE0_CAPSULE_TTL_MS, type EmailnatorProviderState } from "./schemas.server.ts";
 
@@ -17,6 +18,19 @@ export interface Phase0ResultBase {
   capsule: string;
   capsuleExpiresAt: string;
   diagnostics: Awaited<ReturnType<typeof generateInboxAddress>>["diagnostics"];
+}
+
+export interface PreviewDetailEvidence {
+  contentType: string;
+  bodyLength: number;
+  textPreview: string;
+  markerFound: boolean;
+}
+
+export interface LocalDetailEvidence {
+  contentType: string;
+  bodyLength: number;
+  markerFound: boolean;
 }
 
 function requireSessionKey(env: Phase0Environment): string {
@@ -56,6 +70,23 @@ export function restoreStateFromCapsule(
   });
 }
 
+export function projectPreviewDetailEvidence(detail: SanitizedDetailResult): PreviewDetailEvidence {
+  return {
+    contentType: detail.contentType,
+    bodyLength: detail.bodyLength,
+    textPreview: detail.textPreview,
+    markerFound: detail.markerFound,
+  };
+}
+
+export function projectLocalDetailEvidence(detail: SanitizedDetailResult): LocalDetailEvidence {
+  return {
+    contentType: detail.contentType,
+    bodyLength: detail.bodyLength,
+    markerFound: detail.markerFound,
+  };
+}
+
 export async function runGenerateAction(env: Phase0Environment, runtime?: EmailnatorRuntime) {
   const generated = await generateInboxAddress(runtime);
   return {
@@ -93,14 +124,25 @@ export async function runDetailAction(
 
   return {
     action: "detail" as const,
-    detail: {
-      contentType: detailed.detail.contentType,
-      bodyLength: detailed.detail.bodyLength,
-      textPreview: detailed.detail.textPreview,
-      markerFound: detailed.detail.markerFound,
-    },
+    detail: projectPreviewDetailEvidence(detailed.detail),
     localText: detailed.detail.text,
     diagnostics: detailed.diagnostics,
+    ...sealState(detailed.state, env, runtime),
+  };
+}
+
+export async function runLocalDetailAction(
+  capsule: string,
+  messageId: string,
+  env: Phase0Environment,
+  runtime?: EmailnatorRuntime,
+) {
+  const state = restoreStateFromCapsule(capsule, env, runtime);
+  const detailed = await getMessageDetail(state, messageId, runtime);
+
+  return {
+    action: "detail" as const,
+    detail: projectLocalDetailEvidence(detailed.detail),
     ...sealState(detailed.state, env, runtime),
   };
 }

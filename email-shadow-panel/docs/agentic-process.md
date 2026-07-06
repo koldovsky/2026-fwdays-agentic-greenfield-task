@@ -91,3 +91,26 @@ No MCP was necessary for Phase 0 implementation. Playwright is not part of requi
 - Decision on whether live verification may proceed: No. Remediate the local detail-output redaction issue before human live verification.
 - Confirmation that the checker did not modify implementation code: confirmed. This checker pass only updated documentation records.
 - Confirmation that no live provider or Vercel action was performed: confirmed.
+
+### Phase 0 - Maker remediation for focused checker finding
+
+- Phase: Phase 0.
+- Role: maker remediation.
+- Originating checker finding: 1 Major finding from `docs/reviews/phase-0-focused-review.md`. The local CLI `detail` path printed full sanitized message text instead of only structural evidence.
+- Implementation scope: fixed only the local detail-output boundary by introducing a dedicated local-detail projection and a dedicated CLI formatter. Preview redaction, provider parsing/sanitization, and live provider request behavior were left unchanged.
+- Files changed for the remediation: `scripts/emailnator-probe.ts`, `server/providers/emailnator/phase0.server.ts`, `tests/phase0/local-detail-output.test.ts`, `tests/phase0/capsule.test.ts`, `docs/verification/phase-0.md`, and this process record.
+- Tests added or updated: added focused regression coverage in `tests/phase0/local-detail-output.test.ts`; stabilized the pre-existing capsule tamper test in `tests/phase0/capsule.test.ts` so the full deterministic suite remains reliable.
+- Commands run and actual results:
+  - focused local-detail test command -> passed; 2 tests passed, 0 failed;
+  - `npm run typecheck` -> passed;
+  - `npm run test:phase0` -> passed; 19 tests passed, 0 failed; cross-process capsule restoration passed;
+  - `npm run lint` -> passed with 0 errors and 6 pre-existing frontend warnings;
+  - `npm run build` in the managed sandbox -> failed with the previously known `spawn EPERM` and Tailwind native-module limitation;
+  - `npm run build` rerun outside the managed sandbox -> passed;
+  - `node --experimental-transform-types ./scripts/verify-phase0.ts` -> passed;
+  - `npm run verify:phase0` rerun outside the managed sandbox -> passed.
+- Environment limitation: the managed Codex sandbox still cannot be treated as a reliable build environment for this repo because of the previously known Vite/Tailwind native-module and `spawn EPERM` issue.
+- Live or deployment actions: none. No live Emailnator probe, no Vercel Preview probe, no deployment command, and no Phase 1 work were performed.
+- Temporary-artifact closure: regenerated `.local/phase0` capsule artifacts and ignored build output were removed after deterministic verification.
+- Commit behavior: no automatic commit or push was performed.
+- Next gate: independent checker recheck.

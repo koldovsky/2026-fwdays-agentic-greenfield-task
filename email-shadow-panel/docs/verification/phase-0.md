@@ -179,6 +179,37 @@ The following remain unverified and must not be treated as proven by this Phase 
 - Cleared for human live verification: `No`
 - Checker finding summary: the local `npm run probe:emailnator -- detail` path still prints full sanitized message text via `localText`, so the implementation does not yet meet the Phase 0 requirement to print only redacted structural evidence.
 
+## Focused Maker Remediation
+
+Status: `REMEDIATION IMPLEMENTED - INDEPENDENT RECHECK REQUIRED`
+
+- Originating checker finding: 1 Major finding in `docs/reviews/phase-0-focused-review.md`. The local `detail` probe path printed full sanitized message text, which violated the Phase 0 requirement to expose only redacted structural evidence during local verification.
+- Affected boundary: the local CLI `detail` path in `scripts/emailnator-probe.ts`, backed by the local Phase 0 detail action in `server/providers/emailnator/phase0.server.ts`.
+- Root cause: the local CLI used the same detail action payload that carried Preview-oriented detail evidence plus `localText`, then printed that sanitized body text directly.
+- Remediation implemented:
+  - added a dedicated local-detail projection that allowlists only `contentType`, `bodyLength`, and `markerFound`;
+  - added a local CLI formatter that prints only those structural lines;
+  - changed the local CLI `detail` path to use the dedicated local-detail action instead of the Preview-oriented detail payload;
+  - kept provider fetch, parsing, sanitization, Preview probe behavior, and live request behavior unchanged.
+- Exact local content/output fields removed from the CLI detail path: `localText`, the `Message text:` label, and any possibility of printing sanitized body text through the default detail output path.
+- Exact structural fields retained for the local CLI detail path: `contentType`, `bodyLength`, and `markerFound`.
+- Focused regression coverage added or updated:
+  - `tests/phase0/local-detail-output.test.ts`: verifies the local detail action returns only allowlisted structural keys, does not serialize fixture body text, sanitized text, HTML, OTP values, cookie names, XSRF names, or inbox address data, and still reseals capsule state;
+  - `tests/phase0/local-detail-output.test.ts`: verifies the CLI formatter emits only the three allowlisted structural lines;
+  - `tests/phase0/capsule.test.ts`: stabilized the pre-existing tamper test by mutating decoded auth-tag bytes directly so the required full suite is deterministic.
+- Commands run by Codex for this remediation pass and actual results:
+  - `node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase0/local-detail-output.test.ts` -> passed; 2 tests passed, 0 failed.
+  - `npm run typecheck` -> passed.
+  - `npm run test:phase0` -> passed; 19 tests passed, 0 failed; cross-process capsule restoration passed in a fresh Node process.
+  - `npm run lint` -> passed with 0 errors and 6 pre-existing `react-refresh/only-export-components` warnings.
+  - `npm run build` in the managed sandbox -> failed with the previously known `spawn EPERM` and Tailwind native-module limitation.
+  - `npm run build` rerun outside the managed sandbox -> passed.
+  - `node --experimental-transform-types ./scripts/verify-phase0.ts` -> passed.
+  - `npm run verify:phase0` rerun outside the managed sandbox -> passed.
+- Environment-specific limitation: the managed Codex sandbox still cannot complete the Vite build reliably because of the previously known `spawn EPERM` and Tailwind native-module loading issue. That limitation was recorded separately and not treated as a new implementation defect.
+- Checks still requiring a human: live Emailnator bootstrap, generate, list, detail, session restoration against the real provider, Vercel Preview verification, and any normal-terminal human rerun the human wants for an additional local reproduction.
+- Independent status: the Major finding is not declared independently closed yet. An independent checker recheck is still required.
+
 ## Final Verdict
 
 Verdict: PENDING HUMAN VERIFICATION
