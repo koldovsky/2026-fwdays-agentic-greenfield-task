@@ -33,12 +33,28 @@
   S4; rate-limit → hardening). 173 tests green, lint, openspec 6/6
   strict, traceability 0 failures. Checker fix: `testDirs` now includes
   `packages`.
-  **Remaining: 6.9 manual smoke — NEEDS THE USER** (start the real bot
-  with a live `TELEGRAM_BOT_TOKEN`, walk a real Telegram chat: happy
-  path age 9, age-3 refusal, piano detour, amend, cancel, returning
-  lead) → then 6.10 archive. Script the scriptable parts under
-  `scripts/qa/manual-smoke-intake.mjs`, transcript to
-  `docs/qa/intake-manual-smoke.md` (mirror S1).
+  **Transport pivot (user-directed): the bot's model calls go through the
+  Claude Agent SDK, not the raw API.** A subscription Claude Code OAuth
+  token (`CLAUDE_CODE_OAUTH_TOKEN`) authenticates against the raw API but
+  is instantly rate-limited (429) — proven by the AnthropicModelPort
+  smoke. New `ClaudeAgentModelPort` (`packages/agent/src/claude-agent-
+  model-port.ts`) spawns the local `claude` CLI (subscription allowance),
+  behind the SAME `ModelPort` interface so loop.ts/pipeline.ts are
+  untouched. `canUseTool` captures the model's proposed tool_use, denies +
+  aborts (nothing executes). Wired as production in index.ts;
+  AnthropicModelPort kept for API-key deployments. `ensureAmbientAuthToken`
+  bridges CLAUDE_CODE_OAUTH_TOKEN→ANTHROPIC_AUTH_TOKEN. **Proven live by an
+  automated smoke**: 'Доньку звати Софійка' → save_name via the CLI, no
+  429. RISK: CLI-spawn latency ~5–12s/turn vs NFR-UX-01 p90≤5s (warm-
+  subprocess follow-up flagged). 187 unit green; integration 4 passed +
+  1 skipped (Anthropic smoke, no API key here).
+  **Remaining: 6.9 manual smoke — IN PROGRESS with the user.** The real
+  bot is running (long polling, Agent-SDK model); user is walking a live
+  Telegram chat (happy path age 9, age-3 refusal, piano detour, amend,
+  cancel, returning lead). Note: live slot proposal is deferred to S4, so
+  the flow collects the full profile then stops before proposing. After
+  the chat: capture transcript/DB evidence to `docs/qa/intake-manual-
+  smoke.md`, then 6.10 archive. Bot start: `node packages/bot/src/index.ts`.
 - **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
   (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
   chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
