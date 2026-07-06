@@ -62,8 +62,7 @@ export default async function DashboardPage() {
     status: sub.status,
     autoRenew: sub.autoRenew,
     currentPeriodEnd: sub.currentPeriodEnd.toISOString(),
-    cardToken: sub.cardToken,
-    walletId: sub.walletId,
+    hasCardToken: !!sub.cardToken,
   } : null;
 
   const headersList = await headers();

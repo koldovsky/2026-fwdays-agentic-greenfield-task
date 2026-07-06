@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { db } from '@/db';
 import { sessions, users, subscriptions } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, gt } from 'drizzle-orm';
 import crypto from 'crypto';
 
 export async function getCurrentUser() {
@@ -9,23 +9,25 @@ export async function getCurrentUser() {
   const token = cookieStore.get('session_token')?.value;
   if (!token) return null;
 
-  const sessionList = await db
-    .select()
+  const result = await db
+    .select({
+      user: users,
+    })
     .from(sessions)
-    .where(eq(sessions.token, token))
+    .innerJoin(users, eq(sessions.userId, users.id))
+    .where(
+      and(
+        eq(sessions.token, token),
+        gt(sessions.expiresAt, new Date())
+      )
+    )
     .limit(1);
 
-  if (sessionList.length === 0 || sessionList[0].expiresAt < new Date()) {
+  if (result.length === 0) {
     return null;
   }
 
-  const userList = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, sessionList[0].userId))
-    .limit(1);
-
-  return userList[0] || null;
+  return result[0].user;
 }
 
 export async function authenticateApiKey(request: Request) {
@@ -81,39 +83,30 @@ export async function checkActiveSubscription(userId: string) {
     }
   }
 
-  if (status === 'paused') {
-    return {
+  const statusMap: Record<string, { allowed: boolean; statusCode: number; error: string }> = {
+    paused: {
       allowed: false,
       statusCode: 402,
       error: 'Subscription is paused. Please resume your subscription.',
-    };
-  }
-
-  if (status === 'suspended') {
-    return {
+    },
+    suspended: {
       allowed: false,
       statusCode: 402,
       error: 'Subscription is suspended due to payment failure.',
-    };
-  }
-
-  if (status === 'cancelled') {
-    return {
+    },
+    cancelled: {
       allowed: false,
       statusCode: 403,
       error: 'Subscription has been cancelled.',
-    };
-  }
-
-  if (status === 'created') {
-    return {
+    },
+    created: {
       allowed: false,
       statusCode: 403,
       error: 'Subscription is not yet activated. Please complete your payment.',
-    };
-  }
+    },
+  };
 
-  return {
+  return statusMap[status] || {
     allowed: false,
     statusCode: 403,
     error: 'Invalid subscription status.',

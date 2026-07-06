@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export interface WalletCard {
@@ -15,8 +15,7 @@ export interface SubscriptionData {
   status: 'created' | 'active' | 'paused' | 'suspended' | 'cancelled';
   autoRenew: boolean;
   currentPeriodEnd: string; // ISO date string
-  cardToken?: string | null;
-  walletId?: string | null;
+  hasCardToken: boolean;
 }
 
 interface BillingManagerProps {
@@ -33,6 +32,21 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
   // Modals state
   const [isPauseOpen, setIsPauseOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPauseOpen(false);
+        setIsCancelOpen(false);
+      }
+    };
+    if (isPauseOpen || isCancelOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPauseOpen, isCancelOpen]);
 
   const card = cards[0] || null;
 
@@ -128,7 +142,7 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
   };
 
   // Check if we have an active billing relationship
-  const hasBilling = subscription && subscription.cardToken;
+  const hasBilling = subscription && subscription.hasCardToken;
 
   return (
     <div className="mt-8 border border-border-custom bg-bg-card p-8">
@@ -151,10 +165,19 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
             Картка буде збережена для автоматичного подовження.
           </p>
 
-          <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto mb-8">
+          <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto mb-8" role="radiogroup" aria-label="Тарифні плани">
             {/* Monthly Plan */}
             <div 
+              role="radio"
+              aria-checked={selectedPlan === 'monthly'}
+              tabIndex={0}
               onClick={() => setSelectedPlan('monthly')}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  setSelectedPlan('monthly');
+                }
+              }}
               className={`cursor-pointer border p-6 relative transition-all duration-300 ${
                 selectedPlan === 'monthly' 
                   ? 'border-accent-blue bg-bg-secondary shadow-sm ring-1 ring-accent-blue' 
@@ -183,7 +206,16 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
 
             {/* Yearly Plan */}
             <div 
+              role="radio"
+              aria-checked={selectedPlan === 'yearly'}
+              tabIndex={0}
               onClick={() => setSelectedPlan('yearly')}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  setSelectedPlan('yearly');
+                }
+              }}
               className={`cursor-pointer border p-6 relative transition-all duration-300 ${
                 selectedPlan === 'yearly' 
                   ? 'border-accent-blue bg-bg-secondary shadow-sm ring-1 ring-accent-blue' 
@@ -335,9 +367,18 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
 
       {/* PAUSE MODAL */}
       {isPauseOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md border border-border-custom bg-bg-card p-6 shadow-lg">
-            <h3 className="font-display text-lg font-medium text-text-primary mb-4">
+        <div 
+          onClick={() => setIsPauseOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pause-modal-title"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md border border-border-custom bg-bg-card p-6 shadow-lg"
+          >
+            <h3 id="pause-modal-title" className="font-display text-lg font-medium text-text-primary mb-4">
               Призупинити підписку?
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed mb-6">
@@ -365,9 +406,18 @@ export default function BillingManager({ subscription, cards }: BillingManagerPr
 
       {/* CANCEL MODAL */}
       {isCancelOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md border border-border-custom bg-bg-card p-6 shadow-lg">
-            <h3 className="font-display text-lg font-medium text-text-primary mb-4">
+        <div 
+          onClick={() => setIsCancelOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cancel-modal-title"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md border border-border-custom bg-bg-card p-6 shadow-lg"
+          >
+            <h3 id="cancel-modal-title" className="font-display text-lg font-medium text-text-primary mb-4">
               Скасувати підписку?
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed mb-6">

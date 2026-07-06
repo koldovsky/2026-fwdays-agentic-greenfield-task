@@ -31,6 +31,8 @@ export async function POST() {
       .set({
         status: 'cancelled',
         autoRenew: false,
+        cardToken: null,
+        walletId: null,
         updatedAt: new Date(),
       })
       .where(eq(subscriptions.id, sub.id));

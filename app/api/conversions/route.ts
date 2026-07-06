@@ -6,27 +6,7 @@ import { validateConversions } from '@/lib/conversions';
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify Content-Type
-    const contentType = request.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return NextResponse.json(
-        { error: 'Content-Type must be application/json' },
-        { status: 400 }
-      );
-    }
-
-    // 2. Parse JSON body
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON body' },
-        { status: 400 }
-      );
-    }
-
-    // 3. Authenticate using X-API-Key
+    // 1. Authenticate using X-API-Key
     const apiKey = request.headers.get('x-api-key');
     if (!apiKey) {
       return NextResponse.json(
@@ -40,6 +20,26 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Invalid API key' },
         { status: 401 }
+      );
+    }
+
+    // 2. Verify Content-Type
+    const contentType = request.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be application/json' },
+        { status: 400 }
+      );
+    }
+
+    // 3. Parse JSON body
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
       );
     }
 
@@ -90,17 +90,3 @@ export async function POST(request: Request) {
   }
 }
 
-// Explicit handlers to return 405 Method Not Allowed for other methods
-const methodNotAllowed = () => {
-  return new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: 'POST' },
-  });
-};
-
-export {
-  methodNotAllowed as GET,
-  methodNotAllowed as PUT,
-  methodNotAllowed as DELETE,
-  methodNotAllowed as PATCH,
-};

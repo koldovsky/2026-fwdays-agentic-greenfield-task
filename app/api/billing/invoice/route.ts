@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getExchangeRate, createInvoice } from '@/lib/monobank';
+import { createInvoice } from '@/lib/monobank';
+import { getPricingDetails } from '@/lib/pricing';
 import { db } from '@/db';
 import { subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -24,14 +25,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Некоректний тарифний план' }, { status: 400 });
     }
 
-    // Calculate dynamic UAH amount in minor units
-    const exchangeRate = await getExchangeRate();
-    const usdPrice = tariffPlan === 'monthly' ? 10.99 : 120.00;
-    const amountInKopecks = Math.round(usdPrice * exchangeRate * 100);
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const webHookUrl = process.env.MONOBANK_WEBHOOK_URL || `${appUrl}/api/billing/webhook`;
-    const redirectUrl = `${appUrl}/dashboard`;
+    // Calculate dynamic UAH amount and URLs
+    const { amountInKopecks, redirectUrl, webHookUrl } = await getPricingDetails(tariffPlan);
 
     // Create invoice via Monobank API
     const invoiceRes = await createInvoice(amountInKopecks, redirectUrl, webHookUrl);

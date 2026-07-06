@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { sql } from 'drizzle-orm';
+import crypto from 'crypto';
 
 export async function GET(request: Request) {
   try {
@@ -24,7 +25,10 @@ export async function GET(request: Request) {
     }
 
     const token = authHeader.substring(7);
-    if (token !== cronSecret) {
+    const tokenBuffer = Buffer.from(token);
+    const secretBuffer = Buffer.from(cronSecret);
+
+    if (tokenBuffer.length !== secretBuffer.length || !crypto.timingSafeEqual(tokenBuffer, secretBuffer)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
