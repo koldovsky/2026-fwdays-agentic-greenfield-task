@@ -106,24 +106,19 @@ export default function AnalyticsTab() {
     if (preset === 'custom') return;
 
     const today = new Date();
-    const formatDate = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
     const daysCount = parseInt(preset);
     const pastDate = new Date();
     pastDate.setDate(today.getDate() - (daysCount - 1));
 
-    setStartDate(formatDate(pastDate));
-    setEndDate(formatDate(today));
+    setStartDate(formatDateHelper(pastDate));
+    setEndDate(formatDateHelper(today));
   };
 
   // Fetch data
   useEffect(() => {
     if (!startDate || !endDate) return;
+
+    let ignore = false;
 
     async function fetchAnalytics() {
       setIsLoading(true);
@@ -137,6 +132,7 @@ export default function AnalyticsTab() {
         });
         const res = await fetch(`/api/analytics?${queryParams.toString()}`);
         const data = await res.json();
+        if (ignore) return;
         if (res.ok) {
           setAnalyticsData(data);
           setCurrentPage(1); // Reset pagination on filter load
@@ -144,13 +140,20 @@ export default function AnalyticsTab() {
           setErrorMsg(data.error || 'Помилка завантаження аналітичних даних');
         }
       } catch {
+        if (ignore) return;
         setErrorMsg('Не вдалося завантажити аналітичні дані з сервера');
       } finally {
-        setIsLoading(false);
+        if (!ignore) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchAnalytics();
+
+    return () => {
+      ignore = true;
+    };
   }, [startDate, endDate, adSourceFilter, channelFilter]);
 
   // Format currency helper

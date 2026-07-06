@@ -34,7 +34,7 @@ function getKyivDateString(date: Date): string {
 }
 
 function parseInTimeZone(dateStr: string, timeStr: string, timeZone = 'Europe/Kyiv') {
-  const tempDate = new Date(`${dateStr}T${timeStr}`);
+  const tempDate = new Date(`${dateStr}T${timeStr}Z`);
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
@@ -55,7 +55,7 @@ function parseInTimeZone(dateStr: string, timeStr: string, timeZone = 'Europe/Ky
   const second = parseInt(getPart('second'));
 
   const formattedUtc = Date.UTC(year, month - 1, day, hour, minute, second);
-  const diff = tempDate.getTime() - formattedUtc;
+  const diff = tempDate.getTime() - tempDate.getUTCMilliseconds() - formattedUtc;
   return new Date(tempDate.getTime() + diff);
 }
 
@@ -81,6 +81,23 @@ function getKyivMonthString(date: Date): string {
   ];
   return `${monthNamesUa[month - 1]} ${year}`;
 }
+
+interface ClassificationRule {
+  category: string;
+  keywords: string[];
+}
+
+const SOURCE_RULES: ClassificationRule[] = [
+  { category: 'Google Ads', keywords: ['google', 'gads'] },
+  { category: 'Meta Ads', keywords: ['meta', 'facebook'] },
+  { category: 'Organic', keywords: ['organic'] }
+];
+
+const CHANNEL_RULES: ClassificationRule[] = [
+  { category: 'Вебсайт', keywords: ['web', 'website'] },
+  { category: 'Телефонія', keywords: ['phone', 'telephony'] },
+  { category: 'Месенджери', keywords: ['messenger', 'telegram'] }
+];
 
 export async function GET(req: Request) {
   try {
@@ -249,8 +266,8 @@ export async function GET(req: Request) {
     } else {
       // Group by Month
       const uniqueMonths = new Set<string>();
-      const current = new Date(Date.UTC(partsStart.year, partsStart.month - 1, partsStart.day));
-      const endLimit = new Date(Date.UTC(partsEnd.year, partsEnd.month - 1, partsEnd.day));
+      const current = new Date(Date.UTC(partsStart.year, partsStart.month - 1, 1));
+      const endLimit = new Date(Date.UTC(partsEnd.year, partsEnd.month - 1, 1));
 
       while (current <= endLimit) {
         uniqueMonths.add(getKyivMonthString(current));
@@ -277,29 +294,42 @@ export async function GET(req: Request) {
     }
 
     // 4. Perform mapping for Pie Charts
-    const sourcesCount = { 'Google Ads': 0, 'Meta Ads': 0, 'Organic': 0, 'інше': 0 };
-    const channelsCount = { 'Вебсайт': 0, 'Телефонія': 0, 'Месенджери': 0, 'інше': 0 };
+    const sourcesCount: Record<string, number> = {};
+    for (const rule of SOURCE_RULES) {
+      sourcesCount[rule.category] = 0;
+    }
+    sourcesCount['інше'] = 0;
+
+    const channelsCount: Record<string, number> = {};
+    for (const rule of CHANNEL_RULES) {
+      channelsCount[rule.category] = 0;
+    }
+    channelsCount['інше'] = 0;
 
     for (const c of userConversions) {
       const src = (c.adSource || '').toLowerCase();
-      if (src.includes('google') || src.includes('gads')) {
-        sourcesCount['Google Ads']++;
-      } else if (src.includes('meta') || src.includes('facebook')) {
-        sourcesCount['Meta Ads']++;
-      } else if (src.includes('organic')) {
-        sourcesCount['Organic']++;
-      } else {
+      let matchedSource = false;
+      for (const rule of SOURCE_RULES) {
+        if (rule.keywords.some((k) => src.includes(k))) {
+          sourcesCount[rule.category]++;
+          matchedSource = true;
+          break;
+        }
+      }
+      if (!matchedSource) {
         sourcesCount['інше']++;
       }
 
       const ch = (c.channel || '').toLowerCase();
-      if (ch.includes('web') || ch.includes('website')) {
-        channelsCount['Вебсайт']++;
-      } else if (ch.includes('phone') || ch.includes('telephony')) {
-        channelsCount['Телефонія']++;
-      } else if (ch.includes('messenger') || ch.includes('telegram')) {
-        channelsCount['Месенджери']++;
-      } else {
+      let matchedChannel = false;
+      for (const rule of CHANNEL_RULES) {
+        if (rule.keywords.some((k) => ch.includes(k))) {
+          channelsCount[rule.category]++;
+          matchedChannel = true;
+          break;
+        }
+      }
+      if (!matchedChannel) {
         channelsCount['інше']++;
       }
     }
@@ -315,67 +345,35 @@ export async function GET(req: Request) {
     ];
 
     if (adSource && adSource !== 'all') {
-      if (adSource === 'Google Ads') {
+      const rule = SOURCE_RULES.find((r) => r.category === adSource);
+      if (rule) {
+        const conditions = rule.keywords.map((k) => ilike(conversions.adSource, `%${k}%`));
         logConditions.push(
-          or(
-            ilike(conversions.adSource, '%google%'),
-            ilike(conversions.adSource, '%gads%')
-          ) as SQL
+          (conditions.length === 1 ? conditions[0] : or(...conditions)) as SQL
         );
-      } else if (adSource === 'Meta Ads') {
-        logConditions.push(
-          or(
-            ilike(conversions.adSource, '%meta%'),
-            ilike(conversions.adSource, '%facebook%')
-          ) as SQL
-        );
-      } else if (adSource === 'Organic') {
-        logConditions.push(ilike(conversions.adSource, '%organic%'));
       } else if (adSource === 'інше') {
+        const notConditions = SOURCE_RULES.flatMap((r) =>
+          r.keywords.map((k) => not(ilike(conversions.adSource, `%${k}%`)))
+        );
         logConditions.push(
-          and(
-            not(ilike(conversions.adSource, '%google%')),
-            not(ilike(conversions.adSource, '%gads%')),
-            not(ilike(conversions.adSource, '%meta%')),
-            not(ilike(conversions.adSource, '%facebook%')),
-            not(ilike(conversions.adSource, '%organic%'))
-          ) as SQL
+          and(...notConditions) as SQL
         );
       }
     }
 
     if (channel && channel !== 'all') {
-      if (channel === 'Вебсайт') {
+      const rule = CHANNEL_RULES.find((r) => r.category === channel);
+      if (rule) {
+        const conditions = rule.keywords.map((k) => ilike(conversions.channel, `%${k}%`));
         logConditions.push(
-          or(
-            ilike(conversions.channel, '%web%'),
-            ilike(conversions.channel, '%website%')
-          ) as SQL
-        );
-      } else if (channel === 'Телефонія') {
-        logConditions.push(
-          or(
-            ilike(conversions.channel, '%phone%'),
-            ilike(conversions.channel, '%telephony%')
-          ) as SQL
-        );
-      } else if (channel === 'Месенджери') {
-        logConditions.push(
-          or(
-            ilike(conversions.channel, '%messenger%'),
-            ilike(conversions.channel, '%telegram%')
-          ) as SQL
+          (conditions.length === 1 ? conditions[0] : or(...conditions)) as SQL
         );
       } else if (channel === 'інше') {
+        const notConditions = CHANNEL_RULES.flatMap((r) =>
+          r.keywords.map((k) => not(ilike(conversions.channel, `%${k}%`)))
+        );
         logConditions.push(
-          and(
-            not(ilike(conversions.channel, '%web%')),
-            not(ilike(conversions.channel, '%website%')),
-            not(ilike(conversions.channel, '%phone%')),
-            not(ilike(conversions.channel, '%telephony%')),
-            not(ilike(conversions.channel, '%messenger%')),
-            not(ilike(conversions.channel, '%telegram%'))
-          ) as SQL
+          and(...notConditions) as SQL
         );
       }
     }

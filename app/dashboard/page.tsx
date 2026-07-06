@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { sessions, users, subscriptions } from '@/db/schema';
@@ -66,6 +66,11 @@ export default async function DashboardPage() {
     walletId: sub.walletId,
   } : null;
 
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const proto = headersList.get('x-forwarded-proto') || 'https';
+  const ssrAppUrl = host ? `${proto}://${host}` : undefined;
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-page font-sans text-text-primary">
       {/* Top Navbar */}
@@ -97,7 +102,7 @@ export default async function DashboardPage() {
             Особистий кабінет (Панель користувача)
           </h2>
           
-          <DashboardClient apiKeyHash={user.apiKeyHash} subscription={subscriptionData} cards={cards} />
+          <DashboardClient apiKeyHash={user.apiKeyHash} subscription={subscriptionData} cards={cards} ssrAppUrl={ssrAppUrl} />
         </div>
       </main>
     </div>

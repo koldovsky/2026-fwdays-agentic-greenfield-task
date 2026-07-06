@@ -180,21 +180,25 @@ export async function runBillingCron() {
       }
       // C. Cancelled subscription (period end reached -> delete token)
       else if (sub.status === 'cancelled') {
-        if (sub.cardToken) {
-          try {
-            await deleteCard(sub.cardToken);
-            console.log(`Successfully deleted card token from Monobank for subscription ${sub.id}.`);
-          } catch (deleteErr) {
-            console.error(`Failed to delete card token from Monobank for subscription ${sub.id}:`, deleteErr);
-          }
+        if (!sub.cardToken) {
+          console.log(`Subscription ${sub.id} is cancelled and has already been processed (no card token). Skipping.`);
+          continue;
         }
 
-        // Clear cardToken and walletId from database
+        try {
+          await deleteCard(sub.cardToken);
+          console.log(`Successfully deleted card token from Monobank for subscription ${sub.id}.`);
+        } catch (deleteErr) {
+          console.error(`Failed to delete card token from Monobank for subscription ${sub.id}:`, deleteErr);
+        }
+
+        // Clear cardToken and walletId from database, and set currentPeriodEnd to far future to make it non-eligible for expired query
         await db
           .update(subscriptions)
           .set({
             cardToken: null,
             walletId: null,
+            currentPeriodEnd: new Date('9999-12-31T00:00:00Z'),
             updatedAt: new Date(),
           })
           .where(eq(subscriptions.id, sub.id));

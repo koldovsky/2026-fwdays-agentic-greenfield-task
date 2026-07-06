@@ -30,5 +30,5 @@ Each update must include:
 
 Do not duplicate full specs here; link to `requirements.md` / `product-brief.md` and record only session-specific deltas.
 
-**CRITICAL RULE**: All update descriptions, statuses, next steps, plan and notes in [docs/current-state.md](file:///d:/home/Documents/Developer/2026-fwdays-agentic-greenfield-task/docs/current-state.md) MUST be written in Ukrainian.
+**CRITICAL RULE**: All update descriptions, statuses, next steps, plan and notes in [docs/current-state.md](docs/current-state.md) MUST be written in Ukrainian.
 

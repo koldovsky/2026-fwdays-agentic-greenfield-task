@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 
 interface IntegrationTabProps {
   initialApiKeyHash: string;
+  ssrAppUrl?: string;
 }
 
-export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProps) {
+export default function IntegrationTab({ initialApiKeyHash, ssrAppUrl }: IntegrationTabProps) {
   // Credentials state
   const [crmUrl, setCrmUrl] = useState('');
   const [crmLogin, setCrmLogin] = useState('');
@@ -28,6 +29,7 @@ export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProp
 
   // API Key state
   const [apiKeyHash, setApiKeyHash] = useState(initialApiKeyHash);
+  const [hasKey, setHasKey] = useState(!!initialApiKeyHash);
   const [rawApiKey, setRawApiKey] = useState<string | null>(null);
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
@@ -36,7 +38,11 @@ export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProp
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
 
-  const hostUrl = typeof window !== 'undefined' ? window.location.origin : 'https://acontrol.pro';
+  let resolvedUrl = process.env.NEXT_PUBLIC_APP_URL || ssrAppUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://acontrol.pro');
+  if (resolvedUrl.endsWith('/')) {
+    resolvedUrl = resolvedUrl.slice(0, -1);
+  }
+  const hostUrl = resolvedUrl;
 
   // Load current integration credentials
   useEffect(() => {
@@ -183,7 +189,7 @@ export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProp
   };
 
   const handleGenerateApiKey = async () => {
-    if (apiKeyHash && !confirm('Створення нового ключа анулює ваш попередній API-ключ. Продовжити?')) {
+    if (hasKey && !confirm('Створення нового ключа анулює ваш попередній API-ключ. Продовжити?')) {
       return;
     }
 
@@ -196,8 +202,17 @@ export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProp
       const data = await res.json();
       if (res.ok && data.apiKey) {
         setRawApiKey(data.apiKey);
-        // Calculate placeholder SHA256 locally or just show generated state
-        setApiKeyHash('оновлено');
+        setHasKey(true);
+        try {
+          const encoder = new TextEncoder();
+          const dataBuffer = encoder.encode(data.apiKey);
+          const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          setApiKeyHash(hashHex);
+        } catch (err) {
+          console.error('Failed to generate hash locally:', err);
+        }
       } else {
         setKeyError(data.error || 'Не вдалося згенерувати API-ключ');
       }
@@ -214,7 +229,7 @@ export default function IntegrationTab({ initialApiKeyHash }: IntegrationTabProp
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const hasKey = apiKeyHash && apiKeyHash !== '';
+
 
   // Apps Script Code Template
   const appsScriptCode = `function sendConversions() {
@@ -293,7 +308,7 @@ function formatISO(dateVal) {
             <div>
               <span className="text-xs text-text-muted block">Статус API-ключа:</span>
               <span className="text-sm font-medium text-text-primary">
-                {hasKey ? 'Ключ згенеровано' : 'Ключ ще не створено'}
+                {hasKey ? (apiKeyHash ? `Ключ згенеровано (хеш: ${apiKeyHash.slice(0, 8)}...)` : 'Ключ згенеровано') : 'Ключ ще не створено'}
               </span>
             </div>
             <button

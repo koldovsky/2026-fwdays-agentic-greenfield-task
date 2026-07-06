@@ -41,6 +41,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Некоректний JSON' }, { status: 400 });
     }
 
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Некоректний формат запиту' }, { status: 400 });
+    }
+
     let {
       crmUrl,
       crmLogin,
@@ -50,6 +54,25 @@ export async function POST(req: Request) {
       telephonyPassword,
       telephonyApiKey,
     } = body;
+
+    const fieldsToValidate = [
+      { name: 'crmUrl', value: crmUrl },
+      { name: 'crmLogin', value: crmLogin },
+      { name: 'crmPassword', value: crmPassword },
+      { name: 'telephonyUrl', value: telephonyUrl },
+      { name: 'telephonyLogin', value: telephonyLogin },
+      { name: 'telephonyPassword', value: telephonyPassword },
+      { name: 'telephonyApiKey', value: telephonyApiKey },
+    ];
+
+    for (const field of fieldsToValidate) {
+      if (field.value !== undefined && field.value !== null && typeof field.value !== 'string') {
+        return NextResponse.json(
+          { error: `Некоректний тип даних для поля ${field.name}` },
+          { status: 400 }
+        );
+      }
+    }
 
     // Clean values
     crmUrl = crmUrl?.trim() || null;
