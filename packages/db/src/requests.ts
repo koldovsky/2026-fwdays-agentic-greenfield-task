@@ -78,24 +78,14 @@ export interface UpdateRequestFieldsInput {
   comfort?: string | null;
   preferredWeekdays?: string | null;
   preferredTimeRange?: string | null;
-  /** S4 `booking-hitl` design.md Decision 4 item 2. TYPE-ONLY WIDENING
-   *  (booking-hitl tasks.md B.9/B.10, RED phase): intentionally NOT yet
-   *  mapped into `FIELD_COLUMN_BY_KEY`/the `UPDATE` below — a caller
-   *  passing `offeredSlots` today does not actually persist it, by design,
-   *  so B.9's round-trip assertion fails at runtime until B.10 wires in the
-   *  `JSON.stringify` write + `offered_slots` column. */
+  /** S4 `booking-hitl` design.md Decision 4 item 2. Serialized to JSON at
+   *  this db-boundary write (see `updateRequestFields` below) — the pure
+   *  reducer in `lib/` never sees the raw string; read it back via
+   *  `parseOfferedSlots`, never `JSON.parse` directly. */
   offeredSlots?: OfferedSlot[] | null;
 }
 
-// `Exclude<..., "offeredSlots">`, not the full `keyof UpdateRequestFieldsInput`
-// (booking-hitl tasks.md B.9/B.10, RED phase): `offeredSlots` is deliberately
-// NOT mapped to a column yet, so this object's shape stays unchanged — see
-// `UpdateRequestFieldsInput.offeredSlots`'s comment above. The two lookups in
-// `updateRequestFields` below cast the (wider) iterated key down to this
-// (narrower) type; at runtime a key of `"offeredSlots"` still misses this
-// object and resolves to `undefined`, which is exactly the "not wired yet"
-// behavior B.9 needs to observe.
-const FIELD_COLUMN_BY_KEY: Record<Exclude<keyof UpdateRequestFieldsInput, "offeredSlots">, string> = {
+const FIELD_COLUMN_BY_KEY: Record<keyof UpdateRequestFieldsInput, string> = {
   studentName: "student_name",
   studentAge: "student_age",
   format: "format",
@@ -107,6 +97,7 @@ const FIELD_COLUMN_BY_KEY: Record<Exclude<keyof UpdateRequestFieldsInput, "offer
   comfort: "comfort",
   preferredWeekdays: "preferred_weekdays",
   preferredTimeRange: "preferred_time_range",
+  offeredSlots: "offered_slots",
 };
 
 /**
@@ -159,24 +150,20 @@ export function updateRequestFields(
     return 0;
   }
 
-  // See `FIELD_COLUMN_BY_KEY`'s own comment above: `key` is cast down to its
-  // narrower type purely so this indexes cleanly under
-  // `noUncheckedIndexedAccess` — it does NOT change runtime behavior. A key
-  // of `"offeredSlots"` still misses the object at runtime (returns
-  // `undefined`), by design, until B.10.
   const setClause = entries
     .map(([key]) => {
-      const column =
-        FIELD_COLUMN_BY_KEY[key as Exclude<keyof UpdateRequestFieldsInput, "offeredSlots">];
+      const column = FIELD_COLUMN_BY_KEY[key];
       return `${column} = @${column}`;
     })
     .join(", ");
 
   const params: Record<string, unknown> = { id };
   for (const [key, value] of entries) {
-    const column =
-      FIELD_COLUMN_BY_KEY[key as Exclude<keyof UpdateRequestFieldsInput, "offeredSlots">];
-    params[column] = value ?? null;
+    const column = FIELD_COLUMN_BY_KEY[key];
+    // `offeredSlots` is the one JSON-in-TEXT column (design.md Decision 4
+    // item 2) — stringify at this db-boundary write, never inside `lib/`'s
+    // pure reducer.
+    params[column] = key === "offeredSlots" ? JSON.stringify(value ?? null) : (value ?? null);
   }
 
   const result = db.prepare(`UPDATE requests SET ${setClause} WHERE id = @id`).run(params);
@@ -216,13 +203,15 @@ export function findLatestRequestForLead(
  * the CALLER — never inside `lib/`" means the pure reducer never sees a raw
  * string, not that `packages/db` itself may not own this defensive-parse
  * boundary.
- *
- * TYPED THROWING STUB — red state for booking-hitl tasks.md B.9; the body
- * is implemented in B.10.
  */
 export function parseOfferedSlots(value: string | null): OfferedSlot[] | null {
-  void value;
-  throw new Error(
-    "Not implemented — packages/db/src/requests.ts parseOfferedSlots (booking-hitl task B.10)",
-  );
+  if (value === null) {
+    return null;
+  }
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return (parsed as OfferedSlot[] | null) ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -118,6 +118,47 @@ const CREATE_REQUESTS_LEAD_ID_INDEX = `
 CREATE INDEX IF NOT EXISTS idx_requests_lead_id ON requests(lead_id);
 `;
 
+// notifications — the SQLite outbox drained by the bot (S4 `booking-hitl`,
+// design.md Decision 1 / Decision 4 item 1). `booking_id` FKs `bookings`
+// (`ON DELETE CASCADE` — a notification is meaningless once its booking is
+// gone), so this table must be created AFTER `bookings` exists.
+// `delivery_status` defaults `'pending'` at the column level (never an
+// insert-time parameter, see notifications.ts's header comment); the partial
+// index mirrors the FR-KB-04/ADR-0001 §4 `questions.delivery_status` shape.
+const CREATE_NOTIFICATIONS_TABLE = `
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  telegram_chat_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('confirmed','declined','proposed_again')),
+  payload TEXT NOT NULL,
+  delivery_status TEXT NOT NULL DEFAULT 'pending' CHECK (delivery_status IN ('pending','delivered','failed')),
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  delivered_at TEXT
+);
+`;
+
+const CREATE_NOTIFICATIONS_DELIVERABLE_INDEX = `
+CREATE INDEX IF NOT EXISTS idx_notifications_deliverable
+  ON notifications(delivery_status) WHERE delivery_status IN ('pending','failed');
+`;
+
+/**
+ * Adds `requests.offered_slots` once `requests` exists (S4 `booking-hitl`
+ * design.md Decision 4 item 2) — same `PRAGMA table_info` idempotency
+ * pattern as `ensureBookingsRequestIdColumn` above (SQLite's `ALTER TABLE
+ * ... ADD COLUMN` has no `IF NOT EXISTS` clause). Nullable TEXT holding a
+ * JSON array of `{start,end}` (or `NULL`) — serves BOTH the agent's own
+ * `offer_slots` event and the administrator's "Propose another time" slots.
+ */
+function ensureRequestsOfferedSlotsColumn(db: Database.Database): void {
+  const columns = db.prepare("PRAGMA table_info(requests)").all() as Array<{ name: string }>;
+  const hasOfferedSlots = columns.some((column) => column.name === "offered_slots");
+  if (!hasOfferedSlots) {
+    db.exec(`ALTER TABLE requests ADD COLUMN offered_slots TEXT;`);
+  }
+}
+
 /**
  * Adds `bookings.request_id` once `requests` exists (S1's deferred column,
  * owned by S2 per schema.ts's own historical comment above).
@@ -161,4 +202,10 @@ export function initSchema(db: Database.Database): void {
   db.exec(CREATE_REQUESTS_TABLE);
   db.exec(CREATE_REQUESTS_LEAD_ID_INDEX);
   ensureBookingsRequestIdColumn(db);
+  // notifications FKs bookings — created only after CREATE_BOOKINGS_TABLE.
+  db.exec(CREATE_NOTIFICATIONS_TABLE);
+  db.exec(CREATE_NOTIFICATIONS_DELIVERABLE_INDEX);
+  // offered_slots is a follow-up column on requests — created only after
+  // CREATE_REQUESTS_TABLE.
+  ensureRequestsOfferedSlotsColumn(db);
 }

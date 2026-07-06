@@ -3,11 +3,10 @@
 // Added specifically so the slots slice's real-SQLite integration smoke
 // (tests/integration/slots/) has something narrower than raw SQL to call
 // for the two operations it needs: inserting a `pending` hold row and
-// moving a row to a terminal status. Deliberately minimal — this slice does
-// not need reads/finders beyond what the integration test asserts with its
-// own `SELECT` (see schema.test.ts's existing style), and does not yet have
-// a `request_id` column to join against (that follow-up column lands with
-// S2 `intake`, per schema.ts's own comment).
+// moving a row to a terminal status. `request_id` (S2 `intake`'s deferred
+// column, wired by S4 `booking-hitl` design.md Decision 4 item 3) and
+// `findBookingsByRequestId` (Decision 4 item 4) were added once `requests`
+// existed and a real caller needed them.
 
 import type Database from "better-sqlite3";
 import type { BookingStatus } from "./schema.ts";
@@ -24,13 +23,8 @@ export interface InsertBookingInput {
   /** S4 `booking-hitl` design.md Decision 4 item 3: closes the documented
    *  gap ("`insertBooking` does NOT persist `request_id`") — `HoldStorePort
    *  .holdSlot` is the first real caller that needs it. Optional so S1's
-   *  own tests/fixtures (which never pass one) keep compiling unchanged.
-   *
-   *  TYPE-ONLY WIDENING (booking-hitl tasks.md B.5/B.6, RED phase): this
-   *  field is intentionally NOT yet threaded into `insertBooking`'s
-   *  `INSERT` below — a caller passing `requestId` still gets back
-   *  `request_id: null` today, by design, so B.5's round-trip assertion
-   *  fails at runtime until B.6 wires it in. */
+   *  own tests/fixtures (which never pass one) keep compiling unchanged and
+   *  still get back `request_id: null`. */
   requestId?: number | null;
 }
 
@@ -41,8 +35,6 @@ export interface BookingRow {
   status: BookingStatus;
   calendar_event_id: string | null;
   created_at: string;
-  /** See `InsertBookingInput.requestId`'s comment — always `null` until
-   *  B.6 wires the column into `insertBooking`'s `INSERT` statement. */
   request_id: number | null;
 }
 
@@ -54,8 +46,8 @@ export interface BookingRow {
 export function insertBooking(db: Database.Database, input: InsertBookingInput): BookingRow {
   return db
     .prepare(
-      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id)
-       VALUES (@slot_start, @slot_end, @status, @calendar_event_id)
+      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id, request_id)
+       VALUES (@slot_start, @slot_end, @status, @calendar_event_id, @request_id)
        RETURNING *`,
     )
     .get({
@@ -63,6 +55,7 @@ export function insertBooking(db: Database.Database, input: InsertBookingInput):
       slot_end: input.slotEnd,
       status: input.status,
       calendar_event_id: input.calendarEventId ?? null,
+      request_id: input.requestId ?? null,
     }) as BookingRow;
 }
 
@@ -88,14 +81,9 @@ export function updateBookingStatus(
  * tested helper — used by the decision route and the idempotent-delete fix
  * to find every pending booking for a request/lead rather than assuming
  * exactly one.
- *
- * TYPED THROWING STUB — red state for booking-hitl tasks.md B.7; the body
- * is implemented in B.8.
  */
 export function findBookingsByRequestId(db: Database.Database, requestId: number): BookingRow[] {
-  void db;
-  void requestId;
-  throw new Error(
-    "Not implemented — packages/db/src/bookings.ts findBookingsByRequestId (booking-hitl task B.8)",
-  );
+  return db
+    .prepare(`SELECT * FROM bookings WHERE request_id = ? ORDER BY id DESC`)
+    .all(requestId) as BookingRow[];
 }

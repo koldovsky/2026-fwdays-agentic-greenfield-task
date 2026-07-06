@@ -83,26 +83,26 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## B. Database — notification outbox, schema additions, new query helpers
 
-- [ ] B.1 `packages/db/src/schema.test.ts` additions FIRST (red): a
+- [x] B.1 `packages/db/src/schema.test.ts` additions FIRST (red): a
       `notifications` table exists after `initSchema()` with `delivery_status`
       CHECK-constrained to `pending|delivered|failed` and `kind`
       CHECK-constrained to `confirmed|declined|proposed_again`, rejecting a
       bogus value of either; `requests.offered_slots` exists via `PRAGMA
       table_info(requests)` (`@trace FR-HITL-02`, design.md Decision 1 and
       Decision 4 item 2). Confirm red.
-- [ ] B.2 Implement `CREATE_NOTIFICATIONS_TABLE`,
+- [x] B.2 Implement `CREATE_NOTIFICATIONS_TABLE`,
       `ensureRequestsOfferedSlotsColumn()` (mirroring
       `ensureBookingsRequestIdColumn`'s `PRAGMA table_info` idempotency
       pattern), and their `initSchema()` wiring in `schema.ts` to pass B.1.
-- [ ] B.3 `packages/db/src/notifications.test.ts` FIRST (red, real in-memory
+- [x] B.3 `packages/db/src/notifications.test.ts` FIRST (red, real in-memory
       SQLite): `insertNotification` persists and round-trips every column;
       `findDeliverableNotifications` returns only `pending`/`failed` rows,
       ordered by `id`; `markNotificationDelivered`/`markNotificationFailed`
       each flip exactly one row's `delivery_status` (and set `delivered_at`
       on success) without touching others (`@trace FR-HITL-02`,
       `@trace NFR-REL-01`). Confirm red.
-- [ ] B.4 Implement `packages/db/src/notifications.ts` to pass B.3.
-- [ ] B.5 `packages/db/src/bookings.test.ts` additions FIRST (red):
+- [x] B.4 Implement `packages/db/src/notifications.ts` to pass B.3.
+- [x] B.5 `packages/db/src/bookings.test.ts` additions FIRST (red):
       `insertBooking({..., requestId: 7})` persists and returns
       `request_id: 7` on the row; omitting `requestId` still defaults to
       `null` (S1's existing callers keep compiling/passing unchanged); a
@@ -110,15 +110,15 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       wall-clock `Slot` string carries no trailing `Z` and no numeric UTC
       offset (design.md Decision 6 item 4, the "Kyiv-offset `slot_start`
       write contract" carryover). Confirm red.
-- [ ] B.6 Extend `InsertBookingInput`/`insertBooking` in `bookings.ts` with
+- [x] B.6 Extend `InsertBookingInput`/`insertBooking` in `bookings.ts` with
       the optional `requestId` column to pass B.5.
-- [ ] B.7 `packages/db/src/bookings.test.ts` (or a new
+- [x] B.7 `packages/db/src/bookings.test.ts` (or a new
       `find-by-request.test.ts`) FIRST (red): a new
       `findBookingsByRequestId(db, requestId)` returns every `bookings` row
       for that `request_id`, newest first, `[]` for a request with none
       (design.md Decision 4 item 4). Confirm red.
-- [ ] B.8 Implement `findBookingsByRequestId` in `bookings.ts` to pass B.7.
-- [ ] B.9 `packages/db/src/requests.test.ts` additions FIRST (red):
+- [x] B.8 Implement `findBookingsByRequestId` in `bookings.ts` to pass B.7.
+- [x] B.9 `packages/db/src/requests.test.ts` additions FIRST (red):
       `updateRequestFields(db, id, {offeredSlots: [...]})` persists a JSON
       array into `offered_slots`, and a new read path (either
       `findLatestRequestForLead`'s existing `RequestRow` shape gaining
@@ -126,14 +126,14 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       `lib/`) round-trips the exact array; a row with `offered_slots: NULL`
       never throws when read (design.md Risks — malformed/legacy JSON is
       treated as "no offered slots known"). Confirm red.
-- [ ] B.10 Extend `UpdateRequestFieldsInput`/`FIELD_COLUMN_BY_KEY`/
+- [x] B.10 Extend `UpdateRequestFieldsInput`/`FIELD_COLUMN_BY_KEY`/
       `RequestRow` in `requests.ts` (JSON `stringify` on write, defensive
       `parse`-or-`null` on the read boundary) to pass B.9.
-- [ ] B.11 Export `insertNotification`, `findDeliverableNotifications`,
+- [x] B.11 Export `insertNotification`, `findDeliverableNotifications`,
       `markNotificationDelivered`, `markNotificationFailed`,
       `findBookingsByRequestId`, and the widened `InsertBookingInput`/
       `RequestRow` types from `packages/db/src/index.ts`.
-- [ ] B.12 Run `npm run test:run`; confirm B.1–B.11 green with zero
+- [x] B.12 Run `npm run test:run`; confirm B.1–B.11 green with zero
       regressions.
 
 ## C. Lead-side proposal/hold wiring — agent loop + bot pipeline

@@ -77,11 +77,18 @@ export function insertNotification(
   db: Database.Database,
   input: InsertNotificationInput,
 ): NotificationRow {
-  void db;
-  void input;
-  throw new Error(
-    "Not implemented — packages/db/src/notifications.ts insertNotification (booking-hitl task B.4)",
-  );
+  return db
+    .prepare(
+      `INSERT INTO notifications (booking_id, telegram_chat_id, kind, payload)
+       VALUES (@booking_id, @telegram_chat_id, @kind, @payload)
+       RETURNING *`,
+    )
+    .get({
+      booking_id: input.bookingId,
+      telegram_chat_id: input.telegramChatId,
+      kind: input.kind,
+      payload: input.payload,
+    }) as NotificationRow;
 }
 
 /**
@@ -94,11 +101,14 @@ export function findDeliverableNotifications(
   db: Database.Database,
   limit: number,
 ): NotificationRow[] {
-  void db;
-  void limit;
-  throw new Error(
-    "Not implemented — packages/db/src/notifications.ts findDeliverableNotifications (booking-hitl task B.4)",
-  );
+  return db
+    .prepare(
+      `SELECT * FROM notifications
+       WHERE delivery_status IN ('pending', 'failed')
+       ORDER BY id ASC
+       LIMIT ?`,
+    )
+    .all(limit) as NotificationRow[];
 }
 
 /**
@@ -109,11 +119,14 @@ export function findDeliverableNotifications(
  * TYPED THROWING STUB.
  */
 export function markNotificationDelivered(db: Database.Database, id: number): number {
-  void db;
-  void id;
-  throw new Error(
-    "Not implemented — packages/db/src/notifications.ts markNotificationDelivered (booking-hitl task B.4)",
-  );
+  const result = db
+    .prepare(
+      `UPDATE notifications
+       SET delivery_status = 'delivered', delivered_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+       WHERE id = ?`,
+    )
+    .run(id);
+  return result.changes;
 }
 
 /**
@@ -123,9 +136,8 @@ export function markNotificationDelivered(db: Database.Database, id: number): nu
  * TYPED THROWING STUB.
  */
 export function markNotificationFailed(db: Database.Database, id: number): number {
-  void db;
-  void id;
-  throw new Error(
-    "Not implemented — packages/db/src/notifications.ts markNotificationFailed (booking-hitl task B.4)",
-  );
+  const result = db
+    .prepare(`UPDATE notifications SET delivery_status = 'failed' WHERE id = ?`)
+    .run(id);
+  return result.changes;
 }
