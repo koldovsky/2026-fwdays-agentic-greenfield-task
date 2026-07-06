@@ -1,22 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import QRCode from 'qrcode';
 
 export default function RegisterPage() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'acontrol_bot';
 
   // Step 1: Fetch the registration token
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchToken() {
       try {
         const response = await fetch('/api/auth/register-token', {
           method: 'POST',
+          signal: controller.signal,
         });
         if (!response.ok) {
           throw new Error('Не вдалося отримати токен реєстрації');
@@ -24,13 +28,21 @@ export default function RegisterPage() {
         const data = await response.json();
         setToken(data.token);
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
         const message = err instanceof Error ? err.message : 'Виникла помилка під час ініціалізації реєстрації';
         setError(message);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
     fetchToken();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // Step 2: Poll registration status
@@ -45,6 +57,9 @@ export default function RegisterPage() {
           if (data.completed) {
             clearInterval(interval);
             router.push('/dashboard');
+          } else if (data.error) {
+            clearInterval(interval);
+            setError('Термін дії сесії реєстрації/QR-коду закінчився. Будь ласка, оновіть сторінку, щоб почати знову.');
           }
         }
       } catch (err) {
@@ -56,9 +71,15 @@ export default function RegisterPage() {
   }, [token, router]);
 
   const botUrl = token ? `https://t.me/${botUsername}?start=reg_${token}` : '';
-  const qrCodeUrl = token
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(botUrl)}`
-    : '';
+
+  // Step 3: Draw QR Code locally using qrcode library
+  useEffect(() => {
+    if (canvasRef.current && botUrl) {
+      QRCode.toCanvas(canvasRef.current, botUrl, { width: 176, margin: 1 }, (error) => {
+        if (error) console.error('Помилка при створенні QR-коду:', error);
+      });
+    }
+  }, [botUrl]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-page px-4 font-sans text-text-primary">
@@ -101,14 +122,10 @@ export default function RegisterPage() {
               
               {/* QR Code Container */}
               <div className="flex flex-col items-center justify-center border border-border-custom bg-bg-secondary p-6">
-                {qrCodeUrl && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={qrCodeUrl}
-                    alt="Telegram Bot QR Code"
-                    className="h-44 w-44 border border-border-custom bg-white"
-                  />
-                )}
+                <canvas
+                  ref={canvasRef}
+                  className="h-44 w-44 border border-border-custom bg-white"
+                />
                 <span className="mt-3 font-mono text-[10px] text-text-muted">
                   Скан для переходу до бота
                 </span>

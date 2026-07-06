@@ -4,25 +4,8 @@ import { magicLinks, users, sessions } from '@/db/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { sendBotMessage } from '@/lib/telegram-bot';
+import { getClientIp, checkDbRateLimit } from '@/lib/rate-limit';
 import crypto from 'crypto';
-
-// In-memory rate limiting for IPs
-const ipRateLimits = new Map<string, { count: number; resetAt: number }>();
-
-function checkIpRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = ipRateLimits.get(ip);
-
-  if (record && record.resetAt > now) {
-    if (record.count >= 3) {
-      return false;
-    }
-    record.count++;
-  } else {
-    ipRateLimits.set(ip, { count: 1, resetAt: now + 60 * 1000 });
-  }
-  return true;
-}
 
 // GET: Validate Magic Link and create session
 export async function GET(request: Request) {
@@ -34,28 +17,26 @@ export async function GET(request: Request) {
   }
 
   try {
-    const linkList = await db
-      .select()
-      .from(magicLinks)
-      .where(eq(magicLinks.token, token))
-      .limit(1);
+    const now = new Date();
 
-    if (linkList.length === 0) {
+    // Atomically check validity and mark as used in a single conditional update
+    const updated = await db
+      .update(magicLinks)
+      .set({ isUsed: true })
+      .where(
+        and(
+          eq(magicLinks.token, token),
+          eq(magicLinks.isUsed, false),
+          gt(magicLinks.expiresAt, now)
+        )
+      )
+      .returning();
+
+    if (updated.length === 0) {
       return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
     }
 
-    const link = linkList[0];
-    const now = new Date();
-
-    if (link.expiresAt < now || link.isUsed) {
-      return NextResponse.redirect(new URL('/login?error=expired_token', request.url));
-    }
-
-    // Mark as used
-    await db
-      .update(magicLinks)
-      .set({ isUsed: true })
-      .where(eq(magicLinks.id, link.id));
+    const link = updated[0];
 
     // Create session (valid for 30 days)
     const sessionToken = crypto.randomUUID();
@@ -86,9 +67,10 @@ export async function GET(request: Request) {
 
 // POST: Request new Magic Link
 export async function POST(request: Request) {
-  const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+  const ip = getClientIp(request);
 
-  if (!checkIpRateLimit(ip)) {
+  const isAllowed = await checkDbRateLimit(ip, 'magic-link-request', 3, 60);
+  if (!isAllowed) {
     return NextResponse.json(
       { error: 'Занадто багато запитів. Будь ласка, спробуйте пізніше' },
       { status: 429 }

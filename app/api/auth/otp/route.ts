@@ -1,32 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { otpCodes, users, sessions } from '@/db/schema';
-import { eq, and, gt } from 'drizzle-orm';
+import { eq, and, gt, desc } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { sendBotMessage } from '@/lib/telegram-bot';
+import { getClientIp, checkDbRateLimit } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
-// In-memory rate limiting maps
-const ipRequestLimits = new Map<string, { count: number; resetAt: number }>();
-const ipVerifyLimits = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string, limitMap: Map<string, { count: number; resetAt: number }>, max: number): boolean {
-  const now = Date.now();
-  const record = limitMap.get(ip);
-
-  if (record && record.resetAt > now) {
-    if (record.count >= max) {
-      return false;
-    }
-    record.count++;
-  } else {
-    limitMap.set(ip, { count: 1, resetAt: now + 60 * 1000 });
-  }
-  return true;
-}
-
 export async function POST(request: Request) {
-  const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+  const ip = getClientIp(request);
   let body: { email?: string; code?: string };
   try {
     body = await request.json();
@@ -44,7 +26,8 @@ export async function POST(request: Request) {
 
   // CASE 1: Verification (code is provided)
   if (code !== undefined) {
-    if (!checkRateLimit(ip, ipVerifyLimits, 5)) {
+    const isAllowed = await checkDbRateLimit(ip, 'otp-verify', 5, 60);
+    if (!isAllowed) {
       return NextResponse.json(
         { error: 'Занадто багато спроб перевірки. Будь ласка, спробуйте пізніше' },
         { status: 429 }
@@ -66,12 +49,20 @@ export async function POST(request: Request) {
       }
 
       const user = userList[0];
+      const now = new Date();
 
-      // Get current active OTP code
+      // Get current active OTP code (latest unused and not expired)
       const activeOtpList = await db
         .select()
         .from(otpCodes)
-        .where(eq(otpCodes.userId, user.id))
+        .where(
+          and(
+            eq(otpCodes.userId, user.id),
+            eq(otpCodes.isUsed, false),
+            gt(otpCodes.expiresAt, now)
+          )
+        )
+        .orderBy(desc(otpCodes.createdAt))
         .limit(1);
 
       if (activeOtpList.length === 0) {
@@ -82,7 +73,6 @@ export async function POST(request: Request) {
       }
 
       const otp = activeOtpList[0];
-      const now = new Date();
 
       if (otp.isUsed || otp.expiresAt < now || otp.attempts >= 3) {
         return NextResponse.json(
@@ -143,7 +133,8 @@ export async function POST(request: Request) {
   }
 
   // CASE 2: Request OTP code (code is not provided)
-  if (!checkRateLimit(ip, ipRequestLimits, 3)) {
+  const isAllowed = await checkDbRateLimit(ip, 'otp-request', 3, 60);
+  if (!isAllowed) {
     return NextResponse.json(
       { error: 'Занадто багато запитів. Будь ласка, спробуйте пізніше' },
       { status: 429 }
@@ -182,8 +173,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Invalidate previous OTP codes
-    await db.delete(otpCodes).where(eq(otpCodes.userId, user.id));
+    // Invalidate previous OTP codes by marking them as used instead of deleting
+    await db
+      .update(otpCodes)
+      .set({ isUsed: true })
+      .where(eq(otpCodes.userId, user.id));
 
     // Generate random 6-digit code
     const rawCode = Math.floor(100000 + Math.random() * 900000).toString();

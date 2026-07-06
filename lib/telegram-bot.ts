@@ -145,7 +145,7 @@ export async function handleBotUpdate(update: TelegramUpdate) {
 
   // Handle /start command with registration token prefix (reg_)
   if (text.startsWith('/start')) {
-    const match = text.match(/^\/start reg_([a-f0-9-]+)$/i);
+    const match = text.match(/^\/start reg_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (match) {
       const token = match[1];
       const now = new Date();
@@ -180,6 +180,26 @@ export async function handleBotUpdate(update: TelegramUpdate) {
           telegramUsername,
         })
         .where(eq(pendingRegistrations.id, pendingReg[0].id));
+
+      // Check if Telegram user is already registered in users table
+      const existingUserTelegram = await db
+        .select()
+        .from(users)
+        .where(eq(users.telegramId, BigInt(telegramId)))
+        .limit(1);
+
+      if (existingUserTelegram.length > 0) {
+        // Delete pendingRegistrations record right away (same cleanup behavior as /cancel) and stop the flow
+        await db
+          .delete(pendingRegistrations)
+          .where(eq(pendingRegistrations.id, pendingReg[0].id));
+
+        await sendBotMessage(
+          telegramId,
+          'Ваш Telegram-акаунт уже повʼязаний з іншим профілем. Зверніться до підтримки'
+        );
+        return;
+      }
 
       await sendBotMessage(
         telegramId,

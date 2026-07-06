@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { pendingRegistrations, users, sessions } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
@@ -35,6 +35,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ completed: false });
     }
 
+    // Check if this registration session has already been claimed
+    const timeRemaining = reg.expiresAt.getTime() - now.getTime();
+    if (timeRemaining <= 30 * 1000) {
+      return NextResponse.json({ completed: true });
+    }
+
     if (!reg.telegramId) {
       return NextResponse.json({ completed: false, error: 'Telegram ID missing' });
     }
@@ -51,6 +57,24 @@ export async function GET(request: Request) {
     }
 
     const user = userList[0];
+
+    // Atomically claim the registration by updating expiresAt to a 30-second grace period
+    const gracePeriod = new Date(now.getTime() + 30 * 1000);
+    const updated = await db
+      .update(pendingRegistrations)
+      .set({ expiresAt: gracePeriod })
+      .where(
+        and(
+          eq(pendingRegistrations.id, reg.id),
+          eq(pendingRegistrations.expiresAt, reg.expiresAt)
+        )
+      )
+      .returning();
+
+    if (updated.length === 0) {
+      // Already claimed by a concurrent request
+      return NextResponse.json({ completed: true });
+    }
 
     // Create session in database
     const sessionToken = crypto.randomUUID();
@@ -71,17 +95,6 @@ export async function GET(request: Request) {
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
     });
-
-    // Invalidate the temporary token allowing a 30-second grace period.
-    // If it's already set to a short expiration, don't update it again.
-    const timeRemaining = reg.expiresAt.getTime() - now.getTime();
-    if (timeRemaining > 30 * 1000) {
-      const gracePeriod = new Date(now.getTime() + 30 * 1000);
-      await db
-        .update(pendingRegistrations)
-        .set({ expiresAt: gracePeriod })
-        .where(eq(pendingRegistrations.id, reg.id));
-    }
 
     return NextResponse.json({ completed: true });
   } catch (error) {

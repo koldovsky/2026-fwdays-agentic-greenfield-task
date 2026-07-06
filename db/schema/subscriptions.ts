@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, timestamp, pgEnum, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, timestamp, pgEnum, boolean, index } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const tariffPlanEnum = pgEnum('tariff_plan', ['monthly', 'yearly']);
@@ -22,5 +22,9 @@ export const subscriptions = pgTable('subscriptions', {
   currentPeriodEnd: timestamp('current_period_end', { withTimezone: true, mode: 'date' }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    idxSubscriptionsUserId: index('idx_subscriptions_user_id').on(table.userId),
+  };
 });
 

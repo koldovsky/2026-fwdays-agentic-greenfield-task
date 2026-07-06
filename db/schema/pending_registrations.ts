@@ -12,7 +12,6 @@ export const pendingRegistrations = pgTable('pending_registrations', {
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 }, (table) => {
   return {
-    idxPendingRegistrationsToken: index('idx_pending_registrations_token').on(table.token),
     idxPendingRegistrationsTelegramId: index('idx_pending_registrations_telegram_id').on(table.telegramId),
   };
 });
