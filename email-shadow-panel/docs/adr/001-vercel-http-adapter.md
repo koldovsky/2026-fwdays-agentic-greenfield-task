@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — pending Phase 0 evidence
+Proposed - PENDING HUMAN VERIFICATION
 
 ## Context
 
@@ -14,7 +14,7 @@ A persistent browser automation worker would add operational cost, deployment co
 
 ## Proposed Decision
 
-Use Vercel Node.js Functions with native `fetch` and an isolated Emailnator compatibility adapter, if Phase 0 proves the full workflow. Store temporary encrypted provider state in Upstash Redis Free only in later phases after a GO verdict.
+Use Vercel Node.js Functions with native `fetch` and an isolated Emailnator compatibility adapter, if Phase 0 proves the full workflow. Pin the runtime to Node 22.x to match the observed local environment (`node --version` returned `v22.20.0`) and rely on the same major through `package.json` for local and Vercel execution.
 
 ## Alternatives Considered
 
@@ -39,16 +39,24 @@ Use Vercel Node.js Functions with native `fetch` and an isolated Emailnator comp
 - Session restoration may be impossible or unsafe.
 - Message detail may require undiscovered state.
 
-## Evidence Required Before Acceptance
+## Evidence Collected So Far
 
-- Provider-session bootstrap evidence.
-- Cookie and XSRF handling evidence.
-- Address generation evidence.
-- Message-list evidence.
-- Individual message-detail evidence.
-- Session serialization and restoration evidence from a new process or invocation.
-- Vercel Preview compatibility evidence.
-- Sanitized fixtures and deterministic tests.
+- A Vercel-style Preview probe was implemented as `api/_probe/emailnator.ts` with a named `POST(request: Request): Promise<Response>` export and Preview-only guards.
+- A single tested helper now owns multi-cookie extraction and fails clearly when `Headers.getSetCookie()` is unavailable.
+- Deterministic validation covers cookie handling, capsule sealing and restoration, request classification, structural detail sanitization, Preview auth gates, and a boundary check that `src/` does not import `server/`, `api/`, or `scripts/`.
+- Public-reference-derived research from Emailnator's public page and client bundle indicates cookie names `XSRF-TOKEN` and `gmailnator_session`, `POST /generate-email`, and `POST /message-list` with detail keyed by `messageID`.
+- The public-reference-derived research above is not proof of the live provider contract.
+
+## Evidence Still Required Before Acceptance
+
+- Live provider-session bootstrap evidence.
+- Live cookie and XSRF handling evidence.
+- Live address generation evidence.
+- Live message-list evidence.
+- Live individual message-detail evidence.
+- Live session serialization and restoration evidence from a new process or invocation.
+- Vercel Preview compatibility evidence from an actual Preview deployment.
+- Separate checker review and CodeRabbit remediation evidence after changes are committed in a future step.
 
 ## GO Criteria
 
@@ -69,3 +77,4 @@ Do not proceed with the full HTTP-proxy architecture. Re-scope the product, choo
 ## Decision History
 
 - 2026-07-05: Proposed before Phase 0 implementation. Evidence not collected yet.
+- 2026-07-05: Phase 0 implementation and deterministic validation completed locally. Live inbox generation, live message retrieval, Vercel Preview probing, and final GO or NO-GO determination remain pending human verification.

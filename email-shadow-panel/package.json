@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.json \u0026\u0026 tsc -p tsconfig.phase0.json",
+    "probe:emailnator": "node --experimental-transform-types ./scripts/emailnator-probe.ts",
+    "test:phase0": "node --experimental-transform-types --experimental-test-isolation=none --test ./tests/phase0/**/*.test.ts \u0026\u0026 node --experimental-transform-types ./scripts/capsule-cross-process-write.ts \u0026\u0026 node --experimental-transform-types ./scripts/capsule-cross-process-read.ts",
+    "verify:phase0": "npm run lint \u0026\u0026 npm run typecheck \u0026\u0026 npm run test:phase0 \u0026\u0026 npm run build \u0026\u0026 node --experimental-transform-types ./scripts/verify-phase0.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -63,6 +67,7 @@
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "three": "^0.185.0",
+    "tough-cookie": "6.0.0",
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
@@ -86,5 +91,8 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

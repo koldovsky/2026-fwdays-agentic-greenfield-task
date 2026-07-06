@@ -6,10 +6,10 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  { ignores: ["dist", ".output", ".vinxi", ".tanstack", "coverage"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}", "vite.config.ts"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -33,6 +33,19 @@ export default tseslint.config(
         },
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ["api/**/*.ts", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
       "@typescript-eslint/no-unused-vars": "off",
     },
   },

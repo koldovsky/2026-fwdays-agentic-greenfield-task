@@ -1,0 +1,17 @@
+{
+  "provenance": "synthetic",
+  "messageData": [
+    {
+      "from": "Verification Robot",
+      "subject": "Shadow Panel Phase 0",
+      "time": "2026-07-05 18:00",
+      "messageID": "msg-001"
+    },
+    {
+      "from": "Example Service",
+      "subject": "Welcome aboard",
+      "time": "2026-07-05 18:05",
+      "messageID": "msg-002"
+    }
+  ]
+}

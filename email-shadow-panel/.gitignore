@@ -25,6 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+provider-output.log
 
 # Local overrides
 *.local
@@ -32,10 +33,15 @@ lerna-debug.log*
 # Future provider and feasibility state
 .provider-state/
 .probe-state/
+.local/
+.local/phase0/
 *.session.enc
+*.capsule.enc
 *.db
 *.sqlite
 *.sqlite3
+.emailnator-captures/
+.emailnator-captures-staging/
 
 # Editor directories and files
 .vscode/*
