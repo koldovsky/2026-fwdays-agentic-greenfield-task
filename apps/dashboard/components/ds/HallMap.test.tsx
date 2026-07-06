@@ -49,6 +49,23 @@ describe("HallMap (dashboard tasks.md §6.7, @trace FR-DASH-03, @trace BC-SCHEDU
     expect(screen.getAllByTestId("hall-seat")).toHaveLength(50);
   });
 
+  it("exposes a valid ARIA grid structure (grid > row > rowheader/gridcell)", () => {
+    const seats = fixtureSeats({});
+    render(<HallMap seats={seats} pendingQueue={[]} />);
+
+    expect(screen.getByRole("grid", { name: "Розклад залу на тиждень" })).toBeInTheDocument();
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(5);
+    expect(screen.getAllByRole("rowheader")).toHaveLength(5);
+    // Every seat button is also exposed as a `gridcell` — the same 50 nodes
+    // `data-testid="hall-seat"` already asserts on.
+    const gridcells = screen.getAllByRole("gridcell");
+    expect(gridcells).toHaveLength(50);
+    for (const cell of gridcells) {
+      expect(cell.getAttribute("data-testid")).toBe("hall-seat");
+    }
+  });
+
   it("each seat's rendered status matches hallSeatStatus's verdict", () => {
     const seats = fixtureSeats({
       "1-10": ["pending"],

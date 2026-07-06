@@ -1,0 +1,32 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "empty-state",
+      "proof": "FR-DASH-01",
+      "video": "docs/qa/dashboard/empty-state.webm",
+      "screenshot": "docs/qa/dashboard/empty-state.png",
+      "explainer": "docs/qa/dashboard/empty-state.md",
+      "asserted": true
+    },
+    {
+      "id": "populated-state",
+      "proof": [
+        "FR-DASH-01",
+        "FR-DASH-03"
+      ],
+      "video": "docs/qa/dashboard/populated-state.webm",
+      "screenshot": "docs/qa/dashboard/populated-state.png",
+      "explainer": "docs/qa/dashboard/populated-state.md",
+      "asserted": true,
+      "visionVerdict": {
+        "judgedBy": "vision-judge (fresh agent, maker != checker; never the UI builder)",
+        "still": "docs/qa/dashboard/populated-state.png",
+        "FR-DASH-01": { "met": true, "readable": true },
+        "FR-DASH-03": { "met": true, "readable": true },
+        "notes": "Both FRs visibly met: streamed reply in РОЗМОВИ, full RequestCard (Софійка + all intake fields), pending queue entry with the amber Очікує badge + Підтвердити/Запропонувати інший час/Відхилити DecisionBar, and a 5-row Пн–Пт HallMap. Two readability defects the judge flagged on the first pass were then FIXED (commit trail): (1) low-saturation seats -> now distinguished by non-color cue (border style/weight: pending solid, confirmed double, cancelled dashed+strikethrough) plus deeper fills, WCAG 1.4.1-safe; (2) clipped brief last line -> persistent scrollbar + 'ще ↓' fade cue, ends cleanly. Re-verified: axe 0 serious/critical in light AND dark; small uppercase labels legible after the --text-muted contrast fix.",
+        "a11y": { "tool": "axe-core wcag2a+wcag2aa", "light": "0 serious/critical", "dark": "0 serious/critical", "darkModeVia": "explicit data-theme (not prefers-color-scheme)" }
+      }
+    }
+  ]
+}

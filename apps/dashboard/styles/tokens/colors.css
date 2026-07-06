@@ -28,7 +28,13 @@
   /* Text */
   --text: #1f231f;
   --text-secondary: #4d5249;
-  --text-muted: #83887c;
+  /* Darkened from the original #83887c (axe `color-contrast`, S3 populated
+   * dashboard: 15 nodes below 4.5:1 for 11px uppercase labels) — #676b62
+   * clears WCAG AA (>=4.5:1) against every surface this token paints text on
+   * (`--bg` 4.95:1, `--surface`/`--surface-raised` 5.45:1, `--surface-hover`
+   * 4.62:1 — `--surface-hover` is the tightest, since `LessonBrief`'s field
+   * labels sit on it), not just the lightest one. */
+  --text-muted: #676b62;
   --text-on-brand: #ffffff;
 
   /* Brand (the tuning-fork teal) + accent */
@@ -41,8 +47,11 @@
   --border: #e4dfd2;
   --border-strong: #c9c1ac;
 
-  /* Status: pending — warm amber */
-  --status-pending-bg: #fbf0d6;
+  /* Status: pending — warm amber. `-bg` deepened from the original #fbf0d6
+   * (vision-judge, S3 populated dashboard: pending/cancelled seats read as
+   * near-identical pale pastels at HallMap's actual 28px size) — #f6e4b4
+   * still clears WCAG AA against `-fg` (5.21:1) with real margin. */
+  --status-pending-bg: #f6e4b4;
   --status-pending-fg: #7a5710;
   --status-pending-solid: #c98a1c;
 
@@ -56,8 +65,11 @@
   --status-declined-fg: #8a3f47;
   --status-declined-solid: #b15862;
 
-  /* Status: cancelled — quiet slate */
-  --status-cancelled-bg: #eae8e2;
+  /* Status: cancelled — quiet slate. `-bg` deepened + shifted cooler from
+   * the original #eae8e2 for the same reason as `-pending-bg` above (it read
+   * as near-identical to pending's pale amber at seat size) — #dcd8ce keeps
+   * WCAG AA against `-fg` (5.10:1). */
+  --status-cancelled-bg: #dcd8ce;
   --status-cancelled-fg: #55584f;
   --status-cancelled-solid: #85887d;
 
@@ -72,7 +84,11 @@
 
   --text: #edf1ee;
   --text-secondary: #b7bfb9;
-  --text-muted: #838a84;
+  /* Lightened from the original #838a84 for the same reason as the light
+   * theme's `--text-muted` above — #909891 clears WCAG AA against every dark
+   * surface (`--bg` 6.03:1, `--surface` 5.55:1, `--surface-raised` 5.11:1,
+   * `--surface-hover` 4.66:1 — again the tightest). */
+  --text-muted: #909891;
   --text-on-brand: #09140f;
 
   --brand: #4fd1a5;
@@ -83,7 +99,9 @@
   --border: #2a3130;
   --border-strong: #3c4543;
 
-  --status-pending-bg: #3a2c10;
+  /* `-bg` deepened for the same seat-distinguishability reason as light's
+   * `-pending-bg` above (7.59:1 against `-fg`, still comfortably AA). */
+  --status-pending-bg: #463410;
   --status-pending-fg: #f5c869;
   --status-pending-solid: #e0a83a;
 
@@ -95,7 +113,9 @@
   --status-declined-fg: #f0a8ae;
   --status-declined-solid: #d97883;
 
-  --status-cancelled-bg: #292d2d;
+  /* `-bg` deepened + shifted cooler for the same reason as light's
+   * `-cancelled-bg` above (7.26:1 against `-fg`, still comfortably AA). */
+  --status-cancelled-bg: #313534;
   --status-cancelled-fg: #c3c7c1;
   --status-cancelled-solid: #8f948b;
 }

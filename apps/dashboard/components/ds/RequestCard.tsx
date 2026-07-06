@@ -71,7 +71,11 @@ export function RequestCard({ fields, brief = null, status, requestId, showDecis
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
             Нотатки до першого заняття
           </span>
-          <BoundedText text={brief} maxHeightPx={160} />
+          {/* This block sits directly on the (raised) Card's own
+           *  `bg-surface-raised`, not the page's base `--surface` or
+           *  LessonBrief's `--surface-hover` — the "more below" fade must
+           *  blend into THAT color. */}
+          <BoundedText text={brief} maxHeightPx={160} fadeSurfaceVar="--surface-raised" />
         </div>
       ) : null}
 

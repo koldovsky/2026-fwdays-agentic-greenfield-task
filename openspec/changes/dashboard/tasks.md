@@ -258,34 +258,34 @@
 
 ## 7. E2E, accessibility, and demo-proof recording
 
-- [ ] 7.1 Start the dashboard (`npm run dev` in `apps/dashboard`, bound to
+- [x] 7.1 Start the dashboard (`npm run dev` in `apps/dashboard`, bound to
       `127.0.0.1:3000` per 1.5) against a seeded SQLite fixture (empty DB for
       the empty-state pass; a DB seeded with an active conversation + a
       `pending` request + a mixed-status week of bookings for the populated
       pass).
-- [ ] 7.2 chrome-devtools MCP (TC-TEST-03): navigate to
+- [x] 7.2 chrome-devtools MCP (TC-TEST-03): navigate to
       `http://127.0.0.1:3000`, capture the empty-state still (no
       conversations, zero-count queue, all-free HallMap) and the
       populated-state still (queue entry with `DecisionBar`, at least one
       seat of each status color, a rendered `ChatStream` message). Assert in
       the recording script that the flow's own DOM assertions passed before
       counting the clip as evidence (`check:recordings`' "asserted" field).
-- [ ] 7.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
+- [x] 7.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
       populated-state route; fix any serious/critical violation before
       proceeding — pay particular attention to status-badge contrast in dark
       mode (DESIGN.md's explicit AA-in-both-themes claim).
-- [ ] 7.4 Launch a fresh `vision-judge` pass (maker ≠ checker — never the
+- [x] 7.4 Launch a fresh `vision-judge` pass (maker ≠ checker — never the
       agent that built the UI) on the settled populated-state still, judging
       whether it visibly demonstrates FR-DASH-01 (a real streamed message,
       real request-card fields, a real pending queue entry) and FR-DASH-03
       (five weekday rows, seat colors matching each status). Record `met`/
       `readable`/`notes` in the recording manifest; a `not met`/`not
       readable` verdict blocks this task until fixed and re-recorded.
-- [ ] 7.5 Write the recording manifest (`docs/qa/dashboard/manifest.json`,
+- [x] 7.5 Write the recording manifest (`docs/qa/dashboard/manifest.json`,
       `scripts/record-demos.mjs`'s contract) citing `FR-DASH-01` and
       `FR-DASH-03`, with the empty-state and populated-state clips/stills and
       the vision verdict from 7.4 attached.
-- [ ] 7.6 Run `node scripts/check-recordings.mjs`; confirm the manifest's
+- [x] 7.6 Run `node scripts/check-recordings.mjs`; confirm the manifest's
       claims are backed by real files on disk.
 
 ## 8. Validation, review gate, and archive prep

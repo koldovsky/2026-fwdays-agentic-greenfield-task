@@ -26,11 +26,22 @@ export interface HallMapProps {
 const WEEKDAY_LABELS: Record<number, string> = { 1: "Пн", 2: "Вт", 3: "Ср", 4: "Чт", 5: "Пт" };
 const WEEKDAYS = [1, 2, 3, 4, 5];
 
+// Status is never carried by hue alone (WCAG 1.4.1 "use of color"): each
+// non-free seat also gets its own border STYLE/weight (solid/double/dashed)
+// and its own text treatment (bold/line-through), on top of the `-bg` tint,
+// so pending/confirmed/cancelled stay told apart for color-vision-deficient
+// and low-vision users too, not just by amber/green/slate hue. Free seats
+// keep the quiet neutral `--border` outline. Border color reads `-fg` (not
+// `-solid`) — `-fg` is the higher-contrast token against its own `-bg` tint
+// in both themes, so the border stays clearly visible, not just tinted.
 const SEAT_STATUS_CLASSES: Record<HallMapSeat["status"], string> = {
   free: "border border-border bg-surface hover:bg-surface-hover",
-  pending: "border border-transparent bg-status-pending text-[color:var(--status-pending-fg)]",
-  confirmed: "border border-transparent bg-status-confirmed text-[color:var(--status-confirmed-fg)]",
-  cancelled: "border border-transparent bg-status-cancelled text-[color:var(--status-cancelled-fg)]",
+  pending:
+    "border-2 border-solid border-[color:var(--status-pending-fg)] bg-status-pending text-[color:var(--status-pending-fg)] font-semibold",
+  confirmed:
+    "border-4 border-double border-[color:var(--status-confirmed-fg)] bg-status-confirmed text-[color:var(--status-confirmed-fg)] font-semibold",
+  cancelled:
+    "border border-dashed border-[color:var(--status-cancelled-fg)] bg-status-cancelled text-[color:var(--status-cancelled-fg)] line-through decoration-2",
 };
 
 const STATUS_LABELS: Record<HallMapSeat["status"], string> = {
@@ -63,12 +74,14 @@ export function HallMap({ seats, pendingQueue }: HallMapProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div role="table" aria-label="Розклад залу на тиждень" className="flex flex-col gap-1.5">
+      <div role="grid" aria-label="Розклад залу на тиждень" className="flex flex-col gap-1.5">
         {WEEKDAYS.map((weekday) => {
           const rowSeats = seats.filter((seat) => seat.weekday === weekday);
           return (
             <div role="row" key={weekday} className="flex items-center gap-1.5">
-              <span className="w-7 shrink-0 font-mono text-xs text-text-secondary">{WEEKDAY_LABELS[weekday]}</span>
+              <span role="rowheader" className="w-7 shrink-0 font-mono text-xs text-text-secondary">
+                {WEEKDAY_LABELS[weekday]}
+              </span>
               {rowSeats.map((seat) => {
                 const entry = entryForSeat(pendingQueue, seat);
                 const label = `${WEEKDAY_LABELS[weekday]} ${String(seat.hour).padStart(2, "0")}:00 — ${STATUS_LABELS[seat.status]}${entry?.studentName ? `, ${entry.studentName}` : ""}`;
@@ -76,6 +89,7 @@ export function HallMap({ seats, pendingQueue }: HallMapProps) {
                   <button
                     key={`${seat.weekday}-${seat.hour}`}
                     type="button"
+                    role="gridcell"
                     data-testid="hall-seat"
                     data-status={seat.status}
                     data-seat-key={`${seat.weekday}-${seat.hour}`}

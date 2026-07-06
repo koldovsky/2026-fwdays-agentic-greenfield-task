@@ -101,6 +101,30 @@ body {
   animation: chat-typing-shimmer 1.1s ease-in-out infinite;
 }
 
+/* `BoundedText`'s scrollable region (vision-judge readability fix, S3
+ * re-verify): a mouse-only, hover-revealed OS "overlay" scrollbar makes a
+ * clipped last line at rest read as broken rather than scrollable. Force a
+ * persistent, always-visible thin scrollbar in both engines instead —
+ * combined with `BoundedText`'s own bottom fade/"ще ↓" cue when content
+ * truly overflows. */
+.bounded-text-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.bounded-text-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bounded-text-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bounded-text-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 9999px;
+}
+
 /* No animation ever blocks interaction; calm motion collapses entirely
  * under reduced-motion (the token-level collapse in motion.css already
  * zeroes durations — this belt-and-suspenders rule also kills any

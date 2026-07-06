@@ -20,7 +20,10 @@ function BriefField({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex flex-col gap-1 min-w-0">
       <span className="text-[11px] font-medium uppercase tracking-wide text-text-muted">{label}</span>
-      <BoundedText text={value} />
+      {/* This field sits inside LessonBrief's own `bg-surface-hover` wrapper
+       *  below, not the page's base `--surface` — the "more below" fade must
+       *  blend into THAT color, or it reads as a mismatched seam. */}
+      <BoundedText text={value} fadeSurfaceVar="--surface-hover" />
     </div>
   );
 }
