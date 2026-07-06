@@ -38,6 +38,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { openDatabase, insertLead, insertRequest, updateRequestState } from "@kamerton/db";
 import { FakeCalendarPort } from "@kamerton/lib/src/slots/fake-calendar.ts";
+import { CalendarApiError } from "@kamerton/lib/src/slots/calendar-port.ts";
 import { setCalendarPortForTesting } from "../../../../lib/calendar-port.ts";
 import { DELETE } from "./route.ts";
 
@@ -188,6 +189,95 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     const verifyDb = openDatabase(dbPath);
     const stillThere = verifyDb.prepare(`SELECT * FROM leads WHERE id = ?`).get(lead.id);
     expect(stillThere).toBeDefined();
+    verifyDb.close();
+  });
+
+  // -------------------------------------------------------------------
+  // F.3 carryover — idempotent delete (booking-hitl design.md Decision 6,
+  // item 2; @trace NFR-REL-01)
+  // -------------------------------------------------------------------
+  // Quoting `openspec/changes/archive/2026-07-06-dashboard/
+  // review-findings.json`'s `deferredWithOwner` finding verbatim: "Delete-
+  // lead is not idempotent across >1 pending booking: if one calendar
+  // event delete succeeds and a later one fails, the route bails before
+  // the DB delete, and a retry re-attempts the already-deleted event
+  // (GoogleCalendarPort.deleteEvent does not treat 404/410 as success), so
+  // the lead can never be deleted" (owner: S4 booking-hitl).
+  //
+  // `lib/src/slots/hold.ts`'s `releaseHold` was fixed for exactly this
+  // (booking-hitl tasks.md A.13/A.14): it now catches a `CalendarApiError`
+  // whose `status` is 404/410 and treats it as an already-satisfied delete.
+  // This case pins the OBSERVABLE BEHAVIOR at THIS call site (a 404 on
+  // delete must not abort the lead delete) — it does not assert HOW the
+  // route gets there, so it is agnostic to whether the green implementation
+  // routes through `releaseHold` (recommended — "one fix, one call site,
+  // every caller benefits") or re-implements the same 404/410 catch inline.
+  //
+  // FAILS TODAY (red, for the right reason): the route currently calls
+  // `calendar.deleteEvent(row.calendar_event_id)` directly inside a bare
+  // `try { ... } catch { return 502 }` block with no 404/410 special-casing
+  // at all — so a 404 here surfaces as the SAME 502 "calendar delete
+  // failed" response a genuine outage would, and `deleteLeadCascade` is
+  // never reached (the lead's rows are never deleted).
+  it("F.3 regression pin: DELETE completes successfully (200, rows gone) even when deleteEvent rejects with a 404 CalendarApiError for one of two pending bookings' tentative events", async () => {
+    class AlreadyDeletedCalendar extends FakeCalendarPort {
+      override async deleteEvent(eventId: string): Promise<void> {
+        if (eventId === "already-gone-evt") {
+          throw new CalendarApiError("already gone", { status: 404 });
+        }
+        return super.deleteEvent(eventId);
+      }
+    }
+
+    const db = openDatabase(dbPath);
+    const calendar = new AlreadyDeletedCalendar();
+    setCalendarPortForTesting(calendar);
+    const { eventId: liveEventId } = await calendar.createTentative(
+      { start: "2026-07-10T07:00:00Z", end: "2026-07-10T08:00:00Z" },
+      "itest hold — live",
+    );
+    // The second pending booking's tentative event was already deleted on
+    // the calendar side (e.g. a previous partial retry) — the calendar
+    // reports 404 for it, but no `bookings` row was ever cleaned up, which
+    // is exactly the "retry re-attempts the already-deleted event" scenario
+    // the finding names.
+    const alreadyGoneEventId = "already-gone-evt";
+
+    const lead = insertLead(db, {
+      telegramUserId: "tg-user-f3",
+      telegramChatId: "tg-chat-f3",
+      telegramDisplayName: "Лід з двома заявками",
+    });
+    const requestOne = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-f3" });
+    updateRequestState(db, requestOne.id, "awaiting_admin");
+    db.prepare(
+      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id, request_id)
+       VALUES (?, ?, 'pending', ?, ?)`,
+    ).run("2026-07-10T10:00:00+03:00", "2026-07-10T11:00:00+03:00", liveEventId, requestOne.id);
+
+    const requestTwo = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-f3" });
+    updateRequestState(db, requestTwo.id, "awaiting_admin");
+    db.prepare(
+      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id, request_id)
+       VALUES (?, ?, 'pending', ?, ?)`,
+    ).run("2026-07-10T12:00:00+03:00", "2026-07-10T13:00:00+03:00", alreadyGoneEventId, requestTwo.id);
+    db.close();
+
+    const response = await DELETE(new Request(leadsUrl(lead.id), { method: "DELETE" }), paramsFor(lead.id));
+
+    // A 404 on an already-gone tentative event is NOT a failure — the
+    // delete still completes (never the 502 a genuine calendar outage
+    // would produce).
+    expect(response.status).toBe(200);
+    expect(response.status).not.toBe(502);
+
+    const verifyDb = openDatabase(dbPath);
+    const remaining = verifyDb.prepare(`SELECT * FROM leads WHERE id = ?`).get(lead.id);
+    expect(remaining).toBeUndefined();
+    const remainingBookings = verifyDb
+      .prepare(`SELECT * FROM bookings WHERE request_id IN (?, ?)`)
+      .all(requestOne.id, requestTwo.id);
+    expect(remainingBookings).toHaveLength(0);
     verifyDb.close();
   });
 });

@@ -115,4 +115,99 @@ describe("buildStateSnapshot (apps/dashboard/lib/dashboard-state.ts, dashboard t
     expect(state.hallMap.length).toBeGreaterThan(0); // the grid itself is always present
     expect(state.hallMap.every((seat) => seat.status === "free")).toBe(true);
   });
+
+  // -------------------------------------------------------------------
+  // F.4 carryover cross-check (booking-hitl tasks.md §F.4, design.md
+  // Decision 6 item 4) — "dashboard-state.dateAndHourOf slices slot_start
+  // assuming a Europe/Kyiv wall-clock offset... a UTC/Z-formatted
+  // slot_start... would mis-bucket HallMap seats by the Kyiv offset with no
+  // error" (`review-findings.json`'s `deferredWithOwner`, owner: S4
+  // booking-hitl).
+  //
+  // `HoldStorePort.holdSlot` (design.md Decision 2) is the FIRST live code
+  // that ever writes `bookings.slot_start`/`slot_end`, and it writes the
+  // `OfferedSlot`'s own Kyiv wall-clock `start`/`end` strings VERBATIM
+  // (`lib/src/slots/grid.ts`'s `Slot` shape — fixed-width
+  // "YYYY-MM-DDTHH:mm", no offset, no "Z"; pinned at the write boundary by
+  // `packages/db/src/bookings.test.ts`'s own B.5 assertion). This case
+  // closes the loop from write to render: feeding that EXACT wall-clock
+  // shape into `buildStateSnapshot` must bucket the seat at the WRITTEN
+  // hour (17), never at some UTC-converted hour.
+  //
+  // This is a REGRESSION PIN, not a new red assertion — per booking-hitl
+  // tasks.md's own F.4 wording ("No new production code expected here if
+  // B/C are already green — this task is the cross-check"), it is expected
+  // to be GREEN ON ARRIVAL: `dateAndHourOf` already reads `slot_start` by
+  // literal character-slicing (`isoLike.slice(0, 10)` / `.slice(11, 13)`),
+  // never through a timezone-aware `Date` parse, so it already buckets a
+  // bare "YYYY-MM-DDTHH:mm" Kyiv wall-clock string correctly. The second
+  // assertion below demonstrates WHY the write contract matters: a
+  // same-real-world-instant value written with a "Z"/UTC suffix instead
+  // (as a regressed write path might do) buckets into a DIFFERENT seat,
+  // because the literal-slice contract has no timezone awareness at all —
+  // it trusts the writer completely. A future regression that starts
+  // writing UTC would fail this test loudly (a seat landing in the wrong
+  // hour) rather than silently mis-bucketing in production.
+  it("F.4: a Kyiv-wall-clock slot_start ('2026-07-14T17:00', HoldStorePort's write shape) buckets the seat at hour 17, never at a UTC-shifted hour", () => {
+    // 2026-07-14 is a Tuesday (ISO weekday 2); "2026-07-13" is that week's
+    // Monday.
+    const TUESDAY_WEEK_START = "2026-07-13";
+
+    const state = buildStateSnapshot(
+      {
+        leads: [lead()],
+        requests: [request({ id: 1, state: "awaiting_admin" })],
+        bookings: [
+          booking({
+            id: 1,
+            request_id: 1,
+            status: "pending",
+            slot_start: "2026-07-14T17:00",
+            slot_end: "2026-07-14T18:00",
+          }),
+        ],
+      },
+      TUESDAY_WEEK_START,
+    );
+
+    const seatAtWrittenHour = state.hallMap.find((s) => s.weekday === 2 && s.hour === 17);
+    expect(seatAtWrittenHour).toBeDefined();
+    expect(seatAtWrittenHour!.status).not.toBe("free");
+  });
+
+  it("F.4 cross-check: the SAME real-world instant written with a UTC 'Z' suffix instead buckets into a DIFFERENT seat — proves the literal-slice contract has no timezone awareness and depends entirely on the Kyiv-wall-clock write contract holding", () => {
+    const TUESDAY_WEEK_START = "2026-07-13";
+
+    // "2026-07-14T14:00:00.000Z" is the SAME real-world instant as Kyiv
+    // wall-clock "2026-07-14T17:00" (Europe/Kyiv is UTC+3 in July, DST) —
+    // but if a regression ever wrote it in this UTC/Z form instead of the
+    // Kyiv-local form B.5 pins, `dateAndHourOf`'s literal slice would read
+    // hour 14, not 17.
+    const state = buildStateSnapshot(
+      {
+        leads: [lead()],
+        requests: [request({ id: 1, state: "awaiting_admin" })],
+        bookings: [
+          booking({
+            id: 1,
+            request_id: 1,
+            status: "pending",
+            slot_start: "2026-07-14T14:00:00.000Z",
+            slot_end: "2026-07-14T15:00:00.000Z",
+          }),
+        ],
+      },
+      TUESDAY_WEEK_START,
+    );
+
+    const seatAtIntendedKyivHour = state.hallMap.find((s) => s.weekday === 2 && s.hour === 17);
+    const seatAtLiteralSlicedHour = state.hallMap.find((s) => s.weekday === 2 && s.hour === 14);
+    expect(seatAtIntendedKyivHour).toBeDefined();
+    expect(seatAtLiteralSlicedHour).toBeDefined();
+
+    // Mis-bucketed: the "Z"-suffixed write lands on hour 14's seat, not
+    // hour 17's — exactly the silent mis-bucketing the finding warns about.
+    expect(seatAtLiteralSlicedHour!.status).not.toBe("free");
+    expect(seatAtIntendedKyivHour!.status).toBe("free");
+  });
 });
