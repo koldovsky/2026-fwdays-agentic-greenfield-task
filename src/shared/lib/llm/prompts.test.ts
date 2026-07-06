@@ -2,16 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   COVER_LETTER_SYSTEM_PROMPT,
+  COVER_LETTER_VERIFICATION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
   buildCoverLetterPrompt,
+  buildCoverLetterVerificationPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
   buildSeniorityPrompt,
 } from "./index";
 import type {
   ConfirmedAnswerEvidence,
+  CoverLetterVerificationInput,
   DocumentAttachment,
   GeneratedBullet,
   GenerationInput,
@@ -377,5 +380,195 @@ describe("confirmedAnswers evidence lane (BC-HONESTY-03)", () => {
     expect(explicitUndefined).toEqual(noField);
     expect(explicitEmpty).toEqual(noField);
     expect(textOf(noField.messages)).not.toContain("Підтверджені відповіді");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T5 §3.2 — buildCoverLetterVerificationPrompt
+// The second, isolated pass that verifies the finished prose. Receives ONLY
+// paragraphs + cvSentences + confirmedAnswers — never requirements, JD, or
+// careerStage (BC-HONESTY-01/03).
+// ---------------------------------------------------------------------------
+
+describe("buildCoverLetterVerificationPrompt (T5 §3.2, BC-HONESTY-01/03, NFR-I18N-01)", () => {
+  const paragraphs = [
+    "Я побудував платіжну систему на React за два квартали.",
+    "Координував роботу трьох бекенд-розробників.",
+  ];
+
+  const verInput: CoverLetterVerificationInput = {
+    paragraphs,
+    cvSentences: cv.sentences,
+  };
+
+  it("has a system message then a user message", () => {
+    const prompt = buildCoverLetterVerificationPrompt(verInput);
+    expect(prompt.messages.map((m) => m.role)).toEqual(["system", "user"]);
+  });
+
+  it("user message contains the paragraphs under verification", () => {
+    const all = textOf(buildCoverLetterVerificationPrompt(verInput).messages);
+    for (const p of paragraphs) {
+      expect(all).toContain(p);
+    }
+  });
+
+  it("user message contains the CV sentences (the only evidence source)", () => {
+    const all = textOf(buildCoverLetterVerificationPrompt(verInput).messages);
+    for (const s of cv.sentences) {
+      expect(all).toContain(s);
+    }
+  });
+
+  it("DOES NOT contain requirements text (isolation — BC-HONESTY-01/03)", () => {
+    const all = textOf(buildCoverLetterVerificationPrompt(verInput).messages);
+    for (const r of requirements) {
+      expect(all).not.toContain(r.text);
+    }
+  });
+
+  it("DOES NOT contain a careerStage/tone block (isolation — BC-HONESTY-03)", () => {
+    // The verification builder has no careerStage input at all.
+    // Assert none of the stage labels or the tone-block header appear.
+    const all = textOf(buildCoverLetterVerificationPrompt(verInput).messages);
+    expect(all).not.toContain("Рівень кандидата");
+    expect(all).not.toContain("джуніор");
+    expect(all).not.toContain("мідл");
+    expect(all).not.toContain("сеньйор");
+  });
+
+  it("system prompt enforces no-fabrication in Ukrainian (COVER_LETTER_VERIFICATION_SYSTEM_PROMPT)", () => {
+    const CYRILLIC = /[Ѐ-ӿ]/;
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT).toMatch(CYRILLIC);
+    // Strictly instructs the verifier: any unverifiable claim → not supported.
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT.toLowerCase()).toContain("підтвердж");
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT).toContain("unsupportedClaims");
+  });
+
+  it("absent confirmedAnswers is byte-identical to the bare input (baseline stable)", () => {
+    const bare = buildCoverLetterVerificationPrompt(verInput);
+    const explicit = buildCoverLetterVerificationPrompt({
+      ...verInput,
+      confirmedAnswers: undefined,
+    });
+    const explicitEmpty = buildCoverLetterVerificationPrompt({
+      ...verInput,
+      confirmedAnswers: [],
+    });
+    expect(explicit).toEqual(bare);
+    expect(explicitEmpty).toEqual(bare);
+    const text = textOf(bare.messages);
+    expect(text).not.toContain("Підтверджені відповіді");
+  });
+
+  it("includes confirmedAnswers in a separate labeled block (BC-HONESTY-03)", () => {
+    const confirmedAnswers: readonly ConfirmedAnswerEvidence[] = [
+      {
+        question: "UNIQUE_VERIF_QUESTION_MARKER",
+        answer: "UNIQUE_VERIF_ANSWER_MARKER",
+      },
+    ];
+    const withAnswers = buildCoverLetterVerificationPrompt({ ...verInput, confirmedAnswers });
+    const text = textOf(withAnswers.messages);
+
+    expect(text).toContain("## Підтверджені відповіді кандидата");
+    expect(text).toContain("UNIQUE_VERIF_QUESTION_MARKER");
+    expect(text).toContain("UNIQUE_VERIF_ANSWER_MARKER");
+
+    // The answers block must come AFTER the CV sentences block.
+    const cvIdx = text.indexOf("## Речення з резюме кандидата");
+    const answersIdx = text.indexOf("## Підтверджені відповіді кандидата");
+    expect(cvIdx).toBeGreaterThanOrEqual(0);
+    expect(answersIdx).toBeGreaterThan(cvIdx);
+
+    // The CV sentences section must NOT contain the answer (separate lanes).
+    const cvSection = text.slice(cvIdx, answersIdx);
+    expect(cvSection).not.toContain("UNIQUE_VERIF_ANSWER_MARKER");
+  });
+
+  it("handles empty paragraphs and sentences without throwing", () => {
+    const p = buildCoverLetterVerificationPrompt({ paragraphs: [], cvSentences: [] });
+    const text = textOf(p.messages);
+    expect(text).toContain("(речень немає)");
+    expect(text).toContain("(абзаців немає)");
+  });
+
+  it("is pure — same input yields identical output (TC-PURE-01)", () => {
+    expect(buildCoverLetterVerificationPrompt(verInput)).toEqual(
+      buildCoverLetterVerificationPrompt(verInput),
+    );
+  });
+});
+
+describe("grounding isolation: verification prompt vs generation prompt (T5 §3.2, BC-HONESTY-01)", () => {
+  it("buildCoverLetterVerificationPrompt is byte-stable across two calls with the same input", () => {
+    const verInput: CoverLetterVerificationInput = {
+      paragraphs: ["Пункт один.", "Пункт два."],
+      cvSentences: cv.sentences,
+    };
+    expect(buildCoverLetterVerificationPrompt(verInput)).toEqual(
+      buildCoverLetterVerificationPrompt(verInput),
+    );
+  });
+
+  it("verification prompt shares NO content with the generation prompt (unique JD marker absent)", () => {
+    // UNIQUE_JD_MARKER appears in the generation prompt (via genInput) but
+    // must never leak into the verification prompt (it has no JD input).
+    const verInput: CoverLetterVerificationInput = {
+      paragraphs: ["Абзац."],
+      cvSentences: cv.sentences,
+    };
+    const genText = textOf(buildCoverLetterPrompt({
+      requirements,
+      cvSentences: cv.sentences,
+      // The generation system prompt itself is different; just confirm the
+      // generation user msg contains requirement text that verification does not.
+    }).messages);
+    const verText = textOf(buildCoverLetterVerificationPrompt(verInput).messages);
+
+    // Requirements text in generation, not in verification.
+    for (const r of requirements) {
+      expect(genText).toContain(r.text);
+      expect(verText).not.toContain(r.text);
+    }
+  });
+
+  it("buildCoverLetterVerificationPrompt does NOT share a system prompt with buildGroundingPrompt (separate passes)", () => {
+    const groundingSystemPrompt = GROUNDING_SYSTEM_PROMPT;
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT).not.toBe(groundingSystemPrompt);
+    // Both are strict verifiers, but the letter verifier has its own instruction text.
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT).not.toContain("пункт");
+    expect(COVER_LETTER_VERIFICATION_SYSTEM_PROMPT.toLowerCase()).toContain("лист");
+  });
+});
+
+describe("buildCoverLetterPrompt with careerStage (T5 §3.1/3.5, BC-HONESTY-01)", () => {
+  it("includes a tone-only careerStage block when supplied", () => {
+    const text = textOf(
+      buildCoverLetterPrompt({ requirements, cvSentences: cv.sentences, careerStage: "mid" }).messages,
+    );
+    expect(text).toContain("## Рівень кандидата (лише для тону)");
+    expect(text).toContain("мідл");
+    expect(text).toContain("НЕ додавай");
+  });
+
+  it("absent careerStage is byte-identical to no careerStage field in buildCoverLetterPrompt", () => {
+    const base = buildCoverLetterPrompt({ requirements, cvSentences: cv.sentences });
+    const explicit = buildCoverLetterPrompt({
+      requirements,
+      cvSentences: cv.sentences,
+      careerStage: undefined,
+    });
+    expect(explicit).toEqual(base);
+    expect(textOf(base.messages)).not.toContain("Рівень кандидата");
+  });
+
+  it("buildCoverLetterPrompt includes requirements text (emphasis-only input)", () => {
+    const text = textOf(
+      buildCoverLetterPrompt({ requirements, cvSentences: cv.sentences }).messages,
+    );
+    for (const r of requirements) {
+      expect(text).toContain(r.text);
+    }
   });
 });

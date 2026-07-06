@@ -185,3 +185,83 @@ describe("benefit strings — brand audit (task 4.4, BC-BRAND-01)", () => {
     expect(comingSoon.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// T5 §3.5 — cover-letter framing i18n (NFR-I18N-01, BC-BRAND-01)
+// ExportStepper builds CoverLetterContext.framing from
+//   copy.export.coverLetter.{greeting, closing, headline}
+// plus copy.export.footer (only when not paid). These keys must exist in both
+// locales, carry no emoji/!/em-dash (BC-BRAND-01), and be non-empty.
+// ---------------------------------------------------------------------------
+
+describe("export.coverLetter framing keys — ua/en parity (T5 §3.5, NFR-I18N-01)", () => {
+  it("ua and en both have export.coverLetter.greeting", () => {
+    expect(typeof ua.export.coverLetter.greeting).toBe("string");
+    expect(typeof en.export.coverLetter.greeting).toBe("string");
+    expect(ua.export.coverLetter.greeting.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.greeting.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.closing", () => {
+    expect(typeof ua.export.coverLetter.closing).toBe("string");
+    expect(typeof en.export.coverLetter.closing).toBe("string");
+    expect(ua.export.coverLetter.closing.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.closing.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.headline", () => {
+    expect(typeof ua.export.coverLetter.headline).toBe("string");
+    expect(typeof en.export.coverLetter.headline).toBe("string");
+    expect(ua.export.coverLetter.headline.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.headline.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.action (button label)", () => {
+    expect(typeof ua.export.coverLetter.action).toBe("string");
+    expect(typeof en.export.coverLetter.action).toBe("string");
+  });
+
+  it("cover-letter framing strings contain no emoji (BC-BRAND-01)", () => {
+    const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toMatch(EMOJI);
+    }
+  });
+
+  it("cover-letter framing strings contain no exclamation points (BC-BRAND-01)", () => {
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toContain("!");
+    }
+  });
+
+  it("cover-letter framing strings contain no em-dashes (BC-BRAND-01)", () => {
+    const EM_DASH = /—/;
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toMatch(EM_DASH);
+    }
+  });
+});

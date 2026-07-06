@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseCoverLetterResponse,
+  parseCoverLetterVerdict,
   parseGenerationResponse,
   parseGroundingResponse,
   parseSeniorityResponse,
@@ -26,6 +27,94 @@ describe("parseCoverLetterResponse (§4, NFR-OBS-01)", () => {
     expect(parseCoverLetterResponse('{"paragraphs":[]}').ok).toBe(false);
     expect(parseCoverLetterResponse('{"paragraphs":["",""]}').ok).toBe(false);
     expect(parseCoverLetterResponse("garbage").ok).toBe(false);
+  });
+});
+
+describe("parseCoverLetterVerdict (T5 §3.2, BC-HONESTY-01/02, NFR-OBS-01)", () => {
+  it("parses a clean supported=true verdict with an empty unsupportedClaims array", () => {
+    const res = parseCoverLetterVerdict('{"supported":true,"unsupportedClaims":[]}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.supported).toBe(true);
+    expect(res.value.unsupportedClaims).toEqual([]);
+  });
+
+  it("parses a rejected verdict with listed unsupported claims", () => {
+    const res = parseCoverLetterVerdict(
+      '{"supported":false,"unsupportedClaims":["вигаданий факт","Ще один вигаданий факт"]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.supported).toBe(false);
+    expect(res.value.unsupportedClaims).toEqual(["вигаданий факт", "Ще один вигаданий факт"]);
+  });
+
+  it("treats supported=true WITH unsupportedClaims as NOT supported (contradiction, BC-HONESTY-01)", () => {
+    // The model says supported:true but lists an unsupported claim — a
+    // contradiction that must never let an overclaim through. The parser
+    // normalizes `supported` to false.
+    const res = parseCoverLetterVerdict(
+      '{"supported":true,"unsupportedClaims":["вигаданий факт"]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.supported).toBe(false);
+    expect(res.value.unsupportedClaims).toEqual(["вигаданий факт"]);
+  });
+
+  it("tolerates a missing unsupportedClaims field — defaults to empty array", () => {
+    const res = parseCoverLetterVerdict('{"supported":true}');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.supported).toBe(true);
+    expect(res.value.unsupportedClaims).toEqual([]);
+  });
+
+  it("tolerates Markdown fences and surrounding prose (NFR-OBS-01)", () => {
+    const raw =
+      'Перевірка:\n```json\n{"supported":false,"unsupportedClaims":["x"]}\n```\nОбґрунтування нижче.';
+    const res = parseCoverLetterVerdict(raw);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.supported).toBe(false);
+  });
+
+  it("filters empty/whitespace strings from unsupportedClaims", () => {
+    const res = parseCoverLetterVerdict(
+      '{"supported":false,"unsupportedClaims":["  ","","реальна претензія"]}',
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.unsupportedClaims).toEqual(["реальна претензія"]);
+  });
+
+  it("returns a typed error when supported field is absent (never throws)", () => {
+    const res = parseCoverLetterVerdict('{"unsupportedClaims":[]}');
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.length).toBeGreaterThan(0);
+  });
+
+  it("returns a typed error when supported is a non-boolean string (never throws)", () => {
+    const res = parseCoverLetterVerdict('{"supported":"yes","unsupportedClaims":[]}');
+    expect(res.ok).toBe(false);
+  });
+
+  it("returns a typed error on malformed JSON — never throws", () => {
+    const res = parseCoverLetterVerdict("not json at all");
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.length).toBeGreaterThan(0);
+  });
+
+  it("returns a typed error on empty input — never throws", () => {
+    const res = parseCoverLetterVerdict("");
+    expect(res.ok).toBe(false);
+  });
+
+  it("is pure — same input yields identical output (TC-PURE-01)", () => {
+    const input = '{"supported":true,"unsupportedClaims":[]}';
+    expect(parseCoverLetterVerdict(input)).toEqual(parseCoverLetterVerdict(input));
   });
 });
 

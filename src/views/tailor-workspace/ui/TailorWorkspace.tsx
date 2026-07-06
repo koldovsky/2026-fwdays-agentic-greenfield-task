@@ -63,6 +63,10 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
   const [cvText, setCvText] = useState("");
   const [result, setResult] = useState<TailoringRunResult | null>(null);
   const [bullets, setBullets] = useState<Bullet[]>([]);
+  // Confirmed wizard answers retained past generation so the export step can
+  // forward them as a second evidence lane to the grounded cover letter (T5
+  // §3.1, BC-HONESTY-03). Never merged with the CV sentences.
+  const [confirmedAnswers, setConfirmedAnswers] = useState<readonly ConfirmedAnswerEvidence[]>([]);
   const [paywall, setPaywall] = useState<PaywallReason | null>(null);
   // Original CV PDF for the paid multimodal generation pass (T5). Captured at
   // the upload step; the server re-checks entitlement before honoring it.
@@ -100,6 +104,9 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
 
   async function startGenerate(confirmedAnswers: readonly ConfirmedAnswerEvidence[]) {
     if (analysis === null) return;
+    // Retain for the export-time grounded letter (T5 §3.1) — same lane the
+    // generation pass already treats as confirmed evidence (BC-HONESTY-03).
+    setConfirmedAnswers(confirmedAnswers);
     setPhase("generate");
     // A healthy run ends in a terminal `result` or `error`; a stream that closes
     // without one surfaces a calm failure rather than hanging (NFR-OBS-01).
@@ -168,6 +175,7 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
     setAnalysis(null);
     setResult(null);
     setBullets([]);
+    setConfirmedAnswers([]);
     setJdText("");
     setPaywall(null);
     setAttachment(null);
@@ -262,6 +270,16 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
             bullets={bullets}
             paid={paid}
             locale={locale}
+            // Grounded-letter evidence (T5 §3.1): the candidate's own CV
+            // sentences + confirmed answers, plus requirements (emphasis) and
+            // careerStage (tone). The server verifies before it ships; on any
+            // failure it falls back to the deterministic reflow. Never the JD.
+            letterEvidence={{
+              cvSentences: analysis?.cvProfile.sentences ?? [],
+              requirements: analysis?.requirements ?? [],
+              ...(confirmedAnswers.length > 0 ? { confirmedAnswers } : {}),
+              ...(result.careerStage !== undefined ? { careerStage: result.careerStage } : {}),
+            }}
             onPaywall={() => setPaywall("export")}
             onStartOver={startOver}
           />

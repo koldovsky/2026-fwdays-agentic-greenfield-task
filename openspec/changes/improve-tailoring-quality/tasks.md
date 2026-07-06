@@ -35,13 +35,13 @@
 
 ## 3. Grounded LLM cover letter (default paid experience)
 
-- [ ] 3.1 Server generation step for the letter (loop step or dedicated route, paid-gated like `POST /api/export/cover-letter`): promote `buildCoverLetterPrompt` from dead code; inputs = CV sentences + confirmed answers (+ requirements for emphasis, careerStage for tone).
-- [ ] 3.2 Verification pass: separate prompt + parser sharing no context with generation (mirrors the two-pass bullet model); every claim checked against CV sentences + confirmed answers; any unverifiable claim rejects the letter.
-- [ ] 3.3 Fallback wiring in `features/export-cover-letter`: generation/verification failure or rejection ships the deterministic reflow letter with a calm coded surface; unverified prose can never reach the export (NFR-OBS-01).
-- [ ] 3.4 honesty-eval fixtures: the user's approved example letter as the quality fixture; a grounded letter that passes; an overclaiming letter that is rejected; trajectory check that letter keys stay out of bullet grounding (already denylisted, assert it).
-- [ ] 3.5 i18n: letter framing copy ua+en via `shared/lib/i18n`; no emoji, no exclamation points, no em-dashes in generated-copy guards.
-- [ ] 3.6 Verify group 3: lint + build + test green; bullet grounding lane byte-identical with and without letter generation (FR-BULLETS-03 untouched); live letter eval deferred on `ANTHROPIC_API_KEY`.
-- [ ] 3.7 Independent review of group 3 (checker subagent, maker != checker): never-ship-unverified rule, fallback honesty, paywall gating, NFR-PERF-02 placement (letter off the checklist critical path).
+- [x] 3.1 Server generation step for the letter (loop step or dedicated route, paid-gated like `POST /api/export/cover-letter`): promote `buildCoverLetterPrompt` from dead code; inputs = CV sentences + confirmed answers (+ requirements for emphasis, careerStage for tone).
+- [x] 3.2 Verification pass: separate prompt + parser sharing no context with generation (mirrors the two-pass bullet model); every claim checked against CV sentences + confirmed answers; any unverifiable claim rejects the letter.
+- [x] 3.3 Fallback wiring in `features/export-cover-letter`: generation/verification failure or rejection ships the deterministic reflow letter with a calm coded surface; unverified prose can never reach the export (NFR-OBS-01).
+- [x] 3.4 honesty-eval fixtures: the user's approved example letter as the quality fixture; a grounded letter that passes; an overclaiming letter that is rejected; trajectory check that letter keys stay out of bullet grounding (already denylisted, assert it).
+- [x] 3.5 i18n: letter framing copy ua+en via `shared/lib/i18n`; no emoji, no exclamation points, no em-dashes in generated-copy guards.
+- [x] 3.6 Verify group 3: lint + build + test green; bullet grounding lane byte-identical with and without letter generation (FR-BULLETS-03 untouched); live letter eval deferred on `ANTHROPIC_API_KEY`.
+- [x] 3.7 Independent review of group 3 (checker subagent, maker != checker): never-ship-unverified rule, fallback honesty, paywall gating, NFR-PERF-02 placement (letter off the checklist critical path).
 
 ## 4. Structured resume export
 

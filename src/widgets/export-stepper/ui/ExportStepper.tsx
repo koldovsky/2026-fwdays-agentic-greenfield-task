@@ -11,18 +11,44 @@ import { useMemo, useState } from "react";
 
 import type { Bullet } from "@/entities/bullet";
 import { renderPlainText } from "@/entities/export-document";
-import { buildCoverLetterDocument, requestCoverLetter } from "@/features/export-cover-letter";
+import {
+  buildCoverLetterDocument,
+  requestCoverLetter,
+  type CoverLetterContext,
+} from "@/features/export-cover-letter";
 import { buildExportDocument, requestExport, type ExportFormat } from "@/features/export-resume";
+import type { CareerStage, ConfirmedAnswerEvidence, Requirement } from "@/shared/lib/llm";
 import { t, type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 
 /** Download states: the résumé formats plus the cover-letter export (§4). */
 type PendingExport = ExportFormat | "cover-letter";
 
+/**
+ * Grounded-letter evidence forwarded to the server (T5 §3.1/3.3). The candidate's
+ * own CV sentences + confirmed answers plus the requirements (emphasis) and
+ * careerStage (tone). When present, the server attempts a verified two-pass LLM
+ * letter and falls back to the deterministic reflow on any failure — so this
+ * widget never renders unverified prose (BC-HONESTY-01/02). Absent keeps the
+ * pre-T5 deterministic-only behavior.
+ */
+export interface LetterEvidence {
+  readonly cvSentences: readonly string[];
+  readonly confirmedAnswers?: readonly ConfirmedAnswerEvidence[];
+  readonly requirements: readonly Requirement[];
+  readonly careerStage?: CareerStage;
+}
+
 export interface ExportStepperProps {
   readonly bullets: readonly Bullet[];
   /** Server-resolved paid entitlement (FR-PAYWALL-01). */
   readonly paid: boolean;
+  /**
+   * Optional grounded-letter evidence (T5). When supplied, the cover-letter
+   * action requests a server-verified LLM letter; the deterministic reflow is
+   * the fail-honest fallback either way.
+   */
+  readonly letterEvidence?: LetterEvidence;
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
   /** Open the export paywall when a gated action is used without paid access. */
@@ -47,6 +73,7 @@ function downloadBlob(blob: Blob, filename: string): void {
 export function ExportStepper({
   bullets,
   paid,
+  letterEvidence,
   locale = "ua",
   onPaywall,
   onStartOver,
@@ -109,13 +136,41 @@ export function ExportStepper({
     }
   };
 
+  // Grounded-letter context (T5 §3.1/3.3): the candidate's own evidence + the
+  // requirements/tone signals, plus neutral localized framing for the verified
+  // paragraphs. Only present when the view forwarded letter evidence; the server
+  // still falls back to `coverLetterDoc` on any failure, so the deterministic
+  // reflow remains the fail-honest floor (BC-HONESTY-01/02). Framing here omits
+  // `intro` on purpose — the LLM writes its own opening body; greeting/closing
+  // only bracket it.
+  const letterContext = useMemo<CoverLetterContext | undefined>(
+    () =>
+      letterEvidence
+        ? {
+            cvSentences: letterEvidence.cvSentences,
+            requirements: letterEvidence.requirements,
+            ...(letterEvidence.confirmedAnswers
+              ? { confirmedAnswers: letterEvidence.confirmedAnswers }
+              : {}),
+            ...(letterEvidence.careerStage ? { careerStage: letterEvidence.careerStage } : {}),
+            framing: {
+              greeting: copy.export.coverLetter.greeting,
+              closing: copy.export.coverLetter.closing,
+              headline: copy.export.coverLetter.headline,
+              ...(paid ? {} : { footer: copy.export.footer }),
+            },
+          }
+        : undefined,
+    [letterEvidence, paid, copy.export.coverLetter, copy.export.footer],
+  );
+
   const handleCoverLetter = async () => {
     if (!paid) return onPaywall();
     setError(false);
     setCopied(false);
     setPending("cover-letter");
     try {
-      const blob = await requestCoverLetter(coverLetterDoc);
+      const blob = await requestCoverLetter(coverLetterDoc, letterContext);
       onDownload(blob, "vouch-cover-letter.pdf");
     } catch {
       setError(true);

@@ -7,6 +7,24 @@
 
 ## Last action
 
+- **T5 GROUP 3 (grounded LLM cover letter) — DONE + gate green (2026-07-06, ultracode).**
+  Wired the WIP `generateGroundedCoverLetter` (had ZERO callers) into the paid cover-letter export.
+  Integration point = `POST /api/export/cover-letter` (already holds provider + paywall; export-time
+  action so it stays OFF the checklist critical path, NFR-PERF-02). Body carries the deterministic
+  fallback `document` PLUS an optional validated `letter` context (cvSentences, confirmedAnswers,
+  requirements, careerStage, framing). When context present + paid: two-pass verified letter via
+  `resolveLlmProvider()`; on null (gen/parse/verify failure OR any rejected claim OR provider-resolve
+  throw) render the deterministic reflow. Render input is ALWAYS {verified paragraphs + i18n framing}
+  OR {deterministic reflow} — unverified prose can NEVER reach the render (BC-HONESTY-01/02, NFR-OBS-01).
+  Bullet-grounding lane byte-identical, no letter ctx threaded in (FR-BULLETS-03, asserted by
+  `bullet-grounding-isolation.test.ts`). Framing reuses existing `export.coverLetter.*`+`export.footer`
+  (no new i18n keys). Maker(opus)→test-author(sonnet, +74 tests incl. inline honesty-eval fixtures:
+  grounded→accepted, overclaim→rejected)→verifier+checker(opus). Checker ship, 0 blockers; 2 minors
+  FIXED (unused `vi` import; route now element-validates requirements/confirmedAnswers at the trust
+  boundary, defense-in-depth, fail-honest preserved). Gate: lint 0/0 + build + **118 files / 940 tests
+  green.** Implements FR-COVERLETTER-01/02, BC-HONESTY-01/02, FR-BULLETS-03, TC-PURE-01, NFR-OBS-01,
+  NFR-PERF-02. Live letter eval deferred (deterministic proxies green). **Next: T5 Group 2 (flagged
+  coverage judge) → Group 4 (structured resume doc + deferred CvDocument §1.1/1.3) → Group 5 (final).**
 - **T5 Group 1 slice A committed `b5b0c90`; starting Group 3 (LLM cover letter) — `ANTHROPIC_API_KEY`
   now available in `.env` (2026-07-06).** Key unblocks live honesty-eval. Taking Group 3 before Group 2
   (flagged judge, off-by-default = lower impact) because the natural senior cover letter is a direct
