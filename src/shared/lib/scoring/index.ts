@@ -7,4 +7,5 @@ export type {
   CvProfile,
   Requirement,
   RequirementImportance,
+  SeniorityLevel,
 } from "./types";

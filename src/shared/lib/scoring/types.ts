@@ -3,6 +3,14 @@
 
 export type RequirementImportance = "must-have" | "nice-to-have";
 
+// Inferred candidate seniority, used ONLY to relax the claimed-skill rule
+// (improve-tailoring-quality T5): for an experienced candidate a skill listed
+// but not yet backed by prose is treated as coverable, not an overclaim. Junior
+// and unknown seniority keep the strict claimed-only -> overclaim-risk rule.
+// Structurally identical to `CareerStage` in shared/lib/llm; kept local so the
+// pure scorer owns its own vocabulary and stays free of an llm import.
+export type SeniorityLevel = "junior" | "mid" | "senior";
+
 // "info" (blue): not directly met, but plausibly coverable by adjacent CV
 // evidence — a suggestion to surface in a cover letter, not a red "gap".
 export type ChecklistStatus = "met" | "partial" | "info" | "gap" | "overclaim-risk";

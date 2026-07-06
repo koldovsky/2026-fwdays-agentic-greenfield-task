@@ -17,10 +17,11 @@ import type { ClarifyingQuestion } from "../model/types";
 /** Bound on how many questions a wizard run ever asks (FR-WIZARD-02). */
 export const MAX_CLARIFYING_QUESTIONS = 5;
 
-const ELIGIBLE_STATUSES: ReadonlySet<ChecklistStatus> = new Set([
-  "partial",
-  "gap",
-]);
+// Only true gaps earn a clarifying question (FR-WIZARD-02, narrowed by
+// improve-tailoring-quality T5): a `partial` row already has grounded or
+// claimed-covered evidence, so asking about it over-asks. `info`,
+// `overclaim-risk`, and `met` are never eligible.
+const ELIGIBLE_STATUSES: ReadonlySet<ChecklistStatus> = new Set(["gap"]);
 
 /**
  * The only requirement/status data this skill is allowed to see — no
@@ -39,10 +40,6 @@ export interface DeriveClarifyingQuestionsOptions {
   readonly maxQuestions?: number;
 }
 
-function statusRank(status: ChecklistStatus): number {
-  return status === "gap" ? 0 : 1;
-}
-
 function importanceRank(importance: RequirementImportance): number {
   return importance === "must-have" ? 0 : 1;
 }
@@ -59,8 +56,8 @@ function questionText(row: ClarifyingQuestionSourceRow): string {
 
 /**
  * Derive up to `opts.maxQuestions` clarifying questions from checklist rows
- * flagged `partial`/`gap` (FR-WIZARD-02). Pure and deterministic — no LLM, no
- * IO (TC-PURE-01). Eligible rows are prioritized `gap` before `partial`, then
+ * flagged `gap` (FR-WIZARD-02, narrowed by improve-tailoring-quality T5). Pure
+ * and deterministic — no LLM, no IO (TC-PURE-01). Eligible rows are prioritized
  * `must-have` before `nice-to-have`, then original array order as the final
  * tiebreak, so the bound always keeps the highest-value gaps first.
  */
@@ -75,8 +72,6 @@ export function deriveClarifyingQuestions(
     .filter(({ row }) => ELIGIBLE_STATUSES.has(row.status));
 
   eligible.sort((a, b) => {
-    const byStatus = statusRank(a.row.status) - statusRank(b.row.status);
-    if (byStatus !== 0) return byStatus;
     const byImportance =
       importanceRank(a.row.requirement.importance) -
       importanceRank(b.row.requirement.importance);

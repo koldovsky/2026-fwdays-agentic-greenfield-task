@@ -277,7 +277,9 @@ export async function* runAnalysisPhase(
     const scored = await runStep("score", ["requirements", "cvProfile"], undefined, async () => {
       const checklist: TailoringChecklistRow[] = requirements.map((requirement) => ({
         requirement,
-        item: checklistItem(requirement, cvProfile),
+        // Inferred seniority relaxes the claimed-skill rule for mid/senior
+        // candidates (improve-tailoring-quality T5); undefined stays strict.
+        item: checklistItem(requirement, cvProfile, careerStage),
       }));
       return { checklist, matchScore: matchScore(checklist) };
     });

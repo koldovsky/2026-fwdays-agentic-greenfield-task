@@ -7,6 +7,31 @@
 
 ## Last action
 
+- **T5 STARTED — `improve-tailoring-quality` Group 1 slice A DONE + reviewed green (2026-07-06).**
+  verifier PASS; checker fix-first: **1 blocker FIXED** — short aliases were substring-matched so
+  `ts`→"results"/`aws`→"laws"/`ui`→"build" fabricated `met` (score inflation = honesty failure). Fix:
+  alias matching is now WORD-BOUNDARY (`containsToken`), keyword itself still substring (backward-compat);
+  +8 regression tests lock it. Minor rationale-length + em-dash also fixed. Full suite 867/869 (only the
+  2 pre-existing export reds). Committing now.
+  Re-grouped Group 1: shipping the pure, contained honesty fixes FIRST (alias + seniority + derive),
+  deferring CvDocument+tenure (§1.1/1.3) to fold with Group 4 (resume doc, which also needs CvDocument).
+  Slice A (done, lint+build+scoring/derive/build tests green — 5 files / 55 tests, +19):
+  - **§1.2 alias table** in `shared/lib/scoring/checklist.ts` — conservative synonym groups
+    (k8s↔kubernetes, aws↔"amazon web services", node↔nodejs, rest, c#, …; short/overloaded tokens
+    go/r/c/ai deliberately excluded). Keyword coverage is alias-aware by whole-group membership;
+    unrecognized keywords unchanged. Kills false gaps when a CV uses a synonym.
+  - **§1.4/1.5 seniority relaxation** — `checklistItem(req, cv, seniority?)` (new local `SeniorityLevel`
+    in scoring/types, no llm import). Claimed-only skill: mid/senior → "partial" (claimed-covered,
+    honest rationale), junior/undefined → "overclaim-risk" (strict, unchanged). A claimed-only skill
+    NEVER reaches "met" (met needs prose). `build.ts` + `loop.ts` forward `careerStage`. Kills the false
+    overclaim flags for experienced candidates.
+  - **§1.6 derive.ts** — `ELIGIBLE_STATUSES` = `{gap}` only (was partial+gap); stops over-asking.
+  Maker(opus, this thread — overrode the Fable-5 routing since this is the honesty-critical core) →
+  test-author(sonnet, separate ctx) → **checker(opus) + verifier(sonnet) running now.** Isolation note
+  verified in code: checklist status is a coverage-panel/score signal only; bullet grounding
+  (export-exclusion) is a separate pass, untouched (BC-HONESTY-01/02). Implements FR-CHECKLIST-01/03/04,
+  FR-WIZARD-02. **Next after gate: commit slice A, then §2 judge / §3 letter / §4 resume+CvDocument.**
+
 - **T4 `gate-premium-upload-zone` — DONE + committed `1080213` (2026-07-06, ultracode).**
   Split `features/upload-cv/ui/UploadCvDropzone.tsx` into `TextUploadZone.tsx` (free/ungated parse →
   `onExtracted`, FR-CV-01/FR-ONBOARD-01) + `PremiumAttachZone.tsx` (paid-gated original-PDF attach) +
@@ -185,7 +210,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 (impl+tests done, gate in flight) → T5 (next)**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 ✅ (`1080213`) → T5 (Group 1 slice A in flight; §1.1/1.3 + Groups 2-4 remain)**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends

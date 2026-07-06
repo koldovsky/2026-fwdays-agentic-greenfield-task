@@ -9,14 +9,18 @@
 
 ## 1. Heuristic scoring (checklist + wizard, pure path)
 
-- [ ] 1.1 Extend `entities/cv-profile/lib/normalize.ts` with role/date-range parsing into a minimal sectioned `CvDocument` (roles + parsed ranges; en+ua month names, "present"/"дотепер"); pure, never throws, unparseable dates yield zero tenure. +tests (TC-PURE-01).
-- [ ] 1.2 `shared/lib/scoring/checklist.ts`: add the synonym/alias table (pure data, e.g. k8s/kubernetes, js/javascript) and alias-grounded keyword coverage. +tests.
-- [ ] 1.3 Tenure evaluation: detect duration requirements ("3+ years"), sum non-overlapping relevant tenure from `CvDocument`, count the duration keyword as covered when satisfied. +tests including the fail-soft (no dates) case.
-- [ ] 1.4 Thread `careerStage` into `checklistItem(requirement, cvProfile, careerStage?)`: mid/senior skills-list hit = claimed-covered (feeds met/partial); junior and absent/unknown stage keep the strict claimed-only -> `overclaim-risk` rule. Rationales disclose claimed/alias/tenure evidence honestly (FR-CHECKLIST-03, <=100 chars, Ukrainian). +tests for all three stages.
-- [ ] 1.5 `features/run-tailoring/lib/loop.ts`: pass the inferred `careerStage` into the score step (it already exists in scope); score inputs recorded accordingly; grounding-pass context untouched.
-- [ ] 1.6 `entities/clarifying-question/lib/derive.ts`: `ELIGIBLE_STATUSES` = `{gap}` only, must-have-first ordering kept; update tests (partial rows produce no questions) (FR-WIZARD-02 narrowing).
-- [ ] 1.7 Verify group 1: `yarn lint` + `yarn build` + `yarn test` green; determinism + no-inflation tests (uncovered keyword never credited) cited as evidence.
-- [ ] 1.8 Independent review of group 1 (checker subagent, maker != checker): scoring relaxation vs BC-HONESTY-01/02, TC-PURE-01 purity, FSD import rules.
+> Re-grouped: slice A (alias + seniority + derive, §1.2/1.4/1.5/1.6) shipped first
+> as a pure, contained honesty fix. §1.1/1.3 (CvDocument + tenure) deferred to fold
+> with Group 4 (resume export, which also needs the sectioned CvDocument).
+
+- [ ] 1.1 Extend `entities/cv-profile/lib/normalize.ts` with role/date-range parsing into a minimal sectioned `CvDocument` (roles + parsed ranges; en+ua month names, "present"/"дотепер"); pure, never throws, unparseable dates yield zero tenure. +tests (TC-PURE-01). **DEFERRED to Group 4 (shared CvDocument need).**
+- [x] 1.2 `shared/lib/scoring/checklist.ts`: synonym/alias table (pure data: k8s/kubernetes, aws/amazon-web-services, node/nodejs, rest, c#, …; short/overloaded go/r/c/ai excluded) + alias-grounded coverage. **Alias matching is WORD-BOUNDARY (`containsToken`) so a short alias never collides with an unrelated word (checker blocker fixed: ts∤results, aws∤laws, ui∤build).** +8 regression tests.
+- [ ] 1.3 Tenure evaluation for duration requirements. **DEFERRED to Group 4 (needs CvDocument).**
+- [x] 1.4 `checklistItem(requirement, cvProfile, seniority?)`: mid/senior claimed-only skill = claimed-covered → "partial" (never "met" — that needs prose); junior/absent stay strict → "overclaim-risk". Rationale Ukrainian, <=100 chars, no emoji/exclamation/em-dash, names the claimed skill honestly (FR-CHECKLIST-03). +tests for all three stages.
+- [x] 1.5 `features/run-tailoring/lib/loop.ts`: passes the inferred `careerStage` into the score step; grounding-pass context untouched (checker CONFIRMED no export/grounding coupling).
+- [x] 1.6 `entities/clarifying-question/lib/derive.ts`: `ELIGIBLE_STATUSES` = `{gap}` only, must-have-first ordering kept; tests updated (partial rows produce no questions) (FR-WIZARD-02 narrowing).
+- [x] 1.7 Verify slice A: lint + build + full suite green (867/869; the only 2 red are the pre-existing `ExportDataButton` jsdom `Blob.stream` env failures, not this change). Determinism + no-inflation guards cited (verifier PASS).
+- [x] 1.8 Independent review (checker subagent, opus, maker != checker): confirmed relaxation cannot export an overclaiming bullet (status ≠ grounding pass), TC-PURE-01 purity, FSD rules. 1 blocker (alias substring collisions) + 1 minor (rationale length) both FIXED; regression test locks the guard.
 
 ## 2. Flagged LLM coverage judge
 

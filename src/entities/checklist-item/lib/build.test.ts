@@ -61,4 +61,25 @@ describe("buildChecklist", () => {
 
     expect(metMustHave).toBeGreaterThan(metNiceOnly);
   });
+
+  it("forwards seniority to checklistItem: a claimed-only skill is partial with 'senior', overclaim-risk without it (improve-tailoring-quality T5)", () => {
+    const claimedOnlyCv: CvProfile = {
+      skills: ["kubernetes"],
+      sentences: ["No mention of containers in this sentence."],
+    };
+    const reqs: Requirement[] = [
+      {
+        id: "k",
+        text: "Kubernetes",
+        importance: "must-have",
+        keywords: ["kubernetes"],
+      },
+    ];
+
+    const withoutSeniority = buildChecklist(reqs, claimedOnlyCv);
+    expect(withoutSeniority.rows[0]?.item.status).toBe("overclaim-risk");
+
+    const withSenior = buildChecklist(reqs, claimedOnlyCv, "senior");
+    expect(withSenior.rows[0]?.item.status).toBe("partial");
+  });
 });

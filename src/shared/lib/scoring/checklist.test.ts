@@ -121,6 +121,165 @@ describe("checklistItem (FR-CHECKLIST-01/02/03, BC-HONESTY-01)", () => {
   });
 });
 
+describe("checklistItem: alias-aware keyword coverage (improve-tailoring-quality T5)", () => {
+  it("alias in CV prose grounds the keyword: 'k8s' satisfies a 'Kubernetes' requirement (met)", () => {
+    const cv: CvProfile = {
+      skills: ["k8s"],
+      sentences: ["Розгортав сервіси у k8s кластері продакшн"],
+    };
+    const item = checklistItem(req({ keywords: ["Kubernetes"] }), cv);
+    expect(item.status).toBe("met");
+  });
+
+  it("alias grounds one of two keywords in prose → partial, not met", () => {
+    const cv: CvProfile = { skills: [], sentences: ["Writing js code daily"] };
+    const item = checklistItem(req({ keywords: ["javascript", "python"] }), cv);
+    expect(item.status).toBe("partial");
+  });
+
+  it("alias skills-list claim ('aws' for 'Amazon Web Services') is claimed-only, not prose-grounded", () => {
+    const cv: CvProfile = { skills: ["aws"], sentences: [] };
+    const requirement = req({ keywords: ["Amazon Web Services"] });
+    expect(checklistItem(requirement, cv).status).toBe("overclaim-risk");
+    expect(checklistItem(requirement, cv, "mid").status).toBe("partial");
+  });
+
+  it("alias grounding does not credit an unrelated keyword (no inflation, BC-HONESTY-01)", () => {
+    const cv: CvProfile = { skills: ["aws"], sentences: ["Working with AWS Lambda daily"] };
+    const unrelated = checklistItem(req({ keywords: ["docker"] }), cv);
+    expect(unrelated.status).toBe("gap");
+  });
+
+  it("an unrecognized keyword behaves exactly as before (no alias expansion)", () => {
+    const cv: CvProfile = { skills: ["cobol"], sentences: [] };
+    // "cobol" is not in any alias group, so it only ever matches itself.
+    expect(checklistItem(req({ keywords: ["fortran"] }), cv).status).toBe("gap");
+  });
+});
+
+describe("alias boundary matching (no substring collisions, BC-HONESTY-01)", () => {
+  // A short alias must never credit an unrelated word that merely contains it
+  // as a substring. The only relevant text is a colliding word → must be "gap".
+  it("'ts' inside 'results'/'projects' does NOT ground a TypeScript requirement", () => {
+    const cv: CvProfile = {
+      skills: [],
+      sentences: ["Delivered measurable results across projects"],
+    };
+    expect(checklistItem(req({ keywords: ["TypeScript"] }), cv).status).toBe("gap");
+  });
+
+  it("'js' inside 'json' does NOT ground a JavaScript requirement", () => {
+    const cv: CvProfile = {
+      skills: [],
+      sentences: ["Parsed a large json payload"],
+    };
+    expect(checklistItem(req({ keywords: ["JavaScript"] }), cv).status).toBe("gap");
+  });
+
+  it("'ui' inside 'build'/'requirements' does NOT ground a user interface requirement", () => {
+    const cv: CvProfile = {
+      skills: [],
+      sentences: ["We build internal tools and gathered requirements"],
+    };
+    expect(checklistItem(req({ keywords: ["user interface"] }), cv).status).toBe("gap");
+  });
+
+  it("'aws' inside 'laws' does NOT ground an Amazon Web Services requirement", () => {
+    const cv: CvProfile = {
+      skills: [],
+      sentences: ["Aware of local laws"],
+    };
+    expect(checklistItem(req({ keywords: ["Amazon Web Services"] }), cv).status).toBe("gap");
+  });
+
+  // Positive counterparts: a standalone whole-token alias DOES ground/claim.
+  it("standalone 'ts' in prose grounds a TypeScript requirement (met)", () => {
+    const cv: CvProfile = { skills: [], sentences: ["Stack: ts, aws"] };
+    expect(checklistItem(req({ keywords: ["TypeScript"] }), cv).status).toBe("met");
+  });
+
+  it("standalone 'aws' as a claimed skill claims an Amazon Web Services requirement", () => {
+    const cv: CvProfile = { skills: ["ts", "aws"], sentences: ["No cloud prose here"] };
+    expect(checklistItem(req({ keywords: ["Amazon Web Services"] }), cv).status).toBe(
+      "overclaim-risk",
+    );
+  });
+
+  it("standalone 'ui' in prose grounds a user interface requirement (met)", () => {
+    const cv: CvProfile = { skills: [], sentences: ["Built the UI for the dashboard"] };
+    expect(checklistItem(req({ keywords: ["user interface"] }), cv).status).toBe("met");
+  });
+
+  it("standalone 'js' as a claimed skill claims a JavaScript requirement", () => {
+    const cv: CvProfile = { skills: ["js"], sentences: ["No language mentioned in prose"] };
+    expect(checklistItem(req({ keywords: ["JavaScript"] }), cv).status).toBe(
+      "overclaim-risk",
+    );
+  });
+});
+
+describe("checklistItem: seniority relaxation (improve-tailoring-quality T5)", () => {
+  const claimedOnlyReq = req({ keywords: ["kubernetes"] });
+  const claimedOnlyCv: CvProfile = {
+    skills: ["kubernetes"],
+    sentences: ["Немає згадок про контейнеризацію в цьому реченні"],
+  };
+
+  it("claimed-only skill is overclaim-risk when seniority is undefined or junior", () => {
+    expect(checklistItem(claimedOnlyReq, claimedOnlyCv).status).toBe(
+      "overclaim-risk",
+    );
+    expect(checklistItem(claimedOnlyReq, claimedOnlyCv, "junior").status).toBe(
+      "overclaim-risk",
+    );
+  });
+
+  it("claimed-only skill is partial (claimed-covered) for mid and senior", () => {
+    expect(checklistItem(claimedOnlyReq, claimedOnlyCv, "mid").status).toBe(
+      "partial",
+    );
+    expect(checklistItem(claimedOnlyReq, claimedOnlyCv, "senior").status).toBe(
+      "partial",
+    );
+  });
+
+  it("a claimed-only skill never reaches 'met', even for senior (BC-HONESTY-01)", () => {
+    const item = checklistItem(claimedOnlyReq, claimedOnlyCv, "senior");
+    expect(item.status).not.toBe("met");
+    expect(item.status).toBe("partial");
+  });
+
+  it("grounded-in-prose still wins regardless of seniority", () => {
+    const groundedItem = checklistItem(req(), cvWithReactProse, "junior");
+    expect(groundedItem.status).toBe("met");
+  });
+
+  it("claimed-covered rationale is Ukrainian, <=100 chars, no emoji/exclamation, names the skill", () => {
+    const item = checklistItem(claimedOnlyReq, claimedOnlyCv, "senior");
+    expect(item.rationale.length).toBeLessThanOrEqual(100);
+    expect(item.rationale.length).toBeGreaterThan(0);
+    expect(item.rationale).not.toMatch(EMOJI);
+    expect(item.rationale).not.toContain("!");
+    expect(item.rationale).toContain("kubernetes");
+    expect(item.rationale).toMatch(/[а-яіїєА-ЯІЇЄ]/);
+  });
+
+  it("determinism holds for both alias-grounded and seniority-relaxed results", () => {
+    const a = checklistItem(claimedOnlyReq, claimedOnlyCv, "senior");
+    const b = checklistItem(claimedOnlyReq, claimedOnlyCv, "senior");
+    expect(a).toEqual(b);
+
+    const aliasReq = req({ keywords: ["kubernetes"] });
+    const aliasCv: CvProfile = {
+      skills: [],
+      sentences: ["Deployed with k8s in production"],
+    };
+    const c = checklistItem(aliasReq, aliasCv);
+    const d = checklistItem(aliasReq, aliasCv);
+    expect(c).toEqual(d);
+  });
+});
+
 describe("matchScore (FR-CHECKLIST-04)", () => {
   const met = { status: "met" as const, rationale: "" };
 

@@ -23,7 +23,7 @@ describe("deriveClarifyingQuestions", () => {
     expect(deriveClarifyingQuestions(rows)).toEqual([]);
   });
 
-  it("met/overclaim-risk rows never produce a question, even alongside eligible ones", () => {
+  it("met/overclaim-risk/partial rows never produce a question, even alongside an eligible gap (improve-tailoring-quality T5)", () => {
     const rows = [
       row("React", "met"),
       row("Go", "gap"),
@@ -31,11 +31,18 @@ describe("deriveClarifyingQuestions", () => {
       row("TypeScript", "partial"),
     ];
     const questions = deriveClarifyingQuestions(rows);
-    expect(questions).toHaveLength(2);
-    expect(questions.map((q) => q.requirementText)).toEqual([
-      "Go",
-      "TypeScript",
-    ]);
+    expect(questions).toHaveLength(1);
+    expect(questions.map((q) => q.requirementText)).toEqual(["Go"]);
+  });
+
+  it("a partial row alone yields no question; a gap row alone yields one (improve-tailoring-quality T5)", () => {
+    const partialOnly = [row("TypeScript", "partial")];
+    expect(deriveClarifyingQuestions(partialOnly)).toEqual([]);
+
+    const gapOnly = [row("Go", "gap")];
+    const questions = deriveClarifyingQuestions(gapOnly);
+    expect(questions).toHaveLength(1);
+    expect(questions[0]?.requirementText).toBe("Go");
   });
 
   it("bounds to MAX_CLARIFYING_QUESTIONS by default, keeping the highest-priority rows", () => {
