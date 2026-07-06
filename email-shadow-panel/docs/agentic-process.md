@@ -305,3 +305,55 @@ Selected tools for Phases 0 and 1:
 - No separate Phase 3 checker was used.
 - CodeRabbit remains the final broad PR checker.
 - No auto-commit occurred.
+
+### Phase 4 - Deployment readiness and production verification tooling
+
+- Status: implemented offline and awaiting human cloud setup.
+- Actor: maker Codex.
+- Context and specification files used:
+  - `../AGENTS.md`
+  - `AGENTS.md`
+  - `docs/specs/001-mvp-specification.md`
+  - `docs/specs/002-architecture.md`
+  - `docs/adr/001-vercel-http-adapter.md`
+  - `docs/adr/002-anonymous-session-persistence.md`
+  - `docs/adr/003-public-api-abuse-controls.md`
+  - `docs/verification/phase-0.md`
+  - `docs/verification/phase-1.md`
+  - `docs/verification/phase-2.md`
+  - `docs/verification/phase-3.md`
+  - `docs/agentic-process.md`
+  - `.env.example`
+  - `package.json`
+  - `vite.config.ts`
+  - `api/*`
+  - `server/api/*`
+  - `server/session/*`
+  - `scripts/*`
+  - `tests/phase0/*`
+  - `tests/phase1/*`
+  - `tests/phase2/*`
+  - `tests/phase3/*`
+- Principal implementation decisions:
+  - preserved the TanStack Start + Vite deployment path without adding `vercel.json` or a new adapter layer;
+  - documented the Vercel Hobby footprint as five API function entries plus one SSR entry;
+  - created a bounded, opt-in smoke verifier for Preview only;
+  - kept the Phase 0 probe preview-only and production-blocked;
+  - added offline deployment-readiness checks for configuration, docs, and sanitized artifacts.
+- Deterministic checks run by Codex:
+  - `npm run lint`: PASS with the same six pre-existing React Fast Refresh warnings and no errors
+  - `npm run typecheck`: PASS
+  - `npm run test:phase0`: PASS
+  - `npm run test:phase1`: PASS
+  - `npm run test:phase2`: PASS
+  - `npm run test:phase3`: PASS
+  - `npm run test:phase4`: PASS
+  - `npm run test:deterministic`: PASS
+  - `npm run build`: FAIL in the managed Windows sandbox because Vite could not load `@tailwindcss/oxide-win32-x64-msvc` and hit `spawn EPERM` during dependency resolution
+  - `npm run verify:phase4`: FAIL for the same managed-environment build limitation after all offline deterministic checks had already passed
+- Environment-specific limitations:
+  - no Vercel import, Preview deployment, Upstash provisioning, live Emailnator request, or live smoke verification was attempted by Codex;
+  - the managed Windows sandbox still blocks the native Tailwind/Vite build step, so the human should treat that as an environment limitation rather than an implementation regression;
+  - the human still owns cloud setup, deployment, and live-provider checks.
+- Commit behavior:
+  - no automatic commit or push was performed.
