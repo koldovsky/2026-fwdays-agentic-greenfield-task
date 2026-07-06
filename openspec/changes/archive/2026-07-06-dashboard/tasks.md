@@ -1,12 +1,12 @@
 ## 1. Dependencies and database schema
 
-- [ ] 1.1 Confirm `better-sqlite3` row access for `leads`/`requests`/`bookings`
+- [x] 1.1 Confirm `better-sqlite3` row access for `leads`/`requests`/`bookings`
       is already available via `@kamerton/db` (it is, per S1/S2) — this slice
       is **read-only** against the existing schema plus one new write path
       (delete-lead cascade, already a schema fact via `ON DELETE CASCADE` on
       `requests.lead_id`, `packages/db/src/schema.ts`). No new tables, no
       migration task.
-- [ ] 1.2 Add a `deleteLeadCascade(db, leadId)` helper to
+- [x] 1.2 Add a `deleteLeadCascade(db, leadId)` helper to
       `packages/db/src/leads.ts` (mirrors `insertLead`/`findLeadByTelegramUserId`'s
       style): deletes the `leads` row (cascade removes its `requests`/
       `bookings` rows per the schema's `ON DELETE CASCADE`/existing FKs) and
@@ -18,63 +18,63 @@
       assert all rows gone after the call, and the returned pending-booking
       list contains exactly the one seeded `pending` row's event id). Confirm
       red, then implement to green.
-- [ ] 1.3 Confirm/add root `devDependencies`: `@playwright/test` and
+- [x] 1.3 Confirm/add root `devDependencies`: `@playwright/test` and
       `@axe-core/playwright` (both already resolve via `package-lock.json`
       but are not declared in `package.json` — declare them explicitly so
       `npm ci` on a clean checkout installs them, needed by
       `scripts/check-a11y.mjs` and `npm run test:e2e`).
-- [ ] 1.4 Add `apps/dashboard` dependencies DESIGN.md requires that are not
+- [x] 1.4 Add `apps/dashboard` dependencies DESIGN.md requires that are not
       yet installed: `lucide-react` (icons, `Icon` component) and the
       self-hosted Golos Text + JetBrains Mono font files under
       `apps/dashboard/public/fonts/` (or via `next/font/local`) — confirm via
       `ctx7` against the installed Next.js 16 docs for the current
       `next/font/local` API shape before wiring `app/layout.tsx` (AGENTS.md:
       "verify against ctx7 before writing integration code").
-- [ ] 1.5 Confirm `apps/dashboard/package.json`'s `dev`/`start` scripts
+- [x] 1.5 Confirm `apps/dashboard/package.json`'s `dev`/`start` scripts
       already bind to `127.0.0.1` (they do) — add a one-line assertion in the
       E2E setup (section 8) that the server is unreachable on `0.0.0.0`/the
       machine's LAN address, not just reachable on loopback (NFR-LOCAL-01).
 
 ## 2. Domain logic (`lib/src/dashboard/`) — write failing unit tests FIRST (red)
 
-- [ ] 2.1 `lib/src/dashboard/hall-status.test.ts`: `hallSeatStatus([])` is
+- [x] 2.1 `lib/src/dashboard/hall-status.test.ts`: `hallSeatStatus([])` is
       `"free"`; a seat with only a `cancelled` or only a `declined` booking is
       `"cancelled"` (never reverts to free); a seat with both `cancelled` and
       `pending` bookings is `"pending"`; a seat with `pending` and `confirmed`
       is `"confirmed"` — the full precedence table `confirmed` > `pending` >
       `cancelled`/`declined` > free (`@trace FR-DASH-03`). Confirm red.
-- [ ] 2.2 `lib/src/dashboard/week-grid.test.ts`: `weekSeatGrid(weekStartIso)`
+- [x] 2.2 `lib/src/dashboard/week-grid.test.ts`: `weekSeatGrid(weekStartIso)`
       returns exactly 5 rows (Mon–Fri) × 10 seats (10:00 through 19:00
       hourly starts) for a known week; Saturday/Sunday are never present
       regardless of the input `weekStartIso`'s own weekday (`@trace
       FR-DASH-03`, `@trace BC-SCHEDULE-01`). Confirm red.
-- [ ] 2.3 `lib/src/dashboard/json-patch.test.ts`: `applyJsonPatch` correctly
+- [x] 2.3 `lib/src/dashboard/json-patch.test.ts`: `applyJsonPatch` correctly
       applies `add`/`remove`/`replace` at known paths; a `replace`/`add`/
       `remove` targeting a path not present in the state model's known field
       set is discarded (state unchanged for that op, valid ops in the same
       batch still applied); a `test` op that fails discards only that op,
       never throws (`@trace TC-PROTO-01`, baseline spec's "delta patching a
       nonexistent field is discarded" scenario). Confirm red.
-- [ ] 2.4 Run `npm run test:run` and confirm 2.1–2.3 fail (red) before
+- [x] 2.4 Run `npm run test:run` and confirm 2.1–2.3 fail (red) before
       writing any implementation.
 
 ## 3. Domain logic — implement to green
 
-- [ ] 3.1 Implement `lib/src/dashboard/hall-status.ts` (`hallSeatStatus`) to
+- [x] 3.1 Implement `lib/src/dashboard/hall-status.ts` (`hallSeatStatus`) to
       pass 2.1.
-- [ ] 3.2 Implement `lib/src/dashboard/week-grid.ts` (`weekSeatGrid`,
+- [x] 3.2 Implement `lib/src/dashboard/week-grid.ts` (`weekSeatGrid`,
       `SeatCoordinate`) to pass 2.2.
-- [ ] 3.3 Implement `lib/src/dashboard/json-patch.ts` (`applyJsonPatch`,
+- [x] 3.3 Implement `lib/src/dashboard/json-patch.ts` (`applyJsonPatch`,
       `JsonPatchOp`) to pass 2.3 — pure, no dependency on any JSON-Patch
       npm package (TC-PURE-01: keep `lib/` dependency-free where the op set
       is this small: `add`/`remove`/`replace`/`move`/`copy`/`test`).
-- [ ] 3.4 Export the new `dashboard/` modules from `lib/src/index.ts`.
-- [ ] 3.5 Run `npm run test:run` and confirm 2.1–2.3 are now green with no
+- [x] 3.4 Export the new `dashboard/` modules from `lib/src/index.ts`.
+- [x] 3.5 Run `npm run test:run` and confirm 2.1–2.3 are now green with no
       regressions in S1 `slots`/S2 `intake` suites.
 
 ## 4. Publisher seam — `packages/bot` (red → green, protects the archived S2 pipeline)
 
-- [ ] 4.1 Write `packages/bot/src/agui-publisher.ts` tests FIRST
+- [x] 4.1 Write `packages/bot/src/agui-publisher.ts` tests FIRST
       (`agui-publisher.test.ts`): the `AguiEvent` union type (`RUN_STARTED`,
       `RUN_FINISHED`, `RUN_ERROR`, `TEXT_MESSAGE_START/CONTENT/END`,
       `STATE_SNAPSHOT`, `STATE_DELTA`, `CUSTOM` with `name: "BOOKING_PENDING"`
@@ -83,7 +83,7 @@
       coding); `noopAguiPublisher.publish()` resolves without throwing and
       without any side effect (`@trace TC-PROTO-01`). Confirm red, implement
       to green.
-- [ ] 4.2 Write `packages/bot/src/testing/fake-agui-publisher.ts`: a
+- [x] 4.2 Write `packages/bot/src/testing/fake-agui-publisher.ts`: a
       `FakeAguiPublisher` recording every published event in order, for
       pipeline tests.
 - [x] 4.3 Write `packages/bot/src/pipeline.test.ts` additions FIRST (red):
@@ -351,12 +351,12 @@
          dashboard itself keeps serving its last known state without
          crashing (NFR-LOCAL-01's "dashboard is a separate process" holds).
       Confirm `=== 8.11 SMOKE PASSED (all checks) ===` before proceeding.
-- [ ] 8.12 Update `docs/current-state.md` (date/time, Europe/Kyiv; S3
+- [x] 8.12 Update `docs/current-state.md` (date/time, Europe/Kyiv; S3
       COMPLETE+ARCHIVED summary; note the TC-PROTO-01 CopilotKit deviation
       as a flagged-but-not-yet-applied documentation follow-up; next slice =
       S4 `booking-hitl` or S5 `kb-learning`, per the DAG's "fan out in
       parallel" note).
-- [ ] 8.13 Only after 8.1–8.12 all pass: `npx openspec archive dashboard
+- [x] 8.13 Only after 8.1–8.12 all pass: `npx openspec archive dashboard
       --yes`. Gates before archive: all unit/integration/E2E green, lint +
       build clean, openspec 2/2 strict (`dashboard` + `--all`), traceability
       0 failures, a11y 0 serious/critical violations, recordings backed by

@@ -6,30 +6,44 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-06, ~19:40 (Europe/Kyiv)
-- **Current phase:** **Slice S3 `dashboard` CODE-COMPLETE + REVIEW-GATED;
-  archive tail remaining.** OpenSpec change `openspec/changes/dashboard/`
-  (2 human decisions in design.md: Bot→Next ingest→SSE publisher seam;
-  lean AG-UI/SSE client, no CopilotKit). Stages A–D done red→green
-  (lib core + deleteLeadCascade; AG-UI publisher seam on the bot,
-  regression-guarded no-op; ingest/SSE-stream/delete-lead/decision-stub
-  routes; UI tokens+components/ds+SSE-client+page). **332 tests green**,
-  lint + tsc (root + apps/dashboard) clean, dashboard builds, openspec 6/6.
+- **Date and time:** 2026-07-07, ~00:30 (Europe/Kyiv)
+- **Current phase:** **Slice S3 `dashboard` COMPLETE and ARCHIVED — next is
+  S4 `booking-hitl` ∥ S5 `kb-learning` (DAG fan-out).** Archived at
+  `openspec/changes/archive/2026-07-06-dashboard/`. 2 human decisions
+  (design.md): Bot→Next ingest→SSE publisher seam (thin injected publisher on
+  the bot, no-op when unconfigured, regression-guarded so archived S2 is
+  byte-for-byte unchanged); lean AG-UI/SSE client, no CopilotKit (advisory
+  TC-PROTO-01 deviation, flagged to reflect back into requirements). Stages
+  A–D red→green: `lib/src/dashboard` (hallSeatStatus/weekSeatGrid/
+  applyJsonPatch) + `deleteLeadCascade`; AG-UI publisher seam + HttpAgui
+  Publisher; ingest/SSE-stream/delete-lead/decision-stub Next routes + the
+  AG-UI contract relocated to `lib/src/agui` (UI decoupled from the bot);
+  tokens + components/ds + SSE client + page. **333 tests green**, lint + tsc
+  (root + apps/dashboard) clean, dashboard builds, openspec 5/5 strict,
+  traceability 0 failures, trajectory 0 failures.
   **Review-gate ran BEFORE archive** (3 reviewers, maker≠checker; guardrail
-  check PASS): 7 confirmed findings fixed test-first (`00a1fcc` — CRITICAL
-  publisher-hang; conversation-panel snapshot seeding; STATE_DELTA
-  unknown-thread guard; json-patch proto-pollution; ingest/delete input
-  validation; +DashboardApp reconnect/dedup tests), 4 deferred to S4 with
-  owner (all unreachable in S3: no live pending path), in
-  `openspec/changes/dashboard/review-findings.json` (clean:true).
-  **REMAINING before archive (Stage E + F, tasks §7–8):** Playwright stills
-  (empty + populated) + axe light+dark + a fresh vision-judge on the settled
-  populated still + recording manifest; the scripted manual real-DB smoke
-  (`scripts/qa/manual-smoke-dashboard.mjs`, drive pipeline→HttpAguiPublisher
-  →running dashboard SSE, assert receipt + DB); then `npx openspec archive
-  dashboard --yes` + post-archive gates. chrome-devtools MCP is NOT connected
-  this session → use Playwright (browsers cached; declare @playwright/test +
-  @axe-core/playwright per task 1.3). The PR demo video is the user's.
+  check PASS — no confirm-booking/KB-write introduced): 7 confirmed findings
+  fixed test-first (`00a1fcc`; incl. CRITICAL publisher-hang), 4 deferred to
+  S4 with owner (all unreachable in S3: no live pending path), in the
+  archived `review-findings.json` (clean:true).
+  **Rendered-UI gate (Playwright — chrome-devtools MCP not connected):**
+  axe **0 serious/critical light+dark** (3 real violations found+fixed:
+  HallMap ARIA grid, `--text-muted` contrast, BoundedText focus); a fresh
+  **vision-judge** confirmed FR-DASH-01+FR-DASH-03 MET (its 2 readability
+  notes fixed: non-color seat cue solid/double/dashed+strikethrough,
+  WCAG 1.4.1; brief clip). Evidence in `docs/qa/dashboard/` (stills+webm+
+  manifest w/ vision verdict). **Scripted 8.11 smoke PASSED** (28/28,
+  `scripts/qa/manual-smoke-dashboard.mjs`) over the real cross-process
+  HTTP+SSE bridge — surfaced + fixed 2 real bugs: the bot entrypoint wouldn't
+  start under plain `node` (HttpAguiPublisher TS parameter-property vs
+  strip-only execution), and delete-lead 500'd without calendar creds
+  (now lazy calendar-port resolution).
+  **S4 owner-flagged carryovers (from review-findings):** make a newly-created
+  pending request known to the dashboard aggregate (BOOKING_PENDING gate);
+  idempotent calendar-delete across >1 pending booking; refresh
+  `dashboard.hallMap` on live booking-status events (real-time seat flip);
+  write `bookings.slot_start` as a Europe/Kyiv-offset ISO string (HallMap
+  bucketing contract). The PR demo video is the user's to record.
 - **Prior phase (archived):** **Slice S2 `intake` COMPLETE and ARCHIVED.** All 6 task sections done incl. 6.9 real-DB smoke PASSED and
   6.11 archive. 221 unit tests green, lint + build (tsc) clean, openspec 6/6
   strict, traceability 0 failures, trajectory 0 failures (review-findings
@@ -104,16 +118,25 @@
   typing, not weakening); GREEN — domain modules implemented (`5d13658`),
   20/20 pass, tests byte-identical, the compactness tie-break test caught
   a real implementer bug pre-review.
-- **Next task:** **Slice S3 `dashboard`** (Phase 4). Author its OpenSpec
-  change folder (proposal/design/tasks), then test-first red→green:
-  teacher-facing localhost dashboard, AG-UI over SSE (RUN_STARTED/FINISHED,
-  TEXT_MESSAGE_*, STATE_SNAPSHOT/DELTA, custom BOOKING_PENDING → DecisionBar),
-  FR-DASH-01 + FR-DASH-03 (week schedule as concert-hall HallMap per
-  DESIGN.md). Gate the RENDERED UI with axe (`check-a11y`, light+dark) AND a
-  vision pass (`vision-verify`), per the correctness rules. Run the
-  review-gate BEFORE archive (S1/S2 lesson). Model economy: subagent
-  fan-outs on sonnet; session model (Opus/Fable) only for main-loop
-  judgment (user directive).
+- **Next task:** **Slice S4 `booking-hitl` and/or S5 `kb-learning`** — the
+  DAG's final fan-out (both depend on S1–S3, now all archived; S4 and S5 don't
+  depend on each other). **S4** owns the admin decision transitions +
+  DecisionBar POST handlers (the ONLY place `bookings.status → confirmed`,
+  FR-GUARD-01), the real `propose_slots`/`request_hold` wiring to S1's
+  proposeSlots/holdWithRecovery (so a conversation can actually reach
+  `awaiting_admin`/`pending`), calendar sync on Confirm/Decline, and lead
+  notifications — plus the four S3 carryovers flagged in the archived
+  dashboard `review-findings.json` (pending-request-known-to-dashboard;
+  idempotent calendar delete; real-time HallMap seat flip; Kyiv-offset
+  `slot_start`). **S5** owns the Question inbox (FR-KB-*, FR-FAQ-*, FR-GUARD-02/06)
+  on the conversation FAQ path + a dashboard inbox panel. Same discipline:
+  OpenSpec change folder → test-first red→green → review-gate BEFORE archive →
+  rendered-UI gate (axe + vision-verify) for any S5 UI. Model economy:
+  subagent fan-outs on sonnet; session model only for main-loop judgment.
+- **Open before the PR:** eval cases (eval-suite pass, `check-eval-ratchet`);
+  the PR fills `.github/pull_request_template.md` (real name, 1–2 min demo
+  video, human-vs-agent decisions, tools/MCP used); re-run the security
+  checklist after S4/S5 add routes.
 
 ## Source Of Truth
 
@@ -135,8 +158,8 @@ npx openspec validate --all --strict   # expected: 5 passed, 0 failed
 npx openspec list                      # expected: No active changes
 ```
 
-Archived changes: `2026-07-04-slots`, `2026-07-06-intake`
-(under `openspec/changes/archive/`).
+Archived changes: `2026-07-04-slots`, `2026-07-06-intake`,
+`2026-07-06-dashboard` (under `openspec/changes/archive/`).
 
 ## Completed Changes
 
@@ -145,6 +168,12 @@ Archived changes: `2026-07-04-slots`, `2026-07-06-intake`
 - **2026-07-06-intake** (S2) — conversation state machine, validators,
   agent tool-loop, bot pipeline + `ClaudeAgentModelPort`, leads/requests
   schema. Baseline `openspec/specs/intake/spec.md` updated on archive.
+- **2026-07-06-dashboard** (S3) — AG-UI/SSE transport (bot publisher seam →
+  Next ingest → in-memory hub → SSE), lean AG-UI client, live conversation +
+  request card + pending queue + DecisionBar (render-only), concert-hall
+  HallMap, delete-lead cascade, localhost-only. Rendered-UI gated (axe
+  light+dark + vision-judge). Baseline `openspec/specs/dashboard/spec.md`
+  updated on archive.
 
 ## Validation Commands
 

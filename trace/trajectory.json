@@ -11,6 +11,13 @@
       "processComplete": true
     },
     {
+      "slice": "2026-07-06-dashboard",
+      "reviewEvidence": "clean",
+      "trailerCommits": 0,
+      "libDomains": [],
+      "processComplete": true
+    },
+    {
       "slice": "2026-07-06-intake",
       "reviewEvidence": "clean",
       "trailerCommits": 22,
@@ -31,6 +38,10 @@
   ],
   "failures": [],
   "warnings": [
+    {
+      "check": "trailer",
+      "msg": "2026-07-06-dashboard: no commit carries a \"Slice: dashboard\" trailer"
+    },
     {
       "check": "in-scope",
       "msg": "lib/src/ modified by 2 slices (2026-07-04-slots, 2026-07-06-intake) — review for scope drift"

@@ -5,12 +5,13 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 2 archived slice(s).
-Result: PASS, 1 warning(s)
+Scope: 3 archived slice(s).
+Result: PASS, 2 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-07-04-slots | clean | 17 | yes | src |
+| 2026-07-06-dashboard | clean | **0** | yes | - |
 | 2026-07-06-intake | clean | 22 | yes | src |
 
 ## Cross-slice module overlap
@@ -23,4 +24,5 @@ None.
 
 ## Warnings
 
+- **trailer**: 2026-07-06-dashboard: no commit carries a "Slice: dashboard" trailer
 - **in-scope**: lib/src/ modified by 2 slices (2026-07-04-slots, 2026-07-06-intake) — review for scope drift

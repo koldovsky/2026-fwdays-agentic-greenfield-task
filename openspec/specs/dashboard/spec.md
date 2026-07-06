@@ -16,15 +16,14 @@ their side effects (owned by `booking-hitl`, FR-HITL-01..04 — this spec
 covers only *rendering* the DecisionBar), the raw AG-UI developer panel
 (FR-DASH-02 — Future, intentionally unsupported in MVP), and lead-facing seat
 picking (`web-booking`, FR-WEB-01 — Future).
-
 ## Requirements
-
 ### Requirement: AG-UI over SSE transport
 
 The dashboard SHALL receive all real-time data as AG-UI events over a
 Server-Sent Events stream (TC-PROTO-01, ADR-0001 §2), consuming at minimum:
-`RUN_STARTED`/`RUN_FINISHED` (run boundaries), `TEXT_MESSAGE_*` (streamed
-agent replies), `STATE_SNAPSHOT`/`STATE_DELTA` (request card state), and the
+`RUN_STARTED`/`RUN_FINISHED`/`RUN_ERROR` (run boundaries, including a failed
+run — never a silent gap, NFR-REL-01), `TEXT_MESSAGE_*` (streamed agent
+replies), `STATE_SNAPSHOT`/`STATE_DELTA` (request card state), and the
 custom `BOOKING_PENDING` event (renders the DecisionBar). The dashboard SHALL
 NOT poll the database for data that these events carry.
 
