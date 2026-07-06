@@ -2,89 +2,149 @@
 
 ## Status
 
-Provisional pending Phase 0 feasibility
+Accepted for local production-core implementation after Phase 0 feasibility
 
 ## System Context
 
-Email Shadow Panel uses the existing browser frontend, Vercel Node.js Functions, an isolated Emailnator compatibility adapter, and provisional later-phase Upstash Redis state. Emailnator's internal HTTP interface is undocumented and untrusted.
+Email Shadow Panel uses the existing browser frontend, future Vercel Node.js Functions, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
 
 ```mermaid
 flowchart LR
-  Browser["Browser React app"] --> API["Vercel Node.js Functions"]
-  API --> Contracts["Shared contracts"]
-  API --> Adapter["Emailnator compatibility adapter"]
-  API --> Redis["Upstash Redis (later phase)"]
-  Adapter --> Emailnator["Emailnator internal HTTP interface"]
+  Browser["Browser React app"] --> API["Future Vercel Node.js Functions"]
+  API --> Domain["Session service and contracts"]
+  Domain --> Provider["InboxProvider abstraction"]
+  Domain --> Repo["Session repository"]
+  Provider --> Emailnator["Emailnator HTTP interface"]
+  Repo --> Redis["Upstash Redis (production store)"]
 ```
 
 ## Component Boundaries
 
-- React frontend: renders the existing UI, stores local recent-session references, requests inbox operations, and never handles provider-specific internals.
-- API handlers: validate application requests, authorize capability tokens, call server services, and remain thin.
-- Shared contracts: define runtime-validated request and response shapes used across frontend and server boundaries.
-- Emailnator adapter: owns provider bootstrap, cookies, XSRF handling, generation, list, detail, response validation, timeouts, and provider error mapping.
-- Temporary session repository: later stores encrypted provider state, token hashes, TTLs, refresh locks, and limits.
-- Rate limiting: applies visitor and network controls before provider calls.
-- Capability authorization: protects inbox access without product-user accounts.
-- Message sanitization: later converts untrusted provider message content into safe display content.
+- React frontend: renders the existing UI, stores local recent-session references later, and never handles provider cookies, XSRF values, provider message IDs, or encrypted provider state.
+- Route handlers: remain a later thin transport layer that validates inputs, maps HTTP concerns, and delegates to the session service.
+- Shared server-domain contracts: define runtime-validated anonymous-session records, service outputs, message references, and error codes.
+- Inbox provider abstraction: defines create, list, and detail operations that return refreshed provider state without leaking provider internals to transport consumers.
+- Emailnator provider implementation: owns bootstrap, cookie handling, XSRF handling, bounded Gmail-style generation fallback, response validation, timeouts, and provider-error normalization.
+- Anonymous session service: coordinates visitor hashing, capability-token issuance, provider-state encryption, repository persistence, and safe application message references.
+- Session repository: stores only hashed capability identifiers, hashed visitor identifiers, encrypted internal session state, timestamps, provider identifier, and optimistic-concurrency version.
+- Rate limiting and abuse controls: remain later transport-layer concerns.
+- Message sanitization and display rendering: remain later presentation-layer concerns.
 
-## Planned Repository Boundaries
+## Repository Boundaries
 
 ```text
 api/
 server/
-  providers/emailnator/
-shared/
+  providers/
+  session/
+scripts/
 src/
 tests/
 docs/
 ```
 
-No source files are moved during Phase 0A.
+The frontend remains unchanged in Phase 1.
+
+## Anonymous Session Model
+
+A persisted anonymous session contains:
+
+- internal session ID
+- capability-token hash
+- anonymous visitor hash
+- generated inbox address
+- encrypted internal session state
+- provider-state version
+- provider identifier
+- created timestamp
+- updated timestamp
+- expiration timestamp
+- schema version
+
+The encrypted internal session state contains:
+
+- Emailnator provider state
+- bounded application message-reference mappings
+
+Plaintext capability tokens, raw visitor identifiers, provider cookies, XSRF values, and provider message IDs are not persisted in plaintext session records.
+
+## Message Reference Strategy
+
+Provider message IDs stay internal to the provider and encrypted session state.
+
+The session service issues opaque application message references that:
+
+- are generated randomly;
+- are reused for repeated appearances of the same provider message;
+- are stored only inside encrypted state;
+- are bounded and pruned deterministically;
+- fail safely when stale or unknown.
+
+## Persistence Strategy
+
+Two repository implementations exist in Phase 1:
+
+- deterministic in-memory repository for tests;
+- production Upstash Redis repository for later deployment use.
+
+Both repositories support:
+
+- create with TTL;
+- find by capability-token hash;
+- delete by capability-token hash;
+- count active sessions by visitor hash;
+- atomic compare-and-set encrypted-state updates that preserve expiration.
+
+The Redis implementation uses namespaced keys and a Lua-script compare-and-set update so concurrent refreshes cannot silently overwrite newer state.
 
 ## Request Flows
 
-- Inbox generation: browser requests generation; API validates limits; adapter creates provider session and address; server stores temporary encrypted state in a later phase; browser stores a local reference.
-- Message-list refresh: browser refreshes the selected inbox; API validates capability and refresh interval; adapter fetches and validates the list.
-- Individual-message retrieval: browser requests one message; API validates capability; adapter fetches and validates detail; message content is sanitized before display in later phases.
-- Session removal: browser removes the local reference and asks the server to delete Email Shadow Panel temporary state only; no provider-side deletion claim is made.
-
-## Session Model
-
-The browser may hold a random visitor ID and local inbox references. Each inbox uses a capability token in later phases. Provider state is encrypted before Redis persistence and expires by TTL. Browser-storage loss means session-access loss. There is no cross-device recovery.
-
-## Polling Model
-
-Only the current inbox is polled. Polling adapts to visible tabs, pauses or sharply reduces work in hidden tabs, supports Manual Refresh, respects a server-side minimum refresh interval, and backs off on errors.
+- Session creation: the future API layer supplies an opaque visitor identifier; the session service hashes it, generates a capability token, asks the provider to create an inbox, encrypts internal session state, persists the session, and returns the plaintext capability token once with safe inbox metadata.
+- Message listing: the session service validates and hashes the capability token, decrypts state, lists provider messages, resolves or creates safe message references, re-encrypts refreshed state, and persists it through compare-and-set.
+- Message detail: the session service validates the capability token, resolves the safe message reference to a provider message ID inside encrypted state, fetches detail, re-encrypts refreshed state, and persists it atomically.
+- Session deletion: the future API layer requests deletion by capability token; the repository removes temporary application state only.
 
 ## Security Boundaries
 
-Emailnator is an untrusted, undocumented dependency. Email contents are untrusted input. The server uses a fixed provider origin, does not proxy arbitrary URLs or headers, encrypts temporary provider state, hashes capability tokens, and emits sanitized logs only.
+Emailnator is untrusted, message content is untrusted, and temporary persistence is treated as sensitive infrastructure.
+
+The server therefore:
+
+- uses a fixed Emailnator origin;
+- encrypts internal session state before persistence;
+- stores only capability hashes and visitor hashes in plaintext persistence fields;
+- keeps provider state and message-ID mappings out of browser-facing results;
+- normalizes provider, persistence, configuration, and encryption failures into transport-independent domain errors;
+- does not expose arbitrary upstream URLs or headers.
 
 ## Deployment Topology
 
-The active target is Vercel Hobby with Node.js Functions. Upstash Redis Free is a provisional later-phase store for temporary encrypted state, capability hashes, limits, and refresh locks. Oracle infrastructure and browser workers are not part of the active architecture.
+The active target remains Vercel Hobby with Node.js Functions. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions once later phases add HTTP integration and deployment verification.
 
 ## Failure Modes
 
-- Provider unavailable.
-- Provider contract changed.
-- Provider blocks Vercel.
-- Cookie or XSRF rotation.
-- Application session expiration.
-- Upstash unavailable in later phases.
-- Rate limit reached.
-- Invalid provider response.
-- Message detail unavailable.
+- provider unavailable
+- provider challenge or rate limit
+- provider response incompatibility
+- capability token invalid
+- session expired or missing
+- stale concurrent session update
+- persistence unavailable
+- encryption failure
+- configuration invalid
+- timeout
 
 ## Architectural Gates
 
-Phase 0 must return GO before the HTTP adapter architecture is accepted for production implementation.
+- Phase 0 established the accepted direct HTTP Emailnator path.
+- Phase 1 establishes the local production-core backend services.
+- Phase 2 will add transport and API integration.
+- Phase 4 will handle deferred deployment and live infrastructure validation.
 
 ## Deferred Decisions
 
-- Exact Emailnator request sequence and response schemas.
-- Whether Vercel Preview can reach the provider reliably.
-- Whether provider session state can be serialized and restored safely.
-- Redis key structure, TTL values, and refresh-lock policy.
-- Final polling intervals and active-inbox limits.
+- exact HTTP route contracts and status-code mapping
+- abuse-control policy and active-session limits
+- frontend integration details for local recent-session references
+- deployment-environment validation for Upstash and Vercel
+- later sanitization and OTP extraction presentation flows

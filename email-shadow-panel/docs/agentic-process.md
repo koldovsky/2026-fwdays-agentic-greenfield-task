@@ -38,9 +38,11 @@ Stable context belongs in `AGENTS.md` files. Dynamic phase-specific context belo
 - CodeRabbit: final broad PR checker after changes are pushed in a later step.
 - Human: approval and live-verification gates.
 
+Phase 1 explicitly did not create a separate checker artifact because the user requested a maker-only consolidated pass for this phase. Independent review remains deferred to a later human or checker step.
+
 ## Tooling
 
-Selected tools for Phase 0:
+Selected tools for Phases 0 and 1:
 
 - Codex in the local workspace.
 - Git.
@@ -104,3 +106,61 @@ Selected tools for Phase 0:
 - Production Playwright is not required for the MVP.
 - Vercel Preview verification is deferred to Phase 4.
 - No automatic commit or push was performed in this closure step.
+
+### Phase 1 - Production provider and anonymous session core
+
+- Status: implemented and locally verified for deterministic review.
+- Actor: maker Codex.
+- Context and specification files used:
+  - `../AGENTS.md`
+  - `AGENTS.md`
+  - `docs/specs/001-mvp-specification.md`
+  - `docs/specs/002-architecture.md`
+  - `docs/adr/001-vercel-http-adapter.md`
+  - `docs/verification/phase-0.md`
+  - `docs/agentic-process.md`
+  - `.env.example`
+  - `package.json`
+  - `server/providers/emailnator/*`
+  - `scripts/*`
+  - `tests/phase0/*`
+- Principal implementation decisions:
+  - introduced a formal `InboxProvider` contract and a production Emailnator provider wrapper around the proven Phase 0 transport;
+  - kept provider cookies, XSRF handling, and opaque provider message IDs provider-specific and server-only;
+  - introduced a server-only anonymous session model with capability-token hashes, HMAC visitor hashes, encrypted internal session state, optimistic-concurrency versioning, and TTL-based expiration;
+  - stored application message-reference mappings only inside encrypted state and bounded them deterministically;
+  - implemented deterministic in-memory persistence and an Upstash Redis repository with a Lua compare-and-set update that preserves remaining TTL.
+- Deterministic checks run by Codex:
+  - `npm run typecheck`: PASS
+  - `npm run lint`: PASS with the same 6 pre-existing frontend warnings
+  - `npm run test:phase0`: PASS
+  - `npm run test:phase1`: PASS
+  - `npm run test:deterministic`: PASS
+  - `npm run build`: FAIL in the managed environment because the known Vite or Tailwind `spawn EPERM` and Tailwind native-module issue recurred
+- Environment-specific failures separated from implementation defects:
+  - the managed-environment build failure was recorded as environmental because lint, typecheck, Phase 0 tests, and Phase 1 tests passed before build execution;
+  - no live Upstash, live Emailnator, or Vercel action was attempted in this phase.
+- Documentation changes:
+  - added `docs/tasks/phase-1-production-provider-session-core.md`
+  - added `docs/verification/phase-1.md`
+  - added `docs/adr/002-anonymous-session-persistence.md`
+  - updated `docs/specs/002-architecture.md`
+  - updated this process record
+- Network and infrastructure boundary:
+  - no real Emailnator requests were made by Codex for Phase 1;
+  - no real Upstash connection was made;
+  - no Vercel deployment was performed.
+- Commit behavior:
+  - no automatic commit or push was performed.
+
+### Phase 1 - Final documentation closure
+
+- Maker: Codex.
+- Human actor: final local verification and diff review.
+- One consolidated implementation pass was used.
+- Deterministic verification passed.
+- The managed Codex build limitation was separated from implementation defects.
+- The same build passed in the human local environment through `npm run verify:phase1`.
+- No separate Phase 1 checker was used.
+- CodeRabbit remains the final broad PR checker.
+- No auto-commit occurred.
