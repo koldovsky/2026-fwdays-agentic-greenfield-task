@@ -1,0 +1,17 @@
+:root {
+  --shadow-sm: 0 1px 2px rgba(28,25,23,.05);
+  --shadow-md: 0 6px 24px rgba(28,25,23,.08);
+
+  /* Motion — purposeful, calm; everything eases out, nothing bounces hard */
+  --ease-out: cubic-bezier(.2,.7,.3,1);
+  --dur-fast: .15s;
+  --dur-med: .35s;
+  --dur-slow: .5s;
+}
+
+@keyframes ds-fade-up { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+@keyframes ds-pop { 0% { transform:scale(.6); opacity:0; } 60% { transform:scale(1.12); } 100% { transform:scale(1); opacity:1; } }
+@keyframes ds-bar { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@keyframes ds-win-pulse { 0% { transform:scale(1); } 32% { transform:scale(1.22); } 100% { transform:scale(1); } }
+@keyframes ds-confetti-fall { to { transform:translateY(105vh) rotate(720deg); opacity:.9; } }
+@keyframes ds-shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }

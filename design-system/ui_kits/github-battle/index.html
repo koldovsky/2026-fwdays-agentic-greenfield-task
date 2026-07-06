@@ -1,0 +1,336 @@
+<!-- @dsCard group="GitHub Battle" viewport="1200x760" subtitle="Landing → Stats → Battle, click-through" name="GitHub Battle — app" -->
+<!-- @startingPoint section="GitHub Battle" subtitle="Full three-screen app recreation" viewport="1200x760" -->
+<!doctype html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Battle</title>
+<link rel="stylesheet" href="../../styles.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-sans);transition:background .3s,color .3s}
+  input:focus{outline:none}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes rowReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes winPulse{0%{transform:scale(1)}32%{transform:scale(1.22)}100%{transform:scale(1)}}
+  @keyframes popIn{0%{opacity:0;transform:scale(.6)}60%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+  @keyframes confettiFall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/app-src" id="app-src">
+const { useState, useMemo } = React;
+
+// ── sample data (a UI kit uses fixed sample data, not live fetch) ──
+const LANG_COLORS = { TypeScript:'#3178c6', Go:'#00ADD8', Python:'#3572A5', Rust:'#dea584', JavaScript:'#f1e05a', Shell:'#89e051', CSS:'#563d7c', HTML:'#e34c26' };
+const METRICS = [
+  ['Total stars','Stars'],['Forks received','Forks'],['Followers','Followers'],['Original repos','Repos'],
+  ['Language diversity','Langs'],['Account age','Years'],['Commits · 90d','Commits'],['PRs · 90d','PRs'],
+  ['Issues · 90d','Issues'],['Releases · 90d','Releases'],['Public gists','Gists'],['Watchers','Watch'],
+  ['Code volume','Size'],['Following','Follows'],['Forked repos','Forked'],
+];
+const USER_A = {
+  name:'Mukha Andrii', login:'MukhaA', avatar:'https://avatars.githubusercontent.com/u/9919?v=4',
+  bio:'Backend engineer. Distributed systems, Go, and the occasional Rust weekend.',
+  location:'Kyiv, UA', joined:2019, followers:'3.7k', following:'214',
+  values:['5.6k','812','3.7k','42','5','5y','168','54','23','9','18','4.9k','2.4M','214','12'],
+  raw:[5600,812,3700,42,5,5,168,54,23,9,18,4900,2400,214,12],
+  langs:[{name:'Go',pct:.44},{name:'TypeScript',pct:.24},{name:'Python',pct:.16},{name:'Rust',pct:.10},{name:'Shell',pct:.06}],
+  activity:[['Commits',168],['Pull requests',54],['Issues',23],['Releases',9]],
+  reach:[['Stars',5600,'5.6k'],['Forks',812,'812'],['Watchers',4900,'4.9k'],['Followers',3700,'3.7k']],
+  repos:{original:42,forked:12},
+};
+const USER_B = {
+  name:'Viktor Mukha', login:'khvMX', avatar:'https://avatars.githubusercontent.com/u/1024025?v=4',
+  bio:'Frontend & DX. Design systems, React, and tooling that gets out of your way.',
+  location:'Kharkiv, UA', joined:2021, followers:'1.2k', following:'87',
+  values:['812','196','1.2k','128','7','3y','241','96','41','2','6','1.1k','980K','87','58'],
+  raw:[812,196,1200,128,7,3,241,96,41,2,6,1100,980,87,58],
+  langs:[{name:'TypeScript',pct:.52},{name:'JavaScript',pct:.22},{name:'CSS',pct:.14},{name:'HTML',pct:.08},{name:'Shell',pct:.04}],
+  activity:[['Commits',241],['Pull requests',96],['Issues',41],['Releases',2]],
+  reach:[['Stars',812,'812'],['Forks',196,'196'],['Watchers',1100,'1.1k'],['Followers',1200,'1.2k']],
+  repos:{original:128,forked:58},
+};
+
+function Donut({ langs, total }) {
+  let acc = 0; const segs = [];
+  langs.forEach((l,i) => { const c = LANG_COLORS[l.name] || '#b45a29'; const from = acc*360; acc += l.pct; segs.push(`${c} ${from}deg ${acc*360}deg`); });
+  if (acc < .999) segs.push(`var(--surface-track) ${acc*360}deg 360deg`);
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:26,flexWrap:'wrap'}}>
+      <div style={{position:'relative',width:148,height:148,flexShrink:0}}>
+        <div style={{position:'absolute',inset:0,borderRadius:'50%',background:`conic-gradient(${segs.join(',')})`}}/>
+        <div style={{position:'absolute',inset:27,borderRadius:'50%',background:'var(--surface)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+          <div style={{fontFamily:'var(--font-serif)',fontSize:30,lineHeight:1}}>{total}</div>
+          <div style={{color:'var(--text-muted)',fontSize:10.5,letterSpacing:'.06em',textTransform:'uppercase',marginTop:2}}>languages</div>
+        </div>
+      </div>
+      <div style={{flex:1,minWidth:150}}>
+        {langs.map((l,i)=>(
+          <div key={l.name} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,fontSize:14}}>
+            <span style={{width:11,height:11,borderRadius:3,flexShrink:0,background:LANG_COLORS[l.name]||'#b45a29'}}/>
+            <span style={{flex:1}}>{l.name}</span>
+            <span style={{color:'var(--text-muted)'}}>{Math.round(l.pct*100)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const Panel = ({children, style}) => <div style={{border:'1px solid var(--border)',borderRadius:16,padding:24,background:'var(--surface)',...style}}>{children}</div>;
+const H = ({children}) => <div style={{fontFamily:'var(--font-serif)',fontSize:20,marginBottom:20}}>{children}</div>;
+
+function Stats({ u }) {
+  const actMax = Math.max(...u.activity.map(a=>a[1]));
+  const reachMax = Math.max(...u.reach.map(r=>r[1]));
+  const repoTotal = u.repos.original + u.repos.forked;
+  const oPct = Math.round(u.repos.original/repoTotal*100);
+  return (
+    <div style={{maxWidth:1040,margin:'0 auto',padding:'40px 0 70px',animation:'fadeUp .5s both'}}>
+      <div style={{display:'flex',gap:22,alignItems:'flex-start',flexWrap:'wrap',paddingBottom:26,borderBottom:'1px solid var(--border)'}}>
+        <img src={u.avatar} style={{width:88,height:88,borderRadius:999,objectFit:'cover'}}/>
+        <div style={{flex:1,minWidth:220}}>
+          <div style={{fontFamily:'var(--font-serif)',fontWeight:500,fontSize:30,lineHeight:1.1}}>{u.name}</div>
+          <div style={{color:'var(--text-muted)',fontSize:15,margin:'1px 0 10px'}}>@{u.login}</div>
+          <div style={{fontSize:15,lineHeight:1.6,maxWidth:560}}>{u.bio}</div>
+          <div style={{display:'flex',gap:18,flexWrap:'wrap',marginTop:12,color:'var(--text-muted)',fontSize:13}}>
+            <span>{u.location}</span><span>Joined {u.joined}</span><span>{u.followers} followers · {u.following} following</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:1,background:'var(--border)',border:'1px solid var(--border)',borderRadius:14,overflow:'hidden',marginTop:28}}>
+        {METRICS.map((m,i)=>(
+          <div key={m[0]} style={{padding:'18px 16px',background:'var(--surface)'}}>
+            <div style={{color:'var(--text-muted)',fontSize:12}}>{m[0]}</div>
+            <div style={{fontFamily:'var(--font-serif)',fontWeight:500,fontSize:32,lineHeight:1,marginTop:10}}>{u.values[i]}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginTop:20}}>
+        <Panel><H>Language breakdown</H><Donut langs={u.langs} total={u.values[4]}/></Panel>
+        <Panel>
+          <div style={{fontFamily:'var(--font-serif)',fontSize:20}}>Recent activity</div>
+          <div style={{color:'var(--text-muted)',fontSize:12.5,margin:'3px 0 22px'}}>Public events · trailing 90 days</div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:14,height:150}}>
+            {u.activity.map(a=>(
+              <div key={a[0]} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:8,height:'100%',justifyContent:'flex-end'}}>
+                <div style={{fontFamily:'var(--font-serif)',fontSize:18}}>{a[1]}</div>
+                <div style={{width:'100%',background:'var(--surface-track)',borderRadius:'7px 7px 0 0',display:'flex',alignItems:'flex-end',flex:1,overflow:'hidden'}}>
+                  <div style={{width:'100%',height:Math.max(2,Math.round(a[1]/actMax*100))+'%',background:'var(--accent-primary)',borderRadius:'7px 7px 0 0'}}/>
+                </div>
+                <div style={{color:'var(--text-muted)',fontSize:11.5,textAlign:'center'}}>{a[0]}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <Panel style={{marginTop:20}}>
+        <H>Reach &amp; influence</H>
+        {u.reach.map(r=>(
+          <div key={r[0]} style={{display:'flex',alignItems:'center',gap:16,marginBottom:15}}>
+            <div style={{width:90,fontSize:14}}>{r[0]}</div>
+            <div style={{flex:1,height:22,background:'var(--surface-track)',borderRadius:6,overflow:'hidden'}}>
+              <div style={{height:'100%',width:Math.max(2,Math.round(r[1]/reachMax*100))+'%',background:'var(--accent-primary)',borderRadius:6}}/>
+            </div>
+            <div style={{width:74,textAlign:'right',fontFamily:'var(--font-serif)',fontSize:19}}>{r[2]}</div>
+          </div>
+        ))}
+      </Panel>
+
+      <Panel style={{marginTop:20}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16}}>
+          <div style={{fontFamily:'var(--font-serif)',fontSize:20}}>Repository composition</div>
+          <div style={{color:'var(--text-muted)',fontSize:13}}>{repoTotal} public repos</div>
+        </div>
+        <div style={{display:'flex',height:34,borderRadius:8,overflow:'hidden',background:'var(--surface-track)'}}>
+          <div style={{width:oPct+'%',background:'var(--accent-primary)'}}/>
+          <div style={{width:(100-oPct)+'%',background:'var(--accent-secondary)'}}/>
+        </div>
+        <div style={{display:'flex',gap:26,marginTop:15,fontSize:14}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{width:12,height:12,borderRadius:3,background:'var(--accent-primary)'}}/>Original · <strong style={{fontWeight:600}}>{u.repos.original}</strong></div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{width:12,height:12,borderRadius:3,background:'var(--accent-secondary)'}}/>Forked · <strong style={{fontWeight:600}}>{u.repos.forked}</strong></div>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+function Confetti() {
+  const colors = ['var(--accent-primary)', 'var(--accent-secondary)', '#3178c6', '#f1e05a', '#e06a6a'];
+  const bits = React.useMemo(() => Array.from({ length: 90 }).map((_, i) => ({
+    left: Math.random() * 100, delay: Math.random() * 0.6, dur: 1.8 + Math.random() * 1.6,
+    w: 6 + Math.random() * 7, color: colors[i % colors.length], rot: Math.random() * 360,
+  })), []);
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 50 }}>
+      {bits.map((b, i) => (
+        <div key={i} style={{ position: 'absolute', top: -20, left: b.left + '%', width: b.w, height: b.w * 0.6, background: b.color, borderRadius: 2, transform: `rotate(${b.rot}deg)`, animation: `confettiFall ${b.dur}s linear ${b.delay}s forwards` }} />
+      ))}
+    </div>
+  );
+}
+
+function Battle() {
+  const rows = React.useMemo(() => METRICS.map((m, i) => {
+    const a = USER_A.raw[i], b = USER_B.raw[i];
+    return { label: m[0], a: USER_A.values[i], b: USER_B.values[i], win: a > b ? 'a' : b > a ? 'b' : 'draw' };
+  }), []);
+  const reduced = React.useMemo(() => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+  const [revealed, setRevealed] = useState(0);
+  const [confetti, setConfetti] = useState(false);
+  const timer = React.useRef(null);
+
+  const start = React.useCallback(() => {
+    clearInterval(timer.current);
+    setConfetti(false);
+    if (reduced) { setRevealed(rows.length); return; }
+    setRevealed(0);
+    timer.current = setInterval(() => {
+      setRevealed(v => { if (v >= rows.length) { clearInterval(timer.current); return v; } return v + 1; });
+    }, 240);
+  }, [reduced, rows.length]);
+
+  React.useEffect(() => { start(); return () => clearInterval(timer.current); }, [start]);
+  React.useEffect(() => {
+    if (revealed >= rows.length && revealed > 0) { setConfetti(true); const t = setTimeout(() => setConfetti(false), 3400); return () => clearTimeout(t); }
+  }, [revealed, rows.length]);
+
+  const shown = rows.slice(0, revealed);
+  const scoreA = shown.reduce((s, r) => s + (r.win === 'a' ? 1 : r.win === 'draw' ? 0.5 : 0), 0);
+  const scoreB = shown.reduce((s, r) => s + (r.win === 'b' ? 1 : r.win === 'draw' ? 0.5 : 0), 0);
+  const done = revealed >= rows.length;
+  const winner = scoreA > scoreB ? USER_A.name : scoreB > scoreA ? USER_B.name : 'a draw';
+  const winColor = scoreA > scoreB ? 'var(--accent-primary)' : scoreB > scoreA ? 'var(--accent-secondary)' : 'var(--text-muted)';
+  const fmtScore = (n) => (n % 1 ? n.toFixed(1) : n);
+
+  return (
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: '40px 0 70px', animation: 'fadeUp .5s both' }}>
+      {confetti ? <Confetti /> : null}
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 13, letterSpacing: '.04em' }}>HEAD TO HEAD</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><img src={USER_A.avatar} style={{ width: 52, height: 52, borderRadius: 999 }} /><span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>{USER_A.name}</span></div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--text-muted)', fontSize: 22 }}>vs</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>{USER_B.name}</span><img src={USER_B.avatar} style={{ width: 52, height: 52, borderRadius: 999 }} /></div>
+        </div>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 44, marginTop: 16 }}>
+          <span key={'a' + scoreA} style={{ color: 'var(--accent-primary)', display: 'inline-block', animation: 'winPulse .4s ease-out' }}>{fmtScore(scoreA)}</span>
+          <span style={{ color: 'var(--text-muted)', margin: '0 12px', fontSize: 26 }}>—</span>
+          <span key={'b' + scoreB} style={{ color: 'var(--accent-secondary)', display: 'inline-block', animation: 'winPulse .4s ease-out' }}>{fmtScore(scoreB)}</span>
+        </div>
+        {done ? (
+          <div style={{ marginTop: 14, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 20, color: winColor, animation: 'popIn .5s ease-out both' }}>Winner · <strong>{winner}</strong></div>
+        ) : (
+          <div style={{ marginTop: 14, fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)', letterSpacing: '.02em' }}>Revealing round {Math.min(revealed + 1, rows.length)} of {rows.length}…</div>
+        )}
+      </div>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+        {shown.map((r, i) => (
+          <div key={r.label} style={{ display: 'grid', gridTemplateColumns: '1fr 180px 1fr', alignItems: 'center', borderTop: i ? '1px solid var(--border)' : 'none', animation: 'rowReveal .34s ease-out both' }}>
+            <div style={{ padding: '15px 20px', textAlign: 'right', fontFamily: 'var(--font-serif)', fontSize: 22, color: r.win === 'a' ? 'var(--accent-primary)' : 'var(--text-muted)', fontWeight: r.win === 'a' ? 600 : 400 }}>
+              <span style={{ display: 'inline-block', animation: r.win === 'a' ? 'winPulse .5s ease-out .12s both' : 'none' }}>{r.a}</span>
+            </div>
+            <div style={{ textAlign: 'center', padding: '15px 8px', color: 'var(--text-muted)', fontSize: 13, background: 'var(--surface-track)' }}>{r.label}</div>
+            <div style={{ padding: '15px 20px', textAlign: 'left', fontFamily: 'var(--font-serif)', fontSize: 22, color: r.win === 'b' ? 'var(--accent-secondary)' : 'var(--text-muted)', fontWeight: r.win === 'b' ? 600 : 400 }}>
+              <span style={{ display: 'inline-block', animation: r.win === 'b' ? 'winPulse .5s ease-out .12s both' : 'none' }}>{r.b}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Landing({ go }) {
+  const [mode,setMode] = useState('Explore');
+  const seg = (on) => ({border:'none',cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:14,fontWeight:600,padding:'9px 20px',borderRadius:8,background:on?'var(--accent-primary)':'transparent',color:on?'#fff':'var(--text-muted)'});
+  const inp = {width:'100%',padding:'13px 15px',fontSize:15,fontFamily:'var(--font-sans)',background:'var(--surface)',color:'var(--text)',border:'1.5px solid var(--border)',borderRadius:10,outline:'none'};
+  const cta = {border:'none',cursor:'pointer',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,padding:'13px 26px',borderRadius:10,background:'var(--text)',color:'var(--bg)',whiteSpace:'nowrap'};
+  return (
+    <div style={{maxWidth:640,margin:'0 auto',padding:'80px 0',textAlign:'center',animation:'fadeUp .5s both'}}>
+      <div style={{fontFamily:'var(--font-serif)',fontStyle:'italic',color:'var(--text-muted)',fontSize:18,marginBottom:10}}>A quieter way to read a developer.</div>
+      <h1 style={{fontFamily:'var(--font-serif)',fontWeight:500,fontSize:'clamp(38px,6vw,60px)',lineHeight:1.04,margin:'0 0 16px',letterSpacing:'-.01em'}}>The aggregate picture<br/>GitHub never shows you.</h1>
+      <p style={{color:'var(--text-muted)',fontSize:16,lineHeight:1.6,maxWidth:480,margin:'0 auto 36px'}}>Explore one developer's fifteen aggregate signals, or compare two side by side. Public data, no account, no noise.</p>
+      <div style={{display:'inline-flex',gap:4,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,marginBottom:26}}>
+        <button style={seg(mode==='Explore')} onClick={()=>setMode('Explore')}>Explore</button>
+        <button style={seg(mode==='Compare')} onClick={()=>setMode('Compare')}>Compare</button>
+      </div>
+      {mode==='Explore' ? (
+        <div style={{display:'flex',gap:10,maxWidth:460,margin:'0 auto',textAlign:'left'}}>
+          <input style={inp} defaultValue="MukhaA"/>
+          <button style={cta} onClick={()=>go('stats')}>Explore →</button>
+        </div>
+      ) : (
+        <div style={{maxWidth:480,margin:'0 auto',textAlign:'left'}}>
+          <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <input style={inp} defaultValue="MukhaA"/>
+            <span style={{fontFamily:'var(--font-serif)',fontStyle:'italic',color:'var(--text-muted)',fontSize:16}}>vs</span>
+            <input style={inp} defaultValue="khvMX"/>
+          </div>
+          <button style={{...cta,marginTop:18,width:'100%'}} onClick={()=>go('battle')}>Compare →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [screen,setScreen] = useState('landing');
+  const [dark,setDark] = useState(true);
+  React.useEffect(()=>{ document.documentElement.classList.toggle('dark',dark); },[dark]);
+  const nav = (s) => ({border:'none',cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:12.5,fontWeight:600,padding:'7px 13px',borderRadius:7,background:screen===s?'var(--accent-primary)':'transparent',color:screen===s?'#fff':'var(--text-muted)'});
+  return (
+    <div style={{minHeight:'100vh'}}>
+      <div style={{position:'sticky',top:0,zIndex:10,background:'var(--surface)',borderBottom:'1px solid var(--border)'}}>
+        <div style={{maxWidth:1040,margin:'0 auto',padding:'11px 22px',display:'flex',alignItems:'center',gap:20,flexWrap:'wrap'}}>
+          {screen!=='landing' && (
+            <button onClick={()=>setScreen('landing')} title="Back to main" style={{display:'flex',alignItems:'center',gap:6,background:'var(--surface-track)',border:'1px solid var(--border)',borderRadius:9,padding:'7px 13px',color:'var(--text)',fontSize:12.5,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)'}}>← Back</button>
+          )}
+          <div style={{display:'flex',alignItems:'center',gap:9,fontWeight:700,fontSize:14,cursor:'pointer'}} onClick={()=>setScreen('landing')}>
+            <span style={{display:'inline-flex',width:22,height:22,alignItems:'center',justifyContent:'center',borderRadius:6,background:'linear-gradient(135deg,var(--accent-primary),var(--accent-secondary))',color:'#fff',fontWeight:800,fontSize:13}}>⚔</span>
+            GitHub&nbsp;Battle
+          </div>
+          <div style={{display:'flex',gap:4,background:'var(--surface-track)',border:'1px solid var(--border)',borderRadius:9,padding:3}}>
+            <button style={nav('landing')} onClick={()=>setScreen('landing')}>Landing</button>
+            <button style={nav('stats')} onClick={()=>setScreen('stats')}>Stats</button>
+            <button style={nav('battle')} onClick={()=>setScreen('battle')}>Battle</button>
+          </div>
+          <button onClick={()=>setDark(!dark)} style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:7,background:'var(--surface-track)',border:'1px solid var(--border)',borderRadius:9,padding:'7px 13px',color:'var(--text)',fontSize:12.5,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-sans)'}}>{dark?'🌙 Dark':'☀️ Light'}</button>
+        </div>
+      </div>
+      <div style={{padding:'0 22px'}}>
+        {screen==='landing' && <Landing go={setScreen}/>}
+        {screen==='stats' && <Stats u={USER_A}/>}
+        {screen==='battle' && <Battle/>}
+      </div>
+      <div style={{borderTop:'1px solid var(--border)',padding:'20px 22px',textAlign:'center',color:'var(--text-muted)',fontSize:12.5}}>
+        Live data from the GitHub REST API · unauthenticated · no cookies, no analytics
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>
+  (function () {
+    function boot() {
+      var src = document.getElementById('app-src').textContent;
+      var out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+      (0, eval)(out);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  })();
+</script>
+</body>
+</html>

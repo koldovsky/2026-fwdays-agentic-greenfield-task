@@ -1,0 +1,24 @@
+<!-- @dsCard group="Components" viewport="700x360" name="Feedback — loading &amp; errors" subtitle="Skeleton, StatsSkeleton, RateLimitCard, NotFoundCard" -->
+<!doctype html><html class="dark"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>body{margin:0;padding:22px;background:var(--bg);color:var(--text);font-family:var(--font-sans)}
+.sk{background:linear-gradient(90deg,var(--surface-track) 25%,var(--border) 37%,var(--surface-track) 63%);background-size:200% 100%;animation:ds-shimmer 1.4s ease-in-out infinite;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cell{background:var(--surface);padding:14px}
+.card{border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:24px;text-align:center}
+.card .t{font-family:var(--font-serif);font-size:20px;margin-bottom:6px}.card .d{color:var(--text-muted);font-size:13px;line-height:1.55}</style></head><body>
+<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+  <div class="sk" style="width:64px;height:64px;border-radius:999px"></div>
+  <div style="flex:1"><div class="sk" style="width:200px;height:22px"></div><div style="height:8px"></div><div class="sk" style="width:110px;height:13px"></div></div>
+</div>
+<div class="grid">
+  <div class="cell"><div class="sk" style="width:55%;height:11px"></div><div style="height:10px"></div><div class="sk" style="width:45%;height:22px"></div></div>
+  <div class="cell"><div class="sk" style="width:55%;height:11px"></div><div style="height:10px"></div><div class="sk" style="width:45%;height:22px"></div></div>
+  <div class="cell"><div class="sk" style="width:55%;height:11px"></div><div style="height:10px"></div><div class="sk" style="width:45%;height:22px"></div></div>
+  <div class="cell"><div class="sk" style="width:55%;height:11px"></div><div style="height:10px"></div><div class="sk" style="width:45%;height:22px"></div></div>
+  <div class="cell"><div class="sk" style="width:55%;height:11px"></div><div style="height:10px"></div><div class="sk" style="width:45%;height:22px"></div></div>
+</div>
+<div style="display:flex;gap:14px;margin-top:16px">
+  <div class="card" style="flex:1"><div class="t">GitHub rate limit reached</div><div class="d">60 requests/hour per IP. Wait a little, then try again.</div></div>
+  <div class="card" style="flex:1"><div class="t">User not found</div><div class="d">No GitHub account for <strong>@ghost-user</strong>.</div></div>
+</div>
+</body></html>

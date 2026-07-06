@@ -25,3 +25,10 @@ venv/
 target/
 bin/
 obj/
+
+# TypeScript / Next.js generated files
+*.tsbuildinfo
+next-env.d.ts
+
+# Claude Code local (machine-specific) settings
+.claude/settings.local.json

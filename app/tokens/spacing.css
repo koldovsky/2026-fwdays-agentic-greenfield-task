@@ -1,0 +1,21 @@
+/* GitHub Battle Design System — spacing, radii & layout tokens.
+   Source of truth: ../../design-system/tokens/spacing.css (kept in sync). */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-16: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  --maxw-content: 1040px;
+}

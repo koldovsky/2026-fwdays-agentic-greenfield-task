@@ -1,0 +1,50 @@
+:root {
+  /* ── Base palette ── warm neutrals (stone) + two brand accents */
+  --stone-50:  #faf9f7;
+  --stone-100: #f2efec;
+  --stone-200: #e7e4e1;
+  --stone-400: #a8a29e;
+  --stone-500: #78716c;
+  --stone-700: #3d3a37;
+  --stone-800: #2c2926;
+  --stone-850: #242220;
+  --stone-900: #1c1917;
+  --white:     #ffffff;
+
+  --terracotta:      #b45a29;  /* primary accent (light) */
+  --terracotta-soft: #e0975a;  /* primary accent (dark)  */
+  --sage:            #5f7355;  /* secondary accent (light) */
+  --sage-soft:       #8aa678;  /* secondary accent (dark)  */
+  --danger:          #c0483b;
+  --danger-soft:     #e06a6a;
+
+  /* ── Semantic aliases — LIGHT theme (default) ── */
+  --bg: var(--stone-50);
+  --surface: var(--white);
+  --surface-track: var(--stone-100);
+  --border: var(--stone-200);
+  --text: var(--stone-900);
+  --text-muted: var(--stone-500);
+
+  --accent-primary: var(--terracotta);
+  --accent-secondary: var(--sage);
+  --accent-danger: var(--danger);
+  --accent-primary-wash: rgba(180,90,41,.09);
+  --accent-secondary-wash: rgba(95,115,85,.09);
+}
+
+/* ── Semantic aliases — DARK theme ── */
+.dark {
+  --bg: var(--stone-900);
+  --surface: var(--stone-850);
+  --surface-track: var(--stone-800);
+  --border: var(--stone-700);
+  --text: var(--stone-50);
+  --text-muted: var(--stone-400);
+
+  --accent-primary: var(--terracotta-soft);
+  --accent-secondary: var(--sage-soft);
+  --accent-danger: var(--danger-soft);
+  --accent-primary-wash: rgba(224,151,90,.14);
+  --accent-secondary-wash: rgba(138,166,120,.14);
+}

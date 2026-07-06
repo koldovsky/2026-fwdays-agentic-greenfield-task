@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Forms — Button, Input, ModeToggle" subtitle="Actions, username entry, mode segments" -->
+<!doctype html><html class="dark"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>body{margin:0;padding:22px;background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;flex-direction:column;gap:18px}
+.row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+button{border:none;cursor:pointer;font-family:var(--font-sans);font-weight:600;font-size:15px;padding:13px 26px;border-radius:var(--radius-md)}
+.seg{display:inline-flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px}
+.seg button{font-size:14px;padding:9px 20px;border-radius:8px}
+input{width:260px;padding:13px 15px;font-size:15px;font-family:var(--font-sans);background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-md);outline:none}</style></head><body>
+<div class="row">
+  <button style="background:var(--text);color:var(--bg)">Explore →</button>
+  <button style="background:var(--accent-primary);color:#fff">Compare →</button>
+  <button style="background:transparent;color:var(--text);border:1px solid var(--border)">Run again</button>
+  <button style="background:transparent;color:var(--text-muted)">Ghost</button>
+</div>
+<div class="row">
+  <div><input value="MukhaA"></div>
+  <div><input value="ghost-user" style="border-color:var(--accent-danger)"><div style="color:var(--accent-danger);font-size:12.5px;margin-top:6px">User not found</div></div>
+</div>
+<div class="seg"><button style="background:var(--accent-primary);color:#fff">Explore</button><button style="background:transparent;color:var(--text-muted)">Compare</button></div>
+</body></html>

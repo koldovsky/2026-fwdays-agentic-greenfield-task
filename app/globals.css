@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* GitHub Battle Design System — runtime tokens (see DESIGN.md). */
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/effects.css";
+
+/* Class-based dark mode. Product defaults to dark (see app/layout.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Expose the design tokens to Tailwind's utility engine.
+   `inline` means utilities emit the resolved var() references, so the .dark
+   class flip re-themes every `bg-*`, `text-*`, `border-*` at once. */
+@theme inline {
+  /* Semantic colors → bg-bg, bg-surface, text-text, text-text-muted,
+     border-border, bg-accent-primary, text-accent-secondary, … */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-track: var(--surface-track);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-danger: var(--accent-danger);
+  --color-accent-primary-wash: var(--accent-primary-wash);
+  --color-accent-secondary-wash: var(--accent-secondary-wash);
+
+  /* Font families → font-serif, font-sans, font-mono.
+     Bound directly to the next/font variables from app/layout.tsx. */
+  --font-serif: var(--font-newsreader), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', monospace;
+
+  /* Type scale → text-display, text-h1, text-h2, text-stat, text-body,
+     text-small, text-caption (values from app/tokens/typography.css). Without
+     these mappings Tailwind emits no font-size utility and preflight resets
+     headings to body size. */
+  --text-display: var(--text-display);
+  --text-h1: var(--text-h1);
+  --text-h2: var(--text-h2);
+  --text-stat: var(--text-stat);
+  --text-body: var(--text-body);
+  --text-small: var(--text-small);
+  --text-caption: var(--text-caption);
+
+  /* Radii → rounded-sm, rounded-md, rounded-lg, rounded-xl, rounded-pill */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+
+  /* Shadows → shadow-sm, shadow-md */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+
+  /* Content column → max-w-content (1040px) */
+  --container-content: var(--maxw-content);
+
+  /* Motion easing → ease-ds */
+  --ease-ds: var(--ease-out);
+}
+
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--lh-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Display & headings are serif — the numbers and titles are the hero. */
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    line-height: var(--lh-snug);
+  }
+}
+
+/* ── Motion helpers (mirror the design-system keyframes) ── */
+.ds-fade-up { animation: ds-fade-up var(--dur-med) var(--ease-out) both; }
+.ds-pop     { animation: ds-pop var(--dur-med) var(--ease-out) both; }
+
+/* Everything collapses to instant under reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
