@@ -1,0 +1,75 @@
+// @kamerton/bot — the outbox drain (S4 `booking-hitl` tasks.md §E, design.md
+// Decision 1: "the bot's `packages/bot/src/index.ts` gains a short-interval
+// timer... that drains deliverable rows, calls `transport.sendMessage`, and
+// marks each row `delivered` or `failed`. A `failed` row is retried on the
+// next tick"). TYPED THROWING STUB — red state for booking-hitl tasks.md
+// E.1. The signature and return shape below are the contract pinned by
+// `notification-drain.test.ts`; the body is implemented in E.2. No logic
+// lives here yet — same "single Not-implemented throw" convention as this
+// slice's other red-round files (`lib/src/booking/validate-preferences.ts`,
+// `packages/db/src/notifications.ts`'s own pre-B.4 header).
+//
+// FIELD/SHAPE CHOICES made here for the GREEN implementer to honor:
+//   - `NotificationRow.payload` is a pre-`JSON.stringify`'d string of
+//     `{ text: string; buttons?: SendMessageOptions["buttons"] }` (design.md
+//     Decision 1 / Decision 4 item 1's DDL comment: "JSON: { text, buttons?}
+//     (buttons only for proposed_again)"). This module parses it with
+//     `JSON.parse`, the same boundary convention `requests.ts`'s
+//     `parseOfferedSlots` already uses for its own JSON-in-TEXT column.
+//   - `drainNotifications` NEVER throws out of its own promise: an
+//     individual `transport.sendMessage` rejection is caught per-row and
+//     turned into `markNotificationFailed`, so one bad send (or one bad
+//     JSON payload) cannot stop the rest of the batch from draining
+//     (`@trace NFR-REL-01`).
+//   - Return shape is a small delivered/failed tally (`DrainNotificationsResult`)
+//     rather than `void`, mirroring `insertLead`/`markNotificationDelivered`'s
+//     own "return something a caller/test can assert on" convention — the
+//     E.3 timer wiring can log it, and `notification-drain.test.ts` asserts
+//     on it directly instead of only re-querying the DB.
+//   - `limit` defaults to a value comfortably above single-teacher daily
+//     volume (design.md Risks: "a handful of decisions per day") so the
+//     timer wiring (E.3) does not need to think about pagination.
+
+import type Database from "better-sqlite3";
+import type { TelegramTransport, SendMessageOptions } from "./telegram-transport.ts";
+
+/** The parsed shape of a `NotificationRow.payload` string (design.md
+ *  Decision 4 item 1's DDL comment: `JSON: { text, buttons? }`). Declared
+ *  locally rather than imported from `@kamerton/db` — `packages/db` never
+ *  parses this column itself (see `notifications.ts`'s own header: "a
+ *  notification's payload shape varies by `kind`, so `packages/db` has no
+ *  single type to serialize on its behalf"). */
+export interface NotificationPayload {
+  text: string;
+  buttons?: SendMessageOptions["buttons"];
+}
+
+export interface DrainNotificationsResult {
+  delivered: number;
+  failed: number;
+}
+
+const DEFAULT_DRAIN_LIMIT = 50;
+
+/**
+ * Drains every `pending`/`failed` `notifications` row: sends `payload.text`
+ * (plus `payload.buttons` when present) via `transport.sendMessage`, then
+ * marks the row `delivered` on success or `failed` on any thrown error —
+ * never propagating that error out of this function itself. A `delivered`
+ * row is never revisited by a later call (`findDeliverableNotifications`
+ * only ever returns `pending`/`failed` rows).
+ *
+ * TYPED THROWING STUB — see `notification-drain.test.ts` (booking-hitl
+ * tasks.md E.1) for the pinned contract; implement once that suite is
+ * confirmed red (E.2).
+ */
+export async function drainNotifications(
+  db: Database.Database,
+  transport: TelegramTransport,
+  limit: number = DEFAULT_DRAIN_LIMIT,
+): Promise<DrainNotificationsResult> {
+  throw new Error(
+    `Not implemented — notification-drain.ts is a red-round throwing stub ` +
+      `(booking-hitl tasks.md E.1/E.2). db=${typeof db}, transport=${typeof transport}, limit=${limit}`,
+  );
+}
