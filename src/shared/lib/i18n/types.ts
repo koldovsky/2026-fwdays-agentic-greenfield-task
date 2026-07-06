@@ -250,8 +250,12 @@ export interface Dictionary {
     /** GDPR self-serve section (NFR-GDPR-01/02). */
     readonly dataTitle: string;
     readonly dataLead: string;
-    /** Export-my-data action — links to GET /api/account/export. */
+    /** Export-my-data action — triggers a fetch-based download of GET /api/account/export. */
     readonly exportAction: string;
+    /** Shown while the export download is in flight (NFR-OBS-01). */
+    readonly exportPending: string;
+    /** Calm inline failure copy when the export could not be downloaded (NFR-OBS-01). */
+    readonly exportError: string;
     /** Delete-account action + its confirm step (FR-CV-05, NFR-GDPR-02). */
     readonly deleteAction: string;
     readonly deleteConfirmPrompt: string;

@@ -2,24 +2,24 @@
 
 ## 1. i18n strings
 
-- [ ] 1.1 Add `exportPending: string` and `exportError: string` to the `profile`
+- [x] 1.1 Add `exportPending: string` and `exportError: string` to the `profile`
   section of `src/shared/lib/i18n/types.ts` (after `exportAction`, before
   `deleteAction`). Cite NFR-OBS-01 in the comment.
-- [ ] 1.2 Add the Ukrainian values to `src/shared/lib/i18n/ua.ts`:
+- [x] 1.2 Add the Ukrainian values to `src/shared/lib/i18n/ua.ts`:
   `exportPending` (e.g. "Завантаження...") and `exportError` (calm, e.g.
   "Не вдалося завантажити дані. Спробуйте ще раз.").
-- [ ] 1.3 Add the English values to `src/shared/lib/i18n/en.ts`:
+- [x] 1.3 Add the English values to `src/shared/lib/i18n/en.ts`:
   `exportPending` (e.g. "Downloading...") and `exportError` (e.g.
   "Could not download your data. Please try again.").
 
 ## 2. Per-profile decrypt guard (service + repo)
 
-- [ ] 2.1 In `src/shared/lib/account/service.ts`: add optional `decryptionFailed?: true`
+- [x] 2.1 In `src/shared/lib/account/service.ts`: add optional `decryptionFailed?: true`
   to `ExportedCvProfile`. In `exportAccountData`, wrap the `getRawText` call for
   each profile in a try/catch; on throw, push `{ rawText: null, decryptionFailed: true }`
   and log a structured server-side message with the profile id and a stable code —
   no key value, no CV plaintext, no blob content (NFR-SEC-01).
-- [ ] 2.2 In `src/shared/lib/db/cv-profile-repo.ts`: wrap `decryptString` in
+- [x] 2.2 In `src/shared/lib/db/cv-profile-repo.ts`: wrap `decryptString` in
   `getRawText` with a try/catch; on failure return `null` rather than throwing.
   Add a server-side log line with profile id only (no key material, NFR-SEC-01).
   Note: the catch in 2.1 is the primary guard; 2.2 adds defense-in-depth at the
@@ -27,7 +27,7 @@
 
 ## 3. ExportDataButton client component
 
-- [ ] 3.1 Create `src/features/export-data-button/ui/ExportDataButton.tsx`
+- [x] 3.1 Create `src/features/export-data-button/ui/ExportDataButton.tsx`
   (client component, `"use client"`). Props: `locale?: Locale`. State machine:
   `idle | pending | error` (mirrors `DeleteAccountButton` shape). On click:
   set pending, `fetch('/api/account/export')`, on ok extract blob via
@@ -36,16 +36,16 @@
   the `exportPending` string while pending; renders `exportAction` when idle;
   shows `exportError` via `role="alert"` paragraph on error. No navigation, no
   `href` attribute on the trigger.
-- [ ] 3.2 Create `src/features/export-data-button/index.ts` (barrel, exports
+- [x] 3.2 Create `src/features/export-data-button/index.ts` (barrel, exports
   `ExportDataButton`).
-- [ ] 3.3 In `src/views/account-profile/ui/AccountProfileView.tsx`: replace the
+- [x] 3.3 In `src/views/account-profile/ui/AccountProfileView.tsx`: replace the
   `<Button href="/api/account/export" ...>` with `<ExportDataButton locale={locale} />`.
   Remove the wrapping `<div>` if the component renders its own container. Keep
   the surrounding `<div className="flex flex-col gap-4">` structure intact.
 
 ## 4. Tests
 
-- [ ] 4.1 `src/features/export-data-button/ui/ExportDataButton.test.tsx`:
+- [x] 4.1 `src/features/export-data-button/ui/ExportDataButton.test.tsx`:
   - idle: renders `exportAction` string.
   - success: mocks `fetch` returning ok + blob, asserts download anchor created
     and click fired, no navigation.
@@ -54,36 +54,36 @@
   - failure (network): mocks `fetch` throwing, same assert.
   - pending: fetch does not resolve; asserts `exportPending` string visible and
     button not re-activatable.
-- [ ] 4.2 `src/shared/lib/db/cv-profile-repo.test.ts`: add a case for `getRawText`
+- [x] 4.2 `src/shared/lib/db/cv-profile-repo.test.ts`: add a case for `getRawText`
   where `decryptString` throws — assert `null` is returned (no throw).
-- [ ] 4.3 `src/shared/lib/account/service.ts` (unit or integration test): add a
+- [x] 4.3 `src/shared/lib/account/service.ts` (unit or integration test): add a
   case where one profile's `getRawText` rejects — assert the export still resolves
   with all profiles present, the failing one has `rawText: null` and
   `decryptionFailed: true`, and the others have their text.
-- [ ] 4.4 `src/app/api/account/export/route.test.ts`: add a case where one profile
+- [x] 4.4 `src/app/api/account/export/route.test.ts`: add a case where one profile
   fails decryption — assert the route returns 200 with a body containing the
   partial profile (`decryptionFailed: true`), not 500. Assert the response body
   contains no key material.
-- [ ] 4.5 `src/views/account-profile/ui/AccountProfileView.test.tsx`: assert the
+- [x] 4.5 `src/views/account-profile/ui/AccountProfileView.test.tsx`: assert the
   GDPR section no longer contains an anchor pointing to `/api/account/export`
   (the old plain-link pattern is removed).
 
 ## 5. Verify
 
-- [ ] 5.1 `yarn lint` clean — no new lint errors, FSD import rule respected
+- [x] 5.1 `yarn lint` clean — no new lint errors, FSD import rule respected
   (`export-data-button` feature imports only from `shared` and `entities`).
-- [ ] 5.2 `yarn build` clean — no TypeScript errors; confirm `ExportedCvProfile`
+- [x] 5.2 `yarn build` clean — no TypeScript errors; confirm `ExportedCvProfile`
   with optional `decryptionFailed` is compatible at all call sites.
-- [ ] 5.3 `yarn test` green — all pre-existing tests pass; new tests from task 4
+- [x] 5.3 `yarn test` green — all pre-existing tests pass; new tests from task 4
   are included in the count.
 
 ## 6. Independent review (maker != checker)
 
-- [ ] 6.1 Run the `checker-review` subagent (fresh context, read-only) against the
+- [x] 6.1 Run the `checker-review` subagent (fresh context, read-only) against the
   diff of this change. Verify: (a) no anchor remains for the export CTA,
   (b) no log line contains key material or CV text in the new paths,
   (c) the partial-export 200 path is covered by a test,
   (d) `decryptionFailed` does not leak internal error messages.
   Record the verdict and any confirmed findings in `docs/current-state.md`.
-- [ ] 6.2 Update `docs/current-state.md` with last action, evidence (test count),
+- [x] 6.2 Update `docs/current-state.md` with last action, evidence (test count),
   and remaining blockers (prod env still unset).

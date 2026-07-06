@@ -75,6 +75,49 @@ describe("createCvProfileRepo.getRawText", () => {
     const repo = createCvProfileRepo(new FakeDb().enqueue([]), key);
     expect(await repo.getRawText("missing")).toBeNull();
   });
+
+  // Task 4.2 — NFR-SEC-01, NFR-GDPR-01: a corrupt ciphertext (e.g. a rotated key)
+  // must return null at the repo boundary, never throw to the caller. The caller
+  // must never see the encryption key or any error detail. Defense-in-depth: the
+  // service layer (service.ts) has its own try/catch, but the repo absorbs the
+  // failure first so the surface area for accidental leakage is minimal.
+  it("returns null when decryptString throws (e.g. wrong key / corrupt ciphertext) — does not re-throw (NFR-SEC-01)", async () => {
+    // A wrong key will cause the AES-GCM auth tag to fail, making decryptString throw.
+    const wrongKey = randomBytes(32);
+    // Encrypt with the real key so we have a valid-looking envelope.
+    const saveDb = new FakeDb().enqueue([
+      { id: "p1", user_id: "u1", created_at: "2026-07-02T00:00:00.000Z" },
+    ]);
+    const writerRepo = createCvProfileRepo(saveDb, key);
+    await writerRepo.save({ userId: "u1", rawText, profile });
+    const envelope = (saveDb.calls[0].params ?? [])[1] as string;
+
+    // Read with the wrong key — decryptString will throw inside getRawText.
+    const readDb = new FakeDb().enqueue([{ encrypted_text: envelope }]);
+    const readerRepo = createCvProfileRepo(readDb, wrongKey);
+
+    // Must resolve to null, never reject.
+    await expect(readerRepo.getRawText("p1")).resolves.toBeNull();
+  });
+
+  it("does not surface the key value or the ciphertext when decryption fails (NFR-SEC-01)", async () => {
+    const wrongKey = randomBytes(32);
+    const saveDb = new FakeDb().enqueue([
+      { id: "p1", user_id: "u1", created_at: "2026-07-02T00:00:00.000Z" },
+    ]);
+    await createCvProfileRepo(saveDb, key).save({ userId: "u1", rawText, profile });
+    const envelope = (saveDb.calls[0].params ?? [])[1] as string;
+
+    const readDb = new FakeDb().enqueue([{ encrypted_text: envelope }]);
+    const result = await createCvProfileRepo(readDb, wrongKey).getRawText("p1");
+
+    // The returned value must not leak any fragment of the key or the ciphertext.
+    const resultStr = String(result);
+    expect(resultStr).not.toContain(wrongKey.toString("hex"));
+    // rawText itself must not appear (would mean the wrong key somehow decrypted).
+    expect(resultStr).not.toBe(rawText);
+    expect(result).toBeNull();
+  });
 });
 
 describe("createCvProfileRepo.findByUser / deleteByUser", () => {

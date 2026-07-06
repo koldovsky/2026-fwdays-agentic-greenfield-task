@@ -67,14 +67,25 @@ export function createCvProfileRepo(db: Queryable, key: Buffer) {
       return rows.map(toRecord);
     },
 
-    /** Decrypt and return the raw résumé text for one profile (GDPR export, re-tailor). */
+    /**
+     * Decrypt and return the raw résumé text for one profile (GDPR export, re-tailor).
+     * Defense-in-depth (NFR-SEC-01, NFR-GDPR-01/02): a decrypt failure at this
+     * boundary returns null rather than throwing, so a single unreadable profile
+     * (e.g. a rotated key) never fails the caller. The log carries the profile id
+     * ONLY — never the key, the plaintext, or the ciphertext.
+     */
     async getRawText(id: string): Promise<string | null> {
       const { rows } = await db.query<{ encrypted_text: string }>(
         `SELECT encrypted_text FROM cv_profiles WHERE id = $1`,
         [id],
       );
       if (rows.length === 0) return null;
-      return decryptString(rows[0].encrypted_text, key);
+      try {
+        return decryptString(rows[0].encrypted_text, key);
+      } catch {
+        console.error(`[cv-profile-repo] decrypt_failed profile=${id}`);
+        return null;
+      }
     },
 
     /** Delete every profile for a user; FK cascade removes dependent tailorings (FR-CV-05). */

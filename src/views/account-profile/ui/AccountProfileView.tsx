@@ -5,9 +5,9 @@
 // read-only here; subscription management lives on /account/billing.
 import Link from "next/link";
 import { DeleteAccountButton } from "@/features/delete-profile";
+import { ExportDataButton } from "@/features/export-data-button";
 import type { Plan, SubscriptionAccess } from "@/entities/subscription";
 import { t, type Locale } from "@/shared/lib/i18n";
-import { Button } from "@/shared/ui";
 import type { TopBarUser } from "@/widgets/top-bar";
 
 export interface AccountProfileViewProps {
@@ -83,11 +83,7 @@ export function AccountProfileView({ user, subscription, locale = "ua" }: Accoun
           <h2 className="font-display text-lg tracking-tight text-ink">{profile.dataTitle}</h2>
           <p className="mb-4 mt-1 text-sm text-ink-soft">{profile.dataLead}</p>
           <div className="flex flex-col gap-4">
-            <div>
-              <Button href="/api/account/export" variant="secondary" size="sm">
-                {profile.exportAction}
-              </Button>
-            </div>
+            <ExportDataButton locale={locale} />
             <div className="border-t border-hairline pt-4">
               <DeleteAccountButton locale={locale} />
             </div>

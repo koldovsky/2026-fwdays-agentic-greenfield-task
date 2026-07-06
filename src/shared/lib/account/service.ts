@@ -18,6 +18,12 @@ export interface ExportedCvProfile {
   readonly profile: CvProfile;
   /** Decrypted résumé text — the subject's own data (NFR-GDPR-01). */
   readonly rawText: string | null;
+  /**
+   * Set when this one profile could not be decrypted (e.g. a rotated key). The
+   * export still succeeds for every other profile (NFR-GDPR-01/02). A boolean
+   * flag only — no internal error detail reaches the client (NFR-SEC-01).
+   */
+  readonly decryptionFailed?: true;
 }
 
 export interface AccountStores {
@@ -53,12 +59,27 @@ export async function exportAccountData(
   const profiles = await stores.cvProfiles.findByUser(userId);
   const cvProfiles: ExportedCvProfile[] = [];
   for (const p of profiles) {
-    cvProfiles.push({
-      id: p.id,
-      createdAt: p.createdAt,
-      profile: p.profile,
-      rawText: await stores.cvProfiles.getRawText(p.id),
-    });
+    // One profile's decrypt failure (e.g. rotated key) must never fail the whole
+    // export — the subject still gets everything else (NFR-GDPR-01/02). The log
+    // carries the profile id + a stable code ONLY: never the key, the CV
+    // plaintext, or the ciphertext (NFR-SEC-01).
+    try {
+      cvProfiles.push({
+        id: p.id,
+        createdAt: p.createdAt,
+        profile: p.profile,
+        rawText: await stores.cvProfiles.getRawText(p.id),
+      });
+    } catch {
+      console.error(`[account/export] decrypt_failed profile=${p.id}`);
+      cvProfiles.push({
+        id: p.id,
+        createdAt: p.createdAt,
+        profile: p.profile,
+        rawText: null,
+        decryptionFailed: true,
+      });
+    }
   }
 
   const summaries = await stores.tailorings.listByUser(userId);

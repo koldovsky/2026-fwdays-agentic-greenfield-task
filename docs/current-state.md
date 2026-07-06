@@ -7,6 +7,18 @@
 
 ## Last action
 
+- **T3 DONE + gate green (2026-07-06, ultracode).** `harden-account-export-ux`: fetch-based GDPR
+  download via new `features/export-data-button` slice (idle|pending|error state machine mirroring
+  DeleteAccountButton, blob→objectURL→synthetic anchor→revoke, NO href/navigation, inline
+  `exportError` via role=alert); per-profile decrypt guard defense-in-depth (service.ts primary +
+  cv-profile-repo.getRawText returns null instead of throwing) → one bad profile yields
+  `rawText:null, decryptionFailed:true` and export still 200 (GDPR-graceful); decrypt logs carry
+  profile id + stable code only, NO key/plaintext/ciphertext (NFR-SEC-01); route now returns a calm
+  coded 500 when the key is unset. `exportPending`/`exportError` i18n (ua+en). Maker(opus)→
+  test-author(sonnet, +31 tests)→verifier+checker(opus) separate contexts. Checker ship, 0 findings.
+  Gate: lint + build + **113 files / 760 tests green.** Implements NFR-GDPR-01/02, NFR-SEC-01,
+  NFR-OBS-01. Spec tasks ticked. **Prod env fix (CV_ENCRYPTION_KEY/DATABASE_URL + db:migrate) remains
+  ops-blocked** — this diff hardens the code path, does not set the env. **Next: T2.**
 - **T1 DONE + gate green (2026-07-06, ultracode).** `persist-tailoring-lifecycle`: migration 0005
   (status col pending|complete|failed, CHECK, back-fill existing→complete, auto-registered by the
   dir-scanning runner); repo `createPending`+`updateStatus`(+`cvProfileId` threaded)+`save` delegates
@@ -134,7 +146,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 ✅ → T3 (next) → T2 → T4 → T5**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 (next) → T4 → T5**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends

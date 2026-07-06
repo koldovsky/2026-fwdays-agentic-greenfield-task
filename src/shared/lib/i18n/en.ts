@@ -180,6 +180,8 @@ export const en: Dictionary = {
     dataTitle: "Your data",
     dataLead: "Download a copy of your data, or permanently delete your account.",
     exportAction: "Download my data",
+    exportPending: "Downloading...",
+    exportError: "Could not download your data. Please try again.",
     deleteAction: "Delete account",
     deleteConfirmPrompt:
       "Delete your account for good? Your CVs, tailorings, and subscription are erased. This can't be undone.",

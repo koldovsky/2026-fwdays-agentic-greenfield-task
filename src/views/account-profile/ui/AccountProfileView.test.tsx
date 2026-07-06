@@ -39,12 +39,35 @@ describe("AccountProfileView", () => {
     expect(screen.getByText(ua.accountMenu.comingSoon)).toBeInTheDocument();
   });
 
-  it("exposes GDPR export (download link) and delete (action)", () => {
+  // -----------------------------------------------------------------------
+  // Task 4.5 — NFR-OBS-01, NFR-GDPR-01: the old plain <a href> export pattern
+  // is replaced by ExportDataButton. Assert the anchor-to-/api/account/export
+  // is gone from the GDPR section and the button-based control is present.
+  // -----------------------------------------------------------------------
+
+  it("GDPR section does not contain a plain anchor pointing to /api/account/export (old pattern removed)", () => {
     render(<AccountProfileView user={USER} subscription={null} />);
-    expect(screen.getByRole("link", { name: ua.profile.exportAction })).toHaveAttribute(
-      "href",
-      "/api/account/export",
+
+    // Query ALL anchors in the document and assert none points at the export URL.
+    const anchors = screen.queryAllByRole("link");
+    const exportAnchors = anchors.filter(
+      (a) => a.getAttribute("href") === "/api/account/export",
     );
+    expect(exportAnchors).toHaveLength(0);
+  });
+
+  it("GDPR section renders a button-based export control (ExportDataButton) instead of a plain link", () => {
+    render(<AccountProfileView user={USER} subscription={null} />);
+
+    // ExportDataButton renders a <button> labelled with exportAction in idle state.
+    const exportButton = screen.getByRole("button", { name: ua.profile.exportAction });
+    expect(exportButton).toBeInTheDocument();
+    // It must not be an anchor element.
+    expect(exportButton.tagName.toLowerCase()).toBe("button");
+  });
+
+  it("GDPR delete action is still present alongside the export button", () => {
+    render(<AccountProfileView user={USER} subscription={null} />);
     expect(screen.getByRole("button", { name: ua.profile.deleteAction })).toBeInTheDocument();
   });
 });
