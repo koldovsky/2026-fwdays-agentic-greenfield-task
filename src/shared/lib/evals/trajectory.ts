@@ -36,6 +36,15 @@ const GROUNDING_FORBIDDEN = new Set([
   "coverLetter",
   "coverLetterContext",
   "attachment",
+  // The FLAGGED coverage judge (improve-tailoring-quality T5): its context keys
+  // must never reach the bullet-grounding pass. The judge reads CV text +
+  // requirements to rescore the CHECKLIST; letting `requirements` or a judge
+  // verdict into grounding would let a requirement-driven coverage claim launder
+  // an unsupported bullet to "grounded" (BC-HONESTY-01/03). `cvText` stays
+  // allowed (it is grounding's own legal source); the judge-specific keys do not.
+  "requirements",
+  "coverageJudge",
+  "coverageVerdicts",
 ]);
 
 function grade(checks: Check[]): Grade {
@@ -61,6 +70,10 @@ function orderOk(skills: readonly SkillName[]): boolean {
     // after extraction, alongside the other pure analysis steps, ahead of
     // generation (add-tailoring-intelligence §3).
     "infer-seniority": 2,
+    // The flagged coverage judge (T5) sits with the other pure analysis steps,
+    // after extraction and ahead of generation; it feeds `score`, so it shares
+    // rank 2 (non-decreasing order lets judge and score co-locate).
+    "judge-coverage": 2,
     score: 2,
     "derive-clarifying-questions": 2,
     "generate-bullet": 3,

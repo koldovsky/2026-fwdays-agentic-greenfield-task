@@ -6,6 +6,7 @@
 import type {
   CareerStage,
   ConfirmedAnswerEvidence,
+  CoverageJudgeInput,
   CoverLetterInput,
   CoverLetterVerificationInput,
   DocumentAttachment,
@@ -210,6 +211,71 @@ function formatAttachmentBlock(
     "Використай його, щоб не втратити деталей, але НЕ додавай навичок, цифр,",
     "компаній чи досвіду понад те, що є в резюме (BC-HONESTY-01).",
   ];
+}
+
+/**
+ * Coverage-judge system prompt (FLAGGED analysis-phase step, T5 §2.2). One
+ * batched call over CV text + requirements ONLY (NFR-COST-01). It judges each
+ * requirement `covered` / `adjacent` / `uncovered` and — this is the honesty
+ * hinge — MUST return a VERBATIM CV span as the citation for anything not
+ * `uncovered`. A downstream deterministic scorer re-verifies every citation
+ * against the CV text and discards any it cannot find verbatim (BC-HONESTY-01),
+ * so a hallucinated citation buys the model nothing. The prompt forbids
+ * paraphrasing the citation for exactly that reason.
+ */
+export const COVERAGE_JUDGE_SYSTEM_PROMPT = [
+  "Ти — аналітик відповідності резюме вимогам вакансії.",
+  "Твої ЄДИНІ джерела — речення з резюме кандидата, наведені нижче.",
+  "Для КОЖНОЇ вимоги визнач рівень покриття:",
+  '- "covered" — резюме прямо підтверджує вимогу;',
+  '- "adjacent" — резюме має дотичний досвід, але не прямий;',
+  '- "uncovered" — у резюме немає відповідних підтверджень.',
+  "Для кожної вимоги, крім uncovered, наведи citation — ДОСЛІВНУ цитату",
+  "(точний фрагмент речення) з резюме, слово в слово, без переказу і без змін.",
+  "Категорично заборонено вигадувати цитати чи навички, яких немає в резюме",
+  "(BC-HONESTY-01). Якщо дослівної цитати немає — вимога uncovered.",
+  "Поверни ЛИШЕ валідний JSON без пояснень, у форматі:",
+  '{"verdicts":[{"requirementId":"r1","label":"covered","citation":"<дослівна цитата з резюме>"}]}',
+].join("\n");
+
+// --- Coverage-judge prompt (flagged analysis-phase step, T5) ----------------
+
+/**
+ * Build the coverage-judge prompt (T5 §2.2). Carries the ranked requirements and
+ * the candidate's CV sentences ONLY — no JD prose beyond the requirements, no
+ * bullets, no user id (NFR-SEC-02). One call judges every requirement
+ * (NFR-COST-01). Requirements are labeled with their id so verdicts map back
+ * deterministically.
+ */
+export function buildCoverageJudgePrompt(input: CoverageJudgeInput): Prompt {
+  const { requirements, cvSentences } = input;
+
+  const requirementLines =
+    requirements.length > 0
+      ? requirements
+          .map((r) => {
+            const weight = r.importance === "must-have" ? "обовʼязково" : "бажано";
+            return `[${r.id}] [${weight}] ${r.text}`;
+          })
+          .join("\n")
+      : "(вимоги відсутні)";
+
+  const userContent = [
+    "## Речення з резюме кандидата (єдине джерело істини)",
+    formatSentences(cvSentences),
+    "",
+    "## Вимоги вакансії",
+    requirementLines,
+    "",
+    "Оціни покриття кожної вимоги і наведи дослівну цитату з резюме.",
+  ].join("\n");
+
+  const messages: readonly PromptMessage[] = [
+    { role: "system", content: COVERAGE_JUDGE_SYSTEM_PROMPT },
+    { role: "user", content: userContent },
+  ];
+
+  return { messages };
 }
 
 // --- Pass 0: extraction prompt ---------------------------------------------

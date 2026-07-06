@@ -16,6 +16,7 @@ export {
   getPaymentsProviderName,
   getPaymentsWebhookSecret,
   isPaymentsEmulatorEnabled,
+  isCoverageJudgeEnabled,
   type LlmProviderName,
   type PaymentsProviderName,
 } from "./env";

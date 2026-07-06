@@ -46,6 +46,30 @@ export function getOpenAiApiKey(): string {
   return key;
 }
 
+/**
+ * Whether the FLAGGED LLM coverage judge runs (`COVERAGE_JUDGE`,
+ * improve-tailoring-quality T5 §2.1). DEFAULT OFF: the pure heuristic scorer
+ * stays the default path (FR-CHECKLIST-01, TC-PURE-01). The judge is an
+ * optional enhancement that can only UPGRADE a requirement off `gap` when it has
+ * surviving verbatim CV evidence — it never inflates a score from thin air.
+ *
+ * When ON it REQUIRES `ANTHROPIC_API_KEY` (the judge is an LLM call); a misconfig
+ * (flag on, key absent) degrades to OFF rather than crashing, because the loop
+ * calls this on the hot path and an honest tailoring must never fail over a
+ * feature-flag misconfiguration (NFR-OBS-01). NON-THROWING by contract.
+ *
+ * Accepts `1` / `true` / `on` (case-insensitive) as ON; anything else — unset,
+ * empty, `0`, `false`, `off`, or a typo — is OFF (fail-closed to the pure path).
+ */
+export function isCoverageJudgeEnabled(): boolean {
+  const raw = process.env.COVERAGE_JUDGE?.trim().toLowerCase();
+  const flagged = raw === "1" || raw === "true" || raw === "on";
+  if (!flagged) return false;
+  // Flag on but key absent → degrade to off (never throw on the hot path).
+  const key = process.env.ANTHROPIC_API_KEY;
+  return key !== undefined && key !== "";
+}
+
 export type LlmProviderName = "claude" | "chatgpt";
 
 /** LLM provider selector (`LLM_PROVIDER`); Claude is the default (TC-STACK-03). */

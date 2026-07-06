@@ -135,6 +135,44 @@ export interface CoverLetterVerdict {
   readonly unsupportedClaims: readonly string[];
 }
 
+// --- Flagged LLM coverage judge (analysis phase, improve-tailoring-quality T5) --
+
+/**
+ * Input to the FLAGGED batched coverage judge (T5 §2.2). ONE call per tailoring
+ * (NFR-COST-01) that judges every requirement at once. It carries ONLY the
+ * candidate's own CV text and the ranked requirements — never the JD prose
+ * beyond those requirements, never bullets, never a user id (NFR-SEC-02). The
+ * judge produces per-requirement verdicts WITH a verbatim CV citation; the
+ * deterministic scorer downstream re-verifies each citation and discards any it
+ * cannot find verbatim, so the judge can never inflate a score from thin air
+ * (BC-HONESTY-01).
+ */
+export interface CoverageJudgeInput {
+  readonly requirements: readonly Requirement[];
+  /** The candidate's own CV sentences — the ONLY legal source of a citation. */
+  readonly cvSentences: readonly string[];
+}
+
+/** A judge's coverage call on ONE requirement (T5 §2.2). */
+export type CoverageVerdictLabel = "covered" | "adjacent" | "uncovered";
+
+/**
+ * One requirement's coverage verdict from the judge. `citation` is the verbatim
+ * CV span the judge claims backs the requirement — the scorer re-checks it
+ * appears verbatim in the CV text and discards the verdict otherwise. For
+ * `uncovered` the citation is expected empty/absent (nothing to cite).
+ */
+export interface CoverageVerdict {
+  readonly requirementId: string;
+  readonly label: CoverageVerdictLabel;
+  /** Verbatim CV span the judge cites as evidence; absent for `uncovered`. */
+  readonly citation?: string;
+}
+
+export interface CoverageJudgeResult {
+  readonly verdicts: readonly CoverageVerdict[];
+}
+
 // --- Pass 1: generation ---------------------------------------------------
 
 export interface GenerationInput {

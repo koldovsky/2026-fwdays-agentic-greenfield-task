@@ -24,14 +24,14 @@
 
 ## 2. Flagged LLM coverage judge
 
-- [ ] 2.1 `shared/config/env.ts`: `COVERAGE_JUDGE` flag accessor, default off; on requires `ANTHROPIC_API_KEY`; non-throwing check for the loop (NFR-OBS-01).
-- [ ] 2.2 `shared/lib/llm/prompts.ts`: batched coverage-judge prompt (one call per tailoring, NFR-COST-01) over CV text + requirements ONLY; parser for per-requirement `{covered|adjacent|uncovered}` verdicts with verbatim citations.
-- [ ] 2.3 Deterministic scorer over cited evidence: verify each citation appears verbatim in the CV text; discard uncited/fabricated verdicts (fall through to heuristics); every upgrade off `gap` requires a surviving citation; rationale names it.
-- [ ] 2.4 Loop wiring: optional judge step in the analysis phase (before score), fail-soft to the heuristic path on error/timeout; recorded context keys limited to `cvText` + `requirements`.
-- [ ] 2.5 Honesty guardrails: add the judge context keys to `GROUNDING_FORBIDDEN` (`shared/lib/evals/trajectory.ts`); adversarial trace test proving a judge key in grounding context fails the eval; test that a judge `covered` verdict never unflags an `overclaim-risk` bullet (BC-HONESTY-02).
-- [ ] 2.6 honesty-eval fixtures for the judge (grounded upgrade accepted, fabricated citation rejected); live run deferred until `ANTHROPIC_API_KEY` is available, deterministic proxies must be green.
-- [ ] 2.7 Verify group 2: lint + build + test green; flag-off path proven identical to group 1 behavior (no LLM call recorded).
-- [ ] 2.8 Independent review of group 2 (checker subagent, maker != checker): grounding isolation, score-inflation risk, FR-CHECKLIST-01 amendment scope (flagged path only).
+- [x] 2.1 `shared/config/env.ts`: `COVERAGE_JUDGE` flag accessor, default off; on requires `ANTHROPIC_API_KEY`; non-throwing check for the loop (NFR-OBS-01).
+- [x] 2.2 `shared/lib/llm/prompts.ts`: batched coverage-judge prompt (one call per tailoring, NFR-COST-01) over CV text + requirements ONLY; parser for per-requirement `{covered|adjacent|uncovered}` verdicts with verbatim citations.
+- [x] 2.3 Deterministic scorer over cited evidence: verify each citation appears verbatim in the CV text; discard uncited/fabricated verdicts (fall through to heuristics); every upgrade off `gap` requires a surviving citation; rationale names it.
+- [x] 2.4 Loop wiring: optional judge step in the analysis phase (before score), fail-soft to the heuristic path on error/timeout; recorded context keys limited to `cvText` + `requirements`.
+- [x] 2.5 Honesty guardrails: add the judge context keys to `GROUNDING_FORBIDDEN` (`shared/lib/evals/trajectory.ts`); adversarial trace test proving a judge key in grounding context fails the eval; test that a judge `covered` verdict never unflags an `overclaim-risk` bullet (BC-HONESTY-02).
+- [x] 2.6 honesty-eval fixtures for the judge (grounded upgrade accepted, fabricated citation rejected); live run deferred until `ANTHROPIC_API_KEY` is available, deterministic proxies must be green.
+- [x] 2.7 Verify group 2: lint + build + test green; flag-off path proven identical to group 1 behavior (no LLM call recorded).
+- [x] 2.8 Independent review of group 2 (checker subagent, maker != checker): grounding isolation, score-inflation risk, FR-CHECKLIST-01 amendment scope (flagged path only).
 
 ## 3. Grounded LLM cover letter (default paid experience)
 

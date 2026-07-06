@@ -10,11 +10,13 @@
 // the JD (BC-HONESTY-01 / FR-BULLETS-03) and that no user id reached a payload
 // (NFR-SEC-02).
 import {
+  COVERAGE_JUDGE_SYSTEM_PROMPT,
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
   type CareerStage,
+  type CoverageVerdict,
   type GroundingLabel,
   type LlmCallOptions,
   type LlmProvider,
@@ -26,6 +28,8 @@ import {
 export type FakePhase =
   | "extraction"
   | "seniority"
+  /** T5 flagged coverage judge — analysis-phase, off by default. */
+  | "coverage-judge"
   | "generation"
   | "grounding"
   | "unknown";
@@ -45,6 +49,8 @@ export interface FakeProviderScript {
   readonly extraction?: FakeResponder;
   /** §3 seniority inference — auxiliary/best-effort; unscripted calls throw. */
   readonly seniority?: FakeResponder;
+  /** T5 flagged coverage judge — auxiliary/best-effort; unscripted calls throw. */
+  readonly coverageJudge?: FakeResponder;
   readonly generation?: FakeResponder;
   readonly grounding?: FakeResponder;
   /** Phases that should throw instead of responding (fail-honest tests). */
@@ -66,6 +72,7 @@ export function classifyPrompt(prompt: Prompt): FakePhase {
   const system = prompt.messages.find((m) => m.role === "system")?.content ?? "";
   if (system === EXTRACTION_SYSTEM_PROMPT) return "extraction";
   if (system === SENIORITY_SYSTEM_PROMPT) return "seniority";
+  if (system === COVERAGE_JUDGE_SYSTEM_PROMPT) return "coverage-judge";
   if (system === GENERATION_SYSTEM_PROMPT) return "generation";
   if (system === GROUNDING_SYSTEM_PROMPT) return "grounding";
   return "unknown";
@@ -101,11 +108,13 @@ export function createFakeProvider(script: FakeProviderScript = {}): FakeProvide
         ? script.extraction
         : phase === "seniority"
           ? script.seniority
-          : phase === "generation"
-            ? script.generation
-            : phase === "grounding"
-              ? script.grounding
-              : undefined;
+          : phase === "coverage-judge"
+            ? script.coverageJudge
+            : phase === "generation"
+              ? script.generation
+              : phase === "grounding"
+                ? script.grounding
+                : undefined;
     const text = resolve(responder, call);
     if (text === undefined) {
       throw new Error(`fake: no response scripted for phase "${phase}"`);
@@ -142,6 +151,11 @@ export function fakeExtraction(requirements: readonly Requirement[]): string {
 /** Build a seniority response: `{"stage":"...","rationale":"..."}` (parse.ts). */
 export function fakeSeniority(stage: CareerStage, rationale = "На основі досвіду в резюме."): string {
   return JSON.stringify({ stage, rationale });
+}
+
+/** Build a coverage-judge response: `{"verdicts":[{requirementId,label,citation?}]}` (T5). */
+export function fakeCoverageJudge(verdicts: readonly CoverageVerdict[]): string {
+  return JSON.stringify({ verdicts });
 }
 
 /** Build a generation response: `{"bullets":[{id,text,sourceSentence?}]}`. */

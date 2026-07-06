@@ -74,7 +74,7 @@ function aliasesOf(keyword: string): readonly string[] {
  * equal to overclaiming (BC-HONESTY-01). Handles tech tokens with punctuation
  * (k8s, c#, .net, node.js) since the flanks only reject letters/digits.
  */
-function containsToken(text: string, token: string): boolean {
+export function containsToken(text: string, token: string): boolean {
   const haystack = text.toLowerCase();
   const needle = token.toLowerCase();
   if (needle.length === 0) return false;
@@ -127,7 +127,7 @@ const STOPWORDS = new Set([
 ]);
 
 /** Meaningful word-tokens of a keyword (len >= 3, not a stopword). */
-function tokenize(keyword: string): string[] {
+export function tokenize(keyword: string): string[] {
   return keyword
     .toLowerCase()
     .split(/[^\p{L}\p{N}+#]+/u)

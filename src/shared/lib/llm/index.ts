@@ -4,18 +4,21 @@
 export {
   COVER_LETTER_SYSTEM_PROMPT,
   COVER_LETTER_VERIFICATION_SYSTEM_PROMPT,
+  COVERAGE_JUDGE_SYSTEM_PROMPT,
   EXTRACTION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
   GROUNDING_SYSTEM_PROMPT,
   SENIORITY_SYSTEM_PROMPT,
   buildCoverLetterPrompt,
   buildCoverLetterVerificationPrompt,
+  buildCoverageJudgePrompt,
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
   buildSeniorityPrompt,
 } from "./prompts";
 export {
+  parseCoverageJudgeResponse,
   parseCoverLetterResponse,
   parseCoverLetterVerdict,
   parseExtractionResponse,
@@ -30,6 +33,10 @@ export { resolveLlmProvider } from "./factory";
 export type {
   CareerStage,
   ConfirmedAnswerEvidence,
+  CoverageJudgeInput,
+  CoverageJudgeResult,
+  CoverageVerdict,
+  CoverageVerdictLabel,
   CoverLetterInput,
   CoverLetterOutput,
   CoverLetterVerdict,

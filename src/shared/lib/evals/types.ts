@@ -54,6 +54,12 @@ export type SkillName =
   | "parse-cv"
   | "extract-requirements"
   | "infer-seniority"
+  // FLAGGED coverage judge (improve-tailoring-quality T5): an optional
+  // analysis-phase LLM step that runs BEFORE score and can only upgrade a
+  // requirement off `gap` with verbatim-cited CV evidence. Absent entirely when
+  // the COVERAGE_JUDGE flag is off (no step recorded → flag-off traces stay
+  // identical to the pure heuristic path).
+  | "judge-coverage"
   | "derive-clarifying-questions"
   | "generate-bullet"
   | "ground-bullet"

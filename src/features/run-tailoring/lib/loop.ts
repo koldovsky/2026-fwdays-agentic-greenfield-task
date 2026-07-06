@@ -23,12 +23,15 @@ import { applyExportDefaults, type Bullet, type EvidenceSource } from "@/entitie
 import { deriveClarifyingQuestions, type ClarifyingQuestion } from "@/entities/clarifying-question";
 import { normalizeCvText } from "@/entities/cv-profile";
 import type { TailoringChecklistRow } from "@/entities/tailoring";
+import { isCoverageJudgeEnabled } from "@/shared/config";
 import { MAX_ATTEMPTS, type RunTrace, type SkillName, type TraceStep } from "@/shared/lib/evals";
 import {
+  buildCoverageJudgePrompt,
   buildExtractionPrompt,
   buildGenerationPrompt,
   buildGroundingPrompt,
   buildSeniorityPrompt,
+  parseCoverageJudgeResponse,
   parseExtractionResponse,
   parseGenerationResponse,
   parseGroundingResponse,
@@ -40,7 +43,15 @@ import {
   type GroundingVerdict,
   type LlmProvider,
 } from "@/shared/lib/llm";
-import { checklistItem, matchScore, type CvProfile, type Requirement } from "@/shared/lib/scoring";
+import {
+  applyCoverageJudge,
+  checklistItem,
+  matchScore,
+  type CoverageVerdict,
+  type CvProfile,
+  type Requirement,
+  type ScoredRow,
+} from "@/shared/lib/scoring";
 
 import type {
   TailorErrorCode,
@@ -63,6 +74,9 @@ export const STEP_CAP = 40;
 const EXTRACTION_MAX_TOKENS = 2048;
 // Seniority is a tiny JSON verdict ({stage, rationale}) — a small budget suffices.
 const SENIORITY_MAX_TOKENS = 512;
+// The coverage judge returns one small verdict per requirement in a single
+// batched call (NFR-COST-01); a modest budget covers a full checklist.
+const COVERAGE_JUDGE_MAX_TOKENS = 2048;
 const GENERATION_MAX_TOKENS = 4096;
 // Grounding runs at `high` effort (see below) whose adaptive-thinking tokens
 // share this budget; 2048 leaves headroom so deliberation can't starve the
@@ -80,6 +94,15 @@ const GROUNDING_EFFORT = "high" as const;
 
 export interface LoopDeps {
   readonly llm: LlmProvider;
+  /**
+   * Whether the FLAGGED coverage judge runs (improve-tailoring-quality T5).
+   * Defaults to {@link isCoverageJudgeEnabled} (env `COVERAGE_JUDGE`, default
+   * OFF, requires `ANTHROPIC_API_KEY`). Overridable so tests exercise the
+   * flag-on path deterministically. When OFF the analysis phase makes NO judge
+   * LLM call and records NO `judge-coverage` step — the trace is byte-identical
+   * to the pure heuristic path (Group 1, FR-CHECKLIST-01 default).
+   */
+  readonly coverageJudgeEnabled?: boolean;
 }
 
 class StepFailedError extends Error {
@@ -270,16 +293,81 @@ export async function* runAnalysisPhase(
     );
     if (careerStage !== undefined) yield { type: "step", skill: "infer-seniority" };
 
-    // 3. score — pure and deterministic, no LLM (FR-CHECKLIST-01, TC-PURE-01).
-    // Reordered ahead of generation (add-resume-wizard design.md §1): score
-    // only ever depended on requirements + cvProfile, never on generated
-    // bullets, so the wizard can show the checklist before any bullet exists.
-    const scored = await runStep("score", ["requirements", "cvProfile"], undefined, async () => {
-      const checklist: TailoringChecklistRow[] = requirements.map((requirement) => ({
+    // 2c. judge-coverage — FLAGGED, OPTIONAL LLM coverage judge (T5 §2.2/§2.4).
+    //     Runs ONLY when the COVERAGE_JUDGE flag is on; when off, NO call is
+    //     made and NO step is recorded, so a flag-off run's trace is identical
+    //     to the pure heuristic path (Group 1). Sees CV text + requirements
+    //     ONLY (contextKeys `["cvText", "requirements"]`, NFR-SEC-02); NEVER the
+    //     JD prose beyond requirements, bullets, or a user id. Best-effort:
+    //     runOptional records nothing on error/timeout, so a flaky judge
+    //     fail-softs to the heuristic scorer (NFR-OBS-01). Its verdicts feed the
+    //     score step below; they are NEVER threaded into grounding
+    //     (BC-HONESTY-01/03 — GROUNDING_FORBIDDEN denies `requirements`/judge keys).
+    const judgeEnabled = deps.coverageJudgeEnabled ?? isCoverageJudgeEnabled();
+    let coverageVerdicts: readonly CoverageVerdict[] | undefined;
+    if (judgeEnabled) {
+      const judgePrompt = buildCoverageJudgePrompt({
+        requirements,
+        cvSentences: cvProfile.sentences,
+      });
+      coverageVerdicts = await runOptional(
+        "judge-coverage",
+        ["cvText", "requirements"],
+        JSON.stringify(judgePrompt),
+        async () => {
+          const raw = await deps.llm.complete(judgePrompt, {
+            maxTokens: COVERAGE_JUDGE_MAX_TOKENS,
+          });
+          const parsed = parseCoverageJudgeResponse(raw);
+          if (!parsed.ok) throw new Error(parsed.error);
+          // Map the llm-slice verdicts onto the scorer's local vocabulary at
+          // the seam (scoring stays free of an llm import, TC-PURE-01).
+          return parsed.value.verdicts.map((v) => ({
+            requirementId: v.requirementId,
+            label: v.label,
+            ...(v.citation ? { citation: v.citation } : {}),
+          }));
+        },
+      );
+      if (coverageVerdicts !== undefined) yield { type: "step", skill: "judge-coverage" };
+    }
+
+    // 3. score — DETERMINISTIC (FR-CHECKLIST-01, TC-PURE-01). Reordered ahead of
+    // generation (add-resume-wizard design.md §1): score only ever depended on
+    // requirements + cvProfile, never on generated bullets, so the wizard can
+    // show the checklist before any bullet exists. On the FLAGGED path the pure
+    // heuristic rows are then re-scored over the judge's CITED evidence
+    // (applyCoverageJudge, T5 §2.3): a verdict can only upgrade a `gap` when its
+    // citation appears VERBATIM in the CV text AND overlaps the requirement, so
+    // a fabricated or irrelevant citation buys nothing and the score can never
+    // inflate from thin air (BC-HONESTY-01).
+    //
+    // TRACE HONESTY (NFR-OBS-01): the score step's recorded contextKeys name
+    // every input it consumes. On the flag-OFF path it reads only
+    // `["requirements", "cvProfile"]`, byte-identical to Group 1. On the flag-ON
+    // path it ALSO consumes `coverageVerdicts` (a third, already-verified input),
+    // so that dependency is recorded HONESTLY — the flag-ON trace is NOT
+    // byte-identical to Group 1 and must not claim to be. The verdicts feed the
+    // SCORE step only; they NEVER reach the bullet-grounding pass and no user id
+    // is in scope here (NFR-SEC-02, BC-HONESTY-01/03).
+    const scoreContextKeys =
+      coverageVerdicts !== undefined
+        ? ["requirements", "cvProfile", "coverageVerdicts"]
+        : ["requirements", "cvProfile"];
+    const scored = await runStep("score", scoreContextKeys, undefined, async () => {
+      const heuristicRows: ScoredRow[] = requirements.map((requirement) => ({
         requirement,
         // Inferred seniority relaxes the claimed-skill rule for mid/senior
         // candidates (improve-tailoring-quality T5); undefined stays strict.
         item: checklistItem(requirement, cvProfile, careerStage),
+      }));
+      const rows =
+        coverageVerdicts !== undefined
+          ? applyCoverageJudge(heuristicRows, coverageVerdicts, cvProfile.sentences)
+          : heuristicRows;
+      const checklist: TailoringChecklistRow[] = rows.map((row) => ({
+        requirement: row.requirement,
+        item: row.item,
       }));
       return { checklist, matchScore: matchScore(checklist) };
     });

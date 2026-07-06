@@ -7,6 +7,25 @@
 
 ## Last action
 
+- **T5 GROUP 2 (flagged LLM coverage judge) — DONE + gate green (2026-07-06, ultracode).**
+  `isCoverageJudgeEnabled()` flag (DEFAULT OFF, requires ANTHROPIC_API_KEY when on, non-throwing).
+  Batched one-call judge prompt over CV sentences + requirements ONLY (NFR-COST-01); tolerant parser
+  yields per-req {covered|adjacent|uncovered} + a verbatim citation. Pure deterministic scorer
+  `applyCoverageJudge` (new `judge-score.ts`, local `judge-types.ts`, no llm import, TC-PURE-01) only
+  upgrades `gap` rows and ONLY when the citation passes a RELEVANCE GATE: verbatim-in-CV + non-trivial
+  (>=8 chars, real tokens) + shares a requirement keyword-token (reuses checklist.ts tokenize/
+  containsToken). covered→partial (never met), adjacent→info; fabricated/irrelevant/short citations
+  discarded → heuristic gap kept (score cannot inflate from thin air, BC-HONESTY-01). Loop wires an
+  OPTIONAL judge step before score, fail-soft via runOptional; judge keys added to GROUNDING_FORBIDDEN
+  + `judge-coverage` skill; flagged score step now honestly records `coverageVerdicts` in contextKeys
+  (flag-OFF keys unchanged). **FLAG-OFF = byte-identical to Group 1 (no LLM call/step recorded), test-
+  locked.** Maker(opus)→test-author(sonnet)→verifier+checker(opus). Checker ship, 0 blockers; 3 minors:
+  2 FIXED (loose citation gate → relevance-aware = a real inflation vector, closed + proven by
+  matchScore-identity test; trace contextKeys honesty), 1 no-op (intentional type dup, documented).
+  +105 tests (incl. 3 loose-citation fixtures reconciled). Gate: lint 0/0 + build + **124 files /
+  1045 tests green.** Implements FR-CHECKLIST-01 (flagged path only), BC-HONESTY-01/02, NFR-SEC-02,
+  NFR-OBS-01, NFR-COST-01, TC-PURE-01. Live judge eval deferred (deterministic proxies green).
+  **Next: T5 Group 4 (structured resume doc + deferred CvDocument §1.1/1.3) → Group 5 (final).**
 - **T5 GROUP 3 (grounded LLM cover letter) — DONE + gate green (2026-07-06, ultracode).**
   Wired the WIP `generateGroundedCoverLetter` (had ZERO callers) into the paid cover-letter export.
   Integration point = `POST /api/export/cover-letter` (already holds provider + paywall; export-time

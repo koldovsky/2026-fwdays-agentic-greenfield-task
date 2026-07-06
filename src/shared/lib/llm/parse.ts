@@ -4,6 +4,9 @@
 
 import type {
   CareerStage,
+  CoverageJudgeResult,
+  CoverageVerdict,
+  CoverageVerdictLabel,
   CoverLetterOutput,
   CoverLetterVerdict,
   ExtractionResult,
@@ -23,6 +26,12 @@ const GROUNDING_LABELS: readonly GroundingLabel[] = [
 ];
 
 const CAREER_STAGES: readonly CareerStage[] = ["junior", "mid", "senior"];
+
+const COVERAGE_LABELS: readonly CoverageVerdictLabel[] = [
+  "covered",
+  "adjacent",
+  "uncovered",
+];
 
 const EVIDENCE_KINDS = ["cv", "user-confirmed"] as const;
 type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
@@ -215,6 +224,57 @@ export function parseCoverLetterVerdict(
 
   const supported = supportedRaw && unsupportedClaims.length === 0;
   return ok({ supported, unsupportedClaims });
+}
+
+// --- Flagged coverage-judge response (improve-tailoring-quality T5) ---------
+
+function normalizeCoverageLabel(value: unknown): CoverageVerdictLabel | undefined {
+  const label = asString(value)?.trim().toLowerCase();
+  return COVERAGE_LABELS.find((l) => l === label);
+}
+
+/**
+ * Parse the FLAGGED coverage-judge response (T5 §2.2) into per-requirement
+ * verdicts. Tolerant like every parser here (NFR-OBS-01): malformed JSON or a
+ * missing `verdicts` array yields a typed error so the loop falls back to the
+ * pure heuristic path. An unknown/invalid label maps conservatively to
+ * `uncovered` — never over-trust the model into claiming coverage. The
+ * `citation` is carried through UNVERIFIED here (the pure scorer re-checks it
+ * verbatim against the CV text, T5 §2.3); it is dropped for `uncovered` since
+ * that label asserts no evidence. Entries without a `requirementId` are skipped
+ * (they cannot map to a requirement) rather than failing the whole batch, so one
+ * malformed row never sinks the other verdicts.
+ */
+export function parseCoverageJudgeResponse(
+  raw: string,
+): ParseResult<CoverageJudgeResult> {
+  const root = extractJson(raw);
+  if (root === undefined) return fail("Відповідь не містить валідного JSON");
+  if (!isObject(root)) return fail("Очікувався JSON-обʼєкт з полем verdicts");
+
+  const rawVerdicts = root["verdicts"];
+  if (!Array.isArray(rawVerdicts)) {
+    return fail("Поле verdicts відсутнє або не є масивом");
+  }
+
+  const verdicts: CoverageVerdict[] = [];
+  for (const entry of rawVerdicts) {
+    if (!isObject(entry)) continue;
+    const requirementId = asString(entry["requirementId"])?.trim();
+    if (!requirementId) continue; // unmappable — skip, don't sink the batch
+    // Unknown/invalid label → uncovered: never over-trust the model.
+    const label = normalizeCoverageLabel(entry["label"]) ?? "uncovered";
+    const citation =
+      label === "uncovered" ? undefined : asString(entry["citation"])?.trim();
+
+    verdicts.push({
+      requirementId,
+      label,
+      ...(citation ? { citation } : {}),
+    });
+  }
+
+  return ok({ verdicts });
 }
 
 // --- Pass 1: generation response ------------------------------------------
