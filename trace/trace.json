@@ -489,7 +489,9 @@
         "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/booking-hitl/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -524,7 +526,8 @@
         "packages/db/src/schema.test.ts",
         "packages/db/src/schema.test.ts",
         "packages/db/src/schema.test.ts",
-        "packages/db/src/schema.test.ts"
+        "packages/db/src/schema.test.ts",
+        "tests/integration/booking-hitl/full-flow.test.ts"
       ],
       "recordings": []
     },
@@ -550,7 +553,8 @@
         "lib/src/slots/grid.test.ts",
         "lib/src/slots/grid.test.ts",
         "packages/agent/src/loop.test.ts",
-        "packages/bot/src/pipeline.test.ts"
+        "packages/bot/src/pipeline.test.ts",
+        "tests/integration/booking-hitl/full-flow.test.ts"
       ],
       "recordings": []
     },
@@ -562,7 +566,9 @@
         "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "tests/integration/booking-hitl/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -645,14 +651,6 @@
     {
       "check": "test-trace",
       "msg": "FR-GUARD-02 has no test annotated \"@trace FR-GUARD-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-HITL-01 has no test annotated \"@trace FR-HITL-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-HITL-04 has no test annotated \"@trace FR-HITL-04\""
     },
     {
       "check": "recording-evidence",

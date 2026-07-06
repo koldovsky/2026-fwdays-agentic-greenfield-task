@@ -329,13 +329,13 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## G. Integration and real-DB smoke
 
-- [ ] G.1 `tests/integration/booking-hitl/full-flow.test.ts` (real SQLite +
+- [x] G.1 `tests/integration/booking-hitl/full-flow.test.ts` (real SQLite +
       `FakeCalendarPort`): three full round trips — propose → hold →
       confirm; propose → hold → decline; propose → hold → propose-another-
       time → the lead picks one of the admin's slots → confirm — asserting
       real `bookings`/`requests`/`notifications` rows at every step
       (`@trace FR-HITL-01..04`).
-- [ ] G.2 Run `npm run test:integration`; confirm G.1 green.
+- [x] G.2 Run `npm run test:integration`; confirm G.1 green.
 - [ ] G.3 Manual real-DB smoke test — SCRIPTED + rerunnable
       (`scripts/qa/manual-smoke-booking-hitl.mjs`, transcript
       `docs/qa/booking-hitl-manual-smoke.md`, mirroring the S1/S2/S3

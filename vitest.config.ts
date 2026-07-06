@@ -29,18 +29,20 @@ import { defineConfig } from "vitest/config";
 // DOM. `@vitejs/plugin-react` is registered globally (cheap no-op for
 // non-JSX files) so the `.tsx` component tests transform correctly.
 //
-// The third/fourth/fifth include entries ("slots/**/*.test.ts",
-// "agent/**/*.test.ts") look odd at the repo root but are deliberate: Vitest
-// resolves `include` glob patterns relative to `test.dir` (default: the
-// config root), NOT relative to the repo root regardless of `dir`. `npm run
-// test:run` runs plain `vitest run` (dir = repo root), where no top-level
-// `slots/`/`agent/`/`apps/`(-shaped) directory exists at that depth, so
-// these entries match nothing there — a no-op for the unit layer beyond what
-// they're meant for. `npm run test:integration` runs `vitest run --dir
-// tests/integration`, which re-bases every include pattern onto
-// `tests/integration/`, so the SAME entries resolve to
-// `tests/integration/slots/**/*.test.ts` / `tests/integration/agent/**/*.test.ts`
-// and pick up the slots/intake slices' integration suites respectively (no
+// The third/fourth/fifth/sixth include entries ("slots/**/*.test.ts",
+// "agent/**/*.test.ts", "booking-hitl/**/*.test.ts") look odd at the repo
+// root but are deliberate: Vitest resolves `include` glob patterns relative
+// to `test.dir` (default: the config root), NOT relative to the repo root
+// regardless of `dir`. `npm run test:run` runs plain `vitest run` (dir =
+// repo root), where no top-level `slots/`/`agent/`/`booking-hitl/`/`apps/`
+// (-shaped) directory exists at that depth, so these entries match nothing
+// there — a no-op for the unit layer beyond what they're meant for. `npm run
+// test:integration` runs `vitest run --dir tests/integration`, which
+// re-bases every include pattern onto `tests/integration/`, so the SAME
+// entries resolve to `tests/integration/slots/**/*.test.ts` /
+// `tests/integration/agent/**/*.test.ts` /
+// `tests/integration/booking-hitl/**/*.test.ts` and pick up the
+// slots/intake/booking-hitl slices' integration suites respectively (no
 // `tests/integration/apps/` directory exists, so "apps/**/*.test.ts" is
 // similarly a no-op there — the dashboard's route/db tests intentionally run
 // under `test:run`, not `test:integration`, even though they touch a real
@@ -64,6 +66,12 @@ export default defineConfig({
       "apps/**/*.test.{ts,tsx}",
       "slots/**/*.test.ts",
       "agent/**/*.test.ts",
+      // booking-hitl tasks.md G.1: this slice's own real-SQLite +
+      // FakeCalendarPort full-flow test, at
+      // `tests/integration/booking-hitl/full-flow.test.ts` once re-based —
+      // same "own top-level entry per slice" convention as "slots"/"agent"
+      // above (S1/S2 each added their own).
+      "booking-hitl/**/*.test.ts",
     ],
     passWithNoTests: true,
     testTimeout: 30000,
