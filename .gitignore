@@ -42,3 +42,4 @@ go.work.sum
 
 sample-input.txt
 /.github/pull_request.md
+*.txt
