@@ -31,6 +31,11 @@
 //     timer wiring (E.3) does not need to think about pagination.
 
 import type Database from "better-sqlite3";
+import {
+  findDeliverableNotifications,
+  markNotificationDelivered,
+  markNotificationFailed,
+} from "@kamerton/db";
 import type { TelegramTransport, SendMessageOptions } from "./telegram-transport.ts";
 
 /** The parsed shape of a `NotificationRow.payload` string (design.md
@@ -59,17 +64,30 @@ const DEFAULT_DRAIN_LIMIT = 50;
  * row is never revisited by a later call (`findDeliverableNotifications`
  * only ever returns `pending`/`failed` rows).
  *
- * TYPED THROWING STUB — see `notification-drain.test.ts` (booking-hitl
- * tasks.md E.1) for the pinned contract; implement once that suite is
- * confirmed red (E.2).
+ * A malformed (non-JSON) payload is treated the same as a failed send —
+ * marked `failed` and the loop continues (`@trace NFR-REL-01`): one bad row
+ * must never stop the rest of the batch from draining.
  */
 export async function drainNotifications(
   db: Database.Database,
   transport: TelegramTransport,
   limit: number = DEFAULT_DRAIN_LIMIT,
 ): Promise<DrainNotificationsResult> {
-  throw new Error(
-    `Not implemented — notification-drain.ts is a red-round throwing stub ` +
-      `(booking-hitl tasks.md E.1/E.2). db=${typeof db}, transport=${typeof transport}, limit=${limit}`,
-  );
+  const rows = findDeliverableNotifications(db, limit);
+  let delivered = 0;
+  let failed = 0;
+
+  for (const row of rows) {
+    try {
+      const { text, buttons }: NotificationPayload = JSON.parse(row.payload);
+      await transport.sendMessage(row.telegram_chat_id, text, buttons ? { buttons } : undefined);
+      markNotificationDelivered(db, row.id);
+      delivered += 1;
+    } catch {
+      markNotificationFailed(db, row.id);
+      failed += 1;
+    }
+  }
+
+  return { delivered, failed };
 }

@@ -36,6 +36,14 @@ import { handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate } from "./telegram-transport.ts";
 import { resolveAguiPublisher } from "./http-agui-publisher.ts";
+import { drainNotifications } from "./notification-drain.ts";
+
+/** Outbox drain cadence (booking-hitl design.md Decision 1: "a short-interval
+ *  timer... a failed row is retried on the next tick, no backoff needed at
+ *  single-teacher volume"). A few seconds is plenty responsive for a human
+ *  reading the dashboard and a lead waiting in Telegram, without hammering
+ *  SQLite or the Telegram API. */
+const NOTIFICATION_DRAIN_INTERVAL_MS = 3000;
 
 // Load repo-root .env exactly like scripts/qa/manual-smoke-slots.mjs — Node's
 // built-in loader, no dotenv dependency (repo convention). Env already
@@ -123,6 +131,18 @@ async function main(): Promise<void> {
   const publisher = resolveAguiPublisher();
 
   transport.onMessage((update) => handleUpdateSafely(update, { transport, db, model, calendar, publisher }));
+
+  // Outbox drain (booking-hitl design.md Decision 1): fire-and-forget,
+  // never awaited into startup — a rejected drain (e.g. a DB error) is
+  // logged and swallowed here too, same NFR-REL-01 discipline as
+  // `handleUpdateSafely` above, so one bad tick can never crash the
+  // long-polling process. `drainNotifications` itself never throws for an
+  // individual send failure (a bad row is simply retried next tick).
+  setInterval(() => {
+    drainNotifications(db, transport).catch((error) => {
+      console.error("Kamerton: notification drain tick failed", error);
+    });
+  }, NOTIFICATION_DRAIN_INTERVAL_MS);
 
   console.log(`Kamerton bot starting (long polling); db=${dbPath}`);
   await transport.start();

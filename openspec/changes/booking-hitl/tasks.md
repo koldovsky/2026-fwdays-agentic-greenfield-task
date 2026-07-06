@@ -274,7 +274,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## E. Bot outbox-drain timer
 
-- [ ] E.1 `packages/bot/src/notification-drain.test.ts` FIRST (red), against
+- [x] E.1 `packages/bot/src/notification-drain.test.ts` FIRST (red), against
       `FakeTelegramTransport` + real in-memory SQLite: `drainNotifications`
       sends `payload.text` (plus `payload.buttons` when present, for
       `kind:"proposed_again"` rows) for every `pending`/`failed` row, marks
@@ -282,14 +282,14 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       configured to throw marks the row `failed` WITHOUT throwing out of
       `drainNotifications` itself; a `delivered` row is never resent on a
       second call (`@trace FR-HITL-02`, `@trace NFR-REL-01`). Confirm red.
-- [ ] E.2 Implement `packages/bot/src/notification-drain.ts` to pass E.1.
-- [ ] E.3 Wire `packages/bot/src/index.ts`: `setInterval(() =>
+- [x] E.2 Implement `packages/bot/src/notification-drain.ts` to pass E.1.
+- [x] E.3 Wire `packages/bot/src/index.ts`: `setInterval(() =>
       drainNotifications(db, transport), <short interval>)` alongside the
       existing `transport.start()` call (design.md Decision 1) — deliberately
       NOT unit-tested here (same "live wiring, no behavior to fake"
       precedent as `GrammyTelegramTransport`/this file's own existing
       convention); fully covered by E.1's `drainNotifications` unit test.
-- [ ] E.4 Run `npm run test:run`; confirm E.1–E.2 green.
+- [x] E.4 Run `npm run test:run`; confirm E.1–E.2 green.
 
 ## F. The four S3 `dashboard` review-gate carryovers
 
