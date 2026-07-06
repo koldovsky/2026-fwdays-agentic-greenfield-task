@@ -181,7 +181,11 @@ export type Detour = "scope_violation" | "format_unsure";
 /** Error codes the reducer itself produces (mirrors age.ts/format.ts's own
  *  vocabulary from design.md so the green implementation's validator
  *  results plug straight through). */
-export type TransitionErrorCode = "FIELD_NOT_OWNED_BY_STATE" | "AGE_BELOW_MIN" | "TERMINAL_STATE";
+export type TransitionErrorCode =
+  | "FIELD_NOT_OWNED_BY_STATE"
+  | "AGE_BELOW_MIN"
+  | "TERMINAL_STATE"
+  | "INVALID_GOAL_TAG";
 
 /**
  * `transition()`'s return shape. `state` is always the FULL resulting
@@ -204,6 +208,21 @@ export interface TransitionResult {
  */
 export function initialIntakeState(): IntakeState {
   return { conversationState: "greeting", fields: {} };
+}
+
+/** The closed GoalTag enum, as a runtime-checkable set — `save_goal`'s own
+ *  first-time write trusts the model's tool-schema enum to have already
+ *  constrained `goalTag` (design.md Decision 2's "checked twice: schema +
+ *  validator" applies to `save_format`, not `save_goal`, in this slice).
+ *  `amend`, however, is the one event any non-terminal state accepts
+ *  regardless of which tool produced it, so it is the one place a bogus
+ *  goalTag (an out-of-enum model tool call, or an unvalidated
+ *  button-callback payload upstream) must be caught defensively — review-gate
+ *  finding #1. */
+const GOAL_TAGS: ReadonlySet<GoalTag> = new Set(["karaoke", "performance", "confidence", "hobby", "other"]);
+
+function isValidGoalTag(value: unknown): value is GoalTag {
+  return typeof value === "string" && GOAL_TAGS.has(value as GoalTag);
 }
 
 const TERMINAL_STATES: ReadonlySet<ConversationState> = new Set(["done", "soft_decline"]);
@@ -284,6 +303,13 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
     if (isTerminal(state.conversationState)) {
       return rejected(state, "TERMINAL_STATE");
     }
+    // Review-gate finding #1 (CRITICAL): re-run the OWNING validator for
+    // every amendable field that has one — exactly the defense-in-depth a
+    // first-time `save_*` gets — instead of writing the model's raw claim
+    // straight to `fields`. Only fields with NO owning validator in this
+    // slice (free text: studentName/goalText/tastes/dreamSong/experience/
+    // comfort/preferredWeekdays/preferredTimeRange) fall through to the
+    // verbatim write below, which remains correct for them.
     if (event.field === "studentAge") {
       const validation = validateAge(event.value as number);
       if (!validation.ok) {
@@ -293,6 +319,36 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
         state: {
           conversationState: state.conversationState,
           fields: { ...state.fields, studentAge: validation.age },
+        },
+        detour: null,
+      };
+    }
+    if (event.field === "format") {
+      const validation = validateFormat(event.value as CandidateFormat);
+      if (!validation.ok) {
+        // Same side-channel detour shape `save_format` returns (design.md
+        // Decision 1) — `state`/`fields` byte-identical, never mutated.
+        if (validation.code === "FORMAT_UNSURE") {
+          return { state, detour: "format_unsure" };
+        }
+        return { state, detour: "scope_violation" };
+      }
+      return {
+        state: {
+          conversationState: state.conversationState,
+          fields: { ...state.fields, format: validation.format },
+        },
+        detour: null,
+      };
+    }
+    if (event.field === "goalTag") {
+      if (!isValidGoalTag(event.value)) {
+        return rejected(state, "INVALID_GOAL_TAG");
+      }
+      return {
+        state: {
+          conversationState: state.conversationState,
+          fields: { ...state.fields, goalTag: event.value },
         },
         detour: null,
       };

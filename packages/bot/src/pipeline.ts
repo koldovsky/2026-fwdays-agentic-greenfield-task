@@ -127,6 +127,7 @@ import {
   updateRequestState,
   findLatestRequestForLead,
   updateBookingStatus,
+  REQUEST_GOAL_TAGS,
   type RequestRow,
   type RequestState,
   type UpdateRequestFieldsInput,
@@ -256,7 +257,18 @@ function parseCallbackEvent(data: string): IntakeEvent | null {
     return { type: "skip_goal" };
   }
   if (data.startsWith("goal:")) {
-    return { type: "save_goal", goalTag: data.slice("goal:".length) as GoalTag, goalText: "" };
+    const tag = data.slice("goal:".length);
+    // Review-gate finding #3 (CRITICAL): a button callback never reaches
+    // `ModelPort.send()` (design.md Decision 3), so it never benefits from
+    // the model's own tool-schema enum guarding `goalTag` — this allow-list
+    // check is the ONLY gate a callback payload passes through before
+    // `applyCallbackEvent` would otherwise write it straight to the
+    // `requests` row. Anything outside the closed enum is ignored (`null`),
+    // never built into an event.
+    if (!(REQUEST_GOAL_TAGS as readonly string[]).includes(tag)) {
+      return null;
+    }
+    return { type: "save_goal", goalTag: tag as GoalTag, goalText: "" };
   }
   if (data === "tastes:skip") {
     return { type: "skip_tastes" };

@@ -25,6 +25,19 @@ export type AgeValidation = { ok: true; age: number } | { ok: false; code: "AGE_
 const MINIMUM_AGE = 4;
 
 export function validateAge(age: number): AgeValidation {
+  // Runtime type/finiteness guard (review-gate finding #2, MAJOR): `age` is
+  // typed as `number` at compile time, but the reducer's `amend_field` path
+  // carries the model's raw, untyped tool-call value straight through to
+  // here — a non-numeric, NaN, or +/-Infinity value would otherwise slip
+  // past the `age < MINIMUM_AGE` comparison (`NaN < 4` is always `false`;
+  // `Infinity < 4` is `false`) and be echoed back as `{ ok: true, age }`.
+  // The guardrail vocabulary stays deliberately narrow (BC-AGE-01 names only
+  // "AGE_BELOW_MIN") — no new error code is invented for "not a number";
+  // anything that is not a genuine finite number is treated as below the
+  // minimum, never as a silent pass.
+  if (typeof age !== "number" || !Number.isFinite(age)) {
+    return { ok: false, code: "AGE_BELOW_MIN" };
+  }
   if (age < MINIMUM_AGE) {
     return { ok: false, code: "AGE_BELOW_MIN" };
   }

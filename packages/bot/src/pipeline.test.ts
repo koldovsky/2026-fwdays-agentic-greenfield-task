@@ -177,6 +177,39 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(model.callCount).toBe(0);
   });
 
+  // --- review-gate finding #3: callback goalTag allow-list -----------------
+  // @trace FR-GUARD-04-analog
+  // @trace FR-INTAKE-05
+  // Regression coverage: `parseCallbackEvent`'s "goal:<tag>" mapping used to
+  // cast the raw wire payload straight to `GoalTag` with NO allow-list
+  // check — a button callback (never validated by the model's tool-schema
+  // enum, since it never reaches `ModelPort.send()` at all, design.md
+  // Decision 3) could write an arbitrary string into `requests.goal_tag`.
+  // The fix validates against the exact `REQUEST_GOAL_TAGS` allow-list
+  // before building the event, ignoring (returning `null` for) anything
+  // outside it — the same defensive shape the text path's validators use.
+  it("a callback with a bogus goalTag payload is ignored — no requests row mutation, no crash", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded, lead } = seedNewLeadRequest(db);
+    seedRequestAt(db, seeded.id, "profiling", {
+      studentName: "Іван",
+      studentAge: 8,
+      format: "individual",
+    });
+    const before = findLatestRequestForLead(db, lead.id)!;
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const deps = makeDeps({ transport, model, db });
+
+    await handleUpdate(callbackUpdate({ data: "goal:instrument_lessons" }), deps);
+
+    const after = findLatestRequestForLead(db, lead.id)!;
+    expect(after).toEqual(before);
+    expect(model.callCount).toBe(0);
+    expect(transport.sentTexts[transport.sentTexts.length - 1]!.length).toBeGreaterThan(0);
+  });
+
   // --- bullet 3: new lead creates leads+requests rows, greeting notice ----
   // @trace NFR-PRIV-02
   // @trace FR-INTAKE-01
@@ -413,6 +446,73 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
       expect(reply.toLowerCase()).not.toContain(phrase);
     }
     expect(reply.length).toBeGreaterThan(0);
+  });
+
+  // --- review-gate finding #4 (CRITICAL/MAJOR): booking-release throw -----
+  // --- must not crash handleUpdate ------------------------------------------
+  // Regression coverage: a Calendar failure (`deleteEvent` rejecting) during
+  // the cancel path's booking-release orchestration used to propagate as an
+  // uncaught rejection straight out of `handleUpdate()` — nothing in
+  // `packages/bot` caught it, so ONE lead's Calendar outage crashed the
+  // whole bot process for every other lead too. The fix (in `@kamerton/
+  // agent/src/loop.ts`'s `runIntakeTurn`) catches it and falls back to the
+  // deterministic `CALENDAR_UNAVAILABLE_APOLOGY` reply instead — this test
+  // proves that at the `handleUpdate()` boundary this slice owns: it resolves
+  // (never throws/rejects), sends a non-empty Ukrainian apology, and the
+  // conversation's already-committed state is not corrupted.
+  // @trace NFR-REL-01
+  // @trace BC-LANG-01
+  it("bookingStore/releaseHold throwing during cancel does NOT throw out of handleUpdate; a Ukrainian apology is sent and state is preserved", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded } = seedNewLeadRequest(db);
+    seedRequestAt(db, seeded.id, "awaiting_admin", {
+      studentName: "Ольга",
+      studentAge: 10,
+      format: "individual",
+      preferredWeekdays: "середа",
+      preferredTimeRange: "ввечері",
+    });
+
+    class ThrowingCalendarPort extends FakeCalendarPort {
+      override async deleteEvent(): Promise<void> {
+        throw new Error("Calendar unavailable (simulated)");
+      }
+    }
+    const calendar = new ThrowingCalendarPort();
+    const { eventId } = await calendar.createTentative(
+      { start: "2026-07-15T10:00:00Z", end: "2026-07-15T11:00:00Z" },
+      "Kamerton: Ольга (тримання)",
+    );
+    const bookingId = seedPendingBooking(db, seeded.id, eventId);
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([toolUseResponse("cancel_request", {})]);
+    const deps = makeDeps({ transport, model, db, calendar });
+
+    // The point of this assertion: reaching the line after it at all proves
+    // handleUpdate() did not throw/reject — a bare `await` here is
+    // deliberate, mirroring this file's own red-round convention (a thrown
+    // rejection fails the test with an uncaught error, which IS the
+    // regression this test guards against).
+    await handleUpdate(textUpdate({ text: "Скасуйте, будь ласка" }), deps);
+
+    // The booking release never completed — the row stays `pending`, never
+    // silently marked `cancelled` while the calendar event itself still
+    // exists (that would be a worse, silently-inconsistent outcome).
+    const booking = getBookingById(db, bookingId);
+    expect(booking.status).toBe("pending");
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const after = findLatestRequestForLead(db, lead!.id)!;
+    // The conversation-state move to "done" (transition()'s own,
+    // synchronous half of cancel_request) already committed BEFORE the
+    // Calendar call was even attempted — that write is not rolled back by
+    // this catch, and is not itself corrupted/left partial.
+    expect(after.state).toBe("done");
+
+    const reply = transport.sentTexts[transport.sentTexts.length - 1]!;
+    expect(reply.length).toBeGreaterThan(0);
+    expect(reply).toMatch(/[а-яіїєґ]/i); // Ukrainian, not a raw error/stack trace
   });
 
   // --- bullet 10: returning-lead / sibling path ------------------------------

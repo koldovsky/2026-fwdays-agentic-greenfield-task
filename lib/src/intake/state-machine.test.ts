@@ -340,6 +340,106 @@ describe("transition() — amend changes addressing (FR-INTAKE-07, BC-AGE-02)", 
   });
 });
 
+// Regression coverage (review-gate finding #1, CRITICAL): the amend branch
+// used to re-validate ONLY `studentAge` — every other amendable field,
+// including `format` and `goalTag`, was written to `fields` VERBATIM, with
+// no validator in the loop at all. That meant `amend_field({ field:
+// "format", value: "instrument" })` — a model call bypassing its own tool
+// schema, or a compromised call — wrote an out-of-scope instrument lesson
+// straight into `fields.format`, skipping the exact
+// scope_violation/format_unsure detour `save_format` enforces
+// (BC-SCOPE-01/02, BC-FORMAT-01). The fix dispatches `amend`'s validator by
+// `event.field`, exactly like a first-time `save_*` would, for every field
+// that HAS an owning validator (`studentAge` -> `validateAge`, `format` ->
+// `validateFormat`, `goalTag` -> the closed GoalTag enum). Free-text fields
+// (studentName/goalText/tastes/dreamSong/experience/comfort/
+// preferredWeekdays/preferredTimeRange) have no owning validator in this
+// slice — verbatim write remains correct for those (design.md Decision 1's
+// amend contract), so no test below covers a rejection path for them.
+describe("transition() — amend re-validates format/goalTag, not just studentAge (review-gate finding #1)", () => {
+  // @trace FR-INTAKE-07
+  // @trace BC-SCOPE-01
+  // @trace BC-SCOPE-02
+  it("amend field:'format' value:'instrument' yields the scope_violation detour, state byte-identical, fields NEVER mutated", () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: { studentName: "Іван", studentAge: 9, format: "individual" },
+    };
+    // `AmendEvent`'s declared type narrows `field: "format"`'s `value` to
+    // the already-valid `ValidFormat` ("individual" | "group") — exactly
+    // the type-level assumption that let this bug hide. A real attempt to
+    // smuggle "instrument" through only reaches the reducer with its static
+    // type already cast away (mirrors `packages/agent/src/loop.ts`'s own
+    // `amend_field` mapping, which casts through `unknown` for the same
+    // reason: the model's raw tool-call input is never statically typed).
+    const event = { type: "amend", field: "format", value: "instrument" } as unknown as IntakeEvent;
+
+    const result = transition(state, event);
+
+    expect(result.detour).toBe("scope_violation");
+    expect(result.error).toBeUndefined();
+    expect(result.state).toBe(state);
+    expect(result.state.conversationState).toBe("profiling");
+    expect(result.state.fields.format).toBe("individual"); // UNCHANGED — never overwritten with "instrument"
+  });
+
+  // @trace FR-INTAKE-07
+  // @trace BC-FORMAT-01
+  it("amend field:'format' value:'unsure' yields the format_unsure detour, fields NEVER mutated", () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: { studentName: "Іван", studentAge: 9, format: "individual" },
+    };
+    const event = { type: "amend", field: "format", value: "unsure" } as unknown as IntakeEvent;
+
+    const result = transition(state, event);
+
+    expect(result.detour).toBe("format_unsure");
+    expect(result.state).toBe(state);
+    expect(result.state.fields.format).toBe("individual");
+  });
+
+  // @trace FR-INTAKE-07
+  it("amend field:'format' value:'group' (a genuinely valid amendment) succeeds and updates the field", () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: { studentName: "Іван", studentAge: 9, format: "individual" },
+    };
+
+    const result = transition(state, { type: "amend", field: "format", value: "group" });
+
+    expect(result.detour).toBeNull();
+    expect(result.error).toBeUndefined();
+    expect(result.state.fields.format).toBe("group");
+    expect(result.state.conversationState).toBe("profiling");
+  });
+
+  // @trace FR-INTAKE-07
+  it("amend field:'goalTag' with a value outside the closed GoalTag enum is rejected, fields NEVER mutated", () => {
+    const state: IntakeState = {
+      conversationState: "profiling",
+      fields: {
+        studentName: "Іван",
+        studentAge: 9,
+        format: "individual",
+        goalTag: "hobby",
+        goalText: "для задоволення",
+      },
+    };
+    // Same "cast through unknown" shape as the format case above — a real
+    // out-of-enum goalTag only ever reaches the reducer with its static
+    // type already discarded (the model's raw tool input, or a bogus
+    // button-callback payload upstream in packages/bot/src/pipeline.ts).
+    const event = { type: "amend", field: "goalTag", value: "instrument_lessons" } as unknown as IntakeEvent;
+
+    const result = transition(state, event);
+
+    expect(result.error).toBeDefined();
+    expect(result.state).toBe(state);
+    expect(result.state.fields.goalTag).toBe("hobby"); // UNCHANGED
+  });
+});
+
 describe("transition() — cancel (FR-INTAKE-07)", () => {
   // @trace FR-INTAKE-07
   it("cancel from awaiting_admin transitions conversationState to done", () => {

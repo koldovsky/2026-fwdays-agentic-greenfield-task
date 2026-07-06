@@ -23,7 +23,9 @@ import { openDatabase } from "@kamerton/db";
 import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts";
 import { GoogleCalendarPort } from "@kamerton/calendar";
 import { GrammyTelegramTransport } from "./telegram-transport.ts";
-import { handleUpdate } from "./pipeline.ts";
+import { handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
+import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
+import type { InboundUpdate } from "./telegram-transport.ts";
 
 // Load repo-root .env exactly like scripts/qa/manual-smoke-slots.mjs — Node's
 // built-in loader, no dotenv dependency (repo convention). Env already
@@ -40,6 +42,46 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/**
+ * Review-gate finding #4a (CRITICAL/MAJOR): grammY hands every inbound
+ * update to `transport.onMessage`'s registered handler one at a time, with
+ * no error boundary of its own by default — an uncaught exception from
+ * `handleUpdate()` (a bug, a DB write failing, a Calendar/Anthropic call
+ * throwing past `pipeline.ts`'s/`loop.ts`'s own recovery, etc.) would
+ * otherwise either crash the whole long-polling process (killing the bot
+ * for every OTHER lead too, not just the one whose update triggered it) or
+ * silently stop the polling loop, per grammY's own default error handling.
+ * This wrapper is the outermost boundary: it logs the failure server-side
+ * and makes a best-effort attempt to send the lead a deterministic Ukrainian
+ * apology (`TELEGRAM_SEND_FAILURE_APOLOGY`, reused rather than duplicated —
+ * the exact copy already used for a Telegram-send failure, since from the
+ * lead's point of view "something didn't get through" reads the same
+ * either way). If even that best-effort send fails, it is logged and
+ * swallowed — this boundary's whole point is that ONE failed update must
+ * never take the process down (`@trace NFR-REL-01`).
+ *
+ * Deliberately NOT unit-tested here, same as `GrammyTelegramTransport`
+ * itself (this file's own header comment): there is no update to safely
+ * fail without a live grammY `Bot`/`TelegramTransport.onMessage` wiring.
+ * The recoverable-failure PATHS this wrapper exists to catch (a Calendar
+ * throw during cancel, a persistence write throwing) are unit-tested at
+ * their actual source in `packages/agent/src/loop.test.ts` and
+ * `packages/bot/src/pipeline.test.ts`; this function is the last-resort net
+ * for anything that still gets past those.
+ */
+async function handleUpdateSafely(update: InboundUpdate, deps: HandleUpdateDeps): Promise<void> {
+  try {
+    await handleUpdate(update, deps);
+  } catch (error) {
+    console.error("Kamerton: unhandled error while processing an update", error);
+    try {
+      await deps.transport.sendMessage(update.telegramChatId, TELEGRAM_SEND_FAILURE_APOLOGY);
+    } catch (sendError) {
+      console.error("Kamerton: failed to send the fallback apology after an unhandled error", sendError);
+    }
+  }
+}
+
 async function main(): Promise<void> {
   const token = requireEnv("TELEGRAM_BOT_TOKEN");
   const dbPath = process.env.KAMERTON_DB_PATH ?? path.join(repoRoot, "kamerton.db");
@@ -49,7 +91,7 @@ async function main(): Promise<void> {
   const calendar = new GoogleCalendarPort(); // reads GOOGLE_* from env
   const transport = new GrammyTelegramTransport(token);
 
-  transport.onMessage((update) => handleUpdate(update, { transport, db, model, calendar }));
+  transport.onMessage((update) => handleUpdateSafely(update, { transport, db, model, calendar }));
 
   console.log(`Kamerton bot starting (long polling); db=${dbPath}`);
   await transport.start();

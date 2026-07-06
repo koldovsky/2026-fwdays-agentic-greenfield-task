@@ -128,6 +128,12 @@ import { MODEL_CONFIG } from "./model-port.ts";
 import { TOOLS } from "./tools.ts";
 import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "./apology.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
+// Reused rather than duplicated (review-gate finding #4): the exact
+// deterministic Ukrainian "couldn't reach the calendar/schedule" apology S1
+// `slots/propose.ts` already ships (NFR-REL-01, BC-LANG-01, BC-BRAND-01) is
+// also the right copy for a Calendar failure surfacing through this loop's
+// own `cancel_request` booking-release orchestration.
+import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts";
 import type {
   AmendableField,
   CandidateFormat,
@@ -212,7 +218,7 @@ export interface LoopInput {
 /** How a single tool-use block resolved once run through the reducer
  *  (defense in depth: a syntactically valid tool call is not automatically
  *  an applied one). */
-export type ToolCallOutcome = "applied" | "rejected" | "detour";
+export type ToolCallOutcome = "applied" | "rejected" | "detour" | "pass_through";
 
 /** One deterministic log entry per tool-use block the model's response
  *  contained, appended by the loop itself (ADR-0001 §5 analog) —
@@ -282,7 +288,30 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
   let currentState = state;
   const toolCalls: ToolCallLogEntry[] = [];
   for (const block of toolUseBlocks) {
-    const applied = await applyToolUse(block, currentState, ports);
+    let applied: AppliedToolUse;
+    try {
+      // Review-gate finding #4 (CRITICAL/MAJOR): `applyToolUse` calls out to
+      // `ports.persistence`/`ports.bookingStore`/`ports.releaseHold` — real
+      // I/O in production (a DB write, a Google Calendar call during the
+      // `cancel_request` booking-release orchestration). None of those are
+      // guaranteed to succeed; letting a rejection here propagate out of
+      // `runIntakeTurn` would crash the bot for every lead on a transient
+      // Calendar/DB failure (`@trace NFR-REL-01`). Caught narrowly around
+      // exactly this dispatch (never swallowing a `transition()` bug —
+      // `transition()` itself is synchronous and never throws; only the
+      // port calls this loop awaits can reject).
+      applied = await applyToolUse(block, currentState, ports);
+    } catch (error) {
+      console.error("Kamerton: tool-use dispatch failed (persistence/booking-release)", error);
+      // Bail out of the remaining tool-use blocks for this turn — the
+      // caller's own DB writes for anything already applied earlier in this
+      // loop stand (unaffected by this catch), and `currentState` (the
+      // state as of the LAST successfully applied block, unchanged if this
+      // is the first) is returned unmutated, so the conversation resumes
+      // exactly where it last stood, same "state preserved" guarantee as
+      // the `ports.model.send()` failure path above.
+      return { reply: CALENDAR_UNAVAILABLE_APOLOGY, state: currentState, toolCalls };
+    }
     currentState = applied.state;
     toolCalls.push(applied.logEntry);
   }
@@ -408,9 +437,16 @@ async function applyToolUse(
 ): Promise<AppliedToolUse> {
   const event = toIntakeEvent(block);
   if (event === null) {
+    // Review-gate finding #5 (MINOR): `explain_scope`/`explain_format`/
+    // `propose_slots`/`request_hold` (and any tool this pinned `LoopPorts`
+    // contract does not yet wire an event for) never reach `transition()`
+    // at all — nothing was ever offered to the reducer to accept or reject,
+    // so this is NOT "applied" (that label is reserved for a genuine
+    // reducer-approved mutation). "pass_through" names what actually
+    // happened: the tool call was logged and passed straight through.
     return {
       state,
-      logEntry: { tool: block.name, input: block.input, outcome: "applied" },
+      logEntry: { tool: block.name, input: block.input, outcome: "pass_through" },
     };
   }
 

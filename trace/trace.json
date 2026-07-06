@@ -104,6 +104,7 @@
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
@@ -155,6 +156,7 @@
       "planned": true,
       "tests": [
         "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
@@ -183,6 +185,10 @@
       ],
       "planned": true,
       "tests": [
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
+        "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
@@ -226,10 +232,14 @@
         "lib/src/intake/age.test.ts",
         "lib/src/intake/age.test.ts",
         "lib/src/intake/age.test.ts",
+        "lib/src/intake/age.test.ts",
+        "lib/src/intake/age.test.ts",
+        "lib/src/intake/age.test.ts",
         "lib/src/intake/copy.test.ts",
         "lib/src/intake/copy.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
+        "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []

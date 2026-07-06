@@ -41,3 +41,33 @@ describe("validateAge — minimum-age guardrail (BC-AGE-01)", () => {
     expect(validateAge(3.9)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
   });
 });
+
+// Regression coverage (review-gate finding #2, MAJOR): validateAge had no
+// runtime type/finiteness guard, so a non-numeric/NaN/Infinity value
+// (reachable via the reducer's untyped `amend_field` path, e.g. a model
+// tool call carrying `value: "seven"` or a NaN from a bad parse) silently
+// passed straight through — `age < MINIMUM_AGE` is `false` for both NaN and
+// a string, since NaN comparisons are always false and a string is coerced
+// oddly by `<`. Guardrail vocabulary stays deliberately narrow
+// (AGE_BELOW_MIN only, per BC-AGE-01/design.md — no new error code invented
+// for "not a number"): any non-numeric or non-finite value is treated as
+// below the minimum, never as a silent pass.
+describe("validateAge — runtime type/finiteness guard (review-gate finding #2)", () => {
+  // @trace FR-GUARD-04
+  it("rejects NaN as AGE_BELOW_MIN, never a silent pass", () => {
+    expect(validateAge(NaN)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+  });
+
+  // @trace FR-GUARD-04
+  it("rejects Infinity as AGE_BELOW_MIN, never a silent pass", () => {
+    expect(validateAge(Infinity)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+    expect(validateAge(-Infinity)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+  });
+
+  // @trace FR-GUARD-04
+  it("rejects a non-numeric value (reachable via amend_field's untyped `value`) as AGE_BELOW_MIN, never a silent pass", () => {
+    expect(validateAge("7" as unknown as number)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+    expect(validateAge(null as unknown as number)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+    expect(validateAge(undefined as unknown as number)).toEqual({ ok: false, code: "AGE_BELOW_MIN" });
+  });
+});
