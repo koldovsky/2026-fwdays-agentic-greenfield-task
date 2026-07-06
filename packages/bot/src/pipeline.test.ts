@@ -42,9 +42,12 @@ import { FakeCalendarPort } from "@kamerton/lib/src/slots/fake-calendar.ts";
 import { AGE_REFUSAL_COPY, SCOPE_EXPLANATION_COPY } from "@kamerton/lib/src/intake/copy.ts";
 import { ANTHROPIC_PROCESSING_NOTICE } from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
+import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "@kamerton/agent/src/apology.ts";
 import { FakeTelegramTransport } from "./testing/fake-telegram-transport.ts";
 import { compileFirstLessonBrief, handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
 import type { InboundCallbackUpdate, InboundTextUpdate } from "./telegram-transport.ts";
+import { noopAguiPublisher, type AguiEvent } from "./agui-publisher.ts";
+import { FakeAguiPublisher } from "./testing/fake-agui-publisher.ts";
 
 // ---------------------------------------------------------------------------
 // Test scaffolding — every scenario builds its own fresh `:memory:` DB, its
@@ -619,6 +622,254 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(lead).toBeDefined();
     const request = findLatestRequestForLead(db, lead!.id)!;
     expect(request.student_name).toBe("Оксана");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// dashboard tasks.md §4.3 — the AG-UI publisher seam on `handleUpdate()`.
+// RED ROUND: `HandleUpdateDeps.publisher` exists (type + default only, see
+// pipeline.ts's `handleUpdate` header) but nothing in `pipeline.ts` calls
+// `deps.publisher.publish(...)` yet. Every event-sequence test below is
+// therefore EXPECTED TO FAIL — a `FakeAguiPublisher` records zero events for
+// a turn that (once §4.3's GREEN half wires the calls in) should record a
+// full run-boundary sequence. The one test that MUST already pass is the
+// regression guard, proving the type/default change alone does not disturb
+// S2's committed transport-call behaviour.
+// ---------------------------------------------------------------------------
+describe("handleUpdate — AG-UI publisher seam (dashboard tasks.md 4.3)", () => {
+  // --- REGRESSION GUARD — the single most important test in this section --
+  // @trace TC-PROTO-01
+  it("REGRESSION GUARD: transport calls are identical whether `publisher` is omitted or explicitly `noopAguiPublisher`", async () => {
+    const transportOmitted = new FakeTelegramTransport();
+    const depsOmitted = makeDeps({
+      transport: transportOmitted,
+      model: new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]),
+    });
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-regression-omitted", telegramChatId: "tg-chat-regression-omitted" }),
+      depsOmitted,
+    );
+
+    const transportExplicitNoop = new FakeTelegramTransport();
+    const depsExplicitNoop = makeDeps({
+      transport: transportExplicitNoop,
+      model: new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]),
+      publisher: noopAguiPublisher,
+    });
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-regression-explicit", telegramChatId: "tg-chat-regression-explicit" }),
+      depsExplicitNoop,
+    );
+
+    // Byte-for-byte identical outbound behaviour — same call kinds in the
+    // same order, same sent texts — proves the §4.3 type/default change is
+    // observationally a no-op for every S2 caller (`publisher` omitted) and
+    // for an explicit `noopAguiPublisher` alike.
+    expect(transportExplicitNoop.callKinds).toEqual(transportOmitted.callKinds);
+    expect(transportExplicitNoop.sentTexts).toEqual(transportOmitted.sentTexts);
+  });
+
+  /** Narrows a `FakeAguiPublisher.events` array element to one variant, for
+   *  assertions that need a variant-specific field (e.g. `.delta`,
+   *  `.message`) — a small local helper so every test below stays readable
+   *  instead of repeating an inline type-guard. */
+  function eventsOfType<T extends AguiEvent["type"]>(
+    events: AguiEvent[],
+    type: T,
+  ): Extract<AguiEvent, { type: T }>[] {
+    return events.filter((event): event is Extract<AguiEvent, { type: T }> => event.type === type);
+  }
+
+  // --- free-text turn, brand-new request -> STATE_SNAPSHOT (RED) ----------
+  // @trace FR-DASH-01
+  it("RED: a free-text turn for a brand-new lead/request publishes RUN_STARTED -> TEXT_MESSAGE_START -> TEXT_MESSAGE_CONTENT(s) -> TEXT_MESSAGE_END -> STATE_SNAPSHOT -> RUN_FINISHED", async () => {
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]);
+    const publisher = new FakeAguiPublisher();
+    const deps = makeDeps({ transport, model, publisher });
+
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-events-snapshot", telegramChatId: "tg-chat-events-snapshot", text: "Мене звати Оксана" }),
+      deps,
+    );
+
+    // The reply ACTUALLY sent to the lead (design.md Decision 1's honesty
+    // note: the already-assembled final string, including the brand-new-lead
+    // Anthropic-processing notice prepended by pipeline.ts step 5/6 — the
+    // dashboard must show exactly what the lead saw, not a pre-notice draft).
+    const finalReply = transport.sentTexts[transport.sentTexts.length - 1]!;
+
+    expect(publisher.events.length).toBeGreaterThan(0); // <- fails red: 0 events published today
+    expect(publisher.events[0]!.type).toBe("RUN_STARTED");
+    expect(publisher.events[1]!.type).toBe("TEXT_MESSAGE_START");
+
+    const contentEvents = eventsOfType(publisher.events, "TEXT_MESSAGE_CONTENT");
+    expect(contentEvents.length).toBeGreaterThanOrEqual(1);
+    expect(contentEvents.map((event) => event.delta).join("")).toBe(finalReply);
+
+    const startEvent = publisher.events[1] as Extract<AguiEvent, { type: "TEXT_MESSAGE_START" }>;
+    const messageIds = new Set([startEvent.messageId, ...contentEvents.map((event) => event.messageId)]);
+    expect(messageIds.size).toBe(1); // one messageId per turn, shared by START/CONTENT
+
+    const endIndex = publisher.events.findIndex((event) => event.type === "TEXT_MESSAGE_END");
+    expect(endIndex).toBeGreaterThan(0);
+    expect((publisher.events[endIndex] as Extract<AguiEvent, { type: "TEXT_MESSAGE_END" }>).messageId).toBe(
+      startEvent.messageId,
+    );
+
+    const snapshotEvent = publisher.events.find((event) => event.type === "STATE_SNAPSHOT") as
+      | Extract<AguiEvent, { type: "STATE_SNAPSHOT" }>
+      | undefined;
+    expect(snapshotEvent).toBeDefined();
+    expect(snapshotEvent!.snapshot).toMatchObject({ studentName: "Оксана" });
+
+    expect(publisher.events[publisher.events.length - 1]!.type).toBe("RUN_FINISHED");
+
+    const runStarted = publisher.events[0] as Extract<AguiEvent, { type: "RUN_STARTED" }>;
+    const runFinished = publisher.events[publisher.events.length - 1] as Extract<
+      AguiEvent,
+      { type: "RUN_FINISHED" }
+    >;
+    expect(runFinished.runId).toBe(runStarted.runId);
+    expect(runStarted.runId.length).toBeGreaterThan(0);
+    expect(runStarted.threadId).toBe("tg-chat-events-snapshot");
+    expect(runFinished.threadId).toBe("tg-chat-events-snapshot");
+  });
+
+  // --- free-text turn, resuming an existing request -> STATE_DELTA (RED) --
+  // @trace FR-DASH-01
+  it("RED: a free-text turn resuming an already-existing request publishes a STATE_DELTA (not a STATE_SNAPSHOT) reflecting the fields runIntakeTurn just persisted", async () => {
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([
+      toolUseResponse("save_name", { name: "Дмитро" }),
+      toolUseResponse("save_age", { age: 9 }),
+    ]);
+    const setupDeps = makeDeps({ transport, model, publisher: new FakeAguiPublisher() });
+
+    // Turn 1 (brand-new lead/request) — its own event sequence is covered by
+    // the dedicated STATE_SNAPSHOT test above; only used here to reach a
+    // resumed, non-terminal request row for turn 2.
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-events-delta", telegramChatId: "tg-chat-events-delta", text: "Мене звати Дмитро" }),
+      setupDeps,
+    );
+
+    const publisher = new FakeAguiPublisher();
+    const deps: HandleUpdateDeps = { ...setupDeps, publisher };
+
+    // Turn 2 (same lead, resuming the same non-terminal request row).
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-events-delta", telegramChatId: "tg-chat-events-delta", text: "Йому 9 років" }),
+      deps,
+    );
+
+    expect(publisher.events.length).toBeGreaterThan(0); // <- fails red: 0 events published today
+    expect(publisher.events[0]!.type).toBe("RUN_STARTED");
+
+    const snapshotEvents = eventsOfType(publisher.events, "STATE_SNAPSHOT");
+    expect(snapshotEvents).toHaveLength(0); // turn 2 is NOT the brand-new-request turn
+
+    const deltaEvent = publisher.events.find((event) => event.type === "STATE_DELTA") as
+      | Extract<AguiEvent, { type: "STATE_DELTA" }>
+      | undefined;
+    expect(deltaEvent).toBeDefined();
+    expect(deltaEvent!.delta).toContainEqual(expect.objectContaining({ path: "/studentAge", value: 9 }));
+    expect(deltaEvent!.threadId).toBe("tg-chat-events-delta");
+
+    expect(publisher.events[publisher.events.length - 1]!.type).toBe("RUN_FINISHED");
+  });
+
+  // --- button-callback turn -> event sequence (RED) ------------------------
+  // CORRECTION to dashboard tasks.md §4.3's own callback bullet (recorded
+  // here per this task's explicit instruction, so the reviewer sees the
+  // reasoning): tasks.md's text says a callback turn publishes "the same
+  // run-boundary + state-update events" but NO `TEXT_MESSAGE_*` at all. That
+  // is wrong for THIS pipeline: the callback branch (pipeline.ts's
+  // `update.type === "callback"` arm, ~341-348) DOES compute a real
+  // `replyText` and DOES send it to the lead via `sendWithRetry` (~396) —
+  // the dashboard's ChatStream must be able to render that reply too, or a
+  // teacher watching the dashboard would see the lead's own chat update with
+  // no visible cause. So this test asserts a callback turn IS wrapped in
+  // TEXT_MESSAGE_START/CONTENT/END, symmetric with the free-text path. The
+  // distinction tasks.md's bullet actually meant to draw is narrower, and IS
+  // asserted below: a callback never calls `ModelPort.send()` — there is
+  // simply no model call for any TEXT_MESSAGE_* content to be "about".
+  // @trace FR-DASH-01
+  it("RED: a button-callback turn publishes RUN_STARTED -> TEXT_MESSAGE_* (wrapping its own deterministic replyText) -> STATE_DELTA -> RUN_FINISHED, with zero ModelPort.send() calls", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded } = seedNewLeadRequest(db, "tg-callback-events", "tg-chat-callback-events");
+    seedRequestAt(db, seeded.id, "qualifying", { studentName: "Тарас", studentAge: 8 });
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const publisher = new FakeAguiPublisher();
+    const deps = makeDeps({ transport, model, db, publisher });
+
+    await handleUpdate(
+      callbackUpdate({
+        telegramUserId: "tg-callback-events",
+        telegramChatId: "tg-chat-callback-events",
+        data: "format:individual",
+      }),
+      deps,
+    );
+
+    expect(model.callCount).toBe(0);
+
+    const finalReply = transport.sentTexts[transport.sentTexts.length - 1]!;
+    expect(publisher.events.length).toBeGreaterThan(0); // <- fails red: 0 events published today
+    expect(publisher.events[0]!.type).toBe("RUN_STARTED");
+    expect(publisher.events[1]!.type).toBe("TEXT_MESSAGE_START");
+
+    const contentEvents = eventsOfType(publisher.events, "TEXT_MESSAGE_CONTENT");
+    expect(contentEvents.length).toBeGreaterThanOrEqual(1);
+    expect(contentEvents.map((event) => event.delta).join("")).toBe(finalReply);
+
+    const endEvent = publisher.events.find((event) => event.type === "TEXT_MESSAGE_END");
+    expect(endEvent).toBeDefined();
+
+    const deltaEvent = publisher.events.find((event) => event.type === "STATE_DELTA") as
+      | Extract<AguiEvent, { type: "STATE_DELTA" }>
+      | undefined;
+    expect(deltaEvent).toBeDefined();
+    expect(deltaEvent!.delta).toContainEqual(expect.objectContaining({ path: "/format", value: "individual" }));
+
+    expect(publisher.events[publisher.events.length - 1]!.type).toBe("RUN_FINISHED");
+  });
+
+  // --- ModelPort.send() rejection -> RUN_ERROR (RED) -----------------------
+  // The apology is still sent to the lead exactly as today (NFR-REL-01,
+  // unchanged); this stage's contract does NOT stream the apology text via
+  // TEXT_MESSAGE_* — RUN_ERROR is the dashboard's own signal that the run
+  // failed, so the run boundary always closes, never leaving a silent gap.
+  // @trace NFR-REL-01
+  it("RED: a ModelPort.send() rejection publishes RUN_STARTED -> RUN_ERROR -> RUN_FINISHED only (no TEXT_MESSAGE_*), while the lead still receives the deterministic apology", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded } = seedNewLeadRequest(db, "tg-model-error", "tg-chat-model-error");
+    seedRequestAt(db, seeded.id, "qualifying", { studentName: "Іван" });
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([{ reject: new Error("Anthropic unavailable (simulated)") }]);
+    const publisher = new FakeAguiPublisher();
+    const deps = makeDeps({ transport, model, db, publisher });
+
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-model-error", telegramChatId: "tg-chat-model-error", text: "Ще одне повідомлення" }),
+      deps,
+    );
+
+    // The existing NFR-REL-01 behaviour is unaffected by this seam.
+    expect(transport.sentTexts[transport.sentTexts.length - 1]).toBe(ANTHROPIC_UNAVAILABLE_APOLOGY);
+
+    expect(publisher.eventTypes).toEqual(["RUN_STARTED", "RUN_ERROR", "RUN_FINISHED"]); // <- fails red: [] today
+
+    const runStarted = publisher.events[0] as Extract<AguiEvent, { type: "RUN_STARTED" }>;
+    const runError = publisher.events[1] as Extract<AguiEvent, { type: "RUN_ERROR" }>;
+    const runFinished = publisher.events[2] as Extract<AguiEvent, { type: "RUN_FINISHED" }>;
+    expect(runStarted.threadId).toBe("tg-chat-model-error");
+    expect(runError.threadId).toBe("tg-chat-model-error");
+    expect(runFinished.threadId).toBe("tg-chat-model-error");
+    expect(runError.message.length).toBeGreaterThan(0);
   });
 });
 

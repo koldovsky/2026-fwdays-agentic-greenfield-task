@@ -152,14 +152,25 @@ import {
 import { ANTHROPIC_PROCESSING_NOTICE, EMPTY_NARRATION_FALLBACK_COPY } from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate, TelegramTransport } from "./telegram-transport.ts";
+import { noopAguiPublisher, type AguiPublisher } from "./agui-publisher.ts";
 
 /** Every external dependency `handleUpdate` needs for one turn — see this
- *  file's header comment for the exact role each plays. */
+ *  file's header comment for the exact role each plays.
+ *
+ *  `publisher` (dashboard tasks.md §4.3, design.md Decision 1): the AG-UI
+ *  publisher seam this module will call at each run/text/state boundary of
+ *  a turn — a TYPE/DEFAULT change only in this pass (§4.3's RED half); no
+ *  `publish()` call is wired into `handleUpdate` yet (that is §4.3's GREEN
+ *  half). Optional and defaulting to `noopAguiPublisher` so every existing
+ *  S2 caller (and every existing S2 test, which never passes this field)
+ *  keeps behaving byte-for-byte identically — the regression guard
+ *  `pipeline.test.ts` pins this explicitly. */
 export interface HandleUpdateDeps {
   transport: TelegramTransport;
   db: Database.Database;
   model: ModelPort;
   calendar: CalendarPort;
+  publisher?: AguiPublisher;
 }
 
 /** `requests.state`/`IntakeState.conversationState` values from which a
@@ -330,6 +341,15 @@ function applyCallbackEvent(
  * the full pinned algorithm.
  */
 export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps): Promise<void> {
+  // dashboard tasks.md §4.3 (RED half): resolve the publisher seam's default
+  // now, so `HandleUpdateDeps.publisher` is genuinely optional for every S2
+  // caller/test — but do NOT call `publisher.publish(...)` anywhere yet
+  // (that wiring is §4.3's GREEN half, once `pipeline.test.ts`'s new
+  // event-sequence assertions are confirmed red for the right reason: no
+  // events recorded at all).
+  const publisher = deps.publisher ?? noopAguiPublisher;
+  void publisher;
+
   // Step 1: ALWAYS the very first call, before touching db/model at all.
   await deps.transport.sendChatAction(update.telegramChatId, "typing");
 
