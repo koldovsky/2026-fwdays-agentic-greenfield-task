@@ -156,6 +156,11 @@ import { ANTHROPIC_PROCESSING_NOTICE, EMPTY_NARRATION_FALLBACK_COPY } from "./co
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate, TelegramTransport } from "./telegram-transport.ts";
 import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-publisher.ts";
+// dashboard tasks.md §5 "Relocation prerequisite": `compileFirstLessonBrief`
+// now lives in `lib/` (framework-free, TC-PURE-01) so apps/dashboard's
+// server-side glue can reuse it without importing this package. Re-exported
+// below so this module's own callers/tests are unaffected by the move.
+import { compileFirstLessonBrief as compileFirstLessonBriefFromLib } from "@kamerton/lib/src/intake/first-lesson-brief.ts";
 
 /** Every external dependency `handleUpdate` needs for one turn — see this
  *  file's header comment for the exact role each plays.
@@ -504,62 +509,18 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
   }
 }
 
-/** Ukrainian label for a `RequestFormat` column value — administrator-facing
- *  only, never sent to a lead (that copy lives in `@kamerton/lib`'s
- *  guardrail constants). */
-function formatLabel(format: RequestRow["format"]): string {
-  if (format === "individual") return "індивідуальні";
-  if (format === "group") return "групові";
-  return "—";
-}
-
-const GOAL_TAG_LABELS: Record<string, string> = {
-  karaoke: "караоке",
-  performance: "виступи",
-  confidence: "впевненість у собі",
-  hobby: "для задоволення",
-  other: "інше",
-};
-
-function goalTagLabel(goalTag: RequestRow["goal_tag"]): string {
-  if (goalTag === null) return "";
-  return GOAL_TAG_LABELS[goalTag] ?? goalTag;
-}
-
 /**
  * Composes the administrator-facing first-lesson brief from an
  * already-collected `RequestRow` (`@trace FR-INTAKE-01..06`). Pure,
- * synchronous, no I/O. See this file's header comment for the full pinned
+ * synchronous, no I/O — see this file's header comment for the full pinned
  * contract, including the explicit skipped-field marker rule.
+ *
+ * Relocated to `@kamerton/lib/src/intake/first-lesson-brief.ts` (dashboard
+ * tasks.md §5 "Relocation prerequisite") so `apps/dashboard`'s server-side
+ * glue can reuse it without importing this package. `RequestRow` satisfies
+ * the relocated function's structural `FirstLessonBriefInput` parameter type
+ * (it has every field that type requires, plus more — TypeScript's
+ * excess-property check does not apply to a variable passed through), so no
+ * adapter is needed here; this is a plain re-export, not a wrapper.
  */
-export function compileFirstLessonBrief(row: RequestRow): string {
-  const lines: string[] = [];
-
-  lines.push(`Учень/учениця: ${row.student_name ?? "—"}`);
-  lines.push(`Вік: ${row.student_age ?? "—"}`);
-  lines.push(`Формат: ${formatLabel(row.format)}`);
-
-  if (row.goal_tag !== null || row.goal_text !== null) {
-    const tagLabel = goalTagLabel(row.goal_tag);
-    const detail = [tagLabel, row.goal_text ?? undefined].filter((part) => part !== undefined && part !== "");
-    lines.push(`Мета занять: ${detail.length > 0 ? detail.join(" — ") : "—"}`);
-  } else {
-    lines.push("Мета занять: лід не назвав мету занять");
-  }
-
-  if (row.tastes !== null || row.dream_song !== null) {
-    const parts: string[] = [];
-    if (row.tastes !== null) parts.push(row.tastes);
-    if (row.dream_song !== null) parts.push(`мрія-пісня: ${row.dream_song}`);
-    lines.push(`Музичні смаки: ${parts.join("; ")}`);
-  } else {
-    lines.push("Музичні смаки: лід не назвав музичні смаки");
-  }
-
-  lines.push(`Досвід: ${row.experience ?? "—"}`);
-  lines.push(`Комфорт зі співом: ${row.comfort ?? "—"}`);
-  lines.push(`Бажані дні: ${row.preferred_weekdays ?? "—"}`);
-  lines.push(`Бажаний час: ${row.preferred_time_range ?? "—"}`);
-
-  return lines.join("\n");
-}
+export const compileFirstLessonBrief = compileFirstLessonBriefFromLib;

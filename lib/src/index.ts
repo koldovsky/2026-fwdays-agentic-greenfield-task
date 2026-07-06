@@ -11,6 +11,7 @@ export * from "./intake/format";
 export * from "./intake/audience";
 export * from "./intake/copy";
 export * from "./intake/state-machine";
+export * from "./intake/first-lesson-brief";
 export * from "./dashboard/hall-status";
 export * from "./dashboard/week-grid";
 export * from "./dashboard/json-patch";
