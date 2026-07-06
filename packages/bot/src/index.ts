@@ -1,9 +1,17 @@
 // @kamerton/bot — the runnable entrypoint (tasks.md 5.6). Long-polling
 // grammY bot wired to the real production adapters:
 //   • GrammyTelegramTransport  — Telegram I/O (long polling, NFR-LOCAL-01)
-//   • AnthropicModelPort        — the Claude tool-loop model (claude-sonnet-5;
-//     auth resolves from the ambient local user token / ANTHROPIC_AUTH_TOKEN
-//     via the SDK's OWN resolution — no API-key code path here, NFR-SEC-01)
+//   • ClaudeAgentModelPort      — the Claude tool-loop model (claude-sonnet-5).
+//     This deployment authenticates with a subscription Claude Code OAuth
+//     token (CLAUDE_CODE_OAUTH_TOKEN), which the raw Anthropic Messages API
+//     (AnthropicModelPort, still kept for API-key deployments and the
+//     tiny-real-Anthropic smoke) accepts but then rate-limits (HTTP 429) —
+//     not a metered API key. The Claude Agent SDK instead spawns the local
+//     `claude` CLI, which draws on the subscription's own allowance, so it
+//     is the production choice here (see claude-agent-model-port.ts's
+//     header for the full trace). auth resolves from the ambient
+//     CLAUDE_CODE_OAUTH_TOKEN the CLI subprocess inherits — no API-key code
+//     path here, NFR-SEC-01.
 //   • GoogleCalendarPort        — the DEMO calendar (service-account JWT)
 //   • openDatabase              — the local SQLite file (TC-DATA-01)
 //
@@ -20,7 +28,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { openDatabase } from "@kamerton/db";
-import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts";
+import { ClaudeAgentModelPort } from "@kamerton/agent/src/claude-agent-model-port.ts";
 import { ensureAmbientAuthToken } from "@kamerton/agent/src/ambient-auth.ts";
 import { GoogleCalendarPort } from "@kamerton/calendar";
 import { GrammyTelegramTransport } from "./telegram-transport.ts";
@@ -99,7 +107,10 @@ async function main(): Promise<void> {
   const dbPath = process.env.KAMERTON_DB_PATH ?? path.join(repoRoot, "kamerton.db");
 
   const db = openDatabase(dbPath);
-  const model = new AnthropicModelPort(); // ambient auth only (NFR-SEC-01)
+  // Agent SDK transport (see this file's header + claude-agent-model-port.ts's
+  // header): spawns the local `claude` CLI, which draws on the subscription
+  // OAuth token's own allowance instead of hitting the rate-limited raw API.
+  const model = new ClaudeAgentModelPort(); // ambient auth only (NFR-SEC-01)
   const calendar = new GoogleCalendarPort(); // reads GOOGLE_* from env
   const transport = new GrammyTelegramTransport(token);
 

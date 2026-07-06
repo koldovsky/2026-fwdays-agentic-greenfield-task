@@ -6,6 +6,8 @@
   "description": "Agent core: claude-sonnet-5 thin tool-use loop (TC-STACK-02); no confirm/KB-write tools by construction (FR-GUARD-01/06)",
   "main": "src/index.ts",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.93.0"
+    "@anthropic-ai/claude-agent-sdk": "^0.3.201",
+    "@anthropic-ai/sdk": "^0.93.0",
+    "zod": "^4.4.3"
   }
 }
