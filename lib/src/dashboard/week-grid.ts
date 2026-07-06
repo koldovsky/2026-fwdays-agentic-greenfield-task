@@ -37,7 +37,47 @@ export interface SeatCoordinate {
  * weekday. Never reads `Date.now()` — "now" is always the caller's argument
  * (same purity discipline as `rankSlots()`/`generateGrid()`).
  */
+/** Fixed hourly-start seats, 10:00 through 19:00 inclusive (BC-SCHEDULE-01). */
+const HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+
+/**
+ * Weekday of a "YYYY-MM-DD" calendar date, 0 = Sunday .. 6 = Saturday. Same
+ * UTC-midnight-anchored calendar-date arithmetic as `lib/src/slots/grid.ts`
+ * (a calendar date's weekday does not depend on a timezone).
+ */
+function weekdayOf(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+/** Zero-padded "YYYY-MM-DD" for a UTC-midnight-anchored calendar date. */
+function toDateStr(utcMidnight: Date): string {
+  const y = utcMidnight.getUTCFullYear();
+  const m = String(utcMidnight.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(utcMidnight.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function weekSeatGrid(weekStartIso: string): SeatCoordinate[] {
-  void weekStartIso; // referenced only to satisfy no-unused-vars until 3.2 implements this
-  throw new Error("not implemented");
+  const [y, m, d] = weekStartIso.split("-").map(Number) as [number, number, number];
+  const baseMillis = Date.UTC(y, m - 1, d);
+  const dow = weekdayOf(weekStartIso); // 0 = Sunday .. 6 = Saturday
+  // Offset back to this ISO week's Monday: Sunday (0) is 6 days after Monday.
+  const offsetToMonday = dow === 0 ? -6 : 1 - dow;
+  const mondayMillis = baseMillis + offsetToMonday * 24 * 60 * 60 * 1000;
+
+  const seats: SeatCoordinate[] = [];
+  for (let weekday = 1; weekday <= 5; weekday++) {
+    const dayMillis = mondayMillis + (weekday - 1) * 24 * 60 * 60 * 1000;
+    const dateStr = toDateStr(new Date(dayMillis));
+    for (const hour of HOURS) {
+      const hourStr = String(hour).padStart(2, "0");
+      seats.push({
+        weekday,
+        hour,
+        slotStartIso: `${dateStr}T${hourStr}:00`,
+      });
+    }
+  }
+
+  return seats;
 }

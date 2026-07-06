@@ -28,6 +28,25 @@ export type SeatStatus = "free" | "pending" | "confirmed" | "cancelled";
  * `"cancelled"` — it never reverts to `"free"`.
  */
 export function hallSeatStatus(bookings: { status: BookingStatus }[]): SeatStatus {
-  void bookings; // referenced only to satisfy no-unused-vars until 3.1 implements this
-  throw new Error("not implemented");
+  let hasPending = false;
+  let hasReleased = false;
+
+  for (const booking of bookings) {
+    if (booking.status === "confirmed") {
+      return "confirmed";
+    }
+    if (booking.status === "pending") {
+      hasPending = true;
+    } else if (booking.status === "cancelled" || booking.status === "declined") {
+      hasReleased = true;
+    }
+  }
+
+  if (hasPending) {
+    return "pending";
+  }
+  if (hasReleased) {
+    return "cancelled";
+  }
+  return "free";
 }

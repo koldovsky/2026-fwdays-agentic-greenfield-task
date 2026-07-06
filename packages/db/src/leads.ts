@@ -80,7 +80,27 @@ export interface DeleteLeadCascadeResult {
 // lead's `bookings` rows (joined via `requests.lead_id`) BEFORE deleting the
 // `leads` row, rather than relying on the schema's cascades alone.
 export function deleteLeadCascade(db: Database.Database, leadId: number): DeleteLeadCascadeResult {
-  void db; // referenced only to satisfy no-unused-vars until this is implemented
-  void leadId;
-  throw new Error("not implemented");
+  const run = db.transaction((id: number): DeleteLeadCascadeResult => {
+    const pendingEventRows = db
+      .prepare(
+        `SELECT b.calendar_event_id AS calendar_event_id
+         FROM bookings b
+         JOIN requests r ON r.id = b.request_id
+         WHERE r.lead_id = ?
+           AND b.status = 'pending'
+           AND b.calendar_event_id IS NOT NULL`,
+      )
+      .all(id) as { calendar_event_id: string }[];
+
+    db.prepare(
+      `DELETE FROM bookings
+       WHERE request_id IN (SELECT id FROM requests WHERE lead_id = ?)`,
+    ).run(id);
+
+    db.prepare(`DELETE FROM leads WHERE id = ?`).run(id);
+
+    return { deletedPendingEventIds: pendingEventRows.map((row) => row.calendar_event_id) };
+  });
+
+  return run(leadId);
 }
