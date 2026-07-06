@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":4,"namespace":"OrbitTVRemoteDesignSystem_08e5b7","components":[{"name":"AppShortcut","sourcePath":"components/controls/AppShortcut.jsx"},{"name":"DPad","sourcePath":"components/controls/DPad.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"DeviceCard","sourcePath":"components/core/DeviceCard.jsx"},{"name":"IconButton","sourcePath":"components/core/IconButton.jsx"},{"name":"Modal","sourcePath":"components/feedback/Modal.jsx"},{"name":"Input","sourcePath":"components/forms/Input.jsx"},{"name":"Slider","sourcePath":"components/forms/Slider.jsx"},{"name":"Toggle","sourcePath":"components/forms/Toggle.jsx"}],"sourceHashes":{"components/controls/AppShortcut.jsx":"235bec6dffb5","components/controls/DPad.jsx":"03a60c104847","components/core/Badge.jsx":"0263933242d9","components/core/Button.jsx":"c4e70d237b05","components/core/Card.jsx":"62d21bcb9469","components/core/DeviceCard.jsx":"5da15b6adfa4","components/core/IconButton.jsx":"8419e65129d3","components/feedback/Modal.jsx":"e915fd4d0c7b","components/forms/Input.jsx":"951867c97f32","components/forms/Slider.jsx":"2f3ee2cf808d","components/forms/Toggle.jsx":"352535cd7a33","ui_kits/tv-remote/DeviceListScreen.jsx":"d0f4c45eceee","ui_kits/tv-remote/RemoteScreen.jsx":"e737faefc6fa"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"OrbitTVRemoteDesignSystem_08e5b7","components":[{"name":"AppShortcut","sourcePath":"components/controls/AppShortcut.jsx"},{"name":"DPad","sourcePath":"components/controls/DPad.jsx"},{"name":"RotaryKnob","sourcePath":"components/controls/RotaryKnob.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"DeviceCard","sourcePath":"components/core/DeviceCard.jsx"},{"name":"IconButton","sourcePath":"components/core/IconButton.jsx"},{"name":"Modal","sourcePath":"components/feedback/Modal.jsx"},{"name":"Input","sourcePath":"components/forms/Input.jsx"},{"name":"Slider","sourcePath":"components/forms/Slider.jsx"},{"name":"Toggle","sourcePath":"components/forms/Toggle.jsx"}],"sourceHashes":{"components/controls/AppShortcut.jsx":"235bec6dffb5","components/controls/DPad.jsx":"03a60c104847","components/controls/RotaryKnob.jsx":"manual-patch-c9a8b7f0","components/core/Badge.jsx":"0263933242d9","components/core/Button.jsx":"c4e70d237b05","components/core/Card.jsx":"62d21bcb9469","components/core/DeviceCard.jsx":"5da15b6adfa4","components/core/IconButton.jsx":"8419e65129d3","components/feedback/Modal.jsx":"e915fd4d0c7b","components/forms/Input.jsx":"951867c97f32","components/forms/Slider.jsx":"2f3ee2cf808d","components/forms/Toggle.jsx":"352535cd7a33","ui_kits/tv-remote/DeviceListScreen.jsx":"d0f4c45eceee","ui_kits/tv-remote/RemoteScreen.jsx":"e737faefc6fa"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
@@ -467,6 +467,144 @@ function DPad({
 Object.assign(__ds_scope, { DPad });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/DPad.jsx", error: String((e && e.message) || e) }); }
 
+// components/controls/RotaryKnob.jsx
+try { (() => {
+/**
+ * RotaryKnob — a memoryless relative rotary encoder. Neumorphic raised
+ * housing with an inset centre well that hosts a caller-supplied action
+ * (e.g. a mute IconButton). Each 15° of accumulated rotation fires one
+ * `onStep('up' | 'down')` — the knob holds no absolute value.
+ */
+const RK_DETENT_DEG = 15;
+const RK_DETENT_RAD = (RK_DETENT_DEG * Math.PI) / 180;
+const RK_DETENT_EPS = 1e-9;
+function rk_shortestAngleDelta(prev, curr) {
+  let d = curr - prev;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+}
+function RotaryKnob({ size = 200, disabled = false, center, onStep }) {
+  const [indicatorRad, setIndicatorRad] = React.useState(-Math.PI / 2);
+  const [focused, setFocused] = React.useState(false);
+  const pointerRef = React.useRef({ id: null, lastAngle: 0, accumulator: 0 });
+  const emitSteps = React.useCallback((direction, count = 1) => {
+    if (disabled || !onStep) return;
+    for (let i = 0; i < count; i += 1) onStep(direction);
+  }, [disabled, onStep]);
+  const centreOf = (el) => {
+    const rect = el.getBoundingClientRect();
+    return { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 };
+  };
+  const handlePointerDown = (e) => {
+    if (disabled) return;
+    if (pointerRef.current.id !== null) return;
+    const { cx, cy } = centreOf(e.currentTarget);
+    const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    pointerRef.current = { id: e.pointerId, lastAngle: angle, accumulator: 0 };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    setIndicatorRad(angle);
+  };
+  const handlePointerMove = (e) => {
+    const ptr = pointerRef.current;
+    if (ptr.id === null || ptr.id !== e.pointerId) return;
+    const { cx, cy } = centreOf(e.currentTarget);
+    const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const delta = rk_shortestAngleDelta(ptr.lastAngle, angle);
+    ptr.lastAngle = angle;
+    ptr.accumulator += delta;
+    while (ptr.accumulator >= RK_DETENT_RAD - RK_DETENT_EPS) { ptr.accumulator -= RK_DETENT_RAD; emitSteps('up'); }
+    while (ptr.accumulator <= -(RK_DETENT_RAD - RK_DETENT_EPS)) { ptr.accumulator += RK_DETENT_RAD; emitSteps('down'); }
+    setIndicatorRad(angle);
+  };
+  const handlePointerEnd = (e) => {
+    const ptr = pointerRef.current;
+    if (ptr.id === null || ptr.id !== e.pointerId) return;
+    pointerRef.current = { id: null, lastAngle: 0, accumulator: 0 };
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+  };
+  const handleKeyDown = (e) => {
+    if (disabled) return;
+    if (e.target !== e.currentTarget) return;
+    switch (e.key) {
+      case 'ArrowUp':
+      case 'ArrowRight':
+        e.preventDefault(); emitSteps('up'); break;
+      case 'ArrowDown':
+      case 'ArrowLeft':
+        e.preventDefault(); emitSteps('down'); break;
+      case 'PageUp':
+        e.preventDefault(); emitSteps('up', 3); break;
+      case 'PageDown':
+        e.preventDefault(); emitSteps('down', 3); break;
+      default: break;
+    }
+  };
+  const wellSize = Math.round(size * 0.42);
+  const dotSize = Math.max(6, Math.round(size * 0.035));
+  const dotRadius = size / 2 - Math.max(dotSize, Math.round(size * 0.08));
+  return /*#__PURE__*/React.createElement("div", {
+    role: "slider",
+    "aria-orientation": "vertical",
+    "aria-label": "Volume",
+    "aria-valuetext": "Relative volume control",
+    "aria-disabled": disabled,
+    tabIndex: disabled ? -1 : 0,
+    onPointerDown: handlePointerDown,
+    onPointerMove: handlePointerMove,
+    onPointerUp: handlePointerEnd,
+    onPointerCancel: handlePointerEnd,
+    onKeyDown: handleKeyDown,
+    onFocus: () => setFocused(true),
+    onBlur: () => setFocused(false),
+    style: {
+      position: 'relative',
+      width: size,
+      height: size,
+      borderRadius: '50%',
+      background: 'var(--base-100)',
+      boxShadow: 'var(--nm-raised-lg)',
+      touchAction: 'none',
+      userSelect: 'none',
+      outline: focused && !disabled ? '2px solid var(--accent)' : 'none',
+      outlineOffset: 4,
+      opacity: disabled ? 0.55 : 1,
+      pointerEvents: disabled ? 'none' : 'auto',
+      display: 'grid',
+      placeItems: 'center',
+      cursor: disabled ? 'not-allowed' : 'grab'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    "aria-hidden": true,
+    style: {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: dotSize,
+      height: dotSize,
+      borderRadius: '50%',
+      background: 'var(--accent)',
+      transform: `translate(-50%, -50%) rotate(${indicatorRad + Math.PI / 2}rad) translateY(-${dotRadius}px)`,
+      transformOrigin: 'center',
+      pointerEvents: 'none'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    onPointerDown: (e) => e.stopPropagation(),
+    onPointerMove: (e) => e.stopPropagation(),
+    style: {
+      width: wellSize,
+      height: wellSize,
+      borderRadius: '50%',
+      background: 'var(--base-100)',
+      boxShadow: 'var(--nm-inset-md)',
+      display: 'grid',
+      placeItems: 'center'
+    }
+  }, center));
+}
+Object.assign(__ds_scope, { RotaryKnob });
+})(); } catch (e) { __ds_ns.__errors.push({ path: "components/controls/RotaryKnob.jsx", error: String((e && e.message) || e) }); }
+
 // components/feedback/Modal.jsx
 try { (() => {
 /**
@@ -918,11 +1056,10 @@ function RemoteScreen({
   const {
     IconButton,
     DPad,
-    Slider,
+    RotaryKnob,
     Badge,
     AppShortcut
   } = NS2;
-  const [volume, setVolume] = React.useState(38);
   const [muted, setMuted] = React.useState(false);
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1014,18 +1151,18 @@ function RemoteScreen({
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      alignItems: 'center',
-      gap: 14
+      justifyContent: 'center',
+      padding: '8px 0'
     }
-  }, /*#__PURE__*/React.createElement(IconButton, {
-    icon: muted ? 'volume_off' : 'volume_up',
-    active: muted,
-    size: "sm",
-    onClick: () => setMuted(m => !m),
-    "aria-label": "Mute"
-  }), /*#__PURE__*/React.createElement(Slider, {
-    value: volume,
-    onChange: setVolume
+  }, /*#__PURE__*/React.createElement(RotaryKnob, {
+    size: 200,
+    center: /*#__PURE__*/React.createElement(IconButton, {
+      icon: muted ? 'volume_off' : 'volume_up',
+      active: muted,
+      size: "md",
+      onClick: () => setMuted(m => !m),
+      "aria-label": "Mute"
+    })
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1045,6 +1182,8 @@ window.RemoteScreen = RemoteScreen;
 __ds_ns.AppShortcut = __ds_scope.AppShortcut;
 
 __ds_ns.DPad = __ds_scope.DPad;
+
+__ds_ns.RotaryKnob = __ds_scope.RotaryKnob;
 
 __ds_ns.Badge = __ds_scope.Badge;
 

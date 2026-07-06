@@ -35,23 +35,23 @@ vi.mock('../data/useInputs.ts', () => {
 // Mutable ambient state the mocks read. Tests set these before render.
 let mockState: ClientSessionState = 'Disconnected';
 let mockMuted = false;
-let mockVolumeDelta = vi.fn(async () => undefined);
+let mockVolumeDelta = vi.fn(async (_steps: number) => undefined);
 let mockVolumeToggle = vi.fn(async () => undefined);
 let mockInputs: readonly InputCatalogueEntry[] = [
   { id: 'KEY_SOURCE', label: 'Source picker' },
   { id: 'KEY_HDMI1', label: 'HDMI 1' },
 ];
-let mockSetInput = vi.fn(async () => undefined);
+let mockSetInput = vi.fn(async (_id: string) => undefined);
 
 function resetMocks() {
   mockMuted = false;
-  mockVolumeDelta = vi.fn(async () => undefined);
+  mockVolumeDelta = vi.fn(async (_steps: number) => undefined);
   mockVolumeToggle = vi.fn(async () => undefined);
   mockInputs = [
     { id: 'KEY_SOURCE', label: 'Source picker' },
     { id: 'KEY_HDMI1', label: 'HDMI 1' },
   ];
-  mockSetInput = vi.fn(async () => undefined);
+  mockSetInput = vi.fn(async (_id: string) => undefined);
 }
 
 function device(overrides: Partial<Device> = {}): Device {
@@ -67,12 +67,38 @@ function device(overrides: Partial<Device> = {}): Device {
   };
 }
 
+// The knob is centred inside a 200×200 element. Tests need a deterministic
+// bounding rect so `atan2(dy, dx)` maths lines up with the pointer coords
+// we feed in — happy-dom's default rect is all zeros.
+const KNOB_RECT = { left: 0, top: 0, right: 200, bottom: 200, width: 200, height: 200, x: 0, y: 0, toJSON: () => ({}) };
+function mockKnobRect(knob: HTMLElement) {
+  vi.spyOn(knob, 'getBoundingClientRect').mockReturnValue(KNOB_RECT as unknown as DOMRect);
+}
+
+function pointAt(deg: number): { clientX: number; clientY: number } {
+  // Screen coords: y grows downward. atan2(dy, dx) with dy > 0 = below centre,
+  // and Math conventions have +angle = CCW in math axes but CW on screen (y-down).
+  // We want θ = 0 rad → right (3 o'clock), θ = -π/2 → up (12 o'clock).
+  // Convert "clockwise degrees from 12 o'clock" → screen angle θ = -π/2 + deg*π/180.
+  const theta = -Math.PI / 2 + (deg * Math.PI) / 180;
+  const r = 80;
+  return {
+    clientX: 100 + r * Math.cos(theta),
+    clientY: 100 + r * Math.sin(theta),
+  };
+}
+
+function getKnob(container: HTMLElement): HTMLElement {
+  const knob = container.querySelector<HTMLElement>('[role="slider"]');
+  if (!knob) throw new Error('knob (role="slider") not found');
+  mockKnobRect(knob);
+  return knob;
+}
+
 describe('RemoteScreen', () => {
   it('renders every command control as disabled when the session is Connecting', () => {
     mockState = 'Connecting';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
+    resetMocks();
     const post = vi.fn().mockResolvedValue(undefined);
     const { container } = render(
       <RemoteScreen device={device()} onBack={vi.fn()} sendKeyOptions={{ post }} />,
@@ -92,9 +118,7 @@ describe('RemoteScreen', () => {
 
   it('clicking the D-pad up arrow while Connected calls sendKey with KEY_UP', () => {
     mockState = 'Connected';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
+    resetMocks();
     const post = vi.fn().mockResolvedValue(undefined);
     const { container } = render(
       <RemoteScreen device={device()} onBack={vi.fn()} sendKeyOptions={{ post }} />,
@@ -106,23 +130,122 @@ describe('RemoteScreen', () => {
     expect(post).toHaveBeenCalledWith('udn-1', 'KEY_UP');
   });
 
-  it('renders the Slider without erroring and defaults to the local starting position', () => {
+  it('renders the volume knob as a role="slider" when Connected', () => {
     mockState = 'Connected';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
+    resetMocks();
     const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
-    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
-    expect(range, 'slider input not found').not.toBeNull();
-    expect(range?.disabled).toBe(false);
-    // Default local slider position is 38 (per SLIDER_START in RemoteScreen.tsx).
-    expect(Number(range?.value)).toBe(38);
+    const knob = container.querySelector<HTMLElement>('[role="slider"]');
+    expect(knob, 'volume knob not found').not.toBeNull();
+    expect(knob?.getAttribute('aria-disabled')).toBe('false');
+    expect(knob?.tabIndex).toBe(0);
+  });
+
+  it('rotating the knob 15° clockwise while Connected fires one sendDelta(+1)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    const start = pointAt(0);
+    const after15 = pointAt(15);
+    fireEvent.pointerDown(knob, { pointerId: 1, ...start });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...after15 });
+    fireEvent.pointerUp(knob, { pointerId: 1, ...after15 });
+    expect(mockVolumeDelta).toHaveBeenCalledTimes(1);
+    expect(mockVolumeDelta).toHaveBeenCalledWith(1);
+  });
+
+  it('rotating the knob 15° counter-clockwise while Connected fires one sendDelta(-1)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    const start = pointAt(0);
+    const afterMinus15 = pointAt(-15);
+    fireEvent.pointerDown(knob, { pointerId: 1, ...start });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...afterMinus15 });
+    fireEvent.pointerUp(knob, { pointerId: 1, ...afterMinus15 });
+    expect(mockVolumeDelta).toHaveBeenCalledTimes(1);
+    expect(mockVolumeDelta).toHaveBeenCalledWith(-1);
+  });
+
+  it('rotating 45° clockwise in one gesture fires three sendDelta(+1) calls', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    fireEvent.pointerDown(knob, { pointerId: 1, ...pointAt(0) });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...pointAt(15.5) });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...pointAt(30.5) });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...pointAt(45.5) });
+    fireEvent.pointerUp(knob, { pointerId: 1, ...pointAt(45.5) });
+    expect(mockVolumeDelta).toHaveBeenCalledTimes(3);
+    expect(mockVolumeDelta.mock.calls.map((c) => c[0])).toEqual([1, 1, 1]);
+  });
+
+  it('sub-detent rotation (10°) fires nothing', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    fireEvent.pointerDown(knob, { pointerId: 1, ...pointAt(0) });
+    fireEvent.pointerMove(knob, { pointerId: 1, ...pointAt(10) });
+    fireEvent.pointerUp(knob, { pointerId: 1, ...pointAt(10) });
+    expect(mockVolumeDelta).not.toHaveBeenCalled();
+  });
+
+  it('ArrowUp on a focused knob fires one sendDelta(+1)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    knob.focus();
+    fireEvent.keyDown(knob, { key: 'ArrowUp' });
+    expect(mockVolumeDelta).toHaveBeenCalledTimes(1);
+    expect(mockVolumeDelta).toHaveBeenCalledWith(1);
+  });
+
+  it('ArrowDown on a focused knob fires one sendDelta(-1)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    knob.focus();
+    fireEvent.keyDown(knob, { key: 'ArrowDown' });
+    expect(mockVolumeDelta).toHaveBeenCalledTimes(1);
+    expect(mockVolumeDelta).toHaveBeenCalledWith(-1);
+  });
+
+  it('PageUp on a focused knob fires three sendDelta(+1) calls in order', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = getKnob(container);
+    knob.focus();
+    fireEvent.keyDown(knob, { key: 'PageUp' });
+    expect(mockVolumeDelta.mock.calls.map((c) => c[0])).toEqual([1, 1, 1]);
+  });
+
+  it('rotating the knob while Connecting fires no sendDelta', () => {
+    mockState = 'Connecting';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const knob = container.querySelector<HTMLElement>('[role="slider"]');
+    expect(knob, 'knob not found').not.toBeNull();
+    expect(knob?.getAttribute('aria-disabled')).toBe('true');
+    // The wrapper's opacity/pointer-events would already block pointer input in
+    // the browser; also assert the component itself refuses to emit.
+    mockKnobRect(knob!);
+    fireEvent.pointerDown(knob!, { pointerId: 1, ...pointAt(0) });
+    fireEvent.pointerMove(knob!, { pointerId: 1, ...pointAt(45) });
+    fireEvent.pointerUp(knob!, { pointerId: 1, ...pointAt(45) });
+    fireEvent.keyDown(knob!, { key: 'ArrowUp' });
+    expect(mockVolumeDelta).not.toHaveBeenCalled();
   });
 
   it('renders volume_off with active prop when muted: true', () => {
     mockState = 'Connected';
     mockMuted = true;
-    mockVolumeDelta = vi.fn(async () => undefined);
+    mockVolumeDelta = vi.fn(async (_steps: number) => undefined);
     mockVolumeToggle = vi.fn(async () => undefined);
     const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
     const mute = container.querySelector<HTMLButtonElement>('button[aria-label="Mute"]');
@@ -132,37 +255,6 @@ describe('RemoteScreen', () => {
     // `active` prop drives an inset shadow via var(--nm-inset-md).
     const shadow = mute?.style.boxShadow ?? '';
     expect(shadow).toContain('--nm-inset-md');
-  });
-
-  it('committing the slider while Connecting fires no delta call', () => {
-    mockState = 'Connecting';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
-    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
-    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
-    expect(range?.disabled).toBe(true);
-    // Try to drive a change + commit; both should be no-ops.
-    if (range) {
-      fireEvent.change(range, { target: { value: '55' } });
-      fireEvent.mouseUp(range);
-      fireEvent.keyUp(range);
-    }
-    expect(mockVolumeDelta).not.toHaveBeenCalled();
-  });
-
-  it('committing the slider while Connected fires a delta call with the position diff', () => {
-    mockState = 'Connected';
-    mockMuted = false;
-    mockVolumeDelta = vi.fn(async () => undefined);
-    mockVolumeToggle = vi.fn(async () => undefined);
-    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
-    const range = container.querySelector<HTMLInputElement>('input[type="range"]');
-    expect(range).not.toBeNull();
-    // Drag from the default (38) up to 41.
-    fireEvent.change(range!, { target: { value: '41' } });
-    fireEvent.mouseUp(range!);
-    expect(mockVolumeDelta).toHaveBeenCalledWith(3);
   });
 
   it('clicking mute while Connected calls toggleMute', () => {

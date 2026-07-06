@@ -50,6 +50,7 @@ Visual language: **Neumorphism (soft UI)** — a single flat background color, w
 No component library, codebase, or Figma file was attached — this is a from-scratch build, so the full standard primitive set was authored (per the "no source" path), sized down to what a two-screen remote-control app actually needs. Two components go beyond a generic UI-kit checklist and are domain-specific to this product:
 
 - **DPad** — the directional pad housing (a circular inset dish + 4 arrow `IconButton`s + center accent Select button). Reasoning: no generic design system ships a D-pad; it's the signature control of a TV remote and deserved a first-class, reusable primitive rather than being hand-assembled inside the UI kit.
+- **RotaryKnob** — the remote's volume control: a raised neumorphic disc with a rim indicator, an inset centre well hosting a caller-supplied action (typically the mute `IconButton`), and per-detent (~15°) pointer + keyboard step emission. Reasoning: the Samsung Smart View wire protocol is remote-key-only (no absolute-set method, no way to read actual level), so the honest control for volume is a memoryless relative encoder rather than a fake absolute slider.
 - **DeviceCard** — the composed device-list row (icon tile + name/model/IP + status Badge + chevron). Reasoning: this exact row shape recurs as the core unit of the whole first screen; making it a real component (composing `Card` + `Badge`) keeps the UI kit thin and keeps that row consistent everywhere it's reused.
 
 ## Index
@@ -67,7 +68,7 @@ tokens/
 components/
   core/        Button, IconButton, Card, Badge, DeviceCard
   forms/       Toggle, Input, Slider
-  controls/    DPad, AppShortcut
+  controls/    DPad, RotaryKnob, AppShortcut
   feedback/    Modal
 
 guidelines/    foundation specimen cards (Colors, Type, Spacing, Shadows, Iconography, theme comparison)
@@ -92,6 +93,7 @@ SKILL.md       portable skill definition for use in Claude Code / other agent co
 | Input | forms | Inset text field (IP address entry) |
 | Slider | forms | Groove slider (volume/brightness) |
 | DPad | controls | Directional pad housing |
+| RotaryKnob | controls | Memoryless rotary encoder — per-detent `onStep('up' \| 'down')` with a composable centre slot for a mute/action button |
 | AppShortcut | controls | Square app-shortcut tile |
 | Modal | feedback | Centered dialog on blurred scrim (Add-TV flow) |
 

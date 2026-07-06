@@ -1,4 +1,4 @@
-<!-- @dsCard group="Components" viewport="700x300" name="Controls" subtitle="DPad, AppShortcut" -->
+<!-- @dsCard group="Components" viewport="700x340" name="Controls" subtitle="DPad, RotaryKnob, AppShortcut" -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,16 +12,28 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { DPad, AppShortcut } = window.OrbitTVRemoteDesignSystem_08e5b7;
+const { DPad, RotaryKnob, IconButton, AppShortcut } = window.OrbitTVRemoteDesignSystem_08e5b7;
 
 function Demo() {
+  const [muted, setMuted] = React.useState(false);
   return (
     <div style={{ display: 'flex', gap: 40, alignItems: 'center', fontFamily: 'var(--font-sans)' }}>
       <DPad size={180} />
+      <RotaryKnob
+        size={180}
+        center={
+          <IconButton
+            icon={muted ? 'volume_off' : 'volume_up'}
+            active={muted}
+            size="md"
+            aria-label="Mute"
+            onClick={() => setMuted((m) => !m)}
+          />
+        }
+      />
       <div style={{ display: 'flex', gap: 16 }}>
         <AppShortcut icon="live_tv" label="Live TV" />
         <AppShortcut icon="movie" label="Movies" />
-        <AppShortcut icon="sports_esports" label="Games" />
       </div>
     </div>
   );

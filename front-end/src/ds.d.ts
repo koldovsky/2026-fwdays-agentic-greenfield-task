@@ -50,6 +50,11 @@ declare module '@ds/components/controls/DPad.jsx' {
   export const DPad: ComponentType<DPadProps>
 }
 
+declare module '@ds/components/controls/RotaryKnob.jsx' {
+  import type { RotaryKnobProps } from '@ds/components/controls/RotaryKnob'
+  export const RotaryKnob: ComponentType<RotaryKnobProps>
+}
+
 declare module '@ds/components/controls/AppShortcut.jsx' {
   import type { AppShortcutProps } from '@ds/components/controls/AppShortcut'
   export const AppShortcut: ComponentType<AppShortcutProps>

@@ -33,6 +33,7 @@ import { Badge } from '@ds/components/core/Badge.jsx'
 import { Input } from '@ds/components/forms/Input.jsx'
 import { Slider } from '@ds/components/forms/Slider.jsx'
 import { DPad } from '@ds/components/controls/DPad.jsx'
+import { RotaryKnob } from '@ds/components/controls/RotaryKnob.jsx'
 import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx'
 import { Modal } from '@ds/components/feedback/Modal.jsx'
 import { ListRow } from '@ds/components/core/ListRow.jsx'
@@ -50,6 +51,7 @@ import { Toast } from '@ds/components/feedback/Toast.jsx'
 | forms    | `Input`        | Inset text field (IP address entry)                          |
 | forms    | `Slider`       | Groove slider (volume/brightness)                            |
 | controls | `DPad`         | Directional pad — 4 arrows + centre OK                       |
+| controls | `RotaryKnob`   | Memoryless rotary encoder — per-detent step emitter with a composable centre slot (mute button on `RemoteScreen`) |
 | controls | `AppShortcut`  | Square app-shortcut tile                                     |
 | core     | `ListRow`      | Neomorphic row for vertical pickers (inputs modal, settings) |
 | feedback | `Modal`        | Centered dialog on blurred scrim (Add-TV flow)               |
@@ -86,7 +88,7 @@ Full catalog in `docs/orbit-tv-remote-design-system/tokens/`.
 Per the product brief, the whole app is two screens:
 
 1. **Device list** — `DeviceCard` per discovered TV (name, model, IP, `Badge` status). Primary CTA "Add a TV" opens a `Modal` with an `Input` for a manual IP entry.
-2. **Remote** — header (`IconButton` back + name/IP + `Badge`), `AppShortcut` row, `DPad`, transport `IconButton` row, `Slider` for volume with a mute `IconButton`, accent `IconButton` power.
+2. **Remote** — header (`IconButton` back + name/IP + `Badge`), `AppShortcut` row, `DPad`, transport `IconButton` row, `RotaryKnob` for volume with a mute `IconButton` in its centre well (memoryless — each detent posts `±1` to `POST /volume/delta`, no absolute level shown), accent `IconButton` power.
 
 `front-end/src/App.tsx` is the current composition of both screens from DS primitives.
 

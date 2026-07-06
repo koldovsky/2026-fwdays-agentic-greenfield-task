@@ -4,6 +4,38 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-06T08:08:09Z
+
+**What was done — implemented `volume-rotary-knob` via the `/next-change` Loop Engineering cycle**
+- Replaced the write-only `Slider` + separate mute `IconButton` row on `RemoteScreen` with a single memoryless `RotaryKnob` primitive whose centre well hosts the mute `IconButton`. Semantics: 15° accumulated rotation → immediate `POST /volume/delta { delta: ±1 }`; keyboard `ArrowUp/Right` = `+1`, `ArrowDown/Left` = `-1`, `PageUp/PageDown` = ×3. Purely relative — no absolute level state, no `SLIDER_START`, no `useVolume().level` read. Modifies capability C7; back-end wire contract (`GET /volume`, `POST /volume/delta`, `POST /mute`, `volume` WS event) is unchanged.
+- Design system extension:
+  - `docs/orbit-tv-remote-design-system/components/controls/RotaryKnob.{jsx,d.ts,prompt.md}` (new): raised outer housing (`--nm-raised-lg`), inset centre well (`--nm-inset-md`), `--accent` rim indicator dot that follows the pointer during a gesture, focus-visible outline in `--accent`. All neomorphic tokens; no hard-coded palette or shadow strings. Pointer capture via `setPointerCapture` with try/catch (test-envs safe), single-pointer rotation, keyboard handlers guarded by `e.target !== e.currentTarget` so the centre mute button doesn't inherit them. Detent boundary uses a `1e-9` epsilon so exact-15° gestures fire (belt-and-braces for `atan2` FP drift).
+  - `docs/orbit-tv-remote-design-system/_ds_manifest.json`: registered `RotaryKnob` under `components/controls`; bumped the controls card viewport to `700x340`.
+  - `docs/orbit-tv-remote-design-system/_ds_bundle.js`: **hand-patched** (no in-repo bundler script exists) — added the RotaryKnob IIFE, the `__ds_ns.RotaryKnob` export, and swapped the UI-kit `RemoteScreen` compiled block to use the knob. Placeholder `manual-patch-c9a8b7f0` sourceHash noted; a future real bundler run will overwrite it.
+  - `docs/orbit-tv-remote-design-system/components/controls/controls.card.html`: added a live RotaryKnob demo alongside DPad + AppShortcut.
+  - `docs/orbit-tv-remote-design-system/ui_kits/tv-remote/RemoteScreen.jsx`: swapped Slider + mute row for a centred RotaryKnob with mute IconButton in the centre slot; source now mirrors the compiled bundle block.
+  - `docs/orbit-tv-remote-design-system/readme.md`: added RotaryKnob to the component index and the "domain-specific components" reasoning list.
+- Front-end app:
+  - `front-end/src/screens/RemoteScreen.tsx`: removed `Slider` import + `SLIDER_START` + `sliderPosition` state + `lastCommittedRef` + `handleSliderCommit`; new `handleStep(direction)` calls `sendDelta(±1)`; volume row is now a centred `<RotaryKnob>` with mute as the `center` slot. Comment about AppShortcut being the only overlay-disabled control updated to reflect the new set of DS-native `disabled`-aware primitives.
+  - `front-end/src/ds.d.ts`: `@ds/components/controls/RotaryKnob.jsx` type shim (mirrors DPad's pattern).
+  - `front-end/src/screens/RemoteScreen.test.tsx`: rewrote the slider-era tests. New coverage: 15°/−15°/45° rotations (per detent), 10° sub-detent no-op, ArrowUp/ArrowDown/PageUp keyboard stepping, `Connecting` state gates both pointer and keyboard, mute click passthrough, muted `active` inset shadow, inputs-modal auto-close. Uses a `getBoundingClientRect` spy to give the knob a deterministic 200×200 rect and `pointAt(deg)` polar helper. Mock signatures typed with explicit `_steps: number` / `_id: string` so `mock.calls[i][0]` type-narrows.
+  - `DESIGN.md`: RotaryKnob added to the DS primitive table and the Remote-screen composition prose; noted the memoryless semantics.
+- Verification (per AGENTS Verification section + LOOP.md step 5):
+  - `npm run front:build` — pass (tsc + vite; bundle 220 kB).
+  - `npm run back:build` — pass (no back-end diffs; sanity gate).
+  - `npm run front:test` — 38/38 pass (all 7 test files green).
+  - `npm run back:test` — 98/98 pass.
+  - `node --check` on the hand-patched DS bundle — pass.
+- **Not verified this session (agent honesty gate — AGENTS.md "Never claim UI works from a build alone"):**
+  - No live Samsung TV in reach → no end-to-end "spin knob → TV volume moves" confirmation. Manual verification is `tasks.md` §5.4/5.5, left unchecked and flagged as human-deferred. A human on the LAN with a paired TV should eyeball: CW → up, CCW → down, 45° flick → 3 steps, mute toggle, `Connecting` disabling, keyboard stepping, dark-mode via `[data-theme="dark"]`, and the DS docs SPA rendering the new controls card.
+- Follow-ups for the next session:
+  - Complete `tasks.md` §5.4/5.5 (manual UI + DS-SPA eyeball) before treating this capability as production-verified.
+  - Drop `level` from `useVolume(udn)` altogether — it's `null` on the wire and no longer consumed anywhere. Deferred per design.md open-question 2 (kept out of this cycle's scope to stay UI-only).
+  - When the real DS bundler runs next, it will overwrite the placeholder `manual-patch-c9a8b7f0` sourceHash for `RotaryKnob.jsx`; expected and safe.
+  - Design.md open-question 1 (`RotaryKnob` vs `Dial` naming) — no reviewer feedback yet; keeping `RotaryKnob` unless the DS maintainer pushes back.
+
+---
+
 ## 2026-07-05T14:11:25Z
 
 **What was done — implemented `error-surfacing` (C9) via the `/next-change` Loop Engineering cycle, closing out the MVP backlog**

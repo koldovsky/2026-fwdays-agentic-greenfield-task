@@ -1,65 +1,4 @@
-## Purpose
-
-User-facing volume-control capability (C7): a memoryless rotary knob with a mute IconButton in its centre well on `RemoteScreen`, backed by three back-end endpoints (`GET /volume`, `POST /volume/delta`, `POST /mute`) that dispatch `KEY_VOLUP` / `KEY_VOLDOWN` / `KEY_MUTE` `ms.remote.control` frames through the per-TV Samsung Smart View WebSocket session queue from `tv-connection-lifecycle`. Because Smart View is remote-key-only (no absolute-set method, no way to read actual level or mute), the design descopes to a knob that emits one `POST /volume/delta { delta: ±1 }` per rotation detent (never tracking or displaying an absolute level), a `muted` tracker that flips optimistically server-side on every `POST /mute`, and a `level` that is always `null` on the wire.
-
-## Requirements
-
-### Requirement: Volume state exposed to clients
-
-The back-end SHALL expose the current `{ level, muted }` state per TV over both `GET /api/devices/:udn/volume` and a WebSocket `volume` event under the `devices` topic. Because the Samsung Smart View WebSocket cannot report actual level or mute values, `level` SHALL always be `null` and `muted` SHALL be the server's optimistic tracker driven by successful `POST /mute` calls. Covers `FR-VOLUME-04` (write-only fallback branch).
-
-#### Scenario: HTTP snapshot
-
-- **WHEN** a client calls `GET /api/devices/:udn/volume`
-- **THEN** the response is `200` with a JSON body `{ level: null, muted: boolean }`
-
-#### Scenario: WebSocket push on connect
-
-- **WHEN** a session transitions to `Connected`
-- **THEN** within 2 seconds every WebSocket client receives `{ topic: "devices", event: "volume", udn, level: null, muted }` reflecting the current tracker state
-
-#### Scenario: WebSocket push on mute toggle
-
-- **WHEN** a `POST /mute` succeeds
-- **THEN** every WebSocket client receives `{ topic: "devices", event: "volume", udn, level: null, muted: <new value> }`
-
-### Requirement: Relative volume up/down
-
-The back-end SHALL accept `POST /api/devices/:udn/volume/delta { delta: number }` where `delta` is a non-zero integer in `[-25, +25]`. For a positive `delta`, the endpoint SHALL enqueue `delta` Smart View `KEY_VOLUP` frames via `ms.remote.control`; for a negative `delta`, `abs(delta)` `KEY_VOLDOWN` frames. Covers `FR-VOLUME-01` and `FR-VOLUME-02`.
-
-#### Scenario: Delta up sends one KEY_VOLUP
-
-- **WHEN** a client `POST`s `{ "delta": 1 }` and the session is `Connected`
-- **THEN** the response is `204` and the TV received one `ms.remote.control` frame carrying `DataOfCmd: "KEY_VOLUP"`
-
-#### Scenario: Delta of 3 sends three KEY_VOLUP in order
-
-- **WHEN** a client `POST`s `{ "delta": 3 }` and the session is `Connected`
-- **THEN** the TV received three `ms.remote.control` frames with `DataOfCmd: "KEY_VOLUP"` in order (per-TV FIFO)
-
-#### Scenario: Delta of 0 rejected
-
-- **WHEN** a client `POST`s `{ "delta": 0 }`
-- **THEN** the response is `400` with envelope `code: "validation"`
-
-#### Scenario: Out-of-range delta rejected
-
-- **WHEN** a client `POST`s `{ "delta": 100 }`
-- **THEN** the response is `400` with envelope `code: "validation"` and the TV received no frame
-
-### Requirement: Mute toggle
-
-The back-end SHALL accept `POST /api/devices/:udn/mute` and dispatch a single Smart View `KEY_MUTE` frame via `ms.remote.control`. On success it SHALL flip the server-side optimistic `muted` tracker and push a `volume` WebSocket event. Covers `FR-VOLUME-03`.
-
-#### Scenario: Toggle mute from unmuted to muted
-
-- **WHEN** a client `POST`s to `/mute` while the server tracker reports `muted: false` and the session is `Connected`
-- **THEN** the response is `204`, the TV received `ms.remote.control` with `DataOfCmd: "KEY_MUTE"`, and a subsequent `volume` WebSocket push carries `muted: true`
-
-#### Scenario: Session not Connected rejects the mute toggle
-
-- **WHEN** a client `POST`s to `/mute` while the session state is not `Connected`
-- **THEN** the response is `409` with envelope `code: "SessionNotConnected"` and no frame is sent
+## ADDED Requirements
 
 ### Requirement: Front-end rotary knob for relative volume control
 
@@ -129,3 +68,11 @@ The `RemoteScreen` volume block SHALL render a single Orbit `RotaryKnob` primiti
 
 - **WHEN** the front-end receives a `volume` WebSocket event carrying `{ level: null, muted: false }`
 - **THEN** no aspect of the `RotaryKnob`'s rendered angle, indicator position, or internal accumulator changes as a result of the event (the knob is bound to pointer and keyboard input only)
+
+## REMOVED Requirements
+
+### Requirement: Front-end slider bound to write-only volume control
+
+**Reason**: The Orbit `Slider` gave the illusion of an absolute level control while Samsung Smart View is remote-key-only, so its thumb position was a fiction the SPA had to seed and reconcile. Replacing it with a `RotaryKnob` whose semantics are honestly relative removes the drag-to-delta translation layer, the `SLIDER_START` seed value, and the `lastCommittedRef` bookkeeping. See the new "Front-end rotary knob for relative volume control" requirement above.
+
+**Migration**: The wire contract is unchanged. Any front-end code path that used to call `useVolume(udn).delta(steps)` from `handleSliderCommit` should now call `useVolume(udn).delta(±1)` from the `RotaryKnob`'s `onStep` handler; the same `POST /api/devices/:udn/volume/delta` HTTP surface accepts both. Consumers that read `useVolume(udn).level` should stop — it has always been `null` on the wire and is no longer displayed anywhere.

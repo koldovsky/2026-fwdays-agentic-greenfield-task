@@ -3,8 +3,7 @@
 const NS2 = window.OrbitTVRemoteDesignSystem_08e5b7;
 
 function RemoteScreen({ device, onBack }) {
-  const { IconButton, DPad, Slider, Badge, AppShortcut } = NS2;
-  const [volume, setVolume] = React.useState(38);
+  const { IconButton, DPad, RotaryKnob, Badge, AppShortcut } = NS2;
   const [muted, setMuted] = React.useState(false);
 
   return (
@@ -41,9 +40,19 @@ function RemoteScreen({ device, onBack }) {
         </div>
 
         {/* volume */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <IconButton icon={muted ? 'volume_off' : 'volume_up'} active={muted} size="sm" onClick={() => setMuted((m) => !m)} aria-label="Mute" />
-          <Slider value={volume} onChange={setVolume} />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+          <RotaryKnob
+            size={200}
+            center={
+              <IconButton
+                icon={muted ? 'volume_off' : 'volume_up'}
+                active={muted}
+                size="md"
+                onClick={() => setMuted((m) => !m)}
+                aria-label="Mute"
+              />
+            }
+          />
         </div>
 
         {/* power */}

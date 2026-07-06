@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconButton } from '@ds/components/core/IconButton.jsx';
 import { Badge } from '@ds/components/core/Badge.jsx';
-import { Slider } from '@ds/components/forms/Slider.jsx';
 import { DPad } from '@ds/components/controls/DPad.jsx';
+import { RotaryKnob } from '@ds/components/controls/RotaryKnob.jsx';
 import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx';
 import { useDeviceSession, type ClientSessionState } from '../data/useDeviceSession.ts';
 import { useSendKey, type UseSendKeyOptions } from '../data/useSendKey.ts';
@@ -46,15 +46,7 @@ export interface RemoteScreenProps {
   useInputsOptions?: UseInputsOptions;
 }
 
-// Smart View can't report the TV's actual volume level (see
-// `openspec/specs/volume-control/spec.md`), so the slider is purely a
-// local write-only control. This is where it starts each mount — the
-// value has no meaning beyond "somewhere in the middle."
-const SLIDER_START = 38;
-
 export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions, useInputsOptions }: RemoteScreenProps) {
-  const [sliderPosition, setSliderPosition] = useState(SLIDER_START);
-  const lastCommittedRef = useRef(SLIDER_START);
   const [isInputsModalOpen, setInputsModalOpen] = useState(false);
   const { state, connect, disconnect } = useDeviceSession(device.udn);
   const { sendKey } = useSendKey(device.udn, sendKeyOptions);
@@ -78,9 +70,9 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
 
   const isConnected = state === 'Connected';
   // AppShortcut still lacks a `disabled` prop (it's placeholder art for a
-  // future app-launch capability). Slider now accepts `disabled` directly
-  // (extended in C7 per tasks.md 3.3). Only the AppShortcut row falls back
-  // to the token-consistent overlay pattern.
+  // future app-launch capability). Only the AppShortcut row falls back to
+  // the token-consistent overlay pattern; DPad, RotaryKnob, and IconButton
+  // all accept `disabled` directly.
   const disabledStyle = isConnected
     ? undefined
     : { opacity: 0.55, pointerEvents: 'none' as const };
@@ -100,14 +92,8 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
     });
   }
 
-  function handleSliderCommit(value: number): void {
-    // The slider is a write-only control (Smart View can't report actual
-    // level). Fire `commitValue - lastCommittedValue` steps to the TV;
-    // the per-TV FIFO queue on the back-end handles ordering.
-    const steps = value - lastCommittedRef.current;
-    lastCommittedRef.current = value;
-    if (steps === 0) return;
-    void sendDelta(steps).catch(() => {
+  function handleStep(direction: 'up' | 'down'): void {
+    void sendDelta(direction === 'up' ? 1 : -1).catch(() => {
       /* useVolume already logged */
     });
   }
@@ -179,24 +165,22 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <IconButton
-            icon={muted ? 'volume_off' : 'volume_up'}
-            active={muted}
-            size="sm"
-            onClick={handleMuteClick}
-            aria-label="Mute"
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+          <RotaryKnob
+            size={200}
             disabled={!isConnected}
+            onStep={handleStep}
+            center={
+              <IconButton
+                icon={muted ? 'volume_off' : 'volume_up'}
+                active={muted}
+                size="md"
+                onClick={handleMuteClick}
+                aria-label="Mute"
+                disabled={!isConnected}
+              />
+            }
           />
-          <div style={{ flex: 1 }}>
-            <Slider
-              value={sliderPosition}
-              onChange={setSliderPosition}
-              onCommit={(v: number) => handleSliderCommit(v)}
-              disabled={!isConnected}
-              icon="volume_up"
-            />
-          </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 4 }}>
