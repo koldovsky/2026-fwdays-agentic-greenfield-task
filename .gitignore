@@ -41,3 +41,4 @@ go.work.sum
 # vendor/
 
 sample-input.txt
+/.github/pull_request.md
