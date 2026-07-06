@@ -84,8 +84,8 @@
 //     Returns `{ conversationState: "greeting", fields: {} }`, a fresh
 //     object graph every call.
 
-import { validateAge } from "./age";
-import { validateFormat } from "./format";
+import { validateAge } from "./age.ts";
+import { validateFormat } from "./format.ts";
 
 /** The seven-state-plus-terminal conversation machine (ADR-0001 §6). */
 export type ConversationState =

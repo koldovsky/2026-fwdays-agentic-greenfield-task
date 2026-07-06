@@ -6,7 +6,10 @@
   "description": "Telegram bot surface (grammY, long polling — NFR-LOCAL-01)",
   "main": "src/index.ts",
   "dependencies": {
-    "dotenv": "^17.2.3",
+    "@kamerton/agent": "*",
+    "@kamerton/calendar": "*",
+    "@kamerton/db": "*",
+    "@kamerton/lib": "*",
     "grammy": "^1.39.3"
   }
 }

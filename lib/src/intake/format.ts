@@ -26,7 +26,7 @@
 //       SCOPE_EXPLANATION_COPY); no instrument lesson is ever recorded
 //       (BC-SCOPE-01, BC-SCOPE-02).
 
-import type { CandidateFormat, ValidFormat } from "./state-machine";
+import type { CandidateFormat, ValidFormat } from "./state-machine.ts";
 
 /** Discriminated validation result — the spec's two named format error
  *  codes (design.md Decision 1). */

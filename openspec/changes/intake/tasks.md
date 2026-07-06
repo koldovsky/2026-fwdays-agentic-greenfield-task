@@ -324,7 +324,7 @@
       happens. Guard with `describe.skipIf(...)` on missing
       `ANTHROPIC_AUTH_TOKEN`/local auth profile so it never blocks a
       machine without auth (design.md Decision 5).
-- [ ] 5.6 Wire `packages/bot/src/index.ts` to start the real grammY `Bot`
+- [x] 5.6 Wire `packages/bot/src/index.ts` to start the real grammY `Bot`
       with the production `TelegramTransport` + `AnthropicModelPort` +
       `openDatabase()`, reading `TELEGRAM_BOT_TOKEN`/`ANTHROPIC_AUTH_TOKEN`
       from `.env`/the local user-token profile (NFR-SEC-01) — no code path
