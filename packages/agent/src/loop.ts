@@ -144,6 +144,12 @@ import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts
 // stall on "Дякую, я це записала." with nothing to answer next. See
 // `assembleReply`, below, for the reply-assembly rule this drives.
 import { DEFAULT_ACK_COPY, nextLeadFacingStep } from "@kamerton/lib/src/intake/questions.ts";
+// booking-hitl design.md Decision 2's sub-decision (tasks.md C.3): the model
+// re-extracts a structured weekdays/timeWindow value into the propose_slots
+// tool call; this validator is the code-side defense-in-depth check that
+// runs BEFORE ports.slots.proposeSlots is ever called, exactly like
+// save_format's schema-plus-validator pattern.
+import { validatePreferences } from "@kamerton/lib/src/booking/validate-preferences.ts";
 import type {
   AmendableField,
   CandidateFormat,
@@ -587,6 +593,19 @@ async function applyToolUse(
   state: IntakeState,
   ports: LoopPorts,
 ): Promise<AppliedToolUse> {
+  // booking-hitl design.md Decision 2 (tasks.md C.3): `propose_slots`/
+  // `request_hold` need the `ports.slots`/`ports.holdStore` seams and an
+  // async round trip BEFORE any `transition()` call, so they are handled as
+  // their own branches ahead of the synchronous `toIntakeEvent` mapping
+  // below (which still returns `null` for both tool names — `transition()`
+  // itself never sees a `propose_slots`/`request_hold` tool-use block).
+  if (block.name === "propose_slots") {
+    return applyProposeSlots(block, state, ports);
+  }
+  if (block.name === "request_hold") {
+    return applyRequestHold(block, state, ports);
+  }
+
   const event = toIntakeEvent(block);
   if (event === null) {
     // Live-Telegram bug fix (docs/qa/intake-manual-smoke.md scenario 3,
@@ -668,4 +687,129 @@ async function applyToolUse(
   };
 
   return { state: result.state, logEntry };
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.3): the `propose_slots`
+ *  tool-use branch. `validatePreferences` runs FIRST, defense in depth
+ *  (same shape as `save_format`'s schema-plus-validator pattern) — an
+ *  invalid input never reaches `ports.slots.proposeSlots` at all, state
+ *  unchanged (SAME reference). A `{status:"unavailable"}` port result is
+ *  turned into a THROW so `runIntakeTurn`'s own try/catch around
+ *  `applyToolUse` (the existing "Calendar/DB failure during dispatch"
+ *  boundary) produces the deterministic `CALENDAR_UNAVAILABLE_APOLOGY` reply
+ *  with the prior state preserved — the same recovery path a `cancel_request`
+ *  Calendar failure already uses, not a second bespoke mechanism. */
+async function applyProposeSlots(
+  block: ToolUseBlock,
+  state: IntakeState,
+  ports: LoopPorts,
+): Promise<AppliedToolUse> {
+  const rawInput = block.input as { weekdays?: unknown; timeWindow?: unknown };
+  const input = {
+    weekdays: Array.isArray(rawInput.weekdays) ? (rawInput.weekdays as string[]) : [],
+    timeWindow:
+      typeof rawInput.timeWindow === "object" && rawInput.timeWindow !== null
+        ? (rawInput.timeWindow as { start: string; end: string })
+        : { start: "", end: "" },
+  };
+
+  const validation = validatePreferences(input);
+  if (!validation.ok) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected" },
+    };
+  }
+
+  const result = await ports.slots.proposeSlots(input);
+  if (result.status === "unavailable") {
+    // Never let a Calendar apology propagate as anything but the shared
+    // NFR-REL-01 recovery path — see this function's header comment.
+    throw new Error("Kamerton: calendar unavailable during propose_slots");
+  }
+
+  // design.md Decision 2: `{status:"no_free_times"}` is still recorded via
+  // `offer_slots` with an empty list — the reducer does not special-case
+  // emptiness; the "no free times" message composition is a reply-assembly
+  // concern one layer up, not this dispatch's job.
+  const slots = result.status === "ok" ? result.slots : [];
+  const transitionResult = transition(state, { type: "offer_slots", slots });
+  if (transitionResult.error !== undefined) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: transitionResult.error },
+    };
+  }
+
+  await ports.persistence.saveFields({ offeredSlots: slots });
+
+  return {
+    state: transitionResult.state,
+    logEntry: { tool: block.name, input: block.input, outcome: "applied" },
+  };
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.3): the `request_hold`
+ *  tool-use branch. Bounds-checks `slotIndex` against
+ *  `state.fields.offeredSlots` FIRST — an out-of-range (or missing-offer)
+ *  index is rejected `INVALID_SLOT_INDEX` WITHOUT ever calling
+ *  `ports.holdStore.holdSlot` (mirrors `transition()`'s own `pick_slot`
+ *  bounds check, kept here too since `ports.holdStore.holdSlot` must never
+ *  be called with a bogus index). A `{status:"collision"}` result never
+ *  reaches `transition()` at all — `state` stays the SAME reference, logged
+ *  `"rejected"` with the loop-layer-only `"SLOT_COLLISION"` signal so the
+ *  pipeline layer can react (baseline `slots` spec's hold-race scenario). A
+ *  `{status:"unavailable"}` result throws, same shared NFR-REL-01 recovery
+ *  path `applyProposeSlots` uses above. */
+async function applyRequestHold(
+  block: ToolUseBlock,
+  state: IntakeState,
+  ports: LoopPorts,
+): Promise<AppliedToolUse> {
+  const rawInput = block.input as { slotIndex?: unknown };
+  const slotIndex = typeof rawInput.slotIndex === "number" ? rawInput.slotIndex : Number(rawInput.slotIndex);
+  const offeredSlots = state.fields.offeredSlots;
+
+  if (
+    offeredSlots === undefined ||
+    !Number.isInteger(slotIndex) ||
+    slotIndex < 0 ||
+    slotIndex >= offeredSlots.length
+  ) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: "INVALID_SLOT_INDEX" },
+    };
+  }
+
+  const result = await ports.holdStore.holdSlot(slotIndex, offeredSlots);
+  if (result.status === "unavailable") {
+    throw new Error("Kamerton: calendar unavailable during request_hold");
+  }
+  if (result.status === "collision") {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: "SLOT_COLLISION" },
+    };
+  }
+
+  // {status: "held"} — commit the pick_slot transition (proposing ->
+  // awaiting_admin). The bounds check above already guarantees this
+  // transition succeeds; a defensive fallback is kept anyway, never trusting
+  // a reducer call to be infallible just because this call site expects it
+  // to be.
+  const transitionResult = transition(state, { type: "pick_slot", slotIndex });
+  if (transitionResult.error !== undefined) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: transitionResult.error },
+    };
+  }
+
+  await ports.persistence.saveState(transitionResult.state.conversationState);
+
+  return {
+    state: transitionResult.state,
+    logEntry: { tool: block.name, input: block.input, outcome: "applied" },
+  };
 }

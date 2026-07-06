@@ -138,7 +138,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## C. Lead-side proposal/hold wiring — agent loop + bot pipeline
 
-- [ ] C.1 Update `packages/agent/src/tools.ts`'s `propose_slots` entry to the
+- [x] C.1 Update `packages/agent/src/tools.ts`'s `propose_slots` entry to the
       structured `weekdays`/`timeWindow` schema (design.md Decision 2's
       sub-decision) — `tools.test.ts` FIRST (red): the schema's `weekdays`
       enum is exactly `["Mon","Tue","Wed","Thu","Fri"]`; `timeWindow` is a
@@ -146,12 +146,12 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       `TOOL_NAMES` list is otherwise UNCHANGED (still no `confirm*`/
       `*kb*write*` name — `@trace FR-GUARD-01`, `@trace FR-GUARD-06`).
       Confirm red, implement to green.
-- [ ] C.2 Add `SlotsPort`/`HoldStorePort` (design.md Decision 2) and their
+- [x] C.2 Add `SlotsPort`/`HoldStorePort` (design.md Decision 2) and their
       `LoopPorts` fields to `packages/agent/src/loop.ts`'s type contract —
       no behavior change yet (this task only widens the interface so C.3's
       test file compiles against real types, mirroring S2's own
       contract-then-test convention).
-- [ ] C.3 `packages/agent/src/loop.test.ts` additions FIRST (red), against
+- [x] C.3 `packages/agent/src/loop.test.ts` additions FIRST (red), against
       fake `SlotsPort`/`HoldStorePort` implementations:
       - a `propose_slots` tool-use call with a VALID `weekdays`/`timeWindow`
         input calls `validatePreferences` then `ports.slots.proposeSlots`,
@@ -181,10 +181,10 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
         consumed here, not re-specified).
       Confirm every case red, then implement `applyToolUse`'s
       `propose_slots`/`request_hold` branches in `loop.ts` to green.
-- [ ] C.4 Run `npm run test:run`; confirm C.1–C.3 green, zero regressions in
+- [x] C.4 Run `npm run test:run`; confirm C.1–C.3 green, zero regressions in
       the existing `loop.test.ts` cases (4.4/4.5's seven pre-existing
       behaviors untouched).
-- [ ] C.5 `packages/bot/src/pipeline.test.ts` additions FIRST (red), against
+- [x] C.5 `packages/bot/src/pipeline.test.ts` additions FIRST (red), against
       `FakeTelegramTransport` + `FakeModelPort` + a `FakeCalendarPort` + real
       in-memory SQLite:
       - a lead reaching `proposing` whose free text drives the model to call
@@ -213,7 +213,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       `pipeline.ts` to green, pre-binding the SAME helpers into
       `LoopPorts.slots`/`LoopPorts.holdStore` for the free-text path (design.md
       Decision 2 — one implementation, two call sites).
-- [ ] C.6 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] C.6 Run `npm run test:run` and `npm run test:integration`; confirm
       C.5 green with zero regressions in S2's own `pipeline.test.ts` suite.
 
 ## D. Dashboard decision route — replaces the inert stub

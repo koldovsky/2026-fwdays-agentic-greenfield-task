@@ -62,14 +62,19 @@
 //     3. If `update.type === "callback"`: resolve the tap DIRECTLY against
 //        `transition()` — the wire-format-to-event mapping this module
 //        chose is `"format:<value>"` -> `save_format`, `"goal:skip"` ->
-//        `skip_goal`, `"goal:<tag>"` -> `save_goal`. Slot-chip taps
-//        (`"slot:<n>"`) and any other/unrecognised payload fall through to a
-//        deterministic acknowledgement with no reducer call — a full
-//        `request_hold` orchestration through this callback path is a named
-//        gap left for the `dashboard`/`booking-hitl` slices, which are the
-//        ones that actually render slot chips (this slice's own tests never
-//        exercise a slot-chip tap). **`deps.model.send()` is NEVER called
-//        for a callback update.** Then skip to step 6.
+//        `skip_goal`, `"goal:<tag>"` -> `save_goal`. A slot-chip tap
+//        (`"slot:<n>"`, booking-hitl design.md Decision 2) resolves through
+//        the shared `performHoldSlot` orchestration (bounds-checked against
+//        the CURRENT `fields.offeredSlots` first — a stale/out-of-range
+//        index is ignored deterministically, never reaching
+//        `performHoldSlot`): held -> commits `pick_slot`, publishes
+//        `CUSTOM`/`BOOKING_PENDING`, replies with `HOLD_CONFIRMATION_COPY`;
+//        collision -> `requests.state` stays `proposing`, no `bookings` row,
+//        replies with the kind `SLOT_COLLISION_NUDGE_COPY`; unavailable ->
+//        the calendar apology, state unchanged. Any other/unrecognised
+//        payload falls through to a deterministic acknowledgement with no
+//        reducer call. **`deps.model.send()` is NEVER called for a callback
+//        update.** Then skip to step 6.
 //
 //     4. If `update.type === "text"`: build the current turn's `IntakeState`
 //        from the resolved request row, then call `runIntakeTurn({ state,
@@ -124,10 +129,12 @@ import {
   insertLead,
   findLeadByTelegramUserId,
   insertRequest,
+  insertBooking,
   updateRequestFields,
   updateRequestState,
   findLatestRequestForLead,
   updateBookingStatus,
+  parseOfferedSlots,
   REQUEST_GOAL_TAGS,
   type RequestRow,
   type RequestState,
@@ -153,9 +160,27 @@ import {
   SCOPE_EXPLANATION_COPY,
   FORMAT_UNSURE_COPY,
 } from "@kamerton/lib/src/intake/copy.ts";
-import { ANTHROPIC_PROCESSING_NOTICE, EMPTY_NARRATION_FALLBACK_COPY } from "./copy.ts";
+// booking-hitl design.md Decision 2: the "one implementation, two call
+// sites" helpers below wrap S1's own `proposeSlots`/`holdWithRecovery`
+// (never a second re-implementation of the calendar orchestration) — this
+// is the ONLY place in `packages/bot` that imports the slots `CalendarPort`
+// concrete algorithms; `packages/agent` never does (the guardrail this
+// slice preserves byte-for-byte).
+import {
+  proposeSlots,
+  holdWithRecovery,
+  CALENDAR_UNAVAILABLE_APOLOGY,
+} from "@kamerton/lib/src/slots/propose.ts";
+import type { Preferences } from "@kamerton/lib/src/slots/rank.ts";
+import { utcToKyivWallClock } from "@kamerton/lib/src/slots/timezone.ts";
+import {
+  ANTHROPIC_PROCESSING_NOTICE,
+  EMPTY_NARRATION_FALLBACK_COPY,
+  HOLD_CONFIRMATION_COPY,
+  SLOT_COLLISION_NUDGE_COPY,
+} from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
-import type { InboundUpdate, TelegramTransport } from "./telegram-transport.ts";
+import type { InboundUpdate, SendMessageOptions, TelegramTransport } from "./telegram-transport.ts";
 import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-publisher.ts";
 // dashboard tasks.md §5 "Relocation prerequisite": `compileFirstLessonBrief`
 // now lives in `lib/` (framework-free, TC-PURE-01) so apps/dashboard's
@@ -205,6 +230,11 @@ function rowToIntakeState(row: RequestRow): IntakeState {
   if (row.comfort !== null) fields.comfort = row.comfort;
   if (row.preferred_weekdays !== null) fields.preferredWeekdays = row.preferred_weekdays;
   if (row.preferred_time_range !== null) fields.preferredTimeRange = row.preferred_time_range;
+  // booking-hitl design.md Decision 4 item 2: the one JSON-in-TEXT column —
+  // always read through `parseOfferedSlots` (never raw `JSON.parse`), which
+  // is defensively `null`-safe for a malformed/legacy value.
+  const offeredSlots = parseOfferedSlots(row.offered_slots);
+  if (offeredSlots !== null) fields.offeredSlots = offeredSlots;
   return { conversationState: row.state, fields };
 }
 
@@ -256,25 +286,46 @@ function guardrailOverrideFor(toolCalls: { error?: string; detour?: string | nul
  *  it. A second consecutive failure is not recovered from further here; it
  *  propagates to the caller (grammY's own polling-loop error handler in
  *  production). */
-async function sendWithRetry(transport: TelegramTransport, chatId: string, text: string): Promise<void> {
+async function sendWithRetry(
+  transport: TelegramTransport,
+  chatId: string,
+  text: string,
+  options?: SendMessageOptions,
+): Promise<void> {
   try {
-    await transport.sendMessage(chatId, text);
+    await transport.sendMessage(chatId, text, options);
   } catch {
+    // The retry apology is plain text — never re-attempts with a keyboard.
     await transport.sendMessage(chatId, TELEGRAM_SEND_FAILURE_APOLOGY);
   }
 }
 
-/** booking-hitl design.md Decision 2 (tasks.md C.5) — TYPED THROWING STUB
- *  (RED). The shared async orchestration function BOTH the free-text
- *  `LoopPorts.slots` binding (see this module's `applyToolUse`-facing `ports`
- *  construction, step 4) and the `"slot:<n>"` callback branch below call —
- *  "one implementation, two call sites", so a lead who types a preference
- *  and a lead who taps a slot chip can never drift onto two different
- *  validation/hold paths. Real body (S1's `proposeSlots` pre-bound to
- *  `deps.calendar` and the request's own saved preferences, parsed via
- *  `validatePreferences`) is C.5's green half — deliberately NOT implemented
- *  here (tasks.md's own instruction: "do not implement real orchestration
- *  logic" for this red round). */
+/** The lead-proposal horizon (S1 `slots/propose.ts`'s own documented
+ *  convention: "production always passes 14"; there was no real production
+ *  call site until this task — `HoldStorePort`/`SlotsPort`'s first live
+ *  wiring). */
+const PROPOSE_HORIZON_DAYS = 14;
+
+/** Europe/Kyiv LOCAL "YYYY-MM-DD" for "today" — the one place this module
+ *  touches a timezone, reusing `timezone.ts`'s own adapter-boundary
+ *  conversion (design.md Decision 3: lib/ is the only module allowed to
+ *  know about Europe/Kyiv; this just calls through it) rather than deriving
+ *  a UTC calendar date, which could be off by a day near local midnight. */
+function todayKyivDate(): string {
+  return utcToKyivWallClock(new Date().toISOString()).slice(0, 10);
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.5): the shared async
+ *  orchestration function BOTH the free-text `LoopPorts.slots` binding (see
+ *  this module's `applyToolUse`-facing `ports` construction, step 4) and a
+ *  direct free-text call site would use — "one implementation, two call
+ *  sites", so a lead who types a preference can never drift onto a
+ *  differently-validated path than any other caller. `input`'s
+ *  `weekdays`/`timeWindow` have ALREADY been validated by
+ *  `validatePreferences` one layer up (`packages/agent/src/loop.ts`'s
+ *  `applyToolUse`, defense in depth) — this function trusts its caller
+ *  the same way `holdWithRecovery` trusts `createHold`'s own collision
+ *  re-check. */
 async function performProposeSlots(
   deps: HandleUpdateDeps,
   request: RequestRow,
@@ -284,18 +335,32 @@ async function performProposeSlots(
   | { status: "no_free_times" }
   | { status: "unavailable"; apology: string }
 > {
-  void deps;
-  void request;
-  void input;
-  throw new Error("Not implemented — booking-hitl tasks.md C.5 (performProposeSlots)");
+  void request; // the structured preference comes entirely from the model-supplied, code-validated `input` — no `requests` column this port needs.
+  const preferences: Preferences = { weekdays: input.weekdays, timeWindow: input.timeWindow };
+
+  const result = await proposeSlots(deps.calendar, {
+    from: todayKyivDate(),
+    days: PROPOSE_HORIZON_DAYS,
+    preferences,
+  });
+
+  if (result.status === "calendar_unavailable") {
+    return { status: "unavailable", apology: result.apology };
+  }
+  if (result.slots.length === 0) {
+    return { status: "no_free_times" };
+  }
+  return { status: "ok", slots: result.slots };
 }
 
-/** booking-hitl design.md Decision 2 (tasks.md C.5) — TYPED THROWING STUB
- *  (RED). See `performProposeSlots`'s own comment above for the "one
- *  implementation, two call sites" reasoning. Real body: S1's
- *  `holdWithRecovery` pre-bound to `deps.calendar`, PLUS the pending-booking
- *  DB insert (with `request_id`) as one atomic-from-the-caller's-view step
- *  — C.5's green half, deliberately NOT implemented here. */
+/** booking-hitl design.md Decision 2 (tasks.md C.5): the shared async
+ *  hold-orchestration function — S1's `holdWithRecovery` pre-bound to
+ *  `deps.calendar`, PLUS the pending-booking DB insert (with `request_id`)
+ *  as one atomic-from-the-caller's-view step (design.md Decision 4 item 3).
+ *  `offeredSlots`/`slotIndex` are ALREADY bounds-checked by every caller
+ *  (`loop.ts`'s own `request_hold` dispatch, this module's `"slot:<n>"`
+ *  callback branch) — the `undefined` fallback below is defense in depth
+ *  only, never expected to fire. */
 async function performHoldSlot(
   deps: HandleUpdateDeps,
   request: RequestRow,
@@ -306,11 +371,49 @@ async function performHoldSlot(
   | { status: "collision" }
   | { status: "unavailable"; apology: string }
 > {
-  void deps;
-  void request;
-  void slotIndex;
-  void offeredSlots;
-  throw new Error("Not implemented — booking-hitl tasks.md C.5 (performHoldSlot)");
+  const slot = offeredSlots[slotIndex];
+  if (slot === undefined) {
+    return { status: "unavailable", apology: CALENDAR_UNAVAILABLE_APOLOGY };
+  }
+
+  const result = await holdWithRecovery(deps.calendar, {
+    slot,
+    summary: `Пробне заняття — ${request.student_name ?? "лід"}`,
+    description: compileFirstLessonBriefFromLib(request),
+  });
+
+  if (result.status === "failed") {
+    return { status: "unavailable", apology: result.apology };
+  }
+  if (result.status === "collision") {
+    return { status: "collision" };
+  }
+
+  // {status: "held"} — booking-hitl design.md Decision 6 item 4: slot_start/
+  // slot_end are written VERBATIM from the offered slot's own Kyiv
+  // wall-clock strings, never converted to UTC.
+  const booking = insertBooking(deps.db, {
+    slotStart: slot.start,
+    slotEnd: slot.end,
+    status: "pending",
+    calendarEventId: result.eventId,
+    requestId: request.id,
+  });
+  return { status: "held", bookingId: booking.id };
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.5): renders each offered
+ *  slot as its own tappable inline-keyboard row, `data` the exact
+ *  `"slot:<n>"` wire format `parseCallbackEvent` recognises — one button per
+ *  row keeps every label fully readable on a phone-width Telegram client. */
+function formatSlotButtonLabel(slot: OfferedSlot): string {
+  const [datePart, timePart] = slot.start.split("T");
+  const [, month, day] = (datePart ?? "").split("-");
+  return `${day ?? "?"}.${month ?? "?"} о ${timePart ?? "?"}`;
+}
+
+function buildSlotButtons(slots: OfferedSlot[]): NonNullable<SendMessageOptions["buttons"]> {
+  return slots.map((slot, index) => [{ text: formatSlotButtonLabel(slot), data: `slot:${index}` }]);
 }
 
 /** The wire-format-to-event mapping this module chose for button-callback
@@ -395,32 +498,19 @@ function fieldPatchForCallbackEvent(event: IntakeEvent, fields: IntakeFields): P
  *  persists any validator-approved change on the given `requests` row — the
  *  callback-path equivalent of `runIntakeTurn`'s own tool dispatch, minus
  *  the model round trip (design.md Decision 3: "resolve without an agent
- *  call"). booking-hitl tasks.md C.5 widens this from synchronous to `async`
- *  (and from `(db, requestId, ...)` to `(deps, request, ...)`, since
- *  `performHoldSlot` needs `deps.calendar`/`deps.db` and the full request
- *  row) so a `pick_slot` event (a slot-chip tap) can await the shared hold
- *  orchestration BEFORE the reducer ever commits the transition — see
- *  `performHoldSlot`'s own header comment for what the RED body below does
- *  NOT yet implement. */
-async function applyCallbackEvent(
+ *  call"). NEVER called with a `pick_slot` event — a slot-chip tap needs the
+ *  `performHoldSlot` calendar/DB orchestration (and its own
+ *  held/collision/unavailable reply-shaping) BEFORE any transition is
+ *  committed, so `handleUpdate`'s own callback branch (below) resolves
+ *  `pick_slot` directly rather than through this generic, synchronous-result
+ *  helper (design.md Decision 2: "one implementation, two call sites" for
+ *  the hold orchestration itself, not for this reducer-only helper). */
+function applyCallbackEvent(
   deps: HandleUpdateDeps,
   request: RequestRow,
   state: IntakeState,
-  event: IntakeEvent,
-): Promise<TransitionResult> {
-  if (event.type === "pick_slot") {
-    // booking-hitl tasks.md C.5 — TYPED THROWING STUB (RED). Real body:
-    // call `performHoldSlot` FIRST; only commit `pick_slot` via
-    // `transition()` below on `{status:"held"}`; on `{status:"collision"}`
-    // never call `transition()` at all — send the "already taken, here are
-    // others" nudge instead (baseline `slots` spec's hold-race scenario); a
-    // stale/out-of-range index is rejected in code BEFORE this port is ever
-    // called, mirroring `@kamerton/agent/src/loop.ts`'s own `request_hold`
-    // tool-dispatch discipline (`ports.holdStore.holdSlot` never called for
-    // an out-of-bounds index).
-    await performHoldSlot(deps, request, event.slotIndex, state.fields.offeredSlots ?? []);
-  }
-
+  event: Exclude<IntakeEvent, { type: "pick_slot" }>,
+): TransitionResult {
   const result = transition(state, event);
 
   if (result.error !== undefined) {
@@ -496,14 +586,64 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
      *  `STATE_SNAPSHOT`. */
     let finalFields: IntakeFields = rowToIntakeState(request).fields;
     let modelErrored = false;
+    /** booking-hitl design.md Decision 2 (tasks.md C.5): real, tappable
+     *  slot-chip buttons for a turn that just offered (or re-offered) slots
+     *  — `undefined` for every other turn, so `sendWithRetry` renders no
+     *  keyboard at all by default (unchanged S2 behaviour). */
+    let replyOptions: SendMessageOptions | undefined;
 
     if (update.type === "callback") {
       // Step 3: callback updates NEVER reach ModelPort.send().
       const event = parseCallbackEvent(update.data);
       if (event === null) {
         replyText = EMPTY_NARRATION_FALLBACK_COPY;
+      } else if (event.type === "pick_slot") {
+        // booking-hitl design.md Decision 2 (tasks.md C.5): a slot-chip tap
+        // resolves through the SHARED `performHoldSlot` orchestration
+        // WITHOUT ever reaching `runIntakeTurn`/`ModelPort.send()` — mirrors
+        // `packages/agent/src/loop.ts`'s own `request_hold` bounds-check
+        // discipline: a stale/out-of-range index never even reaches
+        // `performHoldSlot`, let alone `ports.calendar`.
+        const currentState = rowToIntakeState(request);
+        const offeredSlots = currentState.fields.offeredSlots;
+        if (offeredSlots === undefined || event.slotIndex < 0 || event.slotIndex >= offeredSlots.length) {
+          // Stale/replayed tap (e.g. after a fresh `offer_slots` narrowed
+          // the list) — ignored deterministically: no reducer call, no DB
+          // write, no calendar call.
+          replyText = EMPTY_NARRATION_FALLBACK_COPY;
+          finalFields = currentState.fields;
+        } else {
+          const holdResult = await performHoldSlot(deps, request, event.slotIndex, offeredSlots);
+          if (holdResult.status === "unavailable") {
+            replyText = holdResult.apology;
+            finalFields = currentState.fields;
+          } else if (holdResult.status === "collision") {
+            // Baseline `slots` spec's own hold-race scenario: `transition()`
+            // is never called at all — `requests.state` stays "proposing",
+            // no `bookings` row is ever created.
+            replyText = SLOT_COLLISION_NUDGE_COPY;
+            replyOptions = { buttons: buildSlotButtons(offeredSlots) };
+            finalFields = currentState.fields;
+          } else {
+            // {status: "held"} — commit pick_slot (proposing -> awaiting_admin).
+            const result = transition(currentState, event);
+            if (result.state.conversationState !== currentState.conversationState) {
+              updateRequestState(deps.db, request.id, result.state.conversationState);
+            }
+            finalFields = result.state.fields;
+            replyText = HOLD_CONFIRMATION_COPY;
+            // design.md Decision 6 item 1's trigger: publish the instant a
+            // hold succeeds so a connected dashboard tab re-reads and
+            // re-renders the new pending request without a reload.
+            safePublish({
+              type: "CUSTOM",
+              name: "BOOKING_PENDING",
+              value: { requestId: request.id, bookingId: holdResult.bookingId },
+            });
+          }
+        }
       } else {
-        const result = await applyCallbackEvent(deps, request, rowToIntakeState(request), event);
+        const result = applyCallbackEvent(deps, request, rowToIntakeState(request), event);
         replyText = guardrailOverrideFor([result]) ?? EMPTY_NARRATION_FALLBACK_COPY;
         finalFields = result.state.fields;
         if (result.error === undefined && result.detour === null) {
@@ -539,17 +679,12 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
           },
         },
         releaseHold: (eventId: string) => deps.calendar.deleteEvent(eventId),
-        // booking-hitl design.md Decision 2 (tasks.md C.5) — pre-bound to
-        // the SAME shared `performProposeSlots`/`performHoldSlot`
-        // orchestration functions the `"slot:<n>"` callback branch calls
-        // (`applyCallbackEvent`, above): "one implementation, two call
-        // sites". TYPED THROWING STUB (RED): both still throw
-        // Not-implemented (C.5's green half), but neither is reachable from
-        // any EXISTING (Stage A/B-era) test today — `runIntakeTurn`'s
-        // `applyToolUse` dispatch for `propose_slots`/`request_hold` is
-        // still the pre-existing `"pass_through"` no-op (tasks.md C.2's own
-        // instruction: no behaviour change there yet), so this wiring is
-        // inert until C.3's green half lands.
+        // booking-hitl design.md Decision 2 (tasks.md C.5) — pre-bound to the
+        // SAME shared `performProposeSlots`/`performHoldSlot` orchestration
+        // functions the `"slot:<n>"` callback branch (above) calls: "one
+        // implementation, two call sites" — a lead who types a preference or
+        // taps a slot chip can never drift onto two differently-validated
+        // hold paths.
         slots: { proposeSlots: (input) => performProposeSlots(deps, request, input) },
         holdStore: {
           holdSlot: (slotIndex, offeredSlots) => performHoldSlot(deps, request, slotIndex, offeredSlots),
@@ -577,6 +712,17 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
       // narration; an empty narration (a bare tool-use response, e.g.
       // cancel_request) never becomes an empty Telegram message.
       replyText = guardrailOverrideFor(result.toolCalls) ?? (result.reply.length > 0 ? result.reply : EMPTY_NARRATION_FALLBACK_COPY);
+
+      // booking-hitl design.md Decision 2 (tasks.md C.5): a turn whose
+      // `propose_slots` tool call actually applied always carries real,
+      // tappable slot-chip buttons — closes S2's own "inline-button
+      // rendering... owned by S4" gap for this message.
+      const proposedSlotsThisTurn = result.toolCalls.some(
+        (call) => call.tool === "propose_slots" && call.outcome === "applied",
+      );
+      if (proposedSlotsThisTurn && result.state.fields.offeredSlots !== undefined) {
+        replyOptions = { buttons: buildSlotButtons(result.state.fields.offeredSlots) };
+      }
     }
 
     if (isBrandNewLead) {
@@ -606,7 +752,7 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
     }
 
     // Step 6: send, with the single-retry-with-apology rule on failure.
-    await sendWithRetry(deps.transport, update.telegramChatId, replyText);
+    await sendWithRetry(deps.transport, update.telegramChatId, replyText, replyOptions);
   } finally {
     // The run boundary always closes, even on the model-error path — never a
     // silent gap for the dashboard to hang on.

@@ -39,3 +39,25 @@ export const ANTHROPIC_PROCESSING_NOTICE: string =
  * (BC-BRAND-01).
  */
 export const EMPTY_NARRATION_FALLBACK_COPY: string = "Дякую, я це записала.";
+
+/**
+ * booking-hitl design.md Decision 2 (tasks.md C.5): the deterministic reply
+ * for a `"slot:<n>"` callback tap that successfully holds a slot
+ * (`HoldStorePort.holdSlot` resolves `{status:"held"}`) — a warm
+ * confirmation-of-hold, never claiming the lesson itself is confirmed
+ * (`@trace FR-GUARD-01`: only the dashboard's decision route may ever say
+ * that). No exclamation marks, no pressure vocabulary (BC-BRAND-01).
+ */
+export const HOLD_CONFIRMATION_COPY: string =
+  "Дякуємо, утримали цей час для вас. Повідомимо, щойно адміністратор прийме рішення.";
+
+/**
+ * booking-hitl design.md Decision 2 (tasks.md C.5): the kind nudge sent when
+ * a `"slot:<n>"` callback tap loses a fresh hold-race
+ * (`HoldStorePort.holdSlot` resolves `{status:"collision"}`) — baseline
+ * `slots` spec's own hold-race scenario. No exclamation marks, no pressure
+ * vocabulary (BC-BRAND-01) — never "останнє місце"/"тільки сьогодні"/
+ * "поспішайте".
+ */
+export const SLOT_COLLISION_NUDGE_COPY: string =
+  "На жаль, цей час щойно зайняли. Оберіть, будь ласка, інший варіант зі списку нижче.";
