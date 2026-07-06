@@ -12,11 +12,13 @@ import type { ModelConfig, ModelMessage, ModelPort, ModelResponse, ToolDefinitio
 
 /** One recorded `send()` invocation — everything a test needs to assert on
  *  what the loop actually sent the model (e.g. the `MODEL_CONFIG` config
- *  assertion, tasks.md 4.4's final bullet). */
+ *  assertion, tasks.md 4.4's final bullet; the `system` prompt-wiring
+ *  assertions, review-gate remediation for "each turn is context-free"). */
 export interface RecordedModelCall {
   messages: ModelMessage[];
   tools: ToolDefinition[];
   config: ModelConfig;
+  system: string;
 }
 
 /** A scripted queue entry: either a canned success `ModelResponse`, or an
@@ -46,8 +48,13 @@ export class FakeModelPort implements ModelPort {
     this.script = [...script];
   }
 
-  async send(messages: ModelMessage[], tools: ToolDefinition[], config: ModelConfig): Promise<ModelResponse> {
-    this.calls.push({ messages, tools, config });
+  async send(
+    messages: ModelMessage[],
+    tools: ToolDefinition[],
+    config: ModelConfig,
+    system: string,
+  ): Promise<ModelResponse> {
+    this.calls.push({ messages, tools, config, system });
 
     const next = this.script.shift();
     if (next === undefined) {

@@ -105,6 +105,8 @@
         "lib/src/intake/state-machine.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
@@ -123,6 +125,7 @@
       "tests": [
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts"
@@ -171,6 +174,7 @@
       "planned": true,
       "tests": [
         "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
@@ -253,6 +257,7 @@
       "planned": true,
       "tests": [
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
@@ -272,7 +277,9 @@
         "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/system-prompt.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -473,6 +480,7 @@
       ],
       "planned": true,
       "tests": [
+        "packages/agent/src/system-prompt.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts"
       ],
@@ -505,10 +513,6 @@
     {
       "check": "test-trace",
       "msg": "FR-FAQ-01 has no test annotated \"@trace FR-FAQ-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-FAQ-02 has no test annotated \"@trace FR-FAQ-02\""
     },
     {
       "check": "test-trace",

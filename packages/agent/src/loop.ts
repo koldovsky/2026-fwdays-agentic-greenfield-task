@@ -127,6 +127,7 @@ import type {
 import { MODEL_CONFIG } from "./model-port.ts";
 import { TOOLS } from "./tools.ts";
 import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "./apology.ts";
+import { buildSystemPrompt } from "./system-prompt.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
 // Reused rather than duplicated (review-gate finding #4): the exact
 // deterministic Ukrainian "couldn't reach the calendar/schedule" apology S1
@@ -259,14 +260,33 @@ export type { ModelConfig };
  */
 export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
   const { state, message, ports } = input;
+  // Review-gate remediation ("the model never receives a system prompt or
+  // any conversation context — each turn is context-free", CRITICAL): the
+  // ONLY thing this loop currently threads through as prior-turn history is
+  // the deterministic `IntakeState` (conversationState + validator-approved
+  // `fields`) it was handed — the persisted `requests` row IS this slice's
+  // conversation memory, per design.md Decision 1/4. `buildSystemPrompt`
+  // (system-prompt.ts) turns that state into the model's dynamic context
+  // EVERY turn, alongside the static voice/guardrail block. `messages`
+  // itself stays a single current-turn user message: replaying a VERBATIM
+  // prior-turn transcript on top of the state summary (e.g. the model's own
+  // previous reply text) would need a message log this slice's schema does
+  // not have (design.md Decision 4 has no such table) — that is a deferred
+  // follow-up for a later hardening pass, not invented here. In practice
+  // this is a low-risk deferral: the state summary already names exactly
+  // which field is missing and what has been collected, so the model does
+  // not need its own prior turn replayed to know what to ask next.
+  const system = buildSystemPrompt(state);
   const messages: ModelMessage[] = [{ role: "user", content: message }];
 
   let response;
   try {
     // ALWAYS the closed TOOLS list and the fixed MODEL_CONFIG — never a
     // subset, never a call-site override (tasks.md 4.4's sixth bullet,
-    // `@trace TC-STACK-02`, `@trace NFR-UX-01`).
-    response = await ports.model.send(messages, TOOLS, MODEL_CONFIG);
+    // `@trace TC-STACK-02`, `@trace NFR-UX-01`) — and now ALWAYS the
+    // state-derived `system` prompt (never omitted, never call-site
+    // optional).
+    response = await ports.model.send(messages, TOOLS, MODEL_CONFIG, system);
   } catch {
     // Only a model-port failure is caught here — validation errors are
     // results (TransitionResult.error), never exceptions, and are handled

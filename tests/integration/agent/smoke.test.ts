@@ -32,6 +32,8 @@ import { describe, expect, it } from "vitest";
 import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts";
 import { MODEL_CONFIG, type ToolUseBlock } from "@kamerton/agent/src/model-port.ts";
 import { TOOLS } from "@kamerton/agent/src/tools.ts";
+import { buildSystemPrompt } from "@kamerton/agent/src/system-prompt.ts";
+import { initialIntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 
 function anthropicConfigDir(): string {
   if (process.env.ANTHROPIC_CONFIG_DIR) return process.env.ANTHROPIC_CONFIG_DIR;
@@ -67,6 +69,7 @@ describe.skipIf(!hasAnthropicAuthSignal())(
         [{ role: "user", content: "Мене звати Оксана" }],
         TOOLS,
         MODEL_CONFIG,
+        buildSystemPrompt(initialIntakeState()),
       );
 
       const toolUseBlocks = response.content.filter(isToolUseBlock);

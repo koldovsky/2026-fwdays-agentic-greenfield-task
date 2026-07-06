@@ -263,4 +263,87 @@ describe("runIntakeTurn", () => {
 
     expect(model.lastCall?.config).toEqual(MODEL_CONFIG);
   });
+
+  // --- Remediation: review-gate finding cluster "the model never receives a
+  // --- system prompt or any conversation context — each turn is
+  // --- context-free" (CRITICAL) + "addressesParent is a dead pure function,
+  // --- never wired into the model's context" (MAJOR).
+  // Regression coverage: `runIntakeTurn` used to call `ports.model.send()`
+  // with only `messages`/`TOOLS`/`MODEL_CONFIG` — no `system` argument at
+  // all, so every turn reached the model with zero voice/guardrail/state
+  // context. The fix threads `buildSystemPrompt(state)` (system-prompt.ts)
+  // through as `send()`'s 4th argument, unconditionally, every turn.
+  describe("system prompt wiring (buildSystemPrompt, @trace BC-BRAND-01, @trace BC-AGE-02)", () => {
+    // @trace BC-BRAND-01
+    it("every send() call carries a non-empty system string with a DESIGN.md voice marker, in Ukrainian", async () => {
+      const state = initialIntakeState();
+      const model = new FakeModelPort([
+        textResponse("Вітаємо! Як звати учня чи ученицю, яку записуємо на пробне заняття?"),
+      ]);
+      const ports = makePorts(model);
+
+      await runIntakeTurn({ state, message: "Привіт", ports });
+
+      const system = model.lastCall?.system;
+      expect(system).toBeTruthy();
+      expect(system).toContain("Kind refusals: say no warmly, then offer the nearest yes.");
+      expect(system).toContain("завжди відповідайте українською");
+    });
+
+    // @trace FR-INTAKE-02
+    it("the system reflects the CURRENT conversationState and names the single next needed field", async () => {
+      const state: IntakeState = {
+        conversationState: "qualifying",
+        fields: { studentName: "Богдан" },
+      };
+      const model = new FakeModelPort([toolUseResponse("save_age", { age: 9 })]);
+      const ports = makePorts(model);
+
+      await runIntakeTurn({ state, message: "Йому дев'ять", ports });
+
+      const system = model.lastCall?.system;
+      expect(system).toContain('"qualifying"');
+      expect(system).toContain("studentAge");
+    });
+
+    // @trace BC-AGE-02
+    it("addressesParent is wired live: studentAge < 10 instructs parent-addressing", async () => {
+      const state: IntakeState = {
+        conversationState: "profiling",
+        fields: { studentName: "Богдан", studentAge: 7, format: "individual" },
+      };
+      const model = new FakeModelPort([toolUseResponse("skip_goal", {})]);
+      const ports = makePorts(model);
+
+      await runIntakeTurn({ state, message: "Пропустимо мету", ports });
+
+      expect(model.lastCall?.system).toContain("БАТЬКІВ");
+    });
+
+    // @trace BC-AGE-02
+    it("addressesParent is wired live: studentAge >= 10 instructs direct student-addressing", async () => {
+      const state: IntakeState = {
+        conversationState: "profiling",
+        fields: { studentName: "Оксана", studentAge: 14, format: "individual" },
+      };
+      const model = new FakeModelPort([toolUseResponse("skip_goal", {})]);
+      const ports = makePorts(model);
+
+      await runIntakeTurn({ state, message: "Пропустимо мету", ports });
+
+      expect(model.lastCall?.system).toContain("БЕЗПОСЕРЕДНЬО");
+    });
+
+    // @trace TC-STACK-02
+    it("MODEL_CONFIG (config, the 3rd argument) is still passed unconditionally alongside the new system argument", async () => {
+      const state = initialIntakeState();
+      const model = new FakeModelPort([toolUseResponse("save_name", { name: "Оксана" })]);
+      const ports = makePorts(model);
+
+      await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
+
+      expect(model.lastCall?.config).toEqual(MODEL_CONFIG);
+      expect(model.lastCall?.system).toBeTruthy();
+    });
+  });
 });

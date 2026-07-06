@@ -88,7 +88,24 @@ export const MODEL_CONFIG: ModelConfig = {
  * (`testing/fake-model-port.ts`) — a scripted queue of canned responses so a
  * state-machine-driven conversation replays deterministically, in under a
  * second, with no network call.
+ *
+ * `system` (remediation of the review-gate finding "the model never
+ * receives a system prompt or any conversation context — each turn is
+ * context-free", CRITICAL) is a SEPARATE argument from `config`, not a field
+ * folded into `ModelConfig`: `MODEL_CONFIG` is the one FIXED literal every
+ * call must carry verbatim (`@trace TC-STACK-02`, `@trace NFR-UX-01`,
+ * asserted with `toEqual(MODEL_CONFIG)` by `loop.test.ts`), whereas `system`
+ * is deliberately DIFFERENT on every turn (it is state-derived — see
+ * `system-prompt.ts`'s `buildSystemPrompt`). Folding a per-turn value into
+ * the otherwise-constant `ModelConfig` would either break that "identical
+ * every call" assertion or force `MODEL_CONFIG` itself to stop being a
+ * plain fixed constant — a plain extra parameter keeps both contracts clean.
  */
 export interface ModelPort {
-  send(messages: ModelMessage[], tools: ToolDefinition[], config: ModelConfig): Promise<ModelResponse>;
+  send(
+    messages: ModelMessage[],
+    tools: ToolDefinition[],
+    config: ModelConfig,
+    system: string,
+  ): Promise<ModelResponse>;
 }

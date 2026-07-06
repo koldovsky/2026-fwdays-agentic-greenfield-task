@@ -69,11 +69,23 @@ export class AnthropicModelPort implements ModelPort {
     this.client = client;
   }
 
-  async send(messages: ModelMessage[], tools: ToolDefinition[], config: ModelConfig): Promise<ModelResponse> {
+  async send(
+    messages: ModelMessage[],
+    tools: ToolDefinition[],
+    config: ModelConfig,
+    system: string,
+  ): Promise<ModelResponse> {
     const response = await this.client.messages.create({
       model: config.model,
       max_tokens: MAX_TOKENS,
       thinking: config.thinking,
+      // The system prompt (`system-prompt.ts`'s `buildSystemPrompt` in
+      // production) — a plain string is one of the two shapes the bundled
+      // SDK types accept for `system` (`string | Array<TextBlockParam>`,
+      // resources/messages/messages.d.ts), so no adapter-side wrapping is
+      // needed (remediation of the review-gate finding "the model never
+      // receives a system prompt or any conversation context").
+      system,
       tools: tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
