@@ -28,7 +28,9 @@
     "front:build": "npm --prefix front-end run build",
     "front:test": "npm --prefix front-end run test",
     "front:install": "npm --prefix front-end install",
-    "install:all": "npm install && npm run back:install && npm run front:install"
+    "install:all": "npm install && npm run back:install && npm run front:install",
+    "deploy:install": "bash scripts/install.sh",
+    "deploy:uninstall": "bash scripts/uninstall.sh"
   },
   "devDependencies": {
     "metaskills": "^1.0.4"

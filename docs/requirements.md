@@ -178,6 +178,30 @@ Unexpected protocol messages shall be logged.
 
 ------------------------------------------------------------------------
 
+## Deployment
+
+**FR-DEPLOY-01**\
+A single Bash script shall build both packages (`npm install`, back-end
+`tsc`, and front-end Vite build) so the compiled SPA is on disk before
+the service starts.
+
+**FR-DEPLOY-02**\
+The script shall install a systemd service unit that runs the back-end
+(`node back-end/dist/index.js`) with the production environment the
+back-end expects (`PORT=80`, `NODE_ENV=production`, `SERVE_SPA=1`).
+
+**FR-DEPLOY-03**\
+The installed service shall start automatically on boot
+(`systemctl enable`, `WantedBy=multi-user.target`) and shall restart on
+failure.
+
+**FR-DEPLOY-04**\
+The script shall be idempotent: re-running it on an already-installed
+host shall update the build, reload the systemd unit only if it changed,
+and restart the service without leaving orphan state.
+
+------------------------------------------------------------------------
+
 # Non-functional Requirements
 
 **NFR-01**\

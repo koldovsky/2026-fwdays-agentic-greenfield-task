@@ -30,15 +30,39 @@ npm run back:dev | npx pino-pretty
 
 Copy `.env.example` to `.env` to override locally; `tsx`/`node` do not auto-load `.env` files here, so export these into your shell or use a tool like `dotenv-cli` if you want file-based overrides.
 
+## Production install (Orange Pi)
+
+The supported deploy path for the Orange Pi (or any systemd-based Linux host) is a single script that builds both packages, grants port-80 capability, writes a systemd unit, and starts the service:
+
+```bash
+sudo ./scripts/install.sh
+```
+
+The script is idempotent — re-running it is also the "update after `git pull`" path. Preview what it will do without touching systemd state:
+
+```bash
+./scripts/install.sh --dry-run
+```
+
+Rollback (stops + disables + removes the unit; keeps the `mytv` user and `/var/lib/mytv/` so a re-install preserves stored pairing tokens):
+
+```bash
+sudo ./scripts/uninstall.sh
+```
+
+See `openspec/changes/archive/*-systemd-installer/design.md` for the full decision set (service-user posture, `Restart=on-failure`, `network-online.target` ordering).
+
 ## Running on the default port 80 (Linux)
 
-The default `PORT=80` matches the URL the product surfaces (`http://mytv.local/`). Binding a low port on Linux requires either running as root or granting the Node binary the capability to bind low ports without root — the standard deploy step on the Orange Pi:
+The default `PORT=80` matches the URL the product surfaces (`http://mytv.local/`). Binding a low port on Linux requires either running as root or granting the Node binary the `cap_net_bind_service` capability. The production install script (`scripts/install.sh` above) does this automatically. If you are running the back-end by hand instead (e.g. debugging), grant the capability directly:
 
 ```bash
 sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which node)")"
 ```
 
 Alternative: set `PORT=8080` (or similar) and redirect port 80 with `iptables`/`nftables`.
+
+**Troubleshooting**: If a system upgrade replaces the node binary (e.g. `apt upgrade` after a NodeSource release), the `setcap` grant is lost and the service will fail with `EACCES` on port 80. Re-run `sudo ./scripts/install.sh` to restore the capability.
 
 ## Development on macOS / non-privileged shells
 

@@ -1,0 +1,31 @@
+[Unit]
+Description=mytv — self-hosted Samsung TV remote
+Documentation=https://github.com/AntoniPetrenko/2026-fwdays-agentic-greenfield-task-AP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mytv
+Group=mytv
+WorkingDirectory=@REPO_ROOT@/back-end
+ExecStart=@NODE_BIN@ dist/index.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=80
+Environment=HOST=0.0.0.0
+Environment=LOG_LEVEL=info
+Environment=SERVE_SPA=1
+# HOME is what back-end/src/tv/token-store.ts resolves against when
+# XDG_CONFIG_HOME is unset: tokens land at /var/lib/mytv/.mytv/tokens.json
+# (0600, owned by the mytv user). Do NOT set XDG_CONFIG_HOME here — it
+# would shift the token file to $XDG_CONFIG_HOME/mytv/tokens.json and
+# desync from the path the docs / uninstall recipe reference.
+Environment=HOME=/var/lib/mytv
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mytv
+
+[Install]
+WantedBy=multi-user.target

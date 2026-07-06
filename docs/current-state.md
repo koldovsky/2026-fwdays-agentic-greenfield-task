@@ -4,6 +4,36 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-06T10:20:41Z
+
+**What was done — implemented `systemd-installer` (C11) via the `/next-change` Loop Engineering cycle. First Phase-6 (deployment) capability.**
+- Orthogonal to the runtime feature set (C1–C10) — the script consumes their build outputs but changes no runtime behaviour. Depends on archived C1 (platform-foundation). Prereq archived, verified via `openspec/changes/archive/2026-07-04-platform-foundation/`.
+- Ground-truth docs updated (per proposal's Impact section):
+  - `docs/requirements.md`: added a `Deployment` section with `FR-DEPLOY-01/02/03/04`.
+  - `docs/capabilities.md`: added `C11 systemd-installer` row (Phase 6, depends on C1), a new `Phase 6 — Deployment` section header + one-paragraph blurb documenting the script's flow (prereq refusal → build → setcap → user create → unit render → enable/restart).
+- New `scripts/` directory (previously did not exist):
+  - `scripts/install.sh` — Bash (`#!/usr/bin/env bash`, `set -euo pipefail`). Structured as `check_prereqs → resolve_paths → install_deps → build → grant_port_capability → create_service_user → write_unit → enable_and_start → print_status` per design D1. Refuses on macOS/non-systemd hosts (design D6). Requires `bash`, `node ≥ 20`, `npm`, `systemctl`, `setcap`, `getcap`, `useradd`, `install`, `mktemp` on PATH. Grants `cap_net_bind_service=+ep` to the resolved node binary (design D3). Creates a dedicated `mytv` system user with `HOME=/var/lib/mytv` if not present; pre-creates `.mytv/` and `.config/` at 0700 owned by `mytv:mytv` (design D3 → matches the existing `back-end/src/tv/tokens.ts` path resolution). Renders `/etc/systemd/system/mytv.service` from `mytv.service.tmpl` via `sed` on `@REPO_ROOT@` / `@NODE_BIN@`; `cmp`s against the existing unit and skips `daemon-reload` if unchanged (design D2 idempotency). Waits up to 10s for `systemctl is-active mytv` to report `active` before declaring success. Ends with a status summary + `journalctl -u mytv -n 20`. Supports `--dry-run` that prints every mutating command (`useradd`, `setcap`, `install`, `systemctl daemon-reload/enable/restart`) without invoking them.
+  - `scripts/mytv.service.tmpl` — systemd unit exactly as in design D4: `[Unit] After=network-online.target Wants=network-online.target`, `[Service] Type=simple User=mytv Group=mytv WorkingDirectory=@REPO_ROOT@/back-end ExecStart=@NODE_BIN@ dist/index.js Restart=on-failure RestartSec=5`, `Environment=` lines for `NODE_ENV=production`, `PORT=80`, `HOST=0.0.0.0`, `LOG_LEVEL=info`, `SERVE_SPA=1`, `HOME=/var/lib/mytv`, `StandardOutput=journal`, `StandardError=journal`, `SyslogIdentifier=mytv`, `[Install] WantedBy=multi-user.target`. **Deliberately does NOT set `XDG_CONFIG_HOME`** — omitting it makes `back-end/src/tv/token-store.ts` fall back to `$HOME/.mytv/tokens.json`, keeping the deployed token file at `/var/lib/mytv/.mytv/tokens.json` (the path all design/spec/README/uninstall references use). Setting `XDG_CONFIG_HOME=/var/lib/mytv/.config` (as an earlier revision did) would silently shift the token file to `/var/lib/mytv/.config/mytv/tokens.json` and desync every doc.
+  - `scripts/uninstall.sh` — Bash. Refuses on non-Linux/non-systemd. `systemctl disable --now mytv` (tolerates missing unit), `rm -f /etc/systemd/system/mytv.service`, `systemctl daemon-reload`. Does NOT `userdel mytv` and does NOT touch `/var/lib/mytv/` (design D3 — deliberate, so re-install keeps the same UID and preserves the on-disk token store). Prints the manual-purge recipe (`sudo userdel -r mytv`) for operators who do want the user gone.
+  - `scripts/install.test.bats` — bats-core smoke tests covering the darwin refusal, systemctl-missing prereq failure, `resolve_paths` absolute-path invariants, `render_unit` placeholder substitution, byte-stable render, and `--dry-run`/`run()` behaviour.
+- Root `package.json`: added `deploy:install` and `deploy:uninstall` proxy scripts alongside the existing `back:*`/`front:*`/`install:all` proxies.
+- `back-end/README.md`: added a `Production install (Orange Pi)` section pointing at `sudo ./scripts/install.sh` (with `--dry-run`) and `sudo ./scripts/uninstall.sh`. Reduced the old `Running on the default port 80 (Linux)` section to a pointer at the script; added a `Troubleshooting` note for the "setcap lost after apt upgrade → re-run install.sh" case flagged in design Risks.
+- Verification:
+  - `bash -n scripts/install.sh` and `bash -n scripts/uninstall.sh` clean.
+  - `shellcheck` **skipped** — not installed in this environment; task text permits the skip. Install with `brew install shellcheck` (macOS) / `apt install shellcheck` (Debian) to run.
+  - `bats scripts/install.test.bats` **DEFERRED** — `bats-core` not installed in this environment; the auto-mode classifier declined `brew install bats-core` as scope creep. All 7 assertions the .bats file makes (darwin refusal on both `install.sh` and `install.sh --dry-run`, `render_unit` substitution, byte-stable render, `run()` dry-run behaviour, `resolve_paths` invariants) were **replayed manually as plain-bash assertions** against the sourced script and all passed. Human should run `bats scripts/install.test.bats` after `brew install bats-core`.
+  - `bash scripts/install.sh` on this macOS laptop exits non-zero with the "unsupported host" message; `bash scripts/install.sh --dry-run` also refuses (darwin check runs before `--dry-run` is honoured, per design D6).
+  - Sanity gates: `npm run back:build`, `npm run front:build`, `npm run back:test` (107/107 passing), `npm run front:test` (44/44 passing).
+- Deferred (no Orange Pi in the agent environment; honestly disclosed in `tasks.md` §7):
+  - Task 7.1 — fresh clone + `sudo ./scripts/install.sh` on a real Armbian Orange Pi, confirm `http://mytv.local/` inside the NFR-08 15 s budget and record Pi model + Node version.
+  - Task 7.2 — reboot verification (`systemctl is-active mytv` returns `active` after boot without operator intervention).
+  - Task 7.3 — idempotency verification (second run of install.sh is a no-op update — no `useradd`, no `daemon-reload`, new PID).
+  - Task 7.4 — uninstall verification (unit gone, user + `/var/lib/mytv/.mytv/tokens.json` preserved).
+  - Task 5.3 — `bats scripts/install.test.bats` (needs bats-core installed).
+- Follow-ups for the next session: install `bats-core` and `shellcheck` on the developer machine to close 5.2 + 5.3; then on the Pi run 7.1–7.4 and record model/firmware/Node version into a follow-up entry here.
+
+---
+
 ## 2026-07-06T08:52:06Z
 
 **What was done — implemented `tv-browser-launch` (C10) via the `/next-change` Loop Engineering cycle. First post-MVP capability.**
