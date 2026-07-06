@@ -6,7 +6,7 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 5,
+      "confirmed": 7,
       "contested": 1,
       "rejected": 0
     },
@@ -44,7 +44,9 @@
     "Inline-keyboard buttons (slot chips, format/goal tickets) are never rendered — the callback-event parsing path is effectively dead code in production",
     "Off-topic detection and scope/format detours rely entirely on unguided model judgment with no static prompt guardrail text",
     "Agent loop sends the model no system prompt and no conversation history — each turn is a stateless single message",
-    "amend_field bypasses format's defense-in-depth validator, letting an invalid value ('instrument') reach a DB write that then throws uncaught, crashing the bot process"
+    "amend_field bypasses format's defense-in-depth validator, letting an invalid value ('instrument') reach a DB write that then throws uncaught, crashing the bot process",
+    "(live smoke S2 6.9) amend_field.value has no schema type, so the model sends an age correction as the STRING '7'; the review-gate's own new validateAge typeof-guard then reads it as AGE_BELOW_MIN and drives a compliant lead into terminal soft_decline with fields wiped — the flip side of confirmed finding #2/#8",
+    "(live smoke S2 6.9) a piano/scope question routes through the dedicated explain_scope tool, which the review-gate's own new pass_through outcome logged with NO detour, so pipeline guardrailOverrideFor never fired SCOPE_EXPLANATION_COPY and the lead got the generic ack instead — the flip side of confirmed finding #5"
   ],
   "contestedTitles": [
     "A stale/late callback tap after a request reaches a terminal state is silently applied to a brand-new sibling request"
@@ -60,9 +62,13 @@
       "error boundary added: loop wraps applyToolUse (Calendar/booking throw -> deterministic Ukrainian apology, state preserved) + index.ts handleUpdateSafely outermost net (dedup of 2 findings, NFR-REL-01)",
       "tool-call log gained a pass_through outcome so 'applied' means a real reducer mutation",
       "static system prompt wired (buildSystemPrompt): DESIGN.md voice verbatim + BC-LANG-01 + FR-GUARD-05 + FR-FAQ-02 + FR-GUARD-01, plus a per-turn dynamic block (conversationState, collected fields, next field) — closes the CRITICAL context-free cluster (dedup of 4 findings across correctness/spec/visual)",
-      "addressesParent now wired into the system prompt's dynamic block (parent vs student addressing, BC-AGE-02) — no longer a dead function"
+      "addressesParent now wired into the system prompt's dynamic block (parent vs student addressing, BC-AGE-02) — no longer a dead function",
+      "(live smoke S2 6.9, commit 5fd6c42) amend age string coercion: coerceAmendedAge() at the tool->event boundary parses a numeric-string amend value to a number for studentAge only; a non-numeric value is left untouched so validateAge still rejects it (regression test proves 'не пам'ятаю' still -> AGE_BELOW_MIN); validateAge itself unchanged",
+      "(live smoke S2 6.9, commit 5fd6c42) explain_scope/explain_format now dispatch to the existing scope_violation/format_unsure detour vocabulary (no reducer call, no state mutation), so the existing pipeline guardrailOverrideFor fires SCOPE_EXPLANATION_COPY/FORMAT_UNSURE_COPY; added a pipeline-level test asserting the lead-facing scope explanation",
+      "(live smoke S2 6.9, commit 5fd6c42 depends on it) conversational-flow stall (bug #2): the CODE now owns asking the next question deterministically (loop.ts assembleReply + lib/intake/next-field.ts + questions.ts) after a text-less field-recording tool call, since ClaudeAgentModelPort's canUseTool aborts before the model narrates a follow-up"
     ],
     "deferred-with-owner": [
+      "(live smoke S2 6.9, MINOR) for an unambiguous under-4 age the model sometimes narrates the refusal itself (from its own DESIGN.md voice rule) without calling save_age, so the deterministic AGE_BELOW_MIN guardrail/soft_decline state is bypassed (lead still gets a kind refusal) -> prompt-hardening pass: tighten the system prompt so age answers always route through save_age; the smoke script accommodates it with an explicit 'please record' retry and flags it, not silent",
       "propose_slots/request_hold real wiring to S1 proposeSlots/holdWithRecovery (conversation reaching awaiting_admin) -> S4 booking-hitl: that slice owns the hold->pending->confirm round trip and the CalendarPort in LoopPorts; the tools log as pass-through no-ops until then (named, not silent)",
       "inline-keyboard button RENDERING (slot chips / format-goal tickets) -> S4/dashboard: the callback PARSING path is hardened (enum-validated) and covered, but production never renders buttons yet",
       "stale/late callback applied to a sibling request (contested) -> S4 when buttons render: the keyboard payload should carry the request id it was rendered for; latent today because no buttons are rendered",
@@ -74,7 +80,7 @@
     ]
   },
   "clean": true,
-  "cleanNote": "clean after remediation: every confirmed guardrail/reliability/context finding fixed test-first (154->173 tests, none weakened); cross-slice integration (propose/hold, buttons) and global hardening (rate-limit) explicitly deferred with named owners. Review ran BEFORE archive this time (S1 process-deviation lesson applied).",
+  "cleanNote": "clean after remediation: every confirmed guardrail/reliability/context finding fixed test-first (154->221 tests, none weakened). The review-gate ran BEFORE archive (S1 lesson); THEN the live real-model 6.9 smoke (docs/qa/intake-manual-smoke.md, real claude CLI + real SQLite) found two more guardrail bugs that only a live model surfaces — each the flip side of a review-gate fix (validateAge type-guard vs. amend string coercion; pass_through outcome vs. explain_scope detour) — both fixed test-first (commit 5fd6c42) plus the conversational-flow stall (deterministic next-question). Cross-slice integration (propose/hold, buttons) + global hardening (rate-limit) + one MINOR prompt-hardening item (under-4 self-narrated refusal) explicitly deferred with named owners.",
   "generatedAt": "2026-07-06T08:36:51Z",
-  "remediatedAt": "2026-07-06T09:30:00Z"
+  "remediatedAt": "2026-07-06T14:00:00Z"
 }

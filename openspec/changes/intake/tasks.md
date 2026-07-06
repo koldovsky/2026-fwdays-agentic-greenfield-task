@@ -353,9 +353,28 @@
       `openspec/changes/intake/review-findings.json`, same shape as the
       archived `slots` change's file. Fix or explicitly disposition every
       confirmed finding before proceeding to 6.9.
-- [ ] 6.9 Manual real-DB smoke test, spelled out step by step (script it
-      under `scripts/qa/manual-smoke-intake.mjs` if practical, transcript
-      to `docs/qa/intake-manual-smoke.md`, mirroring S1's convention):
+- [x] 6.9 Manual real-DB smoke test — SCRIPTED + PASSED (rerunnable
+      `scripts/qa/manual-smoke-intake.mjs`, transcript
+      `docs/qa/intake-manual-smoke.md`; `=== 6.9 SMOKE PASSED (all checks)
+      ===`, 29 real ClaudeAgentModelPort round trips, exit 0). Drives the
+      real `handleUpdate` pipeline through the real `claude` CLI + real
+      on-disk SQLite; `FakeTelegramTransport` records outbound order for the
+      NFR-UX-01 typing-before-reply check. Covered the orchestrator-selected
+      subset: 1 (schema/migration + `bookings.request_id`), 3 (full happy
+      path), 4 (age-3 → `soft_decline`, no booking), 5+6 (piano scope
+      explanation then resume; off-topic folded in), 7 (amend age 6→7), 9
+      (returning lead → fresh sibling `requests` row, first untouched).
+      DEFERRED with reason (script header): step 8 (real DEMO-calendar
+      hold→awaiting_admin→cancel) → S4 booking-hitl (propose_slots/
+      request_hold not yet wired to a CalendarPort from the loop); step 10
+      (break auth → apology) → already unit-tested deterministically in
+      loop.test.ts, not repeated against the live token mid-run.
+      **Live model surfaced 3 real bugs this scripted pass could catch that
+      fakes could not** — fixed test-first before this PASS (see
+      review-findings.json + commits 6b3dc35, d991a67, 5fd6c42):
+      age re-ask; text-less-tool-call stall (code now owns the next
+      question); amend-age-string wrongful soft_decline; explain_scope
+      missing SCOPE_EXPLANATION_COPY.
       1. From a clean SQLite file, run the updated schema/migration; confirm
          `leads`, `requests` exist and `bookings.request_id` is present via
          `PRAGMA table_info(bookings)`.

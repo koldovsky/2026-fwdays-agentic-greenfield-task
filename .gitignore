@@ -28,4 +28,6 @@ obj/
 coverage/
 **/raw/
 *.db
+*.db-shm
+*.db-wal
 secrets/
