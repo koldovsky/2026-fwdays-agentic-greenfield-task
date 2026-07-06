@@ -143,6 +143,7 @@ import type {
   IntakeEvent,
   IntakeFields,
   IntakeState,
+  OfferedSlot,
   TransitionResult,
 } from "@kamerton/lib/src/intake/state-machine.ts";
 import type { CalendarPort } from "@kamerton/lib/src/slots/calendar-port.ts";
@@ -263,11 +264,68 @@ async function sendWithRetry(transport: TelegramTransport, chatId: string, text:
   }
 }
 
+/** booking-hitl design.md Decision 2 (tasks.md C.5) — TYPED THROWING STUB
+ *  (RED). The shared async orchestration function BOTH the free-text
+ *  `LoopPorts.slots` binding (see this module's `applyToolUse`-facing `ports`
+ *  construction, step 4) and the `"slot:<n>"` callback branch below call —
+ *  "one implementation, two call sites", so a lead who types a preference
+ *  and a lead who taps a slot chip can never drift onto two different
+ *  validation/hold paths. Real body (S1's `proposeSlots` pre-bound to
+ *  `deps.calendar` and the request's own saved preferences, parsed via
+ *  `validatePreferences`) is C.5's green half — deliberately NOT implemented
+ *  here (tasks.md's own instruction: "do not implement real orchestration
+ *  logic" for this red round). */
+async function performProposeSlots(
+  deps: HandleUpdateDeps,
+  request: RequestRow,
+  input: { weekdays: string[]; timeWindow: { start: string; end: string } },
+): Promise<
+  | { status: "ok"; slots: OfferedSlot[] }
+  | { status: "no_free_times" }
+  | { status: "unavailable"; apology: string }
+> {
+  void deps;
+  void request;
+  void input;
+  throw new Error("Not implemented — booking-hitl tasks.md C.5 (performProposeSlots)");
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.5) — TYPED THROWING STUB
+ *  (RED). See `performProposeSlots`'s own comment above for the "one
+ *  implementation, two call sites" reasoning. Real body: S1's
+ *  `holdWithRecovery` pre-bound to `deps.calendar`, PLUS the pending-booking
+ *  DB insert (with `request_id`) as one atomic-from-the-caller's-view step
+ *  — C.5's green half, deliberately NOT implemented here. */
+async function performHoldSlot(
+  deps: HandleUpdateDeps,
+  request: RequestRow,
+  slotIndex: number,
+  offeredSlots: OfferedSlot[],
+): Promise<
+  | { status: "held"; bookingId: number }
+  | { status: "collision" }
+  | { status: "unavailable"; apology: string }
+> {
+  void deps;
+  void request;
+  void slotIndex;
+  void offeredSlots;
+  throw new Error("Not implemented — booking-hitl tasks.md C.5 (performHoldSlot)");
+}
+
 /** The wire-format-to-event mapping this module chose for button-callback
  *  updates (step 3) — a save/format/goal-option button maps to the matching
- *  `save_*`/`skip_*` reducer event. Anything this mapping does not recognise
- *  (including slot-chip taps, `"slot:<n>"` — a named gap, see this file's
- *  header comment) returns `null`: no reducer call is made for it. */
+ *  `save_*`/`skip_*` reducer event. A slot-chip tap (`"slot:<n>"`,
+ *  booking-hitl design.md Decision 2, tasks.md C.5) maps onto the SAME
+ *  `pick_slot` `IntakeEvent` the `request_hold` tool dispatch uses
+ *  (`@kamerton/lib/src/intake/state-machine.ts`) — one reducer event, two
+ *  call sites, mirroring `performProposeSlots`/`performHoldSlot`'s own
+ *  sharing. A non-integer/negative index is a malformed payload and is
+ *  ignored here (`null`, never built into an event); an in-range-vs-stale
+ *  check against the CURRENT `fields.offeredSlots` is `applyCallbackEvent`'s
+ *  job (mirroring `request_hold`'s own "reject in code, never trust the
+ *  caller" discipline), not this parser's. Anything else this mapping does
+ *  not recognise returns `null`: no reducer call is made for it. */
 function parseCallbackEvent(data: string): IntakeEvent | null {
   if (data.startsWith("format:")) {
     return { type: "save_format", format: data.slice("format:".length) as CandidateFormat };
@@ -291,6 +349,13 @@ function parseCallbackEvent(data: string): IntakeEvent | null {
   }
   if (data === "tastes:skip") {
     return { type: "skip_tastes" };
+  }
+  if (data.startsWith("slot:")) {
+    const parsed = Number(data.slice("slot:".length));
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      return null;
+    }
+    return { type: "pick_slot", slotIndex: parsed };
   }
   return null;
 }
@@ -330,13 +395,32 @@ function fieldPatchForCallbackEvent(event: IntakeEvent, fields: IntakeFields): P
  *  persists any validator-approved change on the given `requests` row — the
  *  callback-path equivalent of `runIntakeTurn`'s own tool dispatch, minus
  *  the model round trip (design.md Decision 3: "resolve without an agent
- *  call"). */
-function applyCallbackEvent(
-  db: Database.Database,
-  requestId: number,
+ *  call"). booking-hitl tasks.md C.5 widens this from synchronous to `async`
+ *  (and from `(db, requestId, ...)` to `(deps, request, ...)`, since
+ *  `performHoldSlot` needs `deps.calendar`/`deps.db` and the full request
+ *  row) so a `pick_slot` event (a slot-chip tap) can await the shared hold
+ *  orchestration BEFORE the reducer ever commits the transition — see
+ *  `performHoldSlot`'s own header comment for what the RED body below does
+ *  NOT yet implement. */
+async function applyCallbackEvent(
+  deps: HandleUpdateDeps,
+  request: RequestRow,
   state: IntakeState,
   event: IntakeEvent,
-): TransitionResult {
+): Promise<TransitionResult> {
+  if (event.type === "pick_slot") {
+    // booking-hitl tasks.md C.5 — TYPED THROWING STUB (RED). Real body:
+    // call `performHoldSlot` FIRST; only commit `pick_slot` via
+    // `transition()` below on `{status:"held"}`; on `{status:"collision"}`
+    // never call `transition()` at all — send the "already taken, here are
+    // others" nudge instead (baseline `slots` spec's hold-race scenario); a
+    // stale/out-of-range index is rejected in code BEFORE this port is ever
+    // called, mirroring `@kamerton/agent/src/loop.ts`'s own `request_hold`
+    // tool-dispatch discipline (`ports.holdStore.holdSlot` never called for
+    // an out-of-bounds index).
+    await performHoldSlot(deps, request, event.slotIndex, state.fields.offeredSlots ?? []);
+  }
+
   const result = transition(state, event);
 
   if (result.error !== undefined) {
@@ -344,12 +428,12 @@ function applyCallbackEvent(
   }
 
   if (result.state.conversationState !== state.conversationState) {
-    updateRequestState(db, requestId, result.state.conversationState);
+    updateRequestState(deps.db, request.id, result.state.conversationState);
   }
   if (result.detour === null) {
     const patch = fieldPatchForCallbackEvent(event, result.state.fields);
     if (patch !== null) {
-      updateRequestFields(db, requestId, patch);
+      updateRequestFields(deps.db, request.id, patch);
     }
   }
 
@@ -419,7 +503,7 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
       if (event === null) {
         replyText = EMPTY_NARRATION_FALLBACK_COPY;
       } else {
-        const result = applyCallbackEvent(deps.db, request.id, rowToIntakeState(request), event);
+        const result = await applyCallbackEvent(deps, request, rowToIntakeState(request), event);
         replyText = guardrailOverrideFor([result]) ?? EMPTY_NARRATION_FALLBACK_COPY;
         finalFields = result.state.fields;
         if (result.error === undefined && result.detour === null) {
@@ -455,6 +539,21 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
           },
         },
         releaseHold: (eventId: string) => deps.calendar.deleteEvent(eventId),
+        // booking-hitl design.md Decision 2 (tasks.md C.5) — pre-bound to
+        // the SAME shared `performProposeSlots`/`performHoldSlot`
+        // orchestration functions the `"slot:<n>"` callback branch calls
+        // (`applyCallbackEvent`, above): "one implementation, two call
+        // sites". TYPED THROWING STUB (RED): both still throw
+        // Not-implemented (C.5's green half), but neither is reachable from
+        // any EXISTING (Stage A/B-era) test today — `runIntakeTurn`'s
+        // `applyToolUse` dispatch for `propose_slots`/`request_hold` is
+        // still the pre-existing `"pass_through"` no-op (tasks.md C.2's own
+        // instruction: no behaviour change there yet), so this wiring is
+        // inert until C.3's green half lands.
+        slots: { proposeSlots: (input) => performProposeSlots(deps, request, input) },
+        holdStore: {
+          holdSlot: (slotIndex, offeredSlots) => performHoldSlot(deps, request, slotIndex, offeredSlots),
+        },
       };
 
       const result = await runIntakeTurn({

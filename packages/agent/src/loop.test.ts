@@ -18,9 +18,15 @@ import { FakeModelPort, textResponse, toolUseResponse } from "./testing/fake-mod
 import {
   createFakeReleaseHold,
   FakeBookingStorePort,
+  FakeHoldStorePort,
   FakePersistencePort,
+  FakeSlotsPort,
 } from "./testing/fake-loop-ports.ts";
-import { initialIntakeState, type IntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
+import {
+  initialIntakeState,
+  type IntakeState,
+  type OfferedSlot,
+} from "@kamerton/lib/src/intake/state-machine.ts";
 import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts";
 import {
   CANCELLED_CLOSING_COPY,
@@ -34,6 +40,8 @@ function makePorts(model: FakeModelPort, overrides: Partial<LoopPorts> = {}): Lo
     persistence: new FakePersistencePort(),
     bookingStore: new FakeBookingStorePort(),
     releaseHold: createFakeReleaseHold(),
+    slots: new FakeSlotsPort(),
+    holdStore: new FakeHoldStorePort(),
     ...overrides,
   };
 }
@@ -594,6 +602,148 @@ describe("runIntakeTurn", () => {
       const result = await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
 
       expect(result.reply).toMatch(/^[^a-zA-Z]*$/);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // booking-hitl tasks.md C.3 (design.md Decision 2) — RED round.
+  // `applyToolUse`'s `propose_slots`/`request_hold` branches are NOT
+  // implemented yet (tasks.md C.2's own instruction: "no behaviour change
+  // yet"); `toIntakeEvent` still returns `null` for both tool names, so
+  // both fall through to the existing `"pass_through"` no-op path. Every
+  // assertion below is therefore expected to FAIL against today's code, for
+  // the right reason — it asserts the port was called / the state changed /
+  // a specific outcome+error was logged, none of which happens yet.
+  // ---------------------------------------------------------------------
+  describe("propose_slots / request_hold tool dispatch (booking-hitl design.md Decision 2, tasks.md C.3 — RED)", () => {
+    function proposingState(overrides: Partial<IntakeState["fields"]> = {}): IntakeState {
+      return {
+        conversationState: "proposing",
+        fields: {
+          studentName: "Оксана",
+          studentAge: 9,
+          format: "individual",
+          preferredWeekdays: "вівторок, четвер",
+          preferredTimeRange: "після 17:00",
+          ...overrides,
+        },
+      };
+    }
+
+    const SAMPLE_OFFERED_SLOTS: OfferedSlot[] = [
+      { start: "2026-07-14T17:00", end: "2026-07-14T18:00" },
+      { start: "2026-07-16T17:00", end: "2026-07-16T18:00" },
+    ];
+
+    // @trace FR-SLOT-01
+    it("a propose_slots tool-use call with a VALID weekdays/timeWindow input calls validatePreferences then ports.slots.proposeSlots, dispatching offer_slots on {status:'ok'}", async () => {
+      const state = proposingState();
+      const slots = new FakeSlotsPort({ status: "ok", slots: SAMPLE_OFFERED_SLOTS });
+      const persistence = new FakePersistencePort();
+      const model = new FakeModelPort([
+        toolUseResponse("propose_slots", {
+          weekdays: ["Tue", "Thu"],
+          timeWindow: { start: "17:00", end: "20:00" },
+        }),
+      ]);
+      const ports = makePorts(model, { persistence, slots });
+
+      const result = await runIntakeTurn({ state, message: "Вівторок і четвер після 17:00", ports });
+
+      expect(slots.calls).toEqual([{ weekdays: ["Tue", "Thu"], timeWindow: { start: "17:00", end: "20:00" } }]);
+      expect(result.state.fields.offeredSlots).toEqual(SAMPLE_OFFERED_SLOTS);
+      expect(result.state.conversationState).toBe("proposing");
+      expect(persistence.fieldSaves).toContainEqual({ offeredSlots: SAMPLE_OFFERED_SLOTS });
+      expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "applied" });
+    });
+
+    // @trace FR-SLOT-01
+    it("a propose_slots tool-use call with an INVALID input (empty weekdays) is rejected by validatePreferences BEFORE ports.slots.proposeSlots is ever called", async () => {
+      const state = proposingState();
+      const slots = new FakeSlotsPort({ status: "ok", slots: SAMPLE_OFFERED_SLOTS });
+      const model = new FakeModelPort([
+        toolUseResponse("propose_slots", {
+          weekdays: [],
+          timeWindow: { start: "10:00", end: "20:00" },
+        }),
+      ]);
+      const ports = makePorts(model, { slots });
+
+      const result = await runIntakeTurn({ state, message: "Коли завгодно", ports });
+
+      expect(slots.calls).toEqual([]); // defense in depth — never reached
+      expect(result.state).toBe(state); // no mutation happened at all
+      expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "rejected" });
+      expect(result.toolCalls[0]!.outcome).not.toBe("applied");
+    });
+
+    // @trace NFR-REL-01
+    it("a propose_slots call whose port resolves {status:'unavailable'} returns the calendar-unavailable apology, state unchanged", async () => {
+      const state = proposingState();
+      const slots = new FakeSlotsPort({ status: "unavailable", apology: CALENDAR_UNAVAILABLE_APOLOGY });
+      const model = new FakeModelPort([
+        toolUseResponse("propose_slots", {
+          weekdays: ["Tue"],
+          timeWindow: { start: "17:00", end: "20:00" },
+        }),
+      ]);
+      const ports = makePorts(model, { slots });
+
+      const result = await runIntakeTurn({ state, message: "Вівторок після 17:00", ports });
+
+      expect(result.reply).toBe(CALENDAR_UNAVAILABLE_APOLOGY);
+      expect(result.state).toBe(state);
+    });
+
+    // @trace FR-SLOT-02
+    it("a request_hold tool-use call with a slotIndex OUT OF BOUNDS for currentState.fields.offeredSlots is rejected INVALID_SLOT_INDEX WITHOUT ever calling ports.holdStore.holdSlot", async () => {
+      const state = proposingState({ offeredSlots: SAMPLE_OFFERED_SLOTS });
+      const holdStore = new FakeHoldStorePort({ status: "held", bookingId: 1 });
+      const model = new FakeModelPort([toolUseResponse("request_hold", { slotIndex: 5 })]);
+      const ports = makePorts(model, { holdStore });
+
+      const result = await runIntakeTurn({ state, message: "Другий слот", ports });
+
+      expect(holdStore.calls).toEqual([]);
+      expect(result.state).toBe(state);
+      expect(result.toolCalls[0]).toMatchObject({
+        tool: "request_hold",
+        outcome: "rejected",
+        error: "INVALID_SLOT_INDEX",
+      });
+    });
+
+    // @trace FR-SLOT-02
+    // @trace FR-HITL-03
+    it("a request_hold tool-use call with a valid index whose port resolves {status:'held'} commits pick_slot (proposing -> awaiting_admin), persists state, logs 'applied'", async () => {
+      const state = proposingState({ offeredSlots: SAMPLE_OFFERED_SLOTS });
+      const holdStore = new FakeHoldStorePort({ status: "held", bookingId: 99 });
+      const persistence = new FakePersistencePort();
+      const model = new FakeModelPort([toolUseResponse("request_hold", { slotIndex: 0 })]);
+      const ports = makePorts(model, { holdStore, persistence });
+
+      const result = await runIntakeTurn({ state, message: "Перший слот, будь ласка", ports });
+
+      expect(holdStore.calls).toEqual([{ slotIndex: 0, offeredSlots: SAMPLE_OFFERED_SLOTS }]);
+      expect(result.state.conversationState).toBe("awaiting_admin");
+      expect(persistence.stateSaves).toContainEqual("awaiting_admin");
+      expect(result.toolCalls[0]).toMatchObject({ tool: "request_hold", outcome: "applied" });
+    });
+
+    // Baseline `slots` spec's own hold-race scenario, consumed here (not
+    // re-specified): a fresh collision at the moment of the hold attempt.
+    it("a request_hold tool-use call whose port resolves {status:'collision'} does NOT change state (same reference), logs 'rejected' with a collision signal the pipeline layer can react to", async () => {
+      const state = proposingState({ offeredSlots: SAMPLE_OFFERED_SLOTS });
+      const holdStore = new FakeHoldStorePort({ status: "collision" });
+      const model = new FakeModelPort([toolUseResponse("request_hold", { slotIndex: 0 })]);
+      const ports = makePorts(model, { holdStore });
+
+      const result = await runIntakeTurn({ state, message: "Перший слот, будь ласка", ports });
+
+      expect(holdStore.calls).toEqual([{ slotIndex: 0, offeredSlots: SAMPLE_OFFERED_SLOTS }]);
+      expect(result.state).toBe(state); // SAME reference — transition()'s state-changing branch never ran
+      expect(result.toolCalls[0]).toMatchObject({ tool: "request_hold", outcome: "rejected" });
+      expect(result.toolCalls[0]!.error).toBe("SLOT_COLLISION");
     });
   });
 });

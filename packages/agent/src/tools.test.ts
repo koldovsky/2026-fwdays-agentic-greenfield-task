@@ -81,4 +81,57 @@ describe("the agent's closed tool set", () => {
       expect(tool.input_schema.type).toBe("object");
     }
   });
+
+  // --- booking-hitl tasks.md C.1 (design.md Decision 2's sub-decision) -----
+  // `propose_slots` gains structured `weekdays`/`timeWindow` parameters — the
+  // model re-extracts them from the lead's own free-text answer, code
+  // validates twice (schema enum here, `validatePreferences` at the loop
+  // layer, tasks.md C.3).
+  describe("propose_slots' structured weekdays/timeWindow schema (booking-hitl design.md Decision 2)", () => {
+    // @trace FR-SLOT-01
+    it("weekdays is a required array property whose items enum is exactly [Mon, Tue, Wed, Thu, Fri]", () => {
+      const proposeSlots = TOOLS.find((tool) => tool.name === "propose_slots");
+      expect(proposeSlots).toBeDefined();
+      const properties = proposeSlots!.input_schema.properties as Record<
+        string,
+        { type?: string; items?: { enum?: string[] } } | undefined
+      >;
+      expect(properties.weekdays?.type).toBe("array");
+      expect(properties.weekdays?.items?.enum).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+      expect(proposeSlots!.input_schema.required).toContain("weekdays");
+    });
+
+    // @trace FR-SLOT-01
+    it("timeWindow is a required object property with required start/end string sub-properties", () => {
+      const proposeSlots = TOOLS.find((tool) => tool.name === "propose_slots");
+      expect(proposeSlots).toBeDefined();
+      const properties = proposeSlots!.input_schema.properties as Record<
+        string,
+        | {
+            type?: string;
+            properties?: Record<string, { type?: string } | undefined>;
+            required?: string[];
+          }
+        | undefined
+      >;
+      expect(properties.timeWindow?.type).toBe("object");
+      expect(properties.timeWindow?.properties?.start?.type).toBe("string");
+      expect(properties.timeWindow?.properties?.end?.type).toBe("string");
+      expect(properties.timeWindow?.required).toEqual(expect.arrayContaining(["start", "end"]));
+      expect(proposeSlots!.input_schema.required).toContain("timeWindow");
+    });
+
+    // @trace FR-GUARD-01
+    // @trace FR-GUARD-06
+    it("the closed TOOL_NAMES list is otherwise UNCHANGED by this schema edit — still exactly sixteen names, none confirm*/*kb*write*", () => {
+      expect(TOOLS).toHaveLength(EXPECTED_TOOL_NAMES.length);
+      expect([...TOOL_NAMES].sort()).toEqual([...EXPECTED_TOOL_NAMES].sort());
+      for (const name of TOOL_NAMES) {
+        const lowered = name.toLowerCase();
+        expect(lowered).not.toMatch(/^confirm/);
+        expect(lowered).not.toMatch(/kb.*write/);
+        expect(lowered).not.toMatch(/write.*kb/);
+      }
+    });
+  });
 });

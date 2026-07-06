@@ -25,17 +25,17 @@ Result: PASS, 37 warning(s)
 | FR-KB-03 | yes | yes | - | - |
 | FR-KB-04 | yes | yes | - | - |
 | FR-GUARD-02 | yes | yes | - | - |
-| FR-GUARD-06 | yes | yes | 2 | - |
-| FR-SLOT-01 | yes | yes | 17 | - |
-| FR-SLOT-02 | yes | yes | 19 | - |
+| FR-GUARD-06 | yes | yes | 3 | - |
+| FR-SLOT-01 | yes | yes | 23 | - |
+| FR-SLOT-02 | yes | yes | 24 | - |
 | FR-SLOT-03 | yes | yes | 6 | - |
 | FR-SLOT-04 | yes | yes | 5 | - |
 | FR-GUARD-03 | yes | yes | 2 | - |
 | FR-HITL-01 | yes | yes | - | - |
 | FR-HITL-02 | yes | yes | 21 | - |
-| FR-HITL-03 | yes | yes | 12 | - |
+| FR-HITL-03 | yes | yes | 14 | - |
 | FR-HITL-04 | yes | yes | - | - |
-| FR-GUARD-01 | yes | yes | 3 | - |
+| FR-GUARD-01 | yes | yes | 4 | - |
 | FR-DASH-01 | yes | yes | 3 | yes |
 | FR-DASH-03 | yes | yes | 8 | yes |
 

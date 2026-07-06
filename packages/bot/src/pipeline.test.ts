@@ -40,10 +40,12 @@ import {
 import type { ModelResponse } from "@kamerton/agent/src/model-port.ts";
 import { FakeCalendarPort } from "@kamerton/lib/src/slots/fake-calendar.ts";
 import { AGE_REFUSAL_COPY, SCOPE_EXPLANATION_COPY } from "@kamerton/lib/src/intake/copy.ts";
+import { kyivWallClockToUtc } from "@kamerton/lib/src/slots/timezone.ts";
 import { ANTHROPIC_PROCESSING_NOTICE } from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "@kamerton/agent/src/apology.ts";
 import { FakeTelegramTransport } from "./testing/fake-telegram-transport.ts";
+import type { RecordedCall } from "./testing/fake-telegram-transport.ts";
 import { compileFirstLessonBrief, handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
 import type { InboundCallbackUpdate, InboundTextUpdate } from "./telegram-transport.ts";
 import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-publisher.ts";
@@ -84,7 +86,16 @@ function callbackUpdate(overrides: Partial<InboundCallbackUpdate> = {}): Inbound
     telegramUserId: "tg-user-1",
     telegramChatId: "tg-chat-1",
     telegramDisplayName: "Тестова Лідка",
-    data: "slot:0",
+    // Deliberately an UNRECOGNISED wire-format payload (`parseCallbackEvent`
+    // returns `null` for it) — the pre-C.5 default value was `"slot:0"`,
+    // which booking-hitl tasks.md C.5 turns into a live, recognised
+    // `pick_slot` payload; scenarios that need to exercise the real
+    // slot-chip path now pass `{ data: "slot:<n>" }` explicitly (see
+    // below), so this shared default stays inert for every OTHER scenario
+    // that only cares about generic callback plumbing (ack-ordering,
+    // "never calls ModelPort.send()"), regardless of which wire formats are
+    // recognised.
+    data: "noop:default",
     ...overrides,
   };
 }
@@ -623,6 +634,211 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(lead).toBeDefined();
     const request = findLatestRequestForLead(db, lead!.id)!;
     expect(request.student_name).toBe("Оксана");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// booking-hitl tasks.md C.5 (design.md Decision 2) — RED ROUND.
+// `performProposeSlots`/`performHoldSlot` (pipeline.ts) are TYPED THROWING
+// STUBS (Not-implemented) and `runIntakeTurn`'s own `propose_slots`/
+// `request_hold` dispatch is still the pre-existing `"pass_through"` no-op
+// (tasks.md C.2's own instruction) — every scenario below is therefore
+// expected to FAIL against today's code, for the right reason: either an
+// uncaught rejection propagating out of `handleUpdate()` (the `"slot:<n>"`
+// callback path, which awaits `performHoldSlot` before it does anything
+// else) or an assertion mismatch (the free-text `propose_slots` path, which
+// today never persists `offered_slots` or renders slot-chip buttons at all).
+// ---------------------------------------------------------------------------
+describe("handleUpdate — booking-hitl lead-side proposal/hold wiring (tasks.md C.5 — RED)", () => {
+  /** Seeds a `proposing`-state request with a fully-collected profile plus
+   *  (optionally) an already-offered slot list, mirroring what a real
+   *  `propose_slots`/`offer_slots` turn would have left behind — used by
+   *  every scenario below that starts mid-flow rather than replaying the
+   *  whole intake conversation. */
+  function seedProposingRequest(
+    db: Database.Database,
+    overrides: Partial<UpdateRequestFieldsInput> = {},
+  ): { lead: LeadRow; request: RequestRow } {
+    const seeded = seedNewLeadRequest(db);
+    seedRequestAt(db, seeded.request.id, "proposing", {
+      studentName: "Соломія",
+      studentAge: 11,
+      format: "individual",
+      preferredWeekdays: "вівторок, четвер",
+      preferredTimeRange: "після 17:00",
+      ...overrides,
+    });
+    return seeded;
+  }
+
+  const SAMPLE_OFFERED_SLOTS = [
+    { start: "2026-07-14T17:00", end: "2026-07-14T18:00" },
+    { start: "2026-07-16T17:00", end: "2026-07-16T18:00" },
+  ];
+
+  // @trace FR-SLOT-01
+  it("a lead reaching proposing whose free text drives the model to call propose_slots receives a reply carrying real SendMessageOptions.buttons slot chips, and requests.offered_slots is persisted", async () => {
+    const db = openDatabase(":memory:");
+    seedProposingRequest(db);
+
+    const transport = new FakeTelegramTransport();
+    const calendar = new FakeCalendarPort();
+    const model = new FakeModelPort([
+      toolUseResponse("propose_slots", {
+        weekdays: ["Tue", "Thu"],
+        timeWindow: { start: "17:00", end: "20:00" },
+      }),
+    ]);
+    const deps = makeDeps({ transport, model, calendar, db });
+
+    await handleUpdate(textUpdate({ text: "Вівторок і четвер після 17:00" }), deps);
+
+    const lastSend = [...transport.calls]
+      .reverse()
+      .find((call): call is Extract<RecordedCall, { kind: "sendMessage" }> => call.kind === "sendMessage")!;
+    const buttons = lastSend.options?.buttons ?? [];
+    const flatButtons = buttons.flat();
+    expect(flatButtons.some((button) => button.data === "slot:0")).toBe(true);
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const after = findLatestRequestForLead(db, lead!.id)!;
+    expect(after.offered_slots).not.toBeNull();
+  });
+
+  // @trace FR-SLOT-01
+  it("a propose_slots free-text turn does NOT persist offered_slots or render buttons when the model input is invalid (empty weekdays)", async () => {
+    const db = openDatabase(":memory:");
+    seedProposingRequest(db);
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([
+      toolUseResponse("propose_slots", { weekdays: [], timeWindow: { start: "10:00", end: "20:00" } }),
+    ]);
+    const deps = makeDeps({ transport, model, db });
+
+    await handleUpdate(textUpdate({ text: "Коли завгодно" }), deps);
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const after = findLatestRequestForLead(db, lead!.id)!;
+    expect(after.offered_slots).toBeNull();
+
+    const lastSend = [...transport.calls]
+      .reverse()
+      .find((call): call is Extract<RecordedCall, { kind: "sendMessage" }> => call.kind === "sendMessage")!;
+    expect(lastSend.options?.buttons ?? []).toEqual([]);
+  });
+
+  // @trace FR-SLOT-02
+  it("a 'slot:<n>' callback tap resolves via performHoldSlot WITHOUT any ModelPort.send() call, creating a real pending bookings row (request_id set, slot_start/slot_end verbatim, calendar_event_id from FakeCalendarPort.createTentative)", async () => {
+    const db = openDatabase(":memory:");
+    const { request: seeded } = seedProposingRequest(db, { offeredSlots: SAMPLE_OFFERED_SLOTS });
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const calendar = new FakeCalendarPort();
+    const deps = makeDeps({ transport, model, calendar, db });
+
+    await handleUpdate(callbackUpdate({ data: "slot:0" }), deps);
+
+    expect(model.callCount).toBe(0);
+
+    const bookings = db.prepare(`SELECT * FROM bookings WHERE request_id = ?`).all(seeded.id) as Array<{
+      status: string;
+      request_id: number;
+      slot_start: string;
+      slot_end: string;
+      calendar_event_id: string | null;
+    }>;
+    expect(bookings).toHaveLength(1);
+    expect(bookings[0]!.status).toBe("pending");
+    expect(bookings[0]!.request_id).toBe(seeded.id);
+    expect(bookings[0]!.slot_start).toBe(SAMPLE_OFFERED_SLOTS[0]!.start);
+    expect(bookings[0]!.slot_end).toBe(SAMPLE_OFFERED_SLOTS[0]!.end);
+    expect(bookings[0]!.calendar_event_id).not.toBeNull();
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const after = findLatestRequestForLead(db, lead!.id)!;
+    expect(after.state).toBe("awaiting_admin");
+  });
+
+  // @trace FR-SLOT-02
+  // design.md Decision 6 item 1's trigger.
+  it("the same held tap publishes a CUSTOM/BOOKING_PENDING AG-UI event via the injected publisher", async () => {
+    const db = openDatabase(":memory:");
+    seedProposingRequest(db, { offeredSlots: SAMPLE_OFFERED_SLOTS });
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const calendar = new FakeCalendarPort();
+    const publisher = new FakeAguiPublisher();
+    const deps = makeDeps({ transport, model, calendar, db, publisher });
+
+    await handleUpdate(callbackUpdate({ data: "slot:0" }), deps);
+
+    const bookingPendingEvents = publisher.events.filter(
+      (event): event is Extract<AguiEvent, { type: "CUSTOM"; name: "BOOKING_PENDING" }> =>
+        event.type === "CUSTOM" && event.name === "BOOKING_PENDING",
+    );
+    expect(bookingPendingEvents.length).toBeGreaterThan(0);
+  });
+
+  // Baseline `slots` spec's own hold-race scenario, cross-capability
+  // consumed here (not re-specified).
+  // @trace FR-HITL-03
+  it("a 'slot:<n>' callback tap whose FakeCalendarPort reports a fresh collision leaves requests.state at proposing, sends a kind Ukrainian nudge, creates NO bookings row", async () => {
+    const db = openDatabase(":memory:");
+    seedProposingRequest(db, { offeredSlots: SAMPLE_OFFERED_SLOTS });
+
+    const calendar = new FakeCalendarPort([
+      {
+        start: kyivWallClockToUtc(SAMPLE_OFFERED_SLOTS[0]!.start),
+        end: kyivWallClockToUtc(SAMPLE_OFFERED_SLOTS[0]!.end),
+      },
+    ]);
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const deps = makeDeps({ transport, model, calendar, db });
+
+    await handleUpdate(callbackUpdate({ data: "slot:0" }), deps);
+
+    const lead = findLeadByTelegramUserId(db, "tg-user-1");
+    const after = findLatestRequestForLead(db, lead!.id)!;
+    expect(after.state).toBe("proposing");
+
+    const bookingsCount = db.prepare(`SELECT COUNT(*) AS n FROM bookings`).get() as { n: number };
+    expect(bookingsCount.n).toBe(0);
+
+    const reply = transport.sentTexts[transport.sentTexts.length - 1]!;
+    expect(reply.length).toBeGreaterThan(0);
+    for (const phrase of PRESSURE_VOCABULARY) {
+      expect(reply.toLowerCase()).not.toContain(phrase);
+    }
+  });
+
+  // @trace FR-SLOT-02
+  it("a stale/out-of-range 'slot:<n>' tap is ignored deterministically — no reducer/DB mutation", async () => {
+    const db = openDatabase(":memory:");
+    const { lead, request: seeded } = seedProposingRequest(db, {
+      offeredSlots: [SAMPLE_OFFERED_SLOTS[0]!],
+    });
+    const before = findLatestRequestForLead(db, lead.id)!;
+
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort();
+    const calendar = new FakeCalendarPort();
+    const deps = makeDeps({ transport, model, calendar, db });
+
+    // Out of bounds for a single-element offeredSlots array — e.g. a
+    // replayed tap after a fresh `offer_slots` narrowed the list.
+    await handleUpdate(callbackUpdate({ data: "slot:9" }), deps);
+
+    const after = findLatestRequestForLead(db, lead.id)!;
+    expect(after).toEqual(before);
+
+    const bookingsCount = db.prepare(`SELECT COUNT(*) AS n FROM bookings WHERE request_id = ?`).get(seeded.id) as {
+      n: number;
+    };
+    expect(bookingsCount.n).toBe(0);
   });
 });
 

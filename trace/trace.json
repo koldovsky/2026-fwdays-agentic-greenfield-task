@@ -363,6 +363,7 @@
       "planned": true,
       "tests": [
         "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts"
       ],
       "recordings": []
@@ -390,6 +391,12 @@
         "lib/src/slots/timezone.test.ts",
         "lib/src/slots/timezone.test.ts",
         "lib/src/slots/timezone.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
         "tests/integration/slots/round-trip.test.ts"
       ],
       "recordings": []
@@ -413,6 +420,11 @@
         "lib/src/slots/propose.test.ts",
         "lib/src/slots/propose.test.ts",
         "lib/src/slots/propose.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
         "packages/db/src/bookings.test.ts",
         "packages/db/src/bookings.test.ts",
         "packages/db/src/schema.test.ts",
@@ -532,7 +544,9 @@
         "lib/src/booking/validate-admin-slots.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/slots/grid.test.ts",
-        "lib/src/slots/grid.test.ts"
+        "lib/src/slots/grid.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts"
       ],
       "recordings": []
     },
@@ -558,6 +572,7 @@
       "planned": true,
       "tests": [
         "packages/agent/src/system-prompt.test.ts",
+        "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts"
       ],

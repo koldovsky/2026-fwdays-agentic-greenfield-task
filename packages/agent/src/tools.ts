@@ -28,14 +28,26 @@
 // deterministic static-prompt fallback line instead of a half-built KB
 // feature — S5 `kb-learning` owns the real tools and the `questions` table).
 //
-// `propose_slots`/`request_hold`'s schemas are intentionally minimal
-// (parameterless triggers) — the loop supplies the actual `ProposeRequest`/
-// `HoldRequest` payload itself from the already-collected `IntakeFields` and
-// a server-computed horizon, per design.md Decision 2 ("wraps S1's
-// proposeSlots"/"holdWithRecovery"); the model does not need to, and must
-// not be trusted to, invent scheduling parameters.
+// `propose_slots`' schema (booking-hitl design.md Decision 2's sub-decision,
+// tasks.md C.1) gains structured `weekdays`/`timeWindow` parameters — the
+// model re-extracts them from the lead's already-collected free-text
+// preferences (the same "extract, don't invent" trust boundary `save_age`
+// already relies on); a new `lib/src/booking/validate-preferences.ts` guard
+// checks them again, code-side, before `ports.slots.proposeSlots(...)` is
+// ever called (defense in depth — the model cannot bypass this by ignoring
+// its own schema enum). `request_hold`'s existing `slotIndex` schema needs no
+// change — it already expresses "pick from the list just offered", never
+// inventing a slot.
 
 import type { ToolDefinition } from "./model-port.ts";
+
+/** The exact weekday enum `propose_slots.weekdays` accepts (booking-hitl
+ *  design.md Decision 2's sub-decision) — duplicated here rather than
+ *  imported from `@kamerton/lib/src/booking/validate-preferences.ts`,
+ *  deliberately, same "wire-format contract stays stable even if the
+ *  reducer/validator's internal type changes shape" reasoning this file's
+ *  header already gives for `GoalTag`. */
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"] as const;
 
 /** The GoalTag enum, duplicated here (not imported from
  *  `@kamerton/lib/src/intake/state-machine.ts`) deliberately: a tool JSON
@@ -205,8 +217,27 @@ export const TOOLS: ToolDefinition[] = [
   {
     name: "propose_slots",
     description:
-      "Профіль зібрано повністю (стан 'proposing') — запропонувати вільні слоти на основі вже збережених вподобань (design.md Decision 2, wraps S1 proposeSlots). Параметри обчислює реєстратор, не модель.",
-    input_schema: { type: "object", properties: {} },
+      "Профіль зібрано повністю (стан 'proposing') — запропонувати вільні слоти на основі бажаних днів тижня та часового проміжку, які лід щойно назвав текстом (booking-hitl design.md Decision 2, wraps S1 proposeSlots). Модель ПОВТОРНО виокремлює ці два параметри зі свіжої відповіді ліда — реєстратор (validatePreferences) перевіряє їх ще раз, перш ніж звертатись до календаря.",
+    input_schema: {
+      type: "object",
+      properties: {
+        weekdays: {
+          type: "array",
+          items: { type: "string", enum: [...WEEKDAYS] },
+          description: "Дні тижня (з переліку Пн-Пт), які назвав лід, як код-значення англійською.",
+        },
+        timeWindow: {
+          type: "object",
+          description: "Бажаний часовий проміжок протягом дня, який назвав лід.",
+          properties: {
+            start: { type: "string", description: "Початок бажаного проміжку, формат HH:mm." },
+            end: { type: "string", description: "Кінець бажаного проміжку, формат HH:mm." },
+          },
+          required: ["start", "end"],
+        },
+      },
+      required: ["weekdays", "timeWindow"],
+    },
   },
   {
     name: "request_hold",

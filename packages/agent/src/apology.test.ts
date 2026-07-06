@@ -26,7 +26,9 @@ import { FakeModelPort } from "./testing/fake-model-port.ts";
 import {
   createFakeReleaseHold,
   FakeBookingStorePort,
+  FakeHoldStorePort,
   FakePersistencePort,
+  FakeSlotsPort,
 } from "./testing/fake-loop-ports.ts";
 import { initialIntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 
@@ -74,6 +76,13 @@ describe("runIntakeTurn on an Anthropic call failure", () => {
       persistence: new FakePersistencePort(),
       bookingStore: new FakeBookingStorePort(),
       releaseHold: createFakeReleaseHold(),
+      // booking-hitl tasks.md C.2 widened LoopPorts with two new ports; this
+      // scenario (a ModelPort.send() rejection) never reaches propose_slots/
+      // request_hold dispatch, so these are unscripted throwing-by-default
+      // fakes (`FakeSlotsPort`/`FakeHoldStorePort`'s own "unavailable"
+      // default) — present only so this fixture keeps compiling.
+      slots: new FakeSlotsPort(),
+      holdStore: new FakeHoldStorePort(),
     };
 
     const result = await runIntakeTurn({ state, message: "Привіт", ports });

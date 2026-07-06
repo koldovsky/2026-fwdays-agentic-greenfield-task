@@ -153,6 +153,7 @@ import type {
   IntakeEvent,
   IntakeFields,
   IntakeState,
+  OfferedSlot,
   TransitionErrorCode,
   TransitionResult,
 } from "@kamerton/lib/src/intake/state-machine.ts";
@@ -209,14 +210,54 @@ export interface BookingStorePort {
  *  the slots `CalendarPort` type directly. */
 export type ReleaseHoldFn = (calendarEventId: string) => Promise<void>;
 
+/** booking-hitl design.md Decision 2 (tasks.md C.2, TYPE CONTRACT ONLY —
+ *  `applyToolUse`'s `propose_slots` branch is wired in tasks.md C.3's green
+ *  half, not here). The seam this loop uses for the `propose_slots` tool —
+ *  wraps S1's `proposeSlots`, pre-bound to a concrete `CalendarPort` and the
+ *  request's own horizon by the caller (`packages/bot/src/pipeline.ts`), so
+ *  this package never imports the slots `CalendarPort` type (unchanged
+ *  rule, verified: `input`/the result both use plain structural shapes —
+ *  `OfferedSlot`, never `CalendarPort`). `validatePreferences`
+ *  (`@kamerton/lib/src/booking/validate-preferences.ts`) runs BEFORE this
+ *  port is ever called (defense in depth, same shape as `save_format`'s
+ *  schema-plus-validator pattern). */
+export interface SlotsPort {
+  proposeSlots(input: { weekdays: string[]; timeWindow: { start: string; end: string } }): Promise<
+    | { status: "ok"; slots: OfferedSlot[] }
+    | { status: "no_free_times" }
+    | { status: "unavailable"; apology: string }
+  >;
+}
+
+/** booking-hitl design.md Decision 2 (tasks.md C.2, TYPE CONTRACT ONLY — see
+ *  `SlotsPort`'s own comment above). The seam this loop uses for the
+ *  `request_hold` tool — wraps S1's `holdWithRecovery` PLUS the
+ *  pending-booking DB insert (with `request_id`) as one atomic-from-the-
+ *  caller's-view step. Deliberately a SEPARATE interface from
+ *  `BookingStorePort` (cancel-only, unchanged) — this is an INSERT of a new
+ *  `pending` row, never a confirm, so inspecting `BookingStorePort` alone
+ *  still proves "no create/confirm method exists on it"
+ *  (`@trace FR-GUARD-01`'s structural assertion is unchanged by this port's
+ *  existence). */
+export interface HoldStorePort {
+  holdSlot(
+    slotIndex: number,
+    offeredSlots: OfferedSlot[],
+  ): Promise<
+    { status: "held"; bookingId: number } | { status: "collision" } | { status: "unavailable"; apology: string }
+  >;
+}
+
 /** Every external dependency `runIntakeTurn` needs for one turn, bundled so
  *  the function signature stays a clean `(state, message, ports)` shape
  *  rather than an ever-growing positional-argument list. */
 export interface LoopPorts {
   model: ModelPort;
   persistence: PersistencePort;
-  bookingStore: BookingStorePort;
+  bookingStore: BookingStorePort; // UNCHANGED — still cancel-only (`@trace FR-GUARD-01`)
   releaseHold: ReleaseHoldFn;
+  slots: SlotsPort; // NEW — booking-hitl design.md Decision 2 (tasks.md C.2)
+  holdStore: HoldStorePort; // NEW — booking-hitl design.md Decision 2 (tasks.md C.2)
 }
 
 export interface LoopInput {
@@ -230,6 +271,18 @@ export interface LoopInput {
  *  an applied one). */
 export type ToolCallOutcome = "applied" | "rejected" | "detour" | "pass_through";
 
+/** booking-hitl design.md Decision 2 (tasks.md C.2/C.3): the reducer's own
+ *  closed `TransitionErrorCode` set, widened by exactly one loop-layer-only
+ *  signal — `"SLOT_COLLISION"`, produced when `ports.holdStore.holdSlot`
+ *  resolves `{status:"collision"}` (a hold-race, never a `transition()`
+ *  rejection — `transition()`/`pick_slot` is never even called on this path,
+ *  see `applyToolUse`'s `request_hold` branch) — so a `request_hold` tool
+ *  call's log entry can carry a machine-readable "the pipeline layer can
+ *  react to this" signal (tasks.md C.3's own wording) without widening the
+ *  pure reducer's own error vocabulary for a concern (calendar collision)
+ *  the reducer itself never touches. */
+export type LoopErrorCode = TransitionErrorCode | "SLOT_COLLISION";
+
 /** One deterministic log entry per tool-use block the model's response
  *  contained, appended by the loop itself (ADR-0001 §5 analog) —
  *  independent of the model's own narration. */
@@ -238,7 +291,7 @@ export interface ToolCallLogEntry {
   input: unknown;
   outcome: ToolCallOutcome;
   detour?: Detour | null;
-  error?: TransitionErrorCode;
+  error?: LoopErrorCode;
 }
 
 export interface LoopResult {

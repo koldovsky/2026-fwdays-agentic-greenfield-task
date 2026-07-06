@@ -6,8 +6,15 @@
 // for `hold.test.ts`, and this package's own `FakeModelPort` plays for the
 // model seam).
 
-import type { BookingStorePort, PendingBooking, PersistencePort, ReleaseHoldFn } from "../loop.ts";
-import type { ConversationState, IntakeFields } from "@kamerton/lib/src/intake/state-machine.ts";
+import type {
+  BookingStorePort,
+  HoldStorePort,
+  PendingBooking,
+  PersistencePort,
+  ReleaseHoldFn,
+  SlotsPort,
+} from "../loop.ts";
+import type { ConversationState, IntakeFields, OfferedSlot } from "@kamerton/lib/src/intake/state-machine.ts";
 
 /** Records every `saveFields`/`saveState` call, in order, so a test can
  *  assert exactly what the loop persisted (and nothing more) — e.g. tasks.md
@@ -51,4 +58,56 @@ export function createFakeReleaseHold(): ReleaseHoldFn & { releasedEventIds: str
     releasedEventIds.push(calendarEventId);
   };
   return Object.assign(fn, { releasedEventIds });
+}
+
+/** `SlotsPort.proposeSlots`'s exact resolved-value shape (booking-hitl
+ *  design.md Decision 2, tasks.md C.2/C.3) — re-derived here rather than
+ *  imported so this test-infra file never has to reach past `loop.ts`'s own
+ *  exported interface. */
+type SlotsProposeResult = Awaited<ReturnType<SlotsPort["proposeSlots"]>>;
+type HoldSlotResult = Awaited<ReturnType<HoldStorePort["holdSlot"]>>;
+
+/** A scripted + recording `SlotsPort` double (booking-hitl tasks.md C.2/C.3)
+ *  — constructed with the single result every `proposeSlots` call resolves
+ *  to (mirrors `FakeBookingStorePort`'s own "constructed with the scripted
+ *  outcome" shape); records every call's input, in order, so a test can
+ *  assert `ports.slots.proposeSlots` was (or, for the invalid-input case,
+ *  was NOT) ever called. Defaults to `"unavailable"` — a loud, honest
+ *  default: a test that forgets to script a result gets a Calendar-apology
+ *  reply, not a silently-wrong "ok" result. */
+export class FakeSlotsPort implements SlotsPort {
+  readonly calls: Array<{ weekdays: string[]; timeWindow: { start: string; end: string } }> = [];
+
+  constructor(
+    private readonly result: SlotsProposeResult = {
+      status: "unavailable",
+      apology: "FakeSlotsPort: no result scripted for this test",
+    },
+  ) {}
+
+  async proposeSlots(input: {
+    weekdays: string[];
+    timeWindow: { start: string; end: string };
+  }): Promise<SlotsProposeResult> {
+    this.calls.push(input);
+    return this.result;
+  }
+}
+
+/** A scripted + recording `HoldStorePort` double (booking-hitl tasks.md
+ *  C.2/C.3) — same construction/recording shape as `FakeSlotsPort` above. */
+export class FakeHoldStorePort implements HoldStorePort {
+  readonly calls: Array<{ slotIndex: number; offeredSlots: OfferedSlot[] }> = [];
+
+  constructor(
+    private readonly result: HoldSlotResult = {
+      status: "unavailable",
+      apology: "FakeHoldStorePort: no result scripted for this test",
+    },
+  ) {}
+
+  async holdSlot(slotIndex: number, offeredSlots: OfferedSlot[]): Promise<HoldSlotResult> {
+    this.calls.push({ slotIndex, offeredSlots });
+    return this.result;
+  }
 }
