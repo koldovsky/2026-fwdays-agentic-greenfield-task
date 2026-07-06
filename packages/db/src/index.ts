@@ -20,6 +20,7 @@ export {
 export {
   insertBooking,
   updateBookingStatus,
+  findBookingsByRequestId,
   type InsertBookingInput,
   type BookingRow,
 } from "./bookings.ts";
@@ -36,10 +37,24 @@ export {
   updateRequestFields,
   updateRequestState,
   findLatestRequestForLead,
+  parseOfferedSlots,
   type InsertRequestInput,
   type UpdateRequestFieldsInput,
   type RequestRow,
+  type OfferedSlot,
 } from "./requests.ts";
+export {
+  insertNotification,
+  findDeliverableNotifications,
+  markNotificationDelivered,
+  markNotificationFailed,
+  NOTIFICATION_KINDS,
+  type NotificationKind,
+  NOTIFICATION_DELIVERY_STATUSES,
+  type NotificationDeliveryStatus,
+  type InsertNotificationInput,
+  type NotificationRow,
+} from "./notifications.ts";
 
 /**
  * Open (or create) the SQLite database file at `path` and ensure every table

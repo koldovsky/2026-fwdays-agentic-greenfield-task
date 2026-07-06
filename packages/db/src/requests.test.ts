@@ -6,6 +6,8 @@ import {
   updateRequestFields,
   updateRequestState,
   findLatestRequestForLead,
+  parseOfferedSlots,
+  type RequestRow,
 } from "./requests.ts";
 
 function seedLead(db: ReturnType<typeof openDatabase>, telegramUserId = "tg-request-tests") {
@@ -159,5 +161,70 @@ describe("findLatestRequestForLead (TC-DATA-01)", () => {
     expect(latest).toBeUndefined();
 
     db.close();
+  });
+});
+
+// --- S4 booking-hitl Stage B (RED): requests.offered_slots (tasks.md B.9,
+// design.md Decision 4 item 2 / Risks). `offeredSlots` is TYPE-ONLY on
+// `UpdateRequestFieldsInput` today (not yet mapped in
+// `FIELD_COLUMN_BY_KEY`/the `UPDATE`) and `parseOfferedSlots` is a typed
+// throwing stub — every case below fails today for that reason, then goes
+// green once B.10 lands.
+
+describe("offeredSlots (booking-hitl design.md Decision 4 item 2)", () => {
+  // @trace FR-HITL-02
+  it("persists offeredSlots as a JSON array into offered_slots", () => {
+    const db = openDatabase(":memory:");
+    const lead = seedLead(db, "tg-offered-slots-1");
+    const request = insertRequest(db, { leadId: lead.id, telegramChatId: lead.telegram_chat_id });
+
+    const offeredSlots = [
+      { start: "2026-07-14T17:00", end: "2026-07-14T18:00" },
+      { start: "2026-07-15T10:00", end: "2026-07-15T11:00" },
+    ];
+
+    updateRequestFields(db, request.id, { offeredSlots });
+
+    const updated = db.prepare("SELECT * FROM requests WHERE id = ?").get(request.id) as RequestRow;
+    expect(updated.offered_slots).toBe(JSON.stringify(offeredSlots));
+
+    db.close();
+  });
+
+  // @trace FR-HITL-02
+  it("round-trips the exact offeredSlots array through the RequestRow read path", () => {
+    const db = openDatabase(":memory:");
+    const lead = seedLead(db, "tg-offered-slots-2");
+    const request = insertRequest(db, { leadId: lead.id, telegramChatId: lead.telegram_chat_id });
+    const offeredSlots = [{ start: "2026-07-20T12:00", end: "2026-07-20T13:00" }];
+
+    updateRequestFields(db, request.id, { offeredSlots });
+
+    const reloaded = db.prepare("SELECT * FROM requests WHERE id = ?").get(request.id) as RequestRow;
+    expect(parseOfferedSlots(reloaded.offered_slots)).toEqual(offeredSlots);
+
+    db.close();
+  });
+
+  // @trace FR-HITL-02 — design.md Risks: a NULL offered_slots never throws
+  // when read.
+  it("parseOfferedSlots returns null for a NULL column value, never throwing", () => {
+    const db = openDatabase(":memory:");
+    const lead = seedLead(db, "tg-offered-slots-3");
+    const request = insertRequest(db, { leadId: lead.id, telegramChatId: lead.telegram_chat_id });
+
+    const row = db.prepare("SELECT * FROM requests WHERE id = ?").get(request.id) as RequestRow;
+    expect(row.offered_slots).toBeNull();
+    expect(() => parseOfferedSlots(row.offered_slots)).not.toThrow();
+    expect(parseOfferedSlots(row.offered_slots)).toBeNull();
+
+    db.close();
+  });
+
+  // @trace FR-HITL-02 — design.md Risks: malformed/legacy JSON is "no
+  // offered slots known", never a thrown exception.
+  it("parseOfferedSlots treats malformed JSON as no offered slots, never throwing", () => {
+    expect(() => parseOfferedSlots("not-json{")).not.toThrow();
+    expect(parseOfferedSlots("not-json{")).toBeNull();
   });
 });

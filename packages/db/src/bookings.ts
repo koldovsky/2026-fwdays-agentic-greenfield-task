@@ -21,6 +21,17 @@ export interface InsertBookingInput {
    *  (not expected on the `pending` happy path — FR-SLOT-02 requires a
    *  `pending` row to always carry the hold's `calendar_event_id`). */
   calendarEventId?: string | null;
+  /** S4 `booking-hitl` design.md Decision 4 item 3: closes the documented
+   *  gap ("`insertBooking` does NOT persist `request_id`") — `HoldStorePort
+   *  .holdSlot` is the first real caller that needs it. Optional so S1's
+   *  own tests/fixtures (which never pass one) keep compiling unchanged.
+   *
+   *  TYPE-ONLY WIDENING (booking-hitl tasks.md B.5/B.6, RED phase): this
+   *  field is intentionally NOT yet threaded into `insertBooking`'s
+   *  `INSERT` below — a caller passing `requestId` still gets back
+   *  `request_id: null` today, by design, so B.5's round-trip assertion
+   *  fails at runtime until B.6 wires it in. */
+  requestId?: number | null;
 }
 
 export interface BookingRow {
@@ -30,6 +41,9 @@ export interface BookingRow {
   status: BookingStatus;
   calendar_event_id: string | null;
   created_at: string;
+  /** See `InsertBookingInput.requestId`'s comment — always `null` until
+   *  B.6 wires the column into `insertBooking`'s `INSERT` statement. */
+  request_id: number | null;
 }
 
 /**
@@ -65,4 +79,23 @@ export function updateBookingStatus(
 ): number {
   const result = db.prepare(`UPDATE bookings SET status = ? WHERE id = ?`).run(status, id);
   return result.changes;
+}
+
+/**
+ * Returns every `bookings` row for `requestId`, newest first (`id DESC`),
+ * `[]` if there are none. Replaces `packages/bot/src/pipeline.ts`'s inline
+ * raw SQL (S4 `booking-hitl` design.md Decision 4 item 4) with a shared,
+ * tested helper — used by the decision route and the idempotent-delete fix
+ * to find every pending booking for a request/lead rather than assuming
+ * exactly one.
+ *
+ * TYPED THROWING STUB — red state for booking-hitl tasks.md B.7; the body
+ * is implemented in B.8.
+ */
+export function findBookingsByRequestId(db: Database.Database, requestId: number): BookingRow[] {
+  void db;
+  void requestId;
+  throw new Error(
+    "Not implemented — packages/db/src/bookings.ts findBookingsByRequestId (booking-hitl task B.8)",
+  );
 }

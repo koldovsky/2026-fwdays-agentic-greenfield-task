@@ -32,7 +32,7 @@ Result: PASS, 37 warning(s)
 | FR-SLOT-04 | yes | yes | 5 | - |
 | FR-GUARD-03 | yes | yes | 2 | - |
 | FR-HITL-01 | yes | yes | - | - |
-| FR-HITL-02 | yes | yes | 4 | - |
+| FR-HITL-02 | yes | yes | 21 | - |
 | FR-HITL-03 | yes | yes | 12 | - |
 | FR-HITL-04 | yes | yes | - | - |
 | FR-GUARD-01 | yes | yes | 3 | - |
