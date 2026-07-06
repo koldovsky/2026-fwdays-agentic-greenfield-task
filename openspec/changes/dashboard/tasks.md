@@ -86,7 +86,7 @@
 - [ ] 4.2 Write `packages/bot/src/testing/fake-agui-publisher.ts`: a
       `FakeAguiPublisher` recording every published event in order, for
       pipeline tests.
-- [ ] 4.3 Write `packages/bot/src/pipeline.test.ts` additions FIRST (red):
+- [x] 4.3 Write `packages/bot/src/pipeline.test.ts` additions FIRST (red):
       - **Regression guard:** with `deps.publisher` set to
         `noopAguiPublisher` (or omitted, defaulting to it), every existing
         S2 `pipeline.test.ts` scenario still passes byte-for-byte — proves
@@ -110,12 +110,12 @@
       call `deps.publisher` at each of the above points (new optional
       `publisher?: AguiPublisher` field on `HandleUpdateDeps`, defaulting to
       `noopAguiPublisher`).
-- [ ] 4.4 Wire `packages/bot/src/index.ts` to construct a real HTTP-POSTing
+- [x] 4.4 Wire `packages/bot/src/index.ts` to construct a real HTTP-POSTing
       `AguiPublisher` (posts to `AGUI_INGEST_URL`, e.g.
       `http://127.0.0.1:3000/api/agui/ingest`, env-optional — absent env
       means `noopAguiPublisher`, never a crash) and pass it into
       `handleUpdateSafely`'s deps.
-- [ ] 4.5 Run `npm run test:run`; confirm 4.1–4.3 green with zero regressions
+- [x] 4.5 Run `npm run test:run`; confirm 4.1–4.3 green with zero regressions
       in the S2 `intake` suites (the regression guard from 4.3 is the gate
       that matters most here).
 

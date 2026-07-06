@@ -35,6 +35,7 @@ import { GrammyTelegramTransport } from "./telegram-transport.ts";
 import { handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate } from "./telegram-transport.ts";
+import { resolveAguiPublisher } from "./http-agui-publisher.ts";
 
 // Load repo-root .env exactly like scripts/qa/manual-smoke-slots.mjs — Node's
 // built-in loader, no dotenv dependency (repo convention). Env already
@@ -113,8 +114,15 @@ async function main(): Promise<void> {
   const model = new ClaudeAgentModelPort(); // ambient auth only (NFR-SEC-01)
   const calendar = new GoogleCalendarPort(); // reads GOOGLE_* from env
   const transport = new GrammyTelegramTransport(token);
+  // dashboard tasks.md §4.4: AGUI_INGEST_URL unset -> noopAguiPublisher
+  // (no dashboard running, never a crash); set -> POSTs each AG-UI event to
+  // it (e.g. http://127.0.0.1:3000/api/agui/ingest). A POST failure is
+  // logged and swallowed inside the publisher itself (http-agui-publisher.ts),
+  // and `pipeline.ts`'s own `safePublish` wrapper is a second safety net —
+  // the bot keeps serving leads even with no dashboard listening.
+  const publisher = resolveAguiPublisher();
 
-  transport.onMessage((update) => handleUpdateSafely(update, { transport, db, model, calendar }));
+  transport.onMessage((update) => handleUpdateSafely(update, { transport, db, model, calendar, publisher }));
 
   console.log(`Kamerton bot starting (long polling); db=${dbPath}`);
   await transport.start();

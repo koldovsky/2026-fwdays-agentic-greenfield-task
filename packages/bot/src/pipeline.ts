@@ -118,6 +118,7 @@
 // the only I/O this module performs is through its three injected ports
 // (`transport`, `db`, `model`) plus `calendar`.
 
+import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 import {
   insertLead,
@@ -134,6 +135,7 @@ import {
 } from "@kamerton/db";
 import { runIntakeTurn, type LoopPorts } from "@kamerton/agent/src/loop.ts";
 import type { ModelPort } from "@kamerton/agent/src/model-port.ts";
+import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "@kamerton/agent/src/apology.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
 import type {
   CandidateFormat,
@@ -144,6 +146,7 @@ import type {
   TransitionResult,
 } from "@kamerton/lib/src/intake/state-machine.ts";
 import type { CalendarPort } from "@kamerton/lib/src/slots/calendar-port.ts";
+import type { JsonPatchOp } from "@kamerton/lib/src/dashboard/json-patch.ts";
 import {
   AGE_REFUSAL_COPY,
   SCOPE_EXPLANATION_COPY,
@@ -152,7 +155,7 @@ import {
 import { ANTHROPIC_PROCESSING_NOTICE, EMPTY_NARRATION_FALLBACK_COPY } from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate, TelegramTransport } from "./telegram-transport.ts";
-import { noopAguiPublisher, type AguiPublisher } from "./agui-publisher.ts";
+import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-publisher.ts";
 
 /** Every external dependency `handleUpdate` needs for one turn — see this
  *  file's header comment for the exact role each plays.
@@ -287,6 +290,21 @@ function parseCallbackEvent(data: string): IntakeEvent | null {
   return null;
 }
 
+/** Converts a `Partial<IntakeFields>` patch (the exact shape both
+ *  `ports.persistence.saveFields` and the callback path's
+ *  `fieldPatchForCallbackEvent` already deal in) into the RFC-6902 op list a
+ *  `STATE_DELTA` event carries (dashboard tasks.md §4.3, design.md's AG-UI
+ *  contract). `op` choice (`add` vs `replace`) is not asserted by any test —
+ *  `"replace"` is used uniformly since every field this pipeline patches
+ *  already exists on the dashboard's known-paths state model. */
+function patchToJsonPatchOps(patch: Partial<IntakeFields>): JsonPatchOp[] {
+  return Object.entries(patch).map(([key, value]) => ({
+    op: "replace" as const,
+    path: `/${key}`,
+    value,
+  }));
+}
+
 /** The validator-approved field patch to persist for a successfully applied
  *  callback event — mirrors `@kamerton/agent/src/loop.ts`'s own private
  *  `fieldPatchForEvent` for the subset of events this module's callback path
@@ -341,79 +359,149 @@ function applyCallbackEvent(
  * the full pinned algorithm.
  */
 export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps): Promise<void> {
-  // dashboard tasks.md §4.3 (RED half): resolve the publisher seam's default
-  // now, so `HandleUpdateDeps.publisher` is genuinely optional for every S2
-  // caller/test — but do NOT call `publisher.publish(...)` anywhere yet
-  // (that wiring is §4.3's GREEN half, once `pipeline.test.ts`'s new
-  // event-sequence assertions are confirmed red for the right reason: no
-  // events recorded at all).
+  // dashboard tasks.md §4.3 (GREEN half): the injected publisher seam,
+  // defaulting to `noopAguiPublisher` so every existing S2 caller/test keeps
+  // behaving byte-for-byte identically (the regression guard in
+  // `pipeline.test.ts` pins this). Every `publish()` call below is wrapped by
+  // `safePublish` so a publisher failure (the real HTTP one can reject) NEVER
+  // breaks the turn or the lead's reply — the dashboard is a best-effort side
+  // channel, never load-bearing for NFR-REL-01.
   const publisher = deps.publisher ?? noopAguiPublisher;
-  void publisher;
+  const threadId = update.telegramChatId;
+  const runId = randomUUID();
 
-  // Step 1: ALWAYS the very first call, before touching db/model at all.
-  await deps.transport.sendChatAction(update.telegramChatId, "typing");
-
-  // Step 2: resolve the current lead + request row.
-  const { request, isBrandNewLead } = resolveLeadAndRequest(deps.db, update);
-
-  let replyText: string;
-
-  if (update.type === "callback") {
-    // Step 3: callback updates NEVER reach ModelPort.send().
-    const event = parseCallbackEvent(update.data);
-    if (event === null) {
-      replyText = EMPTY_NARRATION_FALLBACK_COPY;
-    } else {
-      const result = applyCallbackEvent(deps.db, request.id, rowToIntakeState(request), event);
-      replyText = guardrailOverrideFor([result]) ?? EMPTY_NARRATION_FALLBACK_COPY;
+  async function safePublish(event: AguiEvent): Promise<void> {
+    try {
+      await publisher.publish(event);
+    } catch {
+      // Intentionally swallowed: the publisher is a one-way, best-effort
+      // side channel — a dashboard-ingest hiccup must never surface to the
+      // lead or interrupt the turn.
     }
-  } else {
-    // Step 4: free text always goes through the agent tool-use loop.
-    const ports: LoopPorts = {
-      model: deps.model,
-      persistence: {
-        async saveFields(patch: Partial<IntakeFields>): Promise<void> {
-          updateRequestFields(deps.db, request.id, patch as UpdateRequestFieldsInput);
-        },
-        async saveState(state): Promise<void> {
-          updateRequestState(deps.db, request.id, state);
-        },
-      },
-      bookingStore: {
-        async findPendingBookingForCurrentRequest() {
-          const row = deps.db
-            .prepare(`SELECT id, calendar_event_id FROM bookings WHERE request_id = ? AND status = 'pending'`)
-            .get(request.id) as { id: number; calendar_event_id: string | null } | undefined;
-          if (row === undefined) {
-            return undefined;
-          }
-          return { id: row.id, calendarEventId: row.calendar_event_id };
-        },
-        async markBookingCancelled(bookingId: number): Promise<void> {
-          updateBookingStatus(deps.db, bookingId, "cancelled");
-        },
-      },
-      releaseHold: (eventId: string) => deps.calendar.deleteEvent(eventId),
-    };
-
-    const result = await runIntakeTurn({
-      state: rowToIntakeState(request),
-      message: update.text,
-      ports,
-    });
-
-    // Step 5: deterministic guardrail copy always wins over the model's own
-    // narration; an empty narration (a bare tool-use response, e.g.
-    // cancel_request) never becomes an empty Telegram message.
-    replyText = guardrailOverrideFor(result.toolCalls) ?? (result.reply.length > 0 ? result.reply : EMPTY_NARRATION_FALLBACK_COPY);
   }
 
-  if (isBrandNewLead) {
-    replyText = `${ANTHROPIC_PROCESSING_NOTICE}\n\n${replyText}`;
-  }
+  await safePublish({ type: "RUN_STARTED", threadId, runId });
 
-  // Step 6: send, with the single-retry-with-apology rule on failure.
-  await sendWithRetry(deps.transport, update.telegramChatId, replyText);
+  try {
+    // Step 1: ALWAYS the very first call, before touching db/model at all.
+    await deps.transport.sendChatAction(update.telegramChatId, "typing");
+
+    // Step 2: resolve the current lead + request row.
+    const { request, isBrandNewLead } = resolveLeadAndRequest(deps.db, update);
+
+    let replyText: string;
+    /** The field(s) persisted THIS turn — the source for the turn's
+     *  `STATE_DELTA` (unused when the turn instead publishes a
+     *  `STATE_SNAPSHOT`, i.e. a brand-new lead's first-ever request). */
+    let statePatch: Partial<IntakeFields> = {};
+    /** The FULL resulting `fields` object after this turn — every reducer
+     *  result (`TransitionResult`/`LoopResult`'s `state.fields`) already
+     *  carries this, per `state-machine.ts`'s own "always the full resulting
+     *  IntakeState" contract — the source for a brand-new lead's
+     *  `STATE_SNAPSHOT`. */
+    let finalFields: IntakeFields = rowToIntakeState(request).fields;
+    let modelErrored = false;
+
+    if (update.type === "callback") {
+      // Step 3: callback updates NEVER reach ModelPort.send().
+      const event = parseCallbackEvent(update.data);
+      if (event === null) {
+        replyText = EMPTY_NARRATION_FALLBACK_COPY;
+      } else {
+        const result = applyCallbackEvent(deps.db, request.id, rowToIntakeState(request), event);
+        replyText = guardrailOverrideFor([result]) ?? EMPTY_NARRATION_FALLBACK_COPY;
+        finalFields = result.state.fields;
+        if (result.error === undefined && result.detour === null) {
+          statePatch = fieldPatchForCallbackEvent(event, result.state.fields) ?? {};
+        }
+      }
+    } else {
+      // Step 4: free text always goes through the agent tool-use loop.
+      const capturedPatch: Partial<IntakeFields> = {};
+      const ports: LoopPorts = {
+        model: deps.model,
+        persistence: {
+          async saveFields(patch: Partial<IntakeFields>): Promise<void> {
+            Object.assign(capturedPatch, patch);
+            updateRequestFields(deps.db, request.id, patch as UpdateRequestFieldsInput);
+          },
+          async saveState(state): Promise<void> {
+            updateRequestState(deps.db, request.id, state);
+          },
+        },
+        bookingStore: {
+          async findPendingBookingForCurrentRequest() {
+            const row = deps.db
+              .prepare(`SELECT id, calendar_event_id FROM bookings WHERE request_id = ? AND status = 'pending'`)
+              .get(request.id) as { id: number; calendar_event_id: string | null } | undefined;
+            if (row === undefined) {
+              return undefined;
+            }
+            return { id: row.id, calendarEventId: row.calendar_event_id };
+          },
+          async markBookingCancelled(bookingId: number): Promise<void> {
+            updateBookingStatus(deps.db, bookingId, "cancelled");
+          },
+        },
+        releaseHold: (eventId: string) => deps.calendar.deleteEvent(eventId),
+      };
+
+      const result = await runIntakeTurn({
+        state: rowToIntakeState(request),
+        message: update.text,
+        ports,
+      });
+
+      finalFields = result.state.fields;
+      statePatch = capturedPatch;
+
+      // `runIntakeTurn` swallows a `ModelPort.send()` rejection into this
+      // exact sentinel reply (loop.ts's own "model unavailable" branch) — the
+      // only pipeline-layer signal available, since the rejection itself
+      // never propagates here.
+      if (result.reply === ANTHROPIC_UNAVAILABLE_APOLOGY) {
+        modelErrored = true;
+      }
+
+      // Step 5: deterministic guardrail copy always wins over the model's own
+      // narration; an empty narration (a bare tool-use response, e.g.
+      // cancel_request) never becomes an empty Telegram message.
+      replyText = guardrailOverrideFor(result.toolCalls) ?? (result.reply.length > 0 ? result.reply : EMPTY_NARRATION_FALLBACK_COPY);
+    }
+
+    if (isBrandNewLead) {
+      replyText = `${ANTHROPIC_PROCESSING_NOTICE}\n\n${replyText}`;
+    }
+
+    if (modelErrored) {
+      // The run failed before any reply text was assembled for the lead —
+      // no TEXT_MESSAGE_*/state event, just the run-boundary + the error
+      // signal. The apology is still sent to the lead exactly as today.
+      await safePublish({
+        type: "RUN_ERROR",
+        threadId,
+        message: "Anthropic model request failed for this turn.",
+      });
+    } else {
+      const messageId = randomUUID();
+      await safePublish({ type: "TEXT_MESSAGE_START", messageId, threadId });
+      await safePublish({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: replyText });
+      await safePublish({ type: "TEXT_MESSAGE_END", messageId });
+
+      if (isBrandNewLead) {
+        await safePublish({ type: "STATE_SNAPSHOT", threadId, snapshot: finalFields });
+      } else {
+        await safePublish({ type: "STATE_DELTA", threadId, delta: patchToJsonPatchOps(statePatch) });
+      }
+    }
+
+    // Step 6: send, with the single-retry-with-apology rule on failure.
+    await sendWithRetry(deps.transport, update.telegramChatId, replyText);
+  } finally {
+    // The run boundary always closes, even on the model-error path — never a
+    // silent gap for the dashboard to hang on.
+    await safePublish({ type: "RUN_FINISHED", threadId, runId });
+  }
 }
 
 /** Ukrainian label for a `RequestFormat` column value — administrator-facing
