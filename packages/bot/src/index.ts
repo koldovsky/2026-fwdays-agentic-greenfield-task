@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 
 import { openDatabase } from "@kamerton/db";
 import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts";
+import { ensureAmbientAuthToken } from "@kamerton/agent/src/ambient-auth.ts";
 import { GoogleCalendarPort } from "@kamerton/calendar";
 import { GrammyTelegramTransport } from "./telegram-transport.ts";
 import { handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
@@ -33,6 +34,17 @@ import type { InboundUpdate } from "./telegram-transport.ts";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const envPath = path.join(repoRoot, ".env");
 if (existsSync(envPath)) process.loadEnvFile(envPath);
+
+// Bridge the local Claude Code OAuth token onto the bearer var the SDK reads
+// (NFR-SEC-01: local user token, never an API key). Warn but don't abort if
+// absent — model turns then degrade to the deterministic apology (NFR-REL-01)
+// rather than crashing, exactly as a real Anthropic outage would.
+if (!ensureAmbientAuthToken()) {
+  console.warn(
+    "Warning: no Anthropic auth (ANTHROPIC_AUTH_TOKEN / CLAUDE_CODE_OAUTH_TOKEN) — " +
+      "model turns will return the deterministic apology until auth is provided.",
+  );
+}
 
 function requireEnv(name: string): string {
   const value = process.env[name];

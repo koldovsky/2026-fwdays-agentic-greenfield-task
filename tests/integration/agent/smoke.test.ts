@@ -33,6 +33,7 @@ import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts"
 import { MODEL_CONFIG, type ToolUseBlock } from "@kamerton/agent/src/model-port.ts";
 import { TOOLS } from "@kamerton/agent/src/tools.ts";
 import { buildSystemPrompt } from "@kamerton/agent/src/system-prompt.ts";
+import { ensureAmbientAuthToken } from "@kamerton/agent/src/ambient-auth.ts";
 import { initialIntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 
 function anthropicConfigDir(): string {
@@ -42,7 +43,10 @@ function anthropicConfigDir(): string {
 }
 
 function hasAnthropicAuthSignal(): boolean {
-  if (process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY) {
+  // Recognises (and bridges) the local Claude Code OAuth token too, so the
+  // smoke runs whenever CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_AUTH_TOKEN is
+  // exported, not only when a config profile exists on disk.
+  if (ensureAmbientAuthToken()) {
     return true;
   }
   const configDir = anthropicConfigDir();
