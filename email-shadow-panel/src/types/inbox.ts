@@ -1,35 +1,51 @@
-// Types for the Email Shadow Panel. These match the shape a real backend
-// provider adapter (e.g. Playwright-driven Emailnator) would return.
+﻿export type ProviderId = "emailnator";
 
-export type ProviderId = "emailnator";
+export interface InboxMetadata {
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+}
 
-export type InboxStatus = "creating" | "ready" | "refreshing" | "closed" | "error";
-
-export interface InboxSession {
+export interface RecentInboxRecord {
   id: string;
   providerId: ProviderId;
   address: string;
-  status: InboxStatus;
+  capabilityToken: string;
   createdAt: string;
-  updatedAt: string;
-  messageCount: number;
+  expiresAt: string;
+  lastOpenedAt: string;
 }
 
-export interface InboxMessage {
-  id: string;
-  inboxId: string;
-  sender: string;
-  senderAddress?: string;
+export interface InboxMessageSummary {
+  reference: string;
+  from: string;
   subject: string;
+  time: string;
   preview: string;
-  bodyText: string;
-  receivedAt: string;
-  isRead: boolean;
 }
 
-export interface ProviderDescriptor {
-  id: ProviderId | string;
-  name: string;
-  available: boolean;
-  description: string;
+export interface InboxMessageDetail {
+  reference: string;
+  contentType: string;
+  bodyLength: number;
+  text: string;
+  textPreview: string;
+  markerFound: boolean;
 }
+
+export type InboxApiErrorKind =
+  | "activeInboxLimit"
+  | "invalidRequest"
+  | "invalidSession"
+  | "internal"
+  | "malformedResponse"
+  | "messageNotFound"
+  | "offline"
+  | "providerDisabled"
+  | "providerUnavailable"
+  | "rateLimited"
+  | "refreshInProgress"
+  | "sessionExpired"
+  | "sessionMissing"
+  | "timeout";

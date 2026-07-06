@@ -1,8 +1,8 @@
-# Email Shadow Panel Architecture
+﻿# Email Shadow Panel Architecture
 
 ## Status
 
-Accepted baseline with Phase 2 public transport and abuse controls implemented locally
+Accepted baseline with Phase 3 frontend integration implemented locally
 
 ## System Context
 
@@ -23,7 +23,7 @@ flowchart LR
 
 ## Component Boundaries
 
-- React frontend: renders the existing UI, later stores local recent-session references, and never handles provider cookies, XSRF values, capability hashes, provider message IDs, or encrypted provider state.
+- React frontend: renders the existing UI through a browser-only API client, a focused inbox controller, and versioned local recent-inbox storage; it never handles provider cookies, XSRF values, capability hashes, provider message IDs, or encrypted provider state.
 - Route handlers: stay thin, validate HTTP concerns, enforce same-origin checks for state changes, and delegate to the public API handler composition root.
 - Public API transport: owns bearer extraction, visitor-cookie handling, trusted client-IP hashing, public response contracts, error mapping, rate limits, active-slot reservations, per-session locks, request deadlines, and the provider kill switch.
 - Shared server-domain contracts: define runtime-validated anonymous-session records, safe message references, public API envelopes, and stable error codes.
@@ -47,7 +47,7 @@ tests/
 docs/
 ```
 
-The frontend still remains unconnected to the API in Phase 2.
+The frontend is connected to the public API in Phase 3 through one typed same-origin client, a controller that centralizes polling and cancellation, and bounded browser-local recent-inbox persistence.
 
 ## Anonymous Session Model
 
@@ -164,7 +164,7 @@ The active target remains Vercel Hobby with Node.js Functions. Upstash Redis Fre
 
 ## Deferred Decisions
 
-- frontend integration and browser-local recent-session wiring;
+- live browser verification against Emailnator through the public API;
 - deployed forwarded-header validation in Vercel Preview and Production;
-- live Upstash and Emailnator verification through the public API;
+- live Upstash-backed persistence and deployed Emailnator verification through the public API;
 - later sanitization and OTP extraction presentation flows beyond the current provider-neutral detail payload.

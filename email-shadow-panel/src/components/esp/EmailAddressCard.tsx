@@ -1,22 +1,26 @@
 ﻿import { CopyButton } from "./CopyButton";
-import { RefreshCw, X, Radio, Plus } from "lucide-react";
+import { RefreshCw, X, Radio, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { InboxSession } from "@/types/inbox";
+import type { RecentInboxRecord } from "@/types/inbox";
 
 interface Props {
-  session: InboxSession;
+  session: RecentInboxRecord;
   onRefresh: () => void;
+  onForget: () => void;
   onClose: () => void;
   onGenerateNew: () => void;
   refreshing?: boolean;
+  removing?: boolean;
 }
 
 export function EmailAddressCard({
   session,
   onRefresh,
+  onForget,
   onClose,
   onGenerateNew,
   refreshing,
+  removing,
 }: Props) {
   return (
     <div className="panel corner-ticks relative overflow-hidden">
@@ -41,7 +45,8 @@ export function EmailAddressCard({
             <span className="cursor-blink shrink-0" />
           </div>
           <div className="mt-1.5 font-mono-tabular text-[11px] text-muted-foreground">
-            channel {session.id} / opened {new Date(session.createdAt).toLocaleTimeString()}
+            opened {new Date(session.createdAt).toLocaleTimeString()} / expires{" "}
+            {new Date(session.expiresAt).toLocaleTimeString()}
           </div>
         </div>
 
@@ -54,7 +59,7 @@ export function EmailAddressCard({
           <button
             type="button"
             onClick={onRefresh}
-            disabled={refreshing}
+            disabled={refreshing || removing}
             className={cn(
               "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-raised px-3 font-mono-tabular text-xs uppercase tracking-wider text-foreground transition-colors",
               "hover:border-signal/40 hover:text-signal",
@@ -68,20 +73,35 @@ export function EmailAddressCard({
           <button
             type="button"
             onClick={onGenerateNew}
+            disabled={removing}
             className={cn(
               "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-signal/35 bg-signal/10 px-3 font-mono-tabular text-xs uppercase tracking-wider text-signal transition-colors",
               "hover:border-signal/60 hover:bg-signal/15",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50",
+              "disabled:opacity-70",
             )}
           >
             <Plus className="size-3.5" /> New inbox
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={onForget}
+            disabled={removing}
             className={cn(
               "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-transparent px-3 font-mono-tabular text-xs uppercase tracking-wider text-muted-foreground transition-colors",
               "hover:border-destructive/50 hover:text-destructive",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+              "disabled:opacity-70",
+            )}
+          >
+            <Trash2 className="size-3.5" /> {removing ? "Forgetting" : "Forget"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn(
+              "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-transparent px-3 font-mono-tabular text-xs uppercase tracking-wider text-muted-foreground transition-colors",
+              "hover:border-signal/40 hover:text-signal",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
             )}
           >

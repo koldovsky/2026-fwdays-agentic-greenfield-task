@@ -1,16 +1,20 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { ProviderSelector } from "./ProviderSelector";
 import { GenerateButton } from "./GenerateButton";
 import { SelectedEmailAnimation } from "./SelectedEmailAnimation";
 import { RecentSessions } from "./RecentSessions";
-import type { InboxSession, ProviderId } from "@/types/inbox";
+import type { ProviderId, RecentInboxRecord } from "@/types/inbox";
 import { Radio, ShieldAlert, Zap } from "lucide-react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 interface Props {
   onGenerate: (providerId: ProviderId) => void | Promise<void>;
-  onResume: (session: InboxSession) => void;
+  onResume: (id: string) => void;
   isTransitioning: boolean;
+  recentInboxes: RecentInboxRecord[];
+  selectedInboxId: string | null;
+  notice?: ReactNode;
 }
 
 const HANDOFF_STEPS = [
@@ -28,21 +32,28 @@ function ShortcutHint({ keys, label }: { keys: string; label: string }) {
   );
 }
 
-export function GenerateScreen({ onGenerate, onResume, isTransitioning }: Props) {
-  const [provider, setProvider] = useState<ProviderId>("emailnator");
+export function GenerateScreen({
+  onGenerate,
+  onResume,
+  isTransitioning,
+  recentInboxes,
+  selectedInboxId,
+  notice,
+}: Props) {
+  const provider: ProviderId = "emailnator";
 
   const shortcuts = useMemo(
     () => ({
       g: () => !isTransitioning && onGenerate(provider),
       n: () => !isTransitioning && onGenerate(provider),
     }),
-    [isTransitioning, onGenerate, provider],
+    [isTransitioning, onGenerate],
   );
   useKeyboardShortcuts(shortcuts);
 
   return (
     <section
-      className={`mx-auto max-w-[1400px] px-5 pt-4 pb-16 sm:px-8 ${isTransitioning ? "warp-out" : "fade-up"}`}
+      className={`mx-auto max-w-[1400px] px-5 pb-16 pt-4 sm:px-8 ${isTransitioning ? "warp-out" : "fade-up"}`}
     >
       <div className="grid items-stretch gap-8 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-10">
         <div className="panel corner-ticks relative overflow-hidden">
@@ -53,7 +64,7 @@ export function GenerateScreen({ onGenerate, onResume, isTransitioning }: Props)
                 <span className="cursor-blink" />
               </div>
               <span className="inline-flex items-center gap-1.5 rounded-sm border border-signal/30 bg-signal/10 px-2 py-1 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal">
-                <Radio className="size-3" /> emailnator online
+                <Radio className="size-3" /> phase 2 api online
               </span>
             </div>
 
@@ -63,13 +74,14 @@ export function GenerateScreen({ onGenerate, onResume, isTransitioning }: Props)
               <span className="text-signal">mailbox channel.</span>
             </h1>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-              Generate a disposable address, watch the inbox come online, and copy detected
-              verification codes without leaving the panel. This frontend uses mock provider data
-              and is ready for a backend adapter later.
+              Generate a disposable address, restore a recent browser-local inbox, and inspect
+              hostile message content through a server-neutral API without exposing provider state.
             </p>
 
             <div className="mt-7 grid gap-5">
-              <ProviderSelector value={provider} onChange={setProvider} />
+              {notice}
+
+              <ProviderSelector value={provider} onChange={() => undefined} />
 
               <div className="panel-inset p-3.5">
                 <div className="mb-3 flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -99,13 +111,17 @@ export function GenerateScreen({ onGenerate, onResume, isTransitioning }: Props)
 
               <p className="flex items-start gap-2 font-mono-tabular text-[11px] leading-relaxed text-muted-foreground/80">
                 <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-amber" />
-                Frontend prototype. Real provider automation belongs in a backend adapter, never in
-                this UI.
+                Recent inbox capability tokens stay in this browser only. Provider cookies, message
+                bodies, and OTP values are never persisted locally.
               </p>
             </div>
 
             <div className="mt-7">
-              <RecentSessions onResume={onResume} />
+              <RecentSessions
+                items={recentInboxes}
+                selectedInboxId={selectedInboxId}
+                onSelect={onResume}
+              />
             </div>
           </div>
         </div>

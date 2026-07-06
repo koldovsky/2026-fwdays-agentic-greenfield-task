@@ -14,11 +14,11 @@ export function DetectedCodeCard({ code, hasSelection }: Props) {
         <div className="flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
           <ShieldCheck className="size-3.5" /> Detected code
         </div>
-        {code && (
+        {code ? (
           <span className="font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-signal">
-            match / high
+            heuristic / high
           </span>
-        )}
+        ) : null}
       </div>
 
       {code ? (
@@ -29,14 +29,14 @@ export function DetectedCodeCard({ code, hasSelection }: Props) {
               textShadow: "0 0 24px color-mix(in oklab, var(--signal) 55%, transparent)",
             }}
           >
-            {code.split("").map((c, i) => (
-              <span key={`${c}-${i}`} className="inline-block px-0.5">
-                {c}
+            {code.split("").map((character, index) => (
+              <span key={`${character}-${index}`} className="inline-block px-0.5">
+                {character}
               </span>
             ))}
           </div>
           <p className="mt-1 text-center font-mono-tabular text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            Detected from selected message
+            Detected from inert message text
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <CopyButton value={code} label="Copy code" successMessage="Detected code copied" />
@@ -44,6 +44,9 @@ export function DetectedCodeCard({ code, hasSelection }: Props) {
               C shortcut
             </span>
           </div>
+          <p className="mt-4 text-center font-mono-tabular text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">
+            heuristic only / never stored
+          </p>
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center">

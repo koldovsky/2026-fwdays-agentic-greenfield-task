@@ -1,25 +1,28 @@
-﻿import type { InboxMessage } from "@/types/inbox";
+﻿import type { InboxApiClientError } from "@/lib/inboxApiClient";
+import type { InboxMessageSummary } from "@/types/inbox";
 import { cn } from "@/lib/utils";
-import { Inbox, Loader2, Radio } from "lucide-react";
+import { Inbox, Loader2, Radio, RotateCcw, TriangleAlert } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
-function timeAgo(iso: string) {
-  const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return `${Math.max(1, Math.floor(s))}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
-}
-
 interface Props {
-  messages: InboxMessage[];
+  messages: InboxMessageSummary[];
   selectedId: string | null;
-  onSelect: (m: InboxMessage) => void;
+  onSelect: (message: InboxMessageSummary) => void;
   loading?: boolean;
   refreshing?: boolean;
+  error?: InboxApiClientError | null;
+  onRetry?: () => void;
 }
 
-export function MessageList({ messages, selectedId, onSelect, loading, refreshing }: Props) {
+export function MessageList({
+  messages,
+  selectedId,
+  onSelect,
+  loading,
+  refreshing,
+  error,
+  onRetry,
+}: Props) {
   return (
     <div className="panel flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
@@ -49,21 +52,40 @@ export function MessageList({ messages, selectedId, onSelect, loading, refreshin
               </div>
             ))}
           </div>
+        ) : error && messages.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="px-6 py-10 text-center">
+              <EmptyState
+                icon={<TriangleAlert className="size-5" />}
+                title="Inbox refresh failed"
+                description={error.message}
+              />
+              {onRetry ? (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="inline-flex items-center gap-2 rounded-md border border-hairline bg-surface-raised px-3 py-2 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-signal/40 hover:text-signal"
+                >
+                  <RotateCcw className="size-3.5" /> Retry
+                </button>
+              ) : null}
+            </div>
+          </div>
         ) : messages.length === 0 ? (
           <EmptyState
             icon={<Inbox className="size-5" />}
             title="No messages yet"
-            description="This inbox is open and listening. The mock provider will stage messages shortly after a new address is created."
+            description="This inbox is open and listening. Refresh manually or wait for the next bounded poll."
           />
         ) : (
           <ul className="divide-y divide-hairline">
-            {messages.map((m, i) => {
-              const active = m.id === selectedId;
+            {messages.map((message, index) => {
+              const active = message.reference === selectedId;
               return (
-                <li key={m.id}>
+                <li key={message.reference}>
                   <button
                     type="button"
-                    onClick={() => onSelect(m)}
+                    onClick={() => onSelect(message)}
                     aria-current={active ? "true" : undefined}
                     className={cn(
                       "group relative flex min-h-[76px] w-full items-start gap-3 px-4 py-3.5 text-left transition-colors fade-up",
@@ -71,23 +93,21 @@ export function MessageList({ messages, selectedId, onSelect, loading, refreshin
                       active &&
                         "bg-signal/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--signal)_28%,transparent)]",
                     )}
-                    style={{ animationDelay: `${i * 45}ms` }}
+                    style={{ animationDelay: `${index * 45}ms` }}
                   >
-                    {active && (
+                    {active ? (
                       <span
                         aria-hidden
                         className="absolute inset-y-2 left-0 w-[2px] rounded-r bg-signal shadow-[0_0_12px_var(--signal)]"
                       />
-                    )}
+                    ) : null}
                     <span
                       aria-hidden
                       className={cn(
                         "mt-1.5 size-2 shrink-0 rounded-full transition-colors",
-                        !m.isRead
+                        active
                           ? "bg-signal shadow-[0_0_8px_var(--signal)]"
-                          : active
-                            ? "bg-signal/55"
-                            : "bg-muted-foreground/35",
+                          : "bg-muted-foreground/35",
                       )}
                     />
                     <div className="min-w-0 flex-1">
@@ -95,29 +115,25 @@ export function MessageList({ messages, selectedId, onSelect, loading, refreshin
                         <span
                           className={cn(
                             "truncate text-sm",
-                            active
-                              ? "text-foreground font-medium"
-                              : m.isRead
-                                ? "text-muted-foreground"
-                                : "text-foreground font-medium",
+                            active ? "text-foreground font-medium" : "text-foreground",
                           )}
                         >
-                          {m.sender}
+                          {message.from}
                         </span>
                         <span className="font-mono-tabular text-[10px] uppercase tracking-wider text-muted-foreground/80">
-                          {timeAgo(m.receivedAt)}
+                          {message.time}
                         </span>
                       </div>
                       <div
                         className={cn(
                           "mt-0.5 truncate text-[13px]",
-                          active || !m.isRead ? "text-foreground" : "text-muted-foreground",
+                          active ? "text-foreground" : "text-foreground/90",
                         )}
                       >
-                        {m.subject}
+                        {message.subject}
                       </div>
                       <div className="mt-1 truncate text-xs text-muted-foreground/80">
-                        {m.preview}
+                        {message.preview}
                       </div>
                     </div>
                   </button>

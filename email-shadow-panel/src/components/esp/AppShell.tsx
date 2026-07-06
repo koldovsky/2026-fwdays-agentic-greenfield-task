@@ -1,10 +1,9 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { Terminal } from "lucide-react";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-dvh">
-      {/* ambient grid + scanline overlays */}
       <div aria-hidden className="pointer-events-none fixed inset-0 grid-lines opacity-40" />
       <div
         aria-hidden
@@ -28,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="relative z-10">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-4 sm:px-8">
           <div className="flex items-center gap-2.5">
-            <div className="relative grid place-items-center size-7 rounded-sm border border-signal/40 bg-surface-raised text-signal">
+            <div className="relative grid size-7 place-items-center rounded-sm border border-signal/40 bg-surface-raised text-signal">
               <Terminal className="size-3.5" strokeWidth={2.25} />
               <span
                 aria-hidden
@@ -42,15 +41,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-mono-tabular text-[13px] tracking-[0.18em] uppercase text-foreground">
                 Email Shadow Panel
               </span>
-              <span className="hidden sm:inline font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-                v0.1 · prototype
+              <span className="hidden font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 sm:inline">
+                v0.1 · phase 3
               </span>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-4 font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            <span>mock data</span>
+          <div className="hidden items-center gap-4 font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground md:flex">
+            <span>same-origin api</span>
             <span aria-hidden>·</span>
-            <span>ready for backend adapter</span>
+            <span>browser-local recent inboxes</span>
           </div>
         </div>
         <div
@@ -67,7 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="relative z-10 mx-auto max-w-[1400px] px-5 pb-6 pt-10 sm:px-8">
         <div className="font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-          local session storage · no auth · frontend prototype
+          capability tokens stay local · no accounts · bounded polling
         </div>
       </footer>
     </div>

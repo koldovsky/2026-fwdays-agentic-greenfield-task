@@ -1,6 +1,4 @@
-﻿import type { InboxSession } from "@/types/inbox";
-import { loadRecentSessions } from "@/lib/localSessions";
-import { useEffect, useState } from "react";
+﻿import type { RecentInboxRecord } from "@/types/inbox";
 import { Clock, MailOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,55 +12,56 @@ function formatWhen(iso: string): string {
 }
 
 interface Props {
-  onResume?: (s: InboxSession) => void;
-  refreshKey?: number;
+  items: RecentInboxRecord[];
+  selectedInboxId?: string | null;
+  onSelect?: (id: string) => void;
 }
 
-export function RecentSessions({ onResume, refreshKey }: Props) {
-  const [items, setItems] = useState<InboxSession[]>([]);
-
-  useEffect(() => {
-    setItems(loadRecentSessions());
-  }, [refreshKey]);
-
+export function RecentSessions({ items, selectedInboxId, onSelect }: Props) {
   if (items.length === 0) return null;
 
   return (
     <div className="fade-up">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          <Clock className="size-3" /> Recent sessions
+          <Clock className="size-3" /> Recent inboxes
         </div>
         <span className="font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60">
-          local
+          browser local
         </span>
       </div>
       <div className="grid gap-1.5">
-        {items.slice(0, 3).map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => onResume?.(s)}
-            className={cn(
-              "group flex min-h-12 items-center gap-3 rounded-md border border-hairline bg-surface/45 px-3 py-2.5 text-left",
-              "transition-colors hover:border-signal/40 hover:bg-surface-raised",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-            )}
-          >
-            <MailOpen className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-signal" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-mono-tabular text-[12px] text-foreground">
-                {s.address}
+        {items.map((item) => {
+          const selected = item.id === selectedInboxId;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onSelect?.(item.id)}
+              className={cn(
+                "group flex min-h-12 items-center gap-3 rounded-md border px-3 py-2.5 text-left",
+                "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                selected
+                  ? "border-signal/45 bg-signal/10"
+                  : "border-hairline bg-surface/45 hover:border-signal/35 hover:bg-surface-raised",
+              )}
+            >
+              <MailOpen className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-signal" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-mono-tabular text-[12px] text-foreground">
+                  {item.address}
+                </div>
+                <div className="mt-0.5 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  opened {formatWhen(item.lastOpenedAt)} / expires{" "}
+                  {new Date(item.expiresAt).toLocaleTimeString()}
+                </div>
               </div>
-              <div className="mt-0.5 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {formatWhen(s.updatedAt ?? s.createdAt)} / {s.messageCount} msg
-              </div>
-            </div>
-            <span className="hidden font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal/80 sm:inline">
-              resume
-            </span>
-          </button>
-        ))}
+              <span className="hidden font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal/80 sm:inline">
+                {selected ? "selected" : "open"}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

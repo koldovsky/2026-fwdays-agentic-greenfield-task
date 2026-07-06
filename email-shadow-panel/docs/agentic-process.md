@@ -235,3 +235,73 @@ Selected tools for Phases 0 and 1:
 - No separate Phase 2 checker was used.
 - CodeRabbit remains the final broad PR checker.
 - No auto-commit occurred.
+
+### Phase 3 - Frontend integration
+
+- Status: implemented and locally verified for deterministic review with a managed-environment build limitation recorded separately.
+- Actor: maker Codex.
+- Context and specification files used:
+  - `../AGENTS.md`
+  - `AGENTS.md`
+  - `docs/specs/001-mvp-specification.md`
+  - `docs/specs/002-architecture.md`
+  - `docs/adr/001-vercel-http-adapter.md`
+  - `docs/adr/002-anonymous-session-persistence.md`
+  - `docs/adr/003-public-api-abuse-controls.md`
+  - `docs/tasks/phase-2-public-api-abuse-protection.md`
+  - `docs/verification/phase-2.md`
+  - `docs/agentic-process.md`
+  - `package.json`
+  - current `src/`, `api/`, `server/`, and existing test files
+- Principal implementation decisions:
+  - replaced the mock production inbox flow with one typed same-origin browser API client over the Phase 2 public routes;
+  - introduced a versioned bounded browser-local recent-inbox repository that stores only capability tokens, safe inbox metadata, and selected-inbox identity;
+  - introduced a focused inbox controller to own startup restoration, selected-inbox switching, cancellable list and detail loading, polling timers, overlap prevention, and local-storage synchronization;
+  - kept hostile message rendering text-only and inert by consuming the provider-neutral detail contract rather than rendering raw HTML;
+  - expanded OTP detection into a deterministic local-only heuristic with bounded numeric and constrained alphanumeric support;
+  - removed the obsolete mock frontend provider path from production usage and deleted the dead mock service modules.
+- Deterministic checks run by Codex:
+  - `npm run lint`: PASS with the same 6 pre-existing frontend Fast Refresh warnings and 0 errors
+  - `npm run typecheck`: PASS
+  - `npm run test:phase0`: PASS
+  - `npm run test:phase1`: PASS
+  - `npm run test:phase2`: PASS
+  - `npm run test:phase3`: PASS
+  - `npm run test:deterministic`: PASS
+  - `node --experimental-transform-types ./scripts/verify-phase3.ts`: PASS
+  - `npm run build`: FAIL in the managed environment because the known Vite or Tailwind Windows native-module and `spawn EPERM` issue recurred
+  - `npm run verify:phase3`: FAIL only at the same managed-environment build step after lint, typecheck, and all deterministic tests had already passed
+  - `git diff --check`: PASS
+- Environment-specific failures separated from implementation defects:
+  - the managed-environment build failure was recorded separately because lint, typecheck, and all deterministic Phase 0-3 tests passed before build execution stopped;
+  - no live Emailnator, Upstash, or Vercel operation was attempted in this phase.
+- Documentation changes:
+  - added `docs/tasks/phase-3-frontend-integration.md`
+  - added `docs/verification/phase-3.md`
+  - added `scripts/verify-phase3.ts`
+  - updated `docs/specs/002-architecture.md`
+  - updated `docs/agentic-process.md`
+  - updated `package.json`
+- Network and infrastructure boundary:
+  - no real Emailnator requests were made by Codex for Phase 3;
+  - no real Upstash connection was made;
+  - no Vercel deployment was performed.
+- Checker behavior:
+  - no separate Phase 3 checker artifact was created because the user explicitly requested a maker-only consolidated pass for this phase;
+  - CodeRabbit remains the final broad PR checker after a later push.
+- Cleanup behavior:
+  - the ignored `.local/phase0` verification state created by Phase 0 regression checks was confirmed ignored through `git check-ignore -v` and then removed;
+  - no secret or sensitive artifact remained after cleanup.
+- Commit behavior:
+  - no automatic commit or push was performed.
+
+### Phase 3 - Final documentation closure
+
+- Maker: Codex.
+- Human actor: final deterministic verification, browser sanity check, and diff review.
+- One consolidated implementation pass was used.
+- A human local build found and corrected the `package.json` BOM.
+- The complete local verification passed after correction.
+- No separate Phase 3 checker was used.
+- CodeRabbit remains the final broad PR checker.
+- No auto-commit occurred.
