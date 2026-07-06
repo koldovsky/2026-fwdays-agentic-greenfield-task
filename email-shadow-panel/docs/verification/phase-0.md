@@ -74,7 +74,7 @@ This repair pass confirmed that the Phase 0 dependency lock is now aligned with 
 - Server-only TypeScript scope was isolated to `tsconfig.phase0.json` and scoped ESLint overrides; frontend browser files were not broadly given Node globals.
 - The import-boundary test proved that browser code under `src/` does not import from `server/`, `api/`, or `scripts/`.
 - Deterministic capsule restore succeeded across separate Node processes using a written fixture and a fresh reader process.
-- The detail response path returns only sanitized structural evidence: content type, body length, sanitized text preview, and marker presence.
+- The Preview detail response path returns only sanitized structural evidence: content type, body length, sanitized text preview, and marker presence. The independent checker later found that the local CLI detail path still prints full sanitized message text and requires remediation before live verification.
 - Phase 0 artifact and sensitive-value scanning passed.
 - The complete local deterministic verification command now passes in the normal local terminal.
 - The dependency lock was repaired so the root lockfile metadata now matches `package.json`.
@@ -159,6 +159,25 @@ The following remain unverified and must not be treated as proven by this Phase 
 | Vercel Preview compatibility | Pending human verification | Preview-only probe was implemented; no Preview deployment check was run. |
 | Deterministic tests | Passed | `npm run test:phase0` passed with 17 of 17 tests, the human-run `npm run verify:phase0` command passed end to end, and the post-repair Codex-run `npm run verify:phase0` command passed after a clean `npm ci --ignore-scripts`. |
 | Sensitive-data review | Passed | Phase 0 artifact and sensitive-value checks passed during both the human-run complete verification and the post-repair Codex-run verification. |
+
+## Independent focused checker
+
+- Checker role: independent checker in a separate Codex session from the maker session.
+- Maker commit reviewed: `36e6752f374892e6166a0c40285946417ec26605`
+- Commit range: `1e33880ee6b75423b3635d7c50e602caeae6210b..36e6752f374892e6166a0c40285946417ec26605`
+- Deterministic commands run by checker:
+  - `npm run lint` -> passed with 6 pre-existing `react-refresh/only-export-components` warnings in `src/components/ui/*`
+  - `npm run typecheck` -> passed
+  - `npm run test:phase0` -> passed; 17 tests passed, 0 failed; cross-process capsule write/read passed
+  - `npm run build` -> failed in the managed checker environment while loading `@tailwindcss/oxide-win32-x64-msvc` and repeatedly hit `spawn EPERM`
+  - `node --experimental-transform-types ./scripts/verify-phase0.ts` -> passed
+- Actual checker results:
+  - Checker-confirmed deterministic checks passed for lint, typecheck, tests, and artifact scanning.
+  - Checker did not reproduce a full successful build in the managed environment.
+- Findings by severity: 0 blocker, 1 major, 0 minor, 0 suggestion.
+- Final checker verdict: `CHANGES REQUIRED`
+- Cleared for human live verification: `No`
+- Checker finding summary: the local `npm run probe:emailnator -- detail` path still prints full sanitized message text via `localText`, so the implementation does not yet meet the Phase 0 requirement to print only redacted structural evidence.
 
 ## Final Verdict
 

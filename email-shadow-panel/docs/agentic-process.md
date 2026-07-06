@@ -69,6 +69,25 @@ No MCP was necessary for Phase 0 implementation. Playwright is not part of requi
 - Environment note: the first complete `npm run verify:phase0` attempt inside the managed Codex sandbox failed because Vite hit `spawn EPERM`. The human reran the same full command in a normal local terminal, and it passed without any source-code change. This distinguished an environmental tool restriction from an implementation defect.
 - Dependency-lock maintenance note: a later pass found that the root `package-lock.json` metadata was out of sync with `package.json` for `tough-cookie`, `engines.node`, and stale `tsx`. A lock-only npm refresh repaired the metadata, `npm ci --ignore-scripts` then passed, and a full `npm run verify:phase0` rerun passed again outside the managed sandbox. No Phase 0 source-code change was needed beyond the lockfile repair.
 - Live verification status: no live inbox generation, live message retrieval, Preview deployment probe, or manual test-email checkpoint was run in this pass by instruction.
-- Security posture: fixtures were labeled by provenance, raw provider HTML was not exposed in responses, message detail output was reduced to sanitized structural evidence, and no live provider secrets were intentionally captured in repository artifacts.
+- Security posture: fixtures were labeled by provenance, raw provider HTML was not exposed in responses, and no live provider secrets were intentionally captured in repository artifacts. The independent checker later found that the local CLI detail path still prints full sanitized message text instead of only structural evidence.
 - Checker status: separate checker review and CodeRabbit review are still pending future commit and PR steps.
 - Next gate: human-reviewed live checks must decide the actual feasibility verdict.
+
+### Phase 0 - Independent focused checker
+
+- Phase: Phase 0.
+- Role: independent checker.
+- Model/session separation from maker: separate Codex checker session from the maker implementation session.
+- Maker commit: `36e6752f374892e6166a0c40285946417ec26605`
+- Review range: `1e33880ee6b75423b3635d7c50e602caeae6210b..36e6752f374892e6166a0c40285946417ec26605`
+- Commands run:
+  - `npm run lint` -> passed with 6 pre-existing `react-refresh/only-export-components` warnings in `src/components/ui/*`
+  - `npm run typecheck` -> passed
+  - `npm run test:phase0` -> passed; 17 tests passed, 0 failed; cross-process capsule write/read passed
+  - `npm run build` -> failed in the managed checker environment while loading `@tailwindcss/oxide-win32-x64-msvc` and repeatedly hit `spawn EPERM`
+  - `node --experimental-transform-types ./scripts/verify-phase0.ts` -> passed
+- Findings summary: 1 major finding, 0 blocker, 0 minor, 0 suggestion. The local `detail` probe path still prints full sanitized message text instead of only structural evidence.
+- Checker verdict: `CHANGES REQUIRED`
+- Decision on whether live verification may proceed: No. Remediate the local detail-output redaction issue before human live verification.
+- Confirmation that the checker did not modify implementation code: confirmed. This checker pass only updated documentation records.
+- Confirmation that no live provider or Vercel action was performed: confirmed.
