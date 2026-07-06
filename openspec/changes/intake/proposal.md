@@ -84,3 +84,22 @@ Context and the delta file's own note).
   `confirmed`/`declined` transitions or admin decision handling
   (`booking-hitl`, S4), no FAQ answering or the `questions` table
   (`kb-learning`, S5), no group matching (Future `FR-GROUP-01`).
+- **Deferred by the S2 review gate (with named owners; see
+  `review-findings.json`):**
+  - `propose_slots`/`request_hold` are defined in the closed tool set and
+    log as pass-through no-ops, but their real wiring to S1's
+    `proposeSlots`/`holdWithRecovery` (so a conversation actually reaches
+    `awaiting_admin` and holds a tentative event) is owned by **S4
+    `booking-hitl`** — that slice owns the hold→`pending`→confirm round
+    trip and adds the `CalendarPort` to `LoopPorts`. Until then the
+    conversation collects the full profile and preferences but stops short
+    of a live proposal.
+  - **Inline-keyboard button rendering** (slot chips, format/goal
+    "tickets") is owned by **S4/dashboard**. The callback-PARSING path is
+    implemented and enum-hardened here, but production does not yet render
+    any buttons, so a stale-callback-to-sibling-request edge (contested
+    finding) is latent until rendering lands and the keyboard payload
+    carries its originating request id.
+  - **Per-lead rate limiting** on the Telegram surface is a **global
+    hardening** concern, not intake correctness — deferred to the
+    hardening pass.

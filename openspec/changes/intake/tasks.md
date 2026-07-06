@@ -344,7 +344,7 @@
       green, this change validates).
 - [x] 6.7 Run `node scripts/check-traceability.mjs` (FR-INTAKE-01..08,
       FR-GUARD-04/05 show implemented coverage, 0 failures).
-- [ ] 6.8 **Review gate — run BEFORE archive** (S1 process-deviation
+- [x] 6.8 **Review gate — run BEFORE archive** (S1 process-deviation
       lesson, `docs/current-state.md`: "review-gate ran post-archive —
       run it BEFORE archive next time"): a fresh reviewer pass (maker ≠
       checker) over the full diff against `openspec/specs/intake/spec.md`,

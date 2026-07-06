@@ -1,0 +1,80 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice S2 intake (lib state machine + validators + copy; packages/agent tool-loop + AnthropicModelPort; packages/bot pipeline + transport + entrypoint; packages/db leads/requests/bookings.request_id schema; integration smoke)",
+  "change": "intake",
+  "baseRef": "d903418",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 5,
+      "contested": 1,
+      "rejected": 0
+    },
+    "security": {
+      "confirmed": 6,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 5,
+      "contested": 0,
+      "rejected": 1
+    },
+    "visual": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "confirmedTitles": [
+    "amend_field bypasses field validators for every field except studentAge, defeating format/goal guardrails",
+    "validateAge has no runtime type guard; a non-numeric amend value silently bypasses the AGE_BELOW_MIN guardrail",
+    "The model never receives conversation history or a system prompt — each turn is context-free",
+    "No bot.catch() registered — any unhandled error (e.g. a Calendar failure during cancel) stops the whole bot for every lead",
+    "Deterministic tool-call log marks explain_scope/explain_format/propose_slots/request_hold as \"applied\" though nothing was applied",
+    "amend_field bypasses field validators for everything except studentAge — format/goalTag guardrails can be defeated via the model tool call",
+    "Telegram callback path writes attacker-influenced goalTag straight to the DB with no enum validation, and no error handling around the write",
+    "validateAge performs no type/finiteness check — a non-numeric value can silently pass the AGE_BELOW_MIN guardrail",
+    "No global error boundary around inbound Telegram update handling — any uncaught exception during a turn can crash the bot / silently drop a reply",
+    "No abuse/rate limiting on the Telegram intake surface — unbounded Anthropic API spend and unbounded lead/request row creation per inbound message",
+    "SQL injection, secrets hygiene, and authorization matrix — clean in this slice's scope",
+    "No system prompt and no conversation history are ever sent to the model — multi-turn conversational requirements are structurally unenforceable",
+    "BC-AGE-02 parent-addressing flag is a dead pure function — never wired into the model's context, no end-to-end test",
+    "propose_slots/request_hold tools never wire to S1's proposeSlots/holdWithRecovery — conversation can never actually reach awaiting_admin through the implemented system",
+    "Inline-keyboard buttons (slot chips, format/goal tickets) are never rendered — the callback-event parsing path is effectively dead code in production",
+    "Off-topic detection and scope/format detours rely entirely on unguided model judgment with no static prompt guardrail text",
+    "Agent loop sends the model no system prompt and no conversation history — each turn is a stateless single message",
+    "amend_field bypasses format's defense-in-depth validator, letting an invalid value ('instrument') reach a DB write that then throws uncaught, crashing the bot process"
+  ],
+  "contestedTitles": [
+    "A stale/late callback tap after a request reaches a terminal state is silently applied to a brand-new sibling request"
+  ],
+  "rejectedTitles": [
+    "review-findings.json (task 6.8) is missing though referenced by tasks.md — no action, this file is that artifact"
+  ],
+  "remediation": {
+    "fixed-in-followup-commits": [
+      "amend branch now re-validates per field: validateFormat for format (scope_violation/format_unsure detour), closed-set isValidGoalTag (+INVALID_GOAL_TAG) for goalTag — the CRITICAL guardrail bypass (dedup of 3 findings across correctness/security/visual)",
+      "validateAge rejects non-finite/non-number before the range check (dedup of 2 findings)",
+      "callback path allow-lists REQUEST_GOAL_TAGS before the DB write — this actually CRASHED with a SqliteError CHECK violation, worse than the finding stated",
+      "error boundary added: loop wraps applyToolUse (Calendar/booking throw -> deterministic Ukrainian apology, state preserved) + index.ts handleUpdateSafely outermost net (dedup of 2 findings, NFR-REL-01)",
+      "tool-call log gained a pass_through outcome so 'applied' means a real reducer mutation",
+      "static system prompt wired (buildSystemPrompt): DESIGN.md voice verbatim + BC-LANG-01 + FR-GUARD-05 + FR-FAQ-02 + FR-GUARD-01, plus a per-turn dynamic block (conversationState, collected fields, next field) — closes the CRITICAL context-free cluster (dedup of 4 findings across correctness/spec/visual)",
+      "addressesParent now wired into the system prompt's dynamic block (parent vs student addressing, BC-AGE-02) — no longer a dead function"
+    ],
+    "deferred-with-owner": [
+      "propose_slots/request_hold real wiring to S1 proposeSlots/holdWithRecovery (conversation reaching awaiting_admin) -> S4 booking-hitl: that slice owns the hold->pending->confirm round trip and the CalendarPort in LoopPorts; the tools log as pass-through no-ops until then (named, not silent)",
+      "inline-keyboard button RENDERING (slot chips / format-goal tickets) -> S4/dashboard: the callback PARSING path is hardened (enum-validated) and covered, but production never renders buttons yet",
+      "stale/late callback applied to a sibling request (contested) -> S4 when buttons render: the keyboard payload should carry the request id it was rendered for; latent today because no buttons are rendered",
+      "per-lead rate limiting on the Telegram surface -> hardening/global pass: unbounded model spend / row creation, a global concern not specific to intake correctness"
+    ],
+    "informational-no-action": [
+      "SQL fully parameterized, secrets never logged, no auth surface yet in this slice — re-run the authorization-matrix checklist when the dashboard admin routes land (S3/S4)",
+      "verbatim multi-turn transcript replay beyond the deterministic state summary — no message-log schema this slice; the state summary IS the context (documented at the runIntakeTurn call site)"
+    ]
+  },
+  "clean": true,
+  "cleanNote": "clean after remediation: every confirmed guardrail/reliability/context finding fixed test-first (154->173 tests, none weakened); cross-slice integration (propose/hold, buttons) and global hardening (rate-limit) explicitly deferred with named owners. Review ran BEFORE archive this time (S1 process-deviation lesson applied).",
+  "generatedAt": "2026-07-06T08:36:51Z",
+  "remediatedAt": "2026-07-06T09:30:00Z"
+}
