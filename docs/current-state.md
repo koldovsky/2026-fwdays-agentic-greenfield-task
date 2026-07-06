@@ -20,17 +20,25 @@
   127.0.0.1, key chmod 600, secret-scan patterns hardened.
   Gates: lint, 47/47 unit, 6/6 live integration, build, openspec 5/5
   strict, traceability 0 failures.
-- **S2 `intake` in flight (PAUSED by the user, 2026-07-04 ~13:00):**
-  sections 1–4 DONE (schema; state machine + validators red→green
-  106/106; agent tool-loop red→green 122/122); section 5 nearly done
-  (`884eb90`): pipeline green 142/142, AnthropicModelPort (ambient auth
-  only), integration smoke (skipIf no auth; 6 passed + 1 skipped).
-  **Remaining:** 5.6 wire `packages/bot/src/index.ts` (real grammY +
-  AnthropicModelPort + GoogleCalendarPort + openDatabase, startable via
-  `node packages/bot/src/index.ts`); section 6: cadence 6.1–6.7 →
-  **review-gate BEFORE archive** (patch workflow args:
-  `typeof args==='string'?JSON.parse:...`, change='intake') → 6.9
-  manual smoke NEEDS THE USER (real bot + real Telegram chat) → archive.
+- **S2 `intake`: sections 1–6.8 DONE; ONE step left (6.9, needs the
+  user).** Sections 1–5 red→green (schema; state machine + validators;
+  agent tool-loop; bot pipeline + AnthropicModelPort + entrypoint wiring;
+  runtime import-extension fix so the real bot loads under plain Node).
+  **Review-gate ran BEFORE archive** (S1 lesson): 18 confirmed findings,
+  all dispositioned in `openspec/changes/intake/review-findings.json`
+  (clean:true) — 7 fixed test-first (CRITICAL amend-validator bypass,
+  age type-guard, callback enum crash, error boundary, system-prompt +
+  DESIGN.md voice + addressesParent context, log label), 4 deferred with
+  owners (propose/hold real wiring + button rendering + stale-callback →
+  S4; rate-limit → hardening). 173 tests green, lint, openspec 6/6
+  strict, traceability 0 failures. Checker fix: `testDirs` now includes
+  `packages`.
+  **Remaining: 6.9 manual smoke — NEEDS THE USER** (start the real bot
+  with a live `TELEGRAM_BOT_TOKEN`, walk a real Telegram chat: happy
+  path age 9, age-3 refusal, piano detour, amend, cancel, returning
+  lead) → then 6.10 archive. Script the scriptable parts under
+  `scripts/qa/manual-smoke-intake.mjs`, transcript to
+  `docs/qa/intake-manual-smoke.md` (mirror S1).
 - **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
   (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
   chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
