@@ -9,9 +9,31 @@
         "src"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-07-06-intake",
+      "reviewEvidence": "clean",
+      "trailerCommits": 22,
+      "libDomains": [
+        "src"
+      ],
+      "processComplete": true
     }
   ],
-  "overlaps": [],
+  "overlaps": [
+    {
+      "domain": "src",
+      "slices": [
+        "2026-07-04-slots",
+        "2026-07-06-intake"
+      ]
+    }
+  ],
   "failures": [],
-  "warnings": []
+  "warnings": [
+    {
+      "check": "in-scope",
+      "msg": "lib/src/ modified by 2 slices (2026-07-04-slots, 2026-07-06-intake) — review for scope drift"
+    }
+  ]
 }

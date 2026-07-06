@@ -26,9 +26,7 @@ Intentionally out of scope for this capability in MVP (not bugs):
 - Payments, reminders, and rescheduling of already-confirmed lessons.
 - Automatic expiry of slot holds — a stale `pending` is resolved by the
   administrator.
-
 ## Requirements
-
 ### Requirement: Immediate typing acknowledgement (bot responsiveness)
 
 The bot SHALL send a Telegram `sendChatAction` (typing) call immediately on
@@ -418,3 +416,4 @@ only owns the lead-facing promise and the greeting notice.
 - **WHEN** the request is relayed and the administrator performs the deletion action
 - **THEN** the lead's record, together with its questions and bookings, is deleted from the database
 - **AND** the agent never claims the deletion happened before the admin action completes
+

@@ -407,8 +407,10 @@
       10. Temporarily break `ANTHROPIC_AUTH_TOKEN`; send a message; confirm
           the deterministic Ukrainian apology fires with no crash; restore
           auth afterward.
-- [ ] 6.10 Update `docs/current-state.md` (phase, last-updated timestamp
-      Europe/Kyiv, S2 completion summary, next slice = S3 `dashboard`) and
-      `README.md` if it references slice status.
-- [ ] 6.11 Only after 6.1–6.10 all pass: run `npx openspec archive intake
-      --yes`.
+- [x] 6.10 Updated `docs/current-state.md` (2026-07-06 ~17:05 Europe/Kyiv;
+      S2 COMPLETE+ARCHIVED summary; next slice = S3 `dashboard`). README has
+      no slice-status references (Ukrainian assignment only), so no change.
+- [x] 6.11 Only after 6.1–6.10 all pass: `npx openspec archive intake
+      --yes`. Gates before archive: 221 unit green, lint + build clean,
+      openspec 6/6 strict, traceability 0 failures, trajectory 0 failures
+      (review-findings clean).

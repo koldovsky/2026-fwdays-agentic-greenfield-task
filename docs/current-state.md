@@ -6,8 +6,26 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-04, ~04:15 (Europe/Kyiv)
-- **Current phase:** **Slice S1 `slots` COMPLETE and ARCHIVED**
+- **Date and time:** 2026-07-06, ~17:05 (Europe/Kyiv)
+- **Current phase:** **Slice S2 `intake` COMPLETE and ARCHIVED — next is S3
+  `dashboard`.** All 6 task sections done incl. 6.9 real-DB smoke PASSED and
+  6.11 archive. 221 unit tests green, lint + build (tsc) clean, openspec 6/6
+  strict, traceability 0 failures, trajectory 0 failures (review-findings
+  clean). Live real-model 6.9 testing surfaced 3 bugs fakes could not (age
+  re-ask `6b3dc35`; text-less-tool-call stall → code now owns the next
+  question `d991a67`; amend-age-string wrongful soft_decline + explain_scope
+  missing SCOPE_EXPLANATION_COPY `5fd6c42`), each fixed test-first before the
+  smoke was allowed to pass. Two of those were the flip side of a review-gate
+  fix (validateAge type-guard ↔ amend string coercion; pass_through outcome ↔
+  explain_scope detour). Transport: the bot's model calls go through the
+  **Claude Agent SDK / local `claude` CLI** (subscription auth), behind the
+  unchanged `ModelPort` seam (`ClaudeAgentModelPort`); a subscription OAuth
+  token 429s against the raw API. Deferred to S4: live slot proposal +
+  real-calendar hold/awaiting_admin/cancel (propose_slots/request_hold are
+  pass-through no-ops until the loop gets a CalendarPort seam); inline-button
+  rendering; per-lead rate-limit → global hardening; a MINOR prompt-hardening
+  item (under-4 self-narrated refusal bypassing the deterministic guardrail).
+- **Prior phase (archived):** **Slice S1 `slots` COMPLETE and ARCHIVED**
   (`openspec/changes/archive/2026-07-04-slots/`, 44/44 tasks). Spike
   verdict: **googleapis** (MCP disqualified empirically — no
   service-account auth; evidence in packages/calendar/spike-mcp/).
@@ -20,57 +38,19 @@
   127.0.0.1, key chmod 600, secret-scan patterns hardened.
   Gates: lint, 47/47 unit, 6/6 live integration, build, openspec 5/5
   strict, traceability 0 failures.
-- **S2 `intake`: sections 1–6.8 DONE; ONE step left (6.9, needs the
-  user).** Sections 1–5 red→green (schema; state machine + validators;
-  agent tool-loop; bot pipeline + AnthropicModelPort + entrypoint wiring;
-  runtime import-extension fix so the real bot loads under plain Node).
-  **Review-gate ran BEFORE archive** (S1 lesson): 18 confirmed findings,
-  all dispositioned in `openspec/changes/intake/review-findings.json`
-  (clean:true) — 7 fixed test-first (CRITICAL amend-validator bypass,
-  age type-guard, callback enum crash, error boundary, system-prompt +
-  DESIGN.md voice + addressesParent context, log label), 4 deferred with
-  owners (propose/hold real wiring + button rendering + stale-callback →
-  S4; rate-limit → hardening). 173 tests green, lint, openspec 6/6
-  strict, traceability 0 failures. Checker fix: `testDirs` now includes
-  `packages`.
-  **Transport pivot (user-directed): the bot's model calls go through the
-  Claude Agent SDK, not the raw API.** A subscription Claude Code OAuth
-  token (`CLAUDE_CODE_OAUTH_TOKEN`) authenticates against the raw API but
-  is instantly rate-limited (429) — proven by the AnthropicModelPort
-  smoke. New `ClaudeAgentModelPort` (`packages/agent/src/claude-agent-
-  model-port.ts`) spawns the local `claude` CLI (subscription allowance),
-  behind the SAME `ModelPort` interface so loop.ts/pipeline.ts are
-  untouched. `canUseTool` captures the model's proposed tool_use, denies +
-  aborts (nothing executes). Wired as production in index.ts;
-  AnthropicModelPort kept for API-key deployments. `ensureAmbientAuthToken`
-  bridges CLAUDE_CODE_OAUTH_TOKEN→ANTHROPIC_AUTH_TOKEN. **Proven live by an
-  automated smoke**: 'Доньку звати Софійка' → save_name via the CLI, no
-  429. RISK: CLI-spawn latency ~5–12s/turn vs NFR-UX-01 p90≤5s (warm-
-  subprocess follow-up flagged). 187 unit green; integration 4 passed +
-  1 skipped (Anthropic smoke, no API key here).
-  **6.9 manual smoke — IN PROGRESS; live testing found two real
-  conversational bugs (the payoff of real-model testing over fakes):**
-  1. FIXED (`6b3dc35`): bot re-asked the age on a bare number — the
-     system prompt's age instruction told the model to re-ask "ambiguous"
-     answers, and it treated "7" as ambiguous. Reworded so any number
-     form → save_age immediately; verified 5/5 live + pipeline persists.
-  2. IN PROGRESS (agent `a35cdddbe081b9798`, sonnet): after a text-less
-     save_* tool call the bot sent only the bare ack "Дякую, я це
-     записала." and never asked the NEXT question → flow stalls. Fix:
-     the CODE asks the next question deterministically (model only
-     extracts the answer); lead-facing question copy per field + reply
-     assembly in loop.ts, test-first. NOT yet committed.
-  **Background processes live right now** (survive a compact): the bot is
-  running with the age fix (PID ~62691; restart: `node packages/bot/src/
-  index.ts`) but does NOT yet have fix #2 — RESTART it after fix #2
-  commits. Scripted-6.9 agent `a6304a9c72104eacc` is (or was) running —
-  its transcript may be stale after these two fixes; likely re-run it.
-  **After both fixes + restart:** finish the 6.9 transcript to
-  `docs/qa/intake-manual-smoke.md`, tick 6.9, then 6.10 (review-evidence
-  is already clean → `npx openspec archive intake --yes` + post-archive
-  gates), stop the bot, then S3 dashboard. Live slot proposal stays
-  deferred to S4 (flow collects full profile then a deterministic
-  "we'll follow up with times" close).
+  S2 `intake` details are archived under
+  `openspec/changes/archive/…-intake/` (proposal, design, tasks, and the
+  dispositioned `review-findings.json`). Intake architecture landed:
+  identity-only `leads` + full-profile `requests`; a pure `transition()`
+  state machine (greeting→qualifying→profiling→collecting→proposing→
+  awaiting_admin→done, soft_decline terminal); the model only extracts
+  answers into tool calls while guardrails re-validate in code; a static
+  system prompt (DESIGN.md voice + BC rules + FR-GUARD-01/05/FR-FAQ-02) plus
+  a per-turn dynamic block; the CODE (not the model) deterministically asks
+  the next question (`lib/intake/next-field.ts` + `questions.ts`,
+  `loop.ts assembleReply`), because `ClaudeAgentModelPort`'s `canUseTool`
+  aborts before the model narrates a follow-up. The agent still has NO
+  confirm-booking / KB-write tool (FR-GUARD-01/06).
 - **Open items before the PR:** eval cases fr-guard-03/fr-slot-03/04
   (eval-suite pass); tentative-hold calendar UI screenshot (QA-proof,
   chrome-devtools MCP); re-run security checklist when S3/S4 add routes.
@@ -102,14 +82,16 @@
   typing, not weakening); GREEN — domain modules implemented (`5d13658`),
   20/20 pass, tests byte-identical, the compactness tie-break test caught
   a real implementer bug pre-review.
-- **Next task:** `slots` tasks.md remaining sections: 1 (bookings schema
-  seed), **4 (CalendarPort + googleapis-vs-MCP spike — BLOCKED: needs the
-  user to create the DEMO Google Calendar, a service account, share the
-  calendar with it, and put the JSON key path + calendar id in `.env`)**,
-  5 (NFR-REL-01 failure paths + real-calendar integration smoke), 6
-  (validation cadence; archive only after real smoke). Then slice S2
-  `intake`. Model economy: subagent fan-outs on sonnet; Fable only for
-  main-loop judgment (user directive).
+- **Next task:** **Slice S3 `dashboard`** (Phase 4). Author its OpenSpec
+  change folder (proposal/design/tasks), then test-first red→green:
+  teacher-facing localhost dashboard, AG-UI over SSE (RUN_STARTED/FINISHED,
+  TEXT_MESSAGE_*, STATE_SNAPSHOT/DELTA, custom BOOKING_PENDING → DecisionBar),
+  FR-DASH-01 + FR-DASH-03 (week schedule as concert-hall HallMap per
+  DESIGN.md). Gate the RENDERED UI with axe (`check-a11y`, light+dark) AND a
+  vision pass (`vision-verify`), per the correctness rules. Run the
+  review-gate BEFORE archive (S1/S2 lesson). Model economy: subagent
+  fan-outs on sonnet; session model (Opus/Fable) only for main-loop
+  judgment (user directive).
 
 ## Source Of Truth
 
@@ -127,16 +109,20 @@
 ## OpenSpec Status
 
 ```bash
-npx openspec validate --all --strict   # expected: pass (nothing authored yet)
+npx openspec validate --all --strict   # expected: 5 passed, 0 failed
 npx openspec list                      # expected: No active changes
 ```
 
-Archived changes: none.
+Archived changes: `2026-07-04-slots`, `2026-07-06-intake`
+(under `openspec/changes/archive/`).
 
 ## Completed Changes
 
-None yet — Phase 2 (baseline specs) is next; per-slice change folders start in
-Phase 4a.
+- **2026-07-04-slots** (S1) — deterministic slot grid, free-slot subtraction,
+  `rankSlots()`, tentative holds, CalendarPort (googleapis).
+- **2026-07-06-intake** (S2) — conversation state machine, validators,
+  agent tool-loop, bot pipeline + `ClaudeAgentModelPort`, leads/requests
+  schema. Baseline `openspec/specs/intake/spec.md` updated on archive.
 
 ## Validation Commands
 
