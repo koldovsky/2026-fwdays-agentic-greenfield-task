@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RemoteScreen } from './RemoteScreen.tsx';
 import type { Device } from '../data/types.ts';
@@ -32,6 +32,14 @@ vi.mock('../data/useInputs.ts', () => {
   return { useInputs: stub };
 });
 
+vi.mock('../data/useBrowserLaunch.ts', () => {
+  const stub = vi.fn(() => ({
+    launch: mockBrowserLaunch,
+    isPending: mockBrowserPending,
+  }));
+  return { useBrowserLaunch: stub };
+});
+
 // Mutable ambient state the mocks read. Tests set these before render.
 let mockState: ClientSessionState = 'Disconnected';
 let mockMuted = false;
@@ -42,6 +50,8 @@ let mockInputs: readonly InputCatalogueEntry[] = [
   { id: 'KEY_HDMI1', label: 'HDMI 1' },
 ];
 let mockSetInput = vi.fn(async (_id: string) => undefined);
+let mockBrowserLaunch = vi.fn(async (_url: string) => undefined);
+let mockBrowserPending = false;
 
 function resetMocks() {
   mockMuted = false;
@@ -52,6 +62,8 @@ function resetMocks() {
     { id: 'KEY_HDMI1', label: 'HDMI 1' },
   ];
   mockSetInput = vi.fn(async (_id: string) => undefined);
+  mockBrowserLaunch = vi.fn(async (_url: string) => undefined);
+  mockBrowserPending = false;
 }
 
 function device(overrides: Partial<Device> = {}): Device {
@@ -264,6 +276,84 @@ describe('RemoteScreen', () => {
     const mute = container.querySelector<HTMLButtonElement>('button[aria-label="Mute"]');
     fireEvent.click(mute!);
     expect(mockVolumeToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render the AppShortcut labels (Live TV / Movies / Games / Apps)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const text = container.textContent ?? '';
+    expect(text).not.toContain('Live TV');
+    expect(text).not.toContain('Movies');
+    expect(text).not.toContain('Games');
+    // "Apps" also served as an AppShortcut label; the removed row shouldn't leave
+    // the standalone word behind (other UI copy uses "app" lowercase / different phrasing).
+    expect(text).not.toContain('Apps');
+  });
+
+  it('renders the URL input and "Open" button in place of the AppShortcut row', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const urlInput = container.querySelector<HTMLInputElement>('input[type="url"]');
+    expect(urlInput, 'URL input not found').not.toBeNull();
+    const openButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button'),
+    ).find((btn) => btn.textContent?.trim() === 'Open');
+    expect(openButton, '"Open" button not found').not.toBeUndefined();
+  });
+
+  it('"Open" button is disabled while the URL is empty', () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const openButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button'),
+    ).find((btn) => btn.textContent?.trim() === 'Open');
+    expect(openButton?.disabled).toBe(true);
+  });
+
+  it('"Open" button is disabled while state is Connecting even if the URL is present', () => {
+    mockState = 'Connecting';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const urlInput = container.querySelector<HTMLInputElement>('input[type="url"]');
+    fireEvent.change(urlInput!, { target: { value: 'https://www.google.com' } });
+    const openButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button'),
+    ).find((btn) => btn.textContent?.trim() === 'Open');
+    expect(openButton?.disabled).toBe(true);
+  });
+
+  it('"Open" button is disabled while a launch is in flight (isPending=true)', () => {
+    mockState = 'Connected';
+    resetMocks();
+    mockBrowserPending = true;
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const urlInput = container.querySelector<HTMLInputElement>('input[type="url"]');
+    fireEvent.change(urlInput!, { target: { value: 'https://www.google.com' } });
+    const openButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button'),
+    ).find((btn) => btn.textContent?.trim() === 'Open');
+    expect(openButton?.disabled).toBe(true);
+  });
+
+  it('tapping "Open" while Connected with a URL calls launch(url) exactly once and clears the input on resolve', async () => {
+    mockState = 'Connected';
+    resetMocks();
+    const { container } = render(<RemoteScreen device={device()} onBack={vi.fn()} />);
+    const urlInput = container.querySelector<HTMLInputElement>('input[type="url"]');
+    fireEvent.change(urlInput!, { target: { value: 'https://www.google.com' } });
+    const openButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button'),
+    ).find((btn) => btn.textContent?.trim() === 'Open');
+    expect(openButton?.disabled).toBe(false);
+    fireEvent.click(openButton!);
+    expect(mockBrowserLaunch).toHaveBeenCalledTimes(1);
+    expect(mockBrowserLaunch).toHaveBeenCalledWith('https://www.google.com');
+    // launch() resolves asynchronously; the input clears in a .then() handler,
+    // so wait for the state update to flush through React's scheduler.
+    await waitFor(() => expect(urlInput?.value).toBe(''));
   });
 
   it('opening the inputs modal then flipping state to Connecting auto-closes it', () => {

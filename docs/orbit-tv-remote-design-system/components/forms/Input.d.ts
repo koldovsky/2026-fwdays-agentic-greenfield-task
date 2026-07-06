@@ -7,5 +7,6 @@ export interface InputProps {
   error?: string;
   label?: string;
   type?: string;
+  disabled?: boolean;
   style?: React.CSSProperties;
 }

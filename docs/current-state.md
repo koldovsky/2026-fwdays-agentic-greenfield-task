@@ -4,6 +4,39 @@ Running handoff between agent sessions. **Newest entry on top.** Each session th
 
 ---
 
+## 2026-07-06T08:52:06Z
+
+**What was done — implemented `tv-browser-launch` (C10) via the `/next-change` Loop Engineering cycle. First post-MVP capability.**
+- Deliberately opens the "app launching (future)" door that C1–C9 kept closed, per the change's proposal. Scope is intentionally narrow: one URL launched in the TV's built-in Tizen browser, one new HTTP endpoint, one new wire-envelope family (`ms.channel.emit` → `ed.apps.launch`) — no generic app-launcher yet. Depends on archived C5 (session queue) + C9 (toast pattern). Both prerequisites archived, verified via `openspec/changes/archive/` listing.
+- Ground-truth docs updated (per proposal's Impact section):
+  - `docs/requirements.md`: added a `Browser` section with `FR-BROWSER-01/02/03`.
+  - `docs/capabilities.md`: added `C10 tv-browser-launch` row (Phase 5, depends on C5+C9), a new `Phase 5 — Post-MVP` section header + blurb, and rewrote the "App launching" bullet in `Requirement gaps` to point at C10 rather than forbid the door.
+- Back-end (new files):
+  - `back-end/src/tv/browser.ts`: `launchBrowserParams(url)` returns `{ event: 'ed.apps.launch', to: 'host', data: { appId: 'org.tizen.browser', action_type: 'NATIVE_LAUNCH', metaTag: url } }`, typed via a local `LaunchBrowserParams` interface + `satisfies`. Same shape/naming as `keyControlParams` (C6) so the wire vocabulary stays canonical.
+  - `back-end/src/routes/browser.ts`: `POST /devices/:udn/browser` with a Fastify JSON schema (required `url`, `minLength: 1`, `maxLength: 2048`, `additionalProperties: false`), followed by an in-handler WHATWG `new URL(url)` parse + `http:`/`https:`-only scheme guard. Non-parseable or non-http scheme → `throw new HttpError(400, 'validation', …)` — `HttpError` has no `.validation` factory, so used the direct `new HttpError` constructor. Session precondition mirrors C6/C7/C8: `.get(udn) ?? .ensure(udn)`, `Connected`-only, else `409 SessionNotConnected`. Frame enqueued via `session.enqueue((t) => t.call('ms.channel.emit', launchBrowserParams(url)))`. Reply `204`.
+  - Route registered in `back-end/src/app.ts` inside the `/api` prefix block, right after `registerInputRoutes`.
+  - Route logs `{ correlationId, udn, url, host }` at `info`. `logger.ts`'s existing `TOKEN_QUERY_FRAGMENT` regex redacts `?token=…` / `&token=…` fragments recursively, so a URL carrying a session token doesn't leak.
+- Front-end:
+  - `front-end/src/data/useBrowserLaunch.ts` (new hook): `{ launch(url), isPending }`. `launch` POSTs to `/api/devices/:udn/browser`, maps `ApiError` through the shared `messageFor` + `useToast` pattern, rethrows so callers can handle the promise. Note: proposed hook signature also included `error: DomainError | null`, but the toast already renders it — omitted the field to avoid duplicating state; deviation called out in the `tasks.md` note next to task 4.1.
+  - `front-end/src/screens/RemoteScreen.tsx`: dropped the four `AppShortcut` placeholders + the `AppShortcut` import + the stale disabled-overlay comment. Same slot now renders an inline row: DS `Input` (URL, flex-grow, placeholder `https://example.com`, `icon="link"`, `type="url"`) followed by a primary DS `Button` labeled "Open". Both take `disabled={!isConnected}`; the button also disables when the trimmed URL is empty or `isPending`. On click, calls `launchBrowser(trimmedUrl).then(clear).catch(noop)` — the toast is already fired inside the hook on rejection, so we swallow here to keep the value for retry.
+- Design system:
+  - `Input.jsx` + `Input.d.ts`: extended with a `disabled` prop (mirrors the C7 `Slider` extension precedent). The DS did not previously thread `disabled` through to the underlying `<input>`; the tasks/spec require it. This is a modification of an existing primitive, not a new file — passes the spec scenario `git status docs/orbit-tv-remote-design-system/components/` returning no new files.
+  - `AppShortcut` component itself is **not** deleted from the DS (may have future consumers); only `RemoteScreen.tsx`'s import and four usages are gone.
+- Verification (per AGENTS Verification + LOOP.md step 5):
+  - `npm run back:build` — pass.
+  - `npm run back:test` — 107/107 pass on second run. First run hit a preexisting flaky ordering assertion in `back-end/src/routes/keys.test.ts:231` ("three rapid POSTs land on the transport in order") that's unrelated to this change; noted as a follow-up.
+  - `npm run front:build` — pass.
+  - `npm run front:test` — 44/44 pass. Added 6 new component tests (AppShortcut labels gone, Input+Button render, three disabled-state cases, click-launches-and-clears).
+- **Not verified this session (agent honesty gate — AGENTS.md "Never claim UI works from a build alone"):**
+  - Tasks 7.1/7.2/7.3 (manual verification against a real Samsung TV, dark-mode eyeball) are left unchecked and flagged as human-deferred. The `ms.channel.emit` / `ed.apps.launch` / `metaTag` envelope is documented in the change's `design.md` D2 and worked once in a hand test per the proposal, but it hasn't been re-verified this session. If task 7.1 fails on a target model, the back-end logs `ms.error` events at info per `jsonrpc.ts` — that's the debug entrypoint the design already anticipates.
+- Follow-ups for the next session:
+  - Complete `tasks.md` §7.1/7.2/7.3 (real-TV verification of the launch envelope, dark-mode eyeball).
+  - Fix the flaky `back-end/src/routes/keys.test.ts:231` assertion — a per-TV FIFO ordering test that passes on retry, suggests a scheduling race in the stub transport or the session's enqueue queue. Not caused by this change; predates it.
+  - Once C10 is verified, generalise `launchBrowserParams` into an `edAppsLaunchParams(appId, metaTag)` helper so YouTube/Netflix follow-up capabilities can reuse the envelope with a different `appId`. Design.md non-goal 1 (arbitrary apps) becomes the next Phase-5 change.
+  - `_ds_bundle.js` under `docs/orbit-tv-remote-design-system/` is NOT touched by this change — the `Input.disabled` extension applies to the source `.jsx` but the pre-compiled bundle used by the DS docs SPA still ships the old `Input` without `disabled`. Docs-SPA parity fix is a low-priority follow-up (the running app doesn't consume the bundle; it imports source via `@ds` alias).
+
+---
+
 ## 2026-07-06T08:08:09Z
 
 **What was done — implemented `volume-rotary-knob` via the `/next-change` Loop Engineering cycle**

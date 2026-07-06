@@ -12,10 +12,21 @@ export function Input({
   error,
   label,
   type = 'text',
+  disabled = false,
   style,
 }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+    <label
+      aria-disabled={disabled}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        width: '100%',
+        opacity: disabled ? 0.55 : 1,
+        pointerEvents: disabled ? 'none' : 'auto',
+      }}
+    >
       {label && (
         <span
           style={{
@@ -51,6 +62,7 @@ export function Input({
           value={value}
           onChange={(e) => onChange && onChange(e.target.value)}
           placeholder={placeholder}
+          disabled={disabled}
           style={{
             border: 'none',
             outline: 'none',

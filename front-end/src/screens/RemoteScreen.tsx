@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { IconButton } from '@ds/components/core/IconButton.jsx';
+import { Button } from '@ds/components/core/Button.jsx';
 import { Badge } from '@ds/components/core/Badge.jsx';
+import { Input } from '@ds/components/forms/Input.jsx';
 import { DPad } from '@ds/components/controls/DPad.jsx';
 import { RotaryKnob } from '@ds/components/controls/RotaryKnob.jsx';
-import { AppShortcut } from '@ds/components/controls/AppShortcut.jsx';
 import { useDeviceSession, type ClientSessionState } from '../data/useDeviceSession.ts';
 import { useSendKey, type UseSendKeyOptions } from '../data/useSendKey.ts';
 import { useVolume, type UseVolumeOptions } from '../data/useVolume.ts';
 import { useInputs, type UseInputsOptions } from '../data/useInputs.ts';
+import { useBrowserLaunch, type UseBrowserLaunchOptions } from '../data/useBrowserLaunch.ts';
 import { InputsModal } from './InputsModal.tsx';
 import { WsHealthChip } from '../ui/WsHealthChip.tsx';
 import type { SamsungKeyCode } from '../data/keys.ts';
@@ -44,14 +46,28 @@ export interface RemoteScreenProps {
   useVolumeOptions?: UseVolumeOptions;
   /** Injectable for tests. */
   useInputsOptions?: UseInputsOptions;
+  /** Injectable for tests. */
+  useBrowserLaunchOptions?: UseBrowserLaunchOptions;
 }
 
-export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions, useInputsOptions }: RemoteScreenProps) {
+export function RemoteScreen({
+  device,
+  onBack,
+  sendKeyOptions,
+  useVolumeOptions,
+  useInputsOptions,
+  useBrowserLaunchOptions,
+}: RemoteScreenProps) {
   const [isInputsModalOpen, setInputsModalOpen] = useState(false);
+  const [browserUrl, setBrowserUrl] = useState('');
   const { state, connect, disconnect } = useDeviceSession(device.udn);
   const { sendKey } = useSendKey(device.udn, sendKeyOptions);
   const { muted, delta: sendDelta, toggleMute } = useVolume(device.udn, useVolumeOptions);
   const { inputs, setInput } = useInputs(device.udn, useInputsOptions);
+  const { launch: launchBrowser, isPending: isLaunchPending } = useBrowserLaunch(
+    device.udn,
+    useBrowserLaunchOptions,
+  );
 
   // Auto-close the inputs modal if the session state leaves Connected —
   // the rows would be non-actionable anyway (disabled), so the friendlier
@@ -69,13 +85,17 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
   }, [connect]);
 
   const isConnected = state === 'Connected';
-  // AppShortcut still lacks a `disabled` prop (it's placeholder art for a
-  // future app-launch capability). Only the AppShortcut row falls back to
-  // the token-consistent overlay pattern; DPad, RotaryKnob, and IconButton
-  // all accept `disabled` directly.
-  const disabledStyle = isConnected
-    ? undefined
-    : { opacity: 0.55, pointerEvents: 'none' as const };
+  const trimmedUrl = browserUrl.trim();
+  const canLaunch = isConnected && trimmedUrl.length > 0 && !isLaunchPending;
+
+  function handleLaunchBrowser(): void {
+    if (!canLaunch) return;
+    void launchBrowser(trimmedUrl)
+      .then(() => setBrowserUrl(''))
+      .catch(() => {
+        /* useBrowserLaunch already surfaced a toast; keep the value for retry. */
+      });
+  }
 
   async function handleBack() {
     try {
@@ -121,12 +141,26 @@ export function RemoteScreen({ device, onBack, sendKeyOptions, useVolumeOptions,
 
         <div
           aria-disabled={!isConnected}
-          style={{ display: 'flex', gap: 18, justifyContent: 'space-between', padding: '4px 6px', ...disabledStyle }}
+          style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '4px 6px' }}
         >
-          <AppShortcut icon="live_tv" label="Live TV" />
-          <AppShortcut icon="movie" label="Movies" />
-          <AppShortcut icon="sports_esports" label="Games" />
-          <AppShortcut icon="apps" label="Apps" />
+          <div style={{ flex: 1 }}>
+            <Input
+              value={browserUrl}
+              onChange={setBrowserUrl}
+              placeholder="https://example.com"
+              icon="link"
+              type="url"
+              disabled={!isConnected}
+            />
+          </div>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleLaunchBrowser}
+            disabled={!canLaunch}
+          >
+            Open
+          </Button>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>

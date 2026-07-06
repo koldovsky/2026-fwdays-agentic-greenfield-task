@@ -24,6 +24,7 @@ Every capability lists the requirement IDs it covers so nothing is lost in the s
 | C7   | Volume control            | Volume up / down / mute / unmute; render current volume level when the TV reports it.                                       | FR-VOLUME-01…04                                    | C5                      | 3     |
 | C8   | Input management          | List available inputs, switch active input, refresh input list on demand.                                                   | FR-INPUT-01…03                                     | C5                      | 3     |
 | C9   | Error surfacing           | User-facing presentation of communication failures (toast/banner), mapped from the back-end domain error union.             | FR-ERROR-01 (rounds out FR-REMOTE-03)              | C1 (stub) → C6/C7/C8 (real content) | 4 |
+| C10  | TV browser launch         | Open a user-typed URL in the TV's built-in Tizen browser via `ms.channel.emit` → `ed.apps.launch`; replaces the placeholder `AppShortcut` row on `RemoteScreen` with an inline URL `Input` + "Open" `Button` composed from existing DS primitives. | FR-BROWSER-01, FR-BROWSER-02, FR-BROWSER-03        | C5, C9                  | 5     |
 
 ## Phase 0 — Foundation
 
@@ -61,11 +62,17 @@ Any of these three can be built independently once C5 exists.
 
 - **C9 Error surfacing.** A single UI pattern (Orbit toast/banner — extend the DS if needed) for the domain error union `TvNotReachable | TvNotSupported | TvFailed | TvInvalidOp | TvUnknown`. Command capabilities in Phase 3 should already funnel through this pattern; C9 is the coverage sweep + copy pass. Never leak raw `-32xxx` codes to the UI (house rule from `AGENTS.md`).
 
+## Phase 5 — Post-MVP capabilities
+
+The MVP roster stops at C9. Anything past that opens the "future scope" doors listed in `docs/product-brief.md`; each Phase 5 capability should re-open one deliberately, with its own proposal that names the door it's opening.
+
+- **C10 TV browser launch.** First Phase-5 capability. Adds `POST /api/devices/:udn/browser { url }` that enqueues one `ms.channel.emit` frame with an `ed.apps.launch` payload aimed at `org.tizen.browser` — a **new wire-envelope family** for this repo (all prior C6/C7/C8 traffic uses `ms.remote.control`). On the front-end, replaces the placeholder `AppShortcut` row (`Live TV / Movies / Games / Apps`) on `RemoteScreen` with an inline URL `Input` + "Open" `Button`, both composed from existing Orbit primitives (no new DS component). Consumes C5's session queue and C9's toast pattern verbatim. Success = the frame left the back-end; observable feedback loop is the TV screen itself (Smart View is fire-and-forget). Establishes the template for future `ed.apps.launch`-based capabilities (YouTube, Netflix, etc.) once the envelope is verified on real hardware.
+
 ## Requirement gaps to flag before proposing changes
 
 - **Manual TV entry by IP** is described in `docs/product-brief.md` (workflow, MVP list, end-to-end usage) but has no `FR-*` ID in `docs/requirements.md`. Before starting C4 or C5, add `FR-DISCOVERY-06` (or similar) so the manual-add path has traceable acceptance criteria. Otherwise C4's Add-a-TV modal is undocumented behaviour.
 - **Power control** is listed as a core workflow in the product brief but has no FR. Add an ID and slot it into C6 (Remote control keys) or split off if power-on requires WoL/RS-232 fallbacks beyond IP Control's reach.
-- **App launching** is listed as "future" in the brief; keep it out of scope of these capabilities.
+- **App launching** was listed as "future" in the brief and kept out of scope for C1–C9. The Phase-5 opener is **C10 TV browser launch** — a narrow slice (Tizen browser only) that establishes the `ms.channel.emit` → `ed.apps.launch` envelope. Broader app launching (YouTube, Netflix, etc.) is deferred to follow-up post-MVP capabilities once C10 is verified on real hardware.
 - **NFR budgets** (memory <300 MB, startup <15 s) are quality gates, not capabilities. Each capability's OpenSpec proposal should reference the relevant NFRs as acceptance thresholds so we do not discover them at the end.
 - **BC-04 (no auth in MVP)** and **BC-05 (no cloud)** are absorbed into `AGENTS.md` house rules; they don't need their own capability but every proposal should re-affirm them.
 

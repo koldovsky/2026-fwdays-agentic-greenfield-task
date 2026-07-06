@@ -133,6 +133,19 @@ Refresh available inputs on demand.
 
 ------------------------------------------------------------------------
 
+## Browser
+
+**FR-BROWSER-01**\
+Launch a URL in the TV's built-in Tizen web browser from the SPA.
+
+**FR-BROWSER-02**\
+Validate the URL server-side (scheme and parse) before forwarding to the TV.
+
+**FR-BROWSER-03**\
+Disable the browser-launch control while the session is not connected.
+
+------------------------------------------------------------------------
+
 ## User Interface
 
 **FR-UI-01**\

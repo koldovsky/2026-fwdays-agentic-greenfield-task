@@ -13,6 +13,7 @@ import { registerSessionRoutes } from './routes/sessions.js';
 import { registerKeyRoute } from './routes/keys.js';
 import { registerVolumeRoutes } from './routes/volume.js';
 import { registerInputRoutes } from './routes/inputs.js';
+import { registerBrowserRoute } from './routes/browser.js';
 import { startMdns, type MdnsClient, type MdnsHandle } from './mdns.js';
 import { createSsdpTransport, type SsdpTransport } from './discovery/ssdp.js';
 import { createDeviceRegistry, type DeviceRegistry } from './discovery/registry.js';
@@ -248,6 +249,7 @@ export async function createApp(
       if (discoveryRef.inputs) {
         await registerInputRoutes(discoveryRef.inputs)(api);
       }
+      await registerBrowserRoute(api);
     },
     { prefix: '/api' },
   );
