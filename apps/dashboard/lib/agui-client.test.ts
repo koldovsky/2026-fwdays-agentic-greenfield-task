@@ -15,6 +15,7 @@ import {
   EMPTY_REQUEST_CARD_FIELDS,
   initialDashboardClientState,
   safeParseAguiEvent,
+  seedConversationsFromActiveRequests,
   type BookingPendingPayload,
   type DashboardClientState,
 } from "./agui-client.ts";
@@ -163,6 +164,155 @@ describe("applyAguiEvent — STATE_DELTA (dashboard tasks.md §6.2)", () => {
 
     expect((after.requestCards["tg-chat-1"] as Record<string, unknown>).notAKnownField).toBeUndefined();
     expect(after.requestCards["tg-chat-1"]!.studentAge).toBe(9);
+  });
+
+  // --- review-gate FIX 3 [MAJOR] --------------------------------------------
+  // @trace spec.md:58-67 "Event referencing an unknown request id is
+  // ignored". The pipeline always emits a STATE_SNAPSHOT before any
+  // STATE_DELTA for a brand-new thread, so a bare STATE_DELTA for a thread
+  // this client has never seen a card for is unexpected wire traffic —
+  // creating a card from it would render a request the dashboard has no
+  // other truth about at all (no snapshot, no active-request row).
+  it("FIX 3: a STATE_DELTA for a threadId with no prior card leaves requestCards unchanged (does not create one)", () => {
+    const before: DashboardClientState = { ...initialDashboardClientState };
+    const event: AguiEvent = {
+      type: "STATE_DELTA",
+      threadId: "tg-chat-never-seen",
+      delta: [{ op: "add", path: "/studentName", value: "Хтось" }],
+    };
+
+    const after = applyAguiEvent(before, event);
+
+    expect(after.requestCards).toEqual(before.requestCards);
+    expect(after.requestCards["tg-chat-never-seen"]).toBeUndefined();
+  });
+
+  it("FIX 3: a STATE_DELTA after a STATE_SNAPSHOT for that thread still patches correctly (existing behaviour preserved)", () => {
+    let state: DashboardClientState = { ...initialDashboardClientState };
+    state = applyAguiEvent(state, {
+      type: "STATE_SNAPSHOT",
+      threadId: "tg-chat-1",
+      snapshot: { ...EMPTY_REQUEST_CARD_FIELDS, studentName: "Оксана" },
+    });
+    state = applyAguiEvent(state, {
+      type: "STATE_DELTA",
+      threadId: "tg-chat-1",
+      delta: [{ op: "add", path: "/studentAge", value: 9 }],
+    });
+
+    expect(state.requestCards["tg-chat-1"]!.studentName).toBe("Оксана");
+    expect(state.requestCards["tg-chat-1"]!.studentAge).toBe(9);
+  });
+
+  // --- FIX 2 / FIX 3 interaction regression ---------------------------------
+  // FIX 3 gates STATE_DELTA on `requestCards[threadId]` already existing.
+  // Without FIX 2 also seeding `requestCards` (not just `conversations`)
+  // from a dashboard-scoped STATE_SNAPSHOT, a lead RESUMING an
+  // already-active (not brand-new) conversation right after the teacher's
+  // dashboard reconnects would have its every subsequent STATE_DELTA
+  // silently and PERMANENTLY dropped (`pipeline.ts` only ever emits a
+  // per-thread STATE_SNAPSHOT once, on a lead's very first-ever turn) — this
+  // proves the seeding keeps that path alive.
+  it("FIX 2+3: a resumed conversation seeded from a dashboard STATE_SNAPSHOT still accepts its next STATE_DELTA", () => {
+    const dashboardSnapshotEvent: AguiEvent = {
+      type: "STATE_SNAPSHOT",
+      threadId: "dashboard",
+      snapshot: {
+        ...emptyDashboard(),
+        activeRequests: [
+          {
+            id: 1,
+            lead_id: 1,
+            telegram_chat_id: "tg-chat-resumed",
+            state: "collecting",
+            student_name: "Тарас",
+            student_age: 8,
+            format: null,
+            goal_tag: null,
+            goal_text: null,
+            tastes: null,
+            dream_song: null,
+            experience: null,
+            comfort: null,
+            preferred_weekdays: null,
+            preferred_time_range: null,
+            created_at: "2026-07-06T10:00:00.000Z",
+          },
+        ],
+      },
+    };
+
+    let state = applyAguiEvent(initialDashboardClientState, dashboardSnapshotEvent);
+    expect(state.requestCards["tg-chat-resumed"]).toBeDefined();
+    expect(state.requestCards["tg-chat-resumed"]!.studentName).toBe("Тарас");
+
+    state = applyAguiEvent(state, {
+      type: "STATE_DELTA",
+      threadId: "tg-chat-resumed",
+      delta: [{ op: "replace", path: "/format", value: "individual" }],
+    });
+
+    expect(state.requestCards["tg-chat-resumed"]!.format).toBe("individual");
+    expect(state.requestCards["tg-chat-resumed"]!.studentName).toBe("Тарас"); // not clobbered
+  });
+});
+
+describe("seedConversationsFromActiveRequests (review-gate FIX 2)", () => {
+  it("seeds a fresh conversation + request-card placeholder for an unseen active request", () => {
+    const seeded = seedConversationsFromActiveRequests({}, {}, [
+      {
+        id: 1,
+        lead_id: 1,
+        telegram_chat_id: "tg-chat-1",
+        state: "collecting",
+        student_name: "Оксана",
+        student_age: 9,
+        format: null,
+        goal_tag: null,
+        goal_text: null,
+        tastes: null,
+        dream_song: null,
+        experience: null,
+        comfort: null,
+        preferred_weekdays: null,
+        preferred_time_range: null,
+        created_at: "2026-07-06T10:00:00.000Z",
+      },
+    ]);
+
+    expect(seeded.conversations["tg-chat-1"]).toEqual({ threadId: "tg-chat-1", runActive: false, messages: [] });
+    expect(seeded.requestCards["tg-chat-1"]).toMatchObject({ studentName: "Оксана", studentAge: 9 });
+  });
+
+  it("never clobbers an existing conversation or request card for a thread it has already seen", () => {
+    const existingConversations = {
+      "tg-chat-1": { threadId: "tg-chat-1", runActive: true, messages: [{ id: "m1", text: "hi", streaming: false }] },
+    };
+    const existingRequestCards = { "tg-chat-1": { ...EMPTY_REQUEST_CARD_FIELDS, studentName: "Вже є" } };
+
+    const seeded = seedConversationsFromActiveRequests(existingConversations, existingRequestCards, [
+      {
+        id: 1,
+        lead_id: 1,
+        telegram_chat_id: "tg-chat-1",
+        state: "collecting",
+        student_name: "Нове ім'я — має бути проігноровано",
+        student_age: null,
+        format: null,
+        goal_tag: null,
+        goal_text: null,
+        tastes: null,
+        dream_song: null,
+        experience: null,
+        comfort: null,
+        preferred_weekdays: null,
+        preferred_time_range: null,
+        created_at: "2026-07-06T10:00:00.000Z",
+      },
+    ]);
+
+    expect(seeded.conversations).toEqual(existingConversations);
+    expect(seeded.requestCards["tg-chat-1"]!.studentName).toBe("Вже є");
   });
 });
 

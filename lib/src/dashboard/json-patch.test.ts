@@ -139,4 +139,60 @@ describe("applyJsonPatch (TC-PROTO-01)", () => {
     expect(state).toEqual(stateSnapshotBefore);
     expect(ops).toEqual(opsSnapshotBefore);
   });
+
+  // --- review-gate FIX 4 [MINOR]: prototype-pollution guard -----------------
+  // @trace TC-PROTO-01
+  // "/studentName" is itself a known top-level path, so `isKnownPath` alone
+  // does not reject `/studentName/constructor/prototype/x` — the nested
+  // segments walk straight through a string primitive's `.constructor`
+  // (the global `String` function) to its `.prototype` (the REAL, shared
+  // `String.prototype`), then write `x` on it: global prototype pollution.
+  // `studentName` must be a non-null STRING for this walk to even reach
+  // `.constructor` (a `null` field would already fail earlier via a plain
+  // `TypeError`, a separate pre-existing robustness gap this fix does not
+  // otherwise touch).
+  it("discards an op whose path walks through 'constructor'/'prototype', never polluting a shared prototype", () => {
+    const state = { ...fixtureState(), studentName: "Оксана" };
+    const ops: JsonPatchOp[] = [
+      { op: "add", path: "/studentName/constructor/prototype/x", value: "polluted" },
+      { op: "add", path: "/studentAge", value: 9 }, // other valid ops in the batch still apply
+    ];
+
+    const result = applyJsonPatch(state, ops, KNOWN_PATHS);
+
+    expect((String.prototype as unknown as Record<string, unknown>).x).toBeUndefined();
+    expect(({} as Record<string, unknown>).x).toBeUndefined();
+    expect(result.studentAge).toBe(9);
+
+    delete (String.prototype as unknown as Record<string, unknown>).x; // defensive cleanup if the guard is missing
+  });
+
+  it("discards an op whose path targets '__proto__' directly, never polluting Object.prototype", () => {
+    const state = fixtureState();
+    const ops: JsonPatchOp[] = [
+      { op: "add", path: "/__proto__/polluted", value: true },
+      { op: "add", path: "/studentAge", value: 9 },
+    ];
+
+    const result = applyJsonPatch(state, ops, KNOWN_PATHS);
+
+    expect((Object.prototype as Record<string, unknown>).polluted).toBeUndefined();
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(result.studentAge).toBe(9);
+
+    delete (Object.prototype as Record<string, unknown>).polluted; // defensive cleanup
+  });
+
+  it("discards a 'move' op whose 'from' pointer walks through a dangerous segment", () => {
+    const state = { ...fixtureState(), studentName: "Оксана" };
+    const ops: JsonPatchOp[] = [
+      { op: "move", path: "/studentAge", from: "/studentName/constructor/prototype" },
+      { op: "add", path: "/studentAge", value: 9 },
+    ];
+
+    const result = applyJsonPatch(state, ops, KNOWN_PATHS);
+
+    expect((String.prototype as unknown as Record<string, unknown>).studentAge).toBeUndefined();
+    expect(result.studentAge).toBe(9);
+  });
 });

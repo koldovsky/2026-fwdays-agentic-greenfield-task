@@ -56,6 +56,15 @@ export async function DELETE(
   const { id } = await context.params;
   const leadId = Number(id);
 
+  // Review-gate FIX 6 [MINOR]: a non-numeric (`Number("abc")` is `NaN`) or
+  // non-positive-integer `[id]` segment gets a deterministic 400 BEFORE any
+  // DB query — never the misleading "not found or already deleted" 404
+  // below (which implies a real lead id that once existed), and never a raw
+  // 500 (`better-sqlite3` refuses to bind a non-finite parameter at all).
+  if (!Number.isInteger(leadId) || leadId <= 0) {
+    return Response.json({ error: "Некоректний ідентифікатор ліда." }, { status: 400 });
+  }
+
   const db = openDatabase(resolveDbPath());
   try {
     const lead = db.prepare(`SELECT id FROM leads WHERE id = ?`).get(leadId);

@@ -367,29 +367,35 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
   // dashboard tasks.md §4.3 (GREEN half): the injected publisher seam,
   // defaulting to `noopAguiPublisher` so every existing S2 caller/test keeps
   // behaving byte-for-byte identically (the regression guard in
-  // `pipeline.test.ts` pins this). Every `publish()` call below is wrapped by
-  // `safePublish` so a publisher failure (the real HTTP one can reject) NEVER
-  // breaks the turn or the lead's reply — the dashboard is a best-effort side
-  // channel, never load-bearing for NFR-REL-01.
+  // `pipeline.test.ts` pins this). Every `publish()` call below goes through
+  // `safePublish`, which is FIRE-AND-FORGET (review-gate FIX 1 [CRITICAL]):
+  // it invokes `publisher.publish(event)` and attaches `.catch(() => {})`
+  // WITHOUT ever `await`ing it. A publisher failure (the real HTTP one can
+  // reject) or a publisher that simply never settles (a dashboard process
+  // that accepted the connection but hangs) must NEVER slow down or block a
+  // lead's turn — the dashboard is a best-effort side channel, never
+  // load-bearing for NFR-REL-01/NFR-UX-01.
   const publisher = deps.publisher ?? noopAguiPublisher;
   const threadId = update.telegramChatId;
   const runId = randomUUID();
 
-  async function safePublish(event: AguiEvent): Promise<void> {
-    try {
-      await publisher.publish(event);
-    } catch {
+  function safePublish(event: AguiEvent): void {
+    publisher.publish(event).catch(() => {
       // Intentionally swallowed: the publisher is a one-way, best-effort
       // side channel — a dashboard-ingest hiccup must never surface to the
-      // lead or interrupt the turn.
-    }
+      // lead or interrupt the turn. NEVER awaited above, for the same
+      // reason (see this function's header comment).
+    });
   }
 
-  await safePublish({ type: "RUN_STARTED", threadId, runId });
-
   try {
-    // Step 1: ALWAYS the very first call, before touching db/model at all.
+    // Step 1: ALWAYS the very first outbound call this function makes —
+    // strictly before touching db/model, and strictly before the very first
+    // AG-UI publish (review-gate FIX 1: the typing ack must win the race
+    // against the dashboard side channel, NFR-UX-01).
     await deps.transport.sendChatAction(update.telegramChatId, "typing");
+
+    safePublish({ type: "RUN_STARTED", threadId, runId });
 
     // Step 2: resolve the current lead + request row.
     const { request, isBrandNewLead } = resolveLeadAndRequest(deps.db, update);
@@ -482,21 +488,21 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
       // The run failed before any reply text was assembled for the lead —
       // no TEXT_MESSAGE_*/state event, just the run-boundary + the error
       // signal. The apology is still sent to the lead exactly as today.
-      await safePublish({
+      safePublish({
         type: "RUN_ERROR",
         threadId,
         message: "Anthropic model request failed for this turn.",
       });
     } else {
       const messageId = randomUUID();
-      await safePublish({ type: "TEXT_MESSAGE_START", messageId, threadId });
-      await safePublish({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: replyText });
-      await safePublish({ type: "TEXT_MESSAGE_END", messageId });
+      safePublish({ type: "TEXT_MESSAGE_START", messageId, threadId });
+      safePublish({ type: "TEXT_MESSAGE_CONTENT", messageId, delta: replyText });
+      safePublish({ type: "TEXT_MESSAGE_END", messageId });
 
       if (isBrandNewLead) {
-        await safePublish({ type: "STATE_SNAPSHOT", threadId, snapshot: finalFields });
+        safePublish({ type: "STATE_SNAPSHOT", threadId, snapshot: finalFields });
       } else {
-        await safePublish({ type: "STATE_DELTA", threadId, delta: patchToJsonPatchOps(statePatch) });
+        safePublish({ type: "STATE_DELTA", threadId, delta: patchToJsonPatchOps(statePatch) });
       }
     }
 
@@ -505,7 +511,7 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
   } finally {
     // The run boundary always closes, even on the model-error path — never a
     // silent gap for the dashboard to hang on.
-    await safePublish({ type: "RUN_FINISHED", threadId, runId });
+    safePublish({ type: "RUN_FINISHED", threadId, runId });
   }
 }
 

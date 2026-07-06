@@ -33,6 +33,13 @@ export class HttpAguiPublisher implements AguiPublisher {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(event),
+        // Review-gate FIX 1 [CRITICAL]: a dashboard listener that accepts
+        // the connection but never responds (slow-but-running, not down)
+        // must not stall this call — and by extension a lead's whole turn —
+        // indefinitely. `AbortSignal.timeout(2000)` rejects the fetch
+        // promise after 2s; the `catch` below already swallows any
+        // rejection, so a timeout degrades exactly like a network error.
+        signal: AbortSignal.timeout(2000),
       });
       if (!response.ok) {
         console.error(

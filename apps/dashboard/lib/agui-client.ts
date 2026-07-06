@@ -9,6 +9,7 @@
 // exported shapes below are the contract `agui-client.test.ts` pins; the
 // bodies are implemented once that suite is confirmed red.
 
+import type { RequestRow } from "@kamerton/db";
 import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 import { applyJsonPatch } from "@kamerton/lib/src/dashboard/json-patch.ts";
 import type { DashboardState } from "./dashboard-state.ts";
@@ -193,6 +194,79 @@ function ensureConversation(
   return { ...conversations, [threadId]: { threadId, runActive: false, messages: [] } };
 }
 
+/** The same snake_case -> camelCase 1:1 field mapping as
+ *  `request-card-fields.ts`'s own `requestRowToCardFields` — duplicated
+ *  here (not imported) to avoid a mixed type/value import cycle between
+ *  this module and that thin bridge file (`request-card-fields.ts` imports
+ *  `RequestCardFields`, a type-only import, FROM this module). Used only
+ *  to seed a fresh `requestCards[threadId]` entry from DB truth. */
+function requestRowToInitialCardFields(row: RequestRow): RequestCardFields {
+  return {
+    studentName: row.student_name,
+    studentAge: row.student_age,
+    format: row.format,
+    goalTag: row.goal_tag,
+    goalText: row.goal_text,
+    tastes: row.tastes,
+    dreamSong: row.dream_song,
+    experience: row.experience,
+    comfort: row.comfort,
+    preferredWeekdays: row.preferred_weekdays,
+    preferredTimeRange: row.preferred_time_range,
+  };
+}
+
+/** Review-gate FIX 2 [MAJOR] (extended — see this function's last
+ *  paragraph): seeds `conversations[threadId]` AND `requestCards[threadId]`
+ *  for every DB-truth active request that does not already have one —
+ *  called both for `DashboardApp`'s own INITIAL reducer state (from
+ *  `initialSnapshot.activeRequests`, the server-rendered snapshot) and from
+ *  this module's own `STATE_SNAPSHOT` (`threadId === "dashboard"`) branch
+ *  below (a reconnect frame). Without this, a mid-intake lead's card stays
+ *  hidden behind the "Поки що тихо" empty state until their NEXT live
+ *  `RUN_STARTED`/`TEXT_MESSAGE_*` turn — the panel must show DB truth from
+ *  the very first paint (baseline spec).
+ *
+ *  Never clobbers an existing entry: a conversation/card that already has
+ *  live data (messages, a live-patched card) for that thread is left
+ *  exactly as is — only a THREAD ID this map has never seen before gets a
+ *  fresh placeholder. Pure; never mutates its inputs.
+ *
+ *  EXTENSION beyond the literal "seed conversations" fix: also seeding
+ *  `requestCards` (not just `conversations`) is required so review-gate
+ *  FIX 3's `STATE_DELTA`-for-unknown-thread guard (this file's `STATE_DELTA`
+ *  branch below) does not silently and PERMANENTLY drop every future delta
+ *  for a resumed conversation the dashboard never happened to see a live
+ *  `STATE_SNAPSHOT` for — `pipeline.ts` emits a per-thread `STATE_SNAPSHOT`
+ *  only ONCE, ever, on a lead's very first turn (`isBrandNewLead`), so a
+ *  request row already active in the server-rendered/reconnect snapshot
+ *  would otherwise never get a `requestCards` entry any other way, and
+ *  every `STATE_DELTA` after that thread's resume would be ignored (FIX 3)
+ *  instead of just this specific thread never catching up. That card was
+ *  already correctly rendered via `DashboardApp`'s own
+ *  `requestRowToCardFields(activeRequest)` render-time fallback, so this
+ *  seeded value cannot regress what is on screen — it only makes the
+ *  reducer's own `requestCards` map consistent with what is already
+ *  rendered, so a subsequent live delta actually lands. */
+export function seedConversationsFromActiveRequests(
+  conversations: Record<string, ConversationState>,
+  requestCards: Record<string, RequestCardFields>,
+  activeRequests: RequestRow[],
+): { conversations: Record<string, ConversationState>; requestCards: Record<string, RequestCardFields> } {
+  let nextConversations = conversations;
+  let nextRequestCards = requestCards;
+  for (const request of activeRequests) {
+    const threadId = request.telegram_chat_id;
+    if (nextConversations[threadId] === undefined) {
+      nextConversations = { ...nextConversations, [threadId]: { threadId, runActive: false, messages: [] } };
+    }
+    if (nextRequestCards[threadId] === undefined) {
+      nextRequestCards = { ...nextRequestCards, [threadId]: requestRowToInitialCardFields(request) };
+    }
+  }
+  return { conversations: nextConversations, requestCards: nextRequestCards };
+}
+
 /** Finds which thread owns `messageId` (TEXT_MESSAGE_CONTENT/END carry no
  *  `threadId` of their own — see `events.ts`'s wire shape) by scanning every
  *  conversation's messages. Returns `undefined` if no thread has ever seen
@@ -320,7 +394,23 @@ export function applyAguiEvent(state: DashboardClientState, event: AguiEvent): D
 
     case "STATE_SNAPSHOT": {
       if (event.threadId === "dashboard") {
-        return { ...state, dashboard: event.snapshot as DashboardState };
+        const snapshot = event.snapshot as DashboardState;
+        // Review-gate FIX 2: a dashboard-scoped snapshot (initial load and
+        // every reconnect) seeds a conversation + request-card placeholder
+        // for any active request this client has not yet seen a live event
+        // for (see `seedConversationsFromActiveRequests`'s own header for
+        // why `requestCards` is seeded too).
+        const seeded = seedConversationsFromActiveRequests(
+          state.conversations,
+          state.requestCards,
+          snapshot.activeRequests,
+        );
+        return {
+          ...state,
+          dashboard: snapshot,
+          conversations: seeded.conversations,
+          requestCards: seeded.requestCards,
+        };
       }
       return {
         ...state,
@@ -329,7 +419,15 @@ export function applyAguiEvent(state: DashboardClientState, event: AguiEvent): D
     }
 
     case "STATE_DELTA": {
-      const current = state.requestCards[event.threadId] ?? { ...EMPTY_REQUEST_CARD_FIELDS };
+      // Review-gate FIX 3 [MAJOR]: a STATE_DELTA for a threadId this client
+      // has no prior card for is ignored outright — the pipeline always
+      // emits a STATE_SNAPSHOT before any STATE_DELTA for a brand-new
+      // thread (`packages/bot/src/pipeline.ts`'s own pinned algorithm), so a
+      // bare delta with no snapshot behind it is unexpected wire traffic
+      // for a request this dashboard has no other truth about at all —
+      // spec.md's "Event referencing an unknown request id is ignored".
+      const current = state.requestCards[event.threadId];
+      if (current === undefined) return state;
       const patched = applyJsonPatch(current as Record<string, unknown>, event.delta, REQUEST_CARD_KNOWN_PATHS);
       return {
         ...state,

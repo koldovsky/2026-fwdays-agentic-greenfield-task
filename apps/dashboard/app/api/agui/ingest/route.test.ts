@@ -62,4 +62,53 @@ describe("POST /api/agui/ingest (dashboard tasks.md §5.3)", () => {
 
     unsubscribe();
   });
+
+  // --- review-gate FIX 5 [MINOR] --------------------------------------------
+  // @trace TC-PROTO-01, NFR-REL-01
+  // A body that parses fine as JSON but is not shaped like an `AguiEvent`
+  // (no `type` at all, or a non-string `type`) must be rejected the same way
+  // a non-JSON body is — 400, hub untouched — never published as a
+  // malformed/garbage event for the SSE stream to forward downstream.
+  it.each([["{}"], ['{"type":123}']])(
+    "a parseable-but-shape-invalid body (%s) responds 400 and never touches the hub",
+    async (body) => {
+      const received: AguiEvent[] = [];
+      const unsubscribe = subscribe((event) => received.push(event));
+
+      const response = await POST(
+        new Request(INGEST_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body,
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.status).not.toBe(500);
+      expect(received).toHaveLength(0);
+
+      unsubscribe();
+    },
+  );
+
+  // The happy path keeps working: a well-formed body still responds 200 and
+  // still reaches the hub after the FIX 5 shape-validation guard is added.
+  it("REGRESSION: a well-formed body still responds 200 after the shape-validation guard", async () => {
+    const received: AguiEvent[] = [];
+    const unsubscribe = subscribe((event) => received.push(event));
+
+    const event: AguiEvent = { type: "RUN_FINISHED", threadId: "tg-chat-1", runId: "run-2" };
+    const response = await POST(
+      new Request(INGEST_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(event),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(received).toEqual([event]);
+
+    unsubscribe();
+  });
 });

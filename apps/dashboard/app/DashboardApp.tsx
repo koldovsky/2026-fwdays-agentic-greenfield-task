@@ -20,6 +20,7 @@ import {
 import {
   applyAguiEvent,
   connectAgui,
+  seedConversationsFromActiveRequests,
   type BookingPendingPayload,
   type DashboardClientState,
 } from "../lib/agui-client.ts";
@@ -44,14 +45,27 @@ function mergePendingQueue(
   return [...byRequestId.values()];
 }
 
-export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
-  const [state, dispatch] = useReducer(applyAguiEvent, {
+/** `useReducer`'s lazy-init function (`useReducer(reducer, initialArg, init)`
+ *  — runs exactly once, on mount, never on every re-render). Review-gate
+ *  FIX 2 [MAJOR]: seeds a conversation + request-card placeholder for every
+ *  DB-truth active request from the server-rendered initial snapshot, so a
+ *  mid-intake lead's card renders on the very first paint — never waiting
+ *  for a live `RUN_STARTED`/`TEXT_MESSAGE_*` event to seed it first (see
+ *  `seedConversationsFromActiveRequests`'s own header for why
+ *  `requestCards` is seeded too, not just `conversations`). */
+function buildInitialClientState(initialSnapshot: DashboardState): DashboardClientState {
+  const seeded = seedConversationsFromActiveRequests({}, {}, initialSnapshot.activeRequests);
+  return {
     connected: false,
     dashboard: initialSnapshot,
-    conversations: {},
-    requestCards: {},
+    conversations: seeded.conversations,
+    requestCards: seeded.requestCards,
     livePendingQueue: [],
-  } satisfies DashboardClientState);
+  };
+}
+
+export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
+  const [state, dispatch] = useReducer(applyAguiEvent, initialSnapshot, buildInitialClientState);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {

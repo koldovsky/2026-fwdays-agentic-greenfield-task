@@ -47,6 +47,23 @@ function isKnownPath(pointer: string, knownPaths: readonly string[]): boolean {
   return knownPaths.includes(topLevelSegment(pointer));
 }
 
+// Review-gate FIX 4 [MINOR]: `isKnownPath` only ever inspects a pointer's
+// TOP-LEVEL segment — a pointer like "/studentName/constructor/prototype/x"
+// passes that check ("/studentName" IS a known top-level path) yet its
+// nested segments walk straight through a string field's `.constructor`
+// (the global `String` function) to its shared, global `.prototype`, then
+// write an arbitrary property onto it: classic prototype pollution, RCE-
+// adjacent in a long-lived Node process. `/__proto__/...` is the same
+// attack one level shallower. Any op whose `path` (or, for `move`/`copy`,
+// `from`) contains ANY of these three segments ANYWHERE is discarded
+// outright — consistent with this module's existing "unknown top-level
+// path is discarded, never applied, never throws" discipline.
+const DANGEROUS_POINTER_SEGMENTS: ReadonlySet<string> = new Set(["__proto__", "constructor", "prototype"]);
+
+function hasDangerousSegment(pointer: string): boolean {
+  return pointerSegments(pointer).some((segment) => DANGEROUS_POINTER_SEGMENTS.has(segment));
+}
+
 /** Resolves an RFC 6901 pointer's key path segments, unescaping ~1 and ~0. */
 function pointerSegments(pointer: string): string[] {
   if (pointer === "") {
@@ -111,9 +128,14 @@ export function applyJsonPatch<T extends Record<string, unknown>>(
   for (const op of ops) {
     const pathKnown = isKnownPath(op.path, knownPaths);
     const fromKnown = op.from === undefined || isKnownPath(op.from, knownPaths);
+    const pathSafe = !hasDangerousSegment(op.path);
+    const fromSafe = op.from === undefined || !hasDangerousSegment(op.from);
 
-    if (!pathKnown || !fromKnown) {
-      continue; // unknown top-level path -- discard this op, keep going.
+    if (!pathKnown || !fromKnown || !pathSafe || !fromSafe) {
+      // Unknown top-level path, OR a path/from carrying a
+      // "__proto__"/"constructor"/"prototype" segment anywhere (review-gate
+      // FIX 4) -- discard this op, keep going.
+      continue;
     }
 
     switch (op.op) {

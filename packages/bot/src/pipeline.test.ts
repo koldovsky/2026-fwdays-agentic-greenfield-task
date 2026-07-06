@@ -46,8 +46,9 @@ import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "@kamerton/agent/src/apology.ts";
 import { FakeTelegramTransport } from "./testing/fake-telegram-transport.ts";
 import { compileFirstLessonBrief, handleUpdate, type HandleUpdateDeps } from "./pipeline.ts";
 import type { InboundCallbackUpdate, InboundTextUpdate } from "./telegram-transport.ts";
-import { noopAguiPublisher, type AguiEvent } from "./agui-publisher.ts";
+import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-publisher.ts";
 import { FakeAguiPublisher } from "./testing/fake-agui-publisher.ts";
+import type { ChatAction, SendMessageOptions, TelegramTransport } from "./telegram-transport.ts";
 
 // ---------------------------------------------------------------------------
 // Test scaffolding — every scenario builds its own fresh `:memory:` DB, its
@@ -870,6 +871,79 @@ describe("handleUpdate — AG-UI publisher seam (dashboard tasks.md 4.3)", () =>
     expect(runError.threadId).toBe("tg-chat-model-error");
     expect(runFinished.threadId).toBe("tg-chat-model-error");
     expect(runError.message.length).toBeGreaterThan(0);
+  });
+
+  // --- review-gate FIX 1 [CRITICAL]: ack-first ordering vs. the publisher --
+  // @trace NFR-UX-01
+  // `sendChatAction` must be the very first outbound call of a turn, BEFORE
+  // any AG-UI event is published — including `RUN_STARTED`. A shared `order`
+  // timeline records both the transport's `sendChatAction` and every
+  // publisher event on one array (the two fakes' own recording arrays are
+  // otherwise on separate timelines and cannot be compared for order).
+  it("FIX 1: sendChatAction is invoked before the first publisher event (RUN_STARTED)", async () => {
+    const order: string[] = [];
+    const inner = new FakeTelegramTransport();
+    const orderedTransport: TelegramTransport = {
+      async sendChatAction(chatId: string, action: ChatAction): Promise<void> {
+        order.push("sendChatAction");
+        await inner.sendChatAction(chatId, action);
+      },
+      async sendMessage(chatId: string, text: string, options?: SendMessageOptions): Promise<void> {
+        return inner.sendMessage(chatId, text, options);
+      },
+      onMessage(handler) {
+        inner.onMessage(handler);
+      },
+    };
+    const orderedPublisher: AguiPublisher = {
+      async publish(event: AguiEvent): Promise<void> {
+        order.push(`publish:${event.type}`);
+      },
+    };
+
+    const model = new FakeModelPort([textResponse("Привіт! Як звати дитину?")]);
+    const deps = makeDeps({ transport: orderedTransport, model, publisher: orderedPublisher });
+
+    await handleUpdate(textUpdate(), deps);
+
+    expect(order[0]).toBe("sendChatAction");
+    const firstPublishIndex = order.findIndex((entry) => entry.startsWith("publish:"));
+    expect(firstPublishIndex).toBeGreaterThan(0);
+    expect(order[firstPublishIndex]).toBe("publish:RUN_STARTED");
+  });
+
+  // --- review-gate FIX 1 [CRITICAL]: the publisher must never block a turn --
+  // @trace NFR-REL-01
+  // A publisher whose `publish()` never settles (a dashboard that accepted
+  // the connection but hangs, distinct from the network-error case
+  // `noopAguiPublisher`/HttpAguiPublisher's own catch already covers) must
+  // not stall `handleUpdate()` — every publish call is fire-and-forget
+  // (`.catch()`-guarded, never `await`ed) so the lead still gets their
+  // `sendChatAction` + `sendMessage` promptly. Raced against a short timer:
+  // if `handleUpdate()` were still awaiting a hung publish, the race would
+  // resolve to `"timeout"` instead of `"resolved"`.
+  it("FIX 1: a publisher whose publish() never resolves does not hang the turn", async () => {
+    const transport = new FakeTelegramTransport();
+    const model = new FakeModelPort([textResponse("Привіт! Як звати дитину?")]);
+    const neverSettlingPublisher: AguiPublisher = {
+      publish(): Promise<void> {
+        return new Promise<void>(() => {
+          // Deliberately never resolves nor rejects.
+        });
+      },
+    };
+    const deps = makeDeps({ transport, model, publisher: neverSettlingPublisher });
+
+    const handleUpdatePromise = handleUpdate(textUpdate(), deps).then(() => "resolved" as const);
+    const timeoutPromise = new Promise<"timeout">((resolve) => {
+      setTimeout(() => resolve("timeout"), 500);
+    });
+
+    const outcome = await Promise.race([handleUpdatePromise, timeoutPromise]);
+
+    expect(outcome).toBe("resolved");
+    expect(transport.callKinds[0]).toBe("sendChatAction");
+    expect(transport.callKinds).toContain("sendMessage");
   });
 });
 

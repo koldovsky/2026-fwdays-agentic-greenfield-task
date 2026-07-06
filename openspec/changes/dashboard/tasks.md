@@ -100,9 +100,15 @@
         very first turn for a request) reflecting the fields `runIntakeTurn`
         persisted → `RUN_FINISHED` (`@trace FR-DASH-01`).
       - A button-callback turn publishes the same run-boundary + state-update
-        events without ever publishing `TEXT_MESSAGE_*` for a model call that
-        never happened (callbacks never reach `ModelPort.send()`, design.md
-        Decision 3 of the `intake` change).
+        events, WITH `TEXT_MESSAGE_*` wrapping its own deterministic reply
+        text too (the callback branch still computes a real `replyText` and
+        sends it to the lead, so the dashboard's ChatStream must render it —
+        review-gate correction recorded in `pipeline.test.ts`'s own callback
+        scenario comment): the actual distinction a callback turn draws is
+        narrower than "no `TEXT_MESSAGE_*`" — it NEVER calls
+        `ModelPort.send()` (design.md Decision 3 of the `intake` change),
+        so there is simply no model call for any `TEXT_MESSAGE_*` content
+        to be "about".
       - A `ModelPort.send()` rejection (the existing NFR-REL-01 apology path)
         still publishes `RUN_STARTED` → `RUN_ERROR` → `RUN_FINISHED` (never a
         silent gap in the run boundary the dashboard is watching).
@@ -178,8 +184,12 @@
       deterministic, Ukrainian, non-500 "не підключено" payload (design.md
       Decision 4) — never a 404/500 a real user action could be confused
       with a bug. Confirm red, implement the stub to green.
-- [x] 5.8 Run `npm run test:run` and `npm run test:integration`; confirm
-      5.1–5.7 green with no regressions.
+- [x] 5.8 Run `npm run test:run`; confirm 5.1–5.7 green with no regressions
+      (these dashboard route/db tests run under `test:run` — real
+      `better-sqlite3` but plain `vitest run`, per `vitest.config.ts`'s own
+      documented `include` shape; `npm run test:integration` re-bases onto
+      `tests/integration/` and does not pick up any `apps/dashboard/**`
+      test files at all).
 
 ## 6. UI — tokens, `components/ds/`, the SSE client, and pages
 

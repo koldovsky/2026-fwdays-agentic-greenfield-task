@@ -73,6 +73,7 @@
       ],
       "planned": true,
       "tests": [
+        "lib/src/intake/first-lesson-brief.test.ts",
         "lib/src/intake/next-field.test.ts",
         "lib/src/intake/questions.test.ts",
         "lib/src/intake/state-machine.test.ts",
@@ -94,6 +95,7 @@
       "tests": [
         "lib/src/intake/age.test.ts",
         "lib/src/intake/age.test.ts",
+        "lib/src/intake/first-lesson-brief.test.ts",
         "lib/src/intake/format.test.ts",
         "lib/src/intake/format.test.ts",
         "lib/src/intake/format.test.ts",
@@ -131,6 +133,8 @@
       ],
       "planned": true,
       "tests": [
+        "lib/src/intake/first-lesson-brief.test.ts",
+        "lib/src/intake/first-lesson-brief.test.ts",
         "lib/src/intake/next-field.test.ts",
         "lib/src/intake/questions.test.ts",
         "lib/src/intake/questions.test.ts",
@@ -200,7 +204,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -315,7 +320,8 @@
       "id": "FR-KB-02",
       "specs": [
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -455,7 +461,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -474,7 +481,8 @@
       "id": "FR-HITL-03",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/dashboard/spec.md"
+        "openspec/specs/dashboard/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -495,7 +503,8 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/slots/spec.md"
+        "openspec/specs/slots/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -510,19 +519,34 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/intake/spec.md"
+        "openspec/specs/intake/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-DASH-03",
       "specs": [
-        "openspec/specs/dashboard/spec.md"
+        "openspec/specs/dashboard/spec.md",
+        "openspec/changes/dashboard/specs/dashboard/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/hall-status.test.ts",
+        "lib/src/dashboard/week-grid.test.ts",
+        "lib/src/dashboard/week-grid.test.ts"
+      ],
       "recordings": []
     }
   ],
@@ -567,14 +591,6 @@
     {
       "check": "test-trace",
       "msg": "FR-HITL-04 has no test annotated \"@trace FR-HITL-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DASH-01 has no test annotated \"@trace FR-DASH-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-DASH-03 has no test annotated \"@trace FR-DASH-03\""
     },
     {
       "check": "recording-evidence",
@@ -695,6 +711,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-DASH-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"dashboard\" is not archived"
     }
   ]
 }

@@ -117,6 +117,32 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     expect(body).toHaveProperty("error");
   });
 
+  // --- review-gate FIX 6 [MINOR] ---------------------------------------------
+  // @trace NFR-PRIV-02
+  // A non-numeric (or non-positive) `[id]` segment (`Number("abc")` is
+  // `NaN`) must respond 400 with a deterministic Ukrainian message BEFORE
+  // any DB query — not fall through to the misleading 404 path above (which
+  // implies "a real lead id that happens to already be gone"), and
+  // (`better-sqlite3` refuses to bind a `NaN`/non-finite parameter at all,
+  // so without an early guard this would otherwise surface as a raw 500).
+  it.each(["abc", "1.5", "-1", "0", ""])(
+    "DELETE with a non-positive-integer id segment ('%s') responds 400 before any DB query, never 404/500",
+    async (rawId) => {
+      const response = await DELETE(
+        new Request(`http://127.0.0.1:3000/api/leads/${encodeURIComponent(rawId)}`, { method: "DELETE" }),
+        { params: Promise.resolve({ id: rawId }) },
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.status).not.toBe(404);
+      expect(response.status).not.toBe(500);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+      expect(typeof body.error).toBe("string");
+      expect(body.error.length).toBeGreaterThan(0);
+    },
+  );
+
   // @trace NFR-PRIV-02
   it("a calendar.deleteEvent rejection surfaces a deterministic inline-error JSON, never a raw 500, and never touches the DB (calendar-before-DB ordering)", async () => {
     // Simulates a calendar outage — mirrors `packages/bot/src/pipeline.test.ts`'s
