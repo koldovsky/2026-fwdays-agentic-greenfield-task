@@ -85,10 +85,19 @@ export async function DELETE(
       )
       .all(leadId) as PendingEventRow[];
 
-    const calendar = resolveCalendarPort();
+    // Review finding (§8.11 smoke): only resolve the calendar port when there
+    // is actually a tentative event to delete. `resolveCalendarPort()`
+    // constructs a real `GoogleCalendarPort`, whose constructor THROWS when
+    // `GOOGLE_APPLICATION_CREDENTIALS`/`GOOGLE_CALENDAR_ID` are unset — so
+    // constructing it unconditionally 500'd this route for a lead with zero
+    // calendar-backed pending bookings (the common case), needlessly coupling
+    // a pure DB delete to calendar credentials. Resolve lazily.
     try {
-      for (const row of pendingEventRows) {
-        await calendar.deleteEvent(row.calendar_event_id);
+      if (pendingEventRows.length > 0) {
+        const calendar = resolveCalendarPort();
+        for (const row of pendingEventRows) {
+          await calendar.deleteEvent(row.calendar_event_id);
+        }
       }
     } catch {
       // Calendar-before-DB ordering: bail out BEFORE touching the DB — the

@@ -25,7 +25,19 @@ import { noopAguiPublisher, type AguiEvent, type AguiPublisher } from "./agui-pu
  * only one.
  */
 export class HttpAguiPublisher implements AguiPublisher {
-  constructor(private readonly ingestUrl: string) {}
+  // Explicit field + assignment rather than a TypeScript constructor
+  // parameter-property (`constructor(private readonly ingestUrl: string)`):
+  // Node's default strip-only TypeScript execution rejects parameter-
+  // properties (ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX), so the parameter-property
+  // form would crash the real bot entrypoint (`node packages/bot/src/
+  // index.ts`) at import time even though Vitest (which transforms TS)
+  // tolerates it. Same runtime-only class as this repo's explicit-`.ts`-
+  // import-extension rule — found by the §8.11 dashboard smoke.
+  private readonly ingestUrl: string;
+
+  constructor(ingestUrl: string) {
+    this.ingestUrl = ingestUrl;
+  }
 
   async publish(event: AguiEvent): Promise<void> {
     try {
