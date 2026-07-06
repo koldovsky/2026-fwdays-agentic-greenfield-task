@@ -7,7 +7,7 @@
 
 ## Last action
 
-- **T4 `gate-premium-upload-zone` — implemented + tests authored, gate in flight (2026-07-06, ultracode).**
+- **T4 `gate-premium-upload-zone` — DONE + committed `1080213` (2026-07-06, ultracode).**
   Split `features/upload-cv/ui/UploadCvDropzone.tsx` into `TextUploadZone.tsx` (free/ungated parse →
   `onExtracted`, FR-CV-01/FR-ONBOARD-01) + `PremiumAttachZone.tsx` (paid-gated original-PDF attach) +
   a thin composer with the SAME external props (no call-site edit; `views/tailor-workspace` untouched).
@@ -26,7 +26,9 @@
   `new Response(new Blob())` at line 44/76). **Confirmed it fails identically at HEAD `27d4861` with all
   T4 work stashed** → environment/version-sensitive artifact in the T3 slice, green when T3 shipped.
   Belongs to a separate T3-slice test-hardening change, NOT T4. **Next: land verifier/checker verdicts,
-  fix any T4 blocker, commit T4, then T5.**
+  fix any T4 blocker, commit T4, then T5.** verifier PASS (4 gates) + checker fix-first (0 blockers;
+  1 major + 1 minor test-coverage gaps closed by the test-author, +4 tests, 0 code changes). Upload
+  6 files / 44 tests green; full suite 846/848. **T5 is the last batch task (runs on Fable 5).**
 
 - **T2 DONE + gate green (2026-07-06, ultracode).** `rework-subscription-plans`: new `ultra` tier
   ($30/mo) threaded through EVERY plan union (entities Plan, PaymentsPlan+PAYMENTS_PLANS,
@@ -290,6 +292,13 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
 
 ## Blockers / open questions
 
+- **PRE-EXISTING SUITE RED (2 tests, not from any current task):**
+  `src/features/export-data-button/ui/ExportDataButton.test.tsx` fails 2 (`TypeError: object.stream is
+  not a function`) at lines 44/76 where it does `new Response(new Blob([...]))` — this session's
+  jsdom `Blob` has no `.stream()`, so undici's `Response` body-consume throws. Env/version-sensitive;
+  green when T3 shipped, red at HEAD `27d4861` with all later work stashed. **Fix belongs in the T3
+  slice's test** (polyfill `Blob.prototype.stream` in the vitest setup, or build the mock Response
+  from a string body instead of a Blob) as its own small change — do NOT bundle into an unrelated task.
 - **Prod env not set / DB not provisioned** (task 3 operational). `yarn db:migrate` must run against
   prod before history/GDPR work end to end.
 - **Cyrillic fonts unwired** blocks task 10 (layout.tsx loads latin-only subsets).
