@@ -2,7 +2,7 @@
 // Decision 5's "Tiny real-Anthropic smoke": ONE real round trip against the
 // PRODUCTION `AnthropicModelPort` (`packages/agent/src/anthropic-model-port.ts`,
 // `claude-sonnet-5`, thinking disabled — `MODEL_CONFIG`), never a fake, never
-// mocked network. A single scripted lead message ("Мене звати Оксана")
+// mocked network. A single scripted lead message ("Доньку звати Софійка")
 // asserts a `save_name` tool call happens — kept intentionally tiny (one
 // assertion, no conversation loop, no `runIntakeTurn`) so this test costs one
 // real API call, not a whole scripted transcript.
@@ -33,7 +33,6 @@ import { AnthropicModelPort } from "@kamerton/agent/src/anthropic-model-port.ts"
 import { MODEL_CONFIG, type ToolUseBlock } from "@kamerton/agent/src/model-port.ts";
 import { TOOLS } from "@kamerton/agent/src/tools.ts";
 import { buildSystemPrompt } from "@kamerton/agent/src/system-prompt.ts";
-import { ensureAmbientAuthToken } from "@kamerton/agent/src/ambient-auth.ts";
 import { initialIntakeState } from "@kamerton/lib/src/intake/state-machine.ts";
 
 function anthropicConfigDir(): string {
@@ -43,10 +42,15 @@ function anthropicConfigDir(): string {
 }
 
 function hasAnthropicAuthSignal(): boolean {
-  // Recognises (and bridges) the local Claude Code OAuth token too, so the
-  // smoke runs whenever CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_AUTH_TOKEN is
-  // exported, not only when a config profile exists on disk.
-  if (ensureAmbientAuthToken()) {
+  // AnthropicModelPort is the RAW-API adapter — it serves API-key
+  // deployments. A subscription Claude Code OAuth token (CLAUDE_CODE_OAUTH_
+  // TOKEN) authenticates against the raw API but is immediately rate-limited
+  // (429), so this smoke must NOT run on the OAuth token alone — the
+  // subscription path is covered by claude-agent-smoke.test.ts. Hence this
+  // guard deliberately does NOT bridge the OAuth token (no ensureAmbientAuth
+  // Token here): it runs only for a genuine API-key / config-profile
+  // deployment.
+  if (process.env.ANTHROPIC_API_KEY) {
     return true;
   }
   const configDir = anthropicConfigDir();
@@ -70,7 +74,7 @@ describe.skipIf(!hasAnthropicAuthSignal())(
       const port = new AnthropicModelPort();
 
       const response = await port.send(
-        [{ role: "user", content: "Мене звати Оксана" }],
+        [{ role: "user", content: "Доньку звати Софійка" }],
         TOOLS,
         MODEL_CONFIG,
         buildSystemPrompt(initialIntakeState()),

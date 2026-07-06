@@ -3,7 +3,7 @@
 // Decision 5's testing posture): ONE real round trip through
 // `ClaudeAgentModelPort` (claude-agent-model-port.ts), which spawns the local
 // `claude` CLI rather than calling the raw Messages API. A single scripted
-// lead message ("Мене звати Оксана") asserts a `save_name` tool call comes
+// lead message ("Доньку звати Софійка") asserts a `save_name` tool call comes
 // back — kept intentionally tiny, same rationale as `smoke.test.ts`.
 //
 // GATING: `ensureAmbientAuthToken()` (bridges CLAUDE_CODE_OAUTH_TOKEN onto
@@ -35,7 +35,7 @@ describe.skipIf(!ensureAmbientAuthToken())(
       const port = new ClaudeAgentModelPort();
 
       const response = await port.send(
-        [{ role: "user", content: "Мене звати Оксана" }],
+        [{ role: "user", content: "Доньку звати Софійка" }],
         TOOLS,
         MODEL_CONFIG,
         buildSystemPrompt(initialIntakeState()),
