@@ -218,45 +218,45 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## D. Dashboard decision route — replaces the inert stub
 
-- [ ] D.1 Rewrite `apps/dashboard/app/api/decisions/[requestId]/route.test.ts`
+- [x] D.1 Rewrite `apps/dashboard/app/api/decisions/[requestId]/route.test.ts`
       FIRST (red, real SQLite + `FakeCalendarPort`, replacing the stub's
       existing single "not_connected" assertion): a request with NO pending
       booking → `200 {status:"stale", ...}`, never `404` (`@trace FR-HITL-03`,
       baseline spec's "Decision on a request no longer pending is
       rejected"). Confirm red.
-- [ ] D.2 Confirm happy path: fresh `freeBusy` shows no collision →
+- [x] D.2 Confirm happy path: fresh `freeBusy` shows no collision →
       `calendar.upgradeToConfirmed(eventId, brief)` is called with the
       first-lesson brief; `bookings.status` becomes `confirmed`; a
       `notifications` row is inserted (`kind:"confirmed"`,
       `delivery_status:"pending"`, payload containing the exact date/time);
       the dashboard hub receives a fresh `STATE_SNAPSHOT` (`@trace FR-HITL-01`,
       `@trace FR-HITL-02`, `@trace FR-HITL-04`). Confirm red, then green.
-- [ ] D.3 Confirm collision: `freeBusy` shows the slot now busy → `200
+- [x] D.3 Confirm collision: `freeBusy` shows the slot now busy → `200
       {status:"conflict", ...}`, booking stays `pending`, no confirmed event,
       no notification row (`@trace FR-HITL-04`, baseline spec's "Slot no
       longer free at Confirm"). Confirm red, then green.
-- [ ] D.4 Confirm calendar failure: `FakeCalendarPort` throws a
+- [x] D.4 Confirm calendar failure: `FakeCalendarPort` throws a
       `CalendarError` from either `freeBusy` or `upgradeToConfirmed` → `200
       {status:"unavailable", ...}`, booking stays `pending`, nothing sent
       (`@trace NFR-REL-01`). Confirm red, then green.
-- [ ] D.5 Decline happy path: `calendar.deleteEvent` called; `bookings.status`
+- [x] D.5 Decline happy path: `calendar.deleteEvent` called; `bookings.status`
       becomes `declined`; a `kind:"declined"` notification row inserted
       (`@trace FR-HITL-03`, `@trace FR-HITL-04`). Confirm red, then green.
-- [ ] D.6 Decline calendar-delete failure → `200 {status:"unavailable", ...}`,
+- [x] D.6 Decline calendar-delete failure → `200 {status:"unavailable", ...}`,
       booking stays `pending`, slot not marked released (`@trace NFR-REL-01`).
       Confirm red, then green.
-- [ ] D.7 Propose-another-time, zero slots submitted → `200 {status:"invalid",
+- [x] D.7 Propose-another-time, zero slots submitted → `200 {status:"invalid",
       code:"NO_SLOTS_SELECTED", ...}`, no calendar/DB/notification touched
       (`@trace FR-HITL-03`, baseline spec's own scenario). Confirm red, then
       green.
-- [ ] D.8 Propose-another-time, an off-grid slot (Saturday, or 21:00 start)
+- [x] D.8 Propose-another-time, an off-grid slot (Saturday, or 21:00 start)
       submitted → `200 {status:"invalid", code:"OFF_GRID", ...}` naming the
       Mon–Fri 10:00–20:00 rule, original tentative event untouched
       (`@trace BC-SCHEDULE-01`). Confirm red, then green.
-- [ ] D.9 Propose-another-time, a busy/held slot submitted → `200
+- [x] D.9 Propose-another-time, a busy/held slot submitted → `200
       {status:"invalid", code:"SLOT_UNAVAILABLE", ...}` (`@trace FR-HITL-03`).
       Confirm red, then green.
-- [ ] D.10 Propose-another-time happy path: `calendar.deleteEvent` called on
+- [x] D.10 Propose-another-time happy path: `calendar.deleteEvent` called on
       the OLD hold; `bookings.status` becomes `cancelled` (superseded);
       `requests.state` becomes `proposing`; `requests.offered_slots` is
       persisted with the admin's validated slot(s); a
@@ -264,12 +264,12 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       payload; a fresh `STATE_SNAPSHOT` is published (`@trace FR-HITL-03`,
       `@trace FR-HITL-04`, baseline spec's "Propose another time supersedes
       the booking and reopens the conversation"). Confirm red, then green.
-- [ ] D.11 Malformed input: a non-integer `requestId`, or an `action` outside
+- [x] D.11 Malformed input: a non-integer `requestId`, or an `action` outside
       the three-value enum → `400` deterministic JSON, never a raw 500 or a
       pinned decision-shape response. Confirm red, then green.
-- [ ] D.12 Implement `apps/dashboard/app/api/decisions/[requestId]/route.ts`
+- [x] D.12 Implement `apps/dashboard/app/api/decisions/[requestId]/route.ts`
       end to end (design.md Decision 5's nine-step order) to pass D.1–D.11.
-- [ ] D.13 Run `npm run test:run`; confirm D.1–D.12 green, zero regressions
+- [x] D.13 Run `npm run test:run`; confirm D.1–D.12 green, zero regressions
       in S3's own route suites.
 
 ## E. Bot outbox-drain timer

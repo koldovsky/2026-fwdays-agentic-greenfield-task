@@ -82,6 +82,7 @@ function activeRequestRow(overrides: Partial<RequestRow> = {}): RequestRow {
     preferred_weekdays: null,
     preferred_time_range: null,
     created_at: "2026-07-06T10:00:00.000Z",
+    offered_slots: null,
     ...overrides,
   };
 }
