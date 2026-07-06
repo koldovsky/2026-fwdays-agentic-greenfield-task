@@ -133,6 +133,34 @@
   OpenSpec change folder → test-first red→green → review-gate BEFORE archive →
   rendered-UI gate (axe + vision-verify) for any S5 UI. Model economy:
   subagent fan-outs on sonnet; session model only for main-loop judgment.
+- **S4 kickoff — LOCKED human decision (2026-07-07, not yet in a change
+  folder):** the decision→lead-notification cross-process channel is a
+  **SQLite notification outbox drained by the bot**. The dashboard decision
+  route (`apps/dashboard/app/api/decisions/[requestId]/route.ts` — currently
+  the inert "Ще не підключено" stub) will: validate admin input → calendar
+  sync (CalendarPort, calendar-op-before-DB-commit per the spec) → pure `lib/`
+  booking transition → DB commit → INSERT a notification row
+  (`delivery_status pending|delivered|failed`, the FR-KB-04 pattern from
+  ADR-0001 §4). The bot's loop drains the outbox on a short timer and calls
+  `transport.sendMessage`, marking delivered/failed; a failure surfaces on the
+  request card for retry (NFR-REL-01). Chosen over a localhost bot HTTP
+  listener (would breach ADR-0001 §1 no-inbound) and a reverse AG-UI channel
+  (ephemeral, no durable retry). Needs a new `notifications`/outbox table (no
+  such table exists yet — schema has bookings/leads/requests only) and the
+  bot-drain timer in `packages/bot/src/index.ts`.
+  **Seams confirmed:** two state machines — the per-chat CONVERSATION state
+  (`lib/src/intake/state-machine.ts`: proposing→awaiting_admin→done) vs the
+  BOOKING status enum (`bookings.status`, updated via
+  `packages/db/src/bookings.ts updateBookingStatus`). The conversation
+  IntakeEvent union has NO propose/hold events yet — S4 adds them (propose at
+  `proposing`; slot-pick/request_hold `proposing→awaiting_admin` creating a
+  `pending` booking). `propose_slots`/`request_hold` are still pass-through
+  no-ops in `loop.ts` (need a CalendarPort seam in `LoopPorts` to call S1's
+  `proposeSlots`/`holdWithRecovery`; the pick is a callback in
+  `packages/bot/src/pipeline.ts`). Decision transitions must be pure `lib/`
+  (TC-PURE-01). **Next concrete step:** author `openspec/changes/booking-hitl/`
+  (proposal/design/tasks) via the spec-writer with this decision recorded in
+  design.md, then test-first red→green in reviewed stages.
 - **Open before the PR:** eval cases (eval-suite pass, `check-eval-ratchet`);
   the PR fills `.github/pull_request_template.md` (real name, 1–2 min demo
   video, human-vs-agent decisions, tools/MCP used); re-run the security
