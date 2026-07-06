@@ -7,6 +7,27 @@
 
 ## Last action
 
+- **T4 `gate-premium-upload-zone` — implemented + tests authored, gate in flight (2026-07-06, ultracode).**
+  Split `features/upload-cv/ui/UploadCvDropzone.tsx` into `TextUploadZone.tsx` (free/ungated parse →
+  `onExtracted`, FR-CV-01/FR-ONBOARD-01) + `PremiumAttachZone.tsx` (paid-gated original-PDF attach) +
+  a thin composer with the SAME external props (no call-site edit; `views/tailor-workspace` untouched).
+  Free/anon PremiumAttachZone = blurred inert shell (`blur-sm` + `pointer-events-none`, aria-hidden)
+  under an `absolute inset-0` Premium banner (headline/body/CTA); **renders NO `<input type=file>` and
+  NO drop/dragover handlers → no client path to attach without paid** (NFR-SEC-04, cosmetic-only per
+  spec). Paid = live PDF drop target. Attach now DECOUPLED from the parse file (own zone/input). New
+  `uploadCv.premiumZone.{headline,body,upgradeAction}` i18n (ua+en). Server gate in
+  `api/tailor/generate` unchanged (still `attachmentAllowed=false` unless `hasPaidAccess`).
+  Maker(opus, this thread) → **test-author(sonnet, separate ctx)** wrote PremiumAttachZone/TextUploadZone
+  tests + rewrote the composer test (upload: **6 files / 40 tests green**, removed 3 stale coupled-attach
+  tests). lint + build green. **verifier + checker subagents (opus, separate ctx) running now.**
+  Implements FR-CV-01, FR-ONBOARD-01, FR-PAYWALL-01/02, NFR-SEC-04, BC-HONESTY-01, NFR-I18N-01, BC-BRAND-01.
+  **PRE-EXISTING RED (not T4):** `features/export-data-button/ui/ExportDataButton.test.tsx` fails 2
+  tests (`TypeError: object.stream is not a function` — jsdom `Blob` lacks `.stream()` under
+  `new Response(new Blob())` at line 44/76). **Confirmed it fails identically at HEAD `27d4861` with all
+  T4 work stashed** → environment/version-sensitive artifact in the T3 slice, green when T3 shipped.
+  Belongs to a separate T3-slice test-hardening change, NOT T4. **Next: land verifier/checker verdicts,
+  fix any T4 blocker, commit T4, then T5.**
+
 - **T2 DONE + gate green (2026-07-06, ultracode).** `rework-subscription-plans`: new `ultra` tier
   ($30/mo) threaded through EVERY plan union (entities Plan, PaymentsPlan+PAYMENTS_PLANS,
   SubscriptionPlan, PAID_PLANS, SyntheticInvoice.plan, start-checkout param) with no stranded bimap;
@@ -162,7 +183,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 (next) → T5**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 (impl+tests done, gate in flight) → T5 (next)**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends

@@ -56,6 +56,11 @@ export const ua: Dictionary = {
       remove: "Прибрати",
       tooLarge: "PDF завеликий для додавання. Максимальний розмір — 3 МБ.",
     },
+    premiumZone: {
+      headline: "Оригінальний PDF",
+      body: "Додайте оригінал PDF, щоб генерація врахувала форматування й деталі. Доступно на платному тарифі.",
+      upgradeAction: "Оновити тариф",
+    },
   },
   tailorRun: {
     queued: "У черзі",

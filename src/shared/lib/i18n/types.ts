@@ -78,6 +78,19 @@ export interface Dictionary {
       /** Shown when a paid user's PDF exceeds the attachment cap. */
       readonly tooLarge: string;
     };
+    /**
+     * Premium attach ZONE (gate-premium-upload-zone, T4). Shown as a blurred
+     * drop area under a semi-transparent banner for free/anon users; the CTA
+     * opens the paywall. Cosmetic only — the server gate is the trust boundary.
+     */
+    readonly premiumZone: {
+      /** Banner headline naming the premium action. */
+      readonly headline: string;
+      /** One-sentence explanation of the premium benefit. */
+      readonly body: string;
+      /** Upgrade CTA label on the banner button. */
+      readonly upgradeAction: string;
+    };
   };
   readonly tailorRun: {
     /** Visible progress states (FR-TAILOR-01): queued → processing → done. */

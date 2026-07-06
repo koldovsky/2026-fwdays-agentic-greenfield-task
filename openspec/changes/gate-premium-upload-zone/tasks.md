@@ -2,104 +2,48 @@
 
 ## 1. i18n keys (shared/lib/i18n)
 
-- [ ] 1.1 Add `uploadCv.premiumZone` to `shared/lib/i18n/types.ts` with three
-  string keys: `headline`, `body`, and `upgradeAction`. Preserve all existing
-  `uploadCv.*` keys; this is an additive-only change to the type.
-- [ ] 1.2 Author the Ukrainian values in `ua.ts`: calm, direct copy for the
-  banner headline (e.g. "Оригінальний PDF"), body (one sentence explaining the
-  premium benefit), and upgrade CTA. No emoji, no exclamation, no em-dash
-  (BC-BRAND-01, NFR-I18N-01).
-- [ ] 1.3 Mirror the same keys in `en.ts` with English equivalents of equal
-  length and tone.
-- [ ] 1.4 Confirm `i18n.test.ts` parity guard covers the new keys and passes
-  (`yarn test --run i18n`).
+- [x] 1.1 Add `uploadCv.premiumZone` to `types.ts` with `headline`/`body`/`upgradeAction` (additive; existing `uploadCv.*` preserved).
+- [x] 1.2 Ukrainian values in `ua.ts` (headline "Оригінальний PDF", body one sentence, CTA "Оновити тариф"); no emoji/exclamation/em-dash.
+- [x] 1.3 English mirror in `en.ts` (equal tone).
+- [x] 1.4 `i18n.test.ts` parity guard covers the new keys, green (70 upload+i18n tests pass).
 
 ## 2. PremiumAttachZone component
 
-- [ ] 2.1 Create `src/features/upload-cv/ui/PremiumAttachZone.tsx`. Props:
-  `locale`, `paid`, `attachedName`, `attachTooLarge`, `onFileSelected` (called
-  with a `File` for paid users), `onClearAttachment`, `onUpgrade`. When
-  `paid = false`, render the attach area blurred (`blur-sm`, `pointer-events-none`
-  on the inner content) with a semi-transparent Premium banner overlay on top
-  (`absolute inset-0`). When `paid = true`, render the live drop target with drag-
-  and-drop handlers and a file input (mirrors the existing inline attach behavior).
-- [ ] 2.2 Premium banner (non-paid state): `headline` + `body` from
-  `t(locale).uploadCv.premiumZone`, then a `Button` (variant `"secondary"`,
-  size `"sm"`) labeled `upgradeAction` that calls `onUpgrade`. The banner uses
-  only design tokens: `bg-surface-canvas/90`, `rounded-xl`, `shadow-card`,
-  `text-ink`, `text-ink-soft`. No new hue, no icon library (BC-BRAND-01).
-- [ ] 2.3 Disabled state correctness: the underlying `<input type="file">` is
-  absent or has `disabled` set; `onDrop` / `onDragOver` handlers are not attached
-  to the blurred wrapper when `paid = false`, so removing the overlay via devtools
-  still leaves no client event path to a file read.
-- [ ] 2.4 Accessible: the upgrade `Button` has a descriptive `aria-label` if its
-  visible text alone is insufficient; the overlay does not trap keyboard focus
-  when non-paid (NFR-A11Y-01).
-- [ ] 2.5 Write `PremiumAttachZone.test.tsx`: (a) non-paid renders blur class and
-  banner copy; (b) upgrade button calls `onUpgrade`; (c) paid renders without
-  blur and with a file input; (d) `renderToStaticMarkup` SSR smoke test.
+- [x] 2.1 `src/features/upload-cv/ui/PremiumAttachZone.tsx`. Non-paid = blurred inert shell (`blur-sm`, `pointer-events-none`, `aria-hidden`) under an `absolute inset-0` banner; paid = live PDF drop target + file input.
+- [x] 2.2 Banner uses `t(locale).uploadCv.premiumZone` + a `Button` (secondary/sm) calling `onUpgrade`; tokens only (`bg-surface-canvas/90`, `rounded-xl`, `shadow-card`, `text-ink`/`text-ink-soft`, `brand-wash` badge). No new hue/icon.
+- [x] 2.3 Security: non-paid renders NO `<input type=file>` and NO drop/dragover handlers (they live only after the `if (!paid) return`) — removing the overlay leaves no client attach path.
+- [x] 2.4 A11y: upgrade `Button` has an `aria-label`; blurred shell has no focusable descendants (no focus trap).
+- [x] 2.5 `PremiumAttachZone.test.tsx` (11 tests): non-paid blur+banner+no-input, upgrade fires, paid input present, `onFileSelected` fires on drop+select, attached/too-large states, `renderToStaticMarkup` SSR smoke.
 
 ## 3. TextUploadZone component
 
-- [ ] 3.1 Extract the existing parse-only portion of `UploadCvDropzone` into
-  `src/features/upload-cv/ui/TextUploadZone.tsx`. Props: `locale`, `onExtracted`,
-  `pending`, `error`. Logic: drag-and-drop, click-to-browse, calls `parseCvFile`,
-  calls `onExtracted` on success, exposes `error` + `pending` state via props
-  (or internal state plus `onError` / `onPending` callbacks; keep it simple).
-  This component has no knowledge of attachment or paid status.
-- [ ] 3.2 Migrate existing `UploadCvDropzone.test.tsx` coverage of the parse path
-  to `TextUploadZone.test.tsx`; keep the existing test file for the composer
-  (step 4).
+- [x] 3.1 `src/features/upload-cv/ui/TextUploadZone.tsx` — extracted parse-only zone (`locale`, `onExtracted`); owns pending/error/dragActive; no attach/paid knowledge.
+- [x] 3.2 `TextUploadZone.test.tsx` (8 tests) migrated the parse-path coverage; composer test kept separately.
 
 ## 4. Compose UploadCvDropzone
 
-- [ ] 4.1 Refactor `src/features/upload-cv/ui/UploadCvDropzone.tsx` to compose
-  `TextUploadZone` and `PremiumAttachZone`. The external props interface
-  (`locale`, `onExtracted`, `paid`, `onAttachmentChange`, `onUpgrade`) is
-  unchanged so no call site needs updating.
-- [ ] 4.2 Internal state: `pending`, `error`, `attachedName`, `attachTooLarge`
-  remain owned by the composer as today; `maybeAttach` logic moves into
-  `PremiumAttachZone` or a shared handler in the composer.
-- [ ] 4.3 Update `UploadCvDropzone.test.tsx`: add integration-level tests that
-  confirm (a) free users see the blurred zone + banner; (b) paid users see the
-  live zone; (c) `onUpgrade` is forwarded to the banner CTA; (d) `onExtracted`
-  still fires after a successful parse regardless of `paid`.
+- [x] 4.1 `UploadCvDropzone.tsx` now composes `TextUploadZone` + `PremiumAttachZone`; external props unchanged (no call-site edit).
+- [x] 4.2 Composer owns `attachedName`/`attachTooLarge` + `maybeAttach` (base64 read → `onAttachmentChange`, non-PDF clears, size cap).
+- [x] 4.3 `UploadCvDropzone.test.tsx` (8 tests): free sees blurred zone+banner, paid sees live zone (2nd input), `onUpgrade` forwarded, `onExtracted` fires regardless of paid, attach base64 path + oversized guard, premium zone absent when `onAttachmentChange` omitted.
 
 ## 5. Barrel and call-site check
 
-- [ ] 5.1 Update `src/features/upload-cv/index.ts` if `TextUploadZone` or
-  `PremiumAttachZone` need to be exported (only if a widget or view imports them
-  directly; prefer keeping the composer as the sole public export).
-- [ ] 5.2 Verify no call site imports an internal path across slices (`grep -r
-  "upload-cv/ui/Upload" src/` excluding the slice itself should show zero hits
-  other than the barrel re-export).
+- [x] 5.1 Barrel unchanged — composer stays the sole public export (zones are same-slice internals).
+- [x] 5.2 No cross-slice deep import (`grep upload-cv/ui/` outside the slice → 0 hits).
 
-## 6. Security and honesty guard (non-code, evidence-gathering)
+## 6. Security and honesty guard (evidence)
 
-- [ ] 6.1 Confirm by reading `src/app/api/tailor/generate/route.ts` lines 188-258
-  that `attachmentAllowed` is still initialized to `false` and set to `true`
-  only inside the `hasPaidAccess` branch. Document the line range in the PR
-  description as evidence (NFR-SEC-04, OWASP A01).
-- [ ] 6.2 Confirm by reading `src/app/tailor/page.tsx` that the `paid` prop
-  passed to `TailorWorkspace` (and ultimately to `UploadCvDropzone`) is derived
-  exclusively from the server-side subscription check. Document as evidence.
+- [x] 6.1 `api/tailor/generate/route.ts:224` `attachmentAllowed=false`, flipped true only at `:252` inside the `hasPaidAccess` paid branch (`:246-250`); consumed only under `if (attachmentAllowed)` (NFR-SEC-04, OWASP A01). Unchanged by T4.
+- [x] 6.2 `src/app/tailor/page.tsx:32` derives `paid` from the server-side subscription check; flows to `TailorWorkspace` → `UploadCvDropzone`.
 
 ## 7. Verify
 
-- [ ] 7.1 `yarn lint` green (no ESLint errors, no FSD import-rule violations).
-- [ ] 7.2 `yarn build` green (TypeScript strict, no unused exports).
-- [ ] 7.3 `yarn test` green; confirm test count is at least the pre-change count
-  plus the new tests from steps 2.5, 3.2, and 4.3. Record the file and test
-  counts in the PR description as evidence.
-- [ ] 7.4 Run `yarn test --run upload` and confirm all upload-cv tests pass,
-  including the new `PremiumAttachZone` and `TextUploadZone` suites.
+- [x] 7.1 `yarn lint` green (0 errors, FSD rules pass).
+- [x] 7.2 `yarn build` green (TS strict).
+- [x] 7.3 `yarn test`: 846 passed / 848 (the only 2 red are the pre-existing `ExportDataButton` jsdom `Blob.stream` env failures in the T3 slice — confirmed red at HEAD with T4 stashed, not a T4 regression).
+- [x] 7.4 `yarn test --run upload` → 6 files / 44 tests green (PremiumAttachZone 11, TextUploadZone 8, UploadCvDropzone 8, + validate-file/parse-cv-file/TailorWorkspace.upload).
 
 ## 8. Independent review (maker != checker)
 
-- [ ] 8.1 Invoke the checker subagent (or `checker-review` skill) on the diff.
-  It must verify: (a) the free parse path is ungated end-to-end; (b) the
-  non-paid overlay is cosmetic only and the server gate remains the trust
-  boundary; (c) no new hue or icon library is introduced; (d) i18n parity
-  ua/en; (e) FSD import rule not violated; (f) all scenarios from the delta
-  spec have corresponding test coverage.
-- [ ] 8.2 Address all blocker findings before marking this change done.
+- [x] 8.1 `checker` subagent (fresh context, opus) reviewed the diff: verdict fix-first, 0 blockers. Confirmed (a) free parse ungated, (b) non-paid overlay cosmetic + server gate intact, (c) no new hue/icon, (d) ua/en parity, (e) FSD clean, (f) delta-spec scenarios covered (after the two added tests), (g) props contract unchanged. `verifier` subagent (opus) PASS on all four gates.
+- [x] 8.2 Both checker findings (1 major test gap + 1 minor) closed by the test-author (+4 tests) before marking done. 0 code changes required.

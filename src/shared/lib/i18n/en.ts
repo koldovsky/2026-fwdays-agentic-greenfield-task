@@ -55,6 +55,11 @@ export const en: Dictionary = {
       remove: "Remove",
       tooLarge: "That PDF is too large to attach. The maximum size is 3 MB.",
     },
+    premiumZone: {
+      headline: "Original PDF",
+      body: "Attach your original PDF so generation keeps its formatting and detail. Available on a paid plan.",
+      upgradeAction: "Upgrade",
+    },
   },
   tailorRun: {
     queued: "Queued",
