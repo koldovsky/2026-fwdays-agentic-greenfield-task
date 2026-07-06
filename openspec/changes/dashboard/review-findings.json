@@ -1,0 +1,111 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice S3 dashboard (lib/src/dashboard pure fns + lib/src/agui contract + lib/src/intake/first-lesson-brief; packages/bot AG-UI publisher seam + HttpAguiPublisher + pipeline wiring; apps/dashboard AG-UI client reducer, agui-hub, dashboard-state/db, ingest/stream/leads/decisions routes, components/ds, tokens, page; packages/db deleteLeadCascade)",
+  "change": "dashboard",
+  "baseRef": "4b720cb",
+  "headRef": "00a1fcc",
+  "reviewers": [
+    "code-reviewer (correctness/error-handling/framework)",
+    "spec-compliance-auditor (dashboard/spec.md scenario-by-scenario)",
+    "security-reviewer (localhost threat model + guardrail integrity)"
+  ],
+  "guardrailCheck": {
+    "result": "PASS",
+    "note": "No confirm-booking or knowledge-base-write capability was introduced anywhere in this slice. The bookings.status->confirmed UPDATE (packages/db/src/bookings.ts) is untouched by the diff and has no new caller; /api/decisions/[requestId] is a verified inert stub (no DB import/call, unconditional 'Ще не підключено' 200); DecisionBar posts only to that stub; deleteLeadCascade only deletes (NFR-PRIV-02) and never writes knowledge/school.md (zero hits repo-wide). Guardrail intact (FR-GUARD-01/06)."
+  },
+  "dimensions": {
+    "correctness": { "confirmed": 4, "deferred": 3, "rejected": 0 },
+    "spec-compliance": { "confirmed": 3, "deferred": 1, "informational": 4 },
+    "security": { "confirmed": 1, "informational": 6 }
+  },
+  "coverageSummary": "24 dashboard/spec.md scenarios: 0 missing, 0 contradicted. Post-remediation: implemented-and-tested raised (added DashboardApp.test.tsx for empty-state/reconnect/de-dup + STATE_DELTA/proto/ingest/delete tests); the remaining implemented-not-tested scenarios (full run-indicator DOM, ChatStream very-long/locale-atypical text, localhost negative assertion) are covered by Stage E (E2E via Playwright + axe + vision-verify), tasks.md sections 7-8, not yet run.",
+  "confirmedFindings": [
+    {
+      "severity": "CRITICAL",
+      "dimension": "correctness",
+      "title": "HttpAguiPublisher.publish() had no fetch timeout and RUN_STARTED was awaited before sendChatAction — a slow-but-up dashboard could stall every bot turn, breaking NFR-UX-01's typing-ack-first",
+      "disposition": "fixed",
+      "fix": "safePublish is now fire-and-forget (never awaited); HttpAguiPublisher fetch uses AbortSignal.timeout(2000); sendChatAction runs before the first publish. Tests: ack-before-publish order + a never-resolving publisher does not hang handleUpdate."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness+spec",
+      "title": "Conversation panel was seeded only by live events, never from the initial/reconnect STATE_SNAPSHOT — a lead mid-intake showed the 'no conversations' empty state on load/reconnect (contradicts empty-state + reconnect scenarios)",
+      "disposition": "fixed",
+      "fix": "seedConversationsFromActiveRequests wired into the dashboard STATE_SNAPSHOT branch + DashboardApp lazy initial state from initialSnapshot.activeRequests (seeds conversations AND requestCards so FIX 3's gate does not drop resumed-conversation deltas). Test: DashboardApp.test.tsx renders the active request's card with no live events."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "spec-compliance",
+      "title": "STATE_DELTA for an unknown thread was not ignored (only BOOKING_PENDING was) — it created an orphan requestCards entry, violating the 'event referencing an unknown request id is ignored' scenario",
+      "disposition": "fixed",
+      "fix": "STATE_DELTA branch returns state unchanged when no requestCards[threadId] exists (the pipeline always emits STATE_SNAPSHOT first for a new thread, so a delta legitimately only patches an existing card). Tests added."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "security",
+      "title": "applyJsonPatch had no denylist for __proto__/constructor/prototype path segments — a prototype-pollution vector reachable via the arbitrary-JSON ingest route",
+      "disposition": "fixed",
+      "fix": "hasDangerousSegment guard folded into the existing discard branch (path and from), covering add/remove/replace/move/copy. Tests prove no Object/String.prototype pollution and other batch ops still apply."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "POST /api/agui/ingest published any valid-JSON body with no shape validation (e.g. {} or {\"type\":123})",
+      "disposition": "fixed",
+      "fix": "isShapeLikeAguiEvent check (object + string type) -> 400 without publishing, mirroring the non-JSON 400 path."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "DELETE /api/leads/[id] did not validate a numeric id — a non-numeric segment produced a misleading 404 instead of a 400",
+      "disposition": "fixed",
+      "fix": "Number.isInteger(leadId) && leadId > 0 guard before any DB query -> 400 with a deterministic Ukrainian message."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "spec-compliance",
+      "title": "tasks.md §4.3 text and §5.8 wording no longer matched shipped behavior; RUN_ERROR (shipped, NFR-REL-01-aligned) was absent from the spec's 'consuming at minimum' AG-UI event list",
+      "disposition": "fixed",
+      "fix": "tasks.md §4.3 reworded (callback turns DO publish TEXT_MESSAGE_*; the distinction is no ModelPort.send()); §5.8 clarified (dashboard route tests run under test:run); RUN_ERROR added to spec.md's minimum-event list; openspec validate --all --strict still 6/6."
+    }
+  ],
+  "deferredWithOwner": [
+    {
+      "severity": "MAJOR",
+      "title": "BOOKING_PENDING for a request created AFTER the dashboard connected is dropped by the knownRequestIds gate (the per-turn STATE events are keyed by threadId=chatId and never register the numeric request id in the dashboard aggregate)",
+      "owner": "S4 booking-hitl",
+      "why-deferred": "There is no live path to a pending booking in S3 (propose_slots/request_hold are pass-through no-ops until S4), so this cannot manifest in the S3 demo. S4 wires the hold->pending flow and must make the new request known to the dashboard aggregate — e.g. republish a dashboard-scoped STATE_SNAPSHOT (or a lightweight REQUEST_CREATED event) when a request row is created, or have the reducer treat BOOKING_PENDING's self-sufficient payload as registering the entry. The S3 reducer is spec-compliant for the 'unknown id ignored' scenario as-is."
+    },
+    {
+      "severity": "MAJOR",
+      "title": "Delete-lead is not idempotent across >1 pending booking: if one calendar event delete succeeds and a later one fails, the route bails before the DB delete, and a retry re-attempts the already-deleted event (GoogleCalendarPort.deleteEvent does not treat 404/410 as success), so the lead can never be deleted",
+      "owner": "S4 booking-hitl",
+      "why-deferred": "A lead with >1 pending booking only arises once S4 enables re-proposing a slot. Fix belongs with S4's calendar-cleanup: make deleteEvent idempotent (treat 404/410 as success) and/or delete events best-effort collecting failures. S3's single-pending delete path is fully tested and correct."
+    },
+    {
+      "severity": "MAJOR",
+      "title": "HallMap does not update a seat's color/clickability in real time from a live BOOKING_PENDING — dashboard.hallMap is replaced only by a full dashboard-scoped STATE_SNAPSHOT, so a live pending seat stays gray until a snapshot arrives",
+      "owner": "S4 booking-hitl",
+      "why-deferred": "The only live event that moves a request to pending is produced by S4's hold flow (absent in S3). S4 must refresh dashboard.hallMap when a booking status changes (republish a dashboard-scoped STATE_SNAPSHOT after the status event) or the reducer must derive seat status from livePendingQueue too. Static HallMap rendering + precedence + click behavior is fully tested in S3."
+    },
+    {
+      "severity": "MINOR",
+      "title": "dashboard-state.dateAndHourOf slices slot_start assuming a Europe/Kyiv wall-clock offset; a UTC/Z-formatted slot_start (as packages/db/src/bookings.test.ts's own precedent stores) would mis-bucket HallMap seats by the Kyiv offset with no error",
+      "owner": "S4 booking-hitl",
+      "why-deferred": "No live code writes bookings.slot_start until S4's hold-creation. Contract S4 must honor: write slot_start as a Europe/Kyiv-offset ISO string (matching S3's HallMap fixtures), OR dashboard-state must normalize any offset/Z to Kyiv before bucketing. Recorded as a data-integrity contract for S4."
+    }
+  ],
+  "informationalNoAction": [
+    "Localhost binding verified correct (dev/start -H 127.0.0.1; HttpAguiPublisher posts only to a developer-set localhost AGUI_INGEST_URL). Negative 'unreachable from LAN' assertion is a Stage E E2E task (tasks.md §1.5), not yet run.",
+    "SQL fully parameterized (better-sqlite3 prepared statements); React auto-escapes all lead-supplied text (no dangerouslySetInnerHTML anywhere); no secrets logged by the new routes/publisher; no NEXT_PUBLIC_* in the dashboard.",
+    "SSE stream lifecycle verified sound: controller.error() (not close()) avoids the unread-queue reader.closed hang; cancel() + abort listener unsubscribe idempotently; enqueue wrapped in try/catch; the snapshot better-sqlite3 connection is closed in finally.",
+    "agui-hub module-singleton pub/sub is safe under Node's single-threaded model; no unbounded-subscriber cap (acceptable for single-teacher localhost; noted).",
+    "npm audit: 0 high/critical; 2 moderate (PostCSS build-time CSS stringifier via next's toolchain, not reachable by runtime input) — routine next bump when convenient.",
+    "Pending queue renders the full RequestCard rather than a distinct compact 'entry then open' two-tier view — satisfies the letter of the oversized-content scenario (bounded, no h-scroll, full text reachable); accepted UX simplification for a single-teacher tool."
+  ],
+  "clean": true,
+  "cleanNote": "Clean after remediation: guardrail check PASS; all 7 confirmed findings fixed test-first in commit 00a1fcc (332 tests, none weakened, tsc+lint clean, openspec 6/6). Four findings explicitly deferred with named owner to S4 booking-hitl — each is unreachable in S3 (no live path to a pending booking; propose_slots/request_hold are pass-through no-ops until S4) and does not affect the S3 demo. Review ran BEFORE archive (S1/S2 process lesson). Stage E (E2E + axe light+dark + vision-verify + recording, tasks.md §7) and the scripted manual real-DB smoke (§8.11) remain before archive (§8.13).",
+  "generatedAt": "2026-07-06T19:20:00Z",
+  "remediatedAt": "2026-07-06T19:35:00Z"
+}
