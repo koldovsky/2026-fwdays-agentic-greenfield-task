@@ -4,9 +4,9 @@
 // subscriptions table CHECK constraints (migrations/0001_init.sql).
 
 /** Purchasable plans (FR-PAYWALL-02). Free is the absence of a purchase. */
-export type PaymentsPlan = "pro" | "job_hunt_pass";
+export type PaymentsPlan = "pro" | "ultra" | "job_hunt_pass";
 
-const PAYMENTS_PLANS: readonly string[] = ["pro", "job_hunt_pass"];
+const PAYMENTS_PLANS: readonly string[] = ["pro", "ultra", "job_hunt_pass"];
 
 /** Type guard for {@link PaymentsPlan} on untrusted input. */
 export function isPaymentsPlan(value: unknown): value is PaymentsPlan {

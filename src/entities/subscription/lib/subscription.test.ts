@@ -78,3 +78,51 @@ describe("isFree", () => {
     expect(isFree({ ...pro, plan: "job_hunt_pass" })).toBe(false);
   });
 });
+
+// Task 2.4 — ultra plan entitlement (FR-BILLING-01, FR-PAYWALL-01, FR-BILLING-02)
+const ultra: Subscription = {
+  id: "s2",
+  userId: "u2",
+  plan: "ultra",
+  status: "active",
+  currentPeriodEnd: "2026-08-02T12:00:00.000Z",
+};
+
+describe("isSubscriptionActive — ultra plan (FR-BILLING-01)", () => {
+  it("true for an active ultra subscription within its period end", () => {
+    expect(isSubscriptionActive(ultra, now)).toBe(true);
+  });
+
+  it("false once the ultra period has lapsed", () => {
+    expect(
+      isSubscriptionActive({ ...ultra, currentPeriodEnd: "2026-06-01T00:00:00.000Z" }, now),
+    ).toBe(false);
+  });
+});
+
+describe("hasPaidAccess — ultra plan (FR-PAYWALL-01, FR-BILLING-02)", () => {
+  it("true for an active ultra subscription within its period end", () => {
+    expect(hasPaidAccess(ultra, now)).toBe(true);
+  });
+
+  it("true while ultra is canceled but before period end (downgrade at period END)", () => {
+    expect(hasPaidAccess({ ...ultra, status: "canceled" }, now)).toBe(true);
+  });
+
+  it("false once a canceled ultra subscription's period lapses (FR-BILLING-02)", () => {
+    expect(
+      hasPaidAccess(
+        { ...ultra, status: "canceled", currentPeriodEnd: "2026-06-01T00:00:00.000Z" },
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it("false for an expired ultra subscription", () => {
+    expect(hasPaidAccess({ ...ultra, status: "expired" }, now)).toBe(false);
+  });
+
+  it("true for an open-ended active ultra subscription (no period end)", () => {
+    expect(hasPaidAccess({ ...ultra, currentPeriodEnd: null }, now)).toBe(true);
+  });
+});

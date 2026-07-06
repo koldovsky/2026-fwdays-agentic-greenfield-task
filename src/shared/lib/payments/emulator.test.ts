@@ -95,6 +95,77 @@ describe("emulator specifics", () => {
     expect(store.writes).toHaveLength(0);
   });
 
+  // Task 3.2 — per-plan period ends (FR-BILLING-01, FR-PAYWALL-02, FR-BILLING-03)
+  it("job_hunt_pass checkout.completed grants exactly 14 days from occurredAt", async () => {
+    const store = memoryStore();
+    await makeProvider(store).handleWebhook({
+      id: "evt_pass",
+      type: "checkout.completed",
+      userId: "u_pass",
+      plan: "job_hunt_pass",
+      occurredAt: "2026-07-03T00:00:00.000Z",
+    });
+
+    expect(store.writes).toHaveLength(1);
+    // 2026-07-03 + 14 days = 2026-07-17
+    expect(store.writes[0].currentPeriodEnd).toBe("2026-07-17T00:00:00.000Z");
+  });
+
+  it("ultra checkout.completed grants exactly 30 days from occurredAt", async () => {
+    const store = memoryStore();
+    await makeProvider(store).handleWebhook({
+      id: "evt_ultra",
+      type: "checkout.completed",
+      userId: "u_ultra",
+      plan: "ultra",
+      occurredAt: "2026-07-03T00:00:00.000Z",
+    });
+
+    expect(store.writes).toHaveLength(1);
+    // 2026-07-03 + 30 days = 2026-08-02
+    expect(store.writes[0].currentPeriodEnd).toBe("2026-08-02T00:00:00.000Z");
+  });
+
+  it("pro checkout.completed still grants exactly 30 days (no regression)", async () => {
+    const store = memoryStore();
+    await makeProvider(store).handleWebhook({
+      id: "evt_pro",
+      type: "checkout.completed",
+      userId: "u_pro",
+      plan: "pro",
+      occurredAt: "2026-07-03T00:00:00.000Z",
+    });
+
+    expect(store.writes).toHaveLength(1);
+    expect(store.writes[0].currentPeriodEnd).toBe("2026-08-02T00:00:00.000Z");
+  });
+
+  it("checkout.failed writes nothing for job_hunt_pass (FR-BILLING-03)", async () => {
+    const store = memoryStore();
+    await makeProvider(store).handleWebhook({
+      id: "evt_fail_pass",
+      type: "checkout.failed",
+      userId: "u_fail_pass",
+      plan: "job_hunt_pass",
+      occurredAt: "2026-07-03T00:00:00.000Z",
+    });
+
+    expect(store.writes).toHaveLength(0);
+  });
+
+  it("checkout.failed writes nothing for ultra (FR-BILLING-03)", async () => {
+    const store = memoryStore();
+    await makeProvider(store).handleWebhook({
+      id: "evt_fail_ultra",
+      type: "checkout.failed",
+      userId: "u_fail_ultra",
+      plan: "ultra",
+      occurredAt: "2026-07-03T00:00:00.000Z",
+    });
+
+    expect(store.writes).toHaveLength(0);
+  });
+
   it("cancel routes through the webhook path — never a direct store write", async () => {
     const store = memoryStore();
     const provider = makeProvider(store);
@@ -112,6 +183,7 @@ describe("emulator specifics", () => {
     expect(store.writes[1]).toMatchObject({ userId: "u1", status: "canceled" });
     // Plan and period end survive cancellation (FR-BILLING-02).
     expect(store.writes[1].plan).toBe("job_hunt_pass");
-    expect(store.writes[1].currentPeriodEnd).toBe("2026-08-02T00:00:00.000Z");
+    // job_hunt_pass is a 14-day pass: 2026-07-03 + 14 days = 2026-07-17.
+    expect(store.writes[1].currentPeriodEnd).toBe("2026-07-17T00:00:00.000Z");
   });
 });

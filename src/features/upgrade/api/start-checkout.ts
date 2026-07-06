@@ -4,12 +4,16 @@
 // so nothing the client sends can be trusted or needs to be. Calm result
 // union — no exceptions escape (NFR-OBS-01).
 
+// Type-only import: shared/lib/payments' runtime code is server-side
+// (node:crypto); the client only needs the plan union.
+import type { PaymentsPlan } from "@/shared/lib/payments";
+
 export type StartCheckoutResult =
   | { readonly ok: true; readonly checkoutUrl: string }
   | { readonly ok: false; readonly code: "unauthenticated" | "error" };
 
 export async function startCheckout(
-  plan: "pro" | "job_hunt_pass",
+  plan: PaymentsPlan,
   returnTo: string,
 ): Promise<StartCheckoutResult> {
   try {

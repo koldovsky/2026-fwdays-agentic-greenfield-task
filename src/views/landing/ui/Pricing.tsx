@@ -1,6 +1,7 @@
-// Pricing table (FR-SALES-03): Free / Pro / Job-hunt Pass with plain renewal
-// numbers. Included-feature marker is a colored dot (no SVG icons — BC-BRAND-01).
-// Copy via shared/lib/i18n.
+// Pricing table (FR-SALES-03): Free / Pro / Ultra / Job-hunt Pass with plain
+// renewal numbers. Free is a lightweight descriptive row above three paid cards;
+// Ultra is the featured (inverted) card with the primary CTA. Included-feature
+// marker is a colored dot (no SVG icons — BC-BRAND-01). Copy via shared/lib/i18n.
 import { type Locale } from "@/shared/lib/i18n";
 import { Button } from "@/shared/ui";
 import { pricingSection } from "../lib/content";
@@ -8,12 +9,31 @@ import { SectionHead, Wrap } from "./primitives";
 
 export function Pricing({ locale = "ua" }: { readonly locale?: Locale }) {
   const { head, plans } = pricingSection(locale);
+  const free = plans.find((p) => p.freeRow);
+  const paid = plans.filter((p) => !p.freeRow);
   return (
     <section id="pricing" className="scroll-mt-16 py-16">
       <Wrap>
         <SectionHead kicker={head.kicker} title={head.title} lead={head.lead} />
+
+        {free !== undefined && (
+          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-hairline bg-surface-card px-[26px] py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-display text-[17px] font-semibold text-ink">{free.name}</span>
+              <span className="font-display text-xl font-bold text-ink">{free.price}</span>
+              <span className="text-sm text-ink-muted">{free.cadence}</span>
+              <span className="text-sm text-ink-soft">{free.features.join(", ")}</span>
+            </div>
+            <div className="shrink-0">
+              <Button href="/tailor" variant="secondary" size="sm">
+                {free.cta}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="grid items-stretch gap-4 md:grid-cols-3">
-          {plans.map((plan) => {
+          {paid.map((plan) => {
             const featured = plan.featured;
             return (
               <div

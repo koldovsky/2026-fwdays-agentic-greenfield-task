@@ -113,4 +113,95 @@ describe("BillingPortal — free / failed payment (FR-BILLING-03)", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText(ua.billing.noInvoices)).toBeInTheDocument();
   });
+
+  it("free plan shows no benefit list (task 6.2)", () => {
+    render(<BillingPortal subscription={null} now={NOW} />);
+    // No planBenefits list items for a free user — the benefit <ul> is only
+    // rendered when effectivePlan !== "free".
+    // Any <ul>s present belong to UpgradePlans, not a current-plan benefit list.
+    // The current-plan benefit list lives above the invoice section; confirm no
+    // pro/ultra/pass benefit string appears in the current-plan area.
+    expect(screen.queryByText(ua.billing.planBenefits.pro[0])).not.toBeInTheDocument();
+    expect(screen.queryByText(ua.billing.planBenefits.ultra[0])).not.toBeInTheDocument();
+    expect(screen.queryByText(ua.billing.planBenefits.job_hunt_pass[0])).not.toBeInTheDocument();
+  });
+});
+
+// Task 6.2 — Ultra plan display, renewsOnLabel, and planBenefits <ul>
+// (FR-BILLING-01, FR-BILLING-02)
+const activeUltra: SubscriptionAccess = {
+  plan: "ultra",
+  status: "active",
+  currentPeriodEnd: "2026-08-01T12:00:00.000Z",
+};
+
+describe("BillingPortal — active ultra plan (task 6.2, FR-BILLING-01)", () => {
+  it("shows the Ultra plan name in the current-plan area", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+    expect(screen.getByTestId("current-plan-name")).toHaveTextContent(ua.billing.planName.ultra);
+  });
+
+  it("shows renewsOnLabel for an active Ultra plan (not expiresOnLabel)", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+    expect(screen.getByText(ua.billing.renewsOnLabel)).toBeInTheDocument();
+    expect(screen.queryByText(ua.billing.expiresOnLabel)).not.toBeInTheDocument();
+  });
+
+  it("shows checkout.planPrice.ultra as the plan price", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+    expect(screen.getByText(ua.checkout.planPrice.ultra)).toBeInTheDocument();
+  });
+
+  it("renders billing.planBenefits.ultra as a <ul> of <li> items under the plan name (task 6.2)", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+
+    // Every ultra benefit string must appear in the document
+    for (const benefit of ua.billing.planBenefits.ultra) {
+      expect(screen.getByText(benefit)).toBeInTheDocument();
+      expect(screen.getByText(benefit).closest("li")).not.toBeNull();
+    }
+
+    // The benefits must be inside a <ul>
+    const benefitText = ua.billing.planBenefits.ultra[0];
+    const li = screen.getByText(benefitText).closest("li");
+    expect(li?.parentElement?.tagName).toBe("UL");
+  });
+
+  it("shows $30 in the invoice row for an ultra subscription (task 6.2)", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+    expect(screen.getByText("$30")).toBeInTheDocument();
+    // Invoice date: 2026-08-01 minus 30 days = 2026-07-02
+    expect(screen.getByText("2026-07-02")).toBeInTheDocument();
+  });
+
+  it("shows the cancel button for an active ultra plan", () => {
+    render(<BillingPortal subscription={activeUltra} now={NOW} />);
+    expect(screen.getByRole("button", { name: ua.billing.cancelAction })).toBeInTheDocument();
+  });
+});
+
+describe("BillingPortal — job_hunt_pass still shows expiresOnLabel (task 6.2, FR-BILLING-01)", () => {
+  it("shows expiresOnLabel, not renewsOnLabel, for job_hunt_pass", () => {
+    render(
+      <BillingPortal
+        subscription={{ plan: "job_hunt_pass", status: "active", currentPeriodEnd: "2026-08-01T12:00:00.000Z" }}
+        now={NOW}
+      />,
+    );
+    expect(screen.getByText(ua.billing.expiresOnLabel)).toBeInTheDocument();
+    expect(screen.queryByText(ua.billing.renewsOnLabel)).not.toBeInTheDocument();
+  });
+
+  it("shows job_hunt_pass benefits as <li> items", () => {
+    render(
+      <BillingPortal
+        subscription={{ plan: "job_hunt_pass", status: "active", currentPeriodEnd: "2026-08-01T12:00:00.000Z" }}
+        now={NOW}
+      />,
+    );
+    for (const benefit of ua.billing.planBenefits.job_hunt_pass) {
+      expect(screen.getByText(benefit)).toBeInTheDocument();
+      expect(screen.getByText(benefit).closest("li")).not.toBeNull();
+    }
+  });
 });

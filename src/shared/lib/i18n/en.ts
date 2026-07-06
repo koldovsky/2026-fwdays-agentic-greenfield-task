@@ -90,11 +90,13 @@ export const en: Dictionary = {
     planLabel: "Plan",
     planName: {
       pro: "Pro",
+      ultra: "Ultra",
       job_hunt_pass: "Job-hunt Pass",
     },
     planPrice: {
       pro: "$12 per month",
-      job_hunt_pass: "$19 one-time, 30 days",
+      ultra: "$30 per month",
+      job_hunt_pass: "$20 one-time, 14 days",
     },
     succeedAction: "Simulate a successful payment",
     failAction: "Simulate a failed payment",
@@ -116,11 +118,30 @@ export const en: Dictionary = {
   },
   upgrade: {
     planFeature: {
-      pro: "Unlimited tailorings and clean PDF + DOCX export.",
-      job_hunt_pass: "Everything in Pro for 30 days, no subscription.",
+      pro: [
+        "Stop rationing tailorings: run as many as the job hunt takes",
+        "Clean PDF and DOCX export, no more copy-paste into a template",
+        "Tailor from your original PDF, not just its stripped text",
+        "Tailoring history and cover letters, kept in one place",
+        "Priority generation when the queue is busy",
+      ],
+      ultra: [
+        "Everything in Pro, plus room to apply every single day",
+        "The flagship Claude model on every tailoring, not just the fast one",
+        "High-volume daily tailoring for an all-out search",
+        "First in line for generation, even at peak",
+        "Interview prep (coming soon)",
+        "Private community (coming soon)",
+      ],
+      job_hunt_pass: [
+        "Everything in Pro, with no subscription to remember to cancel",
+        "A focused 14-day window built for one sprint of applications",
+        "One flat price, paid once",
+      ],
     },
     chooseAction: {
       pro: "Choose Pro",
+      ultra: "Choose Ultra",
       job_hunt_pass: "Choose Job-hunt Pass",
     },
     pending: "Opening checkout",
@@ -133,7 +154,30 @@ export const en: Dictionary = {
     planName: {
       free: "Free",
       pro: "Pro",
+      ultra: "Ultra",
       job_hunt_pass: "Job-hunt Pass",
+    },
+    planBenefits: {
+      pro: [
+        "Unlimited tailorings",
+        "Clean PDF and DOCX export",
+        "Tailor from your original PDF",
+        "Tailoring history and cover letters",
+        "Priority generation",
+      ],
+      ultra: [
+        "Everything in Pro",
+        "The flagship Claude model on every tailoring",
+        "High-volume daily tailoring",
+        "Priority generation at peak",
+        "Interview prep (coming soon)",
+        "Private community (coming soon)",
+      ],
+      job_hunt_pass: [
+        "Everything in Pro, no subscription",
+        "A focused 14-day window",
+        "One flat price, paid once",
+      ],
     },
     renewsOnLabel: "Next renewal",
     expiresOnLabel: "Valid until",
@@ -472,9 +516,23 @@ export const en: Dictionary = {
         cta: "Go Pro",
         badge: "Popular",
       },
+      ultra: {
+        name: "Ultra",
+        cadence: "per month, renews at $30",
+        features: [
+          "Everything in Pro",
+          "The flagship Claude model on every tailoring",
+          "High-volume daily tailoring",
+          "Priority generation at peak",
+          "Interview prep (coming soon)",
+          "Private community (coming soon)",
+        ],
+        cta: "Go Ultra",
+        badge: "Best value",
+      },
       pass: {
         name: "Job-hunt Pass",
-        cadence: "one-time · 30 days",
+        cadence: "one-time, 14 days",
         features: ["Everything in Pro", "No subscription", "Built for a focused sprint"],
         cta: "Get the pass",
       },
@@ -509,7 +567,7 @@ export const en: Dictionary = {
       pass: {
         question: "What's the Job-hunt Pass?",
         answer:
-          "A one-time 30-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts, the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
+          "A one-time 14-day unlock with everything in Pro and no recurring charge. Job hunts come in bursts, the pass fits a focused sprint without signing you up for a subscription you'll forget to cancel.",
       },
     },
     finalCta: {

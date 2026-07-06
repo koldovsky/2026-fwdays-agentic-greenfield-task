@@ -67,9 +67,10 @@ export function BillingPortal({
   }
 
   const periodEnd = subscription?.currentPeriodEnd ?? null;
+  // Pro and Ultra renew monthly; the Job-hunt Pass has a fixed expiry.
   const dateLabel = canceled
     ? copy.billing.accessUntilLabel
-    : effectivePlan === "pro"
+    : effectivePlan === "pro" || effectivePlan === "ultra"
       ? copy.billing.renewsOnLabel
       : copy.billing.expiresOnLabel;
 
@@ -85,6 +86,17 @@ export function BillingPortal({
         </div>
         {effectivePlan !== "free" && (
           <div className="text-sm text-ink-muted">{copy.checkout.planPrice[effectivePlan]}</div>
+        )}
+
+        {effectivePlan !== "free" && (
+          <ul className="mt-3 flex flex-col gap-1.5 text-sm text-ink-soft">
+            {copy.billing.planBenefits[effectivePlan].map((benefit) => (
+              <li key={benefit} className="flex items-start gap-2">
+                <span className="mt-[6px] h-[6px] w-[6px] shrink-0 rounded-full bg-met" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
         )}
 
         {paid && periodEnd !== null && (

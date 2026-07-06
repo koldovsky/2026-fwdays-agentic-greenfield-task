@@ -1,11 +1,12 @@
 "use client";
 
 // upgrade feature — the plan chooser (add-payments-emulator task 2.1,
-// FR-PAYWALL-02): Pro and Job-hunt Pass side by side; the user picks a plan
-// BEFORE entering checkout. Choosing a plan creates a checkout session for
+// FR-PAYWALL-02): Pro, Ultra, and Job-hunt Pass side by side; the user picks a
+// plan BEFORE entering checkout. Choosing a plan creates a checkout session for
 // the current screen's returnTo (FR-PAYWALL-03) and navigates to it; an
-// anonymous caller is routed to sign-in instead. Pricing copy comes from the
-// shared dictionary and matches the landing pricing table (FR-SALES-03).
+// anonymous caller is routed to sign-in instead. Each plan lists its benefits
+// as bullets; copy comes from the shared dictionary and matches the landing
+// pricing table (FR-SALES-03). Ultra is the featured (primary-CTA) plan.
 import { useState } from "react";
 import { t, type Locale } from "@/shared/lib/i18n";
 // Type-only import: shared/lib/payments' runtime code is server-side
@@ -14,7 +15,7 @@ import type { PaymentsPlan } from "@/shared/lib/payments";
 import { Button } from "@/shared/ui";
 import { startCheckout } from "../api/start-checkout";
 
-const PLANS: readonly PaymentsPlan[] = ["pro", "job_hunt_pass"];
+const PLANS: readonly PaymentsPlan[] = ["pro", "ultra", "job_hunt_pass"];
 
 export interface UpgradePlansProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
@@ -60,7 +61,7 @@ export function UpgradePlans({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
         {PLANS.map((plan) => (
           <div
             key={plan}
@@ -70,12 +71,19 @@ export function UpgradePlans({
               {copy.checkout.planName[plan]}
             </div>
             <div className="mt-1 text-sm text-ink-muted">{copy.checkout.planPrice[plan]}</div>
-            <p className="mb-4 mt-2 text-sm text-ink-soft">{copy.upgrade.planFeature[plan]}</p>
+            <ul className="mb-4 mt-2 flex flex-col gap-1.5 text-sm text-ink-soft">
+              {copy.upgrade.planFeature[plan].map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
+                  <span className="mt-[6px] h-[6px] w-[6px] shrink-0 rounded-full bg-met" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
             <div className="mt-auto">
               <Button
                 label={copy.upgrade.chooseAction[plan]}
                 size="sm"
-                variant={plan === "pro" ? "primary" : "secondary"}
+                variant={plan === "ultra" ? "primary" : "secondary"}
                 disabled={pendingPlan !== null}
                 onClick={() => void choose(plan)}
               />

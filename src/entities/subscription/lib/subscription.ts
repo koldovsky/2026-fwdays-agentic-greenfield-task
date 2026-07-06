@@ -2,7 +2,7 @@
 import type { Plan, Subscription } from "../model/types";
 
 /** Plans that unlock unlimited tailorings + export (everything above Free). */
-const PAID_PLANS: ReadonlySet<Plan> = new Set<Plan>(["pro", "job_hunt_pass"]);
+const PAID_PLANS: ReadonlySet<Plan> = new Set<Plan>(["pro", "ultra", "job_hunt_pass"]);
 
 /**
  * Whether the subscription grants paid access at `nowIso`. Requires `active`

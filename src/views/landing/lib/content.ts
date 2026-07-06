@@ -188,6 +188,8 @@ export interface Plan {
   readonly cta: string;
   readonly featured: boolean;
   readonly badge?: string;
+  /** True for the Free tier — rendered as a lightweight row, not a full card. */
+  readonly freeRow?: boolean;
 }
 
 export function pricingSection(locale: Locale): {
@@ -198,9 +200,10 @@ export function pricingSection(locale: Locale): {
   return {
     head: p.head,
     plans: [
-      { ...p.free, price: "$0", featured: false },
-      { ...p.pro, price: "$12", featured: true },
-      { ...p.pass, price: "$19", featured: false },
+      { ...p.free, price: "$0", featured: false, freeRow: true },
+      { ...p.pro, price: "$12", featured: false },
+      { ...p.ultra, price: "$30", featured: true },
+      { ...p.pass, price: "$20", featured: false },
     ],
   };
 }

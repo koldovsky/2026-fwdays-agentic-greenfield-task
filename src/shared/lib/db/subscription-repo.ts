@@ -5,7 +5,7 @@
 // migrations/0001_init.sql `subscriptions` (one row per user, UNIQUE user_id).
 import type { Queryable } from "./port";
 
-export type SubscriptionPlan = "free" | "pro" | "job_hunt_pass";
+export type SubscriptionPlan = "free" | "pro" | "ultra" | "job_hunt_pass";
 export type SubscriptionStatus = "active" | "canceled" | "expired";
 
 export interface SubscriptionRecord {

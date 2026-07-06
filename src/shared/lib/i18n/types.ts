@@ -128,9 +128,9 @@ export interface Dictionary {
     /** Label above the selected plan. */
     readonly planLabel: string;
     /** Display names per purchasable plan (matches landing pricing). */
-    readonly planName: Readonly<Record<"pro" | "job_hunt_pass", string>>;
+    readonly planName: Readonly<Record<"pro" | "ultra" | "job_hunt_pass", string>>;
     /** Price lines per purchasable plan (matches landing pricing). */
-    readonly planPrice: Readonly<Record<"pro" | "job_hunt_pass", string>>;
+    readonly planPrice: Readonly<Record<"pro" | "ultra" | "job_hunt_pass", string>>;
     /** Emulator action: complete the checkout successfully. */
     readonly succeedAction: string;
     /** Emulator action: make the payment fail (FR-BILLING-03 path). */
@@ -165,10 +165,14 @@ export interface Dictionary {
     readonly dismissAction: string;
   };
   readonly upgrade: {
-    /** One-line pitch per purchasable plan (matches landing pricing). */
-    readonly planFeature: Readonly<Record<"pro" | "job_hunt_pass", string>>;
+    /**
+     * Benefit bullets per purchasable plan (matches landing pricing). A list,
+     * not a sentence, so each tier's differentiated value is scannable
+     * (FR-SALES-03, NFR-I18N-01). ua and en arrays must be the same length per plan.
+     */
+    readonly planFeature: Readonly<Record<"pro" | "ultra" | "job_hunt_pass", readonly string[]>>;
     /** Per-plan choose CTA (FR-PAYWALL-02: user picks before checkout). */
-    readonly chooseAction: Readonly<Record<"pro" | "job_hunt_pass", string>>;
+    readonly chooseAction: Readonly<Record<"pro" | "ultra" | "job_hunt_pass", string>>;
     /** Shown while the checkout session is being created. */
     readonly pending: string;
     /** Calm copy when checkout could not be started (NFR-OBS-01). */
@@ -182,7 +186,13 @@ export interface Dictionary {
     /** Label above the current plan (FR-BILLING-01). */
     readonly currentPlanLabel: string;
     /** Display names for every plan incl. Free. */
-    readonly planName: Readonly<Record<"free" | "pro" | "job_hunt_pass", string>>;
+    readonly planName: Readonly<Record<"free" | "pro" | "ultra" | "job_hunt_pass", string>>;
+    /**
+     * Benefit bullets per paid plan, shown on the current-plan card in the
+     * billing portal (FR-BILLING-01). Same shape as `upgrade.planFeature`;
+     * ua and en arrays must be the same length per plan (NFR-I18N-01).
+     */
+    readonly planBenefits: Readonly<Record<"pro" | "ultra" | "job_hunt_pass", readonly string[]>>;
     /** Next renewal date label — Pro (FR-BILLING-01). */
     readonly renewsOnLabel: string;
     /** Fixed expiry label — Job-hunt Pass. */
@@ -447,7 +457,7 @@ export interface Dictionary {
       readonly paste: { readonly title: string; readonly body: string };
       readonly exportStep: { readonly title: string; readonly body: string };
     };
-    /** Pricing table: three plans. */
+    /** Pricing table: four plans (Free + three paid). */
     readonly pricing: {
       readonly head: SectionHeadCopy;
       readonly free: {
@@ -457,6 +467,13 @@ export interface Dictionary {
         readonly cta: string;
       };
       readonly pro: {
+        readonly name: string;
+        readonly cadence: string;
+        readonly features: readonly string[];
+        readonly cta: string;
+        readonly badge: string;
+      };
+      readonly ultra: {
         readonly name: string;
         readonly cadence: string;
         readonly features: readonly string[];

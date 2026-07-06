@@ -11,14 +11,19 @@
 import { randomUUID } from "node:crypto";
 import { createCheckoutToken } from "./checkout-token";
 import type { PaymentsProvider, SubscriptionsStore } from "./port";
-import { isPaymentsPlan, type PaymentsEvent } from "./types";
+import { isPaymentsPlan, type PaymentsEvent, type PaymentsPlan } from "./types";
 
 /**
- * Paid period granted by one successful checkout. Pro renews monthly and the
- * Job-hunt Pass is a one-time 30-day unlock (landing pricing) — both grant 30
- * days per payment; renewal is a later `checkout.completed` event.
+ * Paid period granted by one successful checkout, per plan (FR-BILLING-01,
+ * FR-PAYWALL-02). Pro and Ultra renew monthly (30 days per cycle); the Job-hunt
+ * Pass is a one-time 14-day sprint, not a month. Renewal for the monthly plans
+ * is a later `checkout.completed` event.
  */
-const PERIOD_DAYS = 30;
+const PERIOD_DAYS_BY_PLAN: Readonly<Record<PaymentsPlan, number>> = {
+  pro: 30,
+  ultra: 30,
+  job_hunt_pass: 14,
+};
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface EmulatorProviderDeps {
@@ -43,7 +48,7 @@ export function createEmulatorProvider(deps: EmulatorProviderDeps): PaymentsProv
         plan: event.plan,
         status: "active",
         currentPeriodEnd: new Date(
-          Date.parse(event.occurredAt) + PERIOD_DAYS * DAY_MS,
+          Date.parse(event.occurredAt) + PERIOD_DAYS_BY_PLAN[event.plan] * DAY_MS,
         ).toISOString(),
       });
       return;

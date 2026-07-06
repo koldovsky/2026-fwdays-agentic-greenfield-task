@@ -7,6 +7,22 @@
 
 ## Last action
 
+- **T2 DONE + gate green (2026-07-06, ultracode).** `rework-subscription-plans`: new `ultra` tier
+  ($30/mo) threaded through EVERY plan union (entities Plan, PaymentsPlan+PAYMENTS_PLANS,
+  SubscriptionPlan, PAID_PLANS, SyntheticInvoice.plan, start-checkout param) with no stranded bimap;
+  **migration renamed 0005→0006** (`0006_ultra_plan.sql`, 0005 taken by T1) — additive CHECK widen;
+  per-plan period map `{pro:30, ultra:30, job_hunt_pass:14}` in BOTH emulator + invoices;
+  PLAN_AMOUNT_USD ultra:30 + Pass 19→20; `upgrade.planFeature`→`readonly string[]` + new
+  `billing.planBenefits`; landing Pricing four-plan layout (Free strip + Pro/Ultra/Pass, Ultra
+  featured); UpgradePlans 3-plan grid w/ bullets; BillingPortal current-plan benefit list.
+  **User decision honored:** Ultra's unbuilt features (interview prep, private community) labeled
+  "(coming soon)" / "(незабаром)" in en+ua — not sold as live. Enemy-centric copy, no
+  emoji/!/em-dash, no honesty claims in marketing copy. Maker(opus)→test-author(sonnet, +67 tests)→
+  verifier+checker(opus). Checker fix-first 0 blockers; 2 major FIXED (Pass FAQ 30→14 day in en+ua) +
+  1 minor FIXED (unused test var). Gate: lint 0/0 + build + **114 files / 831 tests green.**
+  Implements FR-BILLING-01/02, FR-PAYWALL-02, FR-SALES-03, NFR-I18N-01, BC-BRAND-01. Spec tasks ticked
+  except 7.4 (manual dev smoke). **UA copy + tier naming still want a native marketing-voice review**
+  (non-blocking). **Next: T4.**
 - **T3 DONE + gate green (2026-07-06, ultracode).** `harden-account-export-ux`: fetch-based GDPR
   download via new `features/export-data-button` slice (idle|pending|error state machine mirroring
   DeleteAccountButton, blob→objectURL→synthetic anchor→revoke, NO href/navigation, inline
@@ -146,7 +162,7 @@
 ## Working on
 
 **NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 (next) → T4 → T5**. Each task = maker → test-author →
+Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 (next) → T5**. Each task = maker → test-author →
 checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends
