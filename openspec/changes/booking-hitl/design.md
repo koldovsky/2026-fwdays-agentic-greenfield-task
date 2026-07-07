@@ -78,8 +78,8 @@ Three options were considered:
 |---|---|---|---|
 | Durability across a bot restart | N/A — a listener that's down loses the call | Ephemeral — a decision made while the bot is down/reconnecting is lost | Durable — a row sits in `notifications` until delivered, survives either process restarting |
 | New inbound surface | The bot gains an inbound HTTP listener — breaches ADR-0001 §1's "no inbound" invariant | None (SSE is bot→dashboard already; this reverses the direction the bot would need to poll/subscribe) | None — the bot already polls Telegram; polling one more thing (its own DB) is free |
-| Retry on delivery failure | Whatever the dashboard's HTTP client retries — ad hoc, not visible on the request card | Whatever the reconnect logic does — not row-level, no per-decision retry state | `delivery_status` (`pending`/`delivered`/`failed`) is a durable, queryable retry state the request card can surface (spec's own "surfaced on the request card so the administrator can retry" scenario) |
-| Consistency with existing patterns | New pattern | New pattern | Mirrors the already-accepted FR-KB-04/ADR-0001 §4 `questions.delivery_status` shape — same enum, same "administrator can retry" contract |
+| Retry on delivery failure | Whatever the dashboard's HTTP client retries — ad hoc, no durable per-decision retry state | Whatever the reconnect logic does — not row-level, no per-decision retry state | `delivery_status` (`pending`/`delivered`/`failed`) is a durable per-decision retry state the drain loop AUTOMATICALLY retries every tick until it succeeds (auto-retry-only — LOCKED human decision 2026-07-07; see note below) |
+| Consistency with existing patterns | New pattern | New pattern | Mirrors the already-accepted FR-KB-04/ADR-0001 §4 `questions.delivery_status` shape — same enum, same durable-retry contract |
 
 **Chosen:** the dashboard decision route (`apps/dashboard/app/api/decisions/
 [requestId]/route.ts`, currently the inert stub) validates admin input, syncs
@@ -90,9 +90,20 @@ the calendar (calendar-op-before-DB-commit — see Decision 5), calls the pure
 (`setInterval`, alongside the existing `transport.start()` call — no timer
 exists anywhere in the repo today) that drains deliverable rows, calls
 `transport.sendMessage`, and marks each row `delivered` or `failed`. A
-`failed` row is retried on the next tick (no backoff needed at single-teacher
-volume — see Risks) and is what the request card renders as "retry
-sending" (baseline spec's NFR-REL-01 scenario). Rejected: (a) a localhost bot
+`failed` row is AUTOMATICALLY retried on the next drain tick (no backoff
+needed at single-teacher volume — see Risks), so the guarantee is "recorded +
+never silently dropped + auto-retried until delivered" — NOT a manual admin
+retry affordance on the card. **Auto-retry-only (LOCKED human decision,
+2026-07-07):** the review gate flagged that the dashboard does not read
+`notifications.delivery_status` to render a per-decision "retry sending"
+control, which an earlier draft of this decision and the baseline
+NFR-REL-01 scenario implied. The human decided the automatic drain retry is
+sufficient (and arguably better UX than a manual button) for the
+single-teacher MVP; the change's own spec delta amends that scenario
+accordingly (drops the "surfaced on the request card so the administrator can
+retry" clause, keeps "durably recorded + automatically retried + never
+silently dropped"). A manual retry surface is a deliberately-deferred future
+enhancement, not an MVP gap. Rejected: (a) a localhost bot
 HTTP listener — breaches ADR-0001 §1's no-inbound invariant for the bot
 process; (b) a reverse AG-UI channel — ephemeral, no durable per-decision
 retry state, and inverts the existing SSE direction for no benefit.
