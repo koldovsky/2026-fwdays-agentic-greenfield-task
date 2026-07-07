@@ -6,7 +6,7 @@ import type {
   TableDiff,
 } from '../../lib/import/index.ts'
 import { diffRows, KEY_OF, parseTable } from '../../lib/import/index.ts'
-import type { ScheduleInput, ScheduleResult } from '../../lib/index.ts'
+import type { ScheduleInput, ScheduleMode, ScheduleResult } from '../../lib/index.ts'
 import type { PlannedReceipt } from '../../lib/types/index.ts'
 import { schedule } from '../../lib/index.ts'
 import { applyManualMove } from '../../lib/scheduler/reschedule.ts'
@@ -14,6 +14,14 @@ import { expandBom } from '../../lib/bom/expand.ts'
 import { calcGrossRequirements, type GrossRequirement } from '../../lib/mrp/gross-requirements.ts'
 import { demandDatesByMaterial } from '../../lib/material/index.ts'
 import { loadSession, saveTable } from './persistence.ts'
+
+/** Збережений варіант розкладу (FR-SCEN-01). */
+export interface Scenario {
+  id: string
+  name: string
+  mode: ScheduleMode
+  result: ScheduleResult
+}
 
 /** Стан однієї імпортованої таблиці. */
 export interface TableState {
@@ -56,6 +64,11 @@ export interface SessionState {
   stockAdjustments: Record<string, number>
   /** Вручну додані надходження — FR-MAT-03. */
   extraReceipts: PlannedReceipt[]
+  /** Збережені варіанти розкладу (до 3) — FR-SCEN-01. */
+  scenarios: Scenario[]
+  /** id підтвердженого активного варіанту — FR-SCEN-03. */
+  acceptedScenarioId: string | null
+  scenarioSeq: number
   importRows: (table: ImportTable, rows: RawRow[], fileName: string | null) => void
   updateRows: (table: ImportTable, rows: RawRow[]) => void
   clearTable: (table: ImportTable) => void
@@ -68,6 +81,9 @@ export interface SessionState {
   setStockAdjustment: (nomenclatureId: string, qty: number) => void
   addReceipt: (receipt: PlannedReceipt) => void
   resetMaterialEdits: () => void
+  addScenario: (name: string, mode: ScheduleMode, today: Date, horizon: Date) => string | null
+  confirmScenario: (id: string) => void
+  removeScenario: (id: string) => void
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -80,6 +96,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   demandDates: new Map(),
   stockAdjustments: {},
   extraReceipts: [],
+  scenarios: [],
+  acceptedScenarioId: null,
+  scenarioSeq: 0,
 
   importRows: (table, rows, fileName) => {
     const prev = get().tables[table].rawRows
@@ -175,6 +194,45 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   resetMaterialEdits: () => {
     set({ stockAdjustments: {}, extraReceipts: [] })
+  },
+
+  addScenario: (name, mode, today, horizon) => {
+    if (get().scenarios.length >= 3) return null
+    const input = get().buildScheduleInput(today, horizon)
+    if (!input) return null
+    const result = schedule(input, mode)
+    const id = `S${get().scenarioSeq + 1}`
+    set((s) => ({
+      scenarios: [...s.scenarios, { id, name, mode, result }],
+      planInput: input,
+      scenarioSeq: s.scenarioSeq + 1,
+    }))
+    return id
+  },
+
+  confirmScenario: (id) => {
+    const { scenarios, planInput } = get()
+    const scenario = scenarios.find((s) => s.id === id)
+    if (!scenario || !planInput) return
+    // Підтверджений варіант стає активним розкладом (FR-SCEN-03, BC-UX-03).
+    const grossReqs = calcGrossRequirements(expandBom(planInput.orders, planInput.bom))
+    const demandDates = demandDatesByMaterial(scenario.result.operations, planInput.bom)
+    set({
+      plan: scenario.result,
+      acceptedScenarioId: id,
+      grossReqs,
+      demandDates,
+      lockedOpIds: [],
+      stockAdjustments: {},
+      extraReceipts: [],
+    })
+  },
+
+  removeScenario: (id) => {
+    set((s) => ({
+      scenarios: s.scenarios.filter((sc) => sc.id !== id),
+      acceptedScenarioId: s.acceptedScenarioId === id ? null : s.acceptedScenarioId,
+    }))
   },
 
   moveOperation: (opId, newStart) => {
