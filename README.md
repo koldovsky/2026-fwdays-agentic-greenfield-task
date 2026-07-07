@@ -45,3 +45,36 @@
 ---
 
 Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+
+## Traffic Sign Scanner MCP (Cursor)
+
+This repository includes a stdio MCP server for offline Core detection verification from Cursor.
+
+### Prerequisites
+
+- .NET 10 SDK
+- Bundled model at `src/TrafficSignScanner.App/Resources/Raw/model.onnx`
+- Cursor MCP config in `.cursor/mcp.json` (server name: `traffic-sign-scanner`)
+
+Reload MCP servers in Cursor after pulling changes (**Settings → MCP → Refresh**).
+
+### Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `detect_objects(imagePath)` | Run the same Core detector pipeline as the MAUI app on a local image file |
+| `get_model_info()` | Return ONNX input/output names, tensor shape, labels, and confidence threshold |
+
+### Example
+
+Ask Cursor to call `detect_objects` with an absolute path to an eval image, for example:
+
+`evals/dataset/stop-sign/stop-sign-01.jpg` (relative to repo root) or the full Windows path.
+
+`get_model_info()` returns metadata aligned with `docs/model-contract.md`.
+
+### Notes
+
+- Only local image files with extensions `.jpg`, `.jpeg`, `.png`, `.webp`, or `.bmp` are accepted.
+- Invalid or missing paths return a structured MCP error **before** inference runs.
+- Set `TRAFFIC_SIGN_SCANNER_ROOT` if the server cannot locate `TrafficSignScanner.slnx` automatically.

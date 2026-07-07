@@ -2,7 +2,7 @@
 
 ## Gate
 
-Current gate: **G4.4 green** — `app-ui` slice closed (2026-07-08).
+Current gate: **G4.5 green** — `mcp-server` slice closed (2026-07-08).
 
 G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `core-inference`; ratchet not locked (G5).
 
@@ -34,18 +34,24 @@ G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `
 ### app-ui (G4.4)
 
 - MAUI MVVM capture/pick, lazy detector warm-up, off-UI-thread analysis, Core PNG preview binding only.
-- 30 Core tests + 4 App ViewModel tests with `@trace` tags.
 - Verdict: `qa/verdicts/app-ui.md` (pass).
+
+### mcp-server (G4.5)
+
+- Stdio MCP tools `detect_objects` / `get_model_info` wrapping Core with path validation.
+- 9 MCP tests with `@trace FR-MCP-*`; registered in `.cursor/mcp.json`.
+- Verdict: `qa/verdicts/mcp-server.md` (pass).
 
 ## Scaffolded Projects
 
 - `src/TrafficSignScanner.Core` — preprocessing, detection, overlay, analysis pipeline
 - `src/TrafficSignScanner.App` — MVVM UI wired to Core
-- `src/TrafficSignScanner.Mcp`
+- `src/TrafficSignScanner.Mcp` — stdio MCP server
 - `tests/TrafficSignScanner.Core.Tests`
 - `tests/TrafficSignScanner.App.Tests`
+- `tests/TrafficSignScanner.Mcp.Tests`
 - `evals/TrafficSignScanner.Evals`
 
 ## Next Slice
 
-`mcp-server` — MCP tools wrapping Core (FR-MCP-01, FR-MCP-02).
+`evals-hardening` — lock `expected.json`, output-eval ratchet, coverage baseline (G5).

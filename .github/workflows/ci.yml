@@ -34,6 +34,9 @@ jobs:
       - name: Build MCP
         run: dotnet build src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj --no-restore
 
+      - name: Test MCP
+        run: dotnet test tests/TrafficSignScanner.Mcp.Tests/TrafficSignScanner.Mcp.Tests.csproj
+
       - name: Test Core
         run: dotnet test tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj --no-build
 

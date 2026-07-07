@@ -23,6 +23,10 @@ Invoke-Step "build MCP" {
     dotnet build "src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj" --no-restore
 }
 
+Invoke-Step "test MCP" {
+    dotnet test "tests/TrafficSignScanner.Mcp.Tests/TrafficSignScanner.Mcp.Tests.csproj"
+}
+
 Invoke-Step "test Core" {
     dotnet test "tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj"
 }

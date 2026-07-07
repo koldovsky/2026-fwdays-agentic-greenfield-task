@@ -13,7 +13,10 @@
         "run",
         "--project",
         "src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj"
-      ]
+      ],
+      "env": {
+        "TRAFFIC_SIGN_SCANNER_ROOT": "${workspaceFolder}"
+      }
     }
   }
 }
