@@ -118,3 +118,14 @@ Deviations from the literal G.3 checklist text are documented in this script's o
   (b) Observe the REAL Telegram confirmation/decline/re-proposal messages arriving in a live test chat (this script's own step 7 proved the outbox drain logic + payload shape against a FAKE transport — a real `transport.sendMessage` round trip to Telegram's API is untested here).
   (c) The outbox restart-durability check: kill the bot process mid-decision, make the decision on the dashboard while the bot is down, confirm the notifications row stays `pending` in the SQLite file, restart the bot, confirm the queued message delivers on the next drain tick (design.md Decision 1's durability guarantee — requires a real second OS process, not exercised here).
 ```
+
+## HUMAN G.3 CONFIRMATION (2026-07-07)
+
+The developer ran the human half of G.3 live: walked a real lead through
+Telegram intake to a slot tap, and confirmed **all admin-decision messages
+(Confirm / Decline / Propose-another-time) arrived in the real Telegram
+chat**. This closes G.3's human-required delivery steps (a)+(b). Combined
+with the autonomous subset above (calendar sync on all three decisions,
+outbox drain against a fake transport, and the LIVE-VERIFIED exact-overlap
+Confirm regression against the real DEMO calendar), G.3 is satisfied for
+archive.

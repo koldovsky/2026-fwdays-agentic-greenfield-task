@@ -336,7 +336,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       real `bookings`/`requests`/`notifications` rows at every step
       (`@trace FR-HITL-01..04`).
 - [x] G.2 Run `npm run test:integration`; confirm G.1 green.
-- [ ] G.3 Manual real-DB smoke test — SCRIPTED + rerunnable
+- [x] G.3 Manual real-DB smoke test — SCRIPTED + rerunnable
       (`scripts/qa/manual-smoke-booking-hitl.mjs`, transcript
       `docs/qa/booking-hitl-manual-smoke.md`, mirroring the S1/S2/S3
       convention):
@@ -432,29 +432,29 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## J. Validation, docs, and archive prep
 
-- [ ] J.1 Run `npm run lint`.
-- [ ] J.2 Run `npm run test:run` (all unit tests green).
-- [ ] J.3 Run `npm run test:integration` (sections C/D/F/G's real-SQLite
+- [x] J.1 Run `npm run lint`.
+- [x] J.2 Run `npm run test:run` (all unit tests green).
+- [x] J.3 Run `npm run test:integration` (sections C/D/F/G's real-SQLite
       suites green).
-- [ ] J.4 Run `npm run test:e2e` (section I's chrome-devtools/Playwright
+- [x] J.4 Run `npm run test:e2e` (section I's chrome-devtools/Playwright
       pass).
-- [ ] J.5 Run `npm run build`.
-- [ ] J.6 Run `npx openspec validate booking-hitl --strict`.
-- [ ] J.7 Run `npx openspec validate --all --strict` (baseline specs stay
+- [x] J.5 Run `npm run build`.
+- [x] J.6 Run `npx openspec validate booking-hitl --strict`.
+- [x] J.7 Run `npx openspec validate --all --strict` (baseline specs stay
       green, this change validates).
-- [ ] J.8 Run `node scripts/check-traceability.mjs` (FR-HITL-01..04 and
+- [x] J.8 Run `node scripts/check-traceability.mjs` (FR-HITL-01..04 and
       FR-GUARD-01 show implemented coverage, 0 failures).
-- [ ] J.9 Run `node scripts/check-eval-ratchet.mjs` (green or a deliberate
+- [x] J.9 Run `node scripts/check-eval-ratchet.mjs` (green or a deliberate
       baseline update per H.3).
-- [ ] J.10 Run `node scripts/check-a11y.mjs` and
+- [x] J.10 Run `node scripts/check-a11y.mjs` and
       `node scripts/check-recordings.mjs` once more against the final build
       (not just the dev server used mid-implementation).
-- [ ] J.11 Update `docs/current-state.md` (date/time, Europe/Kyiv; S4
+- [x] J.11 Update `docs/current-state.md` (date/time, Europe/Kyiv; S4
       `booking-hitl` COMPLETE+ARCHIVED summary; note S5 `kb-learning` as the
       only remaining MVP slice per the DAG). Check whether `README.md`
       references slice status (S1–S3 precedent: it does not — Ukrainian
       assignment brief only) and update only if it does.
-- [ ] J.12 Only after J.1–J.11 all pass: `npx openspec archive booking-hitl
+- [x] J.12 Only after J.1–J.11 all pass: `npx openspec archive booking-hitl
       --yes`. Gates before archive: all unit/integration/E2E green, lint +
       build clean, openspec 2/2 strict (`booking-hitl` + `--all`),
       traceability 0 failures, a11y 0 serious/critical violations,
