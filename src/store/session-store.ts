@@ -7,8 +7,12 @@ import type {
 } from '../../lib/import/index.ts'
 import { diffRows, KEY_OF, parseTable } from '../../lib/import/index.ts'
 import type { ScheduleInput, ScheduleResult } from '../../lib/index.ts'
+import type { PlannedReceipt } from '../../lib/types/index.ts'
 import { schedule } from '../../lib/index.ts'
 import { applyManualMove } from '../../lib/scheduler/reschedule.ts'
+import { expandBom } from '../../lib/bom/expand.ts'
+import { calcGrossRequirements, type GrossRequirement } from '../../lib/mrp/gross-requirements.ts'
+import { demandDatesByMaterial } from '../../lib/material/index.ts'
 import { loadSession, saveTable } from './persistence.ts'
 
 /** Стан однієї імпортованої таблиці. */
@@ -44,6 +48,14 @@ export interface SessionState {
   plan: ScheduleResult | null
   planInput: ScheduleInput | null
   lockedOpIds: string[]
+  /** Брутто-потреба, зафіксована при плануванні (для перерахунку дефіцитів). */
+  grossReqs: GrossRequirement[]
+  /** Дата споживання кожного матеріалу. */
+  demandDates: Map<string, Date>
+  /** Ручні перевизначення залишків (абсолютні) — FR-MAT-03. */
+  stockAdjustments: Record<string, number>
+  /** Вручну додані надходження — FR-MAT-03. */
+  extraReceipts: PlannedReceipt[]
   importRows: (table: ImportTable, rows: RawRow[], fileName: string | null) => void
   updateRows: (table: ImportTable, rows: RawRow[]) => void
   clearTable: (table: ImportTable) => void
@@ -53,6 +65,9 @@ export interface SessionState {
   buildScheduleInput: (today: Date, horizon: Date) => ScheduleInput | null
   runPlanning: (today: Date, horizon: Date) => ScheduleResult | null
   moveOperation: (opId: string, newStart: Date) => void
+  setStockAdjustment: (nomenclatureId: string, qty: number) => void
+  addReceipt: (receipt: PlannedReceipt) => void
+  resetMaterialEdits: () => void
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -61,6 +76,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   plan: null,
   planInput: null,
   lockedOpIds: [],
+  grossReqs: [],
+  demandDates: new Map(),
+  stockAdjustments: {},
+  extraReceipts: [],
 
   importRows: (table, rows, fileName) => {
     const prev = get().tables[table].rawRows
@@ -131,8 +150,31 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const input = get().buildScheduleInput(today, horizon)
     if (!input) return null
     const plan = schedule(input, 'min-lateness')
-    set({ plan, planInput: input, lockedOpIds: [] })
+    // Фіксуємо брутто-потребу і дати споживання для миттєвого перерахунку дефіцитів.
+    const grossReqs = calcGrossRequirements(expandBom(input.orders, input.bom))
+    const demandDates = demandDatesByMaterial(plan.operations, input.bom)
+    set({
+      plan,
+      planInput: input,
+      lockedOpIds: [],
+      grossReqs,
+      demandDates,
+      stockAdjustments: {},
+      extraReceipts: [],
+    })
     return plan
+  },
+
+  setStockAdjustment: (nomenclatureId, qty) => {
+    set((s) => ({ stockAdjustments: { ...s.stockAdjustments, [nomenclatureId]: qty } }))
+  },
+
+  addReceipt: (receipt) => {
+    set((s) => ({ extraReceipts: [...s.extraReceipts, receipt] }))
+  },
+
+  resetMaterialEdits: () => {
+    set({ stockAdjustments: {}, extraReceipts: [] })
   },
 
   moveOperation: (opId, newStart) => {
