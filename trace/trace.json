@@ -289,8 +289,7 @@
     {
       "id": "FR-FAQ-01",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -306,8 +305,7 @@
     {
       "id": "FR-FAQ-02",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -326,8 +324,7 @@
     {
       "id": "FR-KB-01",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -354,8 +351,7 @@
       "id": "FR-KB-02",
       "specs": [
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -370,8 +366,7 @@
     {
       "id": "FR-KB-03",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -413,8 +408,7 @@
     {
       "id": "FR-KB-04",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -437,8 +431,7 @@
     {
       "id": "FR-GUARD-02",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -451,8 +444,7 @@
     {
       "id": "FR-GUARD-06",
       "specs": [
-        "openspec/specs/kb-learning/spec.md",
-        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -822,10 +814,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-GUARD-01 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"kb-learning\" is not archived"
     }
   ]
 }

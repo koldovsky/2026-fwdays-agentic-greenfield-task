@@ -5,7 +5,7 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 4 archived slice(s).
+Scope: 5 archived slice(s).
 Result: PASS, 1 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
@@ -14,10 +14,11 @@ Result: PASS, 1 warning(s)
 | 2026-07-06-dashboard | clean | 2 | yes | - |
 | 2026-07-06-intake | clean | 22 | yes | src |
 | 2026-07-07-booking-hitl | clean | 36 | yes | src |
+| 2026-07-07-kb-learning | clean | 14 | yes | src |
 
 ## Cross-slice module overlap
 
-- `lib/src/` touched by: 2026-07-04-slots, 2026-07-06-intake, 2026-07-07-booking-hitl
+- `lib/src/` touched by: 2026-07-04-slots, 2026-07-06-intake, 2026-07-07-booking-hitl, 2026-07-07-kb-learning
 
 ## Failures
 
@@ -25,4 +26,4 @@ None.
 
 ## Warnings
 
-- **in-scope**: lib/src/ modified by 3 slices (2026-07-04-slots, 2026-07-06-intake, 2026-07-07-booking-hitl) — review for scope drift
+- **in-scope**: lib/src/ modified by 4 slices (2026-07-04-slots, 2026-07-06-intake, 2026-07-07-booking-hitl, 2026-07-07-kb-learning) — review for scope drift

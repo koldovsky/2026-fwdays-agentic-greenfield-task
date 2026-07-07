@@ -10,9 +10,7 @@ conversation and queue surfaces). The knowledge base grows only through human
 paths: a direct file edit or an admin answer in the inbox; the agent has no
 KB-write operation. Covers FR-FAQ-01/02, FR-KB-01..04, FR-GUARD-02, and
 FR-GUARD-06.
-
 ## Requirements
-
 ### Requirement: KB-grounded FAQ answers
 
 The agent SHALL answer lead questions about the school (format, lesson
@@ -114,7 +112,16 @@ question leaves the inbox list once it is both `answered` and
 `delivery_status = 'delivered'`; a question that is `answered` but whose
 `delivery_status` is `failed` stays on the panel in a visually distinct
 delivery-failed state with a retry action (FR-KB-04) — it is never silently
-absent.
+absent. A question that has just been `answered` but whose `delivery_status`
+is still `pending` (the brief window before the bot's next delivery attempt)
+also remains part of the server-side inbox data (it is neither `kb`-answered
+nor yet `delivered`), shown in a distinct "answered — sending" state that,
+like the delivery-failed state, does not accept a second answer; the
+administrator's own client MAY remove a question from its local view
+immediately upon a successful answer submission (an optimistic update), but a
+fresh page load or another admin's tab MUST still be able to see the same
+question if it has not yet actually been delivered — the row is never
+literally gone from the data source before delivery completes.
 
 #### Scenario: Unanswered questions listed newest first
 
@@ -139,6 +146,19 @@ absent.
 - THEN that question is visible on the panel, visually distinct from open
   `unanswered` questions (it does not accept a second answer), and offers a
   retry-delivery action
+
+#### Scenario: Just-answered, not-yet-delivered question is still visible on a fresh load
+
+- GIVEN a `questions` row was just marked `answered` by an admin's submit
+  moments ago, and its `delivery_status` is still `pending` (the bot's
+  delivery drain has not yet run)
+- WHEN a DIFFERENT admin tab (or the same tab, freshly reloaded) fetches the
+  Question inbox
+- THEN that row is present in the fetched inbox data, in a state visually
+  distinct from an open `unanswered` question and from a `failed` question,
+  and it does not offer an answer form (it is not open for a second answer)
+- AND once the row's `delivery_status` becomes `delivered`, the NEXT fetch no
+  longer includes it
 
 #### Scenario: Successful retry delivers the answer and clears the panel
 
@@ -322,7 +342,7 @@ number that is absent from the KB.
   duration, group composition/size, and discounts — both present-in-KB and
   absent-from-KB variants
 - THEN every numeric answer produced is checked against `knowledge/school.md`
-  and every absent-from-KB probe yields no number and no invented term
+- AND every absent-from-KB probe yields no number and no invented term
 
 ### Requirement: Agent cannot write to the knowledge base
 
