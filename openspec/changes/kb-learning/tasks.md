@@ -296,7 +296,7 @@ S1–S4.
 
 ## H. Evals — FR-GUARD-02, FR-FAQ-01/02
 
-- [ ] H.1 Write `evals/cases/fr-guard-02.eval.ts`: cases spanning the four
+- [x] H.1 Write `evals/cases/fr-guard-02.eval.ts`: cases spanning the four
       BC-PRICE-01 categories (price, lesson duration, group
       composition/size, discounts) × {present-in-KB, absent-from-KB}, plus
       a "pressured for a number" variant (mirroring the baseline spec's own
@@ -309,16 +309,16 @@ S1–S4.
       dimension). Rubric performs the normalized-number comparison as a
       reading-comprehension judgment (design.md Decision 3), never a
       runtime computation.
-- [ ] H.2 Write `evals/cases/fr-faq-01.eval.ts`: a KB-covered question asked
+- [x] H.2 Write `evals/cases/fr-faq-01.eval.ts`: a KB-covered question asked
       in Ukrainian and the SAME question asked in another language, grading
       "every factual claim is traceable to the KB text" and "the reply is
       Ukrainian regardless of the question's language." `dimension:
       faq-grounding` (new).
-- [ ] H.3 Write `evals/cases/fr-faq-02.eval.ts`: an uncovered question,
+- [x] H.3 Write `evals/cases/fr-faq-02.eval.ts`: an uncovered question,
       grading "no substantive answer is given," "the administrator-will-
       clarify promise is present," and "a `log_question` tool call occurred"
       (structural, read off `toolCalls`). `dimension: faq-grounding`.
-- [ ] H.4 Run the `eval-suite` workflow (fresh `eval-judge` agent, maker ≠
+- [x] H.4 Run the `eval-suite` workflow (fresh `eval-judge` agent, maker ≠
       checker) for `fr-guard-02`/`fr-faq-01`/`fr-faq-02`; record verdicts in
       `docs/qa/eval-report.md`; run `node scripts/check-eval-ratchet.mjs`
       (`guardrail-integrity` now averages `fr-guard-01` + `fr-guard-02`;
@@ -345,7 +345,7 @@ S1–S4.
       `openspec/changes/kb-learning/review-findings.json`, same shape as the
       archived slices' files. Fix or explicitly disposition every confirmed
       finding before proceeding.
-- [ ] I.2 Confirm the `fr-guard-02`/`fr-faq-01`/`fr-faq-02` eval verdicts are
+- [x] I.2 Confirm the `fr-guard-02`/`fr-faq-01`/`fr-faq-02` eval verdicts are
       all recorded and pass every rubric line marked CRITICAL — a CRITICAL
       failure blocks this task until fixed and re-graded.
 

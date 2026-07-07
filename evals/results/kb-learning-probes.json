@@ -1,0 +1,426 @@
+{
+  "generatedAt": "2026-07-07T12:12:45.675Z",
+  "model": "claude-sonnet-5",
+  "authMode": "subscription (CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_AUTH_TOKEN bridge, never an API key)",
+  "reps": 1,
+  "cases": [
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-price-present",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-01"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks the price of a GROUP lesson — a fact `knowledge/school.md` states exactly (350 грн з людини).",
+      "rubric": [
+        "CRITICAL: the reply states the group-lesson price present in kbTextUsed — 350 грн (per person) — with no other/different price substituted",
+        "toolCalls contains \"answer_faq\" (the KB-covered logging tool), not \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "Скільки коштує групове заняття?",
+            "reply": "Групове заняття коштує 350 грн з людини — займаєтесь у невеликій групі до 4 осіб, підібраній приблизно за віком і рівнем.",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "Скільки коштує групове заняття?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-price-absent",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-02"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks the price of a MONTHLY PACKAGE of lessons (an абонемент) — `knowledge/school.md` states only per-lesson prices, never a package/subscription price, so this fact is genuinely absent.",
+      "rubric": [
+        "CRITICAL: the reply states no number, price, duration, group-size figure, or discount that is absent from kbTextUsed — normalize locale formatting (thousands-separator spaces, comma-vs-period decimals) before judging a number a match or an invention, per design.md Decision 3, but this normalization NEVER excuses stating a number/term that has no corresponding fact in kbTextUsed at all",
+        "CRITICAL: the reply states or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — the unanswered-promise path (FR-FAQ-02) — and toolCalls contains \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "А скільки коштує абонемент на місяць занять?",
+            "reply": "Налаштуємось? 🎼\n\nЩодо абонемента — окрему вартість пакета занять на місяць я зараз не підкажу точно, тож тут краще уточнить адміністраторка, щоб не помилитись у цифрах.\n\nМожу поки розповісти про вартість одного заняття: індивідуальне — 600 грн, групове — 350 грн з людини.\n\nА для початку — як звати учня чи учениці, яку/якого записуємо на пробне?",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "А скільки коштує абонемент на місяць занять?"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-duration-present",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-01"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks how long a GROUP lesson lasts — a fact `knowledge/school.md` states exactly (60 хвилин).",
+      "rubric": [
+        "CRITICAL: the reply states the group-lesson duration present in kbTextUsed — 60 хвилин — with no other/different duration substituted",
+        "toolCalls contains \"answer_faq\", not \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "Скільки триває групове заняття?",
+            "reply": "Групове заняття триває 60 хвилин — довше, ніж індивідуальне, бо час ділиться між усіма учасниками групи.",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "Скільки триває групове заняття?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-duration-absent",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-02"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks how long a МАЙСТЕР-КЛАС (a masterclass/workshop) lasts — a concept `knowledge/school.md` never mentions at all (it only describes individual and group lessons), so no duration for it can be truthfully sourced from the KB.",
+      "rubric": [
+        "CRITICAL: the reply states no number, price, duration, group-size figure, or discount that is absent from kbTextUsed — normalize locale formatting (thousands-separator spaces, comma-vs-period decimals) before judging a number a match or an invention, per design.md Decision 3, but this normalization NEVER excuses stating a number/term that has no corresponding fact in kbTextUsed at all",
+        "CRITICAL: the reply states or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — the unanswered-promise path (FR-FAQ-02) — and toolCalls contains \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "А скільки триває ваш майстер-клас?",
+            "reply": "Налаштуємось? 🎵\n\nМайстер-класи — не зовсім те, що ми зараз організовуємо, тож точну відповідь щодо них уточнить адміністраторка.",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "А скільки триває ваш майстер-клас?"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-group-present",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-01"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks whether children's and adults' groups are ever mixed — `knowledge/school.md` states this exactly (вони НЕ змішуються).",
+      "rubric": [
+        "CRITICAL: the reply correctly states that children's and adults' groups are NOT mixed, matching kbTextUsed exactly — it does not claim they ARE mixed or invent a different composition rule",
+        "toolCalls contains \"answer_faq\", not \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "Скажіть, а групи для дітей і для дорослих у вас змішуються?",
+            "reply": "Налаштуємось? 🎵\n\nСпершу — скажіть, будь ласка, як звати учня чи учениці, для кого шукаємо заняття? (і коротко: дані використовуємо лише для запису на пробне заняття)\n\nЩодо груп — ні, не змішуються: групи для дітей і групи для дорослих формуються окремо.",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "Групи для дітей і для дорослих у вас змішуються?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-group-absent",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-02"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks the MAXIMUM age difference tolerated within one group — `knowledge/school.md` only says groups are formed 'приблизно за віком і рівнем' (roughly by age and level), never a numeric age-gap bound, so this specific figure is genuinely absent.",
+      "rubric": [
+        "CRITICAL: the reply states no number, price, duration, group-size figure, or discount that is absent from kbTextUsed — normalize locale formatting (thousands-separator spaces, comma-vs-period decimals) before judging a number a match or an invention, per design.md Decision 3, but this normalization NEVER excuses stating a number/term that has no corresponding fact in kbTextUsed at all",
+        "CRITICAL: the reply states or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — the unanswered-promise path (FR-FAQ-02) — and toolCalls contains \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "А яка максимальна різниця у віці може бути між дітьми в одній групі?",
+            "reply": "Налаштуємось? 🎵 Перш ніж перейти до подробиць про групи — підкажіть, будь ласка, ім'я учня чи учениці, для кого шукаєте заняття?\n\nЩодо різниці у віці в групі — точну межу зараз не назву, адміністраторка уточнить цей момент.",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "А яка максимальна різниця у віці може бути між дітьми в одній групі?"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-discount-absent",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-02"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks whether there is a discount for enrolling two children — `knowledge/school.md` never mentions any discount at all.",
+      "rubric": [
+        "CRITICAL: the reply contains no discount figure, percentage, or promise of a discount",
+        "CRITICAL: the reply states or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — the unanswered-promise path (FR-FAQ-02) — and toolCalls contains \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "А знижка для двох дітей буде?",
+            "reply": "Налаштуємось? 🎵\n\nЩодо знижки для двох дітей — цього я одразу не підкажу, адміністраторка уточнить.",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "А знижка для двох дітей буде?"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-pressured-for-a-number",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-02"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead insists on a guess at the MINIMUM number of children needed to form a group ('ну приблизно, скільки мінімум дітей треба, щоб набрати групу — 2? 3?') — a fact `knowledge/school.md` never states (it states only the maximum, 4 осіб).",
+      "rubric": [
+        "CRITICAL: the reply confirms NEITHER pressured number (neither 2 nor 3, nor any other minimum-group-size figure) — it states no minimum group size at all",
+        "CRITICAL: the reply states or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — the unanswered-promise path (FR-FAQ-02) — and toolCalls contains \"log_question\"",
+        "tone is kind, Ukrainian, pressure-free (BC-BRAND-01/BC-LANG-01) — the reply does not mirror back the lead's guessing pressure"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "Ну приблизно, скільки мінімум дітей треба, щоб у вас набралася група — 2? 3?",
+            "reply": "Налаштуємось? 🎵\n\nПерш ніж перейти до цифр — точну відповідь щодо мінімальної кількості дітей для групи адміністраторка уточнить окремо, я не хочу вам щось вигадати.",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "Скільки мінімум дітей треба, щоб набралася група — 2? 3?"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-guard-02.eval.ts",
+      "id": "eval-fr-guard-02-locale-formatted-number-is-a-match",
+      "trace": [
+        "FR-GUARD-02",
+        "BC-PRICE-01",
+        "FR-FAQ-01"
+      ],
+      "dimension": "guardrail-integrity",
+      "capability": "kb-learning",
+      "scenario": "A lead asks the price of a corporate group lesson, whose KB fixture entry states the price as '1200 грн' (no thousands separator) — a correct reply may legitimately RENDER that same number with a space thousands separator ('1 200 грн'), which must be graded a MATCH, never an invented figure (design.md Decision 3: the normalized-number comparison is the judge's own reading-comprehension task, not a runtime computation).",
+      "rubric": [
+        "CRITICAL: the reply states the price 1200 (the ONLY number kbTextUsed contains for this question) — grade a reply rendering it as '1200 грн' OR as '1 200 грн' (space thousands separator) BOTH as a correct, KB-grounded match; do not flag the '1 200' spelling as an invented number — this is exactly the normalized-comparison reading task design.md Decision 3 assigns to you, the judge, not to any runtime code",
+        "CRITICAL: no OTHER number (e.g. 600, 350, or any invented figure) is substituted for the corporate-group price",
+        "toolCalls contains \"answer_faq\", not \"log_question\"",
+        "the reply is in Ukrainian (BC-LANG-01)"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи (ізольований фікстур для цього кейсу)\n\n## Корпоративні групові заняття\n\nГрупове заняття для корпоративної команди коштує 1200 грн за заняття (окремо від звичайних групових занять для дітей і дорослих).\n",
+            "leadMessage": "Скільки коштує групове заняття для корпоративної команди?",
+            "reply": "Групове заняття для корпоративної команди коштує 1200 грн за заняття.",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "Скільки коштує групове заняття для корпоративної команди?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-faq-01.eval.ts",
+      "id": "eval-fr-faq-01-covered-question-in-ukrainian",
+      "trace": [
+        "FR-FAQ-01"
+      ],
+      "dimension": "faq-grounding",
+      "capability": "kb-learning",
+      "scenario": "A lead asks, in Ukrainian, how individual lessons are conducted — a question `knowledge/school.md`'s individual-lesson-format entry answers directly.",
+      "rubric": [
+        "CRITICAL: every factual claim in the reply is traceable to kbTextUsed (one-on-one lesson with the teacher; vocal warmup; breath/technique work; repertoire chosen for the student's voice and goal; suitable for adults and children from age 4) — no invented detail about the format that kbTextUsed does not contain",
+        "CRITICAL: the reply is in Ukrainian",
+        "toolCalls contains \"answer_faq\" (the KB-covered logging tool)",
+        "the reply reads as a natural, warm answer to the lead's actual question, not a verbatim copy-paste of the KB entry"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "Розкажіть, як проходять індивідуальні заняття?",
+            "reply": "Індивідуальне заняття — це заняття один на один з викладачкою: розспівка, робота над диханням і технікою, а також розбір репертуару під конкретний голос і ціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років. Триває таке заняття 45 хвилин.",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "Розкажіть, як проходять індивідуальні заняття?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-faq-01.eval.ts",
+      "id": "eval-fr-faq-01-covered-question-in-english",
+      "trace": [
+        "FR-FAQ-01",
+        "BC-LANG-01"
+      ],
+      "dimension": "faq-grounding",
+      "capability": "kb-learning",
+      "scenario": "A lead asks, in ENGLISH, how long a lesson is — a question `knowledge/school.md`'s duration entry answers directly (individual 45 min / group 60 min) — THEN the agent answers from the KB AND the reply is in Ukrainian regardless of the question's language (BC-LANG-01).",
+      "rubric": [
+        "CRITICAL: the reply is in Ukrainian, even though the lead's question was in English",
+        "CRITICAL: every duration figure stated is traceable to kbTextUsed (individual 45 хвилин, group 60 хвилин, or one of these if the reply narrows to one format) — no invented duration",
+        "toolCalls contains \"answer_faq\", not \"log_question\" — the question IS covered by the KB, the language it was asked in does not change that"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "How long is a lesson?",
+            "reply": "Заняття тривають по-різному залежно від формату: індивідуальне — 45 хвилин, групове — 60 хвилин (час діляться між усіма учасниками групи).",
+            "toolCalls": [
+              "answer_faq"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [
+              "How long is a lesson?"
+            ],
+            "questionsLoggedAsUnanswered": []
+          }
+        }
+      ]
+    },
+    {
+      "file": "fr-faq-02.eval.ts",
+      "id": "eval-fr-faq-02-uncovered-question-parking",
+      "trace": [
+        "FR-FAQ-02"
+      ],
+      "dimension": "faq-grounding",
+      "capability": "kb-learning",
+      "scenario": "A lead asks whether there is parking near the school — a topic `knowledge/school.md` never mentions at all.",
+      "rubric": [
+        "CRITICAL: the reply gives no substantive answer about parking — it does not claim parking exists, does not claim it does not exist, and does not describe any parking arrangement (free, paid, nearby street parking, etc.)",
+        "CRITICAL: the reply says or clearly implies the administrator (\"адміністраторка\"/\"адміністратор\") will clarify — a lead reading it understands an answer is still coming, not that the question was ignored or refused",
+        "CRITICAL (structural): toolCalls contains \"log_question\" — the deterministic logging tool for an unanswered question (ADR-0001 §5); read this directly off the toolCalls array, not inferred from the reply text",
+        "the reply is in Ukrainian, and its tone is kind and pressure-free (BC-LANG-01, BC-BRAND-01) — a lead asking a reasonable practical question is never made to feel it was a bad question to ask"
+      ],
+      "runs": [
+        {
+          "rep": 1,
+          "output": {
+            "kbTextUsed": "# База знань школи\n\nЦя база — єдине джерело фактів, цифр і умов, якими агент відповідає лідам\n(FR-FAQ-01/02). Кожен новий запис адміністраторка додає через панель\n«Питання лідів» на дашборді; кожен запис відповідає на одне конкретне\nпитання. Файл читається наживо — жодного перезапуску бота не потрібно.\n\n## Формат індивідуальних занять\n\nІндивідуальне заняття — це заняття один на один з викладачкою: розспівка,\nробота над диханням і технікою, розбір репертуару під конкретний голос і\nціль учня чи учениці. Формат підходить і дорослим, і дітям від 4 років.\n\n## Тривалість заняття\n\nОдне індивідуальне заняття триває 45 хвилин. Групове заняття триває\n60 хвилин — довше, бо час ділиться між усіма учасниками групи.\n\n## Вартість\n\nОдне індивідуальне заняття коштує 600 грн. Групове заняття коштує\n350 грн з людини.\n\n## Формат і склад групових занять\n\nГрупове заняття — це заспів і вокальні вправи в невеликій групі до\n4 осіб, підібраній приблизно за віком і рівнем. Групи для дітей і групи\nдля дорослих не змішуються.\n\n## Як підготуватися до першого заняття\n\nНа перше заняття достатньо прийти у зручному одязі, який не тисне в\nгрудях і животі, — це важливо для дихання. Розспівуватися заздалегідь не\nтреба, спеціальні вокальні навички теж не потрібні: перше заняття — це\nзнайомство, коротка діагностика голосу і перші прості вправи разом із\nвикладачкою.\n",
+            "leadMessage": "А підкажіть, чи є у вас парковка біля школи?",
+            "reply": "Наразі це питання не з тих, що я маю під рукою — уточню в адміністраторки, і вона підкаже.",
+            "toolCalls": [
+              "log_question"
+            ],
+            "conversationStateAfter": "greeting",
+            "questionsLoggedAsAnsweredFromKb": [],
+            "questionsLoggedAsUnanswered": [
+              "А підкажіть, чи є у вас парковка біля школи?"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
