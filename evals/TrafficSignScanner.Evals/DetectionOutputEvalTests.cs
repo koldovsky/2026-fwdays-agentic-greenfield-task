@@ -8,10 +8,7 @@ public sealed class DetectionOutputEvalTests
     {
         var repoRoot = FindRepoRoot();
         var modelPath = Path.Combine(repoRoot, "src", "TrafficSignScanner.App", "Resources", "Raw", "model.onnx");
-        if (!File.Exists(modelPath))
-        {
-            return;
-        }
+        Assert.True(File.Exists(modelPath), $"Bundled model is required for output eval: {modelPath}");
 
         var result = OutputEvalRunner.Run(repoRoot);
 

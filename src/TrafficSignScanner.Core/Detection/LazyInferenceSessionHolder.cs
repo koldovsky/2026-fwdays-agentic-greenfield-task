@@ -30,27 +30,25 @@ public sealed class LazyInferenceSessionHolder : IDisposable
 
     public InferenceSession GetSession()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (_session is not null)
-        {
-            return _session;
-        }
-
         lock (_gate)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             return _session ??= _factory.CreateSession(_modelPath);
         }
     }
 
     public void Dispose()
     {
-        if (_disposed)
+        lock (_gate)
         {
-            return;
-        }
+            if (_disposed)
+            {
+                return;
+            }
 
-        _session?.Dispose();
-        _disposed = true;
+            _session?.Dispose();
+            _session = null;
+            _disposed = true;
+        }
     }
 }

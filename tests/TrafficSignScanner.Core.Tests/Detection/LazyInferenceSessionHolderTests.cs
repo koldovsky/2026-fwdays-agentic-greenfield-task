@@ -7,13 +7,20 @@ public sealed class LazyInferenceSessionHolderTests
 {
     /// <summary>@trace FR-DETECT-01</summary>
     [Fact]
+    public void GetSession_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var modelPath = RequireBundledModelPath();
+        var holder = new LazyInferenceSessionHolder(modelPath);
+        holder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => holder.GetSession());
+    }
+
+    /// <summary>@trace FR-DETECT-01</summary>
+    [Fact]
     public void GetSession_ReusesExistingSession()
     {
-        var modelPath = FindBundledModelPath();
-        if (!File.Exists(modelPath))
-        {
-            return;
-        }
+        var modelPath = RequireBundledModelPath();
 
         var factory = new CountingInferenceSessionFactory();
         using var holder = new LazyInferenceSessionHolder(modelPath, factory);
@@ -23,6 +30,13 @@ public sealed class LazyInferenceSessionHolderTests
 
         Assert.Same(first, second);
         Assert.Equal(1, factory.CreateCount);
+    }
+
+    private static string RequireBundledModelPath()
+    {
+        var modelPath = FindBundledModelPath();
+        Assert.True(File.Exists(modelPath), $"Bundled model is required: {modelPath}");
+        return modelPath;
     }
 
     private static string FindBundledModelPath()
