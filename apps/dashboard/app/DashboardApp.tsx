@@ -25,7 +25,11 @@ import {
   type DashboardClientState,
 } from "../lib/agui-client.ts";
 import { candidateProposalSlots } from "../lib/candidate-proposal-slots.ts";
-import { currentWeekStartIso } from "../lib/dashboard-db.ts";
+// Deliberately from `current-week.ts`, NOT `dashboard-db.ts` — this is a
+// client component; `dashboard-db.ts` has a Node-only (`node:url`/
+// `node:path`) top-level side effect that broke every real browser render
+// (booking-hitl S4 rendered-UI gate finding, `current-week.ts`'s own header).
+import { currentWeekStartIso } from "../lib/current-week.ts";
 import type { DashboardState } from "../lib/dashboard-state.ts";
 import { requestRowToCardFields } from "../lib/request-card-fields.ts";
 

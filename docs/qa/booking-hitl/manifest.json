@@ -1,0 +1,85 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "decisionbar-actions",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-light.webm",
+      "screenshot": "docs/qa/booking-hitl/decisionbar-actions.png",
+      "explainer": "docs/qa/booking-hitl/decisionbar-actions.md",
+      "note": "The pending request's real DecisionBar renders all three admin actions: Підтвердити (confirm), Запропонувати інший час (propose another time), Відхилити (decline).",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "slot-picker-open",
+      "proof": "FR-HITL-03",
+      "video": "docs/qa/booking-hitl/booking-hitl-light.webm",
+      "screenshot": "docs/qa/booking-hitl/slot-picker-open.png",
+      "explainer": "docs/qa/booking-hitl/slot-picker-open.md",
+      "note": "Clicking \"Запропонувати інший час\" reveals the inline slot-picker: on-grid candidate slots as real checkboxes (role=checkbox), two selected, \"Запропонувати\" enabled.",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "decision-outcome",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-light.webm",
+      "screenshot": "docs/qa/booking-hitl/decision-outcome.png",
+      "explainer": "docs/qa/booking-hitl/decision-outcome.md",
+      "note": "Confirm's POST to /api/decisions/:id is intercepted (Playwright page.route) and fulfilled with a spec-shaped {status:'applied'} body — a real POST here would either mutate the live DEMO Google Calendar against a fake fixture event id, or silently no-op without live credentials, so this still proves the real DecisionBar/fetch/inline-render path without a non-deterministic side effect.",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "hallmap-states",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-light.webm",
+      "screenshot": "docs/qa/booking-hitl/hallmap-states.png",
+      "explainer": "docs/qa/booking-hitl/hallmap-states.md",
+      "note": "The HallMap shows the seeded pending (amber), confirmed (green), and cancelled (slate) seats together, on three distinct weekday/hour cells.",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "decisionbar-actions-dark",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-dark.webm",
+      "screenshot": "docs/qa/booking-hitl/decisionbar-actions-dark.png",
+      "explainer": "docs/qa/booking-hitl/decisionbar-actions.md",
+      "note": "The pending request's real DecisionBar renders all three admin actions: Підтвердити (confirm), Запропонувати інший час (propose another time), Відхилити (decline).",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "slot-picker-open-dark",
+      "proof": "FR-HITL-03",
+      "video": "docs/qa/booking-hitl/booking-hitl-dark.webm",
+      "screenshot": "docs/qa/booking-hitl/slot-picker-open-dark.png",
+      "explainer": "docs/qa/booking-hitl/slot-picker-open.md",
+      "note": "Clicking \"Запропонувати інший час\" reveals the inline slot-picker: on-grid candidate slots as real checkboxes (role=checkbox), two selected, \"Запропонувати\" enabled.",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "decision-outcome-dark",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-dark.webm",
+      "screenshot": "docs/qa/booking-hitl/decision-outcome-dark.png",
+      "explainer": "docs/qa/booking-hitl/decision-outcome.md",
+      "note": "Confirm's POST to /api/decisions/:id is intercepted (Playwright page.route) and fulfilled with a spec-shaped {status:'applied'} body — a real POST here would either mutate the live DEMO Google Calendar against a fake fixture event id, or silently no-op without live credentials, so this still proves the real DecisionBar/fetch/inline-render path without a non-deterministic side effect.",
+      "asserted": true,
+      "visionVerdict": null
+    },
+    {
+      "id": "hallmap-states-dark",
+      "proof": "FR-HITL-01",
+      "video": "docs/qa/booking-hitl/booking-hitl-dark.webm",
+      "screenshot": "docs/qa/booking-hitl/hallmap-states-dark.png",
+      "explainer": "docs/qa/booking-hitl/hallmap-states.md",
+      "note": "The HallMap shows the seeded pending (amber), confirmed (green), and cancelled (slate) seats together, on three distinct weekday/hour cells.",
+      "asserted": true,
+      "visionVerdict": null
+    }
+  ]
+}

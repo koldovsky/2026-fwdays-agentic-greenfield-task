@@ -20,10 +20,19 @@ export interface SlotChipProps {
 }
 
 export function SlotChip({ weekdayLabel, time, selected = false, onSelectedChange }: SlotChipProps) {
+  // booking-hitl S4 rendered-UI gate fix (axe `color-contrast`, dark theme,
+  // slot-picker OPEN with a selection): a SELECTED chip's background becomes
+  // `--brand-soft` (a translucent teal/green fill), and `--text-secondary`
+  // measured ~4.3:1 against that composited fill in dark mode — just under
+  // WCAG AA's 4.5:1 for this 12px mono time label. `--text` clears it with
+  // real margin (~6.5:1 dark, even higher light) without affecting the
+  // read-only pill or the UNselected checkbox option, which keep
+  // `--text-secondary` against their own (always-compliant) surfaces.
+  const timeColorClass = selected ? "text-text" : "text-text-secondary";
   const label = (
     <>
       <span>{weekdayLabel}</span>
-      <span className="font-mono text-xs text-text-secondary">{time}</span>
+      <span className={`font-mono text-xs ${timeColorClass}`}>{time}</span>
     </>
   );
 

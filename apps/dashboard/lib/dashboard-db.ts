@@ -11,6 +11,13 @@ import type Database from "better-sqlite3";
 import type { LeadRow, RequestRow } from "@kamerton/db";
 import { buildStateSnapshot, type DashboardBookingRow, type DashboardState } from "./dashboard-state.ts";
 
+// Re-exported so every existing server-side import site keeps compiling
+// unchanged — see `current-week.ts`'s own header for why the FUNCTION BODY
+// moved out of this file (a client component must never import it from
+// here: this module's `repoRoot` line below runs a Node-only `node:url`
+// side effect at import time).
+export { currentWeekStartIso } from "./current-week.ts";
+
 /**
  * Reads the current `leads`/`requests`/`bookings` rows from `db` and
  * assembles a `DashboardState` via `dashboard-state.ts`'s `buildStateSnapshot`
@@ -38,24 +45,4 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
  */
 export function resolveDbPath(env: NodeJS.ProcessEnv = process.env): string {
   return env.KAMERTON_DB_PATH ?? path.join(repoRoot, "kamerton.db");
-}
-
-/**
- * "YYYY-MM-DD" for "today" in Europe/Kyiv wall-clock time (BC-SCHEDULE-01) —
- * the one non-pure "now" resolution the SSE route (§5.4) needs, isolated
- * here (server-only glue) so `dashboard-state.ts`/`weekSeatGrid` (lib/) stay
- * pure and deterministically testable via an explicit `weekStartIso`.
- */
-export function currentWeekStartIso(now: Date = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Europe/Kyiv",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const map: Record<string, string> = {};
-  for (const part of parts) {
-    if (part.type !== "literal") map[part.type] = part.value;
-  }
-  return `${map.year}-${map.month}-${map.day}`;
 }

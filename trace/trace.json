@@ -492,7 +492,9 @@
       "tests": [
         "tests/integration/booking-hitl/full-flow.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/booking-hitl/manifest.json"
+      ]
     },
     {
       "id": "FR-HITL-02",
@@ -556,7 +558,9 @@
         "packages/bot/src/pipeline.test.ts",
         "tests/integration/booking-hitl/full-flow.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/booking-hitl/manifest.json"
+      ]
     },
     {
       "id": "FR-HITL-04",
@@ -746,15 +750,7 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-HITL-01 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
       "msg": "FR-HITL-02 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-HITL-03 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",
