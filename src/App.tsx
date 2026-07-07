@@ -6,6 +6,7 @@ import { OrderDashboard } from './components/OrderDashboard.tsx'
 import { MaterialCheck } from './components/MaterialCheck.tsx'
 import { GanttView } from './components/GanttView.tsx'
 import { CapacityView } from './components/CapacityView.tsx'
+import { ExportPanel } from './components/ExportPanel.tsx'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <MaterialCheck />
       <GanttView />
       <CapacityView />
+      <ExportPanel />
     </>
   )
 }
