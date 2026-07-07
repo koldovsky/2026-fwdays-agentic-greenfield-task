@@ -1,0 +1,83 @@
+{
+  "schema": "loopledger.v1",
+  "project": {
+    "name": "LoopLedger",
+    "problem": "Make agentic engineering homework evidence visible and auditable.",
+    "owner": "Yaroslav Tanko",
+    "created_at": "2026-07-07T10:00:00+00:00"
+  },
+  "practices": [
+    {
+      "kind": "context",
+      "evidence": "AGENTS.md defines static rules, dynamic context, and maker/checker expectations.",
+      "note": "Static context lives in repo; dynamic context lives in docs/agentic-process-log.md.",
+      "recorded_at": "2026-07-07T10:01:00+00:00"
+    },
+    {
+      "kind": "loop",
+      "evidence": "Implementation followed spec -> make -> verify -> check -> iterate.",
+      "note": "The CLI itself records these loops.",
+      "recorded_at": "2026-07-07T10:02:00+00:00"
+    },
+    {
+      "kind": "verification",
+      "evidence": "Unit tests and a deterministic eval cover the report/audit behavior.",
+      "note": "Commands are listed in checks.",
+      "recorded_at": "2026-07-07T10:03:00+00:00"
+    },
+    {
+      "kind": "checker",
+      "evidence": "docs/checker-review.md records a separate review pass after implementation.",
+      "note": "Checker focuses on missing evidence and brittle behavior.",
+      "recorded_at": "2026-07-07T10:04:00+00:00"
+    },
+    {
+      "kind": "sdd",
+      "evidence": "docs/specification.md defines the scope and acceptance criteria before implementation.",
+      "note": "Small scope was chosen intentionally.",
+      "recorded_at": "2026-07-07T10:05:00+00:00"
+    }
+  ],
+  "cycles": [
+    {
+      "goal": "Create the evidence ledger data model and CLI.",
+      "maker": "Codex implementation pass",
+      "checker": "Separate Codex review pass using docs/checker-review.md",
+      "verification": "python -m unittest discover -s tests",
+      "status": "done",
+      "recorded_at": "2026-07-07T10:10:00+00:00"
+    },
+    {
+      "goal": "Add deterministic eval for the sample ledger.",
+      "maker": "Codex implementation pass",
+      "checker": "Audit command plus manual report review",
+      "verification": "python evals/evaluate.py",
+      "status": "done",
+      "recorded_at": "2026-07-07T10:20:00+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "name": "unit tests",
+      "command": "python -m unittest discover -s tests",
+      "status": "pass",
+      "evidence": "Covers project creation, audit completeness, failed checks, Markdown report, and CLI paths.",
+      "recorded_at": "2026-07-07T10:30:00+00:00"
+    },
+    {
+      "name": "deterministic eval",
+      "command": "python evals/evaluate.py",
+      "status": "pass",
+      "evidence": "Validates the example ledger reports all required homework evidence.",
+      "recorded_at": "2026-07-07T10:35:00+00:00"
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Build a Python CLI instead of a web app",
+      "reason": "The homework rewards process evidence. A CLI can expose context, loops, checks, and reports with less product surface area.",
+      "consequence": "No frontend is needed; verification stays fast and deterministic.",
+      "recorded_at": "2026-07-07T10:40:00+00:00"
+    }
+  ]
+}

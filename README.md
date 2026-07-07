@@ -1,4 +1,71 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# LoopLedger
+
+LoopLedger is a tiny dependency-free Python CLI for recording evidence of an
+agentic engineering process. It was built as the fwdays Academy Agentic
+Engineering: Greenfield homework project.
+
+The product is intentionally small: it stores context, loops, verification checks,
+maker/checker evidence, and spec-first decisions in a JSON ledger, then audits and
+renders that evidence as Markdown.
+
+## Quick Start
+
+```bash
+PYTHONPATH=src python -m loopledger.cli audit examples/agentic-homework.loopledger.json --strict
+PYTHONPATH=src python -m loopledger.cli report examples/agentic-homework.loopledger.json
+```
+
+Create a new ledger:
+
+```bash
+PYTHONPATH=src python -m loopledger.cli new my-project.loopledger.json \
+  --name "My Agentic Project" \
+  --problem "Track agentic engineering evidence" \
+  --owner "Yaroslav Tanko"
+```
+
+Record evidence:
+
+```bash
+PYTHONPATH=src python -m loopledger.cli practice my-project.loopledger.json \
+  --kind context \
+  --evidence "AGENTS.md documents static and dynamic context"
+
+PYTHONPATH=src python -m loopledger.cli cycle my-project.loopledger.json \
+  --goal "Build audit command" \
+  --maker "Codex implementation pass" \
+  --checker "Separate checker review" \
+  --verification "python -m unittest discover -s tests"
+```
+
+## Verification
+
+```bash
+python -m unittest discover -s tests
+python evals/evaluate.py
+```
+
+## Agentic Engineering Evidence
+
+- Context engineering: `AGENTS.md`
+- SDD/specification: `docs/specification.md`
+- Course analysis: `docs/course-analysis.md`
+- Loop record: `docs/agentic-process-log.md`
+- Maker/checker pass: `docs/checker-review.md`
+- Verification: `tests/test_loopledger.py` and `evals/evaluate.py`
+- Demo plan: `docs/demo-script.md`
+- Demo video: `demo/loopledger-demo.mp4`
+- Example ledger: `examples/agentic-homework.loopledger.json`
+
+## Project Scope Decision
+
+I chose a Python CLI over a web app because the homework evaluates engineering
+evidence, not visual surface area. This keeps the scope small enough to finish and
+verify while still demonstrating the course practices.
+
+---
+
+# Original Homework: Agentic Engineering: Greenfield
 
 Курс **fwdays Academy · Agentic Engineering: Greenfield**.
 

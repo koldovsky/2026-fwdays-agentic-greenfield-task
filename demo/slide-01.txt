@@ -1,0 +1,9 @@
+LoopLedger
+
+A tiny Python CLI for agentic engineering homework evidence.
+
+It records:
+- context rules
+- build loops
+- verification checks
+- maker/checker review

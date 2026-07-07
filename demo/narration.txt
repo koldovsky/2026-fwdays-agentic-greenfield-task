@@ -1,0 +1,5 @@
+This is LoopLedger, a tiny Python command line tool for the fwdays Agentic Engineering homework.
+The project is intentionally small. It records the process evidence that the homework asks for: context, loops, verification, maker checker separation, and spec-first decisions.
+Here is the product flow. The audit command reads the example ledger and reports an evidence score of five out of five. The report command renders a Markdown evidence report for the pull request.
+The agentic engineering evidence is visible in the repository. AGENTS dot md contains static context and dynamic context routing. The specification defines the scope before coding. The process log records the loop. Tests and evals verify behavior. The checker review documents a separate review pass.
+The result is small, finished, and verified.
