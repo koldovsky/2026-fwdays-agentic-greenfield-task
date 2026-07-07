@@ -162,7 +162,7 @@ S1–S4.
 
 ## D. Bot — question-answer delivery drain (manual-retry-only)
 
-- [ ] D.1 `packages/bot/src/question-drain.test.ts` FIRST (red), against
+- [x] D.1 `packages/bot/src/question-drain.test.ts` FIRST (red), against
       `FakeTelegramTransport` + real in-memory SQLite: `drainQuestionDeliveries`
       sends the admin's answer for every `status='answered' AND
       delivery_status='pending'` row and marks it `delivered` on success; a
@@ -173,14 +173,14 @@ S1–S4.
       for design.md Decision 2's fork from the S4 auto-retry precedent; a
       `status='open'` row is never touched (`@trace FR-KB-04`, `@trace
       NFR-REL-01`). Confirm red.
-- [ ] D.2 Implement `packages/bot/src/question-drain.ts` to pass D.1.
-- [ ] D.3 Wire `packages/bot/src/index.ts`: a second `setInterval` calling
+- [x] D.2 Implement `packages/bot/src/question-drain.ts` to pass D.1.
+- [x] D.3 Wire `packages/bot/src/index.ts`: a second `setInterval` calling
       `drainQuestionDeliveries`, alongside the existing notification-drain
       timer — its own in-flight guard, its own try/catch (one bad tick on
       either drain never stops the other or crashes the process). Deliberately
       NOT unit-tested here, same "live wiring, no behavior to fake"
       precedent as the S4 drain wiring; fully covered by D.1.
-- [ ] D.4 Run `npm run test:run`; confirm D.1–D.2 green.
+- [x] D.4 Run `npm run test:run`; confirm D.1–D.2 green.
 
 ## E. Dashboard — Question-inbox panel + routes
 

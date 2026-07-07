@@ -37,6 +37,7 @@ import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate } from "./telegram-transport.ts";
 import { resolveAguiPublisher } from "./http-agui-publisher.ts";
 import { drainNotifications } from "./notification-drain.ts";
+import { drainQuestionDeliveries } from "./question-drain.ts";
 
 /** Outbox drain cadence (booking-hitl design.md Decision 1: "a short-interval
  *  timer... a failed row is retried on the next tick, no backoff needed at
@@ -44,6 +45,12 @@ import { drainNotifications } from "./notification-drain.ts";
  *  reading the dashboard and a lead waiting in Telegram, without hammering
  *  SQLite or the Telegram API. */
 const NOTIFICATION_DRAIN_INTERVAL_MS = 3000;
+
+/** Answer-delivery drain cadence (kb-learning design.md Decision 2: a
+ *  near-twin of the outbox drain above, on the same short-interval cadence —
+ *  a few seconds is plenty responsive for a lead waiting on an admin's
+ *  answer, without hammering SQLite or the Telegram API). */
+const QUESTION_DRAIN_INTERVAL_MS = 3000;
 
 // Load repo-root .env exactly like scripts/qa/manual-smoke-slots.mjs — Node's
 // built-in loader, no dotenv dependency (repo convention). Env already
@@ -150,18 +157,39 @@ async function main(): Promise<void> {
   // in flight, at the real-timer call site (not unit-tested here, same as
   // the rest of this file's own header comment: no live grammY/Telegram
   // wiring to safely exercise without a network).
-  let isDraining = false;
+  let isDrainingNotifications = false;
   setInterval(() => {
-    if (isDraining) return;
-    isDraining = true;
+    if (isDrainingNotifications) return;
+    isDrainingNotifications = true;
     drainNotifications(db, transport)
       .catch((error) => {
         console.error("Kamerton: notification drain tick failed", error);
       })
       .finally(() => {
-        isDraining = false;
+        isDrainingNotifications = false;
       });
   }, NOTIFICATION_DRAIN_INTERVAL_MS);
+
+  // Answer-delivery drain (kb-learning design.md Decision 2): a second,
+  // independent timer alongside the notification drain above — its own
+  // in-flight guard (`isDrainingQuestions`) and its own try/catch, so a bad
+  // tick on EITHER drain never stops the other or crashes the long-polling
+  // process (`@trace NFR-REL-01`). `drainQuestionDeliveries` itself never
+  // throws for an individual send failure (that row is simply marked
+  // `failed`; a manual retry via the dashboard, not this timer, ever
+  // re-queues it — design.md Decision 2's manual-retry fork).
+  let isDrainingQuestions = false;
+  setInterval(() => {
+    if (isDrainingQuestions) return;
+    isDrainingQuestions = true;
+    drainQuestionDeliveries(db, transport)
+      .catch((error) => {
+        console.error("Kamerton: question-answer drain tick failed", error);
+      })
+      .finally(() => {
+        isDrainingQuestions = false;
+      });
+  }, QUESTION_DRAIN_INTERVAL_MS);
 
   console.log(`Kamerton bot starting (long polling); db=${dbPath}`);
   await transport.start();
