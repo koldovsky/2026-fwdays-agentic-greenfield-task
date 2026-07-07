@@ -1,7 +1,7 @@
-﻿using Android.App;
+using Android.App;
 using Android.Runtime;
 
-namespace TrafficSignScanner.App
+namespace TrafficSignScanner
 {
     [Application]
     public class MainApplication : MauiApplication

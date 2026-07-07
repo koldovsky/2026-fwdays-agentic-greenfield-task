@@ -4,7 +4,7 @@ var requiredPaths = new[]
 {
     "TrafficSignScanner.slnx",
     "src/TrafficSignScanner.Core/TrafficSignScanner.Core.csproj",
-    "src/TrafficSignScanner.App/TrafficSignScanner.App.csproj",
+    "src/TrafficSignScanner.App/TrafficSignScanner.csproj",
     "src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj",
     "tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj",
     "evals/TrafficSignScanner.Evals/TrafficSignScanner.Evals.csproj",

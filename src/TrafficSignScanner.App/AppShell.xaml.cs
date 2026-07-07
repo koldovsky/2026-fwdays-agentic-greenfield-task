@@ -1,4 +1,4 @@
-﻿namespace TrafficSignScanner.App
+namespace TrafficSignScanner
 {
     public partial class AppShell : Shell
     {

@@ -1,6 +1,6 @@
-﻿using Foundation;
+using Foundation;
 
-namespace TrafficSignScanner.App
+namespace TrafficSignScanner
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

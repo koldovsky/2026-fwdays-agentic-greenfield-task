@@ -75,7 +75,7 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore app
-        run: dotnet restore src/TrafficSignScanner.App/TrafficSignScanner.App.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
+        run: dotnet restore src/TrafficSignScanner.App/TrafficSignScanner.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
 
       - name: Build app
-        run: dotnet build src/TrafficSignScanner.App/TrafficSignScanner.App.csproj -f net10.0-windows10.0.19041.0 --no-restore
+        run: dotnet build src/TrafficSignScanner.App/TrafficSignScanner.csproj -f net10.0-windows10.0.19041.0 --no-restore

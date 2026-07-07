@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 
-namespace TrafficSignScanner.App
+namespace TrafficSignScanner
 {
     public static class MauiProgram
     {

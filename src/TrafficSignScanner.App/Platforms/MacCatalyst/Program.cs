@@ -1,7 +1,7 @@
-﻿using ObjCRuntime;
+using ObjCRuntime;
 using UIKit;
 
-namespace TrafficSignScanner.App
+namespace TrafficSignScanner
 {
     public class Program
     {
