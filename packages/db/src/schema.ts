@@ -190,6 +190,38 @@ function ensureBookingsRequestIdColumn(db: Database.Database): void {
   }
 }
 
+// questions — one row per lead-asked question (S5 `kb-learning`, design.md
+// Decision 4: "the `questions` table shape and the deterministic-logging
+// seam"). `lead_id` FKs `leads` (`ON DELETE CASCADE` — a question is
+// meaningless once its lead is gone, NFR-PRIV-02's delete-lead cascade);
+// `request_id` FKs `requests` (`ON DELETE SET NULL` — a question outlives
+// the specific conversation it was asked during, mirroring
+// `ensureBookingsRequestIdColumn`'s own `SET NULL` rationale above), so this
+// table must be created AFTER both `leads` and `requests` exist.
+// `status`/`delivery_status` default at the column level (never an
+// insert-time parameter, see questions.ts's header comment) — same
+// convention as `notifications.delivery_status` above. The partial index
+// serves the admin inbox's own "unanswered" filter (FR-KB-02).
+const CREATE_QUESTIONS_TABLE = `
+CREATE TABLE IF NOT EXISTS questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  request_id INTEGER REFERENCES requests(id) ON DELETE SET NULL,
+  telegram_chat_id TEXT NOT NULL,
+  text TEXT NOT NULL,
+  answer_source TEXT NOT NULL CHECK (answer_source IN ('kb','unanswered')),
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','answered')),
+  admin_answer TEXT,
+  answered_at TEXT,
+  delivery_status TEXT NOT NULL DEFAULT 'pending' CHECK (delivery_status IN ('pending','delivered','failed')),
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+`;
+
+const CREATE_QUESTIONS_INBOX_INDEX = `
+CREATE INDEX IF NOT EXISTS idx_questions_inbox ON questions(created_at) WHERE answer_source = 'unanswered';
+`;
+
 /**
  * Create every table this module owns if it doesn't already exist. Safe to
  * call repeatedly (idempotent) — e.g. once per process start, before any
@@ -208,4 +240,7 @@ export function initSchema(db: Database.Database): void {
   // offered_slots is a follow-up column on requests — created only after
   // CREATE_REQUESTS_TABLE.
   ensureRequestsOfferedSlotsColumn(db);
+  // questions FKs both leads and requests — created only after both exist.
+  db.exec(CREATE_QUESTIONS_TABLE);
+  db.exec(CREATE_QUESTIONS_INBOX_INDEX);
 }

@@ -55,6 +55,23 @@ export {
   type InsertNotificationInput,
   type NotificationRow,
 } from "./notifications.ts";
+export {
+  insertQuestion,
+  findOpenInboxQuestions,
+  findQuestionById,
+  markQuestionAnswered,
+  retryQuestionDelivery,
+  markQuestionDeliveryStatus,
+  findDeliverableQuestions,
+  QUESTION_ANSWER_SOURCES,
+  type QuestionAnswerSource,
+  QUESTION_STATUSES,
+  type QuestionStatus,
+  QUESTION_DELIVERY_STATUSES,
+  type QuestionDeliveryStatus,
+  type InsertQuestionInput,
+  type QuestionRow,
+} from "./questions.ts";
 
 /**
  * Open (or create) the SQLite database file at `path` and ensure every table

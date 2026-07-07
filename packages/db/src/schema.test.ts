@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { openDatabase } from "./index.ts";
 import { insertBooking } from "./bookings.ts";
+import { insertLead } from "./leads.ts";
+import { insertRequest } from "./requests.ts";
 
 describe("bookings schema (TC-DATA-01)", () => {
   it("creates the bookings table on init", () => {
@@ -154,6 +156,146 @@ describe("requests.offered_slots column (booking-hitl design.md Decision 4 item 
     const offeredSlots = columns.find((c) => c.name === "offered_slots");
     expect(offeredSlots).toBeDefined();
     expect(offeredSlots?.notnull).toBe(0);
+    db.close();
+  });
+});
+
+// --- S5 kb-learning Stage A (RED): `questions` table (tasks.md A.1,
+// design.md Decision 4). schema.ts is deliberately NOT touched yet — every
+// case below must fail against the current schema (no `questions` table)
+// for the right reason, then go green once A.2 lands.
+
+describe("questions schema (kb-learning design.md Decision 4)", () => {
+  function seedLeadAndRequest(db: ReturnType<typeof openDatabase>) {
+    const lead = insertLead(db, {
+      telegramUserId: "tg-kb-1",
+      telegramChatId: "chat-kb-1",
+    });
+    const request = insertRequest(db, {
+      leadId: lead.id,
+      telegramChatId: lead.telegram_chat_id,
+    });
+    return { lead, request };
+  }
+
+  // @trace FR-KB-01
+  it("creates the questions table on init", () => {
+    const db = openDatabase(":memory:");
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'questions'")
+      .all();
+    expect(tables).toHaveLength(1);
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("rejects a bogus answer_source via the CHECK constraint", () => {
+    const db = openDatabase(":memory:");
+    const { lead } = seedLeadAndRequest(db);
+
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO questions (lead_id, telegram_chat_id, text, answer_source)
+           VALUES (?, ?, ?, ?)`,
+        )
+        .run(lead.id, lead.telegram_chat_id, "Скільки коштує заняття?", "bogus"),
+    ).toThrow(/CHECK constraint failed/);
+
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("rejects a bogus status via the CHECK constraint", () => {
+    const db = openDatabase(":memory:");
+    const { lead } = seedLeadAndRequest(db);
+
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO questions (lead_id, telegram_chat_id, text, answer_source, status)
+           VALUES (?, ?, ?, ?, ?)`,
+        )
+        .run(lead.id, lead.telegram_chat_id, "Скільки коштує заняття?", "unanswered", "bogus"),
+    ).toThrow(/CHECK constraint failed/);
+
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("rejects a bogus delivery_status via the CHECK constraint", () => {
+    const db = openDatabase(":memory:");
+    const { lead } = seedLeadAndRequest(db);
+
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO questions (lead_id, telegram_chat_id, text, answer_source, delivery_status)
+           VALUES (?, ?, ?, ?, ?)`,
+        )
+        .run(lead.id, lead.telegram_chat_id, "Скільки коштує заняття?", "unanswered", "bogus"),
+    ).toThrow(/CHECK constraint failed/);
+
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("rejects a row with a non-existent lead_id (FK enforced)", () => {
+    const db = openDatabase(":memory:");
+
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO questions (lead_id, telegram_chat_id, text, answer_source)
+           VALUES (?, ?, ?, ?)`,
+        )
+        .run(999999, "chat-kb-nope", "Скільки коштує заняття?", "unanswered"),
+    ).toThrow(/FOREIGN KEY constraint failed/);
+
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("cascades: deleting a leads row deletes its questions rows", () => {
+    const db = openDatabase(":memory:");
+    const { lead } = seedLeadAndRequest(db);
+
+    const insert = db
+      .prepare(
+        `INSERT INTO questions (lead_id, telegram_chat_id, text, answer_source)
+         VALUES (?, ?, ?, ?)`,
+      )
+      .run(lead.id, lead.telegram_chat_id, "Скільки коштує заняття?", "unanswered");
+
+    db.prepare("DELETE FROM leads WHERE id = ?").run(lead.id);
+
+    const row = db.prepare("SELECT * FROM questions WHERE id = ?").get(insert.lastInsertRowid);
+    expect(row).toBeUndefined();
+
+    db.close();
+  });
+
+  // @trace FR-KB-01
+  it("deleting a requests row sets the surviving questions.request_id to NULL, never deletes the row", () => {
+    const db = openDatabase(":memory:");
+    const { lead, request } = seedLeadAndRequest(db);
+
+    const insert = db
+      .prepare(
+        `INSERT INTO questions (lead_id, request_id, telegram_chat_id, text, answer_source)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(lead.id, request.id, lead.telegram_chat_id, "Скільки коштує заняття?", "unanswered");
+
+    db.prepare("DELETE FROM requests WHERE id = ?").run(request.id);
+
+    const row = db.prepare("SELECT * FROM questions WHERE id = ?").get(insert.lastInsertRowid) as {
+      id: number;
+      request_id: number | null;
+    };
+    expect(row).toBeDefined();
+    expect(row.request_id).toBeNull();
+
     db.close();
   });
 });

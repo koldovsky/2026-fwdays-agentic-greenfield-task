@@ -12,7 +12,7 @@ Write every test in this section FIRST and confirm it FAILS (red) against a
 typed throwing stub before implementing (green) — same discipline as
 S1–S4.
 
-- [ ] A.1 `packages/db/src/schema.test.ts` additions FIRST (red): a
+- [x] A.1 `packages/db/src/schema.test.ts` additions FIRST (red): a
       `questions` table exists after `initSchema()`; `answer_source` rejects
       a value outside `kb|unanswered`; `status` rejects a value outside
       `open|answered`; `delivery_status` rejects a value outside
@@ -21,10 +21,10 @@ S1–S4.
       `questions` rows; deleting a `requests` row sets the surviving
       `questions.request_id` to `NULL`, never deleting the row (`@trace
       FR-KB-01`, design.md Decision 4). Confirm red.
-- [ ] A.2 Implement `CREATE_QUESTIONS_TABLE` + `idx_questions_inbox` +
+- [x] A.2 Implement `CREATE_QUESTIONS_TABLE` + `idx_questions_inbox` +
       `initSchema()` wiring (created after `leads`/`requests` exist) in
       `schema.ts` to pass A.1.
-- [ ] A.3 `packages/db/src/questions.test.ts` FIRST (red, real in-memory
+- [x] A.3 `packages/db/src/questions.test.ts` FIRST (red, real in-memory
       SQLite):
       - `insertQuestion` persists and round-trips every column;
         `status`/`delivery_status` default to `open`/`pending` when omitted
@@ -53,24 +53,24 @@ S1–S4.
         FIFO) — a `delivery_status='failed'` row is NEVER returned (the
         explicit regression pin for design.md Decision 2's S4 divergence).
       Confirm every case red.
-- [ ] A.4 Implement `packages/db/src/questions.ts` (design.md Decision 4) to
+- [x] A.4 Implement `packages/db/src/questions.ts` (design.md Decision 4) to
       pass A.3.
-- [ ] A.5 Export `insertQuestion`, `findOpenInboxQuestions`,
+- [x] A.5 Export `insertQuestion`, `findOpenInboxQuestions`,
       `findQuestionById`, `markQuestionAnswered`, `retryQuestionDelivery`,
       `markQuestionDeliveryStatus`, `findDeliverableQuestions`, and their
       row/input types from `packages/db/src/index.ts`.
-- [ ] A.6 Run `npm run test:run`; confirm A.1–A.5 green, zero regressions in
+- [x] A.6 Run `npm run test:run`; confirm A.1–A.5 green, zero regressions in
       the S1–S4 suites.
 
 ## B. Pure `lib/src/kb/` — answer validation + entry serialization
 
-- [ ] B.1 `lib/src/kb/validate-answer.test.ts` FIRST (red): an empty string
+- [x] B.1 `lib/src/kb/validate-answer.test.ts` FIRST (red): an empty string
       and a whitespace-only string are both rejected `EMPTY`; a 3,501-
       character string is rejected `TOO_LONG` (naming the 3,500 bound); a
       string of exactly 3,500 characters passes; a normal short answer
       passes (`@trace FR-KB-03`). Confirm red.
-- [ ] B.2 Implement `lib/src/kb/validate-answer.ts` to pass B.1.
-- [ ] B.3 `lib/src/kb/serialize-entry.test.ts` FIRST (red): a plain
+- [x] B.2 Implement `lib/src/kb/validate-answer.ts` to pass B.1.
+- [x] B.3 `lib/src/kb/serialize-entry.test.ts` FIRST (red): a plain
       question+answer serializes into one well-formed block containing both
       texts verbatim; an answer whose text includes a line starting with `#`
       (or `##`, `### `, etc.) has that line escaped/indented in the output so
@@ -80,9 +80,9 @@ S1–S4.
       string leaves every OTHER existing entry's boundaries unchanged — one
       call yields exactly one well-formed entry, never a split or duplicated
       one (`@trace FR-KB-03`). Confirm red.
-- [ ] B.4 Implement `lib/src/kb/serialize-entry.ts` (including a private
+- [x] B.4 Implement `lib/src/kb/serialize-entry.ts` (including a private
       `escapeHeadingLines` helper) to pass B.3.
-- [ ] B.5 Run `npm run test:run`; confirm B.1–B.4 green.
+- [x] B.5 Run `npm run test:run`; confirm B.1–B.4 green.
 
 ## C. Agent — tools, KB-in-context, loop wiring, guardrail assertion
 
