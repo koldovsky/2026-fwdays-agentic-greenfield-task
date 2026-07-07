@@ -15,7 +15,7 @@
     "note": "FR-GUARD-01 structurally verified by two independent reviewers. The ONLY place bookings.status becomes 'confirmed' is apps/dashboard/app/api/decisions/[requestId]/route.ts (grep across packages/apps/lib confirms one non-comment/non-CHECK-enum hit). packages/agent/src/tools.ts's closed TOOL_NAMES has no confirm*/kb-write name (tools.test.ts pins the regression guard, green). packages/agent never imports the slots CalendarPort (comments only). BookingStorePort stays cancel-only (findPendingBookingForCurrentRequest + markBookingCancelled). The new SlotsPort/HoldStorePort create only 'pending' holds, never confirm. Guardrail intact (FR-GUARD-01/06)."
   },
   "dimensions": {
-    "correctness": { "confirmed": 6, "fixed": 4, "accepted": 2, "rejected": 0 },
+    "correctness": { "confirmed": 7, "fixed": 5, "accepted": 2, "rejected": 0, "liveFoundPostGate": 1 },
     "spec-compliance": { "confirmed": 4, "fixed": 2, "amended-scenario": 1, "in-progress-eval": 1, "implemented": 16, "contradictions": 0 },
     "security": { "confirmed": 2, "fixed": 2, "accepted": 2, "deferred": 1 }
   },
@@ -26,7 +26,15 @@
       "dimension": "correctness",
       "title": "Confirm self-collision filter used raw string equality between our locally-computed UTC (Z, ms) and Google's echoed freebusy timestamps — a different-but-equivalent representation (no ms, +00:00) would defeat the own-event filter and make EVERY Confirm spuriously report a collision against the real calendar",
       "disposition": "fixed",
-      "fix": "Replaced string equality with instant comparison (new Date(a).getTime()) via a shared removeOwnInterval/isSameInstantRange helper in decisions/[requestId]/route.ts. RED test strips ms from the fake's own interval and asserts Confirm still applies+confirms. Will be empirically confirmed by the live real-DB smoke (G.3) against the real DEMO calendar."
+      "fix": "Replaced string equality with instant comparison (new Date(a).getTime()) via a shared removeOwnInterval/isSameInstantRange helper in decisions/[requestId]/route.ts. RED test strips ms from the fake's own interval and asserts Confirm still applies+confirms. Confirmed live (G.3) — Confirm returns applied for the booking's own hold, no spurious self-conflict."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness",
+      "title": "Confirm double-booked when an EXTERNAL event exactly overlapped the booking's own hold — a deeper form of finding #1, found by the LIVE G.3 smoke AFTER the review gate (the fake could not surface it)",
+      "disposition": "fixed",
+      "foundBy": "live G.3 real-DEMO-calendar smoke (post-review-gate)",
+      "fix": "Two real bugs surfaced only against the real Google API, fixed test-first + live-verified: (1) Google freebusy.query MERGES overlapping busy periods from different events into ONE interval, so an external event exactly overlapping the own hold got stripped by the value-based self-filter -> masked conflict. Fix (73b4aa7): added CalendarPort.busyEventsInRange (Google events.list, distinct events with ids) + an identity-based Confirm collision check that excludes the own calendar_event_id BY ID, run alongside the value-based check (either -> conflict). (2) The first fix still failed live: busyEventsInRange passed through events.list's LOCAL-OFFSET (+03:00) timestamps while the own range was Z-UTC, and the overlap used string comparison -> wrong ordering (same format-fragility class as finding #1). Fix (e4eb20f): hasIdentityBasedCollision now compares by parsed instant (rangesOverlapByInstant, Date#getTime), and busyEventsInRange normalizes to Z-UTC to honor the interface contract. Both pinned by RED->GREEN unit tests (MergingCalendarPort + OffsetFormatBusyEventsCalendar subclasses) AND a PERMANENT gating step 8 in scripts/qa/manual-smoke-booking-hitl.mjs that is now LIVE-VERIFIED (Confirm -> conflict against the real DEMO calendar). This is the headline maker!=checker/verify-live evidence of the slice: fake-based unit+integration tests all passed, the review gate passed, and only the live smoke caught a real double-booking in the confirm guardrail."
     },
     {
       "severity": "MAJOR",
@@ -120,5 +128,5 @@
       "rationale": "Build-time CSS tokenizer bug; the app renders no untrusted CSS at runtime and no production path in this diff touches postcss. `audit fix --force` proposes a next@9 major DOWNGRADE, incompatible with the AGENTS.md Next.js 16 pin. Track for the next compatible next patch release; not fixable in-slice without a regression."
     }
   ],
-  "notes": "All CONFIRMED code findings are fixed (7 test-first: 3 MAJOR correctness + 1 MAJOR privacy + 2 MAJOR/MINOR spec + minors) or dispositioned (accepted with rationale / deferred with reason / amended-scenario per the LOCKED human decision). No finding is left silently open. FR-GUARD-01 PASS. clean:true reflects that every confirmed defect is resolved or explicitly, defensibly accepted; the remaining pre-archive gates (fr-guard-01 eval, axe+vision rendered-UI gate, real-DB smoke) are tracked in tasks.md sections H/I/G.3/J and run before `openspec archive`."
+  "notes": "All CONFIRMED code findings are fixed test-first or dispositioned (accepted with rationale / deferred / amended-scenario per the LOCKED human decision). No finding is left silently open. FR-GUARD-01 PASS. Post-review-gate, the LIVE G.3 smoke found a real Confirm double-booking (external event exactly overlapping the own hold) that the fakes structurally could not surface — fixed across two layers (identity-based busyEventsInRange + instant-compare/UTC-normalize) and LIVE-VERIFIED against the real DEMO calendar; this is the slice's headline verify-live evidence. Remaining pre-archive: the fr-guard-01 eval is done (score 91, ratchet baseline set); the rendered-UI gate is done (axe 0 serious/critical + vision MET, and it caught a production-fatal browser-crash); the G.3 AUTONOMOUS subset is done + live-verified. The only un-run items are the HUMAN-REQUIRED G.3 steps (real Telegram intake/tap, real Telegram delivery round-trip, outbox restart-durability) + the demo video (the user's) — archive (J) is gated on those per the plan. clean:true reflects that every confirmed defect is resolved or defensibly accepted."
 }
