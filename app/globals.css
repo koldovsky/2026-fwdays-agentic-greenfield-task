@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ── Design-system tokens ─────────────────────────────────────────── */
+:root {
+  /* Neutral scale */
+  --ds-text-primary: #222222;
+  --ds-text-secondary: #6A6A6A;
+  --ds-text-tertiary: #C1C1C1;
+  --ds-surface-light: #F7F7F7;
+  --ds-border-light: #EBEBEB;
+  --ds-border-medium: #DDDDDD;
+
+  /* STOP button — mode-invariant (#2.1) */
+  --ds-stop: #C13515;
+  --ds-stop-hover: #E00B41;
+
+  /* Mode accent — defaults to Calm/Zen Sanctuary (#1.2) */
+  --ds-accent: #FF385C;
+  --ds-accent-hover: #BD1E59;
+  --ds-accent-supporting: #D70466;
+  --ds-focus-ring: rgba(255, 56, 92, 0.1);
+}
+
+/* Mode B: The Blueprint — Rational */
+[data-mode="rational"] {
+  --ds-accent: #1A73E8;
+  --ds-accent-hover: #1355B0;
+  --ds-accent-supporting: #00838F;
+  --ds-focus-ring: rgba(26, 115, 232, 0.1);
+}
+
+/* Mode C: The Indian Auntie — High-Impact */
+[data-mode="auntie"] {
+  --ds-accent: #6C0D63;
+  --ds-accent-hover: #460479;
+  --ds-accent-supporting: #92174D;
+  --ds-focus-ring: rgba(108, 13, 99, 0.1);
+}
+
+@theme inline {
+  /* Mode-adaptive accent tokens — Tailwind utilities: bg-accent, text-accent, border-accent, etc. */
+  --color-accent: var(--ds-accent);
+  --color-accent-hover: var(--ds-accent-hover);
+  --color-accent-supporting: var(--ds-accent-supporting);
+
+  /* STOP button tokens */
+  --color-stop: var(--ds-stop);
+  --color-stop-hover: var(--ds-stop-hover);
+
+  /* Neutral design-system tokens */
+  --color-ds-text-primary: var(--ds-text-primary);
+  --color-ds-text-secondary: var(--ds-text-secondary);
+  --color-ds-text-tertiary: var(--ds-text-tertiary);
+  --color-ds-surface: var(--ds-surface-light);
+  --color-ds-border-light: var(--ds-border-light);
+  --color-ds-border-medium: var(--ds-border-medium);
+
+  /* Card shadows (#2.2) */
+  --shadow-card: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0px 4px 12px rgba(0, 0, 0, 0.12);
+
+  /* System fonts (#3.1) */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: #ffffff;
+  color: var(--ds-text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* iOS Safari: 100dvh fallback for full-screen modal */
+.emergency-modal-full {
+  height: 100dvh;
+  /* stylelint-disable-next-line */
+  height: -webkit-fill-available;
+}

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/istoietska/Desktop/2026-fwdays-agentic-greenfield-task && npm test 2>&1 | tail -40"
+          }
+        ]
+      }
+    ]
+  }
+}
