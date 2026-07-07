@@ -185,8 +185,7 @@
       "id": "FR-INTAKE-06",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -205,8 +204,7 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/intake/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -233,8 +231,7 @@
       "id": "FR-INTAKE-08",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -470,8 +467,7 @@
       "id": "FR-GUARD-03",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/slots/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -485,8 +481,7 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/slots/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -499,8 +494,7 @@
     {
       "id": "FR-HITL-02",
       "specs": [
-        "openspec/specs/booking-hitl/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/booking-hitl/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -537,8 +531,7 @@
       "id": "FR-HITL-03",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/dashboard/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/dashboard/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -566,8 +559,7 @@
       "id": "FR-HITL-04",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
-        "openspec/specs/intake/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/intake/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -580,8 +572,7 @@
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/slots/spec.md",
-        "openspec/changes/booking-hitl/specs/booking-hitl/spec.md"
+        "openspec/specs/slots/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -760,10 +751,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-GUARD-01 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"booking-hitl\" is not archived"
     }
   ]
 }

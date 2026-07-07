@@ -25,6 +25,15 @@
         "src"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-07-07-booking-hitl",
+      "reviewEvidence": "clean",
+      "trailerCommits": 34,
+      "libDomains": [
+        "src"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -32,7 +41,8 @@
       "domain": "src",
       "slices": [
         "2026-07-04-slots",
-        "2026-07-06-intake"
+        "2026-07-06-intake",
+        "2026-07-07-booking-hitl"
       ]
     }
   ],
@@ -40,7 +50,7 @@
   "warnings": [
     {
       "check": "in-scope",
-      "msg": "lib/src/ modified by 2 slices (2026-07-04-slots, 2026-07-06-intake) — review for scope drift"
+      "msg": "lib/src/ modified by 3 slices (2026-07-04-slots, 2026-07-06-intake, 2026-07-07-booking-hitl) — review for scope drift"
     }
   ]
 }

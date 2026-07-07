@@ -7,9 +7,7 @@ declined, or re-proposed booking. The administrator — never the agent — make
 the call from the dashboard; the system relays the decision to the lead in
 Telegram and keeps the DEMO Google Calendar in sync. Covers FR-HITL-01..04 and
 guardrail FR-GUARD-01.
-
 ## Requirements
-
 ### Requirement: Pending request decision surface
 
 A booking request in state `pending` SHALL appear on the dashboard, and the
@@ -74,7 +72,7 @@ neither.
 - **GIVEN** the administrator has made a decision on a `pending` request
 - **WHEN** the Telegram API call to notify the lead fails
 - **THEN** the already-committed state transition and calendar sync are NOT rolled back
-- **AND** the delivery failure is recorded and surfaced on the request card so the administrator can retry the notification
+- **AND** the delivery failure is durably recorded (`notifications.delivery_status = 'failed'`) and automatically retried by the bot's outbox drain loop on a subsequent tick, until it succeeds
 - **AND** the lead notification is never silently dropped
 
 ### Requirement: Booking decision state transitions
