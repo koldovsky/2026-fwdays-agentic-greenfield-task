@@ -251,7 +251,7 @@ S1–S4.
 
 ## F. Integration — the full unanswered→admin-answers→lead-receives-answer loop
 
-- [ ] F.1 `tests/integration/kb-learning/full-flow.test.ts` (real SQLite,
+- [x] F.1 `tests/integration/kb-learning/full-flow.test.ts` (real SQLite,
       `FakeTelegramTransport`, a real tmp `knowledge/school.md` fixture):
       - a lead asks a KB-covered question → an `answer_faq` row
         (`answer_source='kb'`), the reply is grounded, no inbox entry
@@ -270,7 +270,7 @@ S1–S4.
         conversation → answered from the KB this time (`answer_source='kb'`,
         no restart — `@trace FR-KB-03`).
       (`@trace FR-FAQ-01`, `@trace FR-FAQ-02`, `@trace FR-KB-01..04`).
-- [ ] F.2 Run `npm run test:integration`; confirm F.1 green.
+- [x] F.2 Run `npm run test:integration`; confirm F.1 green.
 
 ## G. Rendered-UI gate — axe + vision-verify on the Question-inbox panel
 

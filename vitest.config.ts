@@ -72,6 +72,12 @@ export default defineConfig({
       // same "own top-level entry per slice" convention as "slots"/"agent"
       // above (S1/S2 each added their own).
       "booking-hitl/**/*.test.ts",
+      // kb-learning tasks.md F.1: this slice's own real-SQLite +
+      // FakeTelegramTransport full-flow test, at
+      // `tests/integration/kb-learning/full-flow.test.ts` once re-based —
+      // same "own top-level entry per slice" convention as
+      // "slots"/"agent"/"booking-hitl" above.
+      "kb-learning/**/*.test.ts",
     ],
     passWithNoTests: true,
     testTimeout: 30000,

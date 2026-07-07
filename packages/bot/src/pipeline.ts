@@ -735,8 +735,13 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
       // missing/unreadable file degrades to `""` (`readKnowledgeBaseText`
       // never throws), which `buildSystemPrompt` renders as an explicitly
       // empty KB block — every question then safely falls onto the
-      // `log_question` promise path.
-      const kbText = readKnowledgeBaseText(DEFAULT_KNOWLEDGE_BASE_PATH);
+      // `log_question` promise path. `KAMERTON_KB_PATH` mirrors the dashboard
+      // answer-route's own `resolveKbPath` idiom so BOTH the read side (here)
+      // and the write side (the route) key off the same override — one env,
+      // one file, in dev/tests alike.
+      const kbText = readKnowledgeBaseText(
+        process.env.KAMERTON_KB_PATH ?? DEFAULT_KNOWLEDGE_BASE_PATH,
+      );
 
       const result = await runIntakeTurn({
         state: rowToIntakeState(request),
