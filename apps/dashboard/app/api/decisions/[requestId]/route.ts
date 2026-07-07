@@ -25,15 +25,33 @@
 //      cross-lead source is wired yet) -> `{status:"invalid", code}` on any
 //      violation, booking untouched.
 //   4. Calendar operation, ALWAYS before the DB commit:
-//      - `confirm`: a fresh `calendar.freeBusy` collision re-check over the
-//        booking's OWN slot (excluding the booking's own tentative event
-//        from that re-check — its own hold always appears in a fresh
-//        `freeBusy` snapshot, so a naive full-list check would report a
-//        `conflict` on every confirm, even the very first one) -> a real
-//        collision -> `{status:"conflict"}`. Otherwise
-//        `calendar.upgradeToConfirmed(eventId, compileFirstLessonBrief(...))`.
-//        Any `CalendarError` from either call -> `{status:"unavailable"}`,
-//        booking stays `pending` (NFR-REL-01).
+//      - `confirm`: a fresh, TWO-PART collision re-check over the booking's
+//        OWN slot, run in parallel — anything found by EITHER part is a
+//        real collision:
+//          (a) value-based: `calendar.freeBusy` (busy TIME RANGES, no
+//              identity), self-filtered by INSTANT equality
+//              (`hasExternalCollision`/`removeOwnInterval`) — still needed
+//              because a manually-added, identity-less busy interval (e.g.
+//              a synced external/holiday calendar) is only visible via
+//              `freeBusy`, not `busyEventsInRange`.
+//          (b) identity-based (the live-found Confirm double-booking fix,
+//              `CalendarPort.busyEventsInRange`'s own doc comment,
+//              `docs/qa/booking-hitl-manual-smoke.md`'s "REAL BUG FOUND"):
+//              `calendar.busyEventsInRange`, self-filtered by the booking's
+//              OWN `calendar_event_id` BY IDENTITY. Real Google
+//              `freebusy.query` MERGES overlapping busy periods from
+//              DIFFERENT events into one interval — if a distinct external
+//              event exactly overlaps the booking's own hold, (a)'s
+//              instant-equality self-filter strips the single merged
+//              interval and mistakes it for "just my own hold", silently
+//              double-booking. `busyEventsInRange` never merges, so
+//              excluding the booking's own event BY IDENTITY leaves any
+//              OTHER event — including an exact-overlap one — as a real,
+//              detected collision, immune to (a)'s blind spot.
+//        Otherwise `calendar.upgradeToConfirmed(eventId,
+//        compileFirstLessonBrief(...))`. Any `CalendarError` from any of
+//        the three calendar calls -> `{status:"unavailable"}`, booking
+//        stays `pending` (NFR-REL-01).
 //      - `decline` / `propose_another_time`: `releaseHold(calendar,
 //        eventId)` — the ONE shared delete path (design.md Decision 6 item
 //        2) rather than a raw `calendar.deleteEvent`, so a 404/410
@@ -82,6 +100,7 @@ import {
 } from "@kamerton/lib/src/booking/copy.ts";
 import { releaseHold } from "@kamerton/lib/src/slots/hold.ts";
 import { CalendarError, type CalendarPort } from "@kamerton/lib/src/slots/calendar-port.ts";
+import { overlaps } from "@kamerton/lib/src/slots/subtract.ts";
 import { kyivWallClockToUtc, utcToKyivWallClock } from "@kamerton/lib/src/slots/timezone.ts";
 import type { Slot } from "@kamerton/lib/src/slots/grid.ts";
 import { compileFirstLessonBrief } from "@kamerton/lib/src/intake/first-lesson-brief.ts";
@@ -147,7 +166,31 @@ function formatSlotButtonLabel(slot: Slot): string {
  *  still-live tentative event for its own slot, so re-proposing that exact
  *  slot would otherwise always be reported as busy/unavailable. Same
  *  instant-comparison self-filter as `hasExternalCollision` (finding #1),
- *  reused via `removeOwnInterval`. */
+ *  reused via `removeOwnInterval`.
+ *
+ *  DELIBERATELY NOT switched to the identity-based `busyEventsInRange` fix
+ *  (unlike Confirm's step-4 re-check, above): the live-found bug is
+ *  `freeBusy`'s MERGING of overlapping busy periods from distinct events
+ *  masking an exact-overlap external event as "just my own hold" — the same
+ *  failure mode could in theory recur here if the admin re-proposes the
+ *  booking's OWN slot while a distinct external event exactly overlaps it.
+ *  Two things keep this a narrow, accepted residual risk rather than a
+ *  second required fix: (1) `validateAdminProposedSlots` is a PURE function
+ *  over `BusyInterval[]` (design.md Decision 1's port-boundary discipline;
+ *  TC-PURE-01) — folding `busyEventsInRange`'s identity-based result in here
+ *  would mean either widening that pure signature to carry `eventId`s it has
+ *  no other use for, or silently dropping identity again to fit
+ *  `BusyInterval[]`, which defeats the point; and (2) D.9's own
+ *  `SLOT_UNAVAILABLE` regression pin seeds a MANUALLY-added, identity-less
+ *  busy interval (`FakeCalendarPort.addManualBusy`) that `busyEventsInRange`
+ *  never reports at all (by design — it only tracks its own
+ *  tentative/confirmed events and `addExternalEvent`-seeded ones), so
+ *  `freeBusy` cannot simply be replaced here without regressing that test.
+ *  Confirm (the higher-stakes, teacher-facing "book it" action) is the one
+ *  made identity-based by this fix; a coincident exact-overlap on a
+ *  re-proposed slot would still surface at the NEXT Confirm attempt on that
+ *  slot, so the double-booking itself is still caught before it can stick —
+ *  just one step later than ideal for this specific, narrow scenario. */
 async function freshBusyForSlots(
   calendar: CalendarPort,
   slots: Slot[],
@@ -222,14 +265,33 @@ function removeOwnInterval<T extends { start: string; end: string }>(
   });
 }
 
-/** Confirm's fresh collision re-check (step 4): see `removeOwnInterval`'s
- *  own comment — anything left after removing the booking's own interval is
- *  a genuine external collision. */
+/** Confirm's fresh collision re-check (step 4), VALUE-based half: see
+ *  `removeOwnInterval`'s own comment — anything left after removing the
+ *  booking's own interval is a genuine external collision. Kept alongside
+ *  `hasIdentityBasedCollision` below (see this file's Confirm step-4 header
+ *  comment): a manually-added, identity-less busy interval is only visible
+ *  via `freeBusy`, never via `busyEventsInRange`. */
 function hasExternalCollision(
   busy: { start: string; end: string }[],
   ownRange: { start: string; end: string },
 ): boolean {
   return removeOwnInterval(busy, ownRange).length > 0;
+}
+
+/** Confirm's fresh collision re-check (step 4), IDENTITY-based half — the
+ *  fix for the live-found Confirm double-booking bug (see this file's
+ *  Confirm step-4 header comment and `CalendarPort.busyEventsInRange`'s own
+ *  doc comment). Excludes the booking's own tentative/confirmed event BY
+ *  `eventId`, never by value-matching a range that a merge-prone `freeBusy`
+ *  snapshot could make ambiguous — any OTHER event overlapping `ownRange`
+ *  is a genuine external collision, no matter how many events share the
+ *  exact same time range. */
+function hasIdentityBasedCollision(
+  distinctEvents: { eventId: string; start: string; end: string }[],
+  ownEventId: string,
+  ownRange: { start: string; end: string },
+): boolean {
+  return distinctEvents.some((event) => event.eventId !== ownEventId && overlaps(ownRange, event));
 }
 
 export async function POST(
@@ -350,15 +412,22 @@ export async function POST(
         end: kyivWallClockToUtc(booking.slot_end),
       };
       let freshBusyUtc: { start: string; end: string }[];
+      let distinctEvents: { eventId: string; start: string; end: string }[];
       try {
-        freshBusyUtc = await calendar.freeBusy(ownRange);
+        [freshBusyUtc, distinctEvents] = await Promise.all([
+          calendar.freeBusy(ownRange),
+          calendar.busyEventsInRange(ownRange),
+        ]);
       } catch (error) {
         if (error instanceof CalendarError) {
           return Response.json({ status: "unavailable", message: UNAVAILABLE_MESSAGE }, { status: 200 });
         }
         throw error;
       }
-      if (hasExternalCollision(freshBusyUtc, ownRange)) {
+      if (
+        hasExternalCollision(freshBusyUtc, ownRange) ||
+        hasIdentityBasedCollision(distinctEvents, eventId, ownRange)
+      ) {
         return Response.json({ status: "conflict", message: CONFLICT_MESSAGE }, { status: 200 });
       }
       try {

@@ -222,22 +222,52 @@ export class GoogleCalendarPort implements CalendarPort {
     }
   }
 
-  // NOT YET IMPLEMENTED — GREEN-phase stub only, so this class keeps
-  // compiling against `CalendarPort`'s additive `busyEventsInRange` member
-  // (see that interface's own doc comment: the fix for the live-found
-  // Confirm double-booking bug, `docs/qa/booking-hitl-manual-smoke.md`'s
-  // "REAL BUG FOUND" note). The GREEN implementer wires this to Google
-  // `calendar.events.list({ calendarId, timeMin: range.start, timeMax:
-  // range.end, singleEvents: true })`, mapping each returned event to
-  // `{ eventId: event.id, start: event.start.dateTime, end:
-  // event.end.dateTime }` (and the same `mapCalendarError` taxonomy as every
-  // other method above) — deliberately NOT written here (test-first: this
-  // pass only pins the contract, RED).
+  /**
+   * `calendar.events.list` — distinct, identity-carrying events overlapping
+   * `range` (the fix for the live-found Confirm double-booking bug, see
+   * `CalendarPort.busyEventsInRange`'s own doc comment). `singleEvents:
+   * true` expands recurring events into concrete instances (required for
+   * `orderBy: "startTime"`, which Google only accepts when `singleEvents`
+   * is set); `maxResults: 2500` (Google's documented page-size ceiling) so
+   * a single call covers the narrow slot-sized `range` this port is always
+   * called with, without needing pagination.
+   *
+   * All-day events (a `date`-only `start`/`end`, no `dateTime`) and
+   * `status === "cancelled"` events are SKIPPED: an all-day event carries no
+   * timed range comparable to a booking slot, and a cancelled event is not
+   * actually occupying the calendar (Google's `events.list` can still
+   * surface cancelled events in some sync modes). Conversion-free RFC3339
+   * UTC pass-through (design.md Decision 3), like every other method here.
+   */
   async busyEventsInRange(
     range: { start: string; end: string },
   ): Promise<{ eventId: string; start: string; end: string }[]> {
-    throw new CalendarApiError(
-      `busyEventsInRange: not yet implemented on GoogleCalendarPort (requested range ${range.start}..${range.end}) — GREEN-phase implementer wires Google events.list here`,
-    );
+    try {
+      const calendar = await this.client();
+      const res = await calendar.events.list({
+        calendarId: this.calendarId,
+        timeMin: range.start,
+        timeMax: range.end,
+        singleEvents: true,
+        orderBy: "startTime",
+        maxResults: 2500,
+      });
+      const items = res.data.items ?? [];
+      const events: { eventId: string; start: string; end: string }[] = [];
+      for (const event of items) {
+        if (event.status === "cancelled") continue;
+        const eventId = event.id;
+        const start = event.start?.dateTime;
+        const end = event.end?.dateTime;
+        if (typeof eventId !== "string" || typeof start !== "string" || typeof end !== "string") {
+          continue;
+        }
+        events.push({ eventId, start, end });
+      }
+      return events;
+    } catch (error) {
+      if (error instanceof CalendarApiError) throw error;
+      throw mapCalendarError(error, "busyEventsInRange");
+    }
   }
 }
