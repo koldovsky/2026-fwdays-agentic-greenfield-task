@@ -61,18 +61,32 @@
   9 integration green, root+dashboard tsc/lint/build clean, openspec 6/6,
   traceability 0 failures, check-recordings 10/0.** QA harness:
   scripts/qa/{seed,capture,a11y}-booking-hitl.mjs; evidence docs/qa/booking-hitl/.
-  **REMAINING (live/model budget — the user chose "attempt live" but these burn
-  limits + need them):** H.2/H.3 `evals/cases/fr-guard-01` (author case whose
-  produce() drives a live runIntakeTurn under lead pressure; run the eval-suite;
-  check-eval-ratchet baseline — NOTE FR-GUARD-01 is already structurally ironclad
-  + tested, so this is documented-evidence value); **G.3 real-DB smoke** (the
-  archive gate — scripted+rerunnable per S1/S2/S3, but walks a lead through real
-  Telegram intake → taps a slot chip → tentative event in the real DEMO calendar
-  → admin Confirm/Decline/Propose on the real dashboard → real Telegram delivery +
-  the outbox-durability restart check; genuinely wants a human tapping Telegram /
-  eyeballing the calendar); J validate+archive (`npx openspec archive booking-hitl
-  --yes` — ONLY after G.3 passes, per the plan's "no archiving on green units
-  alone"). The PR demo video is the user's to record.
+  **DONE (autonomous gates all complete):** H.2/H.3 `evals/cases/fr-guard-01`
+  (`bd734ff`): produce() drives a live claude-sonnet-5 turn under lead pressure;
+  fresh eval-judge scored **91/pass**; ratchet baseline `quality/eval-baseline.json`
+  guardrail-integrity=91 (`check:eval` OK). **G.3 AUTONOMOUS subset + LIVE-VERIFIED**
+  (`5fd1765`→`c3017b9`): scripts/qa/manual-smoke-booking-hitl.mjs runs the calendar
+  sync on all 3 decisions + outbox drain + off-grid + a PERMANENT gating exact-
+  overlap Confirm regression, all against the REAL DEMO calendar, 0 stray events.
+  **The G.3 live smoke found a real Confirm double-booking the fakes couldn't**
+  (Google freebusy.query MERGES coincident events → an external event exactly
+  overlapping the own hold was masked). Fixed across two layers, RED→GREEN + live-
+  verified: (1) `73b4aa7` identity-based `CalendarPort.busyEventsInRange`
+  (events.list, distinct ids) excluding the own event id, alongside the value-based
+  check; (2) `e4eb20f` instant-compare in `hasIdentityBasedCollision` +
+  `busyEventsInRange` UTC-normalize (events.list returns +03:00, own range is Z).
+  Recorded in review-findings.json (correctness confirmed 7, clean:true).
+  **FINAL STATE: 465 unit + 9 integration green, root+dashboard tsc/lint/build
+  clean, openspec 6/6, traceability 0, eval ratchet 91, a11y 0 serious/critical
+  (live, stage I), recordings 10/0, review-findings clean:true, tree clean.**
+  **REMAINING (need the user — archive gated on these):** the HUMAN half of G.3
+  (walk a real lead through Telegram intake → tap a slot chip → observe the real
+  Telegram Confirm/Decline/Propose messages arriving → outbox restart-durability:
+  kill bot mid-decision, restart, confirm delivery next tick); the 1–2 min PR demo
+  video; then J archive (`npx openspec archive booking-hitl --yes` — only after the
+  human G.3 half, per the plan's "no archiving on green units alone"), and the
+  graded PR (`.github/pull_request_template.md`: real name, demo video, human-vs-
+  agent decisions, tools/MCP). S5 `kb-learning` is the only other remaining MVP slice.
 - **Prior phase — Slice S3 `dashboard` COMPLETE and ARCHIVED.** Archived at
   `openspec/changes/archive/2026-07-06-dashboard/`. 2 human decisions
   (design.md): Bot→Next ingest→SSE publisher seam (thin injected publisher on
