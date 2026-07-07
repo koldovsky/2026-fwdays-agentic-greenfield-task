@@ -327,7 +327,7 @@ S1–S4.
 
 ## I. Review gate — run BEFORE archive (S1 process lesson, repeated every slice since)
 
-- [ ] I.1 A fresh reviewer pass (maker ≠ checker) over the full diff against
+- [x] I.1 A fresh reviewer pass (maker ≠ checker) over the full diff against
       `openspec/specs/kb-learning/spec.md` (scenario-by-scenario),
       `design.md`'s five decisions, and AGENTS.md's guardrail rules —
       explicitly confirm: (a) no tool in `tools.ts`'s `TOOLS` accepts an

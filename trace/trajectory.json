@@ -29,7 +29,7 @@
     {
       "slice": "2026-07-07-booking-hitl",
       "reviewEvidence": "clean",
-      "trailerCommits": 34,
+      "trailerCommits": 36,
       "libDomains": [
         "src"
       ],

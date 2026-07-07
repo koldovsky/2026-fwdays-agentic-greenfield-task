@@ -1,0 +1,77 @@
+{
+  "generatedBy": "review-gate",
+  "clean": true,
+  "scope": "slice S5 kb-learning (packages/db questions table + query helpers; lib/src/kb validate-answer + serialize-entry; packages/agent tools answer_faq/log_question + kb-context fresh-per-turn read + system-prompt KB block/FR-FAQ-02 rewrite + loop QuestionsPort/'logged' dispatch + apology; packages/bot pipeline QuestionsPort binding + KB read seam + question-drain manual-retry + index drain timer; apps/dashboard kb-write + /api/questions GET/answer/retry routes + QuestionInbox panel + DashboardApp wiring; knowledge/school.md seed; tests/integration/kb-learning full-flow)",
+  "change": "kb-learning",
+  "baseRef": "155d157",
+  "headRef": "626079e",
+  "reviewers": [
+    "spec-compliance-auditor (kb-learning/spec.md scenario-by-scenario)",
+    "code-reviewer (correctness / error-handling / framework / guardrails / route security)"
+  ],
+  "guardrailCheck": {
+    "result": "PASS",
+    "note": "FR-GUARD-06 structurally verified by two independent reviewers. The ONLY runtime writer of knowledge/school.md across packages/apps/lib is apps/dashboard/lib/kb-write.ts (grep of appendFile|writeFile|school\\.md, excluding tests, confirms one hit); packages/agent (kb-context.ts) and packages/bot only readFileSync it, fail-soft. packages/agent/src/tools.ts's closed TOOLS has no confirm*/kb-write name and answer_faq/log_question each carry ONLY a required `question:string` (no answer/content/price payload the model could get wrong) — tools.test.ts pins this. FR-KB-04 manual-retry fork verified: findDeliverableQuestions is WHERE status='answered' AND delivery_status='pending' (no IN(...), no failed) — a failed row re-enters only via the admin-triggered retryQuestionDelivery. Guardrail intact (FR-GUARD-02 structural surface + FR-GUARD-06)."
+  },
+  "dimensions": {
+    "spec-compliance": { "scenariosAudited": 31, "implemented": 28, "confirmedFindings": 1, "eval-gated-pending": 2, "contradictions": 0 },
+    "correctness": { "confirmed": 3, "fixed": 3, "rejected": 0 },
+    "guardrail-integrity": { "confirmed": 1, "fixed": 1 },
+    "tone": { "confirmed": 1, "fixed": 1 }
+  },
+  "coverageSummary": "31 kb-learning/spec.md scenarios: 28 implemented+tested at review time, 0 contradicted. The one contradicted UI scenario (answered+pending rendered a live answer form) is fixed (isSending branch, +test). The FR-GUARD-02/FR-FAQ-01/02 behavioral evals (stage H) and the rendered-UI axe+vision gate (stage G) + real-DB smoke (stage J) run AFTER this review, per the pre-archive gate sequence (tasks.md H/G/J left unchecked at review time by design). All confirmed CODE findings are fixed test-first; nothing left unresolved for archive except those tracked downstream gates.",
+  "confirmedFindings": [
+    {
+      "severity": "CRITICAL",
+      "dimension": "guardrail-integrity",
+      "title": "serializeKbEntry heading-escaped the answer but spliced the QUESTION raw into the '## ' heading line — the question is the model's verbatim quote of the lead's free-text message (lead-controlled), so an embedded newline+'#' would inject a rogue ATX heading into knowledge/school.md, the file buildKnowledgeBaseBlock folds verbatim as the FR-GUARD-02 single-source-of-truth, and split one entry into two",
+      "disposition": "fixed",
+      "foundBy": "code-reviewer (also implicitly by spec-compliance via the untested single-line-only serialize fixtures)",
+      "fix": "Added flattenQuestionToOneLine() in lib/src/kb/serialize-entry.ts collapsing every whitespace/newline run in the question to a single space (+trim) before splicing into '## ', so the entry is always exactly one heading line — no injected second heading, no split entry. RED-first: 3 new serialize-entry.test.ts cases feed a multi-line/heading-bearing question and assert exactly one '## ' heading and exactly one new entry when appended to the multi-entry fixture. This path passed every unit test, the build, and the F integration test before the review gate — the headline maker!=checker evidence of the slice."
+    },
+    {
+      "severity": "CRITICAL",
+      "dimension": "correctness",
+      "title": "QuestionInbox rendered a live, editable answer form on an already-answered-but-not-yet-delivered (answered+pending) question — the exact behavior the 'Just-answered, not-yet-delivered question is still visible ... does not offer an answer form' delta scenario forbids; only answered+failed was special-cased, everything else fell through to QuestionRowAnswerForm; server side (findOpenInboxQuestions) was correct, the gap was purely client-side and untested",
+      "disposition": "fixed",
+      "foundBy": "both reviewers (spec-compliance CRITICAL, code-reviewer MAJOR)",
+      "fix": "Added an isSending branch (status='answered' && delivery_status!=='delivered' && !failed) in QuestionInbox.tsx rendering a non-color-only '⏳ Відповідь надсилається ліду…' indicator — never the answer form, never a retry button (failed keeps its distinct treatment + retry). +RTL test asserting the pending row shows the sending indicator and has no input/submit/retry."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness",
+      "title": "A successful retry never refetched the inbox (FailedRowRetry set a local message string but never called loadQuestions()), so a just-retried row stayed stuck showing 'failed' + retry button until a manual reload — contradicting design.md Decision 2's explicit 'self-fetch again after every mutating action it performs: answer submit, retry click'",
+      "disposition": "fixed",
+      "foundBy": "code-reviewer",
+      "fix": "FailedRowRetry now takes an onRetried callback; QuestionInbox passes loadQuestions as that callback, fired after a successful retry POST. +RTL test asserting a GET /api/questions refetch fires after the retry POST."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "tone",
+      "title": "A QuestionsPort (DB-write) failure while logging an FAQ question fell through applyToolUse's shared catch and returned CALENDAR_UNAVAILABLE_APOLOGY ('не вдається перевірити розклад занять') — a lead who merely asked a question is wrongly told the schedule is broken (BC-BRAND-01/BC-LANG-01 kind-tone violation); design.md Decision 4 flagged this for the review gate to disposition",
+      "disposition": "fixed",
+      "foundBy": "code-reviewer (recommended fix-now; design.md self-flagged)",
+      "fix": "Added QUESTION_LOGGING_UNAVAILABLE_APOLOGY in packages/agent/src/apology.ts; the answer_faq/log_question branches wrap their ports.questions call in a branch-local try/catch and rethrow a QuestionLoggingFailure marker that runIntakeTurn's shared catch recognizes to pick the question-appropriate apology (state preserved for resumption, NFR-REL-01); the Calendar path's wording is unchanged. The previously-pinned loop.test.ts assertion was deliberately retargeted to the new constant (documented inline as 'review-gate finding d')."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "readQuestionInput would throw a TypeError on a null/undefined tool-use input (not expected from the real API for a required-property tool, but not type-guaranteed at the boundary); low impact because the outer applyToolUse try/catch already degrades a throw to the shared apology with state preserved",
+      "disposition": "fixed",
+      "foundBy": "code-reviewer",
+      "fix": "Added a `typeof input === 'object' && input !== null` guard returning '' otherwise; +a null-input unit assertion via log_question."
+    }
+  ],
+  "acceptedOrDeferred": [
+    {
+      "item": "FR-GUARD-02 / FR-FAQ-01 / FR-FAQ-02 behavioral evals (evals/cases/fr-guard-02.eval.ts, fr-faq-01.eval.ts, fr-faq-02.eval.ts) not yet written at review time",
+      "disposition": "tracked-downstream-gate",
+      "note": "tasks.md stage H — runs after this review, before archive; guarded by check-eval-ratchet. Not a code defect; the spec's own scenarios name these evals as the enforcement mechanism (design.md Decision 3)."
+    },
+    {
+      "item": "Rendered-UI gate (axe light+dark + vision-verify) on the Question-inbox panel not yet run",
+      "disposition": "tracked-downstream-gate",
+      "note": "tasks.md stage G — runs after this review, before archive. The QuestionInbox visual-distinction requirement (the answered+pending finding above) is exactly what a vision pass double-checks; the still is captured after the fix."
+    }
+  ]
+}
