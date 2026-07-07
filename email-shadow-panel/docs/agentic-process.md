@@ -312,6 +312,7 @@ Selected tools for Phases 0 and 1:
 ### Phase 4 - Deployment readiness and production verification tooling
 
 - Status: implemented offline and awaiting human cloud setup.
+- Human local verification later completed successfully in normal PowerShell with `npm run verify:phase4` passing in full.
 - Actor: maker Codex.
 - Context and specification files used:
   - `../AGENTS.md`
@@ -340,10 +341,12 @@ Selected tools for Phases 0 and 1:
 - Principal implementation decisions:
   - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - preserved the TanStack Start app while adding the officially supported Nitro Vite output layer, without adding `vercel.json`;
-  - documented the local source footprint as five API function entries plus one SSR entry, while keeping the deployed Vercel function count provisional until human Preview verification;
+  - documented the deployed footprint as four API function entries plus one SSR entry, while keeping the preview-only Phase 0 probe in source but excluded from the deployed Vercel function count until human Preview verification;
+  - remediated `/api/health` into a standalone Web Handler so Preview health checks do not depend on composition-root startup;
   - created a bounded, opt-in smoke verifier for Preview only;
   - kept the Phase 0 probe preview-only and production-blocked;
-  - added offline deployment-readiness checks for configuration, docs, and sanitized artifacts.
+  - added offline deployment-readiness checks for configuration, docs, and sanitized artifacts;
+  - recorded the human local Phase 4 verification pass, including the Nitro build and the final 4 API + 1 SSR footprint.
 - Deterministic checks run by Codex:
   - `npm run lint`: PASS with the same six pre-existing React Fast Refresh warnings and no errors
   - `npm run typecheck`: PASS
@@ -355,6 +358,7 @@ Selected tools for Phases 0 and 1:
   - `npm run test:deterministic`: PASS
   - `npm run build`: FAIL in the managed Windows sandbox because Vite could not load `@tailwindcss/oxide-win32-x64-msvc` and hit `spawn EPERM` during dependency resolution
   - `npm run verify:phase4`: FAIL for the same managed-environment build limitation after all offline deterministic checks had already passed
+  - human local `npm run verify:phase4`: PASS in normal PowerShell, including lint, typecheck, all Phase 0-4 tests, client build, SSR build, Nitro build, and the final Phase 4 artifact verifier
 - Environment-specific limitations:
   - no Vercel import, Preview deployment, Upstash provisioning, live Emailnator request, or live smoke verification was attempted by Codex;
   - live evidence later showed the first attempted deployment was accidentally classified as Production, returned a root 404, and failed the health-only smoke size bound, so the previously assumed no-Nitro deployment shape was corrected to use Nitro Vite output;

@@ -12,10 +12,13 @@ import {
   loadUpstashSessionRepositoryConfig,
 } from "../../server/session/config.server.ts";
 import {
+  assertDeployedApiEntrypointContracts,
   assertDeploymentSurface,
   assertEnvExampleMatchesCode,
+  assertHealthEntrypointContract,
   assertNitroDependencyLocked,
   assertNitroOutputSurface,
+  assertPreviewOnlyProbeEntrypointContract,
   assertSmokeScriptIsNotAutoWired,
   assertViteConfigParses,
   parseEnvExample,
@@ -55,6 +58,9 @@ test("deployment config parses the documented safe env examples and retains the 
   assertViteConfigParses();
   assertNitroDependencyLocked();
   assertEnvExampleMatchesCode();
+  assertHealthEntrypointContract();
+  assertDeployedApiEntrypointContracts();
+  assertPreviewOnlyProbeEntrypointContract();
 
   const sessionKey = Buffer.alloc(32, 7).toString("hex");
   const visitorKey = Buffer.alloc(32, 11).toString("base64url");
@@ -89,8 +95,8 @@ test("deployment config parses the documented safe env examples and retains the 
   assert.equal(publicConfig.providerEnabled, true);
   assert.equal(publicConfig.operationLockTtlMs, 15_000);
   assert.equal(publicConfig.activeInboxReservationTtlMs, 15_000);
-  assert.equal(footprint.apiEntryCount, 5);
-  assert.equal(footprint.expectedFunctionEntries, 6);
+  assert.equal(footprint.deployedApiEntryCount, 4);
+  assert.equal(footprint.expectedFunctionEntries, 5);
 });
 
 test("the Phase 0 probe stays blocked in production and remains preview-only", async () => {
@@ -142,6 +148,29 @@ test("health stays minimal, does not require Redis or provider methods, and swal
   );
 });
 
+test("health web handler is standalone and avoids server-only imports", () => {
+  const apiHealth = readFileSync(resolve(process.cwd(), "api/health.ts"), "utf8");
+
+  assertHealthEntrypointContract();
+  assert.match(apiHealth, /export const runtime = "nodejs";/u);
+  assert.doesNotMatch(apiHealth, /^\s*import\s+/mu);
+  assert.doesNotMatch(
+    apiHealth,
+    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env/u,
+  );
+  assert.match(apiHealth, /"Cache-Control": "no-store"/u);
+  assert.match(apiHealth, /"Content-Type": "application\/json; charset=utf-8"/u);
+  assert.match(apiHealth, /createHealthResponse\(true\)/u);
+  assert.match(apiHealth, /createHealthResponse\(false\)/u);
+  assert.match(apiHealth, /export async function GET\(/u);
+  assert.match(apiHealth, /export async function HEAD\(/u);
+});
+
+test("deployed API entrypoints stay on approved web-handler shapes and the probe remains preview-only", () => {
+  assertDeployedApiEntrypointContracts();
+  assertPreviewOnlyProbeEntrypointContract();
+});
+
 test("deployment documentation and scripts stay placeholder-only and keep the smoke command opt-in", () => {
   assertSmokeScriptIsNotAutoWired();
 
@@ -166,7 +195,7 @@ test("deployment documentation and scripts stay placeholder-only and keep the sm
   );
 });
 
-test("deployment docs describe the Nitro-backed SSR output and provisional function count", () => {
+test("deployment docs describe the Nitro-backed SSR output and the updated deployed footprint", () => {
   const deploymentDocs = readFileSync(
     resolve(process.cwd(), "docs/runbooks/deployment.md"),
     "utf8",
@@ -176,10 +205,13 @@ test("deployment docs describe the Nitro-backed SSR output and provisional funct
     "utf8",
   );
 
-  assert.match(deploymentDocs, /Nitro Vite plugin to produce Vercel-compatible SSR output/u);
-  assert.match(deploymentDocs, /deployed Vercel function count remains provisional/u);
-  assert.match(phase4VerificationDocs, /Deployment Correction/u);
-  assert.match(phase4VerificationDocs, /404: NOT_FOUND/u);
+  assert.match(deploymentDocs, /5` deployed entrypoints in total/u);
+  assert.match(
+    deploymentDocs,
+    /preview-only `api\/_probe\/emailnator\.ts` file stays in the source tree/u,
+  );
+  assert.match(phase4VerificationDocs, /standalone Web Handler/u);
+  assert.match(phase4VerificationDocs, /preview-only probe is excluded from the deployed count/u);
 });
 
 test("Phase 4 verifier targets Nitro public output and keeps the server boundary separate", () => {
@@ -191,10 +223,22 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   assert.ok(
     verifyPhase4Source.includes('const clientBundleRoot = resolve(PROJECT_ROOT, ".output/public")'),
   );
+  assert.ok(
+    verifyPhase4Source.includes('const nitroServerEntry = resolve(nitroRoot, "server/index.mjs")'),
+  );
+  assert.ok(verifyPhase4Source.includes('const nitroManifest = resolve(nitroRoot, "nitro.json")'));
   assert.ok(verifyPhase4Source.includes("assertNitroOutputSurface()"));
   assert.ok(verifyPhase4Source.includes("assertClientBundleFreeOfServerOnlyModules()"));
+  assert.ok(verifyPhase4Source.includes("assertHealthEntrypointContract()"));
+  assert.ok(verifyPhase4Source.includes("assertDeployedApiEntrypointContracts()"));
+  assert.ok(verifyPhase4Source.includes("assertPreviewOnlyProbeEntrypointContract()"));
   assert.ok(verifyPhase4Source.includes("The Nitro public output is missing."));
   assert.ok(verifyPhase4Source.includes("The Nitro server entry is missing."));
+  assert.ok(
+    verifyPhase4Source.includes(
+      "The deployed Vercel API surface should contain four explicit Web Handler entry files.",
+    ),
+  );
   assert.ok(!verifyPhase4Source.includes("dist/client"));
   assert.ok(
     !verifyPhase4Source.includes(
@@ -203,19 +247,26 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   );
 });
 
-test("server-only modules remain lazily wired in source and do not require eager imports", () => {
-  const apiHealth = ["api/health.ts", "server/api/composition-root.server.ts", "vite.config.ts"]
-    .map((relativePath) => readFileSync(resolve(process.cwd(), relativePath), "utf8"))
-    .join("\n");
+test("server-only modules remain lazily wired in source and the health route is standalone", () => {
+  const apiHealth = readFileSync(resolve(process.cwd(), "api/health.ts"), "utf8");
+  const compositionRoot = readFileSync(
+    resolve(process.cwd(), "server/api/composition-root.server.ts"),
+    "utf8",
+  );
   const verifyPhase4Source = readFileSync(
     resolve(process.cwd(), "scripts/verify-phase4.ts"),
     "utf8",
   );
 
-  assert.match(apiHealth, /createPublicApiHandlers/u);
-  assert.match(apiHealth, /loadPublicApiConfig/u);
-  assert.doesNotMatch(apiHealth, /from\s+['"]server\/api\/composition-root\.server\.ts['"]/u);
-  assert.match(verifyPhase4Source, /assertClientBundleFreeOfServerOnlyModules\(\)/u);
+  assert.doesNotMatch(
+    apiHealth,
+    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\./u,
+  );
+  assert.match(compositionRoot, /createProductionPublicApiDependencies/u);
+  assert.match(compositionRoot, /loadPublicApiConfig/u);
+  assert.match(verifyPhase4Source, /assertHealthEntrypointContract\(\)/u);
+  assert.match(verifyPhase4Source, /assertDeployedApiEntrypointContracts\(\)/u);
+  assert.match(verifyPhase4Source, /assertPreviewOnlyProbeEntrypointContract\(\)/u);
 });
 
 test("the readiness runner executes offline checks only", () => {

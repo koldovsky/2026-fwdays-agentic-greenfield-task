@@ -1,34 +1,27 @@
-import { createProductionPublicApiDependencies } from "../server/api/composition-root.server.ts";
-import { createPublicApiHandlers } from "../server/api/handlers.server.ts";
-
 export const runtime = "nodejs";
 
-const handlers = createPublicApiHandlers(createProductionPublicApiDependencies);
+const HEALTH_HEADERS = {
+  "Cache-Control": "no-store",
+  "Content-Type": "application/json; charset=utf-8",
+} as const;
 
-export function GET(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
+const HEALTH_BODY = JSON.stringify({
+  data: {
+    status: "ok",
+  },
+});
+
+function createHealthResponse(includeBody: boolean): Response {
+  return new Response(includeBody ? HEALTH_BODY : null, {
+    status: 200,
+    headers: HEALTH_HEADERS,
+  });
 }
 
-export function POST(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
+export async function GET(_request: Request): Promise<Response> {
+  return createHealthResponse(true);
 }
 
-export function PUT(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
-}
-
-export function PATCH(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
-}
-
-export function DELETE(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
-}
-
-export function OPTIONS(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
-}
-
-export function HEAD(request: Request): Promise<Response> {
-  return handlers.handleHealthRoute(request);
+export async function HEAD(_request: Request): Promise<Response> {
+  return createHealthResponse(false);
 }

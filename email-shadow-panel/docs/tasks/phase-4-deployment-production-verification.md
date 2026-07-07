@@ -59,12 +59,14 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## Implementation Notes
 
-- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, and five explicit `api/*` route files.
-- The local source footprint is `5` explicit API function entries plus `1` SSR server entry, for `6` total entrypoints; the actual deployed Vercel function count remains provisional until human Preview verification.
+- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, four deployed `api/*` route files, and one preview-only `api/_probe/emailnator.ts` route that remains in source but is excluded from the deployed count.
+- The deployed footprint is `4` explicit API function entries plus `1` SSR server entry, for `5` total deployed entrypoints; the actual deployed Vercel function count remains provisional until human Preview verification.
+- The `/api/health` entrypoint is a standalone Vercel Web Handler that returns no-store JSON without importing composition-root, provider, Redis, or environment configuration modules.
 - The Phase 0 probe remains preview-only, disabled by default, and blocked in Production.
 - The health route stays minimal and no-store.
 - The smoke verifier is opt-in only and never part of `npm test` or deterministic verification.
 - Preview and Production secrets must be entered directly into Vercel's UI, never into Codex, docs, or Git.
+- Human local verification passed in normal PowerShell with the full wrapper, including all 107 deterministic tests, the client build, SSR build, Nitro build, and the final Phase 4 artifact verifier.
 
 ## Testing Strategy
 
@@ -75,6 +77,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 - `npm run test:phase4`
 - `npm run verify:phase4`
 - `npm run build`
+- human local `npm run verify:phase4` pass in normal PowerShell
 
 ## Deferred To Human
 

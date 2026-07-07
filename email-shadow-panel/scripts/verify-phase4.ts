@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const PHASE4_REQUIRED_FILES = [
@@ -50,6 +50,28 @@ export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; patter
   { name: "session encryption env", pattern: /SESSION_ENCRYPTION_KEY/i },
 ];
 
+const DEPLOYED_API_ENTRY_FILES = [
+  "api/health.ts",
+  "api/inboxes.ts",
+  "api/inboxes/messages.ts",
+  "api/inboxes/messages/[messageReference].ts",
+] as const;
+
+const DEPLOYED_WEB_HANDLER_METHODS = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "OPTIONS",
+  "HEAD",
+] as const;
+const HEALTH_WEB_HANDLER_METHODS = ["GET", "HEAD"] as const;
+const PROBE_WEB_HANDLER_METHODS = ["POST"] as const;
+const DEPLOYED_ROUTED_API_ENTRY_FILES = DEPLOYED_API_ENTRY_FILES.filter(
+  (relativePath) => relativePath !== "api/health.ts",
+);
+
 function isClientFacingAsset(filePath: string): boolean {
   return /\.(?:js|mjs|cjs|css|html)$/i.test(filePath);
 }
@@ -70,6 +92,19 @@ function walkFiles(entryPath: string): string[] {
   }
 
   return readdirSync(entryPath).flatMap((child) => walkFiles(resolve(entryPath, child)));
+}
+
+function getExportedMethodNames(source: string): string[] {
+  return [...source.matchAll(/^\s*export\s+(?:async\s+)?function\s+([A-Z]+)\s*\(/gmu)].map(
+    ([, method]) => method,
+  );
+}
+
+function assertOnlyRelativeImports(relativePath: string, source: string): void {
+  const importMatches = source.matchAll(/^\s*import\s+(?:.+?\s+from\s+)?["']([^"']+)["'];?\s*$/gmu);
+  for (const match of importMatches) {
+    assert.ok(match[1].startsWith("."), `${relativePath} must use relative imports only.`);
+  }
 }
 
 export function readTextFile(relativePath: string): string {
@@ -179,20 +214,33 @@ export function assertEnvExampleMatchesCode(): void {
 }
 
 export function assertDeploymentSurface(): {
-  apiEntryCount: number;
+  deployedApiEntryCount: number;
   expectedFunctionEntries: number;
 } {
   const apiFiles = walkFiles(resolve(PROJECT_ROOT, "api")).filter(
     (filePath) => filePath.endsWith(".ts") && !filePath.endsWith(".d.ts"),
   );
   const apiEntryFiles = apiFiles.filter((filePath) => !filePath.endsWith("test.ts"));
-  const normalizedEntryFiles = apiEntryFiles.map((filePath) => filePath.replace(/\\/g, "/"));
+  const normalizedEntryFiles = apiEntryFiles.map((filePath) =>
+    relative(PROJECT_ROOT, filePath).replace(/\\/g, "/"),
+  );
+  const deployedApiEntryFiles = normalizedEntryFiles
+    .filter((filePath) => !filePath.includes("/_probe/"))
+    .sort((left, right) => left.localeCompare(right));
 
-  assert.equal(apiEntryFiles.length, 5, "The Vercel API surface should contain five entry files.");
+  assert.deepEqual(
+    deployedApiEntryFiles,
+    [...DEPLOYED_API_ENTRY_FILES].sort((left, right) => left.localeCompare(right)),
+    "The deployed Vercel API surface should contain four explicit Web Handler entry files.",
+  );
   assert.ok(
     normalizedEntryFiles.some((filePath) =>
       filePath.endsWith("api/inboxes/messages/[messageReference].ts"),
     ),
+  );
+  assert.ok(
+    normalizedEntryFiles.some((filePath) => filePath.endsWith("api/_probe/emailnator.ts")),
+    "The preview-only Phase 0 probe is missing from the source tree.",
   );
   assert.ok(
     existsSync(resolve(PROJECT_ROOT, "src/server.ts")),
@@ -204,10 +252,11 @@ export function assertDeploymentSurface(): {
   );
 
   return {
-    apiEntryCount: apiEntryFiles.length,
-    expectedFunctionEntries: apiEntryFiles.length + 1,
+    deployedApiEntryCount: deployedApiEntryFiles.length,
+    expectedFunctionEntries: deployedApiEntryFiles.length + 1,
   };
 }
+
 export function assertViteConfigParses(): void {
   const viteConfigText = readTextFile("vite.config.ts");
   assert.match(viteConfigText, /import\s+\{\s*nitro\s*\}\s+from\s+["']nitro\/vite["'];/u);
@@ -222,6 +271,44 @@ export function assertViteConfigParses(): void {
     viteConfigText.indexOf("nitro()") < viteConfigText.indexOf("react()"),
     "Nitro should configure before React so the SSR build remains wrapped correctly.",
   );
+}
+
+export function assertHealthEntrypointContract(): void {
+  const healthSource = readTextFile("api/health.ts");
+
+  assert.match(healthSource, /export const runtime = "nodejs";/u);
+  assert.doesNotMatch(healthSource, /^\s*import\s+/mu);
+  assert.doesNotMatch(
+    healthSource,
+    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env|SESSION_ENCRYPTION_KEY|VISITOR_HASH_KEY|UPSTASH_REDIS_REST_/u,
+  );
+  assert.match(healthSource, /"Cache-Control": "no-store"/u);
+  assert.match(healthSource, /"Content-Type": "application\/json; charset=utf-8"/u);
+  assert.match(healthSource, /status:\s*200/u);
+  assert.match(healthSource, /createHealthResponse\(true\)/u);
+  assert.match(healthSource, /createHealthResponse\(false\)/u);
+  assert.deepEqual(getExportedMethodNames(healthSource), [...HEALTH_WEB_HANDLER_METHODS]);
+}
+
+export function assertDeployedApiEntrypointContracts(): void {
+  for (const relativePath of DEPLOYED_ROUTED_API_ENTRY_FILES) {
+    const source = readTextFile(relativePath);
+
+    assert.match(source, /export const runtime = "nodejs";/u);
+    assert.doesNotMatch(source, /export\s+default/u);
+    assertOnlyRelativeImports(relativePath, source);
+    assert.deepEqual(getExportedMethodNames(source), [...DEPLOYED_WEB_HANDLER_METHODS]);
+  }
+}
+
+export function assertPreviewOnlyProbeEntrypointContract(): void {
+  const source = readTextFile("api/_probe/emailnator.ts");
+
+  assert.match(source, /export const runtime = "nodejs";/u);
+  assert.doesNotMatch(source, /export\s+default/u);
+  assertOnlyRelativeImports("api/_probe/emailnator.ts", source);
+  assert.deepEqual(getExportedMethodNames(source), [...PROBE_WEB_HANDLER_METHODS]);
+  assert.match(source, /handleEmailnatorProbeRequest/u);
 }
 
 export function assertNitroOutputSurface(): void {
@@ -302,16 +389,24 @@ export function runPhase4ReadinessChecks(): void {
   assertEnvExampleMatchesCode();
   const footprint = assertDeploymentSurface();
   assert.equal(
+    footprint.deployedApiEntryCount,
+    4,
+    "The deployed API surface should contain four explicit Web Handler entries.",
+  );
+  assert.equal(
     footprint.expectedFunctionEntries,
-    6,
+    5,
     "The deployment footprint should stay under the Vercel Hobby function limit.",
   );
+  assertHealthEntrypointContract();
+  assertDeployedApiEntrypointContracts();
+  assertPreviewOnlyProbeEntrypointContract();
   assertNitroOutputSurface();
   assertDeploymentDocsAreSanitized();
   assertSmokeScriptIsNotAutoWired();
   assertNoSensitiveText(["docs", "scripts", "tests/phase4", ".env.example"]);
   console.log(
-    `Phase 4 readiness checks passed. Expected deployment footprint: ${footprint.apiEntryCount} API entries + 1 SSR entry = ${footprint.expectedFunctionEntries}. The deployed Vercel function count remains provisional until human Preview verification.`,
+    `Phase 4 readiness checks passed. Expected deployment footprint: ${footprint.deployedApiEntryCount} deployed API entries + 1 SSR entry = ${footprint.expectedFunctionEntries}. The preview-only Phase 0 probe is excluded from the deployed function count and remains preview-only until human Preview verification.`,
   );
 }
 

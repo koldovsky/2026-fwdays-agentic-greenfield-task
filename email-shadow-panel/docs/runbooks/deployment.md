@@ -16,16 +16,17 @@ The repository currently uses:
 
 - TanStack Start for SSR
 - Vite plus the Nitro Vite plugin to produce Vercel-compatible SSR output
-- five explicit `api/*` route files for Vercel Node.js Functions
+- four deployed `api/*` route files for Vercel Node.js Functions
+- one preview-only `api/_probe/emailnator.ts` route that remains in source but is excluded from the deployed function count
 - one TanStack Start server entry at `src/server.ts`
 
-Expected deployment entrypoints:
+Expected deployed entrypoints:
 
-- `5` API function entries from `api/`
+- `4` API function entries from `api/health.ts`, `api/inboxes.ts`, `api/inboxes/messages.ts`, and `api/inboxes/messages/[messageReference].ts`
 - `1` SSR server entry from the TanStack Start build
-- `6` local source entrypoints in total
+- `5` deployed entrypoints in total
 
-The local footprint is comfortably below the Vercel Hobby function limit, but the deployed Vercel function count remains provisional until a human Preview deployment confirms it.
+The preview-only `api/_probe/emailnator.ts` file stays in the source tree for Phase 0 evidence, but it is not counted as a deployed Vercel function. The deployed Vercel function count remains provisional until a human Preview deployment confirms it.
 
 ## Vercel Import Settings
 
@@ -37,7 +38,7 @@ When importing the GitHub repository into Vercel, use these settings:
 - Output Directory: do not invent a custom value; keep the framework-detected default unless Vercel explicitly requires a field value
 - Framework Preset: keep the framework preset that Vercel auto-detects for this TanStack Start/Vite project; the Nitro plugin supplies the Vercel-compatible SSR output. Do not add a custom adapter or `vercel.json`
 
-After import, inspect the detected Functions list and confirm the expected `6`-entry footprint.
+After import, inspect the detected Functions list and confirm the expected `5`-entry deployed footprint, excluding the preview-only probe.
 
 ## Secret Handling Rules
 
