@@ -13,6 +13,9 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  path_filters:
+    - "!docs/orbit-tv-remote-design-system/**"
+    - "!docs/samsung-ip-control-protocol/**"
   path_instructions:
     - path: "**"
       instructions: >-
