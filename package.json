@@ -12,6 +12,8 @@
     "test:run": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage",
+    "test:determinism": "vitest run -t deterministic",
     "typecheck:lib": "tsc --noEmit -p tsconfig.lib.json"
   },
   "dependencies": {
