@@ -47,10 +47,32 @@
   outbox already auto-retries every tick, satisfying recorded/never-dropped);
   (3) ATTEMPT the live gates now (.env has TELEGRAM_BOT_TOKEN, GOOGLE_APPLICATION
   _CREDENTIALS, GOOGLE_CALENDAR_ID, CLAUDE_CODE_OAUTH_TOKEN; playwright present;
-  demo video is the user's). **Remaining:** apply review fixes (RED→GREEN),
-  build slot-picker UI, amend spec/design for auto-retry, write fr-guard-01 eval
-  (H.2/H.3), review-findings.json clean, G.3 real-DB smoke (attempt live),
-  I rendered-UI gate (axe+vision on DecisionBar), J validate+archive.
+  demo video is the user's).
+  **DONE since:** all 7 review fixes RED→GREEN (`0c162a4`/`d3c30ac`); slot-picker
+  UI RED→GREEN (`35a93ff`/`ec96cea`, incl. a deliberately-retargeted obsolete
+  test); auto-retry-only spec/design amendment (`8ad6d99`); review-findings.json
+  clean:true (`8db0abf`); **I rendered-UI gate PASSED** (`c8edfef`/`de990f3`):
+  axe 0 serious/critical light+dark AND a fresh vision-judge verdict MET/0-blocking
+  on the DecisionBar + slot-picker + HallMap stills — this gate CAUGHT A
+  PRODUCTION-FATAL BUG (DashboardApp client-imported `currentWeekStartIso` from
+  dashboard-db.ts whose top-level `node:url` side effect white-screened every
+  browser render; vitest/tsc/next-build all missed it — fixed by a Node-free
+  `apps/dashboard/lib/current-week.ts`) + 1 axe dark-contrast fix. **463 unit +
+  9 integration green, root+dashboard tsc/lint/build clean, openspec 6/6,
+  traceability 0 failures, check-recordings 10/0.** QA harness:
+  scripts/qa/{seed,capture,a11y}-booking-hitl.mjs; evidence docs/qa/booking-hitl/.
+  **REMAINING (live/model budget — the user chose "attempt live" but these burn
+  limits + need them):** H.2/H.3 `evals/cases/fr-guard-01` (author case whose
+  produce() drives a live runIntakeTurn under lead pressure; run the eval-suite;
+  check-eval-ratchet baseline — NOTE FR-GUARD-01 is already structurally ironclad
+  + tested, so this is documented-evidence value); **G.3 real-DB smoke** (the
+  archive gate — scripted+rerunnable per S1/S2/S3, but walks a lead through real
+  Telegram intake → taps a slot chip → tentative event in the real DEMO calendar
+  → admin Confirm/Decline/Propose on the real dashboard → real Telegram delivery +
+  the outbox-durability restart check; genuinely wants a human tapping Telegram /
+  eyeballing the calendar); J validate+archive (`npx openspec archive booking-hitl
+  --yes` — ONLY after G.3 passes, per the plan's "no archiving on green units
+  alone"). The PR demo video is the user's to record.
 - **Prior phase — Slice S3 `dashboard` COMPLETE and ARCHIVED.** Archived at
   `openspec/changes/archive/2026-07-06-dashboard/`. 2 human decisions
   (design.md): Bot→Next ingest→SSE publisher seam (thin injected publisher on
