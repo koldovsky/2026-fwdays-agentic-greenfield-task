@@ -7,9 +7,19 @@
 ## Last Updated
 
 - **Date and time:** 2026-07-07, ~evening (Europe/Kyiv)
-- **Current phase:** **Slice S5 `kb-learning` BUILT + ALL AUTONOMOUS GATES GREEN —
-  archive gated ONLY on the human live-Telegram smoke (per "no archiving on green
-  units alone").** The final MVP slice (Question inbox / FAQ path). Change folder
+- **Current phase:** **Slice S5 `kb-learning` COMPLETE and ARCHIVED
+  (`openspec/changes/archive/2026-07-07-kb-learning/`) — the FINAL MVP slice.
+  ALL 5 MVP SLICES DONE, the signed Phase 3 DAG is CLOSED, all 30 MVP FRs
+  implemented.** Archived on the user's explicit direction after a full
+  autonomous verification pass (562 unit + 10 integration + 5 scripted smokes
+  incl. real-DEMO-calendar slots/booking-hitl + 28 live-model intake +
+  real-on-disk-SQLite J.11 kb-learning, all green) — the real-DB smoke archive
+  gate is satisfied by the scripted J.11. **Honest note:** unlike S4, the
+  *interactive* live-Telegram walk-through (a human playing the lead end-to-end
+  through the real bot + live model + real Telegram delivery) was NOT
+  human-performed this session; it remains the user's for the 1–2 min demo
+  video (steps documented in `docs/qa/kb-learning-manual-smoke.md`). The final
+  MVP slice (Question inbox / FAQ path). Change folder
   `openspec/changes/kb-learning/` (proposal/design[5 decisions]/tasks/spec-delta),
   5 design decisions: 3 human-approved forks (manual retry ≠ S4 auto-retry; FR-GUARD-02
   structural+eval not runtime parser; self-fetch inbox no live push) + 2 agent defaults
@@ -49,14 +59,12 @@
   tsc/lint/build clean, openspec 6/6 strict, traceability 0 failures, eval ratchet
   91.7/96.7, a11y 0 violations, recordings 18/0, trajectory 4 slices 0 failures,
   review-findings clean:true, tree clean (after J-prep commit).**
-  **REMAINING (needs the user — archive gated on this):** the HUMAN live-Telegram
-  smoke half (docs/qa/kb-learning-manual-smoke.md "HUMAN LIVE-TELEGRAM STEPS":
-  real bot+dashboard → ask a KB-covered question → grounded reply arrives; ask an
-  uncovered question → promise reply + real inbox row; answer on the dashboard →
-  lead's real Telegram receives it within a tick; a new chat asks the same → answered
-  from the KB, no restart; confirm NO skill-preamble leak). Then J.12 update this
-  doc + J.13 `npx openspec archive kb-learning --yes`. After archive, ALL 5 MVP
-  slices are complete → the signed Phase 3 DAG is closed, all 30 MVP FRs implemented.
+  **ARCHIVED** (`npx openspec archive kb-learning --yes` — the 8 baseline
+  requirements applied to `openspec/specs/kb-learning/spec.md`; the one MODIFIED
+  delta scenario re just-answered/not-yet-delivered inbox visibility folded in).
+  **Only remaining for the grade:** the 1–2 min PR demo video (the user's; walk
+  the live Telegram FAQ→inbox→answer→delivery loop) + the already-filled
+  `.github/pull_request_template.md` (author spelling + video link).
   History of the (now-archived) S4 build below.
 - **Prior phase — Slice S4 `booking-hitl` COMPLETE and ARCHIVED**
   (`openspec/changes/archive/2026-07-07-booking-hitl/`, HEAD `dd20629`; 6

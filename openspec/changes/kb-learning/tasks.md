@@ -351,24 +351,24 @@ S1–S4.
 
 ## J. Validation, docs, and archive prep
 
-- [ ] J.1 Run `npm run lint`.
-- [ ] J.2 Run `npm run test:run` (all unit tests green).
-- [ ] J.3 Run `npm run test:integration` (sections C/D/E/F's real-SQLite
+- [x] J.1 Run `npm run lint`.
+- [x] J.2 Run `npm run test:run` (all unit tests green).
+- [x] J.3 Run `npm run test:integration` (sections C/D/E/F's real-SQLite
       suites green).
-- [ ] J.4 Run `npm run test:e2e` (section G's chrome-devtools/Playwright
+- [x] J.4 Run `npm run test:e2e` (section G's chrome-devtools/Playwright
       pass).
-- [ ] J.5 Run `npm run build`.
-- [ ] J.6 Run `npx openspec validate kb-learning --strict`.
-- [ ] J.7 Run `npx openspec validate --all --strict` (baseline specs stay
+- [x] J.5 Run `npm run build`.
+- [x] J.6 Run `npx openspec validate kb-learning --strict`.
+- [x] J.7 Run `npx openspec validate --all --strict` (baseline specs stay
       green, this change validates).
-- [ ] J.8 Run `node scripts/check-traceability.mjs` (FR-FAQ-01/02,
+- [x] J.8 Run `node scripts/check-traceability.mjs` (FR-FAQ-01/02,
       FR-KB-01..04, FR-GUARD-02/06 show implemented coverage, 0 failures).
-- [ ] J.9 Run `node scripts/check-eval-ratchet.mjs` (green, or a deliberate
+- [x] J.9 Run `node scripts/check-eval-ratchet.mjs` (green, or a deliberate
       baseline update per H.4).
-- [ ] J.10 Run `node scripts/check-a11y.mjs` and
+- [x] J.10 Run `node scripts/check-a11y.mjs` and
       `node scripts/check-recordings.mjs` once more against the final build
       (not just the dev server used mid-implementation).
-- [ ] J.11 Manual real-DB smoke test — SCRIPTED + rerunnable
+- [x] J.11 Manual real-DB smoke test — SCRIPTED + rerunnable
       (`scripts/qa/manual-smoke-kb-learning.mjs`, transcript
       `docs/qa/kb-learning-manual-smoke.md`, mirroring the S1–S4
       convention):
@@ -399,12 +399,12 @@ S1–S4.
          confirm no new file entry, no row change, no second Telegram
          message.
       Confirm `=== J.11 SMOKE PASSED (all checks) ===` before proceeding.
-- [ ] J.12 Update `docs/current-state.md` (date/time, Europe/Kyiv; S5
+- [x] J.12 Update `docs/current-state.md` (date/time, Europe/Kyiv; S5
       `kb-learning` COMPLETE+ARCHIVED summary; note this closes the signed
       Phase 3 DAG — all 5 MVP slices archived, all 30 MVP FRs implemented).
       Check whether `README.md` references slice status (S1–S4 precedent: it
       does not) and update only if it does.
-- [ ] J.13 Only after J.1–J.12 all pass: `npx openspec archive kb-learning
+- [x] J.13 Only after J.1–J.12 all pass: `npx openspec archive kb-learning
       --yes`. Gates before archive: all unit/integration/E2E green, lint +
       build clean, openspec 2/2 strict (`kb-learning` + `--all`),
       traceability 0 failures, a11y 0 serious/critical violations,
