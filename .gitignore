@@ -31,6 +31,7 @@ obj/
 # Build output
 **/bin/
 **/obj/
+**/TestResults/
 
 # Resource / designer files (no longer generated the same way in MAUI, but safe to ignore)
 **/Resource.designer.cs
