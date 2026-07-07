@@ -104,7 +104,16 @@ const INVALID_MESSAGE_BY_CODE: Record<string, string> = {
   NO_SLOTS_SELECTED: "Оберіть хоча б один час, перш ніж надсилати пропозицію.",
   OFF_GRID: "Обраний час поза графіком занять (Пн–Пт, до 19:00).",
   SLOT_UNAVAILABLE: "Обраний час уже зайнятий або утримується іншим лідом.",
+  TOO_MANY_SLOTS: "Забагато варіантів часу в одній пропозиції — оберіть не більше 10.",
 };
+
+// Review-gate finding #6 [MINOR]: reject an oversized `slots` array BEFORE
+// the per-slot `calendar.freeBusy` fan-out (`freshBusyForSlots`) even runs —
+// a malformed/oversized request should never trigger N calendar calls before
+// validation gets a chance to reject it. 10 is comfortably above any
+// realistic single re-proposal (design.md Risks: "a handful of decisions per
+// day"), while still catching a pathological/oversized payload.
+const MAX_PROPOSED_SLOTS = 10;
 
 function isSlotShape(value: unknown): value is Slot {
   return (
@@ -129,19 +138,34 @@ function formatSlotButtonLabel(slot: Slot): string {
 /** Fresh Kyiv-local free/busy for the admin's requested slots (step 3):
  *  fetches `calendar.freeBusy` per slot (RFC3339 UTC in/out) and converts
  *  the result back to Kyiv wall-clock local, the shape
- *  `validateAdminProposedSlots` expects. */
+ *  `validateAdminProposedSlots` expects.
+ *
+ *  Review-gate finding #7: when `excludeOwnRangeUtc` is given (the CURRENT
+ *  pending booking's own tentative hold, about to be released in step 4), it
+ *  is removed from the busy set at the UTC level, BEFORE the Kyiv-local
+ *  conversion — a real `freeBusy` snapshot always includes the booking's own
+ *  still-live tentative event for its own slot, so re-proposing that exact
+ *  slot would otherwise always be reported as busy/unavailable. Same
+ *  instant-comparison self-filter as `hasExternalCollision` (finding #1),
+ *  reused via `removeOwnInterval`. */
 async function freshBusyForSlots(
   calendar: CalendarPort,
   slots: Slot[],
+  excludeOwnRangeUtc?: { start: string; end: string },
 ): Promise<{ start: string; end: string }[]> {
   const busyPerSlot = await Promise.all(
     slots.map((slot) =>
       calendar.freeBusy({ start: kyivWallClockToUtc(slot.start), end: kyivWallClockToUtc(slot.end) }),
     ),
   );
-  return busyPerSlot
-    .flat()
-    .map((interval) => ({ start: utcToKyivWallClock(interval.start), end: utcToKyivWallClock(interval.end) }));
+  let flatBusy = busyPerSlot.flat();
+  if (excludeOwnRangeUtc !== undefined) {
+    flatBusy = removeOwnInterval(flatBusy, excludeOwnRangeUtc);
+  }
+  return flatBusy.map((interval) => ({
+    start: utcToKyivWallClock(interval.start),
+    end: utcToKyivWallClock(interval.end),
+  }));
 }
 
 interface OtherPendingSlotRow {
@@ -164,26 +188,48 @@ function findOtherPendingSlots(db: import("better-sqlite3").Database, excludeReq
   return rows.map((row) => ({ start: row.slot_start, end: row.slot_end }));
 }
 
-/** Confirm's fresh collision re-check (step 4): a real `freeBusy` snapshot
- *  ALWAYS includes the booking's own tentative event for its own slot (it
- *  is a live event in the calendar) — remove exactly ONE busy interval that
- *  exactly matches the booking's own range before checking for a real
- *  collision, so the booking's own hold is never mistaken for a conflict
- *  with itself while a genuine duplicate/overlapping external event still
- *  gets caught. */
-function hasExternalCollision(
-  busy: { start: string; end: string }[],
-  ownRange: { start: string; end: string },
+/** Review-gate finding #1 [MAJOR]: two RFC3339 timestamps can denote the
+ *  SAME instant while being textually different strings (missing
+ *  milliseconds, `+00:00` vs `Z`, etc.) — a real Google Calendar freeBusy
+ *  echo is not guaranteed to preserve the exact string this route generated.
+ *  Compare by INSTANT (`Date#getTime()`), never by raw string equality. */
+function isSameInstantRange(
+  a: { start: string; end: string },
+  b: { start: string; end: string },
 ): boolean {
+  return new Date(a.start).getTime() === new Date(b.start).getTime() && new Date(a.end).getTime() === new Date(b.end).getTime();
+}
+
+/** Shared self-filter (Confirm's own collision re-check, step 4, AND
+ *  propose_another_time's own fresh-busy validation, finding #7): a real
+ *  `freeBusy` snapshot ALWAYS includes the booking's own tentative event for
+ *  its own slot (it is a live event in the calendar) — remove exactly ONE
+ *  busy interval whose INSTANT exactly matches the booking's own range
+ *  before checking for a real collision, so the booking's own hold is never
+ *  mistaken for a conflict with itself while a genuine duplicate/overlapping
+ *  external event still gets caught. */
+function removeOwnInterval<T extends { start: string; end: string }>(
+  intervals: T[],
+  ownRange: { start: string; end: string },
+): T[] {
   let selfRemoved = false;
-  const external = busy.filter((interval) => {
-    if (!selfRemoved && interval.start === ownRange.start && interval.end === ownRange.end) {
+  return intervals.filter((interval) => {
+    if (!selfRemoved && isSameInstantRange(interval, ownRange)) {
       selfRemoved = true;
       return false;
     }
     return true;
   });
-  return external.length > 0;
+}
+
+/** Confirm's fresh collision re-check (step 4): see `removeOwnInterval`'s
+ *  own comment — anything left after removing the booking's own interval is
+ *  a genuine external collision. */
+function hasExternalCollision(
+  busy: { start: string; end: string }[],
+  ownRange: { start: string; end: string },
+): boolean {
+  return removeOwnInterval(busy, ownRange).length > 0;
 }
 
 export async function POST(
@@ -246,15 +292,44 @@ export async function POST(
     // against a fresh free/busy fetch BEFORE any calendar write, DB write,
     // or lead message.
     if (decisionAction === "propose_another_time") {
-      const busy = await freshBusyForSlots(calendar, slots);
+      // Review-gate finding #6: reject an oversized array BEFORE the
+      // per-slot freeBusy fan-out even runs.
+      if (slots.length > MAX_PROPOSED_SLOTS) {
+        return Response.json(
+          {
+            status: "invalid",
+            code: "TOO_MANY_SLOTS",
+            message: INVALID_MESSAGE_BY_CODE.TOO_MANY_SLOTS,
+          },
+          { status: 200 },
+        );
+      }
+
+      // Review-gate finding #7: exclude the booking's OWN currently-held
+      // slot from the fresh busy snapshot — its tentative hold is still a
+      // live event until step 4 releases it, so re-proposing that exact
+      // slot must not be reported as unavailable.
+      const ownRangeUtc = {
+        start: kyivWallClockToUtc(booking.slot_start),
+        end: kyivWallClockToUtc(booking.slot_end),
+      };
+      const busy = await freshBusyForSlots(calendar, slots, ownRangeUtc);
       const otherPendingSlots = findOtherPendingSlots(db, requestId);
       const validation = validateAdminProposedSlots({ slots, busy, otherPendingSlots });
       if (!validation.ok) {
+        // Review-gate finding #5: name the offending slot, both in the
+        // machine-readable `body.slot` and in the human-readable message.
+        const offendingSlot = "slot" in validation ? validation.slot : undefined;
+        const message =
+          validation.code === "SLOT_UNAVAILABLE" && offendingSlot !== undefined
+            ? `Час ${formatSlotButtonLabel(offendingSlot)} уже зайнятий або утримується іншим лідом. Оберіть інший варіант.`
+            : (INVALID_MESSAGE_BY_CODE[validation.code] ?? "Обраний час недоступний.");
         return Response.json(
           {
             status: "invalid",
             code: validation.code,
-            message: INVALID_MESSAGE_BY_CODE[validation.code] ?? "Обраний час недоступний.",
+            message,
+            ...(offendingSlot !== undefined ? { slot: offendingSlot } : {}),
           },
           { status: 200 },
         );
@@ -315,37 +390,52 @@ export async function POST(
       return Response.json({ status: "stale", message: STALE_MESSAGE }, { status: 200 });
     }
 
-    // Step 6: DB commit.
-    updateBookingStatus(db, booking.id, decisionResult.nextStatus);
-    if (decisionAction === "propose_another_time") {
-      updateRequestState(db, requestId, "proposing");
-      updateRequestFields(db, requestId, { offeredSlots: slots });
-    }
+    // Steps 6-7: DB commit + notification outbox row, ALL-OR-NOTHING.
+    //
+    // Review-gate finding #3 [MAJOR]: these were separate autocommit SQLite
+    // statements — a thrown failure between the booking-cancel write and the
+    // notification insert (e.g. `insertNotification` itself throwing) used
+    // to leave a PARTIALLY committed state: the booking already
+    // cancelled/confirmed/declined and (for propose_another_time) the
+    // request already `proposing` with `offered_slots` persisted, but no
+    // notification ever queued — the lead's hold silently dropped with no
+    // message ever sent. Wrapped in one `db.transaction(...)` (the same
+    // better-sqlite3 pattern `packages/db/src/leads.ts`'s
+    // `deleteLeadCascade` uses): any throw inside rolls back every write
+    // above and rethrows, so the caller sees either the full commit or none
+    // of it.
+    const commitDecision = db.transaction((): void => {
+      updateBookingStatus(db, booking.id, decisionResult.nextStatus);
+      if (decisionAction === "propose_another_time") {
+        updateRequestState(db, requestId, "proposing");
+        updateRequestFields(db, requestId, { offeredSlots: slots });
+      }
 
-    // Step 7: notification outbox row.
-    let kind: NotificationKind;
-    let payload: { text: string; buttons?: Array<Array<{ text: string; data: string }>> };
-    if (decisionAction === "confirm") {
-      kind = "confirmed";
-      payload = { text: composeConfirmationMessage({ start: booking.slot_start }) };
-    } else if (decisionAction === "decline") {
-      kind = "declined";
-      payload = { text: DECLINE_COPY };
-    } else {
-      kind = "proposed_again";
-      payload = {
-        text: composeReProposalMessage(slots),
-        buttons: slots.map((slot, index) => [
-          { text: formatSlotButtonLabel(slot), data: `slot:${index}` },
-        ]),
-      };
-    }
-    insertNotification(db, {
-      bookingId: booking.id,
-      telegramChatId: requestRow.telegram_chat_id,
-      kind,
-      payload: JSON.stringify(payload),
+      let kind: NotificationKind;
+      let payload: { text: string; buttons?: Array<Array<{ text: string; data: string }>> };
+      if (decisionAction === "confirm") {
+        kind = "confirmed";
+        payload = { text: composeConfirmationMessage({ start: booking.slot_start }) };
+      } else if (decisionAction === "decline") {
+        kind = "declined";
+        payload = { text: DECLINE_COPY };
+      } else {
+        kind = "proposed_again";
+        payload = {
+          text: composeReProposalMessage(slots),
+          buttons: slots.map((slot, index) => [
+            { text: formatSlotButtonLabel(slot), data: `slot:${index}` },
+          ]),
+        };
+      }
+      insertNotification(db, {
+        bookingId: booking.id,
+        telegramChatId: requestRow.telegram_chat_id,
+        kind,
+        payload: JSON.stringify(payload),
+      });
     });
+    commitDecision();
 
     // Step 8: republish a fresh dashboard-scoped STATE_SNAPSHOT.
     const snapshot = readDashboardSnapshot(db, currentWeekStartIso());

@@ -138,10 +138,29 @@ async function main(): Promise<void> {
   // `handleUpdateSafely` above, so one bad tick can never crash the
   // long-polling process. `drainNotifications` itself never throws for an
   // individual send failure (a bad row is simply retried next tick).
+  //
+  // Review-gate finding #2 [MAJOR] defense-in-depth: `drainNotifications`
+  // itself already guards against double-sending the SAME row across two
+  // overlapping calls (its own module-scoped in-flight claim), but a slow
+  // tick whose `sendMessage` calls take longer than
+  // `NOTIFICATION_DRAIN_INTERVAL_MS` would otherwise still spawn a second,
+  // fully overlapping `drainNotifications` call on every subsequent tick —
+  // wasted DB queries/Telegram calls piling up under a real outage/slowdown.
+  // `isDraining` skips starting a new tick while the previous one is still
+  // in flight, at the real-timer call site (not unit-tested here, same as
+  // the rest of this file's own header comment: no live grammY/Telegram
+  // wiring to safely exercise without a network).
+  let isDraining = false;
   setInterval(() => {
-    drainNotifications(db, transport).catch((error) => {
-      console.error("Kamerton: notification drain tick failed", error);
-    });
+    if (isDraining) return;
+    isDraining = true;
+    drainNotifications(db, transport)
+      .catch((error) => {
+        console.error("Kamerton: notification drain tick failed", error);
+      })
+      .finally(() => {
+        isDraining = false;
+      });
   }, NOTIFICATION_DRAIN_INTERVAL_MS);
 
   console.log(`Kamerton bot starting (long polling); db=${dbPath}`);

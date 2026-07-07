@@ -46,7 +46,7 @@ import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 
 export const runtime = "nodejs";
 
-interface PendingEventRow {
+interface CalendarEventRow {
   calendar_event_id: string;
 }
 
@@ -75,35 +75,47 @@ export async function DELETE(
 
     // Plain SELECT, no delete yet (this file's own header comment: "a
     // calendar failure must never orphan a tentative event").
-    const pendingEventRows = db
+    //
+    // Review-gate finding #4 [MAJOR]: NOT filtered to `b.status = 'pending'`
+    // — a CONFIRMED booking's calendar event is the actual scheduled lesson
+    // (upgraded via booking-hitl's Confirm decision) and still carries the
+    // lead's name/contact details; leaving it behind on lead-delete
+    // permanently orphans it (no `bookings` row survives to ever let
+    // anything in this codebase find and delete it again), violating
+    // NFR-PRIV-02. Any booking of this lead with a non-null
+    // `calendar_event_id` — pending OR confirmed OR already
+    // declined/cancelled — is routed through `releaseHold` below, which is
+    // 404/410-idempotent (F.3), so an already-deleted declined/cancelled
+    // event is safely a no-op.
+    const calendarEventRows = db
       .prepare(
         `SELECT b.calendar_event_id AS calendar_event_id
          FROM bookings b
          JOIN requests r ON r.id = b.request_id
          WHERE r.lead_id = ?
-           AND b.status = 'pending'
            AND b.calendar_event_id IS NOT NULL`,
       )
-      .all(leadId) as PendingEventRow[];
+      .all(leadId) as CalendarEventRow[];
 
     // Review finding (§8.11 smoke): only resolve the calendar port when there
     // is actually a tentative event to delete. `resolveCalendarPort()`
     // constructs a real `GoogleCalendarPort`, whose constructor THROWS when
     // `GOOGLE_APPLICATION_CREDENTIALS`/`GOOGLE_CALENDAR_ID` are unset — so
     // constructing it unconditionally 500'd this route for a lead with zero
-    // calendar-backed pending bookings (the common case), needlessly coupling
+    // calendar-backed bookings (the common case), needlessly coupling
     // a pure DB delete to calendar credentials. Resolve lazily.
     try {
-      if (pendingEventRows.length > 0) {
+      if (calendarEventRows.length > 0) {
         const calendar = resolveCalendarPort();
-        for (const row of pendingEventRows) {
+        for (const row of calendarEventRows) {
           // booking-hitl design.md Decision 6 item 2 / F.3: route the
           // delete through the ONE shared idempotent-delete path
           // (`releaseHold`) rather than a raw `calendar.deleteEvent` — a
-          // 404/410 on an already-gone tentative event (e.g. a previous
-          // partial retry) is treated as an already-satisfied delete, not a
-          // failure. Every other `CalendarError` still propagates
-          // unchanged into the `catch` below.
+          // 404/410 on an already-gone event (e.g. a previous partial retry,
+          // or an already-declined/cancelled booking's stale event id) is
+          // treated as an already-satisfied delete, not a failure. Every
+          // other `CalendarError` still propagates unchanged into the
+          // `catch` below.
           await releaseHold(calendar, row.calendar_event_id);
         }
       }

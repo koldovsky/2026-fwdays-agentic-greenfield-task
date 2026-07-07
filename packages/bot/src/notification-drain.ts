@@ -56,6 +56,28 @@ export interface DrainNotificationsResult {
 
 const DEFAULT_DRAIN_LIMIT = 50;
 
+// Review-gate finding #2 [MAJOR]: two overlapping `drainNotifications` calls
+// sharing the SAME `db` (e.g. a slow tick's `sendMessage` still in flight
+// when the next timer tick fires) must never send the same deliverable row's
+// `sendMessage` more than once. Nothing in the `notifications` table itself
+// marks a row "claimed" until its OWN send resolves (`markNotificationDelivered`/
+// `markNotificationFailed` only run AFTER `await transport.sendMessage(...)`
+// settles) — so a naive re-entrant call's own `findDeliverableNotifications`
+// SELECT sees the exact same still-`pending` row and re-sends it.
+//
+// Fix: a module-scoped in-memory "in-flight" set, keyed by row id. Claiming a
+// row (adding its id to this set) happens SYNCHRONOUSLY, in the same
+// synchronous stretch of the loop as the `SELECT` that found it — i.e.
+// BEFORE the `await transport.sendMessage(...)` that could suspend and let a
+// second `drainNotifications` call's own SELECT run. A second call's loop
+// then skips any row id already claimed by an in-flight first call, and
+// every claim is released in a `finally` (delivered, failed, OR a thrown
+// error) so a claim never survives past the call that made it — even a
+// module-level lock like this is process-local and does not protect two
+// separate OS processes hitting the same SQLite file (out of scope here:
+// this bot runs a single long-polling process, design.md Decision 1).
+const inFlightNotificationIds = new Set<number>();
+
 /**
  * Drains every `pending`/`failed` `notifications` row: sends `payload.text`
  * (plus `payload.buttons` when present) via `transport.sendMessage`, then
@@ -67,6 +89,10 @@ const DEFAULT_DRAIN_LIMIT = 50;
  * A malformed (non-JSON) payload is treated the same as a failed send —
  * marked `failed` and the loop continues (`@trace NFR-REL-01`): one bad row
  * must never stop the rest of the batch from draining.
+ *
+ * Two overlapping calls sharing the same `db` never double-send the same
+ * row (review-gate finding #2, `@trace NFR-REL-01`) — see
+ * `inFlightNotificationIds`'s own comment above for the claiming mechanism.
  */
 export async function drainNotifications(
   db: Database.Database,
@@ -78,6 +104,12 @@ export async function drainNotifications(
   let failed = 0;
 
   for (const row of rows) {
+    // Claim synchronously, before any `await` in this iteration — a
+    // concurrently-running `drainNotifications` call whose own SELECT
+    // already returned this same row will see it here and skip it.
+    if (inFlightNotificationIds.has(row.id)) continue;
+    inFlightNotificationIds.add(row.id);
+
     try {
       const { text, buttons }: NotificationPayload = JSON.parse(row.payload);
       await transport.sendMessage(row.telegram_chat_id, text, buttons ? { buttons } : undefined);
@@ -86,6 +118,8 @@ export async function drainNotifications(
     } catch {
       markNotificationFailed(db, row.id);
       failed += 1;
+    } finally {
+      inFlightNotificationIds.delete(row.id);
     }
   }
 
