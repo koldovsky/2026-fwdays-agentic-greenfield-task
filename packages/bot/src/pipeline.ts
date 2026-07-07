@@ -130,6 +130,7 @@ import {
   findLeadByTelegramUserId,
   insertRequest,
   insertBooking,
+  insertQuestion,
   updateRequestFields,
   updateRequestState,
   findLatestRequestForLead,
@@ -143,6 +144,14 @@ import {
 import { runIntakeTurn, type LoopPorts } from "@kamerton/agent/src/loop.ts";
 import type { ModelPort } from "@kamerton/agent/src/model-port.ts";
 import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "@kamerton/agent/src/apology.ts";
+// kb-learning design.md Decision 1 (tasks.md C.11's own KB-read-wiring
+// choice): this module is the ONE place that actually calls
+// `readKnowledgeBaseText` — fresh, once per turn, against the repo-root
+// `knowledge/school.md` path — and threads the result into `runIntakeTurn`'s
+// OPTIONAL `kbText` input. `packages/agent`'s own unit tests never pass this
+// field (stay hermetic, `""`); this is the one live call site that makes
+// design.md Decision 1's "no bot restart" requirement actually true.
+import { DEFAULT_KNOWLEDGE_BASE_PATH, readKnowledgeBaseText } from "@kamerton/agent/src/kb-context.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
 import type {
   CandidateFormat,
@@ -689,12 +698,51 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
         holdStore: {
           holdSlot: (slotIndex, offeredSlots) => performHoldSlot(deps, request, slotIndex, offeredSlots),
         },
+        // kb-learning design.md Decision 4 (tasks.md C.11): pre-applies the
+        // CURRENT turn's lead_id/request_id/telegram_chat_id — mirrors
+        // `ports.slots`/`ports.holdStore`'s own "pre-bind the request's own
+        // context, expose only the narrow method the loop needs" shape.
+        // `requestId` is passed through (never omitted) even though the
+        // column itself is nullable at the schema level (`ON DELETE SET
+        // NULL`) — a question asked THIS turn always has a live request row
+        // to attribute it to.
+        questions: {
+          async logAnsweredFromKb(question: string): Promise<void> {
+            insertQuestion(deps.db, {
+              leadId: request.lead_id,
+              requestId: request.id,
+              telegramChatId: update.telegramChatId,
+              text: question,
+              answerSource: "kb",
+            });
+          },
+          async logUnanswered(question: string): Promise<void> {
+            insertQuestion(deps.db, {
+              leadId: request.lead_id,
+              requestId: request.id,
+              telegramChatId: update.telegramChatId,
+              text: question,
+              answerSource: "unanswered",
+            });
+          },
+        },
       };
+
+      // kb-learning design.md Decision 1: read fresh, every turn — the
+      // dashboard's answer-handler writes `knowledge/school.md` directly, so
+      // the very next bot-process read (this line) sees it, with zero extra
+      // plumbing (no cache, no cross-process invalidation signal). A
+      // missing/unreadable file degrades to `""` (`readKnowledgeBaseText`
+      // never throws), which `buildSystemPrompt` renders as an explicitly
+      // empty KB block — every question then safely falls onto the
+      // `log_question` promise path.
+      const kbText = readKnowledgeBaseText(DEFAULT_KNOWLEDGE_BASE_PATH);
 
       const result = await runIntakeTurn({
         state: rowToIntakeState(request),
         message: update.text,
         ports,
+        kbText,
       });
 
       finalFields = result.state.fields;

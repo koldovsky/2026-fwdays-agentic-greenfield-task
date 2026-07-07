@@ -11,6 +11,7 @@ import type {
   HoldStorePort,
   PendingBooking,
   PersistencePort,
+  QuestionsPort,
   ReleaseHoldFn,
   SlotsPort,
 } from "../loop.ts";
@@ -109,5 +110,33 @@ export class FakeHoldStorePort implements HoldStorePort {
   async holdSlot(slotIndex: number, offeredSlots: OfferedSlot[]): Promise<HoldSlotResult> {
     this.calls.push({ slotIndex, offeredSlots });
     return this.result;
+  }
+}
+
+/** A recording `QuestionsPort` double (kb-learning design.md Decision 4,
+ *  tasks.md C.7/C.8) — records every `logAnsweredFromKb`/`logUnanswered`
+ *  call's question text, in order, so `loop.test.ts` can assert exactly
+ *  which method was invoked and with what text. Optionally constructed with
+ *  an error to REJECT with, on either method, so the NFR-REL-01
+ *  "QuestionsPort failure is caught by the existing applyToolUse try/catch"
+ *  scenario can be scripted without a real DB. */
+export class FakeQuestionsPort implements QuestionsPort {
+  readonly answeredFromKb: string[] = [];
+  readonly unanswered: string[] = [];
+
+  constructor(private readonly rejectWith: Error | undefined = undefined) {}
+
+  async logAnsweredFromKb(question: string): Promise<void> {
+    if (this.rejectWith !== undefined) {
+      throw this.rejectWith;
+    }
+    this.answeredFromKb.push(question);
+  }
+
+  async logUnanswered(question: string): Promise<void> {
+    if (this.rejectWith !== undefined) {
+      throw this.rejectWith;
+    }
+    this.unanswered.push(question);
   }
 }

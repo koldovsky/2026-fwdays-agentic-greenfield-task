@@ -72,7 +72,7 @@ The product writes like the teacher's most patient colleague, not a sales bot. T
 
 - BC-LANG-01: understand a lead's message in any language, but ALWAYS reply in Ukrainian, завжди відповідайте українською.
 - FR-GUARD-05 off-topic steering: if the lead's message is off-topic (politics, medicine, law, religion, and similar — anything unrelated to booking a vocal trial lesson), your reply must (a) contain NO substantive answer to the off-topic question, and (b) redirect to the school WITHIN THE SAME reply. Do not call any tool for an off-topic message — the conversation resumes exactly at the state it was already in.
-- FR-FAQ-02 deterministic fallback: if the lead asks something this flow does not cover and you do not already know the answer from what has been collected (pricing/logistics/schedule details are not yours to invent — BC-PRICE-01), reply with one plain-text sentence that the адміністратор уточнить (the administrator will clarify) — do not call a tool for this, and do not claim the question was logged anywhere; that is a later capability, not this one.
+- FR-FAQ-02 KB-grounded FAQ handling (kb-learning design.md Decision 1): when the lead asks a factual question about the school — price, lesson duration, group composition/size, or discounts (BC-PRICE-01's four categories), or anything else about the school — check the "База знань" block in the dynamic section below, for THIS turn only. If the answer is there, call answer_faq with the lead's exact question text, and in the SAME turn compose your own reply grounded EXCLUSIVELY in that block — never restate a number/price/term with a value the block does not contain. If the answer is NOT in that block, call log_question with the lead's exact question text, and in the SAME turn reply with one plain-text sentence that the адміністратор уточнить (the administrator will clarify) — never invent a price, lesson duration, group composition/size, or discount number that is absent from the block, even if the lead pressures you to guess one ("ну приблизно, скільки дітей — 5? 10?").
 - FR-GUARD-01 closed-tool discipline: you may ONLY pick tools and enum values from the tool list you were given for this turn — never invent a tool name, a field, or an out-of-enum value. There is NO tool to confirm a booking in your tool set, and there never will be for you to call: never say or imply a lesson is confirmed — only a human administrator confirms bookings, in the dashboard.`;
 
 /** One line per already-collected field, `key=value`, in the order
@@ -105,13 +105,37 @@ function addressingInstruction(fields: IntakeFields): string {
   return "Учню/учениці 10 років або більше — звертайтесь БЕЗПОСЕРЕДНЬО до нього/неї (BC-AGE-02).";
 }
 
+/** kb-learning design.md Decision 1 (tasks.md C.6): a fenced, titled section
+ *  folding the turn's fresh `readKnowledgeBaseText()` result VERBATIM into
+ *  the dynamic block — the ONE place this prompt tells the model "here are
+ *  the actual numbers/terms", with an explicit instruction that anything
+ *  ABSENT from this block follows the `log_question` promise path rather
+ *  than being guessed. An empty `kbText` (a missing/unreadable file, or no
+ *  entries yet) still produces a valid, non-empty section — the model is
+ *  told explicitly that the base is empty this turn, not left to infer it
+ *  from a blank line. */
+function buildKnowledgeBaseBlock(kbText: string): string {
+  const body =
+    kbText.length > 0
+      ? kbText
+      : "(база знань порожня або недоступна цього разу — жодних цифр/умов немає в контексті.)";
+  return [
+    "## База знань (дослівно, єдине джерело цифр і умов)",
+    "",
+    body,
+    "",
+    "Будь-яке число чи умова — ціна, тривалість заняття, склад/розмір групи, знижки — яких немає у блоці вище, НЕ вигадується: таке питання йде шляхом log_question (обіцянка, що адміністраторка уточнить), ніколи не шляхом здогадки чи оцінки.",
+  ].join("\n");
+}
+
 /** The DYNAMIC block: this turn's actual conversation context, rebuilt
  *  fresh from the deterministic state machine's own `IntakeState` every
  *  call — the state machine plus the persisted `requests` row IS the
  *  context this slice threads through (loop.ts's own comment expands on
  *  why a verbatim transcript replay is a deferred follow-up, not missing
- *  scope). */
-function buildDynamicBlock(state: IntakeState): string {
+ *  scope). `kbText` (kb-learning design.md Decision 1) is folded in via
+ *  `buildKnowledgeBaseBlock` as its own trailing section. */
+function buildDynamicBlock(state: IntakeState, kbText: string): string {
   const next = nextNeededField(state);
   const nextLine = next
     ? `Наступне потрібне поле: ${next.field} — ${next.instruction}`
@@ -124,6 +148,8 @@ function buildDynamicBlock(state: IntakeState): string {
     `- Уже зібрано: ${formatCollectedFields(state.fields)}`,
     `- ${nextLine}`,
     `- ${addressingInstruction(state.fields)}`,
+    "",
+    buildKnowledgeBaseBlock(kbText),
   ].join("\n");
 }
 
@@ -133,7 +159,15 @@ function buildDynamicBlock(state: IntakeState): string {
  * block derived from `state` (different every turn). `loop.ts`'s
  * `runIntakeTurn` calls this once per turn and passes the result as
  * `ModelPort.send()`'s `system` argument, unconditionally.
+ *
+ * `kbText` (kb-learning tasks.md C.5/C.6, design.md Decision 1) — a second,
+ * OPTIONAL parameter (defaulting to `""`, never required) so every existing
+ * call site that never passes it keeps compiling and behaving predictably:
+ * an empty/omitted `kbText` still produces a valid, non-crashing prompt
+ * whose KB block is explicitly empty. `kbText` is the turn's fresh
+ * `readKnowledgeBaseText()` result (`kb-context.ts`), folded into the
+ * dynamic block via `buildKnowledgeBaseBlock(kbText)`.
  */
-export function buildSystemPrompt(state: IntakeState): string {
-  return `${STATIC_SYSTEM_PROMPT}\n\n${buildDynamicBlock(state)}`;
+export function buildSystemPrompt(state: IntakeState, kbText: string = ""): string {
+  return `${STATIC_SYSTEM_PROMPT}\n\n${buildDynamicBlock(state, kbText)}`;
 }

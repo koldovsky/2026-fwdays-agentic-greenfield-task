@@ -254,6 +254,27 @@ export interface HoldStorePort {
   >;
 }
 
+/** kb-learning design.md Decision 4 (tasks.md C.7, TYPE CONTRACT ONLY — the
+ *  `applyToolUse` `answer_faq`/`log_question` branches that actually CALL
+ *  this port are wired in tasks.md C.9's GREEN half, not here). The seam
+ *  this loop uses for the two logging-only KB tools: a question can be
+ *  asked in ANY `conversationState`, so this is dispatched in
+ *  `applyToolUse`, NOT `transition()` — mirrors `SlotsPort`/`HoldStorePort`'s
+ *  own "narrow port, pre-bound by the caller to the current turn's row
+ *  context" shape. Deliberately carries NO answer/content parameter on
+ *  either method — the model's own narrated reply text is what may contain
+ *  the answer; these methods only ever receive the LEAD'S question text,
+ *  never anything the model claims as an answer (`@trace FR-GUARD-06`). */
+export interface QuestionsPort {
+  /** The lead's question was answered from the KB this turn (`answer_faq`
+   *  tool call) — logs a `questions` row with `answer_source = 'kb'`. */
+  logAnsweredFromKb(question: string): Promise<void>;
+  /** The lead's question was NOT covered by the KB this turn (`log_question`
+   *  tool call) — logs a `questions` row with `answer_source =
+   *  'unanswered'`, `status = 'open'`. */
+  logUnanswered(question: string): Promise<void>;
+}
+
 /** Every external dependency `runIntakeTurn` needs for one turn, bundled so
  *  the function signature stays a clean `(state, message, ports)` shape
  *  rather than an ever-growing positional-argument list. */
@@ -264,18 +285,54 @@ export interface LoopPorts {
   releaseHold: ReleaseHoldFn;
   slots: SlotsPort; // NEW — booking-hitl design.md Decision 2 (tasks.md C.2)
   holdStore: HoldStorePort; // NEW — booking-hitl design.md Decision 2 (tasks.md C.2)
+  // kb-learning design.md Decision 4 (tasks.md C.7) — OPTIONAL so every
+  // existing caller/test (which never constructs a QuestionsPort) keeps
+  // compiling unchanged; `applyToolUse`'s C.9 GREEN half is the only place
+  // that will ever read it.
+  questions?: QuestionsPort;
 }
 
 export interface LoopInput {
   state: IntakeState;
   message: string;
   ports: LoopPorts;
+  // kb-learning design.md Decision 1 (tasks.md C.5's KB-read-wiring choice):
+  // OPTIONAL, defaulting to `""` — every existing caller/test that never
+  // passes this field keeps compiling and behaving byte-for-byte identically
+  // (`buildSystemPrompt(state, "")`, an explicitly-empty KB block, exactly
+  // this module's pre-kb-learning behaviour). The PRODUCTION caller
+  // (`packages/bot/src/pipeline.ts`) is the one that actually calls
+  // `readKnowledgeBaseText(DEFAULT_KNOWLEDGE_BASE_PATH)` fresh, once per
+  // turn, and threads the result in here — NOT this module itself. Reading
+  // the real repo-root `knowledge/school.md` path directly inside this
+  // package's own `runIntakeTurn` would make `loop.test.ts` non-deterministic
+  // (its outcome would silently depend on whatever that file's on-disk
+  // content happens to be at test-run time, including a file that does not
+  // exist yet today but will after tasks.md E.9 seeds one) — threading the
+  // text in from the caller keeps this package's own unit tests hermetic
+  // while still satisfying design.md Decision 1's "fresh per turn, no bot
+  // restart needed" requirement at the one place (`pipeline.ts`) that owns
+  // real filesystem I/O for this concern.
+  kbText?: string;
 }
 
 /** How a single tool-use block resolved once run through the reducer
  *  (defense in depth: a syntactically valid tool call is not automatically
- *  an applied one). */
-export type ToolCallOutcome = "applied" | "rejected" | "detour" | "pass_through";
+ *  an applied one).
+ *
+ *  `"logged"` (kb-learning design.md Decision 4, tasks.md C.7) — deliberately
+ *  NOT `"applied"`: `runIntakeTurn`'s reply-assembly rule
+ *  (`hasAppliedToolCall || stateAdvanced`) overrides the model's own
+ *  narrated text with the deterministic ack+next-question composer whenever
+ *  ANY tool call in the turn was `"applied"`. An `answer_faq`/`log_question`
+ *  call never reaches `transition()` at all (no state/field mutation to
+ *  "apply") and a PURE FAQ turn's whole point is the OPPOSITE of the ack
+ *  composer: the model's own KB-grounded narration IS the reply. Naming
+ *  this outcome `"logged"` keeps a pure FAQ turn's `hasAppliedToolCall`
+ *  `false`, so its `reply` stays the model's verbatim narration — see
+ *  `applyToolUse`'s (not-yet-written, tasks.md C.9) `answer_faq`/
+ *  `log_question` branches for the dispatch that will produce this value. */
+export type ToolCallOutcome = "applied" | "rejected" | "detour" | "pass_through" | "logged";
 
 /** booking-hitl design.md Decision 2 (tasks.md C.2/C.3): the reducer's own
  *  closed `TransitionErrorCode` set, widened by exactly one loop-layer-only
@@ -327,7 +384,7 @@ export type { ModelConfig };
  * 4.4's six behavioural bullets, implemented below).
  */
 export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
-  const { state, message, ports } = input;
+  const { state, message, ports, kbText = "" } = input;
   // Review-gate remediation ("the model never receives a system prompt or
   // any conversation context — each turn is context-free", CRITICAL): the
   // ONLY thing this loop currently threads through as prior-turn history is
@@ -344,7 +401,7 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
   // this is a low-risk deferral: the state summary already names exactly
   // which field is missing and what has been collected, so the model does
   // not need its own prior turn replayed to know what to ask next.
-  const system = buildSystemPrompt(state);
+  const system = buildSystemPrompt(state, kbText);
   const messages: ModelMessage[] = [{ role: "user", content: message }];
 
   let response;
@@ -467,6 +524,17 @@ function isTextBlock(block: ContentBlock): block is TextBlock {
  *  to a finite number is returned UNCHANGED (never coerced to `NaN` or some
  *  other bogus number) so the existing AGE_BELOW_MIN guardrail still rejects
  *  it exactly as before — this is a narrow type fix-up, not new leniency. */
+/** Reads the `question` string off an `answer_faq`/`log_question` tool-use
+ *  block's input — the ONLY field either tool's schema exposes (tools.ts's
+ *  own guardrail: no answer/content payload, `@trace FR-GUARD-06`). Falls
+ *  back to `""` for a malformed/missing value rather than throwing — a
+ *  syntactically-valid-per-schema call from the real API always carries this
+ *  field, but defense in depth costs nothing here. */
+function readQuestionInput(block: ToolUseBlock): string {
+  const input = block.input as { question?: unknown };
+  return typeof input.question === "string" ? input.question : "";
+}
+
 function coerceAmendedAge(value: unknown): unknown {
   if (typeof value !== "string") {
     return value;
@@ -604,6 +672,28 @@ async function applyToolUse(
   }
   if (block.name === "request_hold") {
     return applyRequestHold(block, state, ports);
+  }
+  // kb-learning design.md Decision 4 (tasks.md C.9): `answer_faq`/
+  // `log_question` are LOGGING-ONLY dedicated tools — mirrors
+  // `explain_scope`/`explain_format`'s own shape (no `transition()` call, no
+  // state/field mutation), except these two also await a `ports.questions`
+  // call. `outcome: "logged"` (NOT "applied") is deliberate: a PURE FAQ turn
+  // (no other tool call) must leave `hasAppliedToolCall` false so the reply
+  // stays the model's own KB-grounded narration, unoverridden by the
+  // deterministic ack+next-question composer (see `ToolCallOutcome`'s own
+  // header comment, and `runIntakeTurn`'s reply-assembly rule below). A
+  // `ports.questions` rejection propagates to `runIntakeTurn`'s EXISTING
+  // try/catch around this call, which returns the shared
+  // `CALENDAR_UNAVAILABLE_APOLOGY` with state preserved — no new
+  // error-handling code needed (design.md Decision 4's own flag, disposition
+  // deferred to the I.1 review-gate stage).
+  if (block.name === "answer_faq") {
+    await ports.questions?.logAnsweredFromKb(readQuestionInput(block));
+    return { state, logEntry: { tool: block.name, input: block.input, outcome: "logged" } };
+  }
+  if (block.name === "log_question") {
+    await ports.questions?.logUnanswered(readQuestionInput(block));
+    return { state, logEntry: { tool: block.name, input: block.input, outcome: "logged" } };
   }
 
   const event = toIntakeEvent(block);

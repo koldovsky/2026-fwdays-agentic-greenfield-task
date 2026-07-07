@@ -1163,6 +1163,106 @@ describe("handleUpdate — AG-UI publisher seam (dashboard tasks.md 4.3)", () =>
   });
 });
 
+// ---------------------------------------------------------------------------
+// kb-learning tasks.md C.11 (design.md Decision 4) — RED round.
+//
+// `pipeline.ts` does not yet bind a real `QuestionsPort` (pre-applying the
+// current turn's `lead_id`/`request_id`/`telegram_chat_id`, mirroring how
+// `ports.slots`/`ports.holdStore` are pre-bound to `performProposeSlots`/
+// `performHoldSlot` — see this file's own header comment), and
+// `packages/agent/src/loop.ts`'s `applyToolUse` does not yet dispatch
+// `answer_faq`/`log_question` to it either (tasks.md C.9's own GREEN half).
+// Both scenarios below therefore assert on a REAL `questions` row appearing
+// in a REAL in-memory SQLite database after `handleUpdate()` — which today
+// never happens, for the right reason: nothing wires `LoopPorts.questions`
+// yet. This is the C.11 RED half; the `pipeline.ts` wiring is C.11's own
+// GREEN half.
+// ---------------------------------------------------------------------------
+describe("kb-learning C.11 (RED) — a real QuestionsPort bound to insertQuestion, pre-applying lead_id/request_id/telegram_chat_id", () => {
+  function questionsForLead(db: Database.Database, telegramUserId: string): {
+    id: number;
+    lead_id: number;
+    request_id: number | null;
+    telegram_chat_id: string;
+    text: string;
+    answer_source: string;
+    status: string;
+  }[] {
+    return db
+      .prepare(
+        `SELECT q.* FROM questions q
+         JOIN leads l ON l.id = q.lead_id
+         WHERE l.telegram_user_id = ?
+         ORDER BY q.id ASC`,
+      )
+      .all(telegramUserId) as {
+      id: number;
+      lead_id: number;
+      request_id: number | null;
+      telegram_chat_id: string;
+      text: string;
+      answer_source: string;
+      status: string;
+    }[];
+  }
+
+  // @trace FR-KB-01
+  it("a KB-answerable message (an answer_faq tool-use response) drives a real questions row with answer_source='kb', lead_id/request_id/telegram_chat_id pre-applied from the current turn", async () => {
+    const db = openDatabase(":memory:");
+    const { lead, request } = seedNewLeadRequest(db, "tg-user-kb-1", "tg-chat-kb-1");
+    const questionText = "Скільки триває індивідуальне заняття?";
+    const model = new FakeModelPort([
+      toolUseResponse(
+        "answer_faq",
+        { question: questionText },
+        { text: "Індивідуальне заняття триває 45 хвилин." },
+      ),
+    ]);
+    const deps = makeDeps({ db, model });
+
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-user-kb-1", telegramChatId: "tg-chat-kb-1", text: questionText }),
+      deps,
+    );
+
+    const rows = questionsForLead(db, "tg-user-kb-1");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.answer_source).toBe("kb");
+    expect(rows[0]?.text).toBe(questionText);
+    expect(rows[0]?.lead_id).toBe(lead.id);
+    expect(rows[0]?.request_id).toBe(request.id);
+    expect(rows[0]?.telegram_chat_id).toBe("tg-chat-kb-1");
+  });
+
+  // @trace FR-KB-01
+  it("an unanswerable message (a log_question tool-use response) drives a real questions row with answer_source='unanswered', status='open'", async () => {
+    const db = openDatabase(":memory:");
+    const { lead, request } = seedNewLeadRequest(db, "tg-user-kb-2", "tg-chat-kb-2");
+    const questionText = "Чи є у вас парковка?";
+    const model = new FakeModelPort([
+      toolUseResponse(
+        "log_question",
+        { question: questionText },
+        { text: "Уточню це в адміністраторки і повернуся з відповіддю." },
+      ),
+    ]);
+    const deps = makeDeps({ db, model });
+
+    await handleUpdate(
+      textUpdate({ telegramUserId: "tg-user-kb-2", telegramChatId: "tg-chat-kb-2", text: questionText }),
+      deps,
+    );
+
+    const rows = questionsForLead(db, "tg-user-kb-2");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.answer_source).toBe("unanswered");
+    expect(rows[0]?.status).toBe("open");
+    expect(rows[0]?.text).toBe(questionText);
+    expect(rows[0]?.lead_id).toBe(lead.id);
+    expect(rows[0]?.request_id).toBe(request.id);
+  });
+});
+
 describe("compileFirstLessonBrief (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
   // @trace FR-INTAKE-01
   // @trace FR-INTAKE-02

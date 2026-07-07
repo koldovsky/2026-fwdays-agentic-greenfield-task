@@ -1,4 +1,5 @@
-// Test-first (tasks.md 4.3): the closed tool set (design.md Decision 2).
+// Test-first (tasks.md 4.3, extended by kb-learning tasks.md C.1): the closed
+// tool set (design.md Decision 2; kb-learning design.md Decision 4).
 //
 // Unlike most of this section's red round, `tools.ts` ships its `TOOLS`
 // array as REAL content already (see tools.ts's own header) — the same
@@ -10,6 +11,17 @@
 // implementation pass. This is called out explicitly, in the test-engineer
 // report, as green-by-nature (task instructions' own carve-out for
 // "MODEL_CONFIG/tool-list/static-guardrail assertions").
+//
+// kb-learning tasks.md C.1 (RED half): `answer_faq`/`log_question` are NOT
+// in `tools.ts` yet (booking-hitl's own slice deliberately omitted them —
+// see the old regression test this file used to carry, now superseded and
+// removed below since kb-learning's own baseline spec requires exactly the
+// opposite: these two tools MUST exist, each carrying ONLY a `question:
+// string` input, no answer/content payload — the model narrates the reply
+// itself, it never hands the answer text to a tool (`@trace FR-GUARD-01`,
+// `@trace FR-GUARD-06`)). Every assertion referencing these two names below
+// is therefore expected to FAIL (red) against today's 16-tool `TOOLS`
+// array, until kb-learning tasks.md C.2 (GREEN) adds them.
 import { describe, expect, it } from "vitest";
 import { TOOL_NAMES, TOOLS } from "./tools.ts";
 
@@ -30,6 +42,9 @@ const EXPECTED_TOOL_NAMES = [
   "explain_format",
   "propose_slots",
   "request_hold",
+  // kb-learning tasks.md C.1 (design.md Decision 4) — RED until C.2 lands.
+  "answer_faq",
+  "log_question",
 ];
 
 describe("the agent's closed tool set", () => {
@@ -56,11 +71,47 @@ describe("the agent's closed tool set", () => {
     }
   });
 
-  // Named regression guard: the S5 kb-learning tools this slice deliberately
-  // omits (design.md Decision 2's "chosen (b)") must not sneak in early.
-  it("never contains log_question or answer_faq (S5 kb-learning's tools, out of this slice's scope)", () => {
-    expect(TOOL_NAMES).not.toContain("log_question");
-    expect(TOOL_NAMES).not.toContain("answer_faq");
+  // kb-learning tasks.md C.1 (design.md Decision 4) — RED until C.2 (GREEN)
+  // adds the two tool definitions to tools.ts. Supersedes the OLD regression
+  // guard this file used to carry ("never contains log_question or
+  // answer_faq") — that guard pinned booking-hitl's own deliberate omission
+  // of these two tools; kb-learning's own baseline spec requires exactly the
+  // opposite, so the old assertion is removed rather than left to
+  // permanently contradict this slice's spec.
+  //
+  // NAMES ARE THE GUARDRAIL SURFACE (this file's own header, and tools.ts's):
+  // `answer_faq`/`log_question` carry ONLY a `question: string` input — no
+  // answer/content payload — because the model must never be handed a tool
+  // through which it could claim to have written or fetched an answer from
+  // anywhere other than the KB block already in its context; it narrates the
+  // reply itself, in the SAME turn, and these two tools exist purely to log
+  // which question was asked and how it was answered (`@trace FR-GUARD-01`,
+  // `@trace FR-GUARD-06`).
+  describe("answer_faq / log_question — logging-only tools, no answer payload (design.md Decision 4)", () => {
+    for (const name of ["answer_faq", "log_question"] as const) {
+      // @trace FR-GUARD-01
+      // @trace FR-GUARD-06
+      it(`${name} has a required 'question: string' input and NO other property`, () => {
+        const tool = TOOLS.find((candidate) => candidate.name === name);
+        expect(tool).toBeDefined();
+        const properties = tool?.input_schema.properties as Record<string, { type?: string } | undefined>;
+        expect(Object.keys(properties ?? {})).toEqual(["question"]);
+        expect(properties?.question?.type).toBe("string");
+        expect(tool?.input_schema.required).toEqual(["question"]);
+      });
+    }
+
+    // @trace FR-GUARD-01
+    // @trace FR-GUARD-06
+    it("both new names pass the existing confirm*/*kb*write* guardrail pattern too (explicit double-check, not just via TOOL_NAMES membership)", () => {
+      for (const name of ["answer_faq", "log_question"]) {
+        expect(TOOL_NAMES).toContain(name);
+        const lowered = name.toLowerCase();
+        expect(lowered).not.toMatch(/^confirm/);
+        expect(lowered).not.toMatch(/kb.*write/);
+        expect(lowered).not.toMatch(/write.*kb/);
+      }
+    });
   });
 
   // @trace FR-INTAKE-02
@@ -123,7 +174,7 @@ describe("the agent's closed tool set", () => {
 
     // @trace FR-GUARD-01
     // @trace FR-GUARD-06
-    it("the closed TOOL_NAMES list is otherwise UNCHANGED by this schema edit — still exactly sixteen names, none confirm*/*kb*write*", () => {
+    it("the closed TOOL_NAMES list is otherwise UNCHANGED by this schema edit — still exactly EXPECTED_TOOL_NAMES.length names, none confirm*/*kb*write*", () => {
       expect(TOOLS).toHaveLength(EXPECTED_TOOL_NAMES.length);
       expect([...TOOL_NAMES].sort()).toEqual([...EXPECTED_TOOL_NAMES].sort());
       for (const name of TOOL_NAMES) {

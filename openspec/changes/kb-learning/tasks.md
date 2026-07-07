@@ -86,7 +86,7 @@ S1–S4.
 
 ## C. Agent — tools, KB-in-context, loop wiring, guardrail assertion
 
-- [ ] C.1 `packages/agent/src/tools.test.ts` additions FIRST (red): `TOOLS`
+- [x] C.1 `packages/agent/src/tools.test.ts` additions FIRST (red): `TOOLS`
       now includes `answer_faq` and `log_question`, each with a required
       `question: string` input and no other property (no answer/content
       payload — the model narrates the reply itself, it never hands the
@@ -95,15 +95,15 @@ S1–S4.
       `confirm*`/`*kb*write*` name" guardrail assertion explicitly checks
       both new names too (`@trace FR-GUARD-01`, `@trace FR-GUARD-06`).
       Confirm red.
-- [ ] C.2 Add the two tool definitions to `tools.ts` to pass C.1.
-- [ ] C.3 `packages/agent/src/kb-context.test.ts` FIRST (red):
+- [x] C.2 Add the two tool definitions to `tools.ts` to pass C.1.
+- [x] C.3 `packages/agent/src/kb-context.test.ts` FIRST (red):
       `readKnowledgeBaseText(path)` returns a fixture file's exact content
       when given its path; returns `""` (never throws) when the path does
       not exist (design.md Decision 1's "fails soft" contrast with the write
       side). Confirm red.
-- [ ] C.4 Implement `packages/agent/src/kb-context.ts` (repo-root resolution
+- [x] C.4 Implement `packages/agent/src/kb-context.ts` (repo-root resolution
       mirroring `packages/bot/src/index.ts`'s own convention) to pass C.3.
-- [ ] C.5 `packages/agent/src/system-prompt.test.ts` additions FIRST (red):
+- [x] C.5 `packages/agent/src/system-prompt.test.ts` additions FIRST (red):
       `buildSystemPrompt` folds a supplied non-empty KB text VERBATIM into
       its output; the static block's rewritten FR-FAQ-02 instruction names
       `answer_faq`/`log_question` by name and enumerates the four
@@ -112,15 +112,15 @@ S1–S4.
       this one" sentence is gone; an EMPTY KB string still produces a valid,
       non-crashing prompt (`@trace FR-FAQ-01`, `@trace FR-FAQ-02`, `@trace
       FR-GUARD-02`, design.md Decision 1). Confirm red.
-- [ ] C.6 Implement `buildKnowledgeBaseBlock` + wire it into
+- [x] C.6 Implement `buildKnowledgeBaseBlock` + wire it into
       `buildDynamicBlock`, thread the KB text through `buildSystemPrompt`'s
       signature (pin the exact parameter shape `system-prompt.test.ts`
       asserts), and rewrite the static FR-FAQ-02 sentence, to pass C.5.
-- [ ] C.7 `loop.ts` contract additions (design.md Decision 4, type-only, no
+- [x] C.7 `loop.ts` contract additions (design.md Decision 4, type-only, no
       behavior change yet — mirrors booking-hitl's own "contract-then-test"
       C.2 precedent): add `QuestionsPort`, the `questions` field on
       `LoopPorts`, and the `"logged"` `ToolCallOutcome` member.
-- [ ] C.8 `packages/agent/src/loop.test.ts` additions FIRST (red), against a
+- [x] C.8 `packages/agent/src/loop.test.ts` additions FIRST (red), against a
       fake `QuestionsPort`:
       - an `answer_faq` tool-use call invokes
         `ports.questions.logAnsweredFromKb` with the question text and logs
@@ -144,12 +144,12 @@ S1–S4.
         `CALENDAR_UNAVAILABLE_APOLOGY` as-is or a renamed/new constant per
         design.md Decision 4's flag, and pin whichever is chosen.
       Confirm every case red.
-- [ ] C.9 Implement `applyToolUse`'s `answer_faq`/`log_question` branches and
+- [x] C.9 Implement `applyToolUse`'s `answer_faq`/`log_question` branches and
       the reply-assembly `"logged"` exclusion in `loop.ts` to pass C.8.
-- [ ] C.10 Run `npm run test:run`; confirm C.1–C.9 green, zero regressions in
+- [x] C.10 Run `npm run test:run`; confirm C.1–C.9 green, zero regressions in
       the existing `loop.test.ts`/`tools.test.ts`/`system-prompt.test.ts`
       suites (S2/S4's own cases untouched).
-- [ ] C.11 `packages/bot/src/pipeline.test.ts` additions FIRST (red), against
+- [x] C.11 `packages/bot/src/pipeline.test.ts` additions FIRST (red), against
       real in-memory SQLite: binds a real `QuestionsPort` (pre-applying the
       current turn's `lead_id`/`request_id`/`telegram_chat_id`) to
       `packages/db/src/questions.ts`'s `insertQuestion` — a lead's
@@ -157,7 +157,7 @@ S1–S4.
       `answer_source='kb'`; an unanswerable message drives a row with
       `answer_source='unanswered'`, `status='open'` (`@trace FR-KB-01`).
       Confirm red, implement the `pipeline.ts` wiring to green.
-- [ ] C.12 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] C.12 Run `npm run test:run` and `npm run test:integration`; confirm
       C.11 green, zero regressions in S2/S4's own `pipeline.test.ts` suites.
 
 ## D. Bot — question-answer delivery drain (manual-retry-only)

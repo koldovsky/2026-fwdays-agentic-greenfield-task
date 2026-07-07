@@ -48,6 +48,58 @@ describe("buildSystemPrompt — static block (DESIGN.md voice, verbatim)", () =>
     expect(system).toContain("адміністратор уточнить");
   });
 
+  // --- kb-learning tasks.md C.5 (RED) — design.md Decision 1's rewrite of --
+  // --- the FR-FAQ-02 static-block sentence -------------------------------
+  // The pre-kb-learning FR-FAQ-02 sentence literally says "do not call a
+  // tool for this ... that is a later capability, not this one" — an
+  // accurate description of the pre-S5 deferral, now WRONG: `answer_faq`/
+  // `log_question` exist (tools.ts, tasks.md C.1/C.2) and MUST be named by
+  // the static prompt so the model knows to call them. Every assertion
+  // below is expected to FAIL red against today's system-prompt.ts (which
+  // still carries the OLD sentence, unnamed tools, no category
+  // enumeration) until tasks.md C.6 (GREEN) rewrites it.
+  describe("static block — FR-FAQ-02 rewrite naming answer_faq/log_question + BC-PRICE-01 categories (kb-learning design.md Decision 1, tasks.md C.5 — RED)", () => {
+    // @trace FR-FAQ-02
+    it("names both answer_faq and log_question by their literal tool names", () => {
+      const system = buildSystemPrompt(initialIntakeState());
+      expect(system).toContain("answer_faq");
+      expect(system).toContain("log_question");
+    });
+
+    // @trace FR-GUARD-02
+    it("enumerates all four BC-PRICE-01 categories: price, lesson duration, group composition/size, discounts", () => {
+      const system = buildSystemPrompt(initialIntakeState());
+      expect(system.toLowerCase()).toContain("price");
+      expect(system.toLowerCase()).toContain("lesson duration");
+      expect(system.toLowerCase()).toContain("group composition");
+      expect(system.toLowerCase()).toContain("discount");
+    });
+
+    // @trace FR-FAQ-02
+    it("no longer contains the OLD 'that is a later capability, not this one' deferral sentence", () => {
+      const system = buildSystemPrompt(initialIntakeState());
+      expect(system).not.toContain("that is a later capability, not this one");
+    });
+  });
+
+  // --- kb-learning tasks.md C.5 (RED) — design.md Decision 1's KB block ---
+  describe("KB text folding (kb-learning design.md Decision 1, tasks.md C.5 — RED, pins buildSystemPrompt's 2nd-parameter signature)", () => {
+    // @trace FR-FAQ-01
+    it("folds a supplied non-empty KB text VERBATIM into the prompt output", () => {
+      const kbText =
+        "## Індивідуальні заняття\n\n45 хвилин, 600 грн — kb-learning-fixture-marker-8f21a";
+      const system = buildSystemPrompt(initialIntakeState(), kbText);
+      expect(system).toContain(kbText);
+    });
+
+    // @trace FR-GUARD-02
+    it("an EMPTY KB string still produces a valid, non-crashing, non-empty prompt", () => {
+      expect(() => buildSystemPrompt(initialIntakeState(), "")).not.toThrow();
+      const system = buildSystemPrompt(initialIntakeState(), "");
+      expect(system.length).toBeGreaterThan(0);
+    });
+  });
+
   // @trace FR-GUARD-01
   it("states the closed-tool discipline: only code-vetted options, never claim to confirm a booking", () => {
     const system = buildSystemPrompt(initialIntakeState());

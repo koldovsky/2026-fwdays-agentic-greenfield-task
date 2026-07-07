@@ -23,10 +23,15 @@
 // a booking-confirmation or knowledge-base-write tool here, ever — see
 // design.md Decision 2 and AGENTS.md's guardrail rules.
 //
-// `log_question`/`answer_faq` are deliberately NOT in this list (design.md
-// Decision 2's "chosen (b)": omit them from this slice, rely on a
-// deterministic static-prompt fallback line instead of a half-built KB
-// feature — S5 `kb-learning` owns the real tools and the `questions` table).
+// `answer_faq`/`log_question` (kb-learning design.md Decision 4, tasks.md
+// C.2) — S5's two logging-only KB tools, ADDED to this closed set. Each
+// carries ONLY a `question: string` input, no answer/content payload: the
+// model never hands the answer text to a tool, it narrates the reply itself
+// in the SAME turn, grounded exclusively in the KB block system-prompt.ts
+// folds into context every turn (`@trace FR-FAQ-01`, `@trace FR-FAQ-02`).
+// These two names are, by construction, never a knowledge-base-WRITE tool
+// (`@trace FR-GUARD-06`) — no agent tool ever appends to `knowledge/school.md`;
+// only `apps/dashboard/lib/kb-write.ts` does that.
 //
 // `propose_slots`' schema (booking-hitl design.md Decision 2's sub-decision,
 // tasks.md C.1) gains structured `weekdays`/`timeWindow` parameters — the
@@ -68,8 +73,9 @@ const GOAL_TAGS = ["karaoke", "performance", "confidence", "hobby", "other"] as 
 const CANDIDATE_FORMATS = ["individual", "group", "unsure", "instrument"] as const;
 
 /**
- * The closed tool set for this slice (design.md Decision 2) — exactly these
- * sixteen tools, no more, no fewer. `tools.test.ts` pins this list's shape;
+ * The closed tool set for this slice (design.md Decision 2; kb-learning
+ * design.md Decision 4 adds `answer_faq`/`log_question`) — exactly these
+ * eighteen tools, no more, no fewer. `tools.test.ts` pins this list's shape;
  * changing it is a spec-level decision, not a casual edit.
  */
 export const TOOLS: ToolDefinition[] = [
@@ -249,6 +255,26 @@ export const TOOLS: ToolDefinition[] = [
         slotIndex: { type: "integer", description: "Індекс обраного слоту у списку, який щойно запропонували." },
       },
       required: ["slotIndex"],
+    },
+  },
+  {
+    name: "answer_faq",
+    description:
+      "Питання ліда покрите базою знань цього ходу (FR-FAQ-01) — викликати ПІСЛЯ того, як ви самі, у цій самій відповіді, склали репліку, обґрунтовану ВИКЛЮЧНО блоком «База знань» нижче. Інструмент лише фіксує факт і текст питання (FR-GUARD-06) — жодної відповіді сюди не передавайте, модель ніколи не вписує в аргумент саму відповідь чи цифру.",
+    input_schema: {
+      type: "object",
+      properties: { question: { type: "string", description: "Дослівний текст питання, яке поставив лід." } },
+      required: ["question"],
+    },
+  },
+  {
+    name: "log_question",
+    description:
+      "Питання ліда НЕ покрите блоком «База знань» цього ходу (FR-FAQ-02) — викликати ПІСЛЯ того, як ви самі відповіли лідові одним реченням, що адміністраторка уточнить. Інструмент лише фіксує факт і текст питання для черги адміністраторки (FR-GUARD-06) — жодної відповіді, ціни чи умови сюди не передавайте.",
+    input_schema: {
+      type: "object",
+      properties: { question: { type: "string", description: "Дослівний текст питання, яке поставив лід." } },
+      required: ["question"],
     },
   },
 ];

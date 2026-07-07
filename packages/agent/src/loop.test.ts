@@ -20,6 +20,7 @@ import {
   FakeBookingStorePort,
   FakeHoldStorePort,
   FakePersistencePort,
+  FakeQuestionsPort,
   FakeSlotsPort,
 } from "./testing/fake-loop-ports.ts";
 import {
@@ -744,6 +745,160 @@ describe("runIntakeTurn", () => {
       expect(result.state).toBe(state); // SAME reference — transition()'s state-changing branch never ran
       expect(result.toolCalls[0]).toMatchObject({ tool: "request_hold", outcome: "rejected" });
       expect(result.toolCalls[0]!.error).toBe("SLOT_COLLISION");
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // kb-learning tasks.md C.8 (design.md Decision 4) — RED round.
+  // `applyToolUse`'s `answer_faq`/`log_question` branches are NOT
+  // implemented yet (tasks.md C.7's own instruction: "type contract only,
+  // no behaviour change yet") — `toIntakeEvent` still returns `null` for
+  // both tool names, so both fall through to the existing generic
+  // `"pass_through"` no-op path (the SAME path `propose_slots`/
+  // `request_hold` fell through to before booking-hitl's own C.3 wired
+  // them). Every assertion below is therefore expected to FAIL against
+  // today's code, for the right reason — `ports.questions` is never called,
+  // and the logged outcome is `"pass_through"`, never `"logged"`.
+  // ---------------------------------------------------------------------
+  describe("answer_faq / log_question tool dispatch (kb-learning design.md Decision 4, tasks.md C.8 — RED)", () => {
+    // @trace FR-KB-01
+    it("an answer_faq tool-use call invokes ports.questions.logAnsweredFromKb with the question text, logs outcome 'logged', and NEVER calls transition() (state is the SAME reference)", async () => {
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort();
+      const model = new FakeModelPort([
+        toolUseResponse(
+          "answer_faq",
+          { question: "Скільки триває індивідуальне заняття?" },
+          { text: "Індивідуальне заняття триває 45 хвилин." },
+        ),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({
+        state,
+        message: "Скільки триває індивідуальне заняття?",
+        ports,
+      });
+
+      expect(questions.answeredFromKb).toEqual(["Скільки триває індивідуальне заняття?"]);
+      expect(result.toolCalls[0]).toMatchObject({ tool: "answer_faq", outcome: "logged" });
+      expect(result.state).toBe(state); // no transition() call at all — same reference
+    });
+
+    // @trace FR-KB-01
+    // @trace FR-FAQ-02
+    it("a log_question tool-use call invokes ports.questions.logUnanswered with the question text, logs outcome 'logged', and NEVER calls transition() (state is the SAME reference)", async () => {
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort();
+      const model = new FakeModelPort([
+        toolUseResponse(
+          "log_question",
+          { question: "Чи є у вас парковка?" },
+          { text: "Уточню це в адміністраторки і повернуся з відповіддю." },
+        ),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "Чи є у вас парковка?", ports });
+
+      expect(questions.unanswered).toEqual(["Чи є у вас парковка?"]);
+      expect(result.toolCalls[0]).toMatchObject({ tool: "log_question", outcome: "logged" });
+      expect(result.state).toBe(state);
+    });
+
+    // @trace FR-FAQ-01
+    // design.md Decision 4's "logged ≠ applied" rule.
+    it("a PURE FAQ turn (only answer_faq/log_question called) returns the model's own narrated text VERBATIM as reply — NOT the deterministic ack+next-question composer", async () => {
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort();
+      const narration = "Індивідуальне заняття триває 45 хвилин і коштує 600 грн.";
+      const model = new FakeModelPort([
+        toolUseResponse("answer_faq", { question: "Скільки коштує заняття?" }, { text: narration }),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "Скільки коштує заняття?", ports });
+
+      // Pinned together with the outcome assertion: a PURE FAQ turn must be
+      // dispatched via the `"logged"` outcome (never `"applied"`,
+      // `"pass_through"`) for `hasAppliedToolCall` to stay false and the
+      // ack+next-question composer to never run.
+      expect(result.toolCalls[0]).toMatchObject({ tool: "answer_faq", outcome: "logged" });
+      expect(result.reply).toBe(narration);
+      expect(result.reply).not.toContain(DEFAULT_ACK_COPY);
+    });
+
+    // Regression pin: a MIXED turn (a genuine field-save PLUS a
+    // log_question/answer_faq call in the same response) is UNCHANGED by
+    // this new dispatch — the deterministic ack+next-question composer still
+    // runs (driven by the field-save's own "applied" outcome), with the
+    // model's own FAQ-plus-ack narration as its prefix.
+    // @trace FR-FAQ-02
+    it("a MIXED turn (save_tastes applied AND log_question logged in the same response) still produces the deterministic ack+next-question reply, with the model's narration as the ack prefix", async () => {
+      const state: IntakeState = {
+        conversationState: "profiling",
+        fields: {
+          studentName: "Богдан",
+          studentAge: 9,
+          format: "individual",
+          goalTag: "hobby",
+          goalText: "для душі",
+        },
+      };
+      const questions = new FakeQuestionsPort();
+      const narration = "Дякую! До речі, щодо знижок — уточню це в адміністраторки.";
+      // A single Anthropic response CAN carry multiple content blocks (one
+      // text block plus several tool_use blocks) — built here as a raw
+      // `ModelResponse` literal rather than via `toolUseResponse()` (this
+      // package's own test-infra builder only ever attaches ONE tool_use
+      // block per call), so both `save_tastes` and `log_question` are
+      // dispatched from the SAME model turn, exactly as the bullet names.
+      const model = new FakeModelPort([
+        {
+          content: [
+            { type: "text", text: narration },
+            { type: "tool_use", id: "tool-1", name: "save_tastes", input: { tastes: "поп, рок" } },
+            {
+              type: "tool_use",
+              id: "tool-2",
+              name: "log_question",
+              input: { question: "яка у вас знижка на двох дітей" },
+            },
+          ],
+        },
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "Поп і рок, а ще яка у вас знижка?", ports });
+
+      expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "save_tastes", outcome: "applied" }));
+      expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "log_question", outcome: "logged" }));
+      expect(questions.unanswered).toEqual(["яка у вас знижка на двох дітей"]);
+      expect(result.reply.startsWith(narration)).toBe(true);
+      expect(result.reply).not.toBe(narration); // the deterministic next-question is appended, not bare narration
+    });
+
+    // @trace NFR-REL-01
+    it("a QuestionsPort rejection (answer_faq) is caught by the EXISTING applyToolUse try/catch — returns the shared apology, state preserved by reference", async () => {
+      // NOTE for the implementer (design.md Decision 4's own flag, tasks.md
+      // C.8/I.1): `applyToolUse`'s existing catch always returns
+      // `CALENDAR_UNAVAILABLE_APOLOGY` today — imprecise wording for a
+      // QuestionsPort/DB failure, but that IS current behaviour, so this
+      // test pins THAT constant. Whether this stays `CALENDAR_UNAVAILABLE_
+      // APOLOGY` or moves to a renamed/new constant is dispositioned at the
+      // I.1 review-gate stage — if renamed, update this assertion's
+      // imported constant to match, deliberately, not silently.
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort(new Error("DB unavailable (simulated)"));
+      const model = new FakeModelPort([
+        toolUseResponse("answer_faq", { question: "Скільки коштує заняття?" }, { text: "600 грн." }),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "Скільки коштує заняття?", ports });
+
+      expect(result.reply).toBe(CALENDAR_UNAVAILABLE_APOLOGY);
+      expect(result.state).toBe(state);
     });
   });
 });
