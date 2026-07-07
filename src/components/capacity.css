@@ -1,0 +1,89 @@
+.cap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+  font-family: system-ui, sans-serif;
+}
+.cap__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cap__header h2 {
+  font-size: 1.2rem;
+  margin: 8px 0;
+}
+.cap__level {
+  display: flex;
+  gap: 6px;
+}
+
+.cap__kpi {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.kpi {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.kpi__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.kpi__label {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.kpi--warn {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.kpi--warn .kpi__value {
+  color: #dc2626;
+}
+.kpi--idle {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.kpi--idle .kpi__value {
+  color: #b45309;
+}
+
+.cap__chart {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px;
+  background: #fff;
+}
+
+/* Custom tooltip */
+.cap-tip {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  max-width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.cap-tip__bucket {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cap-tip__series {
+  margin-top: 4px;
+}
+.cap-tip__head {
+  font-weight: 600;
+}
+.cap-tip__ops {
+  margin: 2px 0 0;
+  padding-left: 16px;
+  color: #475569;
+}
