@@ -1,0 +1,17 @@
+[project]
+name = "loopledger"
+version = "0.1.0"
+description = "A tiny CLI for tracking agentic engineering evidence."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+loopledger = "loopledger.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,7 @@
+Agentic Engineering evidence
+
+AGENTS.md: static context and dynamic context routing
+docs/specification.md: SDD and acceptance criteria
+docs/agentic-process-log.md: loop record
+tests and evals: verification
+docs/checker-review.md: separate checker pass

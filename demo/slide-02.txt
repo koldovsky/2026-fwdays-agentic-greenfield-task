@@ -1,0 +1,9 @@
+CLI demo
+
+Audit command:
+PYTHONPATH=src python -m loopledger.cli audit examples/agentic-homework.loopledger.json --strict
+
+Evidence score: 5/5
+Status: complete
+
+Report command renders Markdown evidence for the PR.
