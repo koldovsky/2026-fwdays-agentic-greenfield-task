@@ -59,13 +59,19 @@ describe("DecisionBar (dashboard tasks.md §6.6, design.md Decision 4)", () => {
     });
   });
 
+  // S4: retargeted from "Propose another time" (which now opens the inline
+  // slot-picker instead of POSTing immediately — see DecisionBar.slot-picker
+  // .test.tsx) to Confirm, an immediate-POST action otherwise uncovered for
+  // the network-failure path. The obsolete propose-POSTs-immediately
+  // assumption was superseded by the FR-HITL-01 slot-picker contract; this
+  // change is deliberate, not a silent weakening.
   it("renders a friendly inline message if the request itself fails (network error)", async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error("network down"));
     vi.stubGlobal("fetch", fetchMock);
 
     const user = userEvent.setup();
     render(<DecisionBar requestId={7} />);
-    await user.click(screen.getByRole("button", { name: /інший час/i }));
+    await user.click(screen.getByRole("button", { name: /підтвердити/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(/спробуйте ще раз/i);

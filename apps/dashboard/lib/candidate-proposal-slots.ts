@@ -10,12 +10,10 @@
 // type here, `DashboardState`, is itself an apps/dashboard shape, not a
 // `lib/`-owned one).
 //
-// TYPED THROWING STUB — red state for the DecisionBar slot-picker's red
-// round (`candidate-proposal-slots.test.ts` pins the contract below FIRST,
-// confirmed red against this stub). The body is implemented alongside the
-// real inline picker (green half); no logic lives here yet — same
-// single-throw convention `lib/`'s own red-round stubs use (see e.g.
-// `lib/src/booking/validate-admin-slots.ts`'s header comment).
+// GREEN — implements the contract `candidate-proposal-slots.test.ts` pins
+// (booking-hitl S4, DecisionBar slot-picker): `weekSeatGrid(weekStartIso)`'s
+// full Mon-Fri 10:00-19:00 grid, minus every seat `state.hallMap` reports as
+// currently occupied (`OCCUPIED_SEAT_STATUSES` below).
 
 import { weekSeatGrid } from "@kamerton/lib/src/dashboard/week-grid.ts";
 import type { Slot } from "@kamerton/lib/src/slots/grid.ts";
@@ -38,7 +36,24 @@ const OCCUPIED_SEAT_STATUSES = new Set(["pending", "confirmed"]);
  * deterministically testable for any week.
  */
 export function candidateProposalSlots(state: DashboardState, weekStartIso: string): Slot[] {
-  throw new Error(
-    "Not implemented — candidateProposalSlots (booking-hitl S4, DecisionBar slot-picker red round)",
+  const occupiedSeatKeys = new Set(
+    state.hallMap
+      .filter((seat) => OCCUPIED_SEAT_STATUSES.has(seat.status))
+      .map((seat) => seat.slotStartIso),
   );
+
+  return weekSeatGrid(weekStartIso)
+    .filter((seat) => !occupiedSeatKeys.has(seat.slotStartIso))
+    .map((seat) => ({ start: seat.slotStartIso, end: addOneHour(seat.slotStartIso) }));
+}
+
+/** "YYYY-MM-DDTHH:mm" -> the same wall-clock date one hour later (grid slots
+ *  are always 60 minutes, `lib/src/slots/grid.ts`'s own Decision 4 — no
+ *  timezone library needed, `hour + 1` never crosses a calendar-date
+ *  boundary since the grid's last hourly start is 19:00). */
+function addOneHour(slotStartIso: string): string {
+  const datePart = slotStartIso.slice(0, 10);
+  const hour = Number(slotStartIso.slice(11, 13));
+  const endHour = String(hour + 1).padStart(2, "0");
+  return `${datePart}T${endHour}:00`;
 }

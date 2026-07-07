@@ -17,6 +17,7 @@
 // and atypical field content" requirement).
 
 import type { BookingStatus } from "@kamerton/lib/src/dashboard/hall-status.ts";
+import type { Slot } from "@kamerton/lib/src/slots/grid.ts";
 import type { RequestCardFields } from "../../lib/agui-client.ts";
 import { BoundedText } from "./BoundedText.tsx";
 import { Card } from "./Card.tsx";
@@ -32,6 +33,10 @@ export interface RequestCardProps {
   status?: BookingStatus;
   requestId?: number;
   showDecisionBar?: boolean;
+  /** Forwarded straight to `DecisionBar`'s own `candidateSlots` prop
+   *  (booking-hitl S4's "Propose another time" picker) — optional so
+   *  existing call sites that don't derive candidates yet still compile. */
+  candidateSlots?: Slot[];
 }
 
 function IdentifyingField({ label, value, mono = false }: { label: string; value: string | null; mono?: boolean }) {
@@ -44,7 +49,14 @@ function IdentifyingField({ label, value, mono = false }: { label: string; value
   );
 }
 
-export function RequestCard({ fields, brief = null, status, requestId, showDecisionBar = false }: RequestCardProps) {
+export function RequestCard({
+  fields,
+  brief = null,
+  status,
+  requestId,
+  showDecisionBar = false,
+  candidateSlots,
+}: RequestCardProps) {
   return (
     <Card raised className="flex w-full max-w-full min-w-0 flex-col gap-4 overflow-x-hidden p-5">
       <div className="flex items-center justify-between gap-2">
@@ -79,7 +91,9 @@ export function RequestCard({ fields, brief = null, status, requestId, showDecis
         </div>
       ) : null}
 
-      {showDecisionBar && requestId !== undefined ? <DecisionBar requestId={requestId} /> : null}
+      {showDecisionBar && requestId !== undefined ? (
+        <DecisionBar requestId={requestId} candidateSlots={candidateSlots} />
+      ) : null}
     </Card>
   );
 }

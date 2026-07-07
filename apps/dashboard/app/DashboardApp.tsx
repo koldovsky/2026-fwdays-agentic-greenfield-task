@@ -24,6 +24,8 @@ import {
   type BookingPendingPayload,
   type DashboardClientState,
 } from "../lib/agui-client.ts";
+import { candidateProposalSlots } from "../lib/candidate-proposal-slots.ts";
+import { currentWeekStartIso } from "../lib/dashboard-db.ts";
 import type { DashboardState } from "../lib/dashboard-state.ts";
 import { requestRowToCardFields } from "../lib/request-card-fields.ts";
 
@@ -80,6 +82,14 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
   const pendingQueue = useMemo(
     () => mergePendingQueue(dashboard.pendingQueue, state.livePendingQueue),
     [dashboard.pendingQueue, state.livePendingQueue],
+  );
+  // The DecisionBar "Propose another time" picker's on-grid candidates
+  // (booking-hitl S4, review-gate CRITICAL fix): this week's grid minus
+  // every seat the current `dashboard.hallMap` reports as taken — recomputed
+  // whenever a fresh `hallMap` arrives via `STATE_SNAPSHOT`/`STATE_DELTA`.
+  const candidateSlots = useMemo(
+    () => candidateProposalSlots(dashboard, currentWeekStartIso()),
+    [dashboard],
   );
 
   const conversations = Object.values(state.conversations);
@@ -155,6 +165,7 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
                   status="pending"
                   requestId={entry.requestId}
                   showDecisionBar
+                  candidateSlots={candidateSlots}
                 />
                 <DeleteLeadButton leadId={entry.leadId} />
               </div>
