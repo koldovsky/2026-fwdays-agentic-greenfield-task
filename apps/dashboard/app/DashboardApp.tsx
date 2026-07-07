@@ -15,6 +15,7 @@ import {
   DeleteLeadButton,
   EmptyState,
   HallMap,
+  QuestionInbox,
   RequestCard,
 } from "../components/ds/index.ts";
 import {
@@ -181,6 +182,11 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
       <section aria-label="Розклад залу" className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Розклад залу</h2>
         <HallMap seats={dashboard.hallMap} pendingQueue={pendingQueue} />
+      </section>
+
+      <section aria-label="Питання лідів" className="flex flex-col gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Питання лідів</h2>
+        <QuestionInbox />
       </section>
     </div>
   );

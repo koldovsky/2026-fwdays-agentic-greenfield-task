@@ -184,18 +184,18 @@ S1–S4.
 
 ## E. Dashboard — Question-inbox panel + routes
 
-- [ ] E.1 `apps/dashboard/lib/kb-write.test.ts` FIRST (red, a real tmp-dir
+- [x] E.1 `apps/dashboard/lib/kb-write.test.ts` FIRST (red, a real tmp-dir
       fixture file): `appendKbEntry(path, entry)` appends the exact entry
       text to an existing file, preserving prior content; throws when the
       target path's directory does not exist (simulating "not writable" —
       `@trace FR-KB-03`). Confirm red, implement `apps/dashboard/lib/kb-write.ts`
       to green.
-- [ ] E.2 `apps/dashboard/app/api/questions/route.test.ts` FIRST (red, real
+- [x] E.2 `apps/dashboard/app/api/questions/route.test.ts` FIRST (red, real
       SQLite): `GET` returns the open-inbox list (design.md Decision 2/4's
       visibility rule) as JSON, newest-first; returns `[]` (never an error)
       when there are none (`@trace FR-KB-02`). Confirm red, implement the
       route to green.
-- [ ] E.3 `apps/dashboard/app/api/questions/[id]/route.test.ts` FIRST (red,
+- [x] E.3 `apps/dashboard/app/api/questions/[id]/route.test.ts` FIRST (red,
       real SQLite + a fixture `knowledge/school.md` path):
       - happy path: the fixture file is appended with the escaped entry; the
         row is marked `answered` (`admin_answer`/`answered_at` set,
@@ -217,14 +217,14 @@ S1–S4.
         directory) → the question stays `open`, an inline error naming the
         failure, never a raw `500` (`@trace FR-KB-03`, `@trace NFR-REL-01`).
       Confirm every case red, implement the route to green.
-- [ ] E.4 `apps/dashboard/app/api/questions/[id]/retry/route.test.ts` FIRST
+- [x] E.4 `apps/dashboard/app/api/questions/[id]/retry/route.test.ts` FIRST
       (red): a `status='answered' AND delivery_status='failed'` row flips to
       `'pending'`; a `'pending'`/`'delivered'` row is an untouched no-op
       (stale click); a `status='open'` question is rejected/no-op (`@trace
       FR-KB-04`). Confirm red, implement to green.
-- [ ] E.5 Run `npm run test:run` and `npm run test:integration`; confirm
+- [x] E.5 Run `npm run test:run` and `npm run test:integration`; confirm
       E.1–E.4 green.
-- [ ] E.6 `apps/dashboard/components/ds/QuestionInbox.test.tsx` FIRST (red,
+- [x] E.6 `apps/dashboard/components/ds/QuestionInbox.test.tsx` FIRST (red,
       React Testing Library, mirroring `DecisionBar.test.tsx`'s own shape):
       an empty inbox renders an explicit `EmptyState` (never a blank area,
       `@trace FR-KB-02`); a populated list renders each open question,
@@ -236,16 +236,16 @@ S1–S4.
       successful response (design.md Decision 2's client-optimistic removal,
       `@trace FR-KB-03`); clicking retry POSTs to the retry route and shows
       the outcome message (`@trace FR-KB-04`). Confirm red.
-- [ ] E.7 Implement `QuestionInbox.tsx` to pass E.6.
-- [ ] E.8 Wire `QuestionInbox` into `apps/dashboard/app/DashboardApp.tsx` as a
+- [x] E.7 Implement `QuestionInbox.tsx` to pass E.6.
+- [x] E.8 Wire `QuestionInbox` into `apps/dashboard/app/DashboardApp.tsx` as a
       new `<section aria-label="Питання лідів">`, self-fetching on mount (not
       threaded through the server-rendered `initialSnapshot` — design.md
       Decision 2's own "not folded into `STATE_SNAPSHOT`" call).
-- [ ] E.9 Seed `knowledge/school.md` at the repo root with real placeholder
+- [x] E.9 Seed `knowledge/school.md` at the repo root with real placeholder
       content (lesson format, duration, prices, group composition/size) —
       enough for stage H's evals and stage J's manual smoke to have real
       facts to probe (`@trace FR-FAQ-01`).
-- [ ] E.10 Run `npm run lint`, `npm run test:run`, `npm run test:integration`;
+- [x] E.10 Run `npm run lint`, `npm run test:run`, `npm run test:integration`;
       confirm E.1–E.9 green, zero regressions in S3/S4's own
       `DashboardApp`/route suites.
 

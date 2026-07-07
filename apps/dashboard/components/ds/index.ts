@@ -21,3 +21,4 @@ export { ChatStream, type ChatStreamProps } from "./ChatStream.tsx";
 export { DecisionBar, type DecisionBarProps } from "./DecisionBar.tsx";
 export { HallMap, type HallMapProps } from "./HallMap.tsx";
 export { DeleteLeadButton, type DeleteLeadButtonProps } from "./DeleteLeadButton.tsx";
+export { QuestionInbox } from "./QuestionInbox.tsx";
