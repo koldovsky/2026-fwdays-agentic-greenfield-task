@@ -297,7 +297,9 @@
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/system-prompt.test.ts",
         "tests/integration/kb-learning/full-flow.test.ts",
-        "tests/integration/kb-learning/full-flow.test.ts"
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "evals/cases/fr-faq-01.eval.ts",
+        "evals/cases/fr-guard-02.eval.ts"
       ],
       "recordings": []
     },
@@ -315,7 +317,9 @@
         "packages/agent/src/system-prompt.test.ts",
         "packages/agent/src/system-prompt.test.ts",
         "tests/integration/kb-learning/full-flow.test.ts",
-        "tests/integration/kb-learning/full-flow.test.ts"
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "evals/cases/fr-faq-02.eval.ts",
+        "evals/cases/fr-guard-02.eval.ts"
       ],
       "recordings": []
     },
@@ -359,7 +363,9 @@
         "tests/integration/kb-learning/full-flow.test.ts",
         "tests/integration/kb-learning/full-flow.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/kb-learning/manifest.json"
+      ]
     },
     {
       "id": "FR-KB-03",
@@ -400,7 +406,9 @@
         "tests/integration/kb-learning/full-flow.test.ts",
         "tests/integration/kb-learning/full-flow.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/kb-learning/manifest.json"
+      ]
     },
     {
       "id": "FR-KB-04",
@@ -422,7 +430,9 @@
         "tests/integration/kb-learning/full-flow.test.ts",
         "tests/integration/kb-learning/full-flow.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/kb-learning/manifest.json"
+      ]
     },
     {
       "id": "FR-GUARD-02",
@@ -433,7 +443,8 @@
       "planned": true,
       "tests": [
         "packages/agent/src/system-prompt.test.ts",
-        "packages/agent/src/system-prompt.test.ts"
+        "packages/agent/src/system-prompt.test.ts",
+        "evals/cases/fr-guard-02.eval.ts"
       ],
       "recordings": []
     },
@@ -445,13 +456,15 @@
       ],
       "planned": true,
       "tests": [
+        "packages/agent/src/claude-agent-model-port.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
-        "packages/agent/src/tools.test.ts"
+        "packages/agent/src/tools.test.ts",
+        "evals/cases/fr-guard-02.eval.ts"
       ],
       "recordings": []
     },
@@ -769,18 +782,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-KB-01 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-KB-02 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-KB-03 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-KB-04 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

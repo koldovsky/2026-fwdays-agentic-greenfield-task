@@ -6,8 +6,59 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-07, ~afternoon (Europe/Kyiv)
-- **Current phase:** **Slice S4 `booking-hitl` COMPLETE and ARCHIVED**
+- **Date and time:** 2026-07-07, ~evening (Europe/Kyiv)
+- **Current phase:** **Slice S5 `kb-learning` BUILT + ALL AUTONOMOUS GATES GREEN —
+  archive gated ONLY on the human live-Telegram smoke (per "no archiving on green
+  units alone").** The final MVP slice (Question inbox / FAQ path). Change folder
+  `openspec/changes/kb-learning/` (proposal/design[5 decisions]/tasks/spec-delta),
+  5 design decisions: 3 human-approved forks (manual retry ≠ S4 auto-retry; FR-GUARD-02
+  structural+eval not runtime parser; self-fetch inbox no live push) + 2 agent defaults
+  (KB read fresh per turn; lib/src/kb pure). Stages, each RED→GREEN test-first
+  maker≠checker, committed on `feat/music-school-agent`: A questions table+queries
+  (`18e2b88`); B pure lib/src/kb validate+serialize (`06a5ce8`); C FAQ tools
+  answer_faq/log_question + KB-in-context + loop/pipeline wiring (`e1de469`); D bot
+  answer-delivery drain manual-retry-only (`8d8fc11`); E dashboard Question-inbox panel
+  + GET/answer/retry routes + seeded knowledge/school.md (`dd482a0`); F full-loop
+  integration + KAMERTON_KB_PATH read seam (`d8d55fc`).
+  **Review gate ran BEFORE archive (2 reviewers, maker≠checker): guardrail PASS**
+  (FR-GUARD-06 structural — only kb-write.ts writes the KB; tools carry only
+  `question`; findDeliverableQuestions never selects failed). 5 findings all fixed
+  test-first (`626079e`): CRITICAL KB-poisoning (question spliced raw into the "## "
+  heading → flattenQuestionToOneLine); CRITICAL answered+pending showed a live answer
+  form → isSending "⏳ надсилається…" branch; MAJOR retry never refetched; MAJOR
+  wrong (calendar) apology for a QuestionsPort failure → QUESTION_LOGGING_UNAVAILABLE_
+  APOLOGY; MINOR readQuestionInput guard. `review-findings.json` clean:true (`38e2411`).
+  **Stage H evals (live claude-sonnet-5, fresh eval-judge, `6780c23`):** fr-guard-02
+  (9 cases) + fr-faq-01/02 (3) — ALL PASS; no invented number/term, correct tool
+  routing, Ukrainian throughout. Ratchet: guardrail-integrity 91→91.7, faq-grounding
+  new 96.7 (`quality/eval-baseline.json`). **The live eval caught + fixed (test-first,
+  `0cc3bfc`) TWO CRITICAL production defects no fake could — the headline maker≠checker
+  /verify-live evidence:** (1) ClaudeAgentModelPort.send() dropped the model's text on
+  tool-call turns → a lead asking any FAQ got a BLANK Telegram message (masked until S5
+  because prior turns' replies were deterministically overridden); (2) the Agent SDK
+  subprocess loaded ambient global skills/plugins/hooks → the `using-superpowers`
+  skill's "Using [skill]…" announcement leaked as the ENTIRE reply → fixed with
+  `settingSources:[]` + `skills:[]` (verified against bundled sdk.d.ts@0.3.201).
+  **Stage G rendered-UI gate (`15ba7bf`):** axe 0 violations light+dark; fresh
+  vision-judge overallVerdict MET 0-blocking on 8 stills (3 inbox states distinct
+  without color-only); `docs/qa/kb-learning/`. **Stage J.11 scripted smoke authored+
+  PASSED** (`scripts/qa/manual-smoke-kb-learning.mjs`, transcript
+  `docs/qa/kb-learning-manual-smoke.md`): all 8 autonomous steps over a real on-disk
+  SQLite + tmp KB, rerunnable, never mutates the committed KB.
+  **FINAL AUTONOMOUS STATE: 562 unit + 10 integration green, root+dashboard
+  tsc/lint/build clean, openspec 6/6 strict, traceability 0 failures, eval ratchet
+  91.7/96.7, a11y 0 violations, recordings 18/0, trajectory 4 slices 0 failures,
+  review-findings clean:true, tree clean (after J-prep commit).**
+  **REMAINING (needs the user — archive gated on this):** the HUMAN live-Telegram
+  smoke half (docs/qa/kb-learning-manual-smoke.md "HUMAN LIVE-TELEGRAM STEPS":
+  real bot+dashboard → ask a KB-covered question → grounded reply arrives; ask an
+  uncovered question → promise reply + real inbox row; answer on the dashboard →
+  lead's real Telegram receives it within a tick; a new chat asks the same → answered
+  from the KB, no restart; confirm NO skill-preamble leak). Then J.12 update this
+  doc + J.13 `npx openspec archive kb-learning --yes`. After archive, ALL 5 MVP
+  slices are complete → the signed Phase 3 DAG is closed, all 30 MVP FRs implemented.
+  History of the (now-archived) S4 build below.
+- **Prior phase — Slice S4 `booking-hitl` COMPLETE and ARCHIVED**
   (`openspec/changes/archive/2026-07-07-booking-hitl/`, HEAD `dd20629`; 6
   MODIFIED requirements incl. the auto-retry-only amendment applied to the
   baseline). No active changes; openspec 5/5 strict; traceability 0 failures;
