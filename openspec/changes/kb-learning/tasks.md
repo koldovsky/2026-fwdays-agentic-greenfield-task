@@ -274,24 +274,24 @@ S1–S4.
 
 ## G. Rendered-UI gate — axe + vision-verify on the Question-inbox panel
 
-- [ ] G.1 Seed a dashboard fixture DB with: one open unanswered question, one
+- [x] G.1 Seed a dashboard fixture DB with: one open unanswered question, one
       `answered`+`delivery_status='failed'` question, one `answer_source='kb'`
       question (must never render), and an otherwise-empty-inbox variant.
-- [ ] G.2 chrome-devtools MCP (or Playwright, per `docs/current-state.md`'s
+- [x] G.2 chrome-devtools MCP (or Playwright, per `docs/current-state.md`'s
       documented fallback) — `@trace TC-TEST-03`: capture stills for the
       empty inbox, the populated inbox (open + failed rows visually
       distinct), the answer form's inline validation error, and the
       retry/outcome message.
-- [ ] G.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
+- [x] G.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
       populated route; fix any serious/critical violation (answer-form focus
       order, `aria-live` on the outcome message) before proceeding.
-- [ ] G.4 Launch a fresh `vision-judge` pass (maker ≠ checker) on the settled
+- [x] G.4 Launch a fresh `vision-judge` pass (maker ≠ checker) on the settled
       stills: does it visibly demonstrate FR-KB-02 (newest-first list) and
       FR-KB-04's failed/retry state as distinct from an open question?
       Record `met`/`readable`/`notes` in
       `docs/qa/kb-learning/manifest.json`; a `not met`/`not readable` verdict
       blocks this task until fixed and re-recorded.
-- [ ] G.5 Run `node scripts/check-recordings.mjs`; confirm the manifest's
+- [x] G.5 Run `node scripts/check-recordings.mjs`; confirm the manifest's
       claims are backed by real files on disk.
 
 ## H. Evals — FR-GUARD-02, FR-FAQ-01/02

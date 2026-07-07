@@ -1,0 +1,95 @@
+{
+  "kind": "demo",
+  "visionSummary": {
+    "judge": "project-factory:vision-judge (fresh agent, maker≠checker)",
+    "overallVerdict": "met",
+    "blocking": [],
+    "notes": [
+      "All 8 stills met/readable in BOTH light and dark. The three inbox states render simultaneously and are distinguishable WITHOUT color alone: OPEN row = real answer input + teal Надіслати button; ANSWERED+FAILED = red dashed border + ✕ + \"Не вдалося надіслати відповідь ліду\" + Повторити надсилання button, no form; ANSWERED+PENDING = ⏳ \"Відповідь надсилається ліду…\", no form/button. The answer_source=kb question is absent (FR-KB-02). Validation error (FR-KB-03) and retry outcome (FR-KB-04) legible; tone calm/sentence-case per DESIGN.md.",
+      "NON-BLOCKING (known timing gap, harness-padded): the retry-outcome still shows the failed chrome (red/✕/dashed) alongside the appended \"Відповідь повторно надіслано ліду.\" success line — reads as \"still failed\" and \"resent\" at once because the DB flips delivery_status but the row styling has not yet re-rendered. Follow-up: swap the row to a neutral \"resent\" cue once the UI closes that gap.",
+      "NON-BLOCKING: newest-first ordering (FR-KB-02) is not eye-verifiable from one still (no visible timestamps) — covered by DOM/unit assertions (questions.test.ts findOpenInboxQuestions ORDER BY created_at DESC)."
+    ]
+  },
+  "results": [
+    {
+      "id": "empty-inbox",
+      "proof": "FR-KB-02",
+      "video": "docs/qa/kb-learning/kb-learning-light.webm",
+      "screenshot": "docs/qa/kb-learning/empty-inbox.png",
+      "explainer": "docs/qa/kb-learning/empty-inbox.md",
+      "note": "With no open/undelivered questions, the Question-inbox panel renders an explicit EmptyState (\"Питань поки немає\") — never a blank area.",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "populated-inbox",
+      "proof": "FR-KB-02",
+      "video": "docs/qa/kb-learning/kb-learning-light.webm",
+      "screenshot": "docs/qa/kb-learning/populated-inbox.png",
+      "explainer": "docs/qa/kb-learning/populated-inbox.md",
+      "note": "The populated fixture's open (real answer form), answered+failed (retry action, no form, ✕ glyph), and answered+pending (\"⏳ надсилається…\", no form, no retry) rows render together, visibly distinct; the answer_source='kb' question is excluded entirely.",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "answer-validation-error",
+      "proof": "FR-KB-03",
+      "video": "docs/qa/kb-learning/kb-learning-light.webm",
+      "screenshot": "docs/qa/kb-learning/answer-validation-error.png",
+      "explainer": "docs/qa/kb-learning/answer-validation-error.md",
+      "note": "Submitting the open question's real answer form with an empty value drives a real POST to /api/questions/:id (never mocked — an invalid submission aborts before any KB write) and renders the inline role=\"alert\" error \"Введіть відповідь.\".",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "retry-outcome",
+      "proof": "FR-KB-04",
+      "video": "docs/qa/kb-learning/kb-learning-light.webm",
+      "screenshot": "docs/qa/kb-learning/retry-outcome.png",
+      "explainer": "docs/qa/kb-learning/retry-outcome.md",
+      "note": "Clicking \"Повторити надсилання\" on the failed row drives a real POST to /api/questions/:id/retry (a DB-only delivery_status flip, no external I/O) and renders the inline role=\"status\" outcome message.",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "empty-inbox-dark",
+      "proof": "FR-KB-02",
+      "video": "docs/qa/kb-learning/kb-learning-dark.webm",
+      "screenshot": "docs/qa/kb-learning/empty-inbox-dark.png",
+      "explainer": "docs/qa/kb-learning/empty-inbox.md",
+      "note": "With no open/undelivered questions, the Question-inbox panel renders an explicit EmptyState (\"Питань поки немає\") — never a blank area.",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "populated-inbox-dark",
+      "proof": "FR-KB-02",
+      "video": "docs/qa/kb-learning/kb-learning-dark.webm",
+      "screenshot": "docs/qa/kb-learning/populated-inbox-dark.png",
+      "explainer": "docs/qa/kb-learning/populated-inbox.md",
+      "note": "The populated fixture's open (real answer form), answered+failed (retry action, no form, ✕ glyph), and answered+pending (\"⏳ надсилається…\", no form, no retry) rows render together, visibly distinct; the answer_source='kb' question is excluded entirely.",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "answer-validation-error-dark",
+      "proof": "FR-KB-03",
+      "video": "docs/qa/kb-learning/kb-learning-dark.webm",
+      "screenshot": "docs/qa/kb-learning/answer-validation-error-dark.png",
+      "explainer": "docs/qa/kb-learning/answer-validation-error.md",
+      "note": "Submitting the open question's real answer form with an empty value drives a real POST to /api/questions/:id (never mocked — an invalid submission aborts before any KB write) and renders the inline role=\"alert\" error \"Введіть відповідь.\".",
+      "asserted": true,
+      "visionVerdict": "met"
+    },
+    {
+      "id": "retry-outcome-dark",
+      "proof": "FR-KB-04",
+      "video": "docs/qa/kb-learning/kb-learning-dark.webm",
+      "screenshot": "docs/qa/kb-learning/retry-outcome-dark.png",
+      "explainer": "docs/qa/kb-learning/retry-outcome.md",
+      "note": "Clicking \"Повторити надсилання\" on the failed row drives a real POST to /api/questions/:id/retry (a DB-only delivery_status flip, no external I/O) and renders the inline role=\"status\" outcome message.",
+      "asserted": true,
+      "visionVerdict": "met"
+    }
+  ]
+}
