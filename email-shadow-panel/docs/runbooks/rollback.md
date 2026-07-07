@@ -28,7 +28,7 @@ If code rollback is needed:
 1. identify the last known-good Vercel deployment
 2. use Vercel's redeploy or promote flow for that deployment
 3. confirm the deployment uses the same environment-variable scope that the code expects
-4. confirm the current Nitro-backed TanStack Start SSR entry and the explicit `api/*` routes still resolve as expected
+4. confirm the current Nitro-backed TanStack Start SSR entry and the Nitro-owned public API routes under `src/routes/api/*` still resolve as expected
 
 ## Encryption And Schema Compatibility
 
@@ -54,7 +54,7 @@ To clear disposable test sessions without exposing Redis values:
 
 After rollback or redeploy:
 
-- confirm `/api/health` still returns only `ok` or `degraded`
+- confirm `/api/health` still returns only `ok` or `degraded` and is served by the Nitro route layer
 - confirm the provider-disabled or provider-enabled state matches the chosen environment variables
 - confirm the browser app still loads
 - confirm logs remain free of secrets

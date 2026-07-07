@@ -25,7 +25,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 - `.env.example`
 - `package.json`
 - `vite.config.ts`
-- `api/*`
+- `src/routes/api/*`
 - `server/api/*`
 - `server/session/*`
 - `scripts/*`
@@ -38,7 +38,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 - verify the TanStack Start, Vite, and Nitro deployment shape for Vercel Hobby
 - keep the app rooted at `email-shadow-panel`
-- preserve the existing `api/*` route behavior and the TanStack Start SSR entry
+- preserve the public API behavior under `src/routes/api/*` and the TanStack Start SSR entry
 - document the environment matrix from the actual config loaders and `.env.example`
 - preserve a safe, preview-only Phase 0 probe disposition
 - add bounded smoke-verification tooling for Preview
@@ -59,14 +59,18 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## Implementation Notes
 
-- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, four deployed `api/*` route files, and one preview-only `api/_probe/emailnator.ts` route that remains in source but is excluded from the deployed count.
-- The deployed footprint is `4` explicit API function entries plus `1` SSR server entry, for `5` total deployed entrypoints; the actual deployed Vercel function count remains provisional until human Preview verification.
-- The `/api/health` entrypoint is a standalone Vercel Web Handler that returns no-store JSON without importing composition-root, provider, Redis, or environment configuration modules.
+- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, Nitro-owned public API routes under `src/routes/api/*`, and a server-only Phase 0 probe implementation that remains out of the deployed route inventory.
+- The deployed footprint is now Nitro-owned and provisional until human Preview verification confirms the exact Vercel function count. Do not rely on the retired root `/api` function footprint.
+- The `/api/health` route is served by the Nitro route layer and returns no-store JSON without importing composition-root, provider, Redis, or environment configuration modules.
 - The Phase 0 probe remains preview-only, disabled by default, and blocked in Production.
 - The health route stays minimal and no-store.
 - The smoke verifier is opt-in only and never part of `npm test` or deterministic verification.
 - Preview and Production secrets must be entered directly into Vercel's UI, never into Codex, docs, or Git.
-- Human local verification passed in normal PowerShell with the full wrapper, including all 107 deterministic tests, the client build, SSR build, Nitro build, and the final Phase 4 artifact verifier.
+- Human local verification passed in normal PowerShell with the full wrapper, including all 108 deterministic tests, the client build, SSR build, Nitro build, and the final Phase 4 artifact verifier.
+
+The final bounded local Nitro runtime smoke against the fresh generated output also passed: `GET /api/health`, `HEAD /api/health`, `POST /api/inboxes` with the provider disabled, `GET /`, and the dynamic message-reference route all behaved as expected without unresolved external `.ts` imports, standalone Vercel API entries, or a public Phase 0 probe route. No inbox was generated, no Emailnator request was made, no direct Upstash request was made, and the local Nitro process plus temporary process environment were cleaned up.
+
+The final environment-template check also passed: `.env.example` is UTF-8 without BOM, begins with `EMAILNATOR_PROBE_ENABLED`, uses `email-shadow-panel-local` for the generic local namespace, and keeps the Preview and Production namespaces distinct.
 
 ## Testing Strategy
 
@@ -78,6 +82,8 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 - `npm run verify:phase4`
 - `npm run build`
 - human local `npm run verify:phase4` pass in normal PowerShell
+- `npm run test:phase4` and `npm run test:deterministic` are build-independent offline checks and must succeed without `.output`
+- `npm run build` followed by the direct `scripts/verify-phase4.ts` verifier performs the post-build Nitro artifact assertions
 
 ## Deferred To Human
 
@@ -107,6 +113,7 @@ This readiness pass is complete when the repository has:
 - no sensitive artifacts in the worktree
 
 The human cloud setup remains pending.
+
 ## Codex Offline Verification
 
 The maker pass completed these offline checks successfully:

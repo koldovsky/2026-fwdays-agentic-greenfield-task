@@ -1,8 +1,7 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+﻿import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const REQUIRED_FILES = [
-  "api/_probe/emailnator.ts",
   "server/providers/emailnator/provider.server.ts",
   "server/providers/emailnator/probe.server.ts",
   "tests/fixtures/emailnator/README.md",
@@ -38,6 +37,12 @@ for (const relativePath of REQUIRED_FILES) {
   } catch {
     throw new Error(`Missing required Phase 0 artifact: ${relativePath}`);
   }
+}
+
+if (existsSync(resolve(process.cwd(), "api/_probe/emailnator.ts"))) {
+  throw new Error(
+    "The Phase 0 probe must stay server-only and not live under the deployable root /api directory.",
+  );
 }
 
 for (const relativePath of [

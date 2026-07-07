@@ -341,12 +341,12 @@ Selected tools for Phases 0 and 1:
 - Principal implementation decisions:
   - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - preserved the TanStack Start app while adding the officially supported Nitro Vite output layer, without adding `vercel.json`;
-  - documented the deployed footprint as four API function entries plus one SSR entry, while keeping the preview-only Phase 0 probe in source but excluded from the deployed Vercel function count until human Preview verification;
-  - remediated `/api/health` into a standalone Web Handler so Preview health checks do not depend on composition-root startup;
+  - consolidated the public API into Nitro routes under `src/routes/api/*`, retired the root `/api` function entries, and kept the preview-only Phase 0 probe server-only while the exact deployed function count remains provisional until human Preview verification;
+  - remediated `/api/health` into a Nitro-owned health route so Preview health checks do not depend on composition-root startup;
   - created a bounded, opt-in smoke verifier for Preview only;
   - kept the Phase 0 probe preview-only and production-blocked;
   - added offline deployment-readiness checks for configuration, docs, and sanitized artifacts;
-  - recorded the human local Phase 4 verification pass, including the Nitro build and the final 4 API + 1 SSR footprint.
+  - recorded the human local Phase 4 verification pass, including the Nitro build, the Nitro-owned public API route inventory, and the provisional deployment footprint that still awaits Preview confirmation.
 - Deterministic checks run by Codex:
   - `npm run lint`: PASS with the same six pre-existing React Fast Refresh warnings and no errors
   - `npm run typecheck`: PASS
@@ -358,11 +358,14 @@ Selected tools for Phases 0 and 1:
   - `npm run test:deterministic`: PASS
   - `npm run build`: FAIL in the managed Windows sandbox because Vite could not load `@tailwindcss/oxide-win32-x64-msvc` and hit `spawn EPERM` during dependency resolution
   - `npm run verify:phase4`: FAIL for the same managed-environment build limitation after all offline deterministic checks had already passed
-  - human local `npm run verify:phase4`: PASS in normal PowerShell, including lint, typecheck, all Phase 0-4 tests, client build, SSR build, Nitro build, and the final Phase 4 artifact verifier
+  - human local `npm run verify:phase4`: PASS in normal PowerShell, including lint, typecheck, all Phase 0-4 tests, the 108 deterministic checks, client build, SSR build, Nitro build, and the final Phase 4 artifact verifier
+  - the final bounded local Nitro runtime smoke against the fresh generated output also passed, confirming the Nitro-owned health route, the provider-disabled inbox create contract, the root SSR page, and the API-owned dynamic message route without unresolved external `.ts` imports or standalone Vercel API entries, while generating no inbox and contacting neither Emailnator nor Upstash during the smoke
 - Environment-specific limitations:
   - no Vercel import, Preview deployment, Upstash provisioning, live Emailnator request, or live smoke verification was attempted by Codex;
-  - live evidence later showed the first attempted deployment was accidentally classified as Production, returned a root 404, and failed the health-only smoke size bound, so the previously assumed no-Nitro deployment shape was corrected to use Nitro Vite output;
+  - live evidence later showed the first attempted deployment was accidentally classified as Production, returned a root 404, and failed the health-only smoke size bound, so the previously assumed no-Nitro deployment shape was corrected to use Nitro Vite output and Nitro-owned public API routes;
   - the first post-build offline verifier run exposed a stale pre-Nitro client-output path, so the verifier was corrected to inspect `.output/public` for client assets while still asserting the separate Nitro server outputs;
+  - the final offline consolidation evidence confirmed that `.env.example` is UTF-8 without BOM, begins with `EMAILNATOR_PROBE_ENABLED`, and uses `email-shadow-panel-local` only for the generic local example while Preview and Production retain distinct namespaces;
+  - a clean rerun exposed that the deterministic Phase 4 tests still depended on stale build output, so the verifier was split into build-independent offline readiness checks and separate post-build Nitro artifact assertions without changing any Nitro route or application behavior;
   - the managed Windows sandbox still blocks the native Tailwind/Vite build step, so the human should treat that as an environment limitation rather than an implementation regression;
   - the human still owns cloud setup, deployment, and live-provider checks.
 - Commit behavior:

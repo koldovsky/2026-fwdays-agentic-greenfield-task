@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
@@ -38,6 +38,10 @@ test("browser code under src does not import server, api, or scripts modules", (
   const violations: string[] = [];
 
   for (const filePath of sourceFiles) {
+    if (filePath.replace(/\\/g, "/").includes("/routes/api/")) {
+      continue;
+    }
+
     const sourceFile = ts.createSourceFile(
       filePath,
       readFileSync(filePath, "utf8"),

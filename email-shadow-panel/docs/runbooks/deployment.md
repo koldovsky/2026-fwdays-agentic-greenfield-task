@@ -16,17 +16,13 @@ The repository currently uses:
 
 - TanStack Start for SSR
 - Vite plus the Nitro Vite plugin to produce Vercel-compatible SSR output
-- four deployed `api/*` route files for Vercel Node.js Functions
-- one preview-only `api/_probe/emailnator.ts` route that remains in source but is excluded from the deployed function count
+- Nitro-owned public API routes under `src/routes/api/*`
+- one server-only Phase 0 probe implementation at `server/providers/emailnator/probe.server.ts` that is not a deployable route and is exercised through the local CLI `npm run probe:emailnator`
 - one TanStack Start server entry at `src/server.ts`
 
-Expected deployed entrypoints:
+The Nitro server runtime owns SSR and the public API routes. The actual deployed Vercel function count remains provisional until a human Preview deployment confirms it.
 
-- `4` API function entries from `api/health.ts`, `api/inboxes.ts`, `api/inboxes/messages.ts`, and `api/inboxes/messages/[messageReference].ts`
-- `1` SSR server entry from the TanStack Start build
-- `5` deployed entrypoints in total
-
-The preview-only `api/_probe/emailnator.ts` file stays in the source tree for Phase 0 evidence, but it is not counted as a deployed Vercel function. The deployed Vercel function count remains provisional until a human Preview deployment confirms it.
+The supported probe is the local CLI `npm run probe:emailnator`. No public HTTP probe route is deployed. The implementation remains server-only for local evidence, but it is not counted as a deployed Vercel function. Do not rely on the old standalone root `/api` function footprint.
 
 ## Vercel Import Settings
 
@@ -38,7 +34,7 @@ When importing the GitHub repository into Vercel, use these settings:
 - Output Directory: do not invent a custom value; keep the framework-detected default unless Vercel explicitly requires a field value
 - Framework Preset: keep the framework preset that Vercel auto-detects for this TanStack Start/Vite project; the Nitro plugin supplies the Vercel-compatible SSR output. Do not add a custom adapter or `vercel.json`
 
-After import, inspect the detected Functions list and confirm the expected `5`-entry deployed footprint, excluding the preview-only probe.
+After import, inspect the detected Functions list and confirm the Nitro server runtime is present and that there are no standalone root `/api` functions. Treat the exact deployed function count as provisional until human Preview verification.
 
 ## Secret Handling Rules
 
@@ -54,9 +50,6 @@ Use the exact variable names below, derived from the implemented config loaders 
 
 | Variable                                    | Secret?    | Preview?     | Production? | Safe example format                                  | Validation rule                                                                                                                 | Rotation impact                                                               | Redeploy required? |
 | ------------------------------------------- | ---------- | ------------ | ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------ |
-| `EMAILNATOR_PROBE_ENABLED`                  | Non-secret | Yes          | Yes         | `true` or `false`                                    | Boolean string; probe remains disabled by default                                                                               | Enables or disables the preview-only probe                                    | Yes                |
-| `PHASE0_PROBE_TOKEN`                        | Secret     | Preview-only | No          | `replace-with-an-internal-preview-only-bearer-token` | Non-empty string; used only as a Preview bearer token                                                                           | Rotating it invalidates probe access only                                     | Yes                |
-| `PHASE0_SESSION_KEY`                        | Secret     | Preview-only | No          | `32-byte base64url` or `64-hex` random material      | Non-empty string; the decoder accepts any string and normalizes it to a 32-byte key, but random 32-byte material is recommended | Rotating it invalidates Phase 0 probe capsules                                | Yes                |
 | `SESSION_ENCRYPTION_KEY`                    | Secret     | Yes          | Yes         | `32-byte base64url` or `64-hex` random material      | Must decode to exactly 32 bytes                                                                                                 | Rotating it invalidates encrypted sessions                                    | Yes                |
 | `VISITOR_HASH_KEY`                          | Secret     | Yes          | Yes         | `32-byte base64url` or `64-hex` random material      | Must decode to exactly 32 bytes                                                                                                 | Rotating it invalidates visitor hashes and orphans existing lookup keys       | Yes                |
 | `SESSION_TTL_SECONDS`                       | Non-secret | Yes          | Yes         | `900`                                                | Positive integer, max `86400`                                                                                                   | Changes session lifetime                                                      | Yes                |
@@ -75,12 +68,16 @@ Use the exact variable names below, derived from the implemented config loaders 
 | `PUBLIC_VISITOR_COOKIE_NAME`                | Non-secret | Yes          | Yes         | `esp_anon_v1`                                        | Cookie-safe charset: `A-Za-z0-9_-`, length `1` to `64`                                                                          | Changing it invalidates existing browser visitor cookies                      | Yes                |
 | `PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS`     | Non-secret | Yes          | Yes         | `2592000`                                            | Integer `300` to `31536000`                                                                                                     | Changes browser cookie lifetime                                               | Yes                |
 
-Namespace rule:
+## Local Diagnostic Only
 
-- Preview namespace: `email-shadow-panel-preview`
-- Production namespace: `email-shadow-panel-production`
-- Preview and Production must not share a namespace when they use the same Upstash database.
-- Changing the namespace makes previously stored records unreachable under the new namespace, but it does not delete them.
+Do not configure these values in Vercel.
+
+- `EMAILNATOR_PROBE_ENABLED`: non-secret, local CLI only. Safe example `false`. Boolean string; enables or disables the local diagnostic helper used by `npm run probe:emailnator`.
+- `PHASE0_PROBE_TOKEN`: secret, local CLI only. Safe example `replace-with-an-internal-preview-only-bearer-token`. Non-empty string; rotating it invalidates probe access only.
+- `PHASE0_SESSION_KEY`: secret, local CLI only. Safe example `32-byte base64url` or `64-hex` random material. Non-empty string; the decoder accepts any string and normalizes it to a 32-byte key, but random 32-byte material is recommended. Rotating it invalidates Phase 0 probe capsules.
+
+The generic local `.env.example` uses `email-shadow-panel-local`. Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`.
+
 ## Key Generation Commands
 
 Generate random material locally and paste the result directly into Vercel's environment UI.
@@ -100,13 +97,17 @@ Recommended usage:
 - use one freshly generated value for `SESSION_ENCRYPTION_KEY` in Production
 - use one freshly generated value for `VISITOR_HASH_KEY` in Preview
 - use one freshly generated value for `VISITOR_HASH_KEY` in Production
-- use one freshly generated value for `PHASE0_SESSION_KEY` in Preview
+- use one freshly generated value for `PHASE0_PROBE_TOKEN` only when running the local diagnostic probe
+- use one freshly generated value for `PHASE0_SESSION_KEY` only when running the local diagnostic probe
+- never configure the local diagnostic probe values in Vercel
 
 Using different Preview and Production encryption keys is recommended, not required by the code.
 
 Rotating `SESSION_ENCRYPTION_KEY` invalidates existing encrypted sessions.
 
 Rotating `VISITOR_HASH_KEY` invalidates visitor-hash lookups and effectively retires existing session references.
+
+Rotating `PHASE0_PROBE_TOKEN` invalidates local probe access.
 
 Rotating `PHASE0_SESSION_KEY` invalidates Phase 0 probe capsules.
 
@@ -127,7 +128,7 @@ Rotating `PHASE0_SESSION_KEY` invalidates Phase 0 probe capsules.
 4. Add the Preview environment variables from the matrix above.
 5. Deploy Preview.
 6. Open the Preview deployment URL from Vercel.
-7. Inspect the Functions tab and confirm the expected entrypoint footprint.
+7. Inspect the Functions tab and confirm the Nitro server runtime owns SSR and the public API routes, with no standalone root `/api` functions.
 8. Inspect logs only after verifying the expected preview request path.
 
 ## Preview Smoke Procedure

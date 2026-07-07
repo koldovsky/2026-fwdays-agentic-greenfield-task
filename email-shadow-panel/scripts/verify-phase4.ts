@@ -4,11 +4,11 @@ import { relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const PHASE4_REQUIRED_FILES = [
-  "api/_probe/emailnator.ts",
-  "api/health.ts",
-  "api/inboxes.ts",
-  "api/inboxes/messages.ts",
-  "api/inboxes/messages/[messageReference].ts",
+  "src/routes/api/health.ts",
+  "src/routes/api/inboxes.ts",
+  "src/routes/api/inboxes/messages.ts",
+  "src/routes/api/inboxes/messages/$messageReference.ts",
+  "server/providers/emailnator/probe.server.ts",
   "docs/agentic-process.md",
   "docs/runbooks/deployment.md",
   "docs/runbooks/rollback.md",
@@ -42,7 +42,7 @@ export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; patter
   {
     name: "api route path",
     pattern:
-      /(?:^|\/)api\/(?:_probe\/emailnator|health|inboxes(?:\/messages(?:\/\[messageReference\])?)?)\.(?:t|j)sx?/i,
+      /(?:^|\/)(?:src\/routes\/)?api\/(?:_probe\/emailnator|health|inboxes(?:\/messages(?:\/(?:\$messageReference|\[messageReference\]))?)?)\.(?:t|j)sx?/i,
   },
   { name: "phase 0 probe env", pattern: /PHASE0_(?:SESSION_KEY|PROBE_TOKEN|CAPSULE)/i },
   { name: "upstash env", pattern: /UPSTASH_REDIS_REST_(?:URL|TOKEN)/i },
@@ -50,27 +50,23 @@ export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; patter
   { name: "session encryption env", pattern: /SESSION_ENCRYPTION_KEY/i },
 ];
 
-const DEPLOYED_API_ENTRY_FILES = [
+const NITRO_API_ROUTE_FILES = [
+  "src/routes/api/health.ts",
+  "src/routes/api/inboxes.ts",
+  "src/routes/api/inboxes/messages.ts",
+  "src/routes/api/inboxes/messages/$messageReference.ts",
+] as const;
+
+const LEGACY_ROOT_API_ENTRY_FILES = [
   "api/health.ts",
   "api/inboxes.ts",
   "api/inboxes/messages.ts",
   "api/inboxes/messages/[messageReference].ts",
+  "api/_probe/emailnator.ts",
 ] as const;
 
-const DEPLOYED_WEB_HANDLER_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "OPTIONS",
-  "HEAD",
-] as const;
-const HEALTH_WEB_HANDLER_METHODS = ["GET", "HEAD"] as const;
-const PROBE_WEB_HANDLER_METHODS = ["POST"] as const;
-const DEPLOYED_ROUTED_API_ENTRY_FILES = DEPLOYED_API_ENTRY_FILES.filter(
-  (relativePath) => relativePath !== "api/health.ts",
-);
+const NITRO_API_ROUTE_METHODS = ["ANY"] as const;
+const HEALTH_ROUTE_METHODS = ["GET", "HEAD", "ANY"] as const;
 
 function isClientFacingAsset(filePath: string): boolean {
   return /\.(?:js|mjs|cjs|css|html)$/i.test(filePath);
@@ -199,7 +195,7 @@ export function assertEnvExampleMatchesCode(): void {
   assert.equal(env.get("SESSION_TTL_SECONDS"), "900");
   assert.equal(env.get("UPSTASH_REDIS_REST_URL"), "https://replace-with-upstash-redis-rest-url");
   assert.equal(env.get("UPSTASH_REDIS_REST_TOKEN"), "replace-with-upstash-redis-rest-token");
-  assert.equal(env.get("REDIS_KEY_NAMESPACE"), "email-shadow-panel");
+  assert.equal(env.get("REDIS_KEY_NAMESPACE"), "email-shadow-panel-local");
   assert.equal(env.get("EMAILNATOR_PROVIDER_ENABLED"), "true");
   assert.equal(env.get("PUBLIC_API_REQUEST_TIMEOUT_MS"), "12000");
   assert.equal(env.get("PUBLIC_API_MAX_ACTIVE_INBOXES_PER_VISITOR"), "3");
@@ -214,33 +210,30 @@ export function assertEnvExampleMatchesCode(): void {
 }
 
 export function assertDeploymentSurface(): {
-  deployedApiEntryCount: number;
-  expectedFunctionEntries: number;
+  nitroApiRouteCount: number;
+  legacyRootApiEntryCount: number;
 } {
-  const apiFiles = walkFiles(resolve(PROJECT_ROOT, "api")).filter(
+  const nitroRouteFiles = walkFiles(resolve(PROJECT_ROOT, "src/routes/api")).filter(
     (filePath) => filePath.endsWith(".ts") && !filePath.endsWith(".d.ts"),
   );
-  const apiEntryFiles = apiFiles.filter((filePath) => !filePath.endsWith("test.ts"));
-  const normalizedEntryFiles = apiEntryFiles.map((filePath) =>
+  const nitroRouteEntryFiles = nitroRouteFiles.filter((filePath) => !filePath.endsWith("test.ts"));
+  const normalizedNitroRouteFiles = nitroRouteEntryFiles.map((filePath) =>
     relative(PROJECT_ROOT, filePath).replace(/\\/g, "/"),
   );
-  const deployedApiEntryFiles = normalizedEntryFiles
-    .filter((filePath) => !filePath.includes("/_probe/"))
-    .sort((left, right) => left.localeCompare(right));
 
   assert.deepEqual(
-    deployedApiEntryFiles,
-    [...DEPLOYED_API_ENTRY_FILES].sort((left, right) => left.localeCompare(right)),
-    "The deployed Vercel API surface should contain four explicit Web Handler entry files.",
+    normalizedNitroRouteFiles.sort((left, right) => left.localeCompare(right)),
+    [...NITRO_API_ROUTE_FILES].sort((left, right) => left.localeCompare(right)),
+    "The Nitro route surface should contain four public API route files.",
   );
-  assert.ok(
-    normalizedEntryFiles.some((filePath) =>
-      filePath.endsWith("api/inboxes/messages/[messageReference].ts"),
-    ),
+
+  const legacyRootApiEntryFiles = LEGACY_ROOT_API_ENTRY_FILES.filter((relativePath) =>
+    existsSync(resolve(PROJECT_ROOT, relativePath)),
   );
-  assert.ok(
-    normalizedEntryFiles.some((filePath) => filePath.endsWith("api/_probe/emailnator.ts")),
-    "The preview-only Phase 0 probe is missing from the source tree.",
+  assert.deepEqual(
+    legacyRootApiEntryFiles,
+    [],
+    "The legacy root /api Vercel Function entries should be absent now that Nitro owns the public API routes.",
   );
   assert.ok(
     existsSync(resolve(PROJECT_ROOT, "src/server.ts")),
@@ -252,8 +245,8 @@ export function assertDeploymentSurface(): {
   );
 
   return {
-    deployedApiEntryCount: deployedApiEntryFiles.length,
-    expectedFunctionEntries: deployedApiEntryFiles.length + 1,
+    nitroApiRouteCount: normalizedNitroRouteFiles.length,
+    legacyRootApiEntryCount: legacyRootApiEntryFiles.length,
   };
 }
 
@@ -274,10 +267,13 @@ export function assertViteConfigParses(): void {
 }
 
 export function assertHealthEntrypointContract(): void {
-  const healthSource = readTextFile("api/health.ts");
+  const healthSource = readTextFile("src/routes/api/health.ts");
 
-  assert.match(healthSource, /export const runtime = "nodejs";/u);
-  assert.doesNotMatch(healthSource, /^\s*import\s+/mu);
+  assert.match(healthSource, /createFileRoute\(["']\/api\/health["']\)/u);
+  assert.match(
+    healthSource,
+    /import\s+\{\s*createFileRoute\s*\}\s+from\s+["']@tanstack\/react-router["'];/u,
+  );
   assert.doesNotMatch(
     healthSource,
     /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env|SESSION_ENCRYPTION_KEY|VISITOR_HASH_KEY|UPSTASH_REDIS_REST_/u,
@@ -287,32 +283,68 @@ export function assertHealthEntrypointContract(): void {
   assert.match(healthSource, /status:\s*200/u);
   assert.match(healthSource, /createHealthResponse\(true\)/u);
   assert.match(healthSource, /createHealthResponse\(false\)/u);
-  assert.deepEqual(getExportedMethodNames(healthSource), [...HEALTH_WEB_HANDLER_METHODS]);
+  assert.match(healthSource, /GET:/u);
+  assert.match(healthSource, /HEAD:/u);
+  assert.match(healthSource, /ANY:/u);
 }
 
 export function assertDeployedApiEntrypointContracts(): void {
-  for (const relativePath of DEPLOYED_ROUTED_API_ENTRY_FILES) {
-    const source = readTextFile(relativePath);
+  const inboxSource = readTextFile("src/routes/api/inboxes.ts");
+  const messagesSource = readTextFile("src/routes/api/inboxes/messages.ts");
+  const messageDetailSource = readTextFile("src/routes/api/inboxes/messages/$messageReference.ts");
 
-    assert.match(source, /export const runtime = "nodejs";/u);
-    assert.doesNotMatch(source, /export\s+default/u);
-    assertOnlyRelativeImports(relativePath, source);
-    assert.deepEqual(getExportedMethodNames(source), [...DEPLOYED_WEB_HANDLER_METHODS]);
+  for (const [relativePath, source, handlerName] of [
+    ["src/routes/api/inboxes.ts", inboxSource, "handleInboxesRoute"],
+    ["src/routes/api/inboxes/messages.ts", messagesSource, "handleMessagesRoute"],
+    [
+      "src/routes/api/inboxes/messages/$messageReference.ts",
+      messageDetailSource,
+      "handleMessageDetailRoute",
+    ],
+  ] as const) {
+    assert.match(
+      source,
+      /createFileRoute\(["']\/api\//u,
+      `${relativePath} must register a Nitro API route.`,
+    );
+    assert.match(
+      source,
+      /createPublicApiHandlers/u,
+      `${relativePath} must create the public API handlers once.`,
+    );
+    assert.match(
+      source,
+      /createProductionPublicApiDependencies/u,
+      `${relativePath} must bind the production dependency factory.`,
+    );
+    assert.match(source, /ANY:/u, `${relativePath} must delegate all HTTP methods through ANY.`);
+    assert.match(
+      source,
+      new RegExp(`${handlerName}\\(request`, "u"),
+      `${relativePath} must delegate to the public API handler without duplicating business logic.`,
+    );
+    assert.doesNotMatch(
+      source,
+      /assertSameOrigin|resolveAnonymousVisitorCookie|extractBearerCapability|createJsonResponse|normalizePublicApiError|createRequestDeadlineSignal|publicCreateInboxResponseSchema|publicListMessagesResponseSchema|publicMessageDetailResponseSchema/u,
+    );
   }
 }
 
 export function assertPreviewOnlyProbeEntrypointContract(): void {
-  const source = readTextFile("api/_probe/emailnator.ts");
+  const source = readTextFile("server/providers/emailnator/probe.server.ts");
 
-  assert.match(source, /export const runtime = "nodejs";/u);
-  assert.doesNotMatch(source, /export\s+default/u);
-  assertOnlyRelativeImports("api/_probe/emailnator.ts", source);
-  assert.deepEqual(getExportedMethodNames(source), [...PROBE_WEB_HANDLER_METHODS]);
   assert.match(source, /handleEmailnatorProbeRequest/u);
+  assert.match(source, /EMAILNATOR_PROBE_ENABLED/u);
+  assert.match(source, /PHASE0_PROBE_TOKEN/u);
+  assert.match(source, /requirePreviewAccess/u);
+  assert.ok(
+    !existsSync(resolve(PROJECT_ROOT, "api/_probe/emailnator.ts")),
+    "The deployable probe entrypoint must be absent now that the probe is server-only.",
+  );
 }
 
-export function assertNitroOutputSurface(): void {
-  const nitroRoot = resolve(PROJECT_ROOT, ".output");
+export function assertNitroOutputSurface(projectRoot = PROJECT_ROOT): void {
+  const nitroRoot = resolve(projectRoot, ".output");
   const nitroPublicRoot = resolve(nitroRoot, "public");
   const nitroServerEntry = resolve(nitroRoot, "server/index.mjs");
   const nitroManifest = resolve(nitroRoot, "nitro.json");
@@ -324,8 +356,8 @@ export function assertNitroOutputSurface(): void {
   assert.ok(walkFiles(nitroPublicRoot).length > 0, "The Nitro public output is empty.");
 }
 
-export function assertClientBundleFreeOfServerOnlyModules(): void {
-  const clientBundleRoot = resolve(PROJECT_ROOT, ".output/public");
+export function assertClientBundleFreeOfServerOnlyModules(projectRoot = PROJECT_ROOT): void {
+  const clientBundleRoot = resolve(projectRoot, ".output/public");
   assert.ok(existsSync(clientBundleRoot), "The Nitro public output is missing.");
 
   const clientAssets = walkFiles(clientBundleRoot).filter(isClientFacingAsset);
@@ -340,10 +372,18 @@ export function assertClientBundleFreeOfServerOnlyModules(): void {
     for (const { name, pattern } of PHASE4_CLIENT_BUNDLE_PATTERNS) {
       assert.ok(
         !pattern.test(text),
-        `Nitro public output contains a server-only pattern in ${filePath}: ${name}`,
+        "Nitro public output contains a server-only pattern in " + filePath + ": " + name,
       );
     }
   }
+}
+
+export function assertPhase4PostBuildVerification(projectRoot = PROJECT_ROOT): void {
+  assertNitroOutputSurface(projectRoot);
+  assertClientBundleFreeOfServerOnlyModules(projectRoot);
+  console.log(
+    "Phase 4 post-build Nitro artifact checks passed. The client bundle scan and Nitro output assertions succeeded.",
+  );
 }
 
 export function assertDeploymentDocsAreSanitized(): void {
@@ -389,24 +429,23 @@ export function runPhase4ReadinessChecks(): void {
   assertEnvExampleMatchesCode();
   const footprint = assertDeploymentSurface();
   assert.equal(
-    footprint.deployedApiEntryCount,
-    4,
-    "The deployed API surface should contain four explicit Web Handler entries.",
+    footprint.nitroApiRouteCount,
+    NITRO_API_ROUTE_FILES.length,
+    "The Nitro public API surface should contain four route files.",
   );
   assert.equal(
-    footprint.expectedFunctionEntries,
-    5,
-    "The deployment footprint should stay under the Vercel Hobby function limit.",
+    footprint.legacyRootApiEntryCount,
+    0,
+    "The legacy root /api Vercel Function entries should be removed now that Nitro owns the public API routes.",
   );
   assertHealthEntrypointContract();
   assertDeployedApiEntrypointContracts();
   assertPreviewOnlyProbeEntrypointContract();
-  assertNitroOutputSurface();
   assertDeploymentDocsAreSanitized();
   assertSmokeScriptIsNotAutoWired();
   assertNoSensitiveText(["docs", "scripts", "tests/phase4", ".env.example"]);
   console.log(
-    `Phase 4 readiness checks passed. Expected deployment footprint: ${footprint.deployedApiEntryCount} deployed API entries + 1 SSR entry = ${footprint.expectedFunctionEntries}. The preview-only Phase 0 probe is excluded from the deployed function count and remains preview-only until human Preview verification.`,
+    "Phase 4 offline readiness checks passed. Offline deterministic checks are build-independent and do not require Nitro output. The deployed Vercel function count remains provisional until human Preview verification. The preview-only Phase 0 probe stays server-only and excluded from the deployed function count.",
   );
 }
 
@@ -414,5 +453,5 @@ const isMain = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(pro
 
 if (isMain) {
   runPhase4ReadinessChecks();
-  assertClientBundleFreeOfServerOnlyModules();
+  assertPhase4PostBuildVerification();
 }

@@ -1,0 +1,17 @@
+﻿import { createFileRoute } from "@tanstack/react-router";
+
+import { createProductionPublicApiDependencies } from "../../../../../server/api/composition-root.server.ts";
+import { createPublicApiHandlers } from "../../../../../server/api/handlers.server.ts";
+
+const handlers = createPublicApiHandlers(createProductionPublicApiDependencies);
+
+export const Route = createFileRoute("/api/inboxes/messages/$messageReference")({
+  server: {
+    handlers: {
+      ANY: async ({ request, params }) =>
+        handlers.handleMessageDetailRoute(request, {
+          messageReference: params.messageReference,
+        }),
+    },
+  },
+});

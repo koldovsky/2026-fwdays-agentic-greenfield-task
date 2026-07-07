@@ -6,12 +6,12 @@ Accepted baseline with Phase 3 frontend integration implemented locally
 
 ## System Context
 
-Email Shadow Panel uses the existing browser frontend, explicit Vercel `api/*` Node.js Functions, a Nitro-backed TanStack Start SSR runtime, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
+Email Shadow Panel uses the existing browser frontend, Nitro-owned public API routes under `src/routes/api/*`, a Nitro-backed TanStack Start SSR runtime, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
 
 ```mermaid
 flowchart LR
   Browser["Browser React app"] --> SSR["Nitro-backed TanStack Start SSR"]
-  Browser["Browser React app"] --> API["Explicit Vercel API functions"]
+  Browser["Browser React app"] --> API["Nitro-owned public API routes"]
   API --> Transport["Public API transport and abuse controls"]
   Transport --> Domain["Session service and contracts"]
   Domain --> Provider["InboxProvider abstraction"]
@@ -25,7 +25,7 @@ flowchart LR
 ## Component Boundaries
 
 - React frontend: renders the existing UI through a browser-only API client, a focused inbox controller, and versioned local recent-inbox storage; it never handles provider cookies, XSRF values, capability hashes, provider message IDs, or encrypted provider state.
-- Route handlers: stay thin, validate HTTP concerns, enforce same-origin checks for state changes, and delegate to the public API handler composition root.
+- Route handlers: live as Nitro server routes under `src/routes/api/*`, stay thin, validate HTTP concerns, enforce same-origin checks for state changes, and delegate to the public API handler composition root.
 - Public API transport: owns bearer extraction, visitor-cookie handling, trusted client-IP hashing, public response contracts, error mapping, rate limits, active-slot reservations, per-session locks, request deadlines, and the provider kill switch.
 - Shared server-domain contracts: define runtime-validated anonymous-session records, safe message references, public API envelopes, and stable error codes.
 - Inbox provider abstraction: defines create, list, and detail operations with optional abort signals and no transport knowledge.
@@ -37,13 +37,14 @@ flowchart LR
 ## Repository Boundaries
 
 ```text
-api/
+src/
+  routes/
+    api/
 server/
   api/
   providers/
   session/
 scripts/
-src/
 tests/
 docs/
 ```
@@ -136,7 +137,7 @@ The server therefore:
 
 ## Deployment Topology
 
-The active target remains Vercel Hobby with explicit `api/*` functions plus a Nitro-generated SSR runtime for the TanStack Start root application. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
+The active target remains Vercel Hobby with Nitro-owned public API routes plus a Nitro-generated SSR runtime for the TanStack Start root application. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
 
 ## Failure Modes
 

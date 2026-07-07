@@ -8,7 +8,7 @@ PASSED FOR LOCAL FEASIBILITY
 
 - `LOCAL LIVE PROVIDER VERIFICATION: PASSED`
 - `PHASE 0 FEASIBILITY GATE: GO FOR PHASE 1`
-- Vercel Preview verification is deferred to Phase 4.
+- Vercel Preview verification is deferred to Phase 4. The supported probe workflow is the local CLI `npm run probe:emailnator`; no public HTTP probe route is deployed.
 
 ## Phase Objective
 
@@ -27,7 +27,7 @@ Cross-process restoration was observed.
 Real message listing and detail retrieval were observed.
 The CLI exposed only numeric indexes for message selection and only structural detail evidence for message retrieval.
 No sensitive message content was printed.
-Vercel Preview verification is deferred to Phase 4.
+Vercel Preview verification is deferred to Phase 4. The supported probe workflow is the local CLI `npm run probe:emailnator`; no public HTTP probe route is deployed.
 
 ## Codex-Run Deterministic Verification
 

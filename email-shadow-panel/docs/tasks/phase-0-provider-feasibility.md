@@ -35,7 +35,7 @@ This phase determines whether the planned Vercel HTTP adapter architecture is vi
 ## Scope
 
 - Local provider probe.
-- Protected Vercel Preview-only probe.
+- Historical Vercel Preview-only probe references retained only for provenance and negative assertions; the current supported probe is the local CLI `npm run probe:emailnator`.
 - Session serialization experiment.
 - Sanitized fixture capture.
 - Deterministic tests around parsing, validation, redaction, and control flow.

@@ -1,4 +1,4 @@
-# Phase 0 Focused Review
+﻿# Phase 0 Focused Review
 
 ## Reviewer role and scope
 
@@ -26,7 +26,7 @@
 - `server/providers/emailnator/capsule.server.ts` and `schemas.server.ts`: capsule sealing, TTL, and request/state validation.
 - `tests/phase0/boundary.test.ts`, `tests/phase0/probe.test.ts`, `tests/phase0/provider.test.ts`: deterministic coverage for boundaries, Preview redaction, parsing, transport, and capsule behavior.
 - `tests/fixtures/emailnator/README.md`, `scripts/verify-phase0.ts`, `.gitignore`, `.env.example`: fixture provenance, artifact scanning, ignore rules, and example configuration safety.
-- `package.json`, `eslint.config.js`, `api/_probe/emailnator.ts`: required scripts, lint/type boundaries, and Preview route entrypoint.
+- `package.json`, `eslint.config.js`, `server/providers/emailnator/probe.server.ts`: required scripts, lint/type boundaries, and the server-only Phase 0 probe implementation.
 
 ## Checker-run commands and actual results
 
@@ -49,7 +49,7 @@
 | Fixed Emailnator origin, bounded request size, timeout handling, and provider error classification | Verified | Reviewed in `server/providers/emailnator/provider.server.ts`; deterministic transport tests passed. |
 | Preview-only probe gate and bearer-token requirement | Verified | Reviewed in `server/providers/emailnator/probe.server.ts`; probe tests passed. |
 | Session capsule sealing and cross-process restoration | Verified | Reviewed in `capsule.server.ts` and `phase0.server.ts`; capsule tests and cross-process scripts passed. |
-| Browser/server architecture boundary | Verified | `tests/phase0/boundary.test.ts` passed; Preview handler remains in `api/_probe/emailnator.ts` with `runtime = "nodejs"`. |
+| Browser/server architecture boundary | Verified | `tests/phase0/boundary.test.ts` passed; the Preview probe implementation remains server-only in `server/providers/emailnator/probe.server.ts`, and the deployable root probe entrypoint was later retired. |
 | Committed fixture and artifact redaction | Verified | `scripts/verify-phase0.ts` passed; fixture provenance file labels sources and committed artifacts remained free of detected secrets. |
 | Local probe prints only redacted structural evidence | Failed | `scripts/emailnator-probe.ts` prints `result.localText`, and `runDetailAction` supplies that full sanitized message text. This conflicts with the spec requirement to print only redacted structural evidence. |
 | Full deterministic end-to-end verification in this checker environment | Partially verified | Lint, typecheck, tests, and artifact scan passed, but `npm run build` failed in the managed checker environment. |
@@ -88,7 +88,7 @@
 ## Architecture-boundary assessment
 
 - Browser/server boundaries remained intact in the reviewed commit.
-- The boundary test passed, and the Preview route entrypoint stays narrow: `api/_probe/emailnator.ts` exports only the Node runtime POST handler into the server-side implementation.
+- The boundary test passed, and the Preview probe implementation stays narrow: `server/providers/emailnator/probe.server.ts` handles the server-side probe logic, while the deployable root probe entrypoint was later retired during Phase 4.
 - No reviewed `src/` import path crossed into `server/`, `api/`, or `scripts/` according to the deterministic boundary test result.
 
 ## Remaining human live-verification requirements

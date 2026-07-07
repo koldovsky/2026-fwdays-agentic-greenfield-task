@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import test from "node:test";
 
 import { publicHealthResponseSchema } from "../../server/api/contracts.server.ts";
@@ -17,6 +18,7 @@ import {
   assertEnvExampleMatchesCode,
   assertHealthEntrypointContract,
   assertNitroDependencyLocked,
+  assertClientBundleFreeOfServerOnlyModules,
   assertNitroOutputSurface,
   assertPreviewOnlyProbeEntrypointContract,
   assertSmokeScriptIsNotAutoWired,
@@ -54,7 +56,7 @@ function createRequest(url: string, init?: RequestInit): Request {
   return new Request(url, init);
 }
 
-test("deployment config parses the documented safe env examples and retains the Vercel footprint", () => {
+test("deployment config parses the documented safe env examples and retains the Nitro-owned Vercel footprint", () => {
   assertViteConfigParses();
   assertNitroDependencyLocked();
   assertEnvExampleMatchesCode();
@@ -72,7 +74,7 @@ test("deployment config parses the documented safe env examples and retains the 
   const upstash = loadUpstashSessionRepositoryConfig({
     UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
     UPSTASH_REDIS_REST_TOKEN: "replace-with-upstash-redis-rest-token",
-    REDIS_KEY_NAMESPACE: "email-shadow-panel",
+    REDIS_KEY_NAMESPACE: "email-shadow-panel-local",
   });
   const publicConfig = loadPublicApiConfig({
     EMAILNATOR_PROVIDER_ENABLED: "true",
@@ -88,18 +90,17 @@ test("deployment config parses the documented safe env examples and retains the 
     PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS: "2592000",
   });
   const footprint = assertDeploymentSurface();
-  assertNitroOutputSurface();
 
   assert.equal(sessionCore.sessionTtlMs, 900_000);
-  assert.equal(upstash.namespace, "email-shadow-panel");
+  assert.equal(upstash.namespace, "email-shadow-panel-local");
   assert.equal(publicConfig.providerEnabled, true);
   assert.equal(publicConfig.operationLockTtlMs, 15_000);
   assert.equal(publicConfig.activeInboxReservationTtlMs, 15_000);
-  assert.equal(footprint.deployedApiEntryCount, 4);
-  assert.equal(footprint.expectedFunctionEntries, 5);
+  assert.equal(footprint.nitroApiRouteCount, 4);
+  assert.equal(footprint.legacyRootApiEntryCount, 0);
 });
 
-test("the Phase 0 probe stays blocked in production and remains preview-only", async () => {
+test("the Phase 0 probe stays blocked in production and remains server-only", async () => {
   const response = await handleEmailnatorProbeRequest(
     createRequest("https://example.test/api/_probe/emailnator", {
       method: "POST",
@@ -148,27 +149,50 @@ test("health stays minimal, does not require Redis or provider methods, and swal
   );
 });
 
-test("health web handler is standalone and avoids server-only imports", () => {
-  const apiHealth = readFileSync(resolve(process.cwd(), "api/health.ts"), "utf8");
+test("health Nitro route is standalone and avoids server-only imports", () => {
+  const healthRoute = readFileSync(resolve(process.cwd(), "src/routes/api/health.ts"), "utf8");
 
   assertHealthEntrypointContract();
-  assert.match(apiHealth, /export const runtime = "nodejs";/u);
-  assert.doesNotMatch(apiHealth, /^\s*import\s+/mu);
+  assert.match(healthRoute, /createFileRoute\(["']\/api\/health["']\)/u);
   assert.doesNotMatch(
-    apiHealth,
+    healthRoute,
     /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env/u,
   );
-  assert.match(apiHealth, /"Cache-Control": "no-store"/u);
-  assert.match(apiHealth, /"Content-Type": "application\/json; charset=utf-8"/u);
-  assert.match(apiHealth, /createHealthResponse\(true\)/u);
-  assert.match(apiHealth, /createHealthResponse\(false\)/u);
-  assert.match(apiHealth, /export async function GET\(/u);
-  assert.match(apiHealth, /export async function HEAD\(/u);
+  assert.match(healthRoute, /"Cache-Control": "no-store"/u);
+  assert.match(healthRoute, /"Content-Type": "application\/json; charset=utf-8"/u);
+  assert.match(healthRoute, /createHealthResponse\(true\)/u);
+  assert.match(healthRoute, /createHealthResponse\(false\)/u);
+  assert.match(healthRoute, /GET:/u);
+  assert.match(healthRoute, /HEAD:/u);
+  assert.match(healthRoute, /ANY:/u);
 });
 
-test("deployed API entrypoints stay on approved web-handler shapes and the probe remains preview-only", () => {
+test("Nitro API routes own the public API surface and the legacy root /api files are absent", () => {
   assertDeployedApiEntrypointContracts();
   assertPreviewOnlyProbeEntrypointContract();
+
+  for (const legacyPath of [
+    "api/health.ts",
+    "api/inboxes.ts",
+    "api/inboxes/messages.ts",
+    "api/inboxes/messages/[messageReference].ts",
+    "api/_probe/emailnator.ts",
+  ]) {
+    assert.equal(
+      existsSync(resolve(process.cwd(), legacyPath)),
+      false,
+      `${legacyPath} should be absent.`,
+    );
+  }
+
+  for (const nitroPath of [
+    "src/routes/api/health.ts",
+    "src/routes/api/inboxes.ts",
+    "src/routes/api/inboxes/messages.ts",
+    "src/routes/api/inboxes/messages/$messageReference.ts",
+  ]) {
+    assert.equal(existsSync(resolve(process.cwd(), nitroPath)), true, `${nitroPath} should exist.`);
+  }
 });
 
 test("deployment documentation and scripts stay placeholder-only and keep the smoke command opt-in", () => {
@@ -195,7 +219,7 @@ test("deployment documentation and scripts stay placeholder-only and keep the sm
   );
 });
 
-test("deployment docs describe the Nitro-backed SSR output and the updated deployed footprint", () => {
+test("deployment docs describe the Nitro-owned API surface and the updated deployed footprint", () => {
   const deploymentDocs = readFileSync(
     resolve(process.cwd(), "docs/runbooks/deployment.md"),
     "utf8",
@@ -205,13 +229,11 @@ test("deployment docs describe the Nitro-backed SSR output and the updated deplo
     "utf8",
   );
 
-  assert.match(deploymentDocs, /5` deployed entrypoints in total/u);
-  assert.match(
-    deploymentDocs,
-    /preview-only `api\/_probe\/emailnator\.ts` file stays in the source tree/u,
-  );
-  assert.match(phase4VerificationDocs, /standalone Web Handler/u);
-  assert.match(phase4VerificationDocs, /preview-only probe is excluded from the deployed count/u);
+  assert.match(deploymentDocs, /Nitro-owned public API routes/u);
+  assert.match(deploymentDocs, /src\/routes\/api/u);
+  assert.match(deploymentDocs, /deployed Vercel function count remains provisional/u);
+  assert.match(phase4VerificationDocs, /Nitro-owned .*public API surface/u);
+  assert.match(phase4VerificationDocs, /legacy root API entries/u);
 });
 
 test("Phase 4 verifier targets Nitro public output and keeps the server boundary separate", () => {
@@ -221,14 +243,15 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   );
 
   assert.ok(
-    verifyPhase4Source.includes('const clientBundleRoot = resolve(PROJECT_ROOT, ".output/public")'),
+    verifyPhase4Source.includes('const clientBundleRoot = resolve(projectRoot, ".output/public")'),
   );
   assert.ok(
     verifyPhase4Source.includes('const nitroServerEntry = resolve(nitroRoot, "server/index.mjs")'),
   );
   assert.ok(verifyPhase4Source.includes('const nitroManifest = resolve(nitroRoot, "nitro.json")'));
-  assert.ok(verifyPhase4Source.includes("assertNitroOutputSurface()"));
-  assert.ok(verifyPhase4Source.includes("assertClientBundleFreeOfServerOnlyModules()"));
+  assert.ok(verifyPhase4Source.includes("assertNitroOutputSurface(projectRoot)"));
+  assert.ok(verifyPhase4Source.includes("assertClientBundleFreeOfServerOnlyModules(projectRoot)"));
+  assert.ok(verifyPhase4Source.includes("assertPhase4PostBuildVerification()"));
   assert.ok(verifyPhase4Source.includes("assertHealthEntrypointContract()"));
   assert.ok(verifyPhase4Source.includes("assertDeployedApiEntrypointContracts()"));
   assert.ok(verifyPhase4Source.includes("assertPreviewOnlyProbeEntrypointContract()"));
@@ -236,7 +259,12 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   assert.ok(verifyPhase4Source.includes("The Nitro server entry is missing."));
   assert.ok(
     verifyPhase4Source.includes(
-      "The deployed Vercel API surface should contain four explicit Web Handler entry files.",
+      "The Nitro route surface should contain four public API route files.",
+    ),
+  );
+  assert.ok(
+    verifyPhase4Source.includes(
+      "The legacy root /api Vercel Function entries should be absent now that Nitro owns the public API routes.",
     ),
   );
   assert.ok(!verifyPhase4Source.includes("dist/client"));
@@ -247,8 +275,48 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   );
 });
 
+test("post-build Nitro artifact assertions still require output and scan only client assets", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "phase4-verifier-"));
+  const outputRoot = join(tempRoot, ".output");
+  const publicAssetsRoot = join(outputRoot, "public", "assets");
+  const serverRoot = join(outputRoot, "server");
+
+  assert.throws(
+    () => assertNitroOutputSurface(tempRoot),
+    /The Nitro output directory is missing./u,
+  );
+
+  mkdirSync(publicAssetsRoot, { recursive: true });
+  mkdirSync(serverRoot, { recursive: true });
+
+  assert.throws(() => assertNitroOutputSurface(tempRoot), /The Nitro server entry is missing./u);
+
+  writeFileSync(join(serverRoot, "index.mjs"), "export default {}\n", "utf8");
+  assert.throws(() => assertNitroOutputSurface(tempRoot), /The Nitro manifest is missing./u);
+
+  writeFileSync(join(outputRoot, "nitro.json"), "{}\n", "utf8");
+  assert.throws(() => assertNitroOutputSurface(tempRoot), /The Nitro public output is empty./u);
+
+  writeFileSync(join(publicAssetsRoot, "client.js"), "console.log('safe');\n", "utf8");
+  assert.doesNotThrow(() => assertNitroOutputSurface(tempRoot));
+
+  writeFileSync(
+    join(serverRoot, "index.mjs"),
+    "console.log('server/api/composition-root.server.ts');\n",
+    "utf8",
+  );
+  assert.doesNotThrow(() => assertClientBundleFreeOfServerOnlyModules(tempRoot));
+
+  writeFileSync(
+    join(publicAssetsRoot, "client.js"),
+    "console.log('server/api/composition-root.server.ts');\n",
+    "utf8",
+  );
+  assert.throws(() => assertClientBundleFreeOfServerOnlyModules(tempRoot), /server-only pattern/u);
+});
+
 test("server-only modules remain lazily wired in source and the health route is standalone", () => {
-  const apiHealth = readFileSync(resolve(process.cwd(), "api/health.ts"), "utf8");
+  const healthRoute = readFileSync(resolve(process.cwd(), "src/routes/api/health.ts"), "utf8");
   const compositionRoot = readFileSync(
     resolve(process.cwd(), "server/api/composition-root.server.ts"),
     "utf8",
@@ -259,14 +327,19 @@ test("server-only modules remain lazily wired in source and the health route is 
   );
 
   assert.doesNotMatch(
-    apiHealth,
-    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\./u,
+    healthRoute,
+    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env/u,
   );
   assert.match(compositionRoot, /createProductionPublicApiDependencies/u);
   assert.match(compositionRoot, /loadPublicApiConfig/u);
   assert.match(verifyPhase4Source, /assertHealthEntrypointContract\(\)/u);
   assert.match(verifyPhase4Source, /assertDeployedApiEntrypointContracts\(\)/u);
   assert.match(verifyPhase4Source, /assertPreviewOnlyProbeEntrypointContract\(\)/u);
+  assert.ok(!existsSync(resolve(process.cwd(), "api/health.ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "api/inboxes.ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "api/inboxes/messages.ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "api/inboxes/messages/[messageReference].ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "api/_probe/emailnator.ts")));
 });
 
 test("the readiness runner executes offline checks only", () => {
