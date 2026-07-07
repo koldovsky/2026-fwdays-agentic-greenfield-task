@@ -2,31 +2,38 @@
 
 ## Gate
 
-Current gate: **G4.1 green** — `core-preprocessing` slice closed (2026-07-07).
+Current gate: **G4.2 green** — `core-inference` slice closed (2026-07-07).
 
-G3 capability plan approved with amendments (cross-cutting constraints, overlay ownership, provisional eval at `core-inference`).
+G3 capability plan approved with amendments. Provisional eval run complete; **eval ratchet not locked** (G5 only).
+
+## Provisional Eval (core-inference)
+
+| Metric | Value |
+| --- | --- |
+| Pass rate | **90.0% (36/40)** |
+| Threshold | 0.5 |
+| Dataset | `evals/dataset/` with `expected.json` |
+| Failures | 4 negatives with false positives (`negative-02`, `negative-04`, `negative-09`, `negative-10`) |
+| Ratchet baseline | **Not locked** — pending `evals-hardening` (G5) |
 
 ## Completed Slices
 
 ### core-preprocessing (G4.1)
 
-- Core center-crop math, SkiaSharp resize to `320x320`, NCHW raw RGB tensor creation.
-- EXIF orientation normalization on encoded-byte decode.
+- Core center-crop, resize to `320x320`, NCHW raw RGB tensor, EXIF orientation.
 - 12 Core unit tests with `@trace FR-PREPROC-*`.
-- OpenSpec change archived: `openspec/changes/archive/2026-07-07-core-preprocessing/`.
 - Verdict: `qa/verdicts/core-preprocessing.md` (pass-with-risks).
 
-## Completed Context
+### core-inference (G4.2)
 
-- Static agent contract: `AGENTS.md`.
-- G0 harness green (solution, CI, hooks, check scripts, OpenSpec specs).
-- G1 requirements review passed on 2026-07-03.
-- G3 capability plan at `docs/mvp-capability-plan.md` (amended).
-- MAUI app at `src/TrafficSignScanner.App` with bundled `model.onnx` and `labels.txt`.
+- `IDetector`, lazy ONNX session reuse, `ModelAssetCopier`, output parsing, label mapping, threshold 0.5.
+- 8 new Core detection unit tests with `@trace FR-DETECT-*` (20 Core tests total).
+- Provisional output eval runner; `evals/dataset/expected.json` generated.
+- Verdict: `qa/verdicts/core-inference.md` (pass-with-risks).
 
 ## Scaffolded Projects
 
-- `src/TrafficSignScanner.Core` — preprocessing implemented
+- `src/TrafficSignScanner.Core` — preprocessing + detection implemented
 - `src/TrafficSignScanner.App`
 - `src/TrafficSignScanner.Mcp`
 - `tests/TrafficSignScanner.Core.Tests`
@@ -34,4 +41,4 @@ G3 capability plan approved with amendments (cross-cutting constraints, overlay 
 
 ## Next Slice
 
-`core-inference` — ONNX session wrapper, output parsing, thresholding, label mapping; run provisional eval at slice end (ratchet still locks at G5).
+`core-overlay` — Core coordinate conversion from model/crop space to displayed preview space; Core owns all overlay geometry.

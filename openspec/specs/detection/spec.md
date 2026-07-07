@@ -3,9 +3,7 @@
 ## Purpose
 
 Define local ONNX inference and detection parsing behavior.
-
 ## Requirements
-
 ### Requirement: Run Local ONNX Model
 The detector SHALL run the bundled Custom Vision compact ONNX model locally through ONNX Runtime. Refs: `FR-DETECT-01`, `BC-OFFLINE-01`.
 
@@ -40,3 +38,14 @@ The detector SHALL map zero-based class IDs to `labels.txt` values and ignore de
 - **GIVEN** the confidence threshold is `0.5`
 - **WHEN** a model score is below `0.5`
 - **THEN** that candidate is excluded from accepted detections
+
+### Requirement: Prepare Physical Model Path
+The detector pipeline SHALL support copying a bundled ONNX model to a physical file path before session creation. Refs: `FR-DETECT-01`.
+
+#### Scenario: Model file is copied when destination is missing
+- **GIVEN** a bundled model exists at a source path
+- **AND** the destination app-data path does not exist
+- **WHEN** model preparation runs
+- **THEN** the model is copied to the destination path
+- **AND** ONNX Runtime can open that physical file
+
