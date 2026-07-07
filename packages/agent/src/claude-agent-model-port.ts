@@ -159,6 +159,27 @@ export class ClaudeAgentModelPort implements ModelPort {
         tools: [], // disable every built-in tool — only the intake MCP tools exist for this turn
         permissionMode: "default", // canUseTool, not an interactive prompt or an auto-allow mode, is the gate
         strictMcpConfig: true, // ignore project .mcp.json/user settings — only the server passed above
+        // SUBPROCESS ISOLATION (verified against the bundled sdk.d.ts@0.3.201,
+        // not memory — AGENTS.md "the stack may differ from your training
+        // data"): the Agent SDK spawns the local `claude` CLI, which by
+        // default loads the developer's ambient config — global/project
+        // settings, SessionStart hooks, CLAUDE.md, and globally-installed
+        // skills/plugins. Without isolation those bleed into a real lead's
+        // reply: a live eval probe caught the `using-superpowers` skill's
+        // "Using [skill] to …" announcement surfacing as the ENTIRE
+        // user-facing message (masked until S5 because every prior intake
+        // turn's reply was overridden by loop.ts's deterministic ack; FAQ
+        // turns are the first to return the model's own narration verbatim).
+        //   - `settingSources: []` — sdk.d.ts:1863 "disable filesystem
+        //     settings (SDK isolation mode)"; also drops settings-sourced
+        //     hooks and (per :1864) CLAUDE.md, so no repo/user prompt bleeds
+        //     into our own `buildSystemPrompt`.
+        //   - `skills: []` — sdk.d.ts:1875 `string[]` = "enable only the
+        //     listed skills" (here: none); omitting it is explicitly NOT
+        //     "skills off" (:1872-1873), so an empty list is required to hide
+        //     every ambient skill from the model.
+        settingSources: [],
+        skills: [],
         canUseTool,
         maxTurns: 1, // one intake turn, `@trace NFR-UX-01`
         thinking: toSdkThinkingConfig(config.thinking),
@@ -193,9 +214,31 @@ export class ClaudeAgentModelPort implements ModelPort {
 
     if (captured !== null) {
       const applied: CapturedToolUse = captured;
-      return {
-        content: [{ type: "tool_use", id: randomUUID(), name: applied.name, input: applied.input }],
-      };
+      // CRITICAL production defect (live kb-learning eval probe, stage H):
+      // this branch used to return ONLY the `tool_use` block, discarding
+      // `textParts` outright. That is harmless for `save_*`/`amend_field`
+      // (loop.ts's `assembleReply` composes a deterministic ack+next-question
+      // reply on top of any/no narration for an "applied" outcome — see
+      // `assembleReply`'s own header comment), but `answer_faq`/`log_question`
+      // are dispatched as `outcome: "logged"` (kb-learning design.md
+      // Decision 4), NOT `"applied"` — `runIntakeTurn` does not override that
+      // reply, so the model's OWN narrated KB answer must survive onto this
+      // response for a pure-FAQ turn to have any reply text at all. Emitting
+      // the collected text FIRST (a `text` block, only when non-empty) ahead
+      // of the `tool_use` block restores that narration without touching the
+      // abort/capture strategy above; the `save_*` path is unaffected in
+      // KIND (loop.ts still overrides an "applied" outcome's reply via
+      // `assembleReply`) even though the narration this exposes may now
+      // legitimately surface as `assembleReply`'s ack prefix instead of the
+      // `DEFAULT_ACK_COPY` fallback — that substitution is `assembleReply`'s
+      // OWN documented behaviour ("the model's own accompanying text if it
+      // gave any ... never discarded when present"), not a new one
+      // introduced here.
+      const text = textParts.join("\n").trim();
+      const content: ModelResponse["content"] = [];
+      if (text.length > 0) content.push({ type: "text", text });
+      content.push({ type: "tool_use", id: randomUUID(), name: applied.name, input: applied.input });
+      return { content };
     }
 
     const text = textParts.length > 0 ? textParts.join("\n") : (resultText ?? "");
