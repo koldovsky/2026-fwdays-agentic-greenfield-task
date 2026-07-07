@@ -38,7 +38,14 @@
 //     between hold and Confirm) is reproduced programmatically: this script
 //     creates a second real event over the same slot via the raw calendar
 //     client BEFORE calling Confirm, then asserts the route reports
-//     `conflict` — same empirical effect, deterministic and scriptable.
+//     `conflict` — same empirical effect, deterministic and scriptable. This
+//     step is now a PERMANENT, gating regression check for the live-found
+//     Confirm double-booking bug (originally found by an earlier run of this
+//     script; FIXED in commit 73b4aa7 by an identity-based collision
+//     re-check, `CalendarPort.busyEventsInRange`, run alongside the
+//     pre-existing value-based `freeBusy` check in route.ts's Confirm step
+//     4) — see step 8's own section below and
+//     `docs/qa/booking-hitl-manual-smoke.md` for the live-verified result.
 //   - Step 9 (Saturday slot on Propose-another-time) is run exactly as
 //     specified (fully autonomous, no calendar/DB write expected).
 //
@@ -77,12 +84,6 @@ if (existsSync(envPath)) process.loadEnvFile(envPath);
 // ---------------------------------------------------------------------------
 const transcriptLines = [];
 const failures = [];
-// Findings from checks BEYOND the required G.3 steps 1-5 (this script's own
-// extra step 8, a scriptable variant of the optional "manually add a
-// conflicting event" scenario) — tracked separately so a genuine finding
-// there is reported loudly WITHOUT blocking the "autonomous subset PASSED"
-// sentinel, which per the task instructions gates on steps 1-5 only.
-const additionalFindings = [];
 
 function log(line = "") {
   console.log(line);
@@ -93,15 +94,6 @@ function check(label, ok, detail = "") {
   const mark = ok ? "PASS" : "FAIL";
   log(`  [${mark}] ${label}${detail ? ` — ${detail}` : ""}`);
   if (!ok) failures.push(label);
-}
-
-/** Same shape as `check`, but for checks BEYOND the required G.3 steps 1-5
- *  (see `additionalFindings`'s own comment above) — a failure here is a real
- *  finding worth reporting, but does not gate the required-subset sentinel. */
-function checkOptional(label, ok, detail = "") {
-  const mark = ok ? "PASS" : "FAIL";
-  log(`  [${mark}] (additional, non-gating) ${label}${detail ? ` — ${detail}` : ""}`);
-  if (!ok) additionalFindings.push(label);
 }
 
 function section(title) {
@@ -205,6 +197,10 @@ log(
 
 let dbDir;
 let db;
+// Set by step 8 (exact-overlap Confirm regression) — `undefined` if the run
+// aborted before reaching that step, otherwise the true empirical live
+// result, consumed by the transcript doc's "History" section below.
+let exactOverlapRegressionHeldLive;
 
 try {
   // -------------------------------------------------------------------------
@@ -555,10 +551,17 @@ try {
 
   // ===========================================================================
   section(
-    "8 (ADDITIONAL, beyond the required steps 1-5): calendar-conflict path — " +
-      "CONFIRM against a genuinely busy slot, a scriptable variant of G.3's " +
-      "optional step 8. Findings here are reported but do NOT gate the " +
-      "'autonomous subset PASSED' sentinel (which is required steps 1-5 only).",
+    "8: CONFIRM exact-overlap collision regression (PERMANENT, gating) — the " +
+      "live-found Confirm double-booking bug, FIXED in commit 73b4aa7 by an " +
+      "identity-based collision re-check (CalendarPort.busyEventsInRange, " +
+      "google-calendar.ts) run ALONGSIDE the pre-existing value-based freeBusy " +
+      "check in route.ts's Confirm step 4. Empirical, real-Google-Calendar-API-" +
+      "only proof: a DISTINCT external event (B) with the EXACT SAME " +
+      "[start,end) as the booking's own tentative hold (A) must still be " +
+      "detected as a genuine collision, immune to freebusy.query's own " +
+      "merging of overlapping busy periods from different events into one " +
+      "interval (FakeCalendarPort's freeBusy never merges, so the unit/" +
+      "integration suite structurally cannot exercise this path).",
   );
   // ===========================================================================
   const conflictSlot = slot(targetMonday, 17);
@@ -567,61 +570,97 @@ try {
     "smoke-hitl-conflict-chat",
     "KAMERTON-SMOKE Conflict Учень",
   );
+  // Event A: the booking's own real tentative hold, via the real calendar port.
   const conflictBookingSeed = await seedPendingBooking(conflictSeed.requestId, conflictSlot, "conflict test hold 17:00-18:00");
-  // Create a SECOND real event over the EXACT same slot via the raw client —
-  // simulating "a conflicting calendar event manually added over a held slot
-  // between the hold and the Confirm click" (G.3 step 8), programmatically
-  // and deterministically — the most natural manual action (clicking the
-  // same appointment slot in the Calendar UI) produces exactly this shape.
+  check(
+    "event A (the booking's own real tentative hold) created for the exact-overlap regression",
+    Boolean(conflictBookingSeed.eventId),
+    conflictBookingSeed.eventId,
+  );
+  // Event B: a DISTINCT external event at the EXACT same slot range, via the
+  // raw client — simulating "a conflicting calendar event manually added over
+  // a held slot between the hold and the Confirm click" (G.3 step 8),
+  // programmatically and deterministically — the most natural manual action
+  // (a teacher double-booking the identical appointment slot in the Calendar
+  // UI) produces exactly this shape, and is the scenario the identity-based
+  // `busyEventsInRange` fix (commit 73b4aa7) exists to catch.
   const conflictRange = { start: kyivWallClockToUtc(conflictSlot.start), end: kyivWallClockToUtc(conflictSlot.end) };
   const conflictingEventRes = await rawCal.events.insert({
     calendarId: CAL_ID,
     requestBody: {
-      summary: `${SMOKE_TAG} externally-added conflicting event`,
+      summary: `${SMOKE_TAG} externally-added conflicting event (B, exact-overlap)`,
       start: { dateTime: conflictRange.start },
       end: { dateTime: conflictRange.end },
     },
   });
   trackEvent(conflictingEventRes.data.id);
+  check(
+    "event A and event B are DISTINCT ids (never the same event)",
+    conflictBookingSeed.eventId !== conflictingEventRes.data.id,
+    `A=${conflictBookingSeed.eventId} B=${conflictingEventRes.data.id}`,
+  );
   const conflictConfirmRes = await postDecision(conflictSeed.requestId, { action: "confirm" });
   const conflictConfirmBody = await conflictConfirmRes.json();
-  log(`  VERBATIM conflict-confirm response: HTTP ${conflictConfirmRes.status} ${JSON.stringify(conflictConfirmBody)}`);
-  checkOptional(
-    "Confirm against a genuinely busy slot (exact-same-range external event) surfaces {status:'conflict'}",
+  log(`  VERBATIM exact-overlap confirm response: HTTP ${conflictConfirmRes.status} ${JSON.stringify(conflictConfirmBody)}`);
+  check(
+    "Confirm against event B (exact-same-range external event) surfaces {status:'conflict'} " +
+      "(NOT 'applied') — the identity-based fix (commit 73b4aa7) correctly distinguishes A from " +
+      "B by eventId, immune to freebusy.query's merging",
     conflictConfirmRes.status === 200 && conflictConfirmBody.status === "conflict",
     JSON.stringify(conflictConfirmBody),
   );
   {
     const row = readBooking(conflictBookingSeed.bookingId);
-    checkOptional("booking stays pending after a conflict (no confirmed event, nothing sent)", row.status === "pending", row.status);
+    check(
+      "booking stays pending after the exact-overlap conflict (no confirmed event, nothing sent)",
+      row.status === "pending",
+      row.status,
+    );
   }
   {
     const notifs = readNotifications(conflictBookingSeed.bookingId);
-    checkOptional("no notification row inserted on conflict", notifs.length === 0, JSON.stringify(notifs));
+    check("no notification row inserted on the exact-overlap conflict", notifs.length === 0, JSON.stringify(notifs));
   }
-  if (additionalFindings.length > 0) {
+  const conflictEventAfterAttempt = await rawGetEvent(conflictBookingSeed.eventId);
+  check(
+    "event A (the booking's own hold) is still tentative — NOT upgraded to confirmed",
+    conflictEventAfterAttempt?.status === "tentative",
+    JSON.stringify(conflictEventAfterAttempt?.status),
+  );
+  exactOverlapRegressionHeldLive = conflictConfirmBody.status === "conflict";
+  if (conflictConfirmBody.status === "applied") {
     log(
-      "\n  *** REAL BUG FOUND (empirical, real-Google-Calendar-API-only — not reproducible against " +
-        "FakeCalendarPort): the decision route's own collision self-filter " +
-        "(route.ts's removeOwnInterval/isSameInstantRange, 'Confirm's own collision re-check') assumes " +
-        "Google's freeBusy returns ONE busy interval PER EVENT. It does not: this run's own diagnostic " +
-        "probe (against the real DEMO calendar) confirmed Google's freebusy.query COALESCES/merges " +
-        "overlapping busy periods from DIFFERENT events on the same calendar into a single interval. " +
-        "When an external event has the EXACT SAME [start,end) as the booking's own tentative hold — " +
-        "the most natural manual action, e.g. a teacher double-booking the identical appointment slot " +
-        "in the Calendar UI — the merged freeBusy response still contains only ONE interval, identical " +
-        "to the booking's own range, which removeOwnInterval strips out as 'just my own hold'. The " +
-        "result: Confirm reports {status:'applied'} and genuinely double-books a real external event, " +
-        "instead of {status:'conflict'}. FakeCalendarPort's own freeBusy (lib/src/slots/fake-calendar.ts) " +
-        "returns one interval PER EVENT, never merges — so D.4's unit/integration test suite structurally " +
-        "cannot exercise this path; only a real-API smoke like this one can. RECOMMENDATION: the " +
-        "self-filter needs a COUNT-based approach (e.g. compare the busy list's total duration/interval " +
-        "count before vs. after removing the booking's own known range, or query freeBusy scoped to " +
-        "exclude the booking's own event id if the API supports it) rather than 'remove exactly one " +
-        "instance matching my own range by value'. ***",
+      "\n  *** REGRESSION: the identity-based exact-overlap fix (commit 73b4aa7) does NOT hold up " +
+        "live — Confirm reported 'applied' against a genuinely busy exact-overlap slot and would " +
+        "have double-booked a real external event. This is the SAME class of bug originally found " +
+        "by an earlier run of this script (see docs/qa/booking-hitl-manual-smoke.md's own history) " +
+        "— reporting loudly, NOT faking a pass.\n" +
+        "  ROOT CAUSE DIAGNOSED (live, this run): `busyEventsInRange` (google-calendar.ts) is a " +
+        "conversion-free pass-through of Google's `events.list` response, but that response encodes " +
+        "`start`/`end` in the CALENDAR'S LOCAL OFFSET (e.g. \"...T17:00:00+03:00\"), NOT the \"Z\"-" +
+        "suffixed UTC format `freeBusy`/`kyivWallClockToUtc` use. `hasIdentityBasedCollision`'s " +
+        "`overlaps()` helper (lib/src/slots/subtract.ts) compares these RFC3339 timestamps with a " +
+        "plain STRING `<` operator, never parsing them to instants — a valid ordering ONLY when both " +
+        "operands share the same offset/format. Comparing a \"Z\"-format `ownRange` against an " +
+        "\"+03:00\"-format event silently produces the WRONG ordering whenever the local hour digits " +
+        "differ from the UTC hour digits (e.g. \"...T14:00:00.000Z\" vs \"...T17:00:00+03:00\", the " +
+        "SAME instant, string-compares as `14 < 17` in one direction but `17 !< 15` in the other), so " +
+        "`overlaps(ownRange, event)` can spuriously return `false` for a genuinely overlapping event — " +
+        "exactly what this run reproduced. FIX NEEDED: compare by INSTANT (`Date#getTime()`, as " +
+        "`isSameInstantRange` already does elsewhere in route.ts), not by string, in `overlaps()`/" +
+        "`hasIdentityBasedCollision`. NOT fixed by this task (verification-only; reported per " +
+        "instructions, not silently patched). ***",
+    );
+  } else if (conflictConfirmBody.status === "conflict") {
+    log(
+      "  LIVE-VERIFIED: the exact-overlap Confirm regression correctly returns {status:'conflict'} " +
+        "against the REAL DEMO calendar — commit 73b4aa7's identity-based busyEventsInRange fix " +
+        "holds up live (Google's freebusy.query still merges the two events into one interval; " +
+        "events.list/busyEventsInRange does not, and the identity exclusion by eventId is what " +
+        "tells A and B apart).",
     );
   }
-  // Cleanup this scenario's own booking's tentative event + the externally-added one
+  // Cleanup this scenario's own booking's tentative event (A) + the externally-added one (B).
   await rawDeleteEvent(conflictBookingSeed.eventId);
   untrackEvent(conflictBookingSeed.eventId);
   await rawDeleteEvent(conflictingEventRes.data.id);
@@ -671,12 +710,6 @@ try {
       "do it without leaving calendar cruft; otherwise note it's covered by the unit tests\" guidance.",
   );
 
-  if (additionalFindings.length > 0) {
-    log(
-      `\n(non-gating) ${additionalFindings.length} additional finding(s) beyond the required steps 1-5 — ` +
-        "see the REAL BUG FOUND note above. These do not affect the sentinel below.",
-    );
-  }
   log(failures.length === 0
     ? "\n=== G.3 SMOKE (autonomous subset) PASSED ==="
     : `\n=== G.3 SMOKE (autonomous subset) FAILED: ${failures.length} check(s): ${failures.join("; ")} ===`);
@@ -737,21 +770,43 @@ try {
 > are in this script's own header comment (\`scripts/qa/manual-smoke-booking-hitl.mjs\`) — summarized:
 > this is the AUTONOMOUS subset (no live Telegram chat); see the "HUMAN-REQUIRED" section below for
 > what still needs a human.
+
+## History: the Confirm exact-overlap double-booking bug (step 8)
+
+1. **REAL BUG FOUND (live)** — an earlier run of this script (commit 5fd1765) found that Google's
+   \`freebusy.query\` MERGES overlapping busy periods from distinct events into one interval, so a
+   distinct external event with the exact same \`[start,end)\` as a booking's own tentative hold was
+   silently mistaken for "just my own hold" — Confirm reported \`applied\` and would have double-booked
+   a real external event.
+2. **FIX ATTEMPTED (commit 73b4aa7)** — an identity-based collision re-check
+   (\`CalendarPort.busyEventsInRange\`, real \`events.list\`, excluding the booking's own
+   \`calendar_event_id\` by identity rather than by value) was added alongside the original value-based
+   \`freeBusy\` check.
+3. **LIVE-VERIFY RESULT (this run, step 8, PERMANENT/gating)**: ${
+    exactOverlapRegressionHeldLive === true
+      ? "**HOLDS UP** — Confirm correctly returned `{status:\"conflict\"}` for a distinct exact-overlap " +
+        "external event; the identity-based fix is LIVE-VERIFIED against the real DEMO calendar."
+      : exactOverlapRegressionHeldLive === false
+        ? "**STILL FAILING LIVE** — Confirm returned `{status:\"applied\"}` for a distinct exact-overlap " +
+          "external event; the fix does NOT hold up against the real DEMO calendar. ROOT CAUSE " +
+          "diagnosed this run: `busyEventsInRange`'s pass-through of Google's `events.list` response " +
+          "carries `start`/`end` in the calendar's LOCAL OFFSET (e.g. `...T17:00:00+03:00`), not the " +
+          "`Z`-suffixed UTC format `freeBusy`/`kyivWallClockToUtc` use; `hasIdentityBasedCollision`'s " +
+          "`overlaps()` helper (`lib/src/slots/subtract.ts`) compares these RFC3339 strings with a " +
+          "plain `<` operator instead of parsing them to instants, so it can return a spurious `false` " +
+          "for a genuinely overlapping event whenever the two representations' hour digits diverge — " +
+          "exactly what this run reproduced. See the transcript's own step 8 \"REGRESSION\" note below " +
+          "for the full diagnosis. NOT fixed by this verification pass (reported per instructions, not " +
+          "silently patched)."
+        : "not reached this run (the script aborted before step 8 — see the failure detail above)."
+  }
 ${
   failures.length === 0
     ? ""
     : `
-## Required-step (1-5) findings from this run
+## Required-step findings from this run
 
 ${failures.map((f, i) => `${i + 1}. **FAIL** — ${f}`).join("\n")}
-`
-}${
-  additionalFindings.length === 0
-    ? ""
-    : `
-## Additional findings (beyond the required steps 1-5, non-gating — see the transcript's "REAL BUG FOUND" note for detail)
-
-${additionalFindings.map((f, i) => `${i + 1}. **FAIL** — ${f}`).join("\n")}
 `
 }
 \`\`\`
