@@ -126,7 +126,7 @@ import type {
 } from "./model-port.ts";
 import { MODEL_CONFIG } from "./model-port.ts";
 import { TOOLS } from "./tools.ts";
-import { ANTHROPIC_UNAVAILABLE_APOLOGY } from "./apology.ts";
+import { ANTHROPIC_UNAVAILABLE_APOLOGY, QUESTION_LOGGING_UNAVAILABLE_APOLOGY } from "./apology.ts";
 import { buildSystemPrompt } from "./system-prompt.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
 // Reused rather than duplicated (review-gate finding #4): the exact
@@ -363,6 +363,22 @@ export interface LoopResult {
   toolCalls: ToolCallLogEntry[];
 }
 
+/** Review-gate finding (Fix 4): a marker error `applyToolUse`'s
+ *  `answer_faq`/`log_question` branches rethrow when their own
+ *  `ports.questions` call rejects — recognized by the shared catch in
+ *  `runIntakeTurn` to select `QUESTION_LOGGING_UNAVAILABLE_APOLOGY` instead
+ *  of the default `CALENDAR_UNAVAILABLE_APOLOGY`, without changing the
+ *  wording of any other dispatch-failure path (Calendar/booking-release
+ *  failures still fall through unchanged). */
+class QuestionLoggingFailure extends Error {
+  readonly cause: unknown;
+  constructor(cause: unknown) {
+    super("Kamerton: QuestionsPort failure while logging a question");
+    this.name = "QuestionLoggingFailure";
+    this.cause = cause;
+  }
+}
+
 /** Re-exported purely so tests can reference the exact config type this
  *  loop's `ModelPort.send()` calls are pinned to (tasks.md 4.4's final
  *  bullet) without importing `model-port.ts` twice under two names. */
@@ -455,7 +471,17 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
       // is the first) is returned unmutated, so the conversation resumes
       // exactly where it last stood, same "state preserved" guarantee as
       // the `ports.model.send()` failure path above.
-      return { reply: CALENDAR_UNAVAILABLE_APOLOGY, state: currentState, toolCalls };
+      //
+      // Review-gate finding (Fix 4): a `QuestionLoggingFailure` marker (a
+      // `ports.questions` rejection inside the `answer_faq`/`log_question`
+      // branches) gets its OWN question-appropriate apology — every other
+      // dispatch failure (Calendar/booking-release) keeps the existing
+      // wording, unchanged.
+      const reply =
+        error instanceof QuestionLoggingFailure
+          ? QUESTION_LOGGING_UNAVAILABLE_APOLOGY
+          : CALENDAR_UNAVAILABLE_APOLOGY;
+      return { reply, state: currentState, toolCalls };
     }
     currentState = applied.state;
     toolCalls.push(applied.logEntry);
@@ -531,8 +557,15 @@ function isTextBlock(block: ContentBlock): block is TextBlock {
  *  syntactically-valid-per-schema call from the real API always carries this
  *  field, but defense in depth costs nothing here. */
 function readQuestionInput(block: ToolUseBlock): string {
-  const input = block.input as { question?: unknown };
-  return typeof input.question === "string" ? input.question : "";
+  // Review-gate finding (Fix 5, MINOR): defensive guard — a `null`/
+  // `undefined`/non-object `input` (never expected from the real API, but
+  // cheap to guard) would otherwise throw reading `.question` off it.
+  const input = block.input;
+  if (typeof input !== "object" || input === null) {
+    return "";
+  }
+  const question = (input as { question?: unknown }).question;
+  return typeof question === "string" ? question : "";
 }
 
 function coerceAmendedAge(value: unknown): unknown {
@@ -687,12 +720,32 @@ async function applyToolUse(
   // `CALENDAR_UNAVAILABLE_APOLOGY` with state preserved — no new
   // error-handling code needed (design.md Decision 4's own flag, disposition
   // deferred to the I.1 review-gate stage).
+  // Review-gate finding (Fix 4, MAJOR/tone): the shared `applyToolUse`
+  // dispatch catch in `runIntakeTurn` returns `CALENDAR_UNAVAILABLE_APOLOGY`
+  // for ANY dispatch failure — right for a Calendar/booking-release failure,
+  // but wrong-toned for a `QuestionsPort` (DB-write) failure while logging an
+  // FAQ question, which has nothing to do with the calendar
+  // (BC-BRAND-01/BC-LANG-01 kind-tone: a lead who asked a question should
+  // never be told the SCHEDULE is broken). Each branch below wraps its own
+  // `ports.questions` call in its OWN try/catch and rethrows a
+  // `QuestionLoggingFailure` marker on rejection — the outer shared catch in
+  // `runIntakeTurn` recognizes this marker and swaps in the question-
+  // appropriate apology instead, while every other dispatch failure
+  // (Calendar/booking-release) keeps its existing, unchanged wording.
   if (block.name === "answer_faq") {
-    await ports.questions?.logAnsweredFromKb(readQuestionInput(block));
+    try {
+      await ports.questions?.logAnsweredFromKb(readQuestionInput(block));
+    } catch (error) {
+      throw new QuestionLoggingFailure(error);
+    }
     return { state, logEntry: { tool: block.name, input: block.input, outcome: "logged" } };
   }
   if (block.name === "log_question") {
-    await ports.questions?.logUnanswered(readQuestionInput(block));
+    try {
+      await ports.questions?.logUnanswered(readQuestionInput(block));
+    } catch (error) {
+      throw new QuestionLoggingFailure(error);
+    }
     return { state, logEntry: { tool: block.name, input: block.input, outcome: "logged" } };
   }
 

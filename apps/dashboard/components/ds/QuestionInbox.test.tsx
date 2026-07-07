@@ -43,6 +43,17 @@ function failedQuestion(id: number, text: string): FakeQuestionRow {
   };
 }
 
+function pendingAnsweredQuestion(id: number, text: string): FakeQuestionRow {
+  return {
+    id,
+    text,
+    status: "answered",
+    delivery_status: "pending",
+    admin_answer: "Так, є.",
+    answer_source: "unanswered",
+  };
+}
+
 function jsonResponse(
   body: unknown,
   ok = true,
@@ -116,6 +127,27 @@ describe("QuestionInbox (kb-learning tasks.md E.6, design.md Decision 2)", () =>
     expect(screen.queryByRole("button", { name: /надіслати|відповісти/i })).not.toBeInTheDocument();
     // Visually distinct: a failure-indicating message is present.
     expect(screen.getByText(/не вдалося|помилка доставки|не доставлено/i)).toBeInTheDocument();
+  });
+
+  // @trace FR-KB-04
+  it("renders an answered+pending row as a distinct 'sending…' state — NO answer form and NO retry button (review-gate Fix 2)", async () => {
+    const rows = [pendingAnsweredQuestion(7, "чи є знижка для двох дітей?")];
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(rows));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<QuestionInbox />);
+
+    await waitFor(() => {
+      expect(screen.getByText("чи є знижка для двох дітей?")).toBeInTheDocument();
+    });
+    // Never an editable answer form on an already-answered question, even
+    // while delivery is still pending.
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /надіслати|відповісти/i })).not.toBeInTheDocument();
+    // Never the failed-row's retry action either — delivery hasn't failed.
+    expect(screen.queryByRole("button", { name: /повторити|retry/i })).not.toBeInTheDocument();
+    // A distinct, non-color-only "sending" indicator is present instead.
+    expect(screen.getByText(/надсилається|надсилаємо|в черзі на доставку/i)).toBeInTheDocument();
   });
 
   // @trace FR-KB-03
@@ -209,6 +241,51 @@ describe("QuestionInbox (kb-learning tasks.md E.6, design.md Decision 2)", () =>
     });
     await waitFor(() => {
       expect(screen.getByText(/надіслано|повторно надіслано|доставлено|успішно/i)).toBeInTheDocument();
+    });
+  });
+
+  // @trace FR-KB-04
+  it("a successful retry triggers a fresh GET /api/questions refetch (design.md Decision 2 — review-gate Fix 3)", async () => {
+    const staleFailedRow = failedQuestion(22, "чи є знижка для двох дітей?");
+    // After a successful retry, the drain would eventually deliver it — the
+    // refetched inbox reflects that the row is no longer stuck failed (here,
+    // simply gone from the open-inbox response), proving a REAL refetch
+    // happened rather than only a locally-set message.
+    let questionsCallCount = 0;
+    const fetchMock = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+      if (url === "/api/questions") {
+        questionsCallCount += 1;
+        return Promise.resolve(jsonResponse(questionsCallCount === 1 ? [staleFailedRow] : []));
+      }
+      if (url === "/api/questions/22/retry" && options?.method === "POST") {
+        return Promise.resolve(jsonResponse({ status: "applied" }));
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<QuestionInbox />);
+    await waitFor(() => {
+      expect(screen.getByText("чи є знижка для двох дітей?")).toBeInTheDocument();
+    });
+    expect(questionsCallCount).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: /повторити|retry/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/questions/22/retry",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    // A refetch of the inbox fires AFTER the successful retry — not just a
+    // locally-set success message.
+    await waitFor(() => {
+      expect(questionsCallCount).toBe(2);
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("чи є знижка для двох дітей?")).not.toBeInTheDocument();
     });
   });
 });

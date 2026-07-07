@@ -11,7 +11,11 @@
 // inline answer form that POSTs `{answer}` to `/api/questions/:id`; an
 // `answered`+`delivery_status='failed'` row renders visually distinct (a
 // non-color-only failure indicator, per the S3/S4 a11y lesson) with a retry
-// action and NO answer form.
+// action and NO answer form. An `answered`+`delivery_status!=='delivered'`
+// row that has NOT yet failed (i.e. still `pending`) is likewise never given
+// an answer form — it shows a distinct "sending…" indicator instead, with no
+// retry action (review-gate Fix 2: an already-answered question must never
+// re-offer an editable answer form, delivered or not).
 
 import { useEffect, useState } from "react";
 import { Button } from "./Button.tsx";
@@ -113,7 +117,13 @@ function QuestionRowAnswerForm({
   );
 }
 
-function FailedRowRetry({ question }: { question: QuestionRow }) {
+function FailedRowRetry({
+  question,
+  onRetried,
+}: {
+  question: QuestionRow;
+  onRetried: () => void;
+}) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -125,6 +135,11 @@ function FailedRowRetry({ question }: { question: QuestionRow }) {
       const body = (await readJson(response)) as AnswerResponse | null;
       if (response.ok && body?.status === "applied") {
         setMessage(RETRY_APPLIED_MESSAGE);
+        // design.md Decision 2: self-fetch again after every mutating
+        // action — a successful retry must refresh the panel so a
+        // subsequently-delivered row leaves the "failed" state instead of
+        // staying stuck showing "failed" + retry (review-gate Fix 3).
+        onRetried();
       } else {
         setMessage(extractMessage(body, FALLBACK_RETRY_ERROR));
       }
@@ -154,6 +169,19 @@ function FailedRowRetry({ question }: { question: QuestionRow }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+// An already-answered question whose delivery hasn't failed (yet) — either
+// still queued or already delivered. Distinguishable from a failed row
+// WITHOUT relying on color alone (a leading glyph + solid border, mirroring
+// the failed row's own pattern), and — critically — never an answer form or
+// a retry button (review-gate Fix 2).
+function SendingRowIndicator() {
+  return (
+    <p className="text-sm font-medium text-text-secondary" role="status" aria-live="polite">
+      ⏳ Відповідь надсилається ліду…
+    </p>
   );
 }
 
@@ -206,7 +234,12 @@ export function QuestionInbox() {
   return (
     <ul className="flex flex-col gap-3">
       {questions.map((question) => {
-        const isFailed = question.status === "answered" && question.delivery_status === "failed";
+        const isAnswered = question.status === "answered";
+        const isFailed = isAnswered && question.delivery_status === "failed";
+        // Already answered but not (yet) failed — still `pending` or already
+        // `delivered`. Never re-offer an editable answer form on it
+        // (review-gate Fix 2).
+        const isSending = isAnswered && !isFailed;
         return (
           <li
             key={question.id}
@@ -221,7 +254,9 @@ export function QuestionInbox() {
           >
             <p className="text-sm font-medium text-text">{question.text}</p>
             {isFailed ? (
-              <FailedRowRetry question={question} />
+              <FailedRowRetry question={question} onRetried={loadQuestions} />
+            ) : isSending ? (
+              <SendingRowIndicator />
             ) : (
               <QuestionRowAnswerForm question={question} onAnswered={removeQuestion} />
             )}

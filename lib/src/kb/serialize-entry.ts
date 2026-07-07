@@ -64,6 +64,20 @@ function escapeHeadingLines(text: string): string {
     .join("\n");
 }
 
+/**
+ * Flattens a question to a single logical line before it is spliced into an
+ * ATX heading line. `entry.question` is the model's verbatim quote of the
+ * lead's free-text message (lead-controlled input) — it can contain
+ * embedded `\r`/`\n`, and a raw splice of a question whose own lines start
+ * with `#` would inject a SECOND heading into `knowledge/school.md`,
+ * splitting one entry into two (a KB-poisoning vector). A question is
+ * semantically one line, so any run of `\r`/`\n`/whitespace collapses to a
+ * single space, and leading/trailing whitespace is trimmed.
+ */
+function flattenQuestionToOneLine(question: string): string {
+  return question.replace(/\s+/g, " ").trim();
+}
+
 export function serializeKbEntry(entry: KbEntryInput): string {
-  return `\n## ${entry.question}\n\n${escapeHeadingLines(entry.answer)}\n`;
+  return `\n## ${flattenQuestionToOneLine(entry.question)}\n\n${escapeHeadingLines(entry.answer)}\n`;
 }

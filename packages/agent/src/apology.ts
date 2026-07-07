@@ -24,3 +24,17 @@
 // message").
 export const ANTHROPIC_UNAVAILABLE_APOLOGY: string =
   "Вибачте, зараз не вдається обробити ваше повідомлення. Спробуйте, будь ласка, написати ще раз за кілька хвилин — усе, що ви вже розповіли, нікуди не зникло, ми продовжимо з того самого місця.";
+
+// Review-gate finding (kb-learning slice, Fix 4/MAJOR-tone): `loop.ts`'s
+// shared `applyToolUse` dispatch catch used to return
+// `CALENDAR_UNAVAILABLE_APOLOGY` for ANY dispatch failure, including a
+// `QuestionsPort` (DB-write) failure while logging an FAQ question — telling
+// a lead who merely asked a question that "the schedule is broken", which
+// has nothing to do with what they did (BC-BRAND-01/BC-LANG-01 kind-tone).
+// This constant is the question-logging-appropriate apology instead: kind,
+// pressure-free, no exclamation, no tech jargon, and — like
+// `ANTHROPIC_UNAVAILABLE_APOLOGY` — makes clear nothing was lost (NFR-REL-01:
+// state preserved for resumption, the lead's message never silently
+// dropped).
+export const QUESTION_LOGGING_UNAVAILABLE_APOLOGY: string =
+  "Вибачте, зараз не вдається зберегти ваше запитання. Спробуйте, будь ласка, написати його ще раз за кілька хвилин — усе інше, про що ми вже говорили, нікуди не зникло.";

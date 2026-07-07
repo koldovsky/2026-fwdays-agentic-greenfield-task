@@ -289,76 +289,166 @@
     {
       "id": "FR-FAQ-01",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-FAQ-02",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
-        "packages/agent/src/system-prompt.test.ts"
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
       ],
       "recordings": []
     },
     {
       "id": "FR-KB-01",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/bot/src/pipeline.test.ts",
+        "packages/db/src/questions.test.ts",
+        "packages/db/src/questions.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "packages/db/src/schema.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-KB-02",
       "specs": [
         "openspec/specs/dashboard/spec.md",
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/db/src/questions.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-KB-03",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/serialize-entry.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "lib/src/kb/validate-answer.test.ts",
+        "packages/agent/src/kb-context.test.ts",
+        "packages/agent/src/kb-context.test.ts",
+        "packages/db/src/questions.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-KB-04",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/bot/src/question-drain.test.ts",
+        "packages/bot/src/question-drain.test.ts",
+        "packages/bot/src/question-drain.test.ts",
+        "packages/bot/src/question-drain.test.ts",
+        "packages/bot/src/question-drain.test.ts",
+        "packages/db/src/questions.test.ts",
+        "packages/db/src/questions.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts",
+        "tests/integration/kb-learning/full-flow.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-GUARD-02",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "packages/agent/src/system-prompt.test.ts",
+        "packages/agent/src/system-prompt.test.ts"
+      ],
       "recordings": []
     },
     {
       "id": "FR-GUARD-06",
       "specs": [
-        "openspec/specs/kb-learning/spec.md"
+        "openspec/specs/kb-learning/spec.md",
+        "openspec/changes/kb-learning/specs/kb-learning/spec.md"
       ],
       "planned": true,
       "tests": [
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts"
@@ -580,6 +670,10 @@
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
+        "packages/agent/src/tools.test.ts",
         "evals/cases/fr-guard-01.eval.ts"
       ],
       "recordings": []
@@ -624,30 +718,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-FAQ-01 has no test annotated \"@trace FR-FAQ-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-KB-01 has no test annotated \"@trace FR-KB-01\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-KB-02 has no test annotated \"@trace FR-KB-02\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-KB-03 has no test annotated \"@trace FR-KB-03\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-KB-04 has no test annotated \"@trace FR-KB-04\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-GUARD-02 has no test annotated \"@trace FR-GUARD-02\""
-    },
     {
       "check": "recording-evidence",
       "msg": "FR-INTAKE-01 is not referenced by any recording manifest under docs/qa/"
@@ -751,6 +821,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-GUARD-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"kb-learning\" is not archived"
     }
   ]
 }

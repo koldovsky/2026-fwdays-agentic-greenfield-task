@@ -29,6 +29,7 @@ import {
   type OfferedSlot,
 } from "@kamerton/lib/src/intake/state-machine.ts";
 import { CALENDAR_UNAVAILABLE_APOLOGY } from "@kamerton/lib/src/slots/propose.ts";
+import { QUESTION_LOGGING_UNAVAILABLE_APOLOGY } from "./apology.ts";
 import {
   CANCELLED_CLOSING_COPY,
   DEFAULT_ACK_COPY,
@@ -879,15 +880,17 @@ describe("runIntakeTurn", () => {
     });
 
     // @trace NFR-REL-01
-    it("a QuestionsPort rejection (answer_faq) is caught by the EXISTING applyToolUse try/catch — returns the shared apology, state preserved by reference", async () => {
-      // NOTE for the implementer (design.md Decision 4's own flag, tasks.md
-      // C.8/I.1): `applyToolUse`'s existing catch always returns
-      // `CALENDAR_UNAVAILABLE_APOLOGY` today — imprecise wording for a
-      // QuestionsPort/DB failure, but that IS current behaviour, so this
-      // test pins THAT constant. Whether this stays `CALENDAR_UNAVAILABLE_
-      // APOLOGY` or moves to a renamed/new constant is dispositioned at the
-      // I.1 review-gate stage — if renamed, update this assertion's
-      // imported constant to match, deliberately, not silently.
+    it("a QuestionsPort rejection (answer_faq) gets its OWN question-appropriate apology, NOT the calendar one — state preserved by reference", async () => {
+      // Deliberately retargeted per review-gate finding d (Fix 4, MAJOR/tone):
+      // `applyToolUse`'s shared catch used to return
+      // `CALENDAR_UNAVAILABLE_APOLOGY` for ANY dispatch failure, including a
+      // `QuestionsPort` (DB-write) failure while logging an FAQ question —
+      // wrongly telling a lead who merely asked a question that the SCHEDULE
+      // is broken (BC-BRAND-01/BC-LANG-01 kind-tone). This test now pins the
+      // dedicated `QUESTION_LOGGING_UNAVAILABLE_APOLOGY` constant instead —
+      // a deliberate behaviour change, not a silent edit — while the
+      // calendar path's own wording (asserted elsewhere in this file) stays
+      // unchanged.
       const state = initialIntakeState();
       const questions = new FakeQuestionsPort(new Error("DB unavailable (simulated)"));
       const model = new FakeModelPort([
@@ -897,8 +900,43 @@ describe("runIntakeTurn", () => {
 
       const result = await runIntakeTurn({ state, message: "Скільки коштує заняття?", ports });
 
-      expect(result.reply).toBe(CALENDAR_UNAVAILABLE_APOLOGY);
+      expect(result.reply).toBe(QUESTION_LOGGING_UNAVAILABLE_APOLOGY);
+      expect(result.reply).not.toBe(CALENDAR_UNAVAILABLE_APOLOGY);
       expect(result.state).toBe(state);
+    });
+
+    // @trace NFR-REL-01
+    it("a QuestionsPort rejection (log_question) also gets the question-appropriate apology, state preserved by reference", async () => {
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort(new Error("DB unavailable (simulated)"));
+      const model = new FakeModelPort([
+        toolUseResponse(
+          "log_question",
+          { question: "Чи є знижка для двох дітей?" },
+          { text: "Уточню це в адміністраторки і повернуся з відповіддю." },
+        ),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "Чи є знижка для двох дітей?", ports });
+
+      expect(result.reply).toBe(QUESTION_LOGGING_UNAVAILABLE_APOLOGY);
+      expect(result.state).toBe(state);
+    });
+
+    // @trace NFR-REL-01
+    it("a log_question tool-use call with a null input never throws — logs an empty question string (review-gate Fix 5, defensive guard)", async () => {
+      const state = initialIntakeState();
+      const questions = new FakeQuestionsPort();
+      const model = new FakeModelPort([
+        toolUseResponse("log_question", null as unknown as Record<string, unknown>),
+      ]);
+      const ports = makePorts(model, { questions });
+
+      const result = await runIntakeTurn({ state, message: "???", ports });
+
+      expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "log_question", outcome: "logged" }));
+      expect(questions.unanswered).toEqual([""]);
     });
   });
 });
