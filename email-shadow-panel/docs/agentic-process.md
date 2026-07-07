@@ -339,8 +339,8 @@ Selected tools for Phases 0 and 1:
   - `tests/phase3/*`
 - Principal implementation decisions:
   - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
-  - preserved the TanStack Start + Vite deployment path without adding `vercel.json` or a new adapter layer;
-  - documented the Vercel Hobby footprint as five API function entries plus one SSR entry;
+  - preserved the TanStack Start app while adding the officially supported Nitro Vite output layer, without adding `vercel.json`;
+  - documented the local source footprint as five API function entries plus one SSR entry, while keeping the deployed Vercel function count provisional until human Preview verification;
   - created a bounded, opt-in smoke verifier for Preview only;
   - kept the Phase 0 probe preview-only and production-blocked;
   - added offline deployment-readiness checks for configuration, docs, and sanitized artifacts.
@@ -357,6 +357,8 @@ Selected tools for Phases 0 and 1:
   - `npm run verify:phase4`: FAIL for the same managed-environment build limitation after all offline deterministic checks had already passed
 - Environment-specific limitations:
   - no Vercel import, Preview deployment, Upstash provisioning, live Emailnator request, or live smoke verification was attempted by Codex;
+  - live evidence later showed the first attempted deployment was accidentally classified as Production, returned a root 404, and failed the health-only smoke size bound, so the previously assumed no-Nitro deployment shape was corrected to use Nitro Vite output;
+  - the first post-build offline verifier run exposed a stale pre-Nitro client-output path, so the verifier was corrected to inspect `.output/public` for client assets while still asserting the separate Nitro server outputs;
   - the managed Windows sandbox still blocks the native Tailwind/Vite build step, so the human should treat that as an environment limitation rather than an implementation regression;
   - the human still owns cloud setup, deployment, and live-provider checks.
 - Commit behavior:

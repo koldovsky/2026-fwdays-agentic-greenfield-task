@@ -15,7 +15,7 @@ The GitHub repository contains the app in that subdirectory, so the root must no
 The repository currently uses:
 
 - TanStack Start for SSR
-- Vite for client and server builds
+- Vite plus the Nitro Vite plugin to produce Vercel-compatible SSR output
 - five explicit `api/*` route files for Vercel Node.js Functions
 - one TanStack Start server entry at `src/server.ts`
 
@@ -23,9 +23,9 @@ Expected deployment entrypoints:
 
 - `5` API function entries from `api/`
 - `1` SSR server entry from the TanStack Start build
-- `6` total deployment entrypoints
+- `6` local source entrypoints in total
 
-This is comfortably below the Vercel Hobby function limit.
+The local footprint is comfortably below the Vercel Hobby function limit, but the deployed Vercel function count remains provisional until a human Preview deployment confirms it.
 
 ## Vercel Import Settings
 
@@ -35,7 +35,7 @@ When importing the GitHub repository into Vercel, use these settings:
 - Build Command: `npm run build`
 - Install Command: leave the default, or use Vercel's default npm install behavior
 - Output Directory: do not invent a custom value; keep the framework-detected default unless Vercel explicitly requires a field value
-- Framework Preset: keep the framework preset that Vercel auto-detects for this TanStack Start/Vite project; do not add a custom adapter or `vercel.json`
+- Framework Preset: keep the framework preset that Vercel auto-detects for this TanStack Start/Vite project; the Nitro plugin supplies the Vercel-compatible SSR output. Do not add a custom adapter or `vercel.json`
 
 After import, inspect the detected Functions list and confirm the expected `6`-entry footprint.
 

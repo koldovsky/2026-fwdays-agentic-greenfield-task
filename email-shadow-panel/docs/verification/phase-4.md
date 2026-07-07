@@ -12,7 +12,7 @@ Prepare the repository for safe Preview and Production deployment, then verify t
 
 The offline readiness pass implemented the following:
 
-- preserved the existing TanStack Start/Vite build path
+- added the Nitro Vite integration required for Vercel-compatible TanStack Start SSR output
 - kept the explicit `api/*` route surface intact
 - documented the environment matrix from the actual config loaders and `.env.example`
 - kept the Phase 0 probe preview-only and disabled by default
@@ -65,6 +65,12 @@ Codex completed the following offline deterministic checks in the local workspac
 The local `npm run build` and `npm run verify:phase4` commands failed in this Windows-managed sandbox because Vite could not load the native `@tailwindcss/oxide-win32-x64-msvc` binding and hit `spawn EPERM` while resolving dependencies. That limitation was recorded separately and not treated as a product defect.
 
 The phase remains `PHASE 4 DEPLOYMENT READINESS: PENDING HUMAN CLOUD SETUP` until the human completes Vercel, Upstash, Preview, and Production checks.
+
+## Deployment Correction
+
+The first live deployment was accidentally classified as Production, returned `404: NOT_FOUND` at the root, and the health-only smoke response exceeded 65,536 bytes. No inbox was generated and no live Emailnator request occurred. That live evidence disproved the earlier no-Nitro assumption, so the repository now includes the Nitro Vite integration that produces the deployable SSR output. The local source footprint remains five explicit API entries plus one SSR entry, but the deployed Vercel function count is still unverified until a human Preview deployment is inspected in Vercel.
+
+The first post-build offline verifier run exposed a stale pre-Nitro client-output path; the verifier was corrected to inspect `.output/public` as the Nitro client/public root while keeping `.output/server/index.mjs` and `.output/nitro.json` as separate server-output assertions.
 ## Namespace Correction
 
 Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`. When both environments use the same Upstash database, they must not share a namespace. Changing the namespace makes existing records unreachable under the new namespace without deleting them.

@@ -14,6 +14,8 @@ import {
 import {
   assertDeploymentSurface,
   assertEnvExampleMatchesCode,
+  assertNitroDependencyLocked,
+  assertNitroOutputSurface,
   assertSmokeScriptIsNotAutoWired,
   assertViteConfigParses,
   parseEnvExample,
@@ -51,6 +53,7 @@ function createRequest(url: string, init?: RequestInit): Request {
 
 test("deployment config parses the documented safe env examples and retains the Vercel footprint", () => {
   assertViteConfigParses();
+  assertNitroDependencyLocked();
   assertEnvExampleMatchesCode();
 
   const sessionKey = Buffer.alloc(32, 7).toString("hex");
@@ -79,6 +82,7 @@ test("deployment config parses the documented safe env examples and retains the 
     PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS: "2592000",
   });
   const footprint = assertDeploymentSurface();
+  assertNitroOutputSurface();
 
   assert.equal(sessionCore.sessionTtlMs, 900_000);
   assert.equal(upstash.namespace, "email-shadow-panel");
@@ -159,6 +163,43 @@ test("deployment documentation and scripts stay placeholder-only and keep the sm
   assert.equal(
     env.get("SESSION_ENCRYPTION_KEY"),
     "replace-with-a-32-byte-base64url-or-64-hex-session-encryption-key",
+  );
+});
+
+test("deployment docs describe the Nitro-backed SSR output and provisional function count", () => {
+  const deploymentDocs = readFileSync(
+    resolve(process.cwd(), "docs/runbooks/deployment.md"),
+    "utf8",
+  );
+  const phase4VerificationDocs = readFileSync(
+    resolve(process.cwd(), "docs/verification/phase-4.md"),
+    "utf8",
+  );
+
+  assert.match(deploymentDocs, /Nitro Vite plugin to produce Vercel-compatible SSR output/u);
+  assert.match(deploymentDocs, /deployed Vercel function count remains provisional/u);
+  assert.match(phase4VerificationDocs, /Deployment Correction/u);
+  assert.match(phase4VerificationDocs, /404: NOT_FOUND/u);
+});
+
+test("Phase 4 verifier targets Nitro public output and keeps the server boundary separate", () => {
+  const verifyPhase4Source = readFileSync(
+    resolve(process.cwd(), "scripts/verify-phase4.ts"),
+    "utf8",
+  );
+
+  assert.ok(
+    verifyPhase4Source.includes('const clientBundleRoot = resolve(PROJECT_ROOT, ".output/public")'),
+  );
+  assert.ok(verifyPhase4Source.includes("assertNitroOutputSurface()"));
+  assert.ok(verifyPhase4Source.includes("assertClientBundleFreeOfServerOnlyModules()"));
+  assert.ok(verifyPhase4Source.includes("The Nitro public output is missing."));
+  assert.ok(verifyPhase4Source.includes("The Nitro server entry is missing."));
+  assert.ok(!verifyPhase4Source.includes("dist/client"));
+  assert.ok(
+    !verifyPhase4Source.includes(
+      'const clientBundleRoot = resolve(PROJECT_ROOT, ".output/server")',
+    ),
   );
 });
 

@@ -36,7 +36,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## In Scope
 
-- verify the existing TanStack Start and Vite deployment shape for Vercel Hobby
+- verify the TanStack Start, Vite, and Nitro deployment shape for Vercel Hobby
 - keep the app rooted at `email-shadow-panel`
 - preserve the existing `api/*` route behavior and the TanStack Start SSR entry
 - document the environment matrix from the actual config loaders and `.env.example`
@@ -59,8 +59,8 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## Implementation Notes
 
-- The repository already builds as a TanStack Start/Vite app with a separate `src/server.ts` SSR entry and five explicit `api/*` route files.
-- The expected deployment footprint is `5` explicit API function entries plus `1` SSR server entry, for `6` total deployment entrypoints.
+- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, and five explicit `api/*` route files.
+- The local source footprint is `5` explicit API function entries plus `1` SSR server entry, for `6` total entrypoints; the actual deployed Vercel function count remains provisional until human Preview verification.
 - The Phase 0 probe remains preview-only, disabled by default, and blocked in Production.
 - The health route stays minimal and no-store.
 - The smoke verifier is opt-in only and never part of `npm test` or deterministic verification.

@@ -39,12 +39,24 @@ export const PHASE4_SECRET_PATTERNS: ReadonlyArray<{ name: string; pattern: RegE
 export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
   { name: "server session module path", pattern: /server\/(?:api|providers|session)\//i },
   { name: "server module import path", pattern: /\.server\.(?:t|j)sx?/i },
+  {
+    name: "api route path",
+    pattern:
+      /(?:^|\/)api\/(?:_probe\/emailnator|health|inboxes(?:\/messages(?:\/\[messageReference\])?)?)\.(?:t|j)sx?/i,
+  },
   { name: "phase 0 probe env", pattern: /PHASE0_(?:SESSION_KEY|PROBE_TOKEN|CAPSULE)/i },
   { name: "upstash env", pattern: /UPSTASH_REDIS_REST_(?:URL|TOKEN)/i },
   { name: "visitor hash env", pattern: /VISITOR_HASH_KEY/i },
   { name: "session encryption env", pattern: /SESSION_ENCRYPTION_KEY/i },
 ];
 
+function isClientFacingAsset(filePath: string): boolean {
+  return /\.(?:js|mjs|cjs|css|html)$/i.test(filePath);
+}
+
+function isClientJavaScriptAsset(filePath: string): boolean {
+  return /\.(?:js|mjs|cjs)$/i.test(filePath);
+}
 const PROJECT_ROOT = process.cwd();
 
 function walkFiles(entryPath: string): string[] {
@@ -198,24 +210,50 @@ export function assertDeploymentSurface(): {
 }
 export function assertViteConfigParses(): void {
   const viteConfigText = readTextFile("vite.config.ts");
+  assert.match(viteConfigText, /import\s+\{\s*nitro\s*\}\s+from\s+["']nitro\/vite["'];/u);
   assert.match(viteConfigText, /tanstackStart\(\{/u);
   assert.match(viteConfigText, /server:\s*\{\s*entry:\s*"server"\s*\}/u);
+  assert.match(viteConfigText, /nitro\(\)/u);
+  assert.ok(
+    viteConfigText.indexOf("tanstackStart({") < viteConfigText.indexOf("nitro()"),
+    "TanStack Start should configure before Nitro.",
+  );
+  assert.ok(
+    viteConfigText.indexOf("nitro()") < viteConfigText.indexOf("react()"),
+    "Nitro should configure before React so the SSR build remains wrapped correctly.",
+  );
+}
+
+export function assertNitroOutputSurface(): void {
+  const nitroRoot = resolve(PROJECT_ROOT, ".output");
+  const nitroPublicRoot = resolve(nitroRoot, "public");
+  const nitroServerEntry = resolve(nitroRoot, "server/index.mjs");
+  const nitroManifest = resolve(nitroRoot, "nitro.json");
+
+  assert.ok(existsSync(nitroRoot), "The Nitro output directory is missing.");
+  assert.ok(existsSync(nitroPublicRoot), "The Nitro public output directory is missing.");
+  assert.ok(existsSync(nitroServerEntry), "The Nitro server entry is missing.");
+  assert.ok(existsSync(nitroManifest), "The Nitro manifest is missing.");
+  assert.ok(walkFiles(nitroPublicRoot).length > 0, "The Nitro public output is empty.");
 }
 
 export function assertClientBundleFreeOfServerOnlyModules(): void {
-  const clientBundleRoot = resolve(PROJECT_ROOT, "dist/client/assets");
-  assert.ok(existsSync(clientBundleRoot), "The client build output is missing.");
+  const clientBundleRoot = resolve(PROJECT_ROOT, ".output/public");
+  assert.ok(existsSync(clientBundleRoot), "The Nitro public output is missing.");
 
-  for (const filePath of walkFiles(clientBundleRoot)) {
-    if (!filePath.endsWith(".js")) {
-      continue;
-    }
+  const clientAssets = walkFiles(clientBundleRoot).filter(isClientFacingAsset);
+  assert.ok(clientAssets.length > 0, "The Nitro public output is empty.");
+  assert.ok(
+    clientAssets.some(isClientJavaScriptAsset),
+    "The Nitro public output does not contain any generated client JavaScript assets.",
+  );
 
+  for (const filePath of clientAssets) {
     const text = readFileSync(filePath, "utf8");
     for (const { name, pattern } of PHASE4_CLIENT_BUNDLE_PATTERNS) {
       assert.ok(
         !pattern.test(text),
-        `Client bundle contains a server-only pattern in ${filePath}: ${name}`,
+        `Nitro public output contains a server-only pattern in ${filePath}: ${name}`,
       );
     }
   }
@@ -244,9 +282,23 @@ export function assertSmokeScriptIsNotAutoWired(): void {
   );
 }
 
+export function assertNitroDependencyLocked(): void {
+  const packageJson = JSON.parse(readTextFile("package.json")) as {
+    devDependencies?: Record<string, string>;
+  };
+  const lockfile = JSON.parse(readTextFile("package-lock.json")) as {
+    packages?: Record<string, { version?: string; devDependencies?: Record<string, string> }>;
+  };
+
+  assert.equal(packageJson.devDependencies?.nitro, "3.0.260603-beta");
+  assert.equal(lockfile.packages?.[""]?.devDependencies?.nitro, "3.0.260603-beta");
+  assert.equal(lockfile.packages?.["node_modules/nitro"]?.version, "3.0.260603-beta");
+}
+
 export function runPhase4ReadinessChecks(): void {
   assertRequiredFilesPresent();
   assertViteConfigParses();
+  assertNitroDependencyLocked();
   assertEnvExampleMatchesCode();
   const footprint = assertDeploymentSurface();
   assert.equal(
@@ -254,11 +306,12 @@ export function runPhase4ReadinessChecks(): void {
     6,
     "The deployment footprint should stay under the Vercel Hobby function limit.",
   );
+  assertNitroOutputSurface();
   assertDeploymentDocsAreSanitized();
   assertSmokeScriptIsNotAutoWired();
   assertNoSensitiveText(["docs", "scripts", "tests/phase4", ".env.example"]);
   console.log(
-    `Phase 4 readiness checks passed. Expected deployment footprint: ${footprint.apiEntryCount} API entries + 1 SSR entry = ${footprint.expectedFunctionEntries}.`,
+    `Phase 4 readiness checks passed. Expected deployment footprint: ${footprint.apiEntryCount} API entries + 1 SSR entry = ${footprint.expectedFunctionEntries}. The deployed Vercel function count remains provisional until human Preview verification.`,
   );
 }
 

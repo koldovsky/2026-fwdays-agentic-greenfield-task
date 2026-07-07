@@ -6,11 +6,12 @@ Accepted baseline with Phase 3 frontend integration implemented locally
 
 ## System Context
 
-Email Shadow Panel uses the existing browser frontend, Vercel Node.js Functions under `api/`, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
+Email Shadow Panel uses the existing browser frontend, explicit Vercel `api/*` Node.js Functions, a Nitro-backed TanStack Start SSR runtime, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
 
 ```mermaid
 flowchart LR
-  Browser["Browser React app"] --> API["Vercel Node.js Functions"]
+  Browser["Browser React app"] --> SSR["Nitro-backed TanStack Start SSR"]
+  Browser["Browser React app"] --> API["Explicit Vercel API functions"]
   API --> Transport["Public API transport and abuse controls"]
   Transport --> Domain["Session service and contracts"]
   Domain --> Provider["InboxProvider abstraction"]
@@ -135,7 +136,7 @@ The server therefore:
 
 ## Deployment Topology
 
-The active target remains Vercel Hobby with Node.js Functions. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
+The active target remains Vercel Hobby with explicit `api/*` functions plus a Nitro-generated SSR runtime for the TanStack Start root application. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
 
 ## Failure Modes
 

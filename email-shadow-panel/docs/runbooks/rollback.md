@@ -28,7 +28,7 @@ If code rollback is needed:
 1. identify the last known-good Vercel deployment
 2. use Vercel's redeploy or promote flow for that deployment
 3. confirm the deployment uses the same environment-variable scope that the code expects
-4. confirm the TanStack Start SSR entry and `api/*` routes still resolve as expected
+4. confirm the current Nitro-backed TanStack Start SSR entry and the explicit `api/*` routes still resolve as expected
 
 ## Encryption And Schema Compatibility
 
