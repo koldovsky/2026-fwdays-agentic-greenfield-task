@@ -11,4 +11,8 @@
     <PackageReference Include="SkiaSharp" Version="4.148.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="TrafficSignScanner.Core.Tests" />
+  </ItemGroup>
+
 </Project>

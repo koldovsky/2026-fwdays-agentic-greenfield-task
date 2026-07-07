@@ -3,9 +3,7 @@
 ## Purpose
 
 Define deterministic image preprocessing before ONNX inference.
-
 ## Requirements
-
 ### Requirement: Center Crop Source Image
 The detector SHALL crop the source image to the largest centered square before resizing. Refs: `FR-PREPROC-01`.
 
@@ -43,3 +41,13 @@ The detector SHALL create an `image_tensor` input in `float32[1,3,320,320]` NCHW
 - **WHEN** preprocessing writes that pixel into the tensor
 - **THEN** the tensor contains `255.0`, `128.0`, and `0.0`
 - **AND** no channel value is divided by `255`
+
+### Requirement: Expose Preprocessing Metadata
+The Core preprocessing pipeline SHALL expose crop rectangle and output dimensions needed by later overlay and inference slices. Refs: `FR-PREPROC-01`, `FR-PREPROC-02`.
+
+#### Scenario: Preprocessing result includes crop metadata
+- **GIVEN** a non-square source image
+- **WHEN** Core preprocessing prepares model input
+- **THEN** the result includes the centered crop rectangle in source coordinates
+- **AND** the resized output dimensions are `320x320`
+
