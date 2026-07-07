@@ -162,6 +162,9 @@ function portWithFailingDelete(error: unknown): CalendarPort {
       throw new Error("portWithFailingDelete: upgradeToConfirmed not used by this test");
     },
     deleteEvent: () => Promise.reject(error),
+    busyEventsInRange: () => {
+      throw new Error("portWithFailingDelete: busyEventsInRange not used by this test");
+    },
   };
 }
 

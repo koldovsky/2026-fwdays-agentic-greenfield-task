@@ -56,6 +56,31 @@ export interface CalendarPort {
   /** Removes an event entirely — used on hold-cancel/decline (FR-SLOT-02)
    *  and by S4's decline path. */
   deleteEvent(eventId: string): Promise<void>;
+
+  /**
+   * Distinct calendar EVENTS overlapping `range`, each carrying its own
+   * identity (`eventId`) — Google `events.list`-shaped. Unlike `freeBusy`,
+   * which reports busy TIME RANGES and (per real Google Calendar
+   * `freebusy.query` semantics — confirmed empirically, see
+   * `docs/qa/booking-hitl-manual-smoke.md`'s "REAL BUG FOUND" note) MERGES
+   * overlapping busy periods from DIFFERENT events on the same calendar into
+   * a single interval, `busyEventsInRange` never merges: every event stays
+   * its own entry, identifiable by `eventId`, no matter how many OTHER
+   * events exactly or partially overlap it.
+   *
+   * This is the fix for the live-found Confirm double-booking bug: a fresh
+   * collision re-check (`booking-hitl` FR-HITL-04) that excludes the
+   * booking's own `calendar_event_id` BY IDENTITY (rather than `freeBusy`'s
+   * merged, identity-less interval list filtered by an instant-equality
+   * self-filter) can never mistake "my own hold merged with a genuinely
+   * distinct external event" for "just my own hold" — any OTHER eventId
+   * left after excluding the booking's own is a real collision, regardless
+   * of whether its range happens to be byte-for-byte identical to the
+   * booking's own range.
+   */
+  busyEventsInRange(
+    range: { start: string; end: string },
+  ): Promise<{ eventId: string; start: string; end: string }[]>;
 }
 
 /**

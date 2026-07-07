@@ -221,4 +221,23 @@ export class GoogleCalendarPort implements CalendarPort {
       throw mapCalendarError(error, "deleteEvent");
     }
   }
+
+  // NOT YET IMPLEMENTED — GREEN-phase stub only, so this class keeps
+  // compiling against `CalendarPort`'s additive `busyEventsInRange` member
+  // (see that interface's own doc comment: the fix for the live-found
+  // Confirm double-booking bug, `docs/qa/booking-hitl-manual-smoke.md`'s
+  // "REAL BUG FOUND" note). The GREEN implementer wires this to Google
+  // `calendar.events.list({ calendarId, timeMin: range.start, timeMax:
+  // range.end, singleEvents: true })`, mapping each returned event to
+  // `{ eventId: event.id, start: event.start.dateTime, end:
+  // event.end.dateTime }` (and the same `mapCalendarError` taxonomy as every
+  // other method above) — deliberately NOT written here (test-first: this
+  // pass only pins the contract, RED).
+  async busyEventsInRange(
+    range: { start: string; end: string },
+  ): Promise<{ eventId: string; start: string; end: string }[]> {
+    throw new CalendarApiError(
+      `busyEventsInRange: not yet implemented on GoogleCalendarPort (requested range ${range.start}..${range.end}) — GREEN-phase implementer wires Google events.list here`,
+    );
+  }
 }

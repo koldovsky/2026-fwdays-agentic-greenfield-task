@@ -417,6 +417,132 @@ describe("POST /api/decisions/:requestId (booking-hitl tasks.md §D, design.md D
   });
 
   // ---------------------------------------------------------------------
+  // Live-found bug (G.3 manual smoke against the REAL DEMO calendar, see
+  // docs/qa/booking-hitl-manual-smoke.md's "REAL BUG FOUND" note): Confirm's
+  // collision re-check (`route.ts`'s `hasExternalCollision`/
+  // `removeOwnInterval`/`isSameInstantRange`) assumes a fresh `freeBusy`
+  // snapshot carries ONE interval per event. Real Google `freebusy.query`
+  // does not — it MERGES overlapping busy periods from DIFFERENT events on
+  // the same calendar into a single interval. When an external event (the
+  // teacher manually double-booking the identical appointment slot in the
+  // Calendar UI) has the EXACT SAME [start, end) as the booking's own
+  // tentative hold, the merged snapshot contains only ONE interval, which
+  // the self-filter strips as "just my own hold" — Confirm silently
+  // double-books instead of reporting a conflict.
+  //
+  // `FakeCalendarPort.freeBusy` (the ordinary one used by D.2/D.3 above)
+  // reports one interval PER EVENT, never merged — by design (unaffected by
+  // this bug reproduction, D.2/D.3 stay green unchanged). `MergingCalendarPort`
+  // below is a LOCAL, test-only subclass (same idiom as this file's own
+  // "Review-gate finding #1" `DifferentTimestampFormatCalendar" above) that
+  // overrides ONLY `freeBusy` to coalesce overlapping busy intervals — i.e.
+  // it faithfully re-creates the real Google merge behaviour for THIS one
+  // reproduction, without touching the shared `FakeCalendarPort.freeBusy`
+  // every other test in this file relies on.
+  //
+  // Target contract this test also pins for the GREEN implementer:
+  // `CalendarPort.busyEventsInRange` (additive interface member, see that
+  // interface's own doc comment) — a distinct, identity-based, NEVER-merged
+  // events list the fix should use instead of `freeBusy` for Confirm's
+  // collision re-check, excluding the booking's own `calendar_event_id` by
+  // identity rather than by an instant-equality self-filter over a merged,
+  // identity-less interval list.
+  // ---------------------------------------------------------------------
+  describe("Confirm double-booking on an exact-overlap external event (Regression: live G.3 manual smoke — docs/qa/booking-hitl-manual-smoke.md 'REAL BUG FOUND'; @trace FR-HITL-04)", () => {
+    /** Sorts by instant, then coalesces overlapping/touching intervals into
+     *  one — the same merge real Google `freebusy.query` performs across
+     *  DIFFERENT events on one calendar (confirmed empirically against the
+     *  real DEMO calendar, see this describe block's own header comment). */
+    function mergeOverlappingBusy(
+      intervals: { start: string; end: string }[],
+    ): { start: string; end: string }[] {
+      const sorted = [...intervals].sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+      );
+      const merged: { start: string; end: string }[] = [];
+      for (const interval of sorted) {
+        const last = merged[merged.length - 1];
+        if (last !== undefined && new Date(interval.start).getTime() <= new Date(last.end).getTime()) {
+          if (new Date(interval.end).getTime() > new Date(last.end).getTime()) {
+            last.end = interval.end;
+          }
+        } else {
+          merged.push({ ...interval });
+        }
+      }
+      return merged;
+    }
+
+    class MergingCalendarPort extends FakeCalendarPort {
+      override async freeBusy(range: { start: string; end: string }) {
+        const busy = await super.freeBusy(range);
+        return mergeOverlappingBusy(busy);
+      }
+    }
+
+    it("responds {status:'conflict'} — not 'applied' — when an external event exactly overlaps the booking's own tentative hold under a freeBusy snapshot that merges overlapping busy periods (real Google freebusy.query semantics); booking stays pending, no confirmed event, no notification", async () => {
+      const mergingCalendar = new MergingCalendarPort();
+      setCalendarPortForTesting(mergingCalendar);
+
+      const slot = { start: "2026-07-08T15:00", end: "2026-07-08T16:00" }; // Wednesday
+      const ownRangeUtc = { start: kyivWallClockToUtc(slot.start), end: kyivWallClockToUtc(slot.end) };
+      const { eventId: ownEventId } = await mergingCalendar.createTentative(
+        ownRangeUtc,
+        "Пробне заняття — лід",
+      );
+
+      // The teacher manually creates a DISTINCT external event in the
+      // Google Calendar UI, at the EXACT same [start, end) as the booking's
+      // own tentative hold — the exact live-found scenario.
+      const externalEventId = mergingCalendar.addExternalEvent(ownRangeUtc);
+      expect(externalEventId).not.toBe(ownEventId);
+
+      // Sanity: `busyEventsInRange` (the target, identity-based contract)
+      // sees TWO distinct events at this exact range — own + external —
+      // never merged.
+      const distinctEvents = await mergingCalendar.busyEventsInRange(ownRangeUtc);
+      expect(distinctEvents.map((e) => e.eventId).sort()).toEqual(
+        [ownEventId, externalEventId].sort(),
+      );
+
+      // Sanity: `MergingCalendarPort.freeBusy`, mirroring real Google's
+      // freebusy.query, merges the two exactly-overlapping busy periods from
+      // the two distinct events into ONE interval — the reproduction's root
+      // cause.
+      const mergedBusy = await mergingCalendar.freeBusy(ownRangeUtc);
+      expect(mergedBusy).toHaveLength(1);
+
+      const db = openDatabase(dbPath);
+      const lead = insertLead(db, { telegramUserId: "tg-user-dbl-book", telegramChatId: "tg-chat-dbl-book" });
+      const request = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-dbl-book" });
+      updateRequestState(db, request.id, "awaiting_admin");
+      const booking = insertBooking(db, {
+        slotStart: slot.start,
+        slotEnd: slot.end,
+        status: "pending",
+        calendarEventId: ownEventId,
+        requestId: request.id,
+      });
+      db.close();
+
+      const response = await postDecision(request.id, { action: "confirm" });
+
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      // THE BUG (today's freeBusy-based self-filter): the single merged
+      // own+external interval gets stripped as "just my own hold", so
+      // Confirm reports {status:"applied"} and silently double-books the
+      // external event. The CORRECT, pinned outcome is {status:"conflict"}
+      // — the booking must stay pending, nothing confirmed, nothing sent.
+      expect(body.status).toBe("conflict");
+
+      expect(readBooking(booking.id).status).toBe("pending");
+      expect(mergingCalendar.getEvent(ownEventId)?.status).toBe("tentative");
+      expect(readNotifications(booking.id)).toHaveLength(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------
   // D.4 — Confirm calendar failure
   // ---------------------------------------------------------------------
   describe("D.4 Confirm calendar failure (@trace NFR-REL-01)", () => {

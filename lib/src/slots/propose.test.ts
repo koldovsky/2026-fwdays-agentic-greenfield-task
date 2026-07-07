@@ -76,6 +76,12 @@ class FailingCalendarPort implements CalendarPort {
     return this.inner.deleteEvent(eventId);
   }
 
+  async busyEventsInRange(
+    range: { start: string; end: string },
+  ): Promise<{ eventId: string; start: string; end: string }[]> {
+    return this.inner.busyEventsInRange(range);
+  }
+
   /** Test-only helper mirroring FakeCalendarPort's own — used to assert "no
    *  orphan event was created" through the wrapper. */
   eventCount(): number {

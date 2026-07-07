@@ -37,6 +37,7 @@ interface FakeEvent {
 export class FakeCalendarPort implements CalendarPort {
   private manualBusy: BusyInterval[];
   private events = new Map<string, FakeEvent>();
+  private externalEvents = new Map<string, BusyInterval>();
   private nextId = 1;
 
   constructor(initialBusy: BusyInterval[] = []) {
@@ -49,6 +50,24 @@ export class FakeCalendarPort implements CalendarPort {
    *  the `CalendarPort` interface. */
   addManualBusy(interval: BusyInterval): void {
     this.manualBusy.push(interval);
+  }
+
+  /** Test-only helper: seed a distinct EXTERNAL calendar event (e.g. the
+   *  teacher manually creating an appointment in the Google Calendar UI)
+   *  with its own identity, at `range` — used to reproduce the live-found
+   *  Confirm double-booking bug (`docs/qa/booking-hitl-manual-smoke.md`'s
+   *  "REAL BUG FOUND" note), where an external event exactly overlaps a
+   *  booking's own tentative hold. Distinct from `addManualBusy` (an
+   *  identity-less pre-existing busy interval, not a discrete event):
+   *  `busyEventsInRange` always reports this as its OWN entry, keyed by
+   *  `eventId`, regardless of any other event's range — unlike a real
+   *  `freeBusy` snapshot, whose merged busy-time reporting can make two
+   *  exactly-overlapping distinct events indistinguishable. Not part of the
+   *  `CalendarPort` interface. Returns the (given or generated) `eventId`. */
+  addExternalEvent(range: { start: string; end: string }, eventId?: string): string {
+    const id = eventId ?? `fake-external-${this.nextId++}`;
+    this.externalEvents.set(id, { start: range.start, end: range.end });
+    return id;
   }
 
   /** Test-only helper: how many tentative/confirmed events currently exist
@@ -67,9 +86,29 @@ export class FakeCalendarPort implements CalendarPort {
 
   async freeBusy(range: { start: string; end: string }): Promise<BusyInterval[]> {
     const eventIntervals = Array.from(this.events.values()).map((e) => e.slot);
-    return [...this.manualBusy, ...eventIntervals].filter((busy) =>
+    const externalIntervals = Array.from(this.externalEvents.values());
+    return [...this.manualBusy, ...eventIntervals, ...externalIntervals].filter((busy) =>
       overlaps(range, busy),
     );
+  }
+
+  /** Distinct events (own tentative/confirmed + seeded external), each its
+   *  own entry keyed by `eventId` — see `CalendarPort.busyEventsInRange`'s
+   *  own doc comment. Deliberately never merges, unlike `freeBusy` above. */
+  async busyEventsInRange(
+    range: { start: string; end: string },
+  ): Promise<{ eventId: string; start: string; end: string }[]> {
+    const ownEvents = Array.from(this.events.entries()).map(([eventId, event]) => ({
+      eventId,
+      start: event.slot.start,
+      end: event.slot.end,
+    }));
+    const externalEvents = Array.from(this.externalEvents.entries()).map(([eventId, interval]) => ({
+      eventId,
+      start: interval.start,
+      end: interval.end,
+    }));
+    return [...ownEvents, ...externalEvents].filter((entry) => overlaps(range, entry));
   }
 
   async createTentative(
