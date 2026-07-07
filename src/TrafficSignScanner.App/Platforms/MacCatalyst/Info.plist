@@ -36,5 +36,9 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Capture photos of traffic signs for offline detection.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select existing photos of traffic signs for offline detection.</string>
 </dict>
 </plist>

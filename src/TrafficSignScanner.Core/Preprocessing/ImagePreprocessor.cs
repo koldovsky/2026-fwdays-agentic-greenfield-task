@@ -29,8 +29,14 @@ public static class ImagePreprocessor
     /// <summary>@trace FR-PREPROC-01, FR-PREPROC-02, FR-PREPROC-03</summary>
     public static PreprocessingResult CreateModelInput(ReadOnlySpan<byte> encodedImageBytes)
     {
-        using var bitmap = DecodeBitmap(encodedImageBytes);
+        using var bitmap = DecodeSourceImage(encodedImageBytes);
         return CreateModelInput(bitmap);
+    }
+
+    /// <summary>@trace FR-PREPROC-01</summary>
+    public static SKBitmap DecodeSourceImage(ReadOnlySpan<byte> encodedImageBytes)
+    {
+        return DecodeBitmap(encodedImageBytes);
     }
 
     /// <summary>@trace FR-PREPROC-02</summary>

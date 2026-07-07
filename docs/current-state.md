@@ -2,7 +2,7 @@
 
 ## Gate
 
-Current gate: **G4.3 green** — `core-overlay` slice closed (2026-07-08).
+Current gate: **G4.4 green** — `app-ui` slice closed (2026-07-08).
 
 G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `core-inference`; ratchet not locked (G5).
 
@@ -29,17 +29,23 @@ G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `
 ### core-overlay (G4.3)
 
 - Model→source→display coordinate conversion; SkiaSharp annotated bitmap rendering (boxes + labels).
-- 5 overlay unit tests with `@trace FR-OVERLAY-01` (26 Core tests total).
 - Verdict: `qa/verdicts/core-overlay.md` (pass).
+
+### app-ui (G4.4)
+
+- MAUI MVVM capture/pick, lazy detector warm-up, off-UI-thread analysis, Core PNG preview binding only.
+- 30 Core tests + 4 App ViewModel tests with `@trace` tags.
+- Verdict: `qa/verdicts/app-ui.md` (pass).
 
 ## Scaffolded Projects
 
-- `src/TrafficSignScanner.Core` — preprocessing, detection, overlay implemented
-- `src/TrafficSignScanner.App`
+- `src/TrafficSignScanner.Core` — preprocessing, detection, overlay, analysis pipeline
+- `src/TrafficSignScanner.App` — MVVM UI wired to Core
 - `src/TrafficSignScanner.Mcp`
 - `tests/TrafficSignScanner.Core.Tests`
+- `tests/TrafficSignScanner.App.Tests`
 - `evals/TrafficSignScanner.Evals`
 
 ## Next Slice
 
-`app-ui` — MAUI MVVM capture/pick, off-UI-thread detection, display-only annotated preview (FR-OVERLAY-02).
+`mcp-server` — MCP tools wrapping Core (FR-MCP-01, FR-MCP-02).

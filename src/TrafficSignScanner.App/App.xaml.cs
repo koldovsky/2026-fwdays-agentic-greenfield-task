@@ -11,7 +11,10 @@ namespace TrafficSignScanner
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            var services = IPlatformApplication.Current?.Services
+                ?? throw new InvalidOperationException("MAUI services are unavailable.");
+            var shell = services.GetRequiredService<AppShell>();
+            return new Window(shell);
         }
     }
 }
