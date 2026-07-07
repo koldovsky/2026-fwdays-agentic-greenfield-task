@@ -38,6 +38,8 @@ export class FakeTelegramTransport implements TelegramTransport {
   readonly calls: RecordedCall[] = [];
   private handler: ((update: InboundUpdate) => Promise<void>) | undefined;
   private remainingSendMessageFailures: number;
+  private sendMessageGate: Promise<void> | null = null;
+  private releaseSendMessageGate: (() => void) | null = null;
 
   constructor(options: FakeTelegramTransportOptions = {}) {
     this.remainingSendMessageFailures = options.sendMessageFailures ?? 0;
@@ -47,7 +49,29 @@ export class FakeTelegramTransport implements TelegramTransport {
     this.calls.push({ kind: "sendChatAction", chatId, action });
   }
 
+  /** Test-only helper (review-gate finding #2, notification-drain
+   *  re-entry/double-send): every subsequent `sendMessage` call blocks
+   *  BEFORE being recorded in `calls`, until `releaseSendMessage()` is
+   *  called — lets a test start a second `drainNotifications` call while a
+   *  first one is still in flight, deterministically, without a real
+   *  network delay or a `setTimeout` race. Not part of the
+   *  `TelegramTransport` interface. */
+  holdSendMessage(): void {
+    this.sendMessageGate = new Promise<void>((resolve) => {
+      this.releaseSendMessageGate = resolve;
+    });
+  }
+
+  /** Releases every `sendMessage` call currently blocked by
+   *  `holdSendMessage()`, and lifts the hold for any future call. */
+  releaseSendMessage(): void {
+    this.releaseSendMessageGate?.();
+    this.sendMessageGate = null;
+    this.releaseSendMessageGate = null;
+  }
+
   async sendMessage(chatId: string, text: string, options?: SendMessageOptions): Promise<void> {
+    if (this.sendMessageGate) await this.sendMessageGate;
     this.calls.push({ kind: "sendMessage", chatId, text, options });
     if (this.remainingSendMessageFailures > 0) {
       this.remainingSendMessageFailures -= 1;

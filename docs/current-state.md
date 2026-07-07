@@ -6,9 +6,52 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-07, ~00:30 (Europe/Kyiv)
-- **Current phase:** **Slice S3 `dashboard` COMPLETE and ARCHIVED — next is
-  S4 `booking-hitl` ∥ S5 `kb-learning` (DAG fan-out).** Archived at
+- **Date and time:** 2026-07-07, ~afternoon (Europe/Kyiv)
+- **Current phase:** **Slice S4 `booking-hitl` IN PROGRESS — code stages A–G
+  DONE + committed; review gate ran; applying review fixes before archive.**
+  Change folder `openspec/changes/booking-hitl/` authored+committed (`2d4f2df`);
+  design.md has 6 decisions incl. the LOCKED notification-outbox. Stages, each
+  RED→GREEN test-first with maker≠checker, all committed on
+  `feat/music-school-agent`: A pure `lib/src/booking` (transitions/validate-
+  admin-slots/validate-preferences/copy + `isSlotOnGrid` + offer_slots/pick_slot
+  intake events + releaseHold 404/410-idempotency) `f42aafc`/`c87611d`; B DB
+  (notifications outbox + `ensureRequestsOfferedSlotsColumn` + insertBooking
+  request_id + findBookingsByRequestId + offered_slots) `92e3a95`/`f9c3519`;
+  C lead-side propose/hold wiring (SlotsPort/HoldStorePort new narrow LoopPorts,
+  BookingStorePort untouched, `slot:<n>` callback → pending booking + BOOKING_
+  PENDING) `09716fd`/`b5b5d11`; D real decision route (9-step, calendar-before-
+  DB, deletes via releaseHold) `9823645`/`b799884`; E drain timer (3s interval,
+  fire-and-forget) `2d1150c`/`1eecaea`; F 4 S3 carryovers (ingest STATE_SNAPSHOT
+  republish + leads-route→releaseHold + Kyiv slot_start pin) `5f9d2d6`/`379455b`;
+  G integration full-flow (3 round trips, real route+pipeline+drain over one
+  SQLite) `0ca2569`. **445 unit + 9 integration green, root+dashboard tsc clean,
+  openspec 6/6, traceability 0 failures.**
+  **Review gate ran BEFORE archive (3 reviewers, maker≠checker): FR-GUARD-01
+  PASS** (structurally verified — only the decision route writes `'confirmed'`;
+  agent has no confirm/calendar tool; `packages/agent` never imports CalendarPort;
+  BookingStorePort cancel-only). Confirmed findings being fixed test-first:
+  (MAJOR) Confirm self-collision used raw string-equality vs Google's echoed
+  freebusy format → compare by parsed instant; (MAJOR) drain setInterval
+  re-entry → duplicate sends → in-flight guard; (MAJOR) propose_another_time
+  DB commit not transactional → wrap in db.transaction; (MAJOR) delete-lead
+  orphaned confirmed bookings' calendar PII (S4 introduced confirmed events) →
+  broaden leads-route delete to all non-null calendar_event_id via releaseHold;
+  (MAJOR) SLOT_UNAVAILABLE must name the slot; (MINOR) cap admin slots array;
+  (MINOR) propose self-slot self-exclude. Docable/accepted: no retry ceiling,
+  double-tap, ingest rate-limit, lead-delete drops undelivered notifications
+  (NFR-PRIV-02 > NFR-REL-01 in that intersection).
+  **3 LOCKED human decisions (2026-07-07):** (1) BUILD the DecisionBar
+  slot-picker now (propose-another-time was API-only — no slot-selection UI);
+  (2) delivery-failure = AUTO-RETRY-ONLY — amend the spec scenario + design.md
+  Decision 1 to drop the manual "administrator can retry" card clause (the
+  outbox already auto-retries every tick, satisfying recorded/never-dropped);
+  (3) ATTEMPT the live gates now (.env has TELEGRAM_BOT_TOKEN, GOOGLE_APPLICATION
+  _CREDENTIALS, GOOGLE_CALENDAR_ID, CLAUDE_CODE_OAUTH_TOKEN; playwright present;
+  demo video is the user's). **Remaining:** apply review fixes (RED→GREEN),
+  build slot-picker UI, amend spec/design for auto-retry, write fr-guard-01 eval
+  (H.2/H.3), review-findings.json clean, G.3 real-DB smoke (attempt live),
+  I rendered-UI gate (axe+vision on DecisionBar), J validate+archive.
+- **Prior phase — Slice S3 `dashboard` COMPLETE and ARCHIVED.** Archived at
   `openspec/changes/archive/2026-07-06-dashboard/`. 2 human decisions
   (design.md): Bot→Next ingest→SSE publisher seam (thin injected publisher on
   the bot, no-op when unconfigured, regression-guarded so archived S2 is

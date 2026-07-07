@@ -280,4 +280,57 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     expect(remainingBookings).toHaveLength(0);
     verifyDb.close();
   });
+
+  // -------------------------------------------------------------------
+  // Review-gate finding #4 [MAJOR]: delete-lead orphans CONFIRMED bookings'
+  // calendar events (@trace NFR-PRIV-02).
+  // -------------------------------------------------------------------
+  // The route's own SELECT (see route.ts's header comment) only reads
+  // pending-events: `WHERE b.status = 'pending' AND b.calendar_event_id IS
+  // NOT NULL`. A CONFIRMED booking's calendar event — the actual scheduled
+  // lesson, upgraded via `booking-hitl`'s Confirm decision — is never
+  // included, so deleting a lead with a confirmed booking removes every DB
+  // row (leads/requests/bookings) but leaves the real calendar event
+  // behind, permanently orphaned: no `bookings` row survives to ever let
+  // anything in this codebase find and delete it again. NFR-PRIV-02 (a
+  // deleted lead's data must not survive the delete) is violated by this
+  // leftover calendar entry, which still carries the lead's name/contact
+  // details in its description/attendee fields.
+  it("review-gate finding #4: DELETE also deletes a CONFIRMED booking's calendar event, not only pending ones", async () => {
+    const db = openDatabase(dbPath);
+    const calendar = new FakeCalendarPort();
+    setCalendarPortForTesting(calendar);
+    const { eventId } = await calendar.createTentative(
+      { start: "2026-07-06T07:00:00Z", end: "2026-07-06T08:00:00Z" },
+      "itest hold — later confirmed",
+    );
+    await calendar.upgradeToConfirmed(eventId, "brief");
+    expect(calendar.getEvent(eventId)?.status).toBe("confirmed");
+
+    const lead = insertLead(db, {
+      telegramUserId: "tg-user-fg4",
+      telegramChatId: "tg-chat-fg4",
+      telegramDisplayName: "Лід із підтвердженим заняттям",
+    });
+    const request = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-fg4" });
+    updateRequestState(db, request.id, "awaiting_admin");
+    db.prepare(
+      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id, request_id)
+       VALUES (?, ?, 'confirmed', ?, ?)`,
+    ).run("2026-07-06T10:00:00+03:00", "2026-07-06T11:00:00+03:00", eventId, request.id);
+    db.close();
+
+    const response = await DELETE(new Request(leadsUrl(lead.id), { method: "DELETE" }), paramsFor(lead.id));
+
+    expect(response.status).toBe(200);
+    // Today's route's SELECT filters `b.status = 'pending'` only — a
+    // confirmed booking's event is never touched, so this is still
+    // 'confirmed' (defined), not deleted.
+    expect(calendar.getEvent(eventId)).toBeUndefined();
+
+    const verifyDb = openDatabase(dbPath);
+    const remainingLead = verifyDb.prepare(`SELECT * FROM leads WHERE id = ?`).get(lead.id);
+    expect(remainingLead).toBeUndefined();
+    verifyDb.close();
+  });
 });
