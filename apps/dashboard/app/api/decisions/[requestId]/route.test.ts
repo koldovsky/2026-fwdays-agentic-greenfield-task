@@ -543,6 +543,143 @@ describe("POST /api/decisions/:requestId (booking-hitl tasks.md §D, design.md D
   });
 
   // ---------------------------------------------------------------------
+  // Second live-found bug in the SAME Confirm collision fix (diagnosed live
+  // against the REAL DEMO calendar, see docs/qa/booking-hitl-manual-smoke.md
+  // "History" — the entry AFTER "FIX ATTEMPTED (commit 73b4aa7)"):
+  // `GoogleCalendarPort.busyEventsInRange` (packages/calendar/src/
+  // google-calendar.ts) is a conversion-free pass-through of Google's
+  // `events.list` response — `start.dateTime`/`end.dateTime` there are in
+  // the CALENDAR'S LOCAL OFFSET (e.g. "...T17:00:00+03:00"), never
+  // "Z"-suffixed UTC. `hasIdentityBasedCollision`'s `overlaps()`
+  // (lib/src/slots/subtract.ts) compares RFC3339 timestamps with a plain
+  // STRING `<`, which is only a valid chronological ordering when both
+  // operands share the same offset/format. `kyivWallClockToUtc` (used for
+  // the booking's OWN range) always produces "Z"-UTC
+  // (`Date#toISOString()`), so comparing that against a "+03:00" echo from
+  // `busyEventsInRange` silently produces the WRONG ordering whenever the
+  // local-hour digits differ from the UTC-hour digits — `overlaps()` then
+  // spuriously returns `false` for a genuinely overlapping external event,
+  // and Confirm reports `{status:"applied"}` instead of `{status:"conflict"}`,
+  // double-booking the real external event.
+  //
+  // `OffsetFormatBusyEventsCalendar` below is a LOCAL, test-only subclass
+  // (same idiom as this file's own `DifferentTimestampFormatCalendar`/
+  // `MergingCalendarPort` above) that overrides ONLY `busyEventsInRange` to
+  // inject a synthetic external entry in Kyiv LOCAL-OFFSET format, without
+  // ever touching `FakeCalendarPort`'s `externalEvents` map — so the
+  // VALUE-based half of Confirm's re-check (`hasExternalCollision`, via
+  // `freeBusy`) never sees this external event at all, and only the
+  // IDENTITY-based half (`hasIdentityBasedCollision`, the target of this
+  // reproduction) is exercised.
+  // ---------------------------------------------------------------------
+  describe("Second live-found Confirm bug: identity-based collision check string-compares MIXED timestamp formats (Regression: live G.3 manual smoke — docs/qa/booking-hitl-manual-smoke.md 'History', entry after 'FIX ATTEMPTED (commit 73b4aa7)'; @trace FR-HITL-04)", () => {
+    class OffsetFormatBusyEventsCalendar extends FakeCalendarPort {
+      constructor(
+        private readonly externalEventId: string,
+        private readonly externalRangeOffsetFormat: { start: string; end: string },
+      ) {
+        super();
+      }
+
+      /** Own tentative/confirmed events are reported exactly as the base
+       *  fake reports them (Z-UTC, since `createTentative` below is seeded
+       *  with a `kyivWallClockToUtc` range) — ONLY the synthetic external
+       *  entry appended here reproduces Google's local-offset echo, and it
+       *  is injected directly (never via `addExternalEvent`), so it is
+       *  invisible to `freeBusy` — isolating the reproduction to the
+       *  identity-based check alone. */
+      override async busyEventsInRange(
+        range: { start: string; end: string },
+      ): Promise<{ eventId: string; start: string; end: string }[]> {
+        const ownEvents = await super.busyEventsInRange(range);
+        return [
+          ...ownEvents,
+          {
+            eventId: this.externalEventId,
+            start: this.externalRangeOffsetFormat.start,
+            end: this.externalRangeOffsetFormat.end,
+          },
+        ];
+      }
+    }
+
+    it("responds {status:'conflict'} — not 'applied' — when busyEventsInRange echoes a genuinely overlapping external event in Kyiv LOCAL-OFFSET format (+03:00) instead of Z-UTC; booking stays pending, no confirmed event, no notification", async () => {
+      // Kyiv 17:00-18:00 = 14:00-15:00 UTC (EEST, summer +3) — chosen so the
+      // local-hour digits (17/18) differ from the UTC-hour digits (14/15),
+      // which is exactly what makes the raw-string comparison mis-order (the
+      // same instant/offset pairing diagnosed live in the manual smoke run).
+      const slot = { start: "2026-08-03T17:00", end: "2026-08-03T18:00" }; // Monday
+      const ownRangeUtc = { start: kyivWallClockToUtc(slot.start), end: kyivWallClockToUtc(slot.end) };
+      // Sanity: kyivWallClockToUtc really does produce Z-UTC for the exact
+      // instants this test relies on.
+      expect(ownRangeUtc).toEqual({
+        start: "2026-08-03T14:00:00.000Z",
+        end: "2026-08-03T15:00:00.000Z",
+      });
+
+      const externalEventId = "fake-external-offset-format";
+      // The SAME real instant as ownRangeUtc — a genuinely overlapping (in
+      // fact identical) external event — expressed in Kyiv LOCAL-OFFSET
+      // format, exactly the shape a real Google `events.list` echo returns.
+      const externalRangeOffsetFormat = {
+        start: "2026-08-03T17:00:00+03:00",
+        end: "2026-08-03T18:00:00+03:00",
+      };
+      // Sanity: this really is the SAME instant as ownRangeUtc, just a
+      // textually different string.
+      expect(new Date(externalRangeOffsetFormat.start).getTime()).toBe(
+        new Date(ownRangeUtc.start).getTime(),
+      );
+      expect(new Date(externalRangeOffsetFormat.end).getTime()).toBe(new Date(ownRangeUtc.end).getTime());
+      // Sanity: raw string comparison mis-orders these two equivalent
+      // instants — the exact defect `overlaps()` (subtract.ts) exhibits when
+      // fed mixed "Z" vs "+03:00" operands.
+      expect(ownRangeUtc.start < externalRangeOffsetFormat.end).toBe(true);
+      expect(externalRangeOffsetFormat.start < ownRangeUtc.end).toBe(false);
+
+      const offsetFormatCalendar = new OffsetFormatBusyEventsCalendar(
+        externalEventId,
+        externalRangeOffsetFormat,
+      );
+      setCalendarPortForTesting(offsetFormatCalendar);
+
+      const { eventId: ownEventId } = await offsetFormatCalendar.createTentative(
+        ownRangeUtc,
+        "Пробне заняття — лід",
+      );
+
+      const db = openDatabase(dbPath);
+      const lead = insertLead(db, { telegramUserId: "tg-user-fg2", telegramChatId: "tg-chat-fg2" });
+      const request = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-fg2" });
+      updateRequestState(db, request.id, "awaiting_admin");
+      const booking = insertBooking(db, {
+        slotStart: slot.start,
+        slotEnd: slot.end,
+        status: "pending",
+        calendarEventId: ownEventId,
+        requestId: request.id,
+      });
+      db.close();
+
+      const response = await postDecision(request.id, { action: "confirm" });
+
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      // THE BUG (today's raw-string `overlaps()` comparing "Z" vs "+03:00"):
+      // `hasIdentityBasedCollision` mis-orders the two equivalent instants
+      // and never flags the external event as overlapping, so Confirm
+      // reports {status:"applied"} and silently double-books it. The
+      // CORRECT, pinned outcome is {status:"conflict"} — the booking must
+      // stay pending, nothing confirmed, nothing sent.
+      expect(body.status).toBe("conflict");
+
+      expect(readBooking(booking.id).status).toBe("pending");
+      expect(offsetFormatCalendar.getEvent(ownEventId)?.status).toBe("tentative");
+      expect(readNotifications(booking.id)).toHaveLength(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------
   // D.4 — Confirm calendar failure
   // ---------------------------------------------------------------------
   describe("D.4 Confirm calendar failure (@trace NFR-REL-01)", () => {
