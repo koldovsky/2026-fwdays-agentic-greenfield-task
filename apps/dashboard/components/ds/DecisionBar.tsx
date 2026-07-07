@@ -9,10 +9,24 @@
 // transition behind this exact same component; nothing here changes then.
 
 import { useState } from "react";
+import type { Slot } from "@kamerton/lib/src/slots/grid.ts";
 import { Button } from "./Button.tsx";
 
 export interface DecisionBarProps {
   requestId: number;
+  /**
+   * On-grid candidate slots for the future inline "Propose another time"
+   * picker (booking-hitl S4, review-gate CRITICAL fix — `@trace
+   * FR-HITL-01`, `@trace FR-HITL-03`: this action used to POST `slots:[]`
+   * with no selection UI at all, so it could never succeed against the
+   * real `/api/decisions/[requestId]` contract). Optional and
+   * DELIBERATELY UNUSED in this red round — the button below still POSTs
+   * immediately, exactly as before; `DecisionBar.slot-picker.test.tsx`'s
+   * red suite pins the contract the green implementation must satisfy.
+   * Derived upstream via `../../lib/candidate-proposal-slots.ts`'s
+   * `candidateProposalSlots()`.
+   */
+  candidateSlots?: Slot[];
 }
 
 type DecisionAction = "confirm" | "propose_another_time" | "decline";
