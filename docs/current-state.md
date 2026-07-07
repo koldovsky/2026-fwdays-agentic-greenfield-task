@@ -7,8 +7,15 @@
 ## Last Updated
 
 - **Date and time:** 2026-07-07, ~afternoon (Europe/Kyiv)
-- **Current phase:** **Slice S4 `booking-hitl` IN PROGRESS — code stages A–G
-  DONE + committed; review gate ran; applying review fixes before archive.**
+- **Current phase:** **Slice S4 `booking-hitl` COMPLETE and ARCHIVED**
+  (`openspec/changes/archive/2026-07-07-booking-hitl/`, HEAD `dd20629`; 6
+  MODIFIED requirements incl. the auto-retry-only amendment applied to the
+  baseline). No active changes; openspec 5/5 strict; traceability 0 failures;
+  trajectory 4 slices 0 failures. Human G.3 half confirmed live (all Telegram
+  Confirm/Decline/Propose messages arrived). **Only remaining for S4's grade:
+  the 1–2 min PR demo video (the user's) + fill `.github/pull_request_template.md`.
+  Next MVP slice: S5 `kb-learning` (Question inbox) — the DAG's last node.**
+  History of the (now-archived) build below.
   Change folder `openspec/changes/booking-hitl/` authored+committed (`2d4f2df`);
   design.md has 6 decisions incl. the LOCKED notification-outbox. Stages, each
   RED→GREEN test-first with maker≠checker, all committed on
