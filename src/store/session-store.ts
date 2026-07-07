@@ -1,0 +1,119 @@
+import { create } from 'zustand'
+import type {
+  ImportTable,
+  ParsedTable,
+  RawRow,
+  TableDiff,
+} from '../../lib/import/index.ts'
+import { diffRows, KEY_OF, parseTable } from '../../lib/import/index.ts'
+import type { ScheduleInput } from '../../lib/index.ts'
+import { loadSession, saveTable } from './persistence.ts'
+
+/** Стан однієї імпортованої таблиці. */
+export interface TableState {
+  rawRows: RawRow[]
+  parsed: ParsedTable
+  diff: TableDiff | null
+  fileName: string | null
+}
+
+/** Таблиці, обов'язкові для запуску планування. */
+const REQUIRED: ImportTable[] = ['orders', 'bom', 'routes', 'resourceCenters', 'calendar']
+
+function emptyTable(table: ImportTable): TableState {
+  return { rawRows: [], parsed: parseTable(table, []), diff: null, fileName: null }
+}
+
+function initialTables(): Record<ImportTable, TableState> {
+  return {
+    orders: emptyTable('orders'),
+    bom: emptyTable('bom'),
+    routes: emptyTable('routes'),
+    resourceCenters: emptyTable('resourceCenters'),
+    stock: emptyTable('stock'),
+    receipts: emptyTable('receipts'),
+    calendar: emptyTable('calendar'),
+  }
+}
+
+export interface SessionState {
+  tables: Record<ImportTable, TableState>
+  hydrated: boolean
+  importRows: (table: ImportTable, rows: RawRow[], fileName: string | null) => void
+  updateRows: (table: ImportTable, rows: RawRow[]) => void
+  clearTable: (table: ImportTable) => void
+  hydrate: () => Promise<void>
+  errorCount: () => number
+  canPlan: () => boolean
+  buildScheduleInput: (today: Date, horizon: Date) => ScheduleInput | null
+}
+
+export const useSessionStore = create<SessionState>((set, get) => ({
+  tables: initialTables(),
+  hydrated: false,
+
+  importRows: (table, rows, fileName) => {
+    const prev = get().tables[table].rawRows
+    const diff = prev.length > 0 ? diffRows(prev, rows, KEY_OF[table]) : null
+    const parsed = parseTable(table, rows)
+    set((s) => ({ tables: { ...s.tables, [table]: { rawRows: rows, parsed, diff, fileName } } }))
+    void saveTable(table, rows)
+  },
+
+  updateRows: (table, rows) => {
+    const parsed = parseTable(table, rows)
+    set((s) => ({
+      tables: { ...s.tables, [table]: { ...s.tables[table], rawRows: rows, parsed } },
+    }))
+    void saveTable(table, rows)
+  },
+
+  clearTable: (table) => {
+    set((s) => ({ tables: { ...s.tables, [table]: emptyTable(table) } }))
+    void saveTable(table, [])
+  },
+
+  hydrate: async () => {
+    const session = await loadSession()
+    set((s) => {
+      const tables = { ...s.tables }
+      for (const table of Object.keys(session) as ImportTable[]) {
+        const rows = session[table]!
+        tables[table] = { rawRows: rows, parsed: parseTable(table, rows), diff: null, fileName: null }
+      }
+      return { tables, hydrated: true }
+    })
+  },
+
+  errorCount: () => {
+    const { tables } = get()
+    let count = 0
+    for (const t of Object.values(tables)) {
+      count += t.parsed.errors.filter((e) => e.severity === 'error').length
+    }
+    return count
+  },
+
+  canPlan: () => {
+    const { tables } = get()
+    if (get().errorCount() > 0) return false
+    return REQUIRED.every((t) => tables[t].rawRows.length > 0)
+  },
+
+  buildScheduleInput: (today, horizon) => {
+    if (!get().canPlan()) return null
+    const t = get().tables
+    return {
+      orders: t.orders.parsed.orders ?? [],
+      bom: t.bom.parsed.bom ?? [],
+      routes: t.routes.parsed.routes ?? [],
+      rcGroups: t.resourceCenters.parsed.rcGroups ?? [],
+      resourceCenters: t.resourceCenters.parsed.resourceCenters ?? [],
+      stock: t.stock.parsed.stock ?? [],
+      plannedReceipts: t.receipts.parsed.receipts ?? [],
+      calendar: t.calendar.parsed.calendar ?? [],
+      horizon,
+      today,
+    }
+  },
+}))

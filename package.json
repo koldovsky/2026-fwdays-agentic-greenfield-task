@@ -15,8 +15,11 @@
     "typecheck:lib": "tsc --noEmit -p tsconfig.lib.json"
   },
   "dependencies": {
+    "idb": "^8.0.3",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
