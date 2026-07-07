@@ -8,6 +8,16 @@
 // entitlement check mirrors /api/tailor/generate's paid lookup: resolve the
 // session server-side, then hasPaidAccess() against the synced subscription
 // state; a non-paid caller (anonymous or free) gets 402, never a render.
+//
+// CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): the body is shape-validated
+// (isExportDocument), but the section/bullet TEXT is authored client-side, where
+// buildExportDocument applies the includedInExport honesty gate. The server renders
+// that text verbatim, so a crafted POST could place arbitrary text into the export.
+// Accepted here because (a) it is the candidate's OWN resume — a self-authored
+// export is not the product overclaiming on the user's behalf — and (b) it is the
+// same boundary the pre-existing flat-bullets path already had. Defense-in-depth
+// follow-up (docs/current-state.md): rebuild sections server-side from the persisted
+// kept-bullet texts + a server-parsed CvDocument so the gate is server-enforced.
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";

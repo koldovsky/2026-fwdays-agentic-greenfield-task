@@ -55,8 +55,8 @@
 
 ## 5. Final verify + review (whole change)
 
-- [ ] 5.1 Full gate: `yarn lint` + `yarn build` + `yarn test` green across all groups; record file/test counts as evidence.
-- [ ] 5.2 honesty-eval suite: all deterministic guards green (judge isolation, letter verification, export merge); note which live evals remain blocked on `ANTHROPIC_API_KEY`.
-- [ ] 5.3 verifier subagent: FR-CHECKLIST-01/02/03/04, FR-WIZARD-02, FR-COVERLETTER-01/02, FR-EXPORT-01/02/03/04, FR-BULLETS-02/03 exercised with evidence; NFR-COST-01 (one judge call, two letter calls) and NFR-PERF-02 asserted.
-- [ ] 5.4 checker subagent (maker != checker): whole-diff adversarial review vs PRD amendments, BC-HONESTY-01/02/03, FSD import rules, DESIGN rules; all confirmed findings fixed before handoff.
+- [x] 5.1 Full gate: `yarn lint` + `yarn build` + `yarn test` green across all groups; record file/test counts as evidence.
+- [x] 5.2 honesty-eval suite: all deterministic guards green (judge isolation, letter verification, export merge); note which live evals remain blocked on `ANTHROPIC_API_KEY`.
+- [x] 5.3 verifier subagent: FR-CHECKLIST-01/02/03/04, FR-WIZARD-02, FR-COVERLETTER-01/02, FR-EXPORT-01/02/03/04, FR-BULLETS-02/03 exercised with evidence; NFR-COST-01 (one judge call, two letter calls) and NFR-PERF-02 asserted.
+- [x] 5.4 checker subagent (maker != checker): whole-diff adversarial review vs PRD amendments, BC-HONESTY-01/02/03, FSD import rules, DESIGN rules; all confirmed findings fixed before handoff.
 - [ ] 5.5 `openspec validate improve-tailoring-quality`; update `docs/current-state.md`; commits per group (Conventional Commits, no secrets).

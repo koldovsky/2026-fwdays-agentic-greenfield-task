@@ -7,6 +7,22 @@
 
 ## Last action
 
+- **T5 DONE (all 5 groups) + WHOLE 6-TASK BATCH COMPLETE (2026-07-07, ultracode).** Group 5 = final
+  whole-change verify + adversarial review across the COMBINED honesty surface (heuristics + flagged
+  judge + grounded letter + resume merge). Whole-change verifier PASS: lint 0/0 + build + **133 files
+  / 1234 tests**, full FR/NFR evidence table green (FR-CHECKLIST-01/02/03/04, FR-WIZARD-02,
+  FR-COVERLETTER-01/02, FR-EXPORT-01/02/03/04, FR-BULLETS-02/03, BC-HONESTY-01/02, NFR-COST-01=1 judge
+  call/<=2 letter calls, NFR-PERF-02, NFR-SEC-01/02, TC-PURE-01); deterministic honesty guards green,
+  live evals correctly deferred on ANTHROPIC_API_KEY. Whole-change checker: **ship, 0 blockers** —
+  adversarial trace found NO score-inflation path (claimed-only never→met; tenure lifts only grounded
+  duration reqs; judge upgrades only gap with verbatim+relevant citation), export honesty holds
+  (overclaim bullets dropped pre-export, gates read includedInExport only), grounding-lane isolation
+  intact, flag-off byte-identical to heuristics. 2 majors were honest-by-construction follow-ups, both
+  ADDRESSED: (1) resume-export spec scenario RELAXED to match impl (kept bullets → most-recent role;
+  per-source-role placement needs a Bullet-model change, tracked); (2) export content trust boundary
+  (client-authored section text rendered verbatim) DOCUMENTED in the pdf/docx route headers as accepted
+  (self-authored resume, same boundary as the pre-existing flat path) with a server-side-gate
+  defense-in-depth follow-up recorded. 5.5 openspec validate = CLI-unavailable (blocker below).
 - **T5 GROUP 4 (structured resume export) + deferred §1.1/1.3 — DONE + gate green (2026-07-07, ultracode).**
   Maker pass + independent review completed after the prior session hit its limit mid-group. CvDocument
   (contact/summary/experience+dates/skills/education) + `parseCvDocument` (pure, never throws, en+ua
@@ -292,9 +308,12 @@
 
 ## Working on
 
-**NEW 6-task batch — IMPLEMENTATION phase.** Specs committed (`a36aa97`). Per-task plan below.
-Implement order: **T6 ✅ → T1 ✅ → T3 ✅ → T2 ✅ → T4 ✅ (`1080213`) → T5 (Group 1 slice A in flight; §1.1/1.3 + Groups 2-4 remain)**. Each task = maker → test-author →
-checker subagent → verifier → commit → update this doc. Task 5 runs on Fable 5.
+**NEW 6-task batch — ✅ COMPLETE (all 6 tasks shipped, reviewed green).**
+Order shipped: **T6 ✅ (`990fb97`) → T1 ✅ (`c2a6dbd`) → T3 ✅ (`c265f89`) → T2 ✅ (`27d4861`) →
+T4 ✅ (`1080213`) → T5 ✅** (`b5b0c90` G1a, `126ab08` G3, `7b2a98d` G2, `dca3530` G4, this commit G5).
+Every task ran maker → test-author → checker + verifier in SEPARATE contexts, committed per unit.
+Batch-end gate: **lint 0/0 + build clean + 133 files / 1234 tests green.** Remaining items are all
+environment/tooling/human-review blocked (no code) — see Remaining below.
 
 Archive-order deps (for later, CLI unavailable here): `persist-tailoring-lifecycle` supersedes/depends
 on `add-tailoring-history` (archive that first or fold in); `harden-account-export-ux` MODIFIES the
@@ -375,7 +394,19 @@ Residual from prior 10-task batch: DONE; env/tooling/human items below unchanged
    decision); the history PAGE still gates on `hasPaidAccess` (paywall stays at the view layer).
 5. **Ops (task 3):** set prod env (`CV_ENCRYPTION_KEY`, `DATABASE_URL`, `AUTH_SECRET`,
    `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`), run `yarn db:migrate`, redeploy.
-5. **Live honesty-eval (needs `ANTHROPIC_API_KEY`):** tasks 1 + 5 generation-prompt changes.
+6. **Live honesty-eval (needs `ANTHROPIC_API_KEY`):** tasks 1 + 5 (coverage judge, grounded cover
+   letter, structured resume) generation-prompt changes. Deterministic proxies green; flip
+   `COVERAGE_JUDGE` on only after live honesty-eval fixtures pass.
+7. **T5 follow-up — per-bullet role provenance (resume export):** kept bullets currently attach to the
+   most-recent parsed role because the `Bullet` model has no source-role tag. Add per-bullet role
+   provenance to place each kept bullet under the role whose original bullet it rewrote, then restore
+   the stricter resume-export spec scenario. Honest today (no fabrication), fidelity-only.
+8. **T5 follow-up — server-side export honesty gate (defense-in-depth):** the pdf/docx export routes
+   render client-authored section/bullet text verbatim after shape validation; the `includedInExport`
+   gate is applied client-side in `buildExportDocument`. Accepted (self-authored resume, same boundary
+   as the pre-existing flat path, documented in both route headers). Harden by rebuilding sections
+   server-side from persisted kept-bullet texts + a server-parsed CvDocument so the gate is
+   server-enforced (BC-HONESTY-02, NFR-SEC-04).
 
 ## Superseded plan / next steps (kept for context)
 

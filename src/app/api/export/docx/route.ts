@@ -6,6 +6,12 @@
 // directly to this route. Mirrors /api/tailor/generate's paid lookup: resolve
 // the session, then hasPaidAccess() against the synced subscription state; a
 // non-paid caller (anonymous or free) gets 402, never a render.
+//
+// CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): same as /api/export/pdf —
+// the body is shape-validated but the section/bullet TEXT is client-authored, where
+// buildExportDocument applies the includedInExport honesty gate; the server renders
+// it verbatim. Accepted (self-authored export of the candidate's own resume; same
+// boundary as the flat-bullets path). Defense-in-depth follow-up in docs/current-state.md.
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";
