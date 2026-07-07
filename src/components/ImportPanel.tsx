@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ImportTable } from '../../lib/import/index.ts'
 import { IMPORT_TABLES } from '../../lib/import/index.ts'
-import { schedule, type ScheduleResult } from '../../lib/index.ts'
 import { useSessionStore } from '../store/session-store.ts'
 import { DropZone } from './DropZone.tsx'
 import { ValidationErrors } from './ValidationErrors.tsx'
@@ -14,10 +13,10 @@ export function ImportPanel() {
   const hydrate = useSessionStore((s) => s.hydrate)
   const canPlan = useSessionStore((s) => s.canPlan())
   const errorCount = useSessionStore((s) => s.errorCount())
-  const buildScheduleInput = useSessionStore((s) => s.buildScheduleInput)
+  const runPlanningAction = useSessionStore((s) => s.runPlanning)
+  const result = useSessionStore((s) => s.plan)
 
   const [selected, setSelected] = useState<ImportTable>('orders')
-  const [result, setResult] = useState<ScheduleResult | null>(null)
   const [planError, setPlanError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -29,7 +28,6 @@ export function ImportPanel() {
 
   const runPlanning = () => {
     setPlanError(null)
-    setResult(null)
     const calDates = (tables.calendar.parsed.calendar ?? []).map((c) => c.date.getTime())
     if (calDates.length === 0) {
       setPlanError('Немає виробничого календаря')
@@ -37,13 +35,10 @@ export function ImportPanel() {
     }
     const today = new Date(Math.min(...calDates))
     const horizon = new Date(Math.max(...calDates))
-    const input = buildScheduleInput(today, horizon)
-    if (!input) {
-      setPlanError('Дані неповні або містять помилки')
-      return
-    }
     try {
-      setResult(schedule(input, 'min-lateness'))
+      if (!runPlanningAction(today, horizon)) {
+        setPlanError('Дані неповні або містять помилки')
+      }
     } catch (e) {
       setPlanError(e instanceof Error ? e.message : 'Помилка планування')
     }

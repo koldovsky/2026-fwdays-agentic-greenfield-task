@@ -15,6 +15,7 @@
     "typecheck:lib": "tsc --noEmit -p tsconfig.lib.json"
   },
   "dependencies": {
+    "dhtmlx-gantt": "^10.0.0",
     "idb": "^8.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

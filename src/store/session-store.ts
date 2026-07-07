@@ -6,7 +6,9 @@ import type {
   TableDiff,
 } from '../../lib/import/index.ts'
 import { diffRows, KEY_OF, parseTable } from '../../lib/import/index.ts'
-import type { ScheduleInput } from '../../lib/index.ts'
+import type { ScheduleInput, ScheduleResult } from '../../lib/index.ts'
+import { schedule } from '../../lib/index.ts'
+import { applyManualMove } from '../../lib/scheduler/reschedule.ts'
 import { loadSession, saveTable } from './persistence.ts'
 
 /** Стан однієї імпортованої таблиці. */
@@ -39,6 +41,9 @@ function initialTables(): Record<ImportTable, TableState> {
 export interface SessionState {
   tables: Record<ImportTable, TableState>
   hydrated: boolean
+  plan: ScheduleResult | null
+  planInput: ScheduleInput | null
+  lockedOpIds: string[]
   importRows: (table: ImportTable, rows: RawRow[], fileName: string | null) => void
   updateRows: (table: ImportTable, rows: RawRow[]) => void
   clearTable: (table: ImportTable) => void
@@ -46,11 +51,16 @@ export interface SessionState {
   errorCount: () => number
   canPlan: () => boolean
   buildScheduleInput: (today: Date, horizon: Date) => ScheduleInput | null
+  runPlanning: (today: Date, horizon: Date) => ScheduleResult | null
+  moveOperation: (opId: string, newStart: Date) => void
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
   tables: initialTables(),
   hydrated: false,
+  plan: null,
+  planInput: null,
+  lockedOpIds: [],
 
   importRows: (table, rows, fileName) => {
     const prev = get().tables[table].rawRows
@@ -115,5 +125,29 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       horizon,
       today,
     }
+  },
+
+  runPlanning: (today, horizon) => {
+    const input = get().buildScheduleInput(today, horizon)
+    if (!input) return null
+    const plan = schedule(input, 'min-lateness')
+    set({ plan, planInput: input, lockedOpIds: [] })
+    return plan
+  },
+
+  moveOperation: (opId, newStart) => {
+    const { plan, planInput, lockedOpIds } = get()
+    if (!plan || !planInput) return
+    const { operations, orders } = applyManualMove(
+      plan.operations,
+      opId,
+      newStart,
+      planInput.orders,
+      planInput.calendar,
+    )
+    set({
+      plan: { ...plan, operations, orders },
+      lockedOpIds: lockedOpIds.includes(opId) ? lockedOpIds : [...lockedOpIds, opId],
+    })
   },
 }))
