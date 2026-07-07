@@ -1,0 +1,309 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/controls/**",
+              "components/core/**",
+              "components/feedback/**",
+              "components/forms/**",
+              "ui_kits/tv-remote/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Montserrat|Material Symbols Rounded))/i]",
+        "message": "Font not provided by the design system. Available: Montserrat, Material Symbols Rounded."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='AppShortcut'] > JSXAttribute > JSXIdentifier[name!=/^(?:icon|label|onClick|color|key|ref|className|style|children)$/]",
+        "message": "<AppShortcut> doesn't accept that prop. Declared props: icon, label, onClick, color."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute > JSXIdentifier[name!=/^(?:status|children|style|key|ref|className|style|children)$/]",
+        "message": "<Badge> doesn't accept that prop. Declared props: status, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='status'] > Literal[value!=/^(?:online|offline|connecting)$/]",
+        "message": "<Badge> status must be one of 'online' | 'offline' | 'connecting'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|disabled|icon|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: children, variant, size, disabled, icon, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|secondary|ghost)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'secondary' | 'ghost'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|padding|radius|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: children, variant, padding, radius, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:raised|inset)$/]",
+        "message": "<Card> variant must be one of 'raised' | 'inset'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DeviceCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|model|ip|status|onClick|key|ref|className|style|children)$/]",
+        "message": "<DeviceCard> doesn't accept that prop. Declared props: name, model, ip, status, onClick."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DeviceCard'] > JSXAttribute[name.name='status'] > Literal[value!=/^(?:online|offline|connecting)$/]",
+        "message": "<DeviceCard> status must be one of 'online' | 'offline' | 'connecting'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DPad'] > JSXAttribute > JSXIdentifier[name!=/^(?:onDirection|onSelect|size|key|ref|className|style|children)$/]",
+        "message": "<DPad> doesn't accept that prop. Declared props: onDirection, onSelect, size."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute > JSXIdentifier[name!=/^(?:icon|size|tone|active|disabled|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<IconButton> doesn't accept that prop. Declared props: icon, size, tone, active, disabled, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<IconButton> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconButton'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:default|accent|danger)$/]",
+        "message": "<IconButton> tone must be one of 'default' | 'accent' | 'danger'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Input'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|onChange|placeholder|icon|error|label|type|style|key|ref|className|style|children)$/]",
+        "message": "<Input> doesn't accept that prop. Declared props: value, onChange, placeholder, icon, error, label, type, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Modal'] > JSXAttribute > JSXIdentifier[name!=/^(?:open|onClose|title|children|footer|key|ref|className|style|children)$/]",
+        "message": "<Modal> doesn't accept that prop. Declared props: open, onClose, title, children, footer."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Slider'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|min|max|onChange|icon|key|ref|className|style|children)$/]",
+        "message": "<Slider> doesn't accept that prop. Declared props: value, min, max, onChange, icon."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Toggle'] > JSXAttribute > JSXIdentifier[name!=/^(?:checked|onChange|disabled|label|key|ref|className|style|children)$/]",
+        "message": "<Toggle> doesn't accept that prop. Declared props: checked, onChange, disabled, label."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "AppShortcut": {
+        "replaces": []
+      },
+      "Badge": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "DeviceCard": {
+        "replaces": []
+      },
+      "DPad": {
+        "replaces": []
+      },
+      "IconButton": {
+        "replaces": []
+      },
+      "Input": {
+        "replaces": []
+      },
+      "Modal": {
+        "replaces": []
+      },
+      "Slider": {
+        "replaces": []
+      },
+      "Toggle": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--accent",
+      "--accent-soft",
+      "--accent-strong",
+      "--accent-wash",
+      "--base-100",
+      "--base-200",
+      "--base-300",
+      "--connecting",
+      "--fg-1",
+      "--fg-2",
+      "--fg-3",
+      "--fg-on-accent",
+      "--font-sans",
+      "--hairline",
+      "--leading-normal",
+      "--leading-relaxed",
+      "--leading-tight",
+      "--nm-blur-lg",
+      "--nm-blur-md",
+      "--nm-blur-sm",
+      "--nm-focus-ring",
+      "--nm-inset-md",
+      "--nm-inset-sm",
+      "--nm-offset-lg",
+      "--nm-offset-md",
+      "--nm-offset-sm",
+      "--nm-raised-accent",
+      "--nm-raised-lg",
+      "--nm-raised-md",
+      "--nm-raised-sm",
+      "--offline",
+      "--offline-wash",
+      "--online",
+      "--online-wash",
+      "--radius-full",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-sm",
+      "--radius-xl",
+      "--shadow-dark",
+      "--shadow-dark-strong",
+      "--shadow-light",
+      "--space-1",
+      "--space-10",
+      "--space-12",
+      "--space-16",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-8",
+      "--text-body",
+      "--text-body-lg",
+      "--text-body-sm",
+      "--text-caption",
+      "--text-display",
+      "--text-h1",
+      "--text-h2",
+      "--tracking-normal",
+      "--tracking-overline",
+      "--tracking-tight",
+      "--tracking-wide",
+      "--weight-bold",
+      "--weight-extrabold",
+      "--weight-medium",
+      "--weight-regular",
+      "--weight-semibold"
+    ],
+    "tokenKinds": {
+      "--base-100": "color",
+      "--base-200": "color",
+      "--base-300": "color",
+      "--shadow-light": "shadow",
+      "--shadow-dark": "shadow",
+      "--shadow-dark-strong": "shadow",
+      "--fg-1": "color",
+      "--fg-2": "color",
+      "--fg-3": "color",
+      "--fg-on-accent": "color",
+      "--accent": "color",
+      "--accent-strong": "color",
+      "--accent-soft": "color",
+      "--accent-wash": "color",
+      "--online": "color",
+      "--online-wash": "color",
+      "--offline": "color",
+      "--offline-wash": "color",
+      "--connecting": "color",
+      "--hairline": "color",
+      "--font-sans": "font",
+      "--text-display": "font",
+      "--text-h1": "font",
+      "--text-h2": "font",
+      "--text-body-lg": "font",
+      "--text-body": "font",
+      "--text-body-sm": "font",
+      "--text-caption": "font",
+      "--weight-regular": "font",
+      "--weight-medium": "font",
+      "--weight-semibold": "font",
+      "--weight-bold": "font",
+      "--weight-extrabold": "font",
+      "--leading-tight": "font",
+      "--leading-normal": "font",
+      "--leading-relaxed": "font",
+      "--tracking-tight": "font",
+      "--tracking-normal": "font",
+      "--tracking-wide": "font",
+      "--tracking-overline": "font",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-8": "spacing",
+      "--space-10": "spacing",
+      "--space-12": "spacing",
+      "--space-16": "spacing",
+      "--radius-sm": "radius",
+      "--radius-md": "radius",
+      "--radius-lg": "radius",
+      "--radius-xl": "radius",
+      "--radius-full": "radius",
+      "--nm-offset-sm": "spacing",
+      "--nm-blur-sm": "spacing",
+      "--nm-offset-md": "spacing",
+      "--nm-blur-md": "spacing",
+      "--nm-offset-lg": "spacing",
+      "--nm-blur-lg": "spacing",
+      "--nm-raised-sm": "color",
+      "--nm-raised-md": "color",
+      "--nm-raised-lg": "color",
+      "--nm-inset-sm": "spacing",
+      "--nm-inset-md": "spacing",
+      "--nm-raised-accent": "color",
+      "--nm-focus-ring": "color"
+    },
+    "fontFamilies": [
+      "Material Symbols Rounded",
+      "Montserrat"
+    ]
+  }
+}

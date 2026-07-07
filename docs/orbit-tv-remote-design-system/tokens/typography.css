@@ -1,0 +1,31 @@
+/* ============================================================
+   TYPE TOKENS — Montserrat only. One family, weight does the work.
+   ============================================================ */
+
+:root {
+  --font-sans: 'Montserrat', 'Segoe UI', sans-serif;
+
+  /* scale — soft UI keeps hierarchy through weight + spacing more than size jumps */
+  --text-display: 40px;   /* rare: onboarding / empty states */
+  --text-h1: 28px;        /* page-level heading (e.g. "Your TVs") */
+  --text-h2: 20px;        /* section heading */
+  --text-body-lg: 17px;   /* device name, primary list content */
+  --text-body: 15px;      /* default body */
+  --text-body-sm: 13px;   /* metadata (IP, model) */
+  --text-caption: 11px;   /* overline labels, timestamps */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.4;
+  --leading-relaxed: 1.6;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-overline: 0.12em; /* uppercase section labels */
+}

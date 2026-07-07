@@ -1,0 +1,13 @@
+<!-- @dsCard group="Colors" viewport="700x140" name="Semantic Status" subtitle="Online / offline / connecting" -->
+<!DOCTYPE html>
+<html><head><link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:20px;background:var(--base-100);font-family:var(--font-sans);display:flex;gap:16px;align-items:center;}
+.pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.dot{width:8px;height:8px;border-radius:50%;}
+</style></head>
+<body>
+<div class="pill" style="background:var(--online-wash);color:var(--online)"><span class="dot" style="background:var(--online)"></span>Online</div>
+<div class="pill" style="background:transparent;color:var(--fg-3)"><span class="dot" style="background:var(--fg-3)"></span>Offline</div>
+<div class="pill" style="background:transparent;color:var(--connecting)"><span class="dot" style="background:var(--connecting)"></span>Connecting</div>
+</body></html>

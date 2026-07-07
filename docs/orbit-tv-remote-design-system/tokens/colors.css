@@ -1,0 +1,66 @@
+/* ============================================================
+   COLOR TOKENS — Orbit (Neumorphism UI, soft-extruded surfaces)
+   Light theme lives on :root. Dark theme overrides via [data-theme="dark"].
+   ============================================================ */
+
+:root {
+  /* --- base neumorphic surface (bg == card color, shadows carve the depth) --- */
+  --base-100: #e0e5ec;      /* app background / resting surface */
+  --base-200: #d9dee6;      /* slightly recessed surface (rows, tracks) */
+  --base-300: #cfd5de;      /* deeper recess (input wells) */
+
+  /* --- neumorphic shadow pair: light source top-left --- */
+  --shadow-light: #ffffff;  /* highlight edge */
+  --shadow-dark: #a3b1c6;   /* carved edge */
+  --shadow-dark-strong: #8d9bb0;
+
+  /* --- text --- */
+  --fg-1: #2e3238;          /* primary text */
+  --fg-2: #5b6472;          /* secondary text */
+  --fg-3: #97a1af;          /* tertiary / placeholder */
+  --fg-on-accent: #fffaf5;
+
+  /* --- accent: warm orange, used for primary actions & active/live states --- */
+  --accent: #ff8a3d;
+  --accent-strong: #e8720f;
+  --accent-soft: #ffd9b8;
+  --accent-wash: rgba(255, 138, 61, 0.14);
+
+  /* --- semantic status --- */
+  --online: #4caf7d;
+  --online-wash: rgba(76, 175, 125, 0.14);
+  --offline: #c65d55;
+  --offline-wash: rgba(198, 93, 85, 0.14);
+  --connecting: #d9a441;
+
+  /* --- borders (used sparingly — neumorphism prefers shadow over line) --- */
+  --hairline: rgba(163, 177, 198, 0.35);
+}
+
+[data-theme="dark"] {
+  --base-100: #2b2f38;
+  --base-200: #262a32;
+  --base-300: #21242b;
+
+  --shadow-light: #363c48;
+  --shadow-dark: #1b1e24;
+  --shadow-dark-strong: #131519;
+
+  --fg-1: #eceef2;
+  --fg-2: #a7afbc;
+  --fg-3: #6f7784;
+  --fg-on-accent: #241300;
+
+  --accent: #ff9a52;
+  --accent-strong: #ffab6e;
+  --accent-soft: #5a3417;
+  --accent-wash: rgba(255, 154, 82, 0.16);
+
+  --online: #63c992;
+  --online-wash: rgba(99, 201, 146, 0.16);
+  --offline: #e07b73;
+  --offline-wash: rgba(224, 123, 115, 0.16);
+  --connecting: #e6b85a;
+
+  --hairline: rgba(0, 0, 0, 0.35);
+}

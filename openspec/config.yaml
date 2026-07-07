@@ -1,0 +1,60 @@
+schema: spec-driven
+
+context: |
+  Project: mytv — a self-hosted Samsung TV remote for a local network. Runs on
+  an Orange Pi, advertises as `mytv.local` over mDNS, discovers Samsung Smart
+  TVs over UPnP, and controls them via Samsung's IP Control protocol (JSON-RPC
+  2.0 over HTTPS, ports 1515/1516, AccessToken auth). Two screens: device list
+  + remote. No cloud, no accounts, no internet required at runtime.
+
+  Architecture: Fastify 5 + TypeScript back-end that serves the API under
+  `/api`, WebSocket at `/ws`, AND the compiled React SPA at `/` from a single
+  origin (`http://mytv.local/`). React 19 + Vite + TypeScript front-end that
+  uses relative HTTP paths, consuming the in-repo Orbit TV Remote design
+  system via a `@ds` alias (neumorphism, one flat surface + paired shadows,
+  Montserrat, Material Symbols Rounded, warm orange accent used once per
+  screen). English UI copy, sentence-case, second-person.
+
+  Ground truth documents:
+  - docs/requirements.md — FR/NFR/BC IDs (single source of truth for
+    requirements traceability; every acceptance criterion should reference
+    the ID it covers).
+  - docs/product-brief.md — product vision, MVP scope, non-goals.
+  - docs/capabilities.md — phased plan slicing requirements.md into 9
+    capabilities (C1–C9); each OpenSpec change should correspond to one row.
+  - AGENTS.md — always-loaded house rules for agents.
+  - DESIGN.md — front-end DS wiring + rules.
+
+  House rules that every change must respect:
+  - Never send the TV `AccessToken` to the front-end; strip it from every
+    log line; log the JSON-RPC `id` on both request and response.
+  - Front-end must never talk directly to TVs; always via the back-end HTTP
+    API. Relative paths only in front-end (`/api/...`, `/ws`) — never
+    hard-code a host or port.
+  - Use `UDN` (UPnP uuid) as the stable TV identity, not IP.
+  - Serialize state-changing IP Control commands per TV; one keep-alive HTTPS
+    agent per TV; do not batch JSON-RPC (spec says batch is not guaranteed).
+  - Map raw `-32xxx` protocol errors to the domain error union
+    `TvNotReachable | TvNotSupported | TvFailed | TvInvalidOp | TvUnknown`.
+    Never leak raw codes to the UI.
+  - Front-end must go through Orbit DS primitives (`@ds/components/**`) and
+    tokens (`var(--base-100)`, `var(--accent)`, `var(--nm-raised-md)`, ...);
+    never hard-code palette or shadow strings. Do not import
+    `@ds/ui_kits/**` (window-scoped demo).
+  - Before ending a session that changed the repo, prepend a new entry to
+    `docs/current-state.md` (rule in AGENTS.md → "Session log").
+
+rules:
+  proposal:
+    - Reference the source capability by ID from docs/capabilities.md (e.g. "C1", "C5") in the Why section.
+    - List the exact FR/NFR/BC IDs from docs/requirements.md this change covers, and call out any IDs explicitly deferred.
+    - Include an explicit "Non-goals" list — quote from docs/product-brief.md "Future scope" when relevant.
+    - Name upstream capabilities this depends on so the change refuses to start until prereqs are archived.
+  design:
+    - For back-end I/O changes, cite the samsung-ip-control-protocol skill for wire format details; do not re-derive them.
+    - For UI changes, cite DESIGN.md + the frontend-design-check skill; list the specific Orbit primitives that will be used.
+    - Include a per-TV state or lifecycle diagram whenever concurrency or reconnection matters.
+  tasks:
+    - "Break tasks into 30 min to 2 h chunks. Each task is a single testable outcome, not a directory of vague work."
+    - "Group tasks into back-end, front-end, and verification sections when a change spans both packages."
+    - "The final task in every change is: prepend an entry to docs/current-state.md."
