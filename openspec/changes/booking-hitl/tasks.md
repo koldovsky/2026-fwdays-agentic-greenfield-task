@@ -375,7 +375,7 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## H. Review gate — run BEFORE archive (S1 process lesson)
 
-- [ ] H.1 A fresh reviewer pass (maker ≠ checker) over the full diff against
+- [x] H.1 A fresh reviewer pass (maker ≠ checker) over the full diff against
       `openspec/specs/booking-hitl/spec.md` (scenario-by-scenario),
       `design.md`'s six decisions, and AGENTS.md's guardrail rules —
       explicitly confirm: (a) no `confirm*`/`*kb*write*` tool name was added

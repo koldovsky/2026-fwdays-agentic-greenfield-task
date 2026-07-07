@@ -1,0 +1,124 @@
+{
+  "generatedBy": "review-gate",
+  "clean": true,
+  "scope": "slice S4 booking-hitl (lib/src/booking transitions/validate-admin-slots/validate-preferences/copy + lib/src/slots grid.isSlotOnGrid + hold.releaseHold 404/410 idempotency + lib/src/intake/state-machine offer_slots/pick_slot; packages/db notifications outbox + schema migration + insertBooking.request_id + findBookingsByRequestId + requests.offered_slots; packages/agent tools propose_slots schema + loop SlotsPort/HoldStorePort dispatch; packages/bot pipeline propose/hold wiring + slot callback + notification-drain + index drain timer; apps/dashboard decisions route + ingest republish + leads-route releaseHold + DecisionBar slot-picker + candidateProposalSlots; tests/integration full-flow)",
+  "change": "booking-hitl",
+  "baseRef": "a8c4bdd",
+  "headRef": "ec96cea",
+  "reviewers": [
+    "code-reviewer (correctness / error-handling / framework)",
+    "spec-compliance-auditor (booking-hitl/spec.md scenario-by-scenario)",
+    "security-reviewer (localhost threat model + FR-GUARD-01 guardrail integrity)"
+  ],
+  "guardrailCheck": {
+    "result": "PASS",
+    "note": "FR-GUARD-01 structurally verified by two independent reviewers. The ONLY place bookings.status becomes 'confirmed' is apps/dashboard/app/api/decisions/[requestId]/route.ts (grep across packages/apps/lib confirms one non-comment/non-CHECK-enum hit). packages/agent/src/tools.ts's closed TOOL_NAMES has no confirm*/kb-write name (tools.test.ts pins the regression guard, green). packages/agent never imports the slots CalendarPort (comments only). BookingStorePort stays cancel-only (findPendingBookingForCurrentRequest + markBookingCancelled). The new SlotsPort/HoldStorePort create only 'pending' holds, never confirm. Guardrail intact (FR-GUARD-01/06)."
+  },
+  "dimensions": {
+    "correctness": { "confirmed": 6, "fixed": 4, "accepted": 2, "rejected": 0 },
+    "spec-compliance": { "confirmed": 4, "fixed": 2, "amended-scenario": 1, "in-progress-eval": 1, "implemented": 16, "contradictions": 0 },
+    "security": { "confirmed": 2, "fixed": 2, "accepted": 2, "deferred": 1 }
+  },
+  "coverageSummary": "21 booking-hitl/spec.md scenarios: 16 implemented+tested at review time, 0 contradicted. Post-remediation: the CRITICAL propose-another-time UI gap is closed (DecisionBar slot-picker built + tested); the delivery-failure-surface scenario is amended to auto-retry-only (LOCKED human decision, see spec delta + design.md Decision 1); SLOT_UNAVAILABLE now names the slot. The fr-guard-01 behavioral eval (H.2/H.3) and the rendered-UI gate (I: axe + vision on the DecisionBar picker) + real-DB smoke (G.3) run after this review, per the pre-archive gate sequence.",
+  "confirmedFindings": [
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness",
+      "title": "Confirm self-collision filter used raw string equality between our locally-computed UTC (Z, ms) and Google's echoed freebusy timestamps — a different-but-equivalent representation (no ms, +00:00) would defeat the own-event filter and make EVERY Confirm spuriously report a collision against the real calendar",
+      "disposition": "fixed",
+      "fix": "Replaced string equality with instant comparison (new Date(a).getTime()) via a shared removeOwnInterval/isSameInstantRange helper in decisions/[requestId]/route.ts. RED test strips ms from the fake's own interval and asserts Confirm still applies+confirms. Will be empirically confirmed by the live real-DB smoke (G.3) against the real DEMO calendar."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness",
+      "title": "notification-drain setInterval could re-enter while a previous tick was still awaiting a slow Telegram send, so the next tick's SELECT re-picked the same still-pending rows -> duplicate lead messages",
+      "disposition": "fixed",
+      "fix": "In-flight claim: a module-scoped inFlightNotificationIds Set claims each row synchronously before the await send (released in finally) so an overlapping drain skips it; plus an isDraining guard around index.ts's setInterval. Test: two overlapping drainNotifications calls (fake holds the send) send exactly one message per row."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "correctness",
+      "title": "propose_another_time's post-calendar-delete DB writes (updateBookingStatus + updateRequestState + updateRequestFields + insertNotification) were 4 separate statements — a mid-sequence throw left the booking cancelled with no forward path and no notification (NFR-REL-01)",
+      "disposition": "fixed",
+      "fix": "Wrapped the DB commit in a single db.transaction() (mirrors deleteLeadCascade); confirm/decline commits share it. Test: mocking insertNotification to throw once asserts booking/state and notification are all-or-nothing."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "security+privacy",
+      "title": "Delete-lead only deleted PENDING bookings' tentative calendar events, but S4 newly introduced CONFIRMED events whose descriptions embed the student's first-lesson brief (PII) — deleting a lead with a confirmed lesson orphaned that PII in the calendar with no DB record to ever find it (NFR-PRIV-02)",
+      "disposition": "fixed",
+      "fix": "Broadened the leads-route SELECT from status='pending' to any booking with a non-null calendar_event_id, routed through the idempotent releaseHold (404/410-tolerant, so already-deleted declined/cancelled events are safe no-ops). RED test seeds a confirmed booking with an event id and asserts it is deleted on lead-delete. This also makes design.md Decision 6 item2's 'releaseHold is the one shared delete path' claim true (leads route + decision route + cancel)."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "spec-compliance",
+      "title": "Propose-another-time was unreachable from the UI (CRITICAL): DecisionBar had no slot-selection control, so the POST always sent slots:[] and validateAdminProposedSlots always rejected NO_SLOTS_SELECTED — the third FR-HITL-01 action could never succeed end-to-end (S3 shipped DecisionBar render-only, deferring this to S4)",
+      "disposition": "fixed",
+      "fix": "Built the DecisionBar inline slot-picker (LOCKED human decision: build now): 'Propose another time' reveals selectable on-grid free candidate slots (candidateProposalSlots = weekSeatGrid minus pending/confirmed seats), role=checkbox, gated 'Запропонувати' send POSTs {action:'propose_another_time', slots}; applied->success+collapse, SLOT_UNAVAILABLE->inline error naming the slot. 12 new tests green; goes through the rendered-UI gate (axe+vision) next."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "spec-compliance",
+      "title": "SLOT_UNAVAILABLE response returned a generic message and discarded validateAdminProposedSlots's returned offending slot — the spec scenario requires 'identifying the unavailable slot'",
+      "disposition": "fixed",
+      "fix": "Threaded validation.slot into body.slot and named its date/time in the human message (formatSlotButtonLabel). Test asserts body.slot present + date/time in message."
+    },
+    {
+      "severity": "MAJOR",
+      "dimension": "spec-compliance",
+      "title": "Telegram-send-failure was durably recorded + auto-retried by the drain loop, but the dashboard did not READ notifications.delivery_status to surface a manual 'retry sending' control on the request card, which the baseline scenario + design.md Decision 1 implied",
+      "disposition": "amended-scenario",
+      "fix": "LOCKED human decision (auto-retry-only): the automatic drain retry (every tick until delivered) satisfies 'recorded + never silently dropped' and is arguably better UX than a manual button for the single-teacher MVP. Amended the change's spec delta (MODIFIED, applies to baseline on archive) to drop the 'surfaced on the request card so the administrator can retry' clause and describe automatic retry; design.md Decision 1 records the decision and that a manual retry surface is a deferred future enhancement, not an MVP gap."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness+security",
+      "title": "propose_another_time fresh-freebusy validation had no upper bound on the admin slots array -> one Google freeBusy call per slot (quota/resource risk, even from a buggy client)",
+      "disposition": "fixed",
+      "fix": "MAX_PROPOSED_SLOTS=10 checked before the freeBusy fan-out -> 200 {status:'invalid', code:'TOO_MANY_SLOTS'}. Test (CountingCalendar) asserts zero freeBusy calls when over the cap."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "propose_another_time rejected the admin re-selecting the booking's OWN currently-held slot (its still-live tentative event showed as busy in the fresh freebusy taken before the hold is released)",
+      "disposition": "fixed",
+      "fix": "freshBusyForSlots now excludes the booking's own tentative interval (reuses the instant-compare removeOwnInterval helper) -> re-proposing the own slot succeeds. Test pins the self-exclude interpretation."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "No retry ceiling on a permanently-undeliverable notification (blocked bot / stale chat id) -> retried every 3s forever",
+      "disposition": "accepted",
+      "rationale": "Matches design.md Decision 1's explicit single-teacher-volume risk acceptance. A max-attempt/dead-letter cap is a deliberately-deferred future enhancement; at a handful of decisions/day an indefinite retry is harmless and never silently drops. Documented in the Risks section."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "correctness",
+      "title": "A lead double-tapping two DIFFERENT slot chips in quick succession could create two concurrent pending bookings for one request if grammY dispatches the updates concurrently (the pending-slot unique index only catches the SAME slot)",
+      "disposition": "accepted",
+      "rationale": "Confidence low and contingent on grammY's per-chat update ordering (grammY processes a chat's updates sequentially by default via long polling; no concurrent dispatch observed). The decision route acts on the newest pending booking; a stray second hold would be a rare, admin-visible extra pending seat, not a guardrail or data-integrity breach. Flagged for the real-DB smoke to watch; a request-level 'at most one pending booking' guard is a candidate future hardening."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "security",
+      "title": "Ingest route re-reads the DB + republishes a full snapshot on every BOOKING_PENDING POST with no rate limit / body-size cap (localhost trust model)",
+      "disposition": "accepted",
+      "rationale": "Explicitly within the spec's localhost single-process trust model (NFR-LOCAL-01); the same trust boundary as the rest of the dashboard. Informational; optional debounce is a future hardening, not an MVP defect."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "reliability+privacy",
+      "title": "Deleting a lead cascades its bookings and (via ON DELETE CASCADE) drops any not-yet-delivered outbox notifications tied to them, without a record",
+      "disposition": "accepted",
+      "rationale": "Deliberate trade-off: NFR-PRIV-02 (erase-on-request) trumps NFR-REL-01 (delivery guarantee) at this one intersection — once a lead is erased there is no lead left to notify. Narrow, non-attacker-controlled race. Documented as an accepted intersection in the Risks section."
+    },
+    {
+      "severity": "MINOR",
+      "dimension": "security",
+      "title": "npm audit: transitive postcss < 8.5.10 (moderate) via the installed next version",
+      "disposition": "deferred",
+      "rationale": "Build-time CSS tokenizer bug; the app renders no untrusted CSS at runtime and no production path in this diff touches postcss. `audit fix --force` proposes a next@9 major DOWNGRADE, incompatible with the AGENTS.md Next.js 16 pin. Track for the next compatible next patch release; not fixable in-slice without a regression."
+    }
+  ],
+  "notes": "All CONFIRMED code findings are fixed (7 test-first: 3 MAJOR correctness + 1 MAJOR privacy + 2 MAJOR/MINOR spec + minors) or dispositioned (accepted with rationale / deferred with reason / amended-scenario per the LOCKED human decision). No finding is left silently open. FR-GUARD-01 PASS. clean:true reflects that every confirmed defect is resolved or explicitly, defensibly accepted; the remaining pre-archive gates (fr-guard-01 eval, axe+vision rendered-UI gate, real-DB smoke) are tracked in tasks.md sections H/I/G.3/J and run before `openspec archive`."
+}
