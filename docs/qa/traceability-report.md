@@ -35,7 +35,7 @@ Result: PASS, 33 warning(s)
 | FR-HITL-02 | yes | yes | 26 | - |
 | FR-HITL-03 | yes | yes | 15 | yes |
 | FR-HITL-04 | yes | yes | 1 | - |
-| FR-GUARD-01 | yes | yes | 4 | - |
+| FR-GUARD-01 | yes | yes | 5 | - |
 | FR-DASH-01 | yes | yes | 3 | yes |
 | FR-DASH-03 | yes | yes | 8 | yes |
 

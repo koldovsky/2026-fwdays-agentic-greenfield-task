@@ -588,7 +588,8 @@
         "packages/agent/src/system-prompt.test.ts",
         "packages/agent/src/tools.test.ts",
         "packages/agent/src/tools.test.ts",
-        "packages/agent/src/tools.test.ts"
+        "packages/agent/src/tools.test.ts",
+        "evals/cases/fr-guard-01.eval.ts"
       ],
       "recordings": []
     },
