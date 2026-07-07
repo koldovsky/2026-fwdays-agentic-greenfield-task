@@ -13,9 +13,9 @@
 > as a pure, contained honesty fix. §1.1/1.3 (CvDocument + tenure) deferred to fold
 > with Group 4 (resume export, which also needs the sectioned CvDocument).
 
-- [ ] 1.1 Extend `entities/cv-profile/lib/normalize.ts` with role/date-range parsing into a minimal sectioned `CvDocument` (roles + parsed ranges; en+ua month names, "present"/"дотепер"); pure, never throws, unparseable dates yield zero tenure. +tests (TC-PURE-01). **DEFERRED to Group 4 (shared CvDocument need).**
+- [x] 1.1 Extend `entities/cv-profile/lib/normalize.ts` with role/date-range parsing into a minimal sectioned `CvDocument` (roles + parsed ranges; en+ua month names, "present"/"дотепер"); pure, never throws, unparseable dates yield zero tenure. +tests (TC-PURE-01). **DEFERRED to Group 4 (shared CvDocument need).**
 - [x] 1.2 `shared/lib/scoring/checklist.ts`: synonym/alias table (pure data: k8s/kubernetes, aws/amazon-web-services, node/nodejs, rest, c#, …; short/overloaded go/r/c/ai excluded) + alias-grounded coverage. **Alias matching is WORD-BOUNDARY (`containsToken`) so a short alias never collides with an unrelated word (checker blocker fixed: ts∤results, aws∤laws, ui∤build).** +8 regression tests.
-- [ ] 1.3 Tenure evaluation for duration requirements. **DEFERRED to Group 4 (needs CvDocument).**
+- [x] 1.3 Tenure evaluation for duration requirements. **DEFERRED to Group 4 (needs CvDocument).**
 - [x] 1.4 `checklistItem(requirement, cvProfile, seniority?)`: mid/senior claimed-only skill = claimed-covered → "partial" (never "met" — that needs prose); junior/absent stay strict → "overclaim-risk". Rationale Ukrainian, <=100 chars, no emoji/exclamation/em-dash, names the claimed skill honestly (FR-CHECKLIST-03). +tests for all three stages.
 - [x] 1.5 `features/run-tailoring/lib/loop.ts`: passes the inferred `careerStage` into the score step; grounding-pass context untouched (checker CONFIRMED no export/grounding coupling).
 - [x] 1.6 `entities/clarifying-question/lib/derive.ts`: `ELIGIBLE_STATUSES` = `{gap}` only, must-have-first ordering kept; tests updated (partial rows produce no questions) (FR-WIZARD-02 narrowing).
@@ -45,13 +45,13 @@
 
 ## 4. Structured resume export
 
-- [ ] 4.1 Complete the `CvDocument` sections in `entities/cv-profile`: contact (name/email/phone/links), summary, role bullets, skills, education; omit undetected sections, never fabricate. +tests on messy CVs.
-- [ ] 4.2 Extend `entities/export-document/model/types.ts` with optional structured sections (contact, summary, experience roles+dates, skills, education); framework-free (TC-PURE-01).
-- [ ] 4.3 Resume builder merge: kept (`includedInExport`) bullets replace the original bullets of their source roles; untouched roles/sections pass through in the CV's original language; excluded overclaim bullets appear in no section (BC-HONESTY-02). +tests.
-- [ ] 4.4 Renderers: `src/app/api/export/pdf/resume-pdf.tsx` + `src/app/api/export/docx/resume-docx.ts` + the clipboard builder render the sections consistently; flat-document fallback when no sections; PT Sans Cyrillic rendering kept; footer + 402 paywall behavior unchanged (FR-EXPORT-01/02/03/04).
-- [ ] 4.5 PII guards: contact fields never added to LLM payloads (NFR-SEC-02) and never logged in plaintext (NFR-SEC-01); test asserting no contact section in recorded LLM contexts.
-- [ ] 4.6 Verify group 4: lint + build + test green; format-parity test (clipboard/PDF/DOCX same sections + footer state); Cyrillic round-trip on the PDF.
-- [ ] 4.7 Independent review of group 4 (checker subagent, maker != checker): honesty of the merge (grounded-only content), PII handling, renderer parity, DESIGN token rules untouched.
+- [x] 4.1 Complete the `CvDocument` sections in `entities/cv-profile`: contact (name/email/phone/links), summary, role bullets, skills, education; omit undetected sections, never fabricate. +tests on messy CVs.
+- [x] 4.2 Extend `entities/export-document/model/types.ts` with optional structured sections (contact, summary, experience roles+dates, skills, education); framework-free (TC-PURE-01).
+- [x] 4.3 Resume builder merge: kept (`includedInExport`) bullets replace the original bullets of their source roles; untouched roles/sections pass through in the CV's original language; excluded overclaim bullets appear in no section (BC-HONESTY-02). +tests.
+- [x] 4.4 Renderers: `src/app/api/export/pdf/resume-pdf.tsx` + `src/app/api/export/docx/resume-docx.ts` + the clipboard builder render the sections consistently; flat-document fallback when no sections; PT Sans Cyrillic rendering kept; footer + 402 paywall behavior unchanged (FR-EXPORT-01/02/03/04).
+- [x] 4.5 PII guards: contact fields never added to LLM payloads (NFR-SEC-02) and never logged in plaintext (NFR-SEC-01); test asserting no contact section in recorded LLM contexts.
+- [x] 4.6 Verify group 4: lint + build + test green; format-parity test (clipboard/PDF/DOCX same sections + footer state); Cyrillic round-trip on the PDF.
+- [x] 4.7 Independent review of group 4 (checker subagent, maker != checker): honesty of the merge (grounded-only content), PII handling, renderer parity, DESIGN token rules untouched.
 
 ## 5. Final verify + review (whole change)
 

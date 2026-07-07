@@ -55,3 +55,85 @@ describe("renderResumePdf Cyrillic round-trip (FR-EXPORT-02, NFR-I18N-01)", () =
     expect(text).not.toContain("Vouch");
   });
 });
+
+describe("renderResumePdf: structured sections (§4.4/4.6, FR-EXPORT-02)", () => {
+  // NOTE: pdf-parse extracts PT Sans Cyrillic glyphs reliably, but garbles
+  // Latin/ASCII text in the embedded glyph space — asserting on Cyrillic strings
+  // is the pattern the existing tests use for reliable extraction.
+  it("renders contact name, summary, experience, skills, education via sections (Cyrillic, §4.6)", async () => {
+    const doc: ExportDocument = {
+      bullets: ["fallback"],
+      sections: {
+        contact: { name: "Іван Петренко" },
+        summary: ["Досвідчений інженер."],
+        experience: [
+          { title: "Старший інженер, ТОВ", dateRange: "2019-2024", bullets: ["Розробив мікросервіси"] },
+        ],
+        skills: ["тайпскрипт", "реакт"],
+        education: ["Бакалавр, КПІ, 2019"],
+      },
+      footer: "Тест підвалу",
+    };
+
+    const buffer = await renderResumePdf(doc);
+    const text = await extractText(buffer);
+
+    expect(text).toContain("Іван Петренко");
+    expect(text).toContain("Досвідчений інженер.");
+    expect(text).toContain("Старший інженер");
+    expect(text).toContain("Розробив мікросервіси");
+    expect(text).toContain("тайпскрипт");
+    expect(text).toContain("Бакалавр");
+    expect(text).toContain("Тест підвалу");
+  });
+
+  it("FLAT FALLBACK: no sections → renders Cyrillic bullets via the flat path (§4.4)", async () => {
+    const doc: ExportDocument = {
+      bullets: ["Розробив платформу обробки даних."],
+    };
+    const buffer = await renderResumePdf(doc);
+    const text = await extractText(buffer);
+    expect(text).toContain("Розробив платформу обробки даних");
+  });
+
+  it("FORMAT PARITY: sections path and flat path both render a Cyrillic footer (FR-EXPORT-04)", async () => {
+    const footerText = "Тестовий підвал для перевірки";
+
+    const withSections: ExportDocument = {
+      bullets: [],
+      sections: { experience: [{ title: "Розробник", bullets: ["Побудував речі"] }], skills: [] },
+      footer: footerText,
+    };
+    const withFlat: ExportDocument = {
+      bullets: ["Побудував речі"],
+      footer: footerText,
+    };
+
+    const [bufA, bufB] = await Promise.all([
+      renderResumePdf(withSections),
+      renderResumePdf(withFlat),
+    ]);
+    const [textA, textB] = await Promise.all([extractText(bufA), extractText(bufB)]);
+
+    expect(textA).toContain(footerText);
+    expect(textB).toContain(footerText);
+  });
+
+  it("Cyrillic round-trip with structured sections (PT Sans, NFR-I18N-01)", async () => {
+    const doc: ExportDocument = {
+      bullets: [],
+      sections: {
+        contact: { name: "Олена Коваленко" },
+        experience: [
+          { title: "Провідний розробник", dateRange: "2020-дотепер", bullets: ["Побудував систему платежів"] },
+        ],
+        skills: ["тайпскрипт", "реакт"],
+      },
+    };
+    const buffer = await renderResumePdf(doc);
+    const text = await extractText(buffer);
+    expect(text).toContain("Олена Коваленко");
+    expect(text).toContain("Провідний розробник");
+    expect(text).toContain("Побудував систему платежів");
+  });
+});

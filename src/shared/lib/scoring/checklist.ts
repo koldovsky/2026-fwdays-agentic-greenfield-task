@@ -126,6 +126,22 @@ const STOPWORDS = new Set([
   "та", "і", "й", "для", "з", "на", "до",
 ]);
 
+/**
+ * Duration requirement detection (improve-tailoring-quality §1.3). A requirement
+ * like "3+ years of backend" or "5 років досвіду" states a minimum tenure. We
+ * read the FIRST year count from the requirement text; a requirement with no
+ * year count is not a duration requirement (returns undefined). Pure.
+ */
+const YEARS_REQUIRED = /(\d{1,2})\s*\+?\s*(?:years?|yrs?|рок(?:и|ів)|року)/i;
+
+/** Minimum years a requirement demands, or undefined when it is not a duration req. */
+export function requiredYears(requirement: Requirement): number | undefined {
+  const match = requirement.text.match(YEARS_REQUIRED);
+  if (match === null) return undefined;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
 /** Meaningful word-tokens of a keyword (len >= 3, not a stopword). */
 export function tokenize(keyword: string): string[] {
   return keyword
@@ -182,6 +198,7 @@ export function checklistItem(
   requirement: Requirement,
   cvProfile: CvProfile,
   seniority?: SeniorityLevel,
+  candidateTenureYears?: number,
 ): ChecklistItem {
   const groundedKeywords: string[] = [];
   const claimedOnlyKeywords: string[] = [];
@@ -198,13 +215,32 @@ export function checklistItem(
   // Experienced candidates: a listed skill counts as covered, not an overclaim.
   const experienced = seniority === "mid" || seniority === "senior";
 
+  // Duration requirement (§1.3): tenure parsed from the CV's own dates satisfies
+  // the "years" side of a "N+ years of X" requirement, but ONLY the years — the
+  // domain keyword must still be grounded in prose. Tenure NEVER credits a
+  // requirement whose skill the CV never mentions (BC-HONESTY-01); it only lifts
+  // an already-grounded requirement from partial toward met.
+  const minYears = requiredYears(requirement);
+  const tenureSatisfies =
+    minYears !== undefined &&
+    candidateTenureYears !== undefined &&
+    candidateTenureYears >= minYears;
+
   let status: ChecklistStatus;
   let coverageToken: string | undefined;
   let claimedCovered = false;
+  let tenureMet = false;
   if (total > 0 && groundedKeywords.length === total) {
     status = "met";
   } else if (groundedKeywords.length > 0) {
-    status = "partial";
+    // Grounded on the skill; if the requirement's only unmet part is the year
+    // count and parsed tenure covers it, this is a full "met" (§1.3).
+    if (tenureSatisfies) {
+      status = "met";
+      tenureMet = true;
+    } else {
+      status = "partial";
+    }
   } else if (claimedOnlyKeywords.length > 0) {
     if (experienced) {
       status = "partial";
@@ -226,7 +262,9 @@ export function checklistItem(
   switch (status) {
     case "met": {
       const evidence = findEvidence(groundedKeywords[0], cvProfile) ?? "";
-      rationale = `Підтверджено досвідом у резюме: «${evidence}»`;
+      rationale = tenureMet
+        ? `Підтверджено навичкою та стажем у резюме: «${evidence}»`
+        : `Підтверджено досвідом у резюме: «${evidence}»`;
       break;
     }
     case "partial": {

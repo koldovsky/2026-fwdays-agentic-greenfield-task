@@ -24,6 +24,7 @@
 import { useMemo, useState } from "react";
 
 import type { Bullet } from "@/entities/bullet";
+import { parseCvDocument } from "@/entities/cv-profile";
 import { ClarifyingQuestions } from "@/features/clarify-tailoring";
 import {
   AnalyzeForm,
@@ -82,6 +83,15 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
             rationale: row.item.rationale,
           })),
     [analysis],
+  );
+
+  // Sectioned CV parse for the structured résumé export (T5 §4). Pure + local
+  // (entities/cv-profile). SECURITY: this contains contact PII and is passed
+  // ONLY to ExportStepper's export builder — never to any analyze/generate/
+  // cover-letter request (NFR-SEC-01/02). Kept distinct from letterEvidence.
+  const cvDocument = useMemo(
+    () => (cvText.trim().length > 0 ? parseCvDocument(cvText) : undefined),
+    [cvText],
   );
 
   const handleAnalysis = (next: AnalysisResult, jd: string) => {
@@ -270,6 +280,10 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
             bullets={bullets}
             paid={paid}
             locale={locale}
+            // Structured export sections (T5 §4). Contact PII lives here and on
+            // the export path only; it is NOT part of letterEvidence and never
+            // reaches an LLM request (NFR-SEC-01/02).
+            {...(cvDocument ? { cvDocument } : {})}
             // Grounded-letter evidence (T5 §3.1): the candidate's own CV
             // sentences + confirmed answers, plus requirements (emphasis) and
             // careerStage (tone). The server verifies before it ships; on any

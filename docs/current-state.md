@@ -7,6 +7,45 @@
 
 ## Last action
 
+- **T5 GROUP 4 (structured resume export) + deferred §1.1/1.3 — DONE + gate green (2026-07-07, ultracode).**
+  Maker pass + independent review completed after the prior session hit its limit mid-group. CvDocument
+  (contact/summary/experience+dates/skills/education) + `parseCvDocument` (pure, never throws, en+ua
+  months); tenure lifts a GROUNDED duration req partial→met, never credits an ungrounded skill;
+  ExportDocument gains optional sections; `buildExportDocument` merges KEPT bullets, excluded overclaim
+  bullets absent from EVERY section (BC-HONESTY-02); pdf/docx/clipboard render sections consistently
+  with flat fallback + PT Sans Cyrillic + unchanged footer/402; contact PII is export-render only,
+  never in any LLM payload (NFR-SEC-01/02, sentinel-tested). Maker(opus)→test-author(sonnet, +129
+  tests)→verifier+checker(opus), all separate contexts. **Real UA-first defect caught + FIXED:**
+  present-marker regex used ASCII `\b` (broke дотепер/нині/донині tenure) → Unicode `\p{L}` lookarounds;
+  test-author flipped 2 bug-documenting tests to assert the fix + added positive markers. Checker ship,
+  0 blockers; 2 minors FIXED (global present-replace; pdf/docx routes now shape-validate the `sections`
+  PII payload at the trust boundary, defense-in-depth), 1 DEFERRED follow-up (kept bullets attach to
+  role[0] — honest, needs a per-bullet→role tag in the Bullet model to place under source role). Gate:
+  lint 0/0 + build + **133 files / 1234 tests green.** Implements FR-CHECKLIST-01/04, FR-EXPORT-01/02/03/04,
+  BC-HONESTY-01/02, NFR-SEC-01/02, NFR-I18N-01, TC-PURE-01. **Next: T5 Group 5 (final whole-change
+  verify; openspec validate blocked — CLI unavailable). This is the LAST group of the last batch task.**
+  Historical maker-pass detail below (superseded):
+- **T5 GROUP 4 (structured resume export) — MAKER pass (2026-07-06), tasks 1.1/1.3/4.1-4.5:**
+  - §1.1/§4.1: `entities/cv-profile` gains `CvDocument` (contact/summary/experience+dates/skills/
+    education) + `parseCvDocument` (pure, never throws, en+ua months, present/дотепер, unparseable →
+    zero tenure). New exports: `parseCvDocument`, `parseDateRange`, `totalTenureMonths`, `tenureYears`,
+    `absMonthOf`, types `CvDocument/CvRole/CvDateRange/CvContact`.
+  - §1.3: `checklistItem` gains a 4th optional param `candidateTenureYears`; `requiredYears()` detects
+    "N+ years" reqs; tenure lifts a GROUNDED duration req partial→met, NEVER credits an ungrounded
+    skill (BC-HONESTY-01). Loop parse-cv computes tenure via `parseCvDocument`+`tenureYears`, threads
+    it into the score step (contact PII discarded, never scored/logged/sent to LLM).
+  - §4.2: `ExportDocument` gains optional `sections` (ExportContact/summary/ExportExperienceRole/
+    skills/education), framework-free.
+  - §4.3 (honesty-critical): `buildExportDocument` optional `cvDocument` → merges KEPT
+    (`includedInExport`) bullets into role[0]; excluded overclaim bullets dropped up front, present in
+    NO section; original role bullets NOT re-inserted; titles/dates pass through original language.
+  - §4.4: plain-text + PDF + DOCX render sections consistently, flat fallback when no sections; PT Sans
+    + footer + 402 unchanged.
+  - §4.5: contact PII is client-set in TailorWorkspace (`parseCvDocument(cvText)`) → ExportStepper
+    `cvDocument` prop → export builder → export routes ONLY. NEVER in letterEvidence or any LLM payload.
+  - NEXT: run gate (lint/build/test), dispatch test-author (see mapped behaviors), then checker (4.7).
+    Do NOT commit yet.
+
 - **T5 GROUP 2 (flagged LLM coverage judge) — DONE + gate green (2026-07-06, ultracode).**
   `isCoverageJudgeEnabled()` flag (DEFAULT OFF, requires ANTHROPIC_API_KEY when on, non-throwing).
   Batched one-call judge prompt over CV sentences + requirements ONLY (NFR-COST-01); tolerant parser

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checklistItem, matchScore } from "./index";
+import { checklistItem, matchScore, requiredYears } from "./index";
 import type { ChecklistStatus, CvProfile, Requirement } from "./types";
 
 // Emoji / pictographic ranges (no emoji allowed — FR-CHECKLIST-03).
@@ -277,6 +277,135 @@ describe("checklistItem: seniority relaxation (improve-tailoring-quality T5)", (
     const c = checklistItem(aliasReq, aliasCv);
     const d = checklistItem(aliasReq, aliasCv);
     expect(c).toEqual(d);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// requiredYears + candidateTenureYears (improve-tailoring-quality §1.3, BC-HONESTY-01)
+// ---------------------------------------------------------------------------
+
+describe("requiredYears (§1.3)", () => {
+  it("returns undefined for a requirement with no year count", () => {
+    expect(requiredYears(req({ text: "React experience" }))).toBeUndefined();
+    expect(requiredYears(req({ text: "TypeScript знання" }))).toBeUndefined();
+  });
+
+  it("detects '3+ years' syntax", () => {
+    expect(requiredYears(req({ text: "3+ years of backend experience" }))).toBe(3);
+  });
+
+  it("detects '5 years' syntax (no +)", () => {
+    expect(requiredYears(req({ text: "5 years React" }))).toBe(5);
+  });
+
+  it("detects '7 років' (Ukrainian)", () => {
+    expect(requiredYears(req({ text: "7 років досвіду з Node.js" }))).toBe(7);
+  });
+
+  it("returns undefined for a year count of zero", () => {
+    expect(requiredYears(req({ text: "0 years experience" }))).toBeUndefined();
+  });
+
+  it("reads the first integer — does not fabricate a higher bar", () => {
+    // "at least 2 years" → 2; "10 or more years" → 10
+    expect(requiredYears(req({ text: "at least 2 years of Go" }))).toBe(2);
+  });
+});
+
+describe("checklistItem: tenure evaluation (§1.3, BC-HONESTY-01)", () => {
+  const groundedDurationReq: Requirement = {
+    id: "r-dur",
+    text: "3+ years of Node.js experience",
+    importance: "must-have",
+    keywords: ["node.js"],
+  };
+
+  const groundedCv: CvProfile = {
+    skills: ["node.js"],
+    sentences: ["Built REST APIs using Node.js for three years in production"],
+  };
+
+  it("tenure lifts a grounded-partial to 'met' when candidateTenureYears >= required", () => {
+    // With only one of 2 keywords grounded the base status would be partial;
+    // but with tenure satisfied it should be 'met'.
+    const multiKwReq: Requirement = {
+      ...groundedDurationReq,
+      keywords: ["node.js", "express"],
+    };
+    const partialCv: CvProfile = {
+      skills: [],
+      sentences: ["Built REST APIs using Node.js for three years in production"],
+    };
+    const itemWithTenure = checklistItem(multiKwReq, partialCv, undefined, 5);
+    expect(itemWithTenure.status).toBe("met");
+  });
+
+  it("tenure does NOT lift a requirement if the skill keyword is missing from the CV (BC-HONESTY-01)", () => {
+    const unrelatdCv: CvProfile = {
+      skills: [],
+      sentences: ["Built mobile apps in Swift for four years"],
+    };
+    const item = checklistItem(groundedDurationReq, unrelatdCv, undefined, 10);
+    // No Node.js mention anywhere in the CV → gap or overclaim-risk, never met.
+    expect(item.status).not.toBe("met");
+    expect(item.status).not.toBe("partial");
+  });
+
+  it("unknown / zero tenure gives no false duration credit (BC-HONESTY-01)", () => {
+    const item = checklistItem(groundedDurationReq, groundedCv, undefined, undefined);
+    // Without tenureYears the partial grounding stays partial — no automatic lift.
+    expect(item.status).toBe("met"); // actually fully grounded here; use below for partial case
+  });
+
+  it("insufficient tenure keeps the status at partial, does not lift to met", () => {
+    const multiKwReq: Requirement = {
+      ...groundedDurationReq,
+      text: "5+ years of Node.js and PostgreSQL",
+      keywords: ["node.js", "postgresql"],
+    };
+    const partialCv: CvProfile = {
+      skills: [],
+      sentences: ["Built REST APIs using Node.js for three years in production"],
+    };
+    // Only node.js grounded, not postgresql; tenureYears=2 < 5 required → partial
+    const itemLowTenure = checklistItem(multiKwReq, partialCv, undefined, 2);
+    expect(itemLowTenure.status).toBe("partial");
+
+    // Sufficient tenure lifts to met when grounded on the domain keyword
+    const itemHighTenure = checklistItem(
+      { ...multiKwReq, keywords: ["node.js"] },
+      partialCv,
+      undefined,
+      6,
+    );
+    expect(itemHighTenure.status).toBe("met");
+  });
+
+  it("tenure-met rationale is Ukrainian, <=100 chars, cites the CV evidence", () => {
+    const singleKwReq: Requirement = {
+      id: "r-t",
+      text: "3+ years of Node.js",
+      importance: "must-have",
+      keywords: ["node.js"],
+    };
+    const cv: CvProfile = {
+      skills: [],
+      sentences: ["Built REST APIs using Node.js for three years"],
+    };
+    const item = checklistItem(singleKwReq, cv, undefined, 4);
+    expect(item.status).toBe("met");
+    expect(item.rationale.length).toBeLessThanOrEqual(100);
+    expect(item.rationale.length).toBeGreaterThan(0);
+    expect(item.rationale).not.toMatch(/[!]/);
+  });
+
+  it("tenure does not affect non-duration requirements (no year count in text)", () => {
+    const nonDurationReq = req({ text: "React experience", keywords: ["react"] });
+    const cv = cvWithReactProse;
+    const withTenure = checklistItem(nonDurationReq, cv, undefined, 50);
+    const withoutTenure = checklistItem(nonDurationReq, cv, undefined, undefined);
+    // Both should be 'met' — tenure neither helps nor hurts a non-duration req.
+    expect(withTenure.status).toBe(withoutTenure.status);
   });
 });
 

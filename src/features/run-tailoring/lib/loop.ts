@@ -21,7 +21,7 @@
 // owning phase stops with a calm error event — never a blank or partial result.
 import { applyExportDefaults, type Bullet, type EvidenceSource } from "@/entities/bullet";
 import { deriveClarifyingQuestions, type ClarifyingQuestion } from "@/entities/clarifying-question";
-import { normalizeCvText } from "@/entities/cv-profile";
+import { normalizeCvText, parseCvDocument, tenureYears, absMonthOf } from "@/entities/cv-profile";
 import type { TailoringChecklistRow } from "@/entities/tailoring";
 import { isCoverageJudgeEnabled } from "@/shared/config";
 import { MAX_ATTEMPTS, type RunTrace, type SkillName, type TraceStep } from "@/shared/lib/evals";
@@ -255,6 +255,15 @@ export async function* runAnalysisPhase(
     });
     yield { type: "step", skill: "parse-cv" };
 
+    // Tenure (§1.3): parse the CV's own role dates into total years so a
+    // duration requirement ("N+ years of X") can be satisfied by real dates
+    // rather than a verbatim substring. Pure + deterministic; unparseable dates
+    // yield zero tenure (no false credit, BC-HONESTY-01). The parse itself
+    // consumes only the CV text (contextKeys `["cvText"]`, NFR-SEC-02) and the
+    // clock; contact PII from parseCvDocument is discarded here and NEVER used
+    // in scoring or any LLM payload.
+    const candidateTenureYears = tenureYears(parseCvDocument(input.cvText), absMonthOf(new Date()));
+
     // 2. extract-requirements — sees ONLY the JD (FR-JD-01/02).
     const extractionPrompt = buildExtractionPrompt({ jobDescription: input.jdText });
     const requirements = await runStep(
@@ -359,7 +368,9 @@ export async function* runAnalysisPhase(
         requirement,
         // Inferred seniority relaxes the claimed-skill rule for mid/senior
         // candidates (improve-tailoring-quality T5); undefined stays strict.
-        item: checklistItem(requirement, cvProfile, careerStage),
+        // Parsed tenure satisfies the years side of a duration requirement whose
+        // skill is already grounded (§1.3); it never credits an ungrounded skill.
+        item: checklistItem(requirement, cvProfile, careerStage, candidateTenureYears),
       }));
       const rows =
         coverageVerdicts !== undefined

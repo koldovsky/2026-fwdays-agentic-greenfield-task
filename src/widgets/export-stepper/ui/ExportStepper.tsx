@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 
 import type { Bullet } from "@/entities/bullet";
+import type { CvDocument } from "@/entities/cv-profile";
 import { renderPlainText } from "@/entities/export-document";
 import {
   buildCoverLetterDocument,
@@ -49,6 +50,15 @@ export interface ExportStepperProps {
    * the fail-honest fallback either way.
    */
   readonly letterEvidence?: LetterEvidence;
+  /**
+   * Optional sectioned CV parse for the structured résumé export (T5 §4). When
+   * supplied, PDF/DOCX/clipboard render contact/summary/experience/skills/
+   * education with kept bullets merged in; absent keeps the flat bullet list.
+   * SECURITY (NFR-SEC-01/02): this carries contact PII and is used ONLY to build
+   * the export document — it is NEVER forwarded to any LLM request. It is kept
+   * strictly separate from `letterEvidence` (the only LLM-bound input here).
+   */
+  readonly cvDocument?: CvDocument;
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
   /** Open the export paywall when a gated action is used without paid access. */
@@ -74,6 +84,7 @@ export function ExportStepper({
   bullets,
   paid,
   letterEvidence,
+  cvDocument,
   locale = "ua",
   onPaywall,
   onStartOver,
@@ -92,8 +103,11 @@ export function ExportStepper({
       buildExportDocument(bullets, {
         headline: copy.export.headline,
         footer: paid ? undefined : copy.export.footer,
+        // Structured export (§4): contact PII stays here, on the export path
+        // only, and never flows into any LLM request (NFR-SEC-01/02).
+        ...(cvDocument ? { cvDocument } : {}),
       }),
-    [bullets, paid, copy.export.headline, copy.export.footer],
+    [bullets, paid, copy.export.headline, copy.export.footer, cvDocument],
   );
 
   // Cover-letter document (§4): grounded, kept bullets reflowed to Ukrainian

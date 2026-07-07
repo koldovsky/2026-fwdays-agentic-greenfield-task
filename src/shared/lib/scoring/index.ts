@@ -1,5 +1,5 @@
 // Public API barrel for the scoring slice — other layers import ONLY this.
-export { checklistItem, matchScore } from "./checklist";
+export { checklistItem, matchScore, requiredYears } from "./checklist";
 export { applyCoverageJudge, type ScoredRow } from "./judge-score";
 export { extractJobTitle } from "./job-title";
 export type {
