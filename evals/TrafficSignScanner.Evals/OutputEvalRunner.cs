@@ -30,6 +30,19 @@ public sealed class OutputEvalRunResult
     public required IReadOnlyList<string> Failures { get; init; }
 }
 
+public sealed class OutputEvalBaseline
+{
+    public required double PassRate { get; init; }
+
+    public required int PassedCases { get; init; }
+
+    public required int TotalCases { get; init; }
+
+    public required float ConfidenceThreshold { get; init; }
+
+    public required string LockedAt { get; init; }
+}
+
 public static class ExpectedDatasetGenerator
 {
     public static ExpectedDataset GenerateFromFolders(string datasetRoot)
@@ -59,6 +72,101 @@ public static class ExpectedDatasetGenerator
     }
 }
 
+public static class ExpectedDatasetValidator
+{
+    /// <summary>@trace NFR-EVAL-01</summary>
+    public static IReadOnlyList<string> FindMissingCases(string datasetRoot, ExpectedDataset expected)
+    {
+        var expectedImages = expected.Cases
+            .Select(evalCase => evalCase.Image.Replace('/', Path.DirectorySeparatorChar))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var actualImages = Directory
+            .EnumerateFiles(datasetRoot, "*.jpg", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(datasetRoot, path))
+            .OrderBy(path => path)
+            .ToArray();
+
+        return actualImages
+            .Where(image => !expectedImages.Contains(image))
+            .ToArray();
+    }
+
+    /// <summary>@trace NFR-EVAL-01</summary>
+    public static IReadOnlyList<string> FindUnexpectedCases(string datasetRoot, ExpectedDataset expected)
+    {
+        var actualImages = Directory
+            .EnumerateFiles(datasetRoot, "*.jpg", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(datasetRoot, path))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return expected.Cases
+            .Where(evalCase => !actualImages.Contains(evalCase.Image.Replace('/', Path.DirectorySeparatorChar)))
+            .Select(evalCase => evalCase.Image)
+            .ToArray();
+    }
+}
+
+public static class ExpectedDatasetReader
+{
+    /// <summary>@trace NFR-EVAL-01</summary>
+    public static ExpectedDataset Load(string expectedPath)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(expectedPath));
+        var root = document.RootElement;
+
+        var cases = new List<ExpectedDatasetCase>();
+        foreach (var caseElement in root.GetProperty("cases").EnumerateArray())
+        {
+            var image = caseElement.GetProperty("image").GetString()
+                ?? throw new InvalidOperationException("expected.json case image is required.");
+
+            string? expectedLabel = null;
+            if (caseElement.TryGetProperty("expectedLabel", out var labelElement)
+                && labelElement.ValueKind is not JsonValueKind.Null)
+            {
+                expectedLabel = labelElement.GetString();
+            }
+
+            cases.Add(new ExpectedDatasetCase
+            {
+                Image = image,
+                ExpectedLabel = expectedLabel,
+            });
+        }
+
+        return new ExpectedDataset
+        {
+            ConfidenceThreshold = root.GetProperty("confidenceThreshold").GetSingle(),
+            Cases = cases,
+        };
+    }
+}
+
+public static class EvalBaselineReader
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    public static OutputEvalBaseline LoadOutputBaseline(string baselinePath)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(baselinePath));
+        var root = document.RootElement;
+
+        return new OutputEvalBaseline
+        {
+            PassRate = root.GetProperty("passRate").GetDouble(),
+            PassedCases = root.GetProperty("passedCases").GetInt32(),
+            TotalCases = root.GetProperty("totalCases").GetInt32(),
+            ConfidenceThreshold = root.GetProperty("confidenceThreshold").GetSingle(),
+            LockedAt = root.GetProperty("lockedAt").GetString()
+                ?? throw new InvalidOperationException("Output baseline lockedAt is required."),
+        };
+    }
+}
+
 public static class OutputEvalRunner
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -68,14 +176,31 @@ public static class OutputEvalRunner
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    /// <summary>@trace NFR-EVAL-01</summary>
     public static OutputEvalRunResult Run(string repoRoot)
     {
         var datasetRoot = Path.Combine(repoRoot, "evals", "dataset");
         var expectedPath = Path.Combine(datasetRoot, "expected.json");
-        EnsureExpectedJson(expectedPath, datasetRoot);
+        if (!File.Exists(expectedPath))
+        {
+            throw new InvalidOperationException("Missing evals/dataset/expected.json.");
+        }
 
-        var expected = JsonSerializer.Deserialize<ExpectedDataset>(File.ReadAllText(expectedPath), JsonOptions)
-            ?? throw new InvalidOperationException("Failed to deserialize expected.json.");
+        var expected = ExpectedDatasetReader.Load(expectedPath);
+
+        var missingCases = ExpectedDatasetValidator.FindMissingCases(datasetRoot, expected);
+        if (missingCases.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"expected.json is missing {missingCases.Count} dataset image(s): {string.Join(", ", missingCases)}");
+        }
+
+        var unexpectedCases = ExpectedDatasetValidator.FindUnexpectedCases(datasetRoot, expected);
+        if (unexpectedCases.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"expected.json references {unexpectedCases.Count} missing image(s): {string.Join(", ", unexpectedCases)}");
+        }
 
         var bundledModelPath = Path.Combine(repoRoot, "src", "TrafficSignScanner.App", "Resources", "Raw", "model.onnx");
         var bundledLabelsPath = Path.Combine(repoRoot, "src", "TrafficSignScanner.App", "Resources", "Raw", "labels.txt");
@@ -110,13 +235,15 @@ public static class OutputEvalRunner
                 continue;
             }
 
-            if (detections.Any(detection => detection.Label == evalCase.ExpectedLabel))
+            if (detections.Any(detection =>
+                    detection.Label == evalCase.ExpectedLabel
+                    && detection.Confidence >= expected.ConfidenceThreshold))
             {
                 passed++;
             }
             else
             {
-                failures.Add($"{evalCase.Image}: expected {evalCase.ExpectedLabel}, got {FormatDetections(detections)}");
+                failures.Add($"{evalCase.Image}: expected {evalCase.ExpectedLabel} @ >={expected.ConfidenceThreshold:F2}, got {FormatDetections(detections)}");
             }
         }
 
@@ -128,13 +255,8 @@ public static class OutputEvalRunner
         };
     }
 
-    public static void EnsureExpectedJson(string expectedPath, string datasetRoot)
+    public static void WriteExpectedJson(string expectedPath, string datasetRoot)
     {
-        if (File.Exists(expectedPath))
-        {
-            return;
-        }
-
         var dataset = ExpectedDatasetGenerator.GenerateFromFolders(datasetRoot);
         File.WriteAllText(expectedPath, JsonSerializer.Serialize(dataset, JsonOptions));
     }

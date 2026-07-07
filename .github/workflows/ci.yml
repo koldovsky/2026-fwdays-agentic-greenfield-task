@@ -38,7 +38,7 @@ jobs:
         run: dotnet test tests/TrafficSignScanner.Mcp.Tests/TrafficSignScanner.Mcp.Tests.csproj
 
       - name: Test Core
-        run: dotnet test tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj --no-build
+        run: dotnet test tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj --collect:"XPlat Code Coverage" --results-directory tests/TrafficSignScanner.Core.Tests/TestResults/coverage
 
       - name: Test eval harness
         run: dotnet test evals/TrafficSignScanner.Evals/TrafficSignScanner.Evals.csproj --no-build

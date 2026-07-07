@@ -2,17 +2,24 @@
 
 ## Gate
 
-Current gate: **G4.5 green** — `mcp-server` slice closed (2026-07-08).
+Current gate: **G5 green** — `evals-hardening` slice closed (2026-07-08).
 
-G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `core-inference`; ratchet not locked (G5).
+MVP capability plan complete. All six implementation slices delivered with locked eval and coverage ratchets.
 
-## Provisional Eval (core-inference)
+## Locked Eval Metrics
 
 | Metric | Value |
 | --- | --- |
-| Pass rate | **90.0% (36/40)** |
-| Threshold | 0.5 |
-| Ratchet baseline | **Not locked** — pending `evals-hardening` (G5) |
+| Output eval pass rate | **90.0% (36/40)** |
+| Confidence threshold | 0.5 |
+| Baseline file | `evals/baselines/output-eval.json` |
+
+## Locked Coverage Metrics
+
+| Metric | Value |
+| --- | --- |
+| Core line rate | **76.2% (346/454 lines)** |
+| Baseline file | `evals/baselines/coverage.json` |
 
 ## Completed Slices
 
@@ -39,8 +46,13 @@ G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `
 ### mcp-server (G4.5)
 
 - Stdio MCP tools `detect_objects` / `get_model_info` wrapping Core with path validation.
-- 9 MCP tests with `@trace FR-MCP-*`; registered in `.cursor/mcp.json`.
 - Verdict: `qa/verdicts/mcp-server.md` (pass).
+
+### evals-hardening (G5)
+
+- Finalized `expected.json` (40 cases), hardened output eval runner, locked eval/coverage ratchets, G5 gate report.
+- EXIF golden JPEG fixture for preprocessing integration test.
+- Verdict: `qa/verdicts/evals-hardening.md` (pass).
 
 ## Scaffolded Projects
 
@@ -54,4 +66,4 @@ G3 capability plan approved. Provisional eval pass-rate **90.0% (36/40)** from `
 
 ## Next Slice
 
-`evals-hardening` — lock `expected.json`, output-eval ratchet, coverage baseline (G5).
+None — MVP plan complete at G5.

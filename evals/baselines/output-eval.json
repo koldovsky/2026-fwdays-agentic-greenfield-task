@@ -1,0 +1,7 @@
+{
+  "passRate": 0.9,
+  "passedCases": 36,
+  "totalCases": 40,
+  "confidenceThreshold": 0.5,
+  "lockedAt": "2026-07-08"
+}

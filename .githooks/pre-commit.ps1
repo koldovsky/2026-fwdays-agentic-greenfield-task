@@ -28,7 +28,7 @@ Invoke-Step "test MCP" {
 }
 
 Invoke-Step "test Core" {
-    dotnet test "tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj"
+    dotnet test "tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj" --collect:"XPlat Code Coverage" --results-directory "tests/TrafficSignScanner.Core.Tests/TestResults/coverage"
 }
 
 Invoke-Step "test eval harness" {

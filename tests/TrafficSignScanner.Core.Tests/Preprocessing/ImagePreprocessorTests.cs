@@ -95,6 +95,19 @@ public sealed class ImagePreprocessorTests
         Assert.Equal(0f, result.Tensor[0, 2, 0, 0]);
     }
 
+    /// <summary>@trace FR-PREPROC-01, NFR-TEST-01</summary>
+    [Fact]
+    public void DecodeSourceImage_FromOrientedJpegFixture_AppliesExifOrientation()
+    {
+        var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "exif-right-top.jpg");
+        Assert.True(File.Exists(fixturePath), $"Missing EXIF fixture: {fixturePath}");
+
+        using var decoded = ImagePreprocessor.DecodeSourceImage(File.ReadAllBytes(fixturePath));
+
+        Assert.Equal(100, decoded.Width);
+        Assert.Equal(200, decoded.Height);
+    }
+
     private static SKBitmap CreatePortraitBitmap(int width, int height)
     {
         var bitmap = new SKBitmap(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
