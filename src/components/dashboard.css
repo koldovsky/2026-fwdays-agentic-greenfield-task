@@ -1,0 +1,93 @@
+.od {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 32px;
+  font-family: system-ui, sans-serif;
+}
+.od h2 {
+  font-size: 1.2rem;
+  margin: 8px 0;
+}
+.od-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.od-table th,
+.od-table td {
+  border: 1px solid #e2e8f0;
+  padding: 6px 8px;
+  text-align: left;
+}
+.od-table thead th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+.od-row {
+  cursor: pointer;
+}
+.od-row:hover {
+  background: #f1f5f9;
+}
+.od-row--open {
+  background: #eff6ff;
+}
+.od-caret {
+  display: inline-block;
+  width: 14px;
+  color: #64748b;
+}
+.od-delay {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.od-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: #fff;
+  white-space: nowrap;
+}
+.od-badge--on-schedule {
+  background: #16a34a;
+}
+.od-badge--at-risk {
+  background: #d97706;
+}
+.od-badge--late {
+  background: #dc2626;
+}
+.od-badge--blocked-material {
+  background: #6b7280;
+}
+
+/* Expanded BOM tree */
+.od-tree-row > td {
+  background: #f8fafc;
+  padding: 8px;
+}
+.od-tree {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  background: #fff;
+}
+.od-tree th,
+.od-tree td {
+  border: 1px solid #e5e7eb;
+  padding: 4px 8px;
+}
+.od-tree thead th {
+  background: #f1f5f9;
+}
+
+.od-summary td {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+.muted {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
