@@ -100,7 +100,6 @@ import {
 } from "@kamerton/lib/src/booking/copy.ts";
 import { releaseHold } from "@kamerton/lib/src/slots/hold.ts";
 import { CalendarError, type CalendarPort } from "@kamerton/lib/src/slots/calendar-port.ts";
-import { overlaps } from "@kamerton/lib/src/slots/subtract.ts";
 import { kyivWallClockToUtc, utcToKyivWallClock } from "@kamerton/lib/src/slots/timezone.ts";
 import type { Slot } from "@kamerton/lib/src/slots/grid.ts";
 import { compileFirstLessonBrief } from "@kamerton/lib/src/intake/first-lesson-brief.ts";
@@ -278,6 +277,28 @@ function hasExternalCollision(
   return removeOwnInterval(busy, ownRange).length > 0;
 }
 
+/** Second live-found Confirm bug (see this describe's own test-file header
+ *  comment above `hasIdentityBasedCollision`'s call site): `overlaps()`
+ *  (`lib/src/slots/subtract.ts`) compares RFC3339 timestamps with a plain
+ *  STRING `<`, which is only a valid chronological ordering when both
+ *  operands share the exact same offset/format. `busyEventsInRange` is a
+ *  distinct adapter boundary (real Google `events.list` echoes
+ *  `dateTime` in the CALENDAR'S LOCAL OFFSET, e.g. `+03:00`) — its results
+ *  cannot be assumed to share `kyivWallClockToUtc`'s always-"Z" format, so
+ *  the identity-based half of Confirm's re-check must compare by PARSED
+ *  INSTANT, never by raw string ordering. Deliberately NOT reusing the
+ *  shared `overlaps()` (its raw-string contract is relied on by its other,
+ *  fixed-width-Kyiv-local-string callers) — mirrors the existing
+ *  `isSameInstantRange` instant-based approach the value-based self-filter
+ *  above already uses, just for a half-open overlap test instead of exact
+ *  equality. */
+function rangesOverlapByInstant(
+  a: { start: string; end: string },
+  b: { start: string; end: string },
+): boolean {
+  return new Date(a.start).getTime() < new Date(b.end).getTime() && new Date(b.start).getTime() < new Date(a.end).getTime();
+}
+
 /** Confirm's fresh collision re-check (step 4), IDENTITY-based half — the
  *  fix for the live-found Confirm double-booking bug (see this file's
  *  Confirm step-4 header comment and `CalendarPort.busyEventsInRange`'s own
@@ -285,13 +306,18 @@ function hasExternalCollision(
  *  `eventId`, never by value-matching a range that a merge-prone `freeBusy`
  *  snapshot could make ambiguous — any OTHER event overlapping `ownRange`
  *  is a genuine external collision, no matter how many events share the
- *  exact same time range. */
+ *  exact same time range. Overlap is checked by PARSED INSTANT
+ *  (`rangesOverlapByInstant`), never `overlaps()`'s raw string compare —
+ *  `busyEventsInRange` results may echo any RFC3339 offset format, not
+ *  only `kyivWallClockToUtc`'s "Z"-UTC. */
 function hasIdentityBasedCollision(
   distinctEvents: { eventId: string; start: string; end: string }[],
   ownEventId: string,
   ownRange: { start: string; end: string },
 ): boolean {
-  return distinctEvents.some((event) => event.eventId !== ownEventId && overlaps(ownRange, event));
+  return distinctEvents.some(
+    (event) => event.eventId !== ownEventId && rangesOverlapByInstant(ownRange, event),
+  );
 }
 
 export async function POST(

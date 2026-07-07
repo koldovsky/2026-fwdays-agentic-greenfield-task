@@ -236,8 +236,19 @@ export class GoogleCalendarPort implements CalendarPort {
    * `status === "cancelled"` events are SKIPPED: an all-day event carries no
    * timed range comparable to a booking slot, and a cancelled event is not
    * actually occupying the calendar (Google's `events.list` can still
-   * surface cancelled events in some sync modes). Conversion-free RFC3339
-   * UTC pass-through (design.md Decision 3), like every other method here.
+   * surface cancelled events in some sync modes).
+   *
+   * NOT a conversion-free pass-through, unlike this adapter's other methods
+   * (second live-found Confirm bug, `docs/qa/booking-hitl-manual-smoke.md`
+   * "History"): `events.list`'s `start.dateTime`/`end.dateTime` carry the
+   * CALENDAR'S LOCAL OFFSET (e.g. `"...T17:00:00+03:00"`), never `Z`-UTC —
+   * but `CalendarPort`'s own interface contract (and `freeBusy`'s actual
+   * behaviour) is RFC3339 UTC throughout. Normalizing here, at the adapter
+   * boundary, honors that contract for every caller (defense-in-depth
+   * alongside the route-level, format-agnostic instant comparison in
+   * `apps/dashboard/app/api/decisions/[requestId]/route.ts`'s
+   * `hasIdentityBasedCollision`) rather than leaking a local-offset format
+   * that only this one method produces.
    */
   async busyEventsInRange(
     range: { start: string; end: string },
@@ -262,7 +273,9 @@ export class GoogleCalendarPort implements CalendarPort {
         if (typeof eventId !== "string" || typeof start !== "string" || typeof end !== "string") {
           continue;
         }
-        events.push({ eventId, start, end });
+        // Normalize the local-offset `dateTime` echo to `Z`-UTC RFC3339,
+        // matching `freeBusy`'s and the `CalendarPort` interface's contract.
+        events.push({ eventId, start: new Date(start).toISOString(), end: new Date(end).toISOString() });
       }
       return events;
     } catch (error) {
