@@ -1,6 +1,7 @@
 import './App.css'
 import './components/import.css'
 import { ImportPanel } from './components/ImportPanel.tsx'
+import { OverviewDashboard } from './components/OverviewDashboard.tsx'
 import { ScenarioCompare } from './components/ScenarioCompare.tsx'
 import { OrderDashboard } from './components/OrderDashboard.tsx'
 import { MaterialCheck } from './components/MaterialCheck.tsx'
@@ -12,11 +13,20 @@ function App() {
   return (
     <>
       <ImportPanel />
+      <OverviewDashboard />
       <ScenarioCompare />
-      <OrderDashboard />
-      <MaterialCheck />
-      <GanttView />
-      <CapacityView />
+      <div id="view-orders">
+        <OrderDashboard />
+      </div>
+      <div id="view-materials">
+        <MaterialCheck />
+      </div>
+      <div id="view-gantt">
+        <GanttView />
+      </div>
+      <div id="view-capacity">
+        <CapacityView />
+      </div>
       <ExportPanel />
     </>
   )
