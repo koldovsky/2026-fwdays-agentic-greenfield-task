@@ -405,10 +405,10 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
 
 ## I. Rendered-UI gate — axe + vision-verify on DecisionBar states
 
-- [ ] I.1 Start the dashboard against a seeded SQLite fixture with at least
+- [x] I.1 Start the dashboard against a seeded SQLite fixture with at least
       one real `pending` request (a real `DecisionBar`), one `confirmed`
       seat, and one `cancelled` (superseded) seat on the HallMap.
-- [ ] I.2 chrome-devtools MCP (or Playwright, per `docs/current-state.md`'s
+- [x] I.2 chrome-devtools MCP (or Playwright, per `docs/current-state.md`'s
       "chrome-devtools MCP not connected" fallback note) — TC-TEST-03:
       capture stills for (a) the pending request's `DecisionBar` with all
       three actions visible, (b) the inline response after each of Confirm/
@@ -416,18 +416,18 @@ typed throwing stub before implementing (green) — same discipline as S1/S2/S3.
       thrown error" contract, now carrying a real outcome message), and (c)
       the HallMap immediately reflecting a live decision (design.md
       Decision 6 items 1/3) without a page reload.
-- [ ] I.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
+- [x] I.3 Run `node scripts/check-a11y.mjs` (light + dark) against the
       populated route; fix any serious/critical violation before proceeding
       (particular attention to `DecisionBar`'s three-button focus order and
       the inline status message's `aria-live` region, already present per
       S3's shipped component).
-- [ ] I.4 Launch a fresh `vision-judge` pass (maker ≠ checker) on the settled
+- [x] I.4 Launch a fresh `vision-judge` pass (maker ≠ checker) on the settled
       stills, judging whether they visibly demonstrate FR-HITL-01 (three
       actions on a pending request) and the live HallMap flip (Decision 6
       item 3). Record `met`/`readable`/`notes` in
       `docs/qa/booking-hitl/manifest.json`; a `not met`/`not readable`
       verdict blocks this task until fixed and re-recorded.
-- [ ] I.5 Run `node scripts/check-recordings.mjs`; confirm the manifest's
+- [x] I.5 Run `node scripts/check-recordings.mjs`; confirm the manifest's
       claims are backed by real files on disk.
 
 ## J. Validation, docs, and archive prep

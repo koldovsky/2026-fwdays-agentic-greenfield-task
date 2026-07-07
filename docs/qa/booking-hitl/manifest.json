@@ -1,5 +1,15 @@
 {
   "kind": "demo",
+  "visionSummary": {
+    "judge": "project-factory:vision-judge (fresh agent, maker!=checker)",
+    "overallVerdict": "met",
+    "blocking": [],
+    "notes": [
+      "FR-HITL-01 (three actions), FR-HITL-03 (slot-picker with 2 selected + enabled Запропонувати), the inline outcome message, and the three distinguishable HallMap seat states (amber pending / green-outline confirmed / dashed+strikethrough cancelled — non-color-only) all visibly demonstrated and legible in BOTH light and dark. 0 blocking.",
+      "NON-BLOCKING (mock-capture artifact, not a UI bug): the decision-outcome still shows the confirmation message beside a card still badged 'Очікує' and a 'ЧЕРГА ОЧІКУВАННЯ · 1' count — because the still MOCKS the /api/decisions POST (Playwright page.route) to avoid a live DEMO-calendar mutation, the STATE_SNAPSHOT republish that flips the badge in real use does not fire. That real-time flip is covered by tests (decisions route STATE_SNAPSHOT publish + ingest republish + F.1) and is exercised live in the G.3 real-DB smoke.",
+      "NON-BLOCKING (future enhancement): HallMap cells are small (~9px) with no on-screen color->status legend, so meaning is inferable from context but not the still alone. A legend is a candidate future dashboard enhancement, not an S4 gap."
+    ]
+  },
   "results": [
     {
       "id": "decisionbar-actions",
@@ -9,7 +19,7 @@
       "explainer": "docs/qa/booking-hitl/decisionbar-actions.md",
       "note": "The pending request's real DecisionBar renders all three admin actions: Підтвердити (confirm), Запропонувати інший час (propose another time), Відхилити (decline).",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "slot-picker-open",
@@ -19,7 +29,7 @@
       "explainer": "docs/qa/booking-hitl/slot-picker-open.md",
       "note": "Clicking \"Запропонувати інший час\" reveals the inline slot-picker: on-grid candidate slots as real checkboxes (role=checkbox), two selected, \"Запропонувати\" enabled.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "decision-outcome",
@@ -29,7 +39,7 @@
       "explainer": "docs/qa/booking-hitl/decision-outcome.md",
       "note": "Confirm's POST to /api/decisions/:id is intercepted (Playwright page.route) and fulfilled with a spec-shaped {status:'applied'} body — a real POST here would either mutate the live DEMO Google Calendar against a fake fixture event id, or silently no-op without live credentials, so this still proves the real DecisionBar/fetch/inline-render path without a non-deterministic side effect.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "hallmap-states",
@@ -39,7 +49,7 @@
       "explainer": "docs/qa/booking-hitl/hallmap-states.md",
       "note": "The HallMap shows the seeded pending (amber), confirmed (green), and cancelled (slate) seats together, on three distinct weekday/hour cells.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "decisionbar-actions-dark",
@@ -49,7 +59,7 @@
       "explainer": "docs/qa/booking-hitl/decisionbar-actions.md",
       "note": "The pending request's real DecisionBar renders all three admin actions: Підтвердити (confirm), Запропонувати інший час (propose another time), Відхилити (decline).",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "slot-picker-open-dark",
@@ -59,7 +69,7 @@
       "explainer": "docs/qa/booking-hitl/slot-picker-open.md",
       "note": "Clicking \"Запропонувати інший час\" reveals the inline slot-picker: on-grid candidate slots as real checkboxes (role=checkbox), two selected, \"Запропонувати\" enabled.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "decision-outcome-dark",
@@ -69,7 +79,7 @@
       "explainer": "docs/qa/booking-hitl/decision-outcome.md",
       "note": "Confirm's POST to /api/decisions/:id is intercepted (Playwright page.route) and fulfilled with a spec-shaped {status:'applied'} body — a real POST here would either mutate the live DEMO Google Calendar against a fake fixture event id, or silently no-op without live credentials, so this still proves the real DecisionBar/fetch/inline-render path without a non-deterministic side effect.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     },
     {
       "id": "hallmap-states-dark",
@@ -79,7 +89,7 @@
       "explainer": "docs/qa/booking-hitl/hallmap-states.md",
       "note": "The HallMap shows the seeded pending (amber), confirmed (green), and cancelled (slate) seats together, on three distinct weekday/hour cells.",
       "asserted": true,
-      "visionVerdict": null
+      "visionVerdict": "met"
     }
   ]
 }
