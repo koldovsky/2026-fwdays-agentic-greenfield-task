@@ -7,6 +7,23 @@
 
 ## Last action
 
+- **Ops follow-up `wire-tailoring-cleanup-route` DONE + gate green (2026-07-08, ultracode).**
+  Wired the previously-uncalled `markAbandonedPending` sweeper behind an auth-protected route.
+  New `getMaintenanceSecret()` in `shared/config/env.ts` (env-only, throws unset/empty; barrel-exported)
+  + new `POST /api/maintenance/tailoring-cleanup`: 503 when secret unset, `Bearer <secret>` auth compared
+  with `crypto.timingSafeEqual` (constant-time; length-guard pre-check), `getDb()` →
+  `markAbandonedPending(db, 30min)` → `{ swept: N }`, calm coded 500 on DB error (no stack/schema leak),
+  logs only stable non-secret lines (no token/PII). FSD-clean (app route → shared only; shared/config
+  framework-free). Investigators(3, haiku-tier) → maker(sonnet, workflow) → test-author(sonnet, workflow)
+  → checker(opus)+verifier(sonnet), all separate contexts. Checker ship, 0 blockers/0 majors; 3 minors:
+  1 real FIXED (auth compare was JS `===` byte-short-circuit → `timingSafeEqual`, NFR-SEC-01/SOC2 access
+  control), 2 test minors closed by a fresh test-author (stale note corrected + 2 timing-safe edge tests
+  restored, +4). Final verifier gate: **lint 0/0 + build + 134 files / 1282 tests green.** Implements
+  NFR-COST-02, FR-ONBOARD-01, NFR-SEC-01, NFR-OBS-01, TC-PURE-01. The periodic cron/curl INVOKER remains
+  an ops step (Remaining §4). Reassessed + DEFERRED this session: T5 #7 (per-bullet role provenance —
+  needs Bullet.sourceRoleIndex in the gen pipeline + migration; own spec-first change; fidelity-only) and
+  T5 #8 (server-side export honesty gate — LOW value: self-authored resume text in a self-downloaded PDF
+  is not an overclaim; keep the documented accepted trust boundary, no schema change).
 - **T5 DONE (all 5 groups) + WHOLE 6-TASK BATCH COMPLETE (2026-07-07, ultracode).** Group 5 = final
   whole-change verify + adversarial review across the COMBINED honesty surface (heuristics + flagged
   judge + grounded letter + resume merge). Whole-change verifier PASS: lint 0/0 + build + **133 files
@@ -308,6 +325,40 @@
 
 ## Working on
 
+**Ops follow-up: wire `markAbandonedPending` invoker (change `wire-tailoring-cleanup-route`) — ✅ DONE
+(2026-07-08, see Last action). Endpoint ships; periodic cron/curl invoker stays ops (Remaining §4).**
+Post-batch code work. Caps: shared/config, shared/lib/db, app/api (maintenance). IDs: NFR-COST-02
+(abandoned pending rows consume a free user's lifetime slot), FR-ONBOARD-01, NFR-OBS-01, NFR-SEC-01.
+
+Root cause: `markAbandonedPending(db, olderThanMs)` (`shared/lib/db/tailoring-cleanup.ts:21`) ships
+with ZERO production callers — only integration tests. No route/cron sweeps abandoned `pending` rows.
+
+### Plan (numbered)
+1. **env accessor** — add `getMaintenanceSecret(): string` to `shared/config/env.ts` (mirror
+   `getPaymentsWebhookSecret`: throw on unset/empty). Export via `shared/config/index.ts`.
+2. **route** — new `src/app/api/maintenance/tailoring-cleanup/route.ts`, `POST`:
+   - 503 calm when secret unset (getMaintenanceSecret throws) — mirror webhook 503.
+   - Read `Authorization: Bearer <secret>`; constant-time-ish compare; 401 on mismatch/missing.
+   - `getDb()` → `markAbandonedPending(db, 30 * 60 * 1000)` (30-min TTL default).
+   - 200 `{ swept: <count> }`; catch DB/other → calm coded 500 (no stack/schema leak, NFR-OBS-01).
+   - Log only `[api/maintenance/tailoring-cleanup] swept N` — NO user ids / key / plaintext (NFR-SEC-01).
+3. **tests** (test-author, separate ctx): unset-secret→503, no/blank header→401, wrong token→401,
+   valid token→200 + markAbandonedPending invoked with 30-min TTL, DB throw→500, no secret leak.
+4. checker + verifier (separate ctx). Commit. Then update handoff.
+
+Security notes: auth-protected ops route (SOC2 access control); secret via env only, never logged
+(no single-point — env gate + bearer check); no PII in payload/logs. Wire the actual cron/curl
+invoker is an OPS step (kept in Remaining) — this change ships the safely-callable endpoint.
+
+Deferred (assessed this session, NOT doing now):
+- **#7 per-bullet role provenance** — needs `Bullet.sourceRoleIndex` set in the gen/grounding
+  pipeline + migration + repo thread. Honesty-core + schema = own spec-first change. Fidelity-only.
+- **#8 server-side export honesty gate** — reassessed LOW value: it is the user's OWN resume; self-
+  authored text in a self-downloaded PDF is not an overclaim. Routes shape-validate already. Keep the
+  documented accepted trust boundary; no schema change.
+
+---
+
 **NEW 6-task batch — ✅ COMPLETE (all 6 tasks shipped, reviewed green).**
 Order shipped: **T6 ✅ (`990fb97`) → T1 ✅ (`c2a6dbd`) → T3 ✅ (`c265f89`) → T2 ✅ (`27d4861`) →
 T4 ✅ (`1080213`) → T5 ✅** (`b5b0c90` G1a, `126ab08` G3, `7b2a98d` G2, `dca3530` G4, this commit G5).
@@ -386,10 +437,11 @@ Residual from prior 10-task batch: DONE; env/tooling/human items below unchanged
 3. **openspec archives (CLI not installed here):** archive in dependency order — `update-landing-flow`
    → `surface-premium-attach-landing`; plus `rework-app-header`, `add-tailoring-history`,
    `add-premium-pdf-attach`, `landing-animations`, `extract-landing-i18n`, `add-language-toggle`.
-4. **Ops (T1 cleanup sweep):** `markAbandonedPending(db, olderThanMs)` ships in
-   `shared/lib/db/tailoring-cleanup.ts` but has NO wired invoker. Wire a cron/route or run it as a
-   periodic maintenance job so abandoned `pending` rows (which consume a free user's lifetime slot,
-   intended non-refund) get swept (default TTL 30 min). Non-blocking; owner-scoped, no data risk.
+4. **Ops (T1 cleanup sweep):** the callable endpoint now EXISTS —
+   `POST /api/maintenance/tailoring-cleanup` (auth: `Authorization: Bearer $MAINTENANCE_SECRET`) calls
+   `markAbandonedPending(db, 30min)` and returns `{ swept: N }`. Remaining ops step: set
+   `MAINTENANCE_SECRET` in prod env, then schedule the periodic invoker (Vercel Cron or external
+   `curl -X POST … -H "Authorization: Bearer $MAINTENANCE_SECRET"`). Non-blocking; owner-scoped, no data risk.
    NOTE: `GET /api/tailoring` list+detail are now open to all logged-in users (matches the locked T1
    decision); the history PAGE still gates on `hasPaidAccess` (paywall stays at the view layer).
 5. **Ops (task 3):** set prod env (`CV_ENCRYPTION_KEY`, `DATABASE_URL`, `AUTH_SECRET`,

@@ -132,3 +132,19 @@ export function getPaymentsWebhookSecret(): string {
   }
   return secret;
 }
+
+/**
+ * Shared secret for the maintenance API (`MAINTENANCE_SECRET`). Required by
+ * `POST /api/maintenance/tailoring-cleanup` to gate the abandoned-pending
+ * sweep (NFR-COST-02, FR-ONBOARD-01). Supplied as a `Bearer` token in the
+ * `Authorization` header — callers are cron jobs or one-off curl invocations
+ * (ops step). Throws when unset or empty so the route can respond 503 cleanly
+ * rather than treating an empty string as a valid credential.
+ */
+export function getMaintenanceSecret(): string {
+  const secret = process.env.MAINTENANCE_SECRET;
+  if (secret === undefined || secret === "") {
+    throw new Error("MAINTENANCE_SECRET is not set");
+  }
+  return secret;
+}

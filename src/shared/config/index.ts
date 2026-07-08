@@ -15,6 +15,7 @@ export {
   getLlmModel,
   getPaymentsProviderName,
   getPaymentsWebhookSecret,
+  getMaintenanceSecret,
   isPaymentsEmulatorEnabled,
   isCoverageJudgeEnabled,
   type LlmProviderName,
