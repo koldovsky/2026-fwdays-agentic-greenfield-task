@@ -145,6 +145,16 @@
   color: #dc2626;
   font-weight: 600;
 }
+/* Fallback-лінія «Сьогодні» (розширення marker відсутнє у dhtmlx-gantt@10 npm) */
+.gantt-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dc2626;
+  z-index: 1;
+  pointer-events: none;
+}
 
 /* Detail side panel (FR-GANTT-04) */
 .op-panel {

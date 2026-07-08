@@ -1,5 +1,6 @@
 import './App.css'
 import './components/import.css'
+import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { ImportPanel } from './components/ImportPanel.tsx'
 import { OverviewDashboard } from './components/OverviewDashboard.tsx'
 import { ScenarioCompare } from './components/ScenarioCompare.tsx'
@@ -12,22 +13,38 @@ import { ExportPanel } from './components/ExportPanel.tsx'
 function App() {
   return (
     <>
-      <ImportPanel />
-      <OverviewDashboard />
-      <ScenarioCompare />
+      <ErrorBoundary name="Імпорт даних">
+        <ImportPanel />
+      </ErrorBoundary>
+      <ErrorBoundary name="Дашборд">
+        <OverviewDashboard />
+      </ErrorBoundary>
+      <ErrorBoundary name="Порівняння варіантів">
+        <ScenarioCompare />
+      </ErrorBoundary>
       <div id="view-orders">
-        <OrderDashboard />
+        <ErrorBoundary name="Замовлення">
+          <OrderDashboard />
+        </ErrorBoundary>
       </div>
       <div id="view-materials">
-        <MaterialCheck />
+        <ErrorBoundary name="Матеріали">
+          <MaterialCheck />
+        </ErrorBoundary>
       </div>
       <div id="view-gantt">
-        <GanttView />
+        <ErrorBoundary name="Діаграма Гантта">
+          <GanttView />
+        </ErrorBoundary>
       </div>
       <div id="view-capacity">
-        <CapacityView />
+        <ErrorBoundary name="Завантаженість РЦ">
+          <CapacityView />
+        </ErrorBoundary>
       </div>
-      <ExportPanel />
+      <ErrorBoundary name="Експорт">
+        <ExportPanel />
+      </ErrorBoundary>
     </>
   )
 }

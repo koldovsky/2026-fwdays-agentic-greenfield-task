@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { gantt } from 'dhtmlx-gantt'
+import { Gantt, type GanttStatic } from 'dhtmlx-gantt'
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
 import type { GanttData, GanttTask } from '../../lib/gantt/index.ts'
 
@@ -76,12 +76,54 @@ export function GanttChart({
   onSelectRef.current = onSelectOp
 
   const markerRef = useRef<string | null>(null)
+  // Окремий екземпляр gantt на кожен монтаж (StrictMode-safe): спільний
+  // сінглтон після destructor() ламається при повторному init.
+  const ganttRef = useRef<GanttStatic | null>(null)
+  // Fallback-лінія «Сьогодні», коли розширення marker відсутнє у бандлі.
+  const todayLineRef = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Намалювати вертикальну лінію «Сьогодні» без розширення marker: обчислюємо
+   * X через `posFromDate` і вставляємо позиціоновану div у область даних.
+   * Повністю захищено — за будь-якої несумісності просто нічого не малює.
+   */
+  const drawTodayLine = () => {
+    const gantt = ganttRef.current
+    const node = containerRef.current
+    if (!gantt || !node) return
+    // Якщо нативний marker доступний — лінію малює він, fallback не потрібен.
+    if (typeof gantt.addMarker === 'function') return
+    try {
+      const area = node.querySelector<HTMLElement>('.gantt_data_area')
+      if (!area || typeof gantt.posFromDate !== 'function') return
+      const x = gantt.posFromDate(today)
+      if (typeof x !== 'number' || !Number.isFinite(x)) return
+      let line = todayLineRef.current
+      if (!line) {
+        line = document.createElement('div')
+        line.className = 'gantt-today-line'
+        line.title = 'Сьогодні'
+        todayLineRef.current = line
+      }
+      line.style.left = `${x}px`
+      // gantt.render() перебудовує область даних — переприкріплюємо лінію.
+      if (line.parentElement !== area) area.appendChild(line)
+    } catch {
+      /* несумісна версія API — лишаємо Гантт без лінії, без падіння */
+    }
+  }
 
   // Ініціалізація один раз.
   useEffect(() => {
     const node = containerRef.current
     if (!node) return
 
+    const gantt = Gantt.getGanttInstance()
+    ganttRef.current = gantt
+
+    // Best-effort: у dhtmlx-gantt@10 (GPL npm) marker не входить у бандл, тож
+    // це no-op; лінію «Сьогодні» малює drawTodayLine() як fallback. Виклик
+    // лишаємо, щоб нативний marker підхопився, якщо колись стане доступним.
     gantt.plugins({ marker: true })
     gantt.config.date_format = '%Y-%m-%d %H:%i'
     gantt.config.readonly = false
@@ -142,30 +184,47 @@ export function GanttChart({
     return () => {
       gantt.clearAll()
       gantt.destructor()
+      ganttRef.current = null
       markerRef.current = null
+      todayLineRef.current?.remove()
+      todayLineRef.current = null
     }
   }, [])
 
   // Масштаб осі часу (FR-GANTT-05).
   useEffect(() => {
+    const gantt = ganttRef.current
+    if (!gantt) return
     gantt.config.scales = SCALES[scale] as unknown as typeof gantt.config.scales
     gantt.render()
+    drawTodayLine()
   }, [scale])
 
   // Дані + маркер «Сьогодні» (FR-GANTT-09).
   useEffect(() => {
+    const gantt = ganttRef.current
+    if (!gantt) return
     gantt.clearAll()
     gantt.parse({ data: data.tasks })
-    if (markerRef.current) gantt.deleteMarker(markerRef.current)
-    markerRef.current = String(
-      gantt.addMarker({ start_date: today, css: 'gantt-today', text: 'Сьогодні' }),
-    )
+    // Розширення `marker` не входить у бандл dhtmlx-gantt@10 (GPL npm): метод
+    // addMarker/deleteMarker відсутній. Викликаємо лише якщо доступний, інакше
+    // лінію «Сьогодні» малюємо через CSS-накладку (див. effect нижче).
+    if (typeof gantt.addMarker === 'function') {
+      if (markerRef.current && typeof gantt.deleteMarker === 'function') {
+        gantt.deleteMarker(markerRef.current)
+      }
+      markerRef.current = String(
+        gantt.addMarker({ start_date: today, css: 'gantt-today', text: 'Сьогодні' }),
+      )
+    }
     gantt.render()
+    drawTodayLine()
   }, [data, today])
 
   // Перерендер при зміні фільтрів / критичного шляху.
   useEffect(() => {
-    gantt.render()
+    ganttRef.current?.render()
+    drawTodayLine()
   }, [filters, criticalOpIds])
 
   return <div ref={containerRef} className="gantt-container" />
