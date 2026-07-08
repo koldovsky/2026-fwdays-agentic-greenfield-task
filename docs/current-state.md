@@ -6,6 +6,8 @@ Current gate: **G5 green** — `evals-hardening` slice closed (2026-07-08).
 
 MVP capability plan complete. All six implementation slices delivered with locked eval and coverage ratchets.
 
+Phase 5 proof pack ready in `qa/` for homework submission review (G6 pending: video + PR).
+
 ## Locked Eval Metrics
 
 | Metric | Value |
@@ -67,3 +69,9 @@ MVP capability plan complete. All six implementation slices delivered with locke
 ## Next Slice
 
 None — MVP plan complete at G5.
+
+## Phase 5 (G6 — submission)
+
+- Proof pack: `qa/README.md` (gate report, traceability matrix, eval report, verdicts, submission checklist)
+- README rewritten with product + harness map
+- **Pending:** record demo video, open homework PR (see `qa/submission-checklist.md`)
