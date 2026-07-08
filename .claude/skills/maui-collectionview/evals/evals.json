@@ -1,0 +1,48 @@
+{
+  "skill_name": "maui-collectionview",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm building a recipe app in .NET MAUI. I need to show a 2-column grid of recipes where each card shows the recipe photo, name, and prep time. Users should be able to tap a card to select it — I want to highlight the selected item. The project uses MVVM. Can you implement this?",
+      "expected_output": "CollectionView with GridItemsLayout (2 columns), DataTemplate with photo/name/prep time, SelectionMode=Single, visual selection feedback, ViewModel with ObservableCollection and SelectedItem property, compiled bindings with x:DataType",
+      "files": [],
+      "expectations": [
+        "CollectionView uses a 2-column GridItemsLayout (Span=2 or Columns=2)",
+        "DataTemplate includes an Image element bound to a photo or image source property",
+        "DataTemplate includes a Label bound to recipe Name and a Label bound to prep time",
+        "CollectionView has SelectionMode set to Single",
+        "ViewModel has a SelectedRecipe or SelectedItem property of the Recipe type with INotifyPropertyChanged",
+        "x:DataType compiled bindings are used on the page and/or DataTemplate",
+        "ViewModel uses ObservableCollection<Recipe> for the items source"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My .NET MAUI e-commerce app needs a product catalog. Products should be grouped by category — each group needs a header showing the category name and item count. Individual items show product name, price formatted as currency, and an 'Add to Cart' button that fires a command. I also need pull-to-refresh to reload the catalog and an empty state message when there are no results.",
+      "expected_output": "CollectionView with IsGrouped=true, GroupHeaderTemplate, DataTemplate for items, PullToRefresh behavior or RefreshView wrapper, EmptyView, commands for Add to Cart, grouped ObservableCollection in ViewModel",
+      "files": [],
+      "expectations": [
+        "CollectionView has IsGrouped='True'",
+        "GroupHeaderTemplate shows category name and item count",
+        "Price is formatted as currency (StringFormat with C, or similar currency formatting)",
+        "An 'Add to Cart' button has a Command binding",
+        "Pull-to-refresh is implemented via RefreshView or IsBusy pattern",
+        "CollectionView has an EmptyView defined for the no-results state",
+        "ViewModel uses a grouped collection structure (ObservableCollection of group objects)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have a MAUI chat app where new messages arrive via an ObservableCollection. I need a CollectionView that displays messages and automatically scrolls to the bottom when a new message is added. Messages from me should appear on the right, messages from others on the left. How do I implement this?",
+      "expected_output": "CollectionView with message DataTemplate, alignment based on sender (relative binding or converter), ScrollTo programmatic call when collection changes, CollectionView reference capture, ViewModel watching for collection changes",
+      "files": [],
+      "expectations": [
+        "CollectionView displays messages from an ObservableCollection",
+        "Message alignment differs by sender — right-aligned for current user, left-aligned for others",
+        "Code calls CollectionView.ScrollTo() to scroll to the last message when new messages arrive",
+        "A CollectionChanged or property-change handler triggers the scroll behavior",
+        "Message model has properties for content/text, a sender or IsFromMe flag, and optionally timestamp"
+      ]
+    }
+  ]
+}

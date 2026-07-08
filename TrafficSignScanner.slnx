@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/evals/">
+    <Project Path="evals/TrafficSignScanner.Evals/TrafficSignScanner.Evals.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/TrafficSignScanner.Core/TrafficSignScanner.Core.csproj" />
+    <Project Path="src/TrafficSignScanner.Mcp/TrafficSignScanner.Mcp.csproj" />
+  </Folder>
+  <Folder Name="/src/TrafficSignScanner.App/">
+    <Project Path="src/TrafficSignScanner.App/TrafficSignScanner.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TrafficSignScanner.Core.Tests/TrafficSignScanner.Core.Tests.csproj" />
+    <Project Path="tests/TrafficSignScanner.App.Tests/TrafficSignScanner.App.Tests.csproj" />
+    <Project Path="tests/TrafficSignScanner.Mcp.Tests/TrafficSignScanner.Mcp.Tests.csproj" />
+  </Folder>
+</Solution>

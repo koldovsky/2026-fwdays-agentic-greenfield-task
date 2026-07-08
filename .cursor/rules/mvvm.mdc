@@ -1,0 +1,15 @@
+---
+description: Keep the MAUI app MVVM-first and responsive.
+globs:
+  - src/TrafficSignScanner.App/**
+alwaysApply: false
+---
+
+# MAUI MVVM
+
+- Keep code-behind limited to view initialization and UI-only event wiring.
+- Put user actions, async workflows, and state in view models using CommunityToolkit.Mvvm patterns.
+- Never block the UI thread with `.Result`, `.Wait()`, synchronous image IO, or synchronous model inference.
+- Use cancellation tokens for capture/pick/detect workflows where practical.
+- Marshal UI updates back to the UI thread only at presentation boundaries.
+- Request permissions explicitly and keep platform lifecycle implications visible in the view model or platform service.

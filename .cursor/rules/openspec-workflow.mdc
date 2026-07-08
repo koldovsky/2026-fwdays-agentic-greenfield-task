@@ -1,0 +1,16 @@
+---
+description: Keep requirements and OpenSpec artifacts synchronized.
+globs:
+  - openspec/**
+  - docs/requirements.md
+  - docs/current-state.md
+alwaysApply: false
+---
+
+# OpenSpec Workflow
+
+- Treat `docs/requirements.md` as the stable PRD and OpenSpec as executable capability detail.
+- Use stable IDs from `docs/requirements.md`; do not invent new ID families without updating the PRD.
+- Write scenarios with `#### Scenario:` headings and GIVEN/WHEN/THEN bullets.
+- Run `npx -y @fission-ai/openspec validate --all --strict` after spec changes.
+- Do not archive or mark a slice complete until gates and checker review are green.

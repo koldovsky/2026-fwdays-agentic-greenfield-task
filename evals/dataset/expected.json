@@ -1,0 +1,155 @@
+{
+  "confidenceThreshold": 0.5,
+  "cases": [
+    {
+      "image": "no-entry/no-entry-01.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-02.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-03.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-04.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-05.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-06.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-07.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-08.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-09.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "no-entry/no-entry-10.jpg",
+      "expectedLabel": "no-entry"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-01.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-02.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-03.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-04.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-05.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-06.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-07.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-08.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-09.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "parking-prohibited/parking-prohibited-10.jpg",
+      "expectedLabel": "parking-prohibited"
+    },
+    {
+      "image": "stop-sign/stop-sign-01.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-02.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-03.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-04.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-05.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-06.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-07.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-08.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-09.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "stop-sign/stop-sign-10.jpg",
+      "expectedLabel": "stop-sign"
+    },
+    {
+      "image": "negative/negative-01.jpg"
+    },
+    {
+      "image": "negative/negative-02.jpg"
+    },
+    {
+      "image": "negative/negative-03.jpg"
+    },
+    {
+      "image": "negative/negative-04.jpg"
+    },
+    {
+      "image": "negative/negative-05.jpg"
+    },
+    {
+      "image": "negative/negative-06.jpg"
+    },
+    {
+      "image": "negative/negative-07.jpg"
+    },
+    {
+      "image": "negative/negative-08.jpg"
+    },
+    {
+      "image": "negative/negative-09.jpg"
+    },
+    {
+      "image": "negative/negative-10.jpg"
+    }
+  ]
+}

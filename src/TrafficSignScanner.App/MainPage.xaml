@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TrafficSignScanner.ViewModels"
+             xmlns:converters="clr-namespace:TrafficSignScanner.Converters"
+             x:Class="TrafficSignScanner.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="Traffic Sign Scanner">
+
+    <ContentPage.Resources>
+        <converters:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageSourceConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto"
+          Padding="16"
+          RowSpacing="12">
+
+        <Label Grid.Row="0"
+               Text="{Binding StatusMessage}"
+               SemanticProperties.HeadingLevel="Level2"
+               LineBreakMode="WordWrap" />
+
+        <Border Grid.Row="1"
+                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                StrokeThickness="1"
+                Padding="4">
+            <Grid>
+                <Image Aspect="AspectFit"
+                       Source="{Binding PreviewImageBytes, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                       SemanticProperties.Description="Annotated traffic sign preview" />
+            </Grid>
+        </Border>
+
+        <ActivityIndicator Grid.Row="2"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center" />
+
+        <Grid Grid.Row="3"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="12">
+            <Button Grid.Column="0"
+                    Text="Capture"
+                    Command="{Binding CapturePhotoCommand}"
+                    SemanticProperties.Hint="Capture a photo from the camera" />
+            <Button Grid.Column="1"
+                    Text="Pick Photo"
+                    Command="{Binding PickPhotoCommand}"
+                    SemanticProperties.Hint="Pick an existing photo from device storage" />
+        </Grid>
+    </Grid>
+
+</ContentPage>

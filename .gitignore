@@ -25,3 +25,76 @@ venv/
 target/
 bin/
 obj/
+
+# =============================
+
+# Build output
+**/bin/
+**/obj/
+**/TestResults/
+
+# Resource / designer files (no longer generated the same way in MAUI, but safe to ignore)
+**/Resource.designer.cs
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.suo
+*.user
+*.userprefs
+*.csproj.user
+*.userosscache
+*.sln.docstates
+
+# MAUI-specific build outputs
+*.apk
+*.ap_
+*.aab
+*.ipa
+
+# NuGet packages
+*.nupkg
+packages/
+# If using centralized NuGet cache:
+.nuget/
+
+# macOS files
+*.DS_Store
+
+# Crash logs and temp files
+*.log
+*.tmp
+
+# Xcode specific (iOS build artifacts)
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Local SQLite databases if generated for testing
+*.db
+*.db-shm
+*.db-wal
+
+# JetBrains Rider DotCover
+.idea/.idea.DotSettings
+
+# MAUI Hot Reload
+**/obj/Debug/net*/hotreload/
+
+# User secrets
+secrets.json
