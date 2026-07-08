@@ -7,6 +7,30 @@
 
 ## Last action
 
+- **Live honesty-eval `add-live-honesty-eval` DONE + live-verified + reviewed (2026-07-08, ultracode).**
+  New KEY-GATED live harness `src/views/evals/honesty-live.eval.test.ts` (views layer — cross-layer
+  composition, imports downward via public barrels; FSD-clean). Runs the REAL shipped honesty paths
+  against real Anthropic (`.env` key, loaded via `node --env-file=.env ./node_modules/.bin/vitest`,
+  never printed) and grades with the existing pure graders. Groups: (1) coverage judge — asserts no
+  `met` from gap, unfounded gaps stay `gap`, every off-gap upgrade carries the citation-gated rationale
+  prefix (grounding proof), score bounded by all-`met` ceiling; (2) grounded cover letter — grounded
+  input → non-null letter; overclaim input → fail-honest (null OR truthful disclaimer, never crash);
+  (3) NEW adversarial gate test — a hardcoded fabricated letter through the REAL verification pass MUST
+  be rejected (`supported:false` OR unsupportedClaims>0) — the real teeth; (4) deterministic resume
+  overclaim-exclusion (no LLM). **LIVE RESULT: honesty core verified correct — judge never inflated;
+  letter never fabricated (model self-disclaims the gap). 7/7 pass, stable across 2 consecutive live
+  runs.** Eval-author(opus)→I diagnosed 2 real findings→eval-author fixes→checker(opus)+verifier(sonnet),
+  separate contexts. Both initial "failures" were WRONG TEST ASSERTIONS, not honesty regressions:
+  (a) judge rationale citation truncated by the ≤100-char cap → assert grounded-prefix instead of full
+  `«…»`; (b) overclaim fail-honest is null OR truthful disclaimer, not only null — mechanical
+  keyword/negation scale-detection is unsound on free prose (self-disclaimers mention the same scale
+  words), so fabrication-detection moved to the adversarial gate test. Checker ship, 0 blockers/0 majors,
+  1 minor FIXED (bare `/не /i` cue → specific disclaimer phrases). Gate: lint 0/0 + build + **135 files /
+  1284 passed + 4 skipped** (live groups skip keyless, CI stays green). Implements BC-HONESTY-01/02,
+  FR-CHECKLIST-01, FR-COVERLETTER-01/02, FR-EXPORT-01/02, NFR-COST-01, NFR-SEC-02, TC-PURE-01.
+  **DECISION PENDING (user):** flipping `COVERAGE_JUDGE` default-on adds 1 LLM call per free tailoring
+  (NFR-COST-01) — judge live-verified honest, but the default change is a cost/product call. Do NOT flip
+  without the user. See "Decision needed" below.
 - **Ops follow-up `wire-tailoring-cleanup-route` DONE + gate green (2026-07-08, ultracode).**
   Wired the previously-uncalled `markAbandonedPending` sweeper behind an auth-protected route.
   New `getMaintenanceSecret()` in `shared/config/env.ts` (env-only, throws unset/empty; barrel-exported)
@@ -324,6 +348,42 @@
 | 10 | Whole-app UA/EN toggle | **DONE** (`add-language-toggle`: Unbounded+Golos fonts, cookie locale, LanguageSwitch); perf-audit + archive pending | P2 |
 
 ## Working on
+
+**Live honesty-eval harness (change `add-live-honesty-eval`) — ✅ DONE + live-verified 7/7 (see Last action).**
+User scope decision: **free-user surface = coverage judge; premium surface = all three** (judge +
+grounded cover letter + structured resume). Real Anthropic spend accepted (`ANTHROPIC_API_KEY` in `.env`).
+Caps: shared/lib/evals, honesty-core. IDs: BC-HONESTY-01/02, FR-CHECKLIST-01, FR-COVERLETTER-01/02,
+FR-EXPORT-01/02, NFR-COST-01, TC-PURE-01.
+
+Key finding (investigation): only TWO of the three have a live LLM call. **Resume export
+(`buildExportDocument`) is fully deterministic — no LLM** — its honesty is the pure `includedInExport`
+gate (BC-HONESTY-02), already unit-tested. So the harness = 2 live paths + 1 deterministic assertion,
+reported honestly (no fake "live" resume run).
+
+### Plan (numbered)
+1. **Eval-author (separate ctx, opus, honesty-eval skill)** writes a KEY-GATED live harness under
+   `src/shared/lib/evals/` — skipped when `ANTHROPIC_API_KEY` unset so CI stays green (matches the
+   existing deferred-eval convention). It must call the REAL shipped paths, not reimplement:
+   - **Judge (free+premium):** `resolveLlmProvider()` → `buildCoverageJudgePrompt` → `provider.complete`
+     → `parseCoverageJudgeResponse` → `applyCoverageJudge`. Grade: score never inflates (gap→partial
+     only w/ verbatim+relevant citation; fabricated/short/irrelevant citation discarded → heuristic gap
+     kept; covered never→met). Reuse `judge-score`/`coverage-judge` fixtures + graders.
+   - **Cover letter (premium):** `generateGroundedCoverLetter(input, { llm: resolveLlmProvider() })`.
+     Grade: GROUNDED fixture → non-null grounded paragraphs; OVERCLAIM fixture ("50 engineers"/"10M
+     users") → null (fail-honest). Reuse `generate-grounded-letter.test.ts` fixtures.
+   - **Resume (premium, deterministic):** assert overclaim bullets never appear in ANY section of
+     `buildExportDocument` output (BC-HONESTY-02). Label as deterministic, not live.
+2. **Run live (me):** load `.env` WITHOUT printing the key (`node --env-file=.env ./node_modules/.bin/vitest run <files>`), capture per-path pass rates. Report honestly incl. any refusal/parse failures.
+3. **Checker (separate ctx)** reviews the harness: does it exercise the shipped path (real provider, real
+   parsers, real graders) vs a parallel reimpl? are the honesty gates asserted, not weakened?
+4. **If judge eval passes:** flipping `COVERAGE_JUDGE` default-on adds 1 LLM call to every free tailoring
+   (NFR-COST-01) — a cost/product decision. CONFIRM with user before changing the default; do not flip
+   silently. Commit the harness regardless (green, gated).
+
+Security/cost notes: NEVER read/print `.env` or the key (org rule); harness sends CV+reqs ONLY, no user
+ids/PII to the LLM (NFR-SEC-02); live run is bounded (few fixtures) to cap spend.
+
+---
 
 **Ops follow-up: wire `markAbandonedPending` invoker (change `wire-tailoring-cleanup-route`) — ✅ DONE
 (2026-07-08, see Last action). Endpoint ships; periodic cron/curl invoker stays ops (Remaining §4).**
