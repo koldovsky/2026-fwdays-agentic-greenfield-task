@@ -47,25 +47,27 @@ export function getOpenAiApiKey(): string {
 }
 
 /**
- * Whether the FLAGGED LLM coverage judge runs (`COVERAGE_JUDGE`,
- * improve-tailoring-quality T5 §2.1). DEFAULT OFF: the pure heuristic scorer
- * stays the default path (FR-CHECKLIST-01, TC-PURE-01). The judge is an
- * optional enhancement that can only UPGRADE a requirement off `gap` when it has
- * surviving verbatim CV evidence — it never inflates a score from thin air.
+ * Whether the LLM coverage judge runs (`COVERAGE_JUDGE`, improve-tailoring-quality
+ * T5 §2.1). DEFAULT ON as of 2026-07-08 (live-verified honest): the judge only
+ * UPGRADES a requirement off `gap` when it has surviving verbatim CV evidence —
+ * it never inflates a score from thin air (FR-CHECKLIST-01, BC-HONESTY-01). The
+ * pure heuristic scorer still runs first; the judge is a strict-honest overlay.
  *
- * When ON it REQUIRES `ANTHROPIC_API_KEY` (the judge is an LLM call); a misconfig
- * (flag on, key absent) degrades to OFF rather than crashing, because the loop
- * calls this on the hot path and an honest tailoring must never fail over a
- * feature-flag misconfiguration (NFR-OBS-01). NON-THROWING by contract.
+ * Because the judge is an LLM call it REQUIRES `ANTHROPIC_API_KEY`; without it
+ * (or with an explicit opt-out) this degrades to OFF rather than crashing —
+ * the loop calls this on the hot path and an honest tailoring must never fail
+ * over configuration (NFR-OBS-01). NON-THROWING by contract.
  *
- * Accepts `1` / `true` / `on` (case-insensitive) as ON; anything else — unset,
- * empty, `0`, `false`, `off`, or a typo — is OFF (fail-closed to the pure path).
+ * Default ON (live-verified honest 2026-07-08). Explicit opt-out is respected:
+ * `0` / `false` / `off` (case-insensitive) → OFF. Unset, empty, `1`/`true`/`on`,
+ * or any other value → ON, subject to the key requirement below.
  */
 export function isCoverageJudgeEnabled(): boolean {
   const raw = process.env.COVERAGE_JUDGE?.trim().toLowerCase();
-  const flagged = raw === "1" || raw === "true" || raw === "on";
-  if (!flagged) return false;
-  // Flag on but key absent → degrade to off (never throw on the hot path).
+  // Explicit opt-out wins over the default.
+  if (raw === "0" || raw === "false" || raw === "off") return false;
+  // Default ON, but the judge is an LLM call — degrade to OFF when the key is
+  // absent so an honest tailoring never fails over a misconfig (NFR-OBS-01).
   const key = process.env.ANTHROPIC_API_KEY;
   return key !== undefined && key !== "";
 }

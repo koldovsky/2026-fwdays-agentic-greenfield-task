@@ -95,12 +95,13 @@ const GROUNDING_EFFORT = "high" as const;
 export interface LoopDeps {
   readonly llm: LlmProvider;
   /**
-   * Whether the FLAGGED coverage judge runs (improve-tailoring-quality T5).
+   * Whether the coverage judge runs (improve-tailoring-quality T5).
    * Defaults to {@link isCoverageJudgeEnabled} (env `COVERAGE_JUDGE`, default
-   * OFF, requires `ANTHROPIC_API_KEY`). Overridable so tests exercise the
-   * flag-on path deterministically. When OFF the analysis phase makes NO judge
-   * LLM call and records NO `judge-coverage` step — the trace is byte-identical
-   * to the pure heuristic path (Group 1, FR-CHECKLIST-01 default).
+   * ON when `ANTHROPIC_API_KEY` is set, explicit `0`/`false`/`off` opts out,
+   * degrades to OFF without the key). Overridable so tests exercise both paths
+   * deterministically. When OFF the analysis phase makes NO judge LLM call and
+   * records NO `judge-coverage` step — the trace is byte-identical to the pure
+   * heuristic path (FR-CHECKLIST-01).
    */
   readonly coverageJudgeEnabled?: boolean;
 }

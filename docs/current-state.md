@@ -28,9 +28,13 @@
   1 minor FIXED (bare `/не /i` cue → specific disclaimer phrases). Gate: lint 0/0 + build + **135 files /
   1284 passed + 4 skipped** (live groups skip keyless, CI stays green). Implements BC-HONESTY-01/02,
   FR-CHECKLIST-01, FR-COVERLETTER-01/02, FR-EXPORT-01/02, NFR-COST-01, NFR-SEC-02, TC-PURE-01.
-  **DECISION PENDING (user):** flipping `COVERAGE_JUDGE` default-on adds 1 LLM call per free tailoring
-  (NFR-COST-01) — judge live-verified honest, but the default change is a cost/product call. Do NOT flip
-  without the user. See "Decision needed" below.
+  **DECISION RESOLVED (user, 2026-07-08): flip `COVERAGE_JUDGE` default ON.** Done — `isCoverageJudgeEnabled()`
+  now defaults ON (key-gated); explicit `0`/`false`/`off` opts out; fails-soft OFF without `ANTHROPIC_API_KEY`
+  (so CI/keyless is byte-identical to the heuristic path). Scoring logic UNCHANGED — pure frequency change,
+  no honesty regression (checker-confirmed). Doc comments (env.ts + loop.ts) updated; flag test rewritten
+  to the new contract (26 tests). Maker(me)→test-author(sonnet)→checker(opus, 1 major FIXED: stale comment
+  head)+verifier(sonnet). Gate: lint 0/0 + build + 135 files / 1293 passed + 5 skipped, 0 failed.
+  NFR-COST-01 note: adds ~1 LLM call per tailoring when a prod key is set.
 - **Ops follow-up `wire-tailoring-cleanup-route` DONE + gate green (2026-07-08, ultracode).**
   Wired the previously-uncalled `markAbandonedPending` sweeper behind an auth-protected route.
   New `getMaintenanceSecret()` in `shared/config/env.ts` (env-only, throws unset/empty; barrel-exported)

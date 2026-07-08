@@ -1,6 +1,6 @@
 // Tests for the COVERAGE_JUDGE feature flag (improve-tailoring-quality T5 §2.1).
-// Pure env-accessor tests: OFF by default, fail-closed, non-throwing, degrades
-// gracefully when ANTHROPIC_API_KEY is absent even if flag is ON.
+// Pure env-accessor tests: DEFAULT ON (2026-07-08), explicit opt-out respected,
+// fail-closed when ANTHROPIC_API_KEY is absent, non-throwing under all inputs.
 //
 // Requirements covered: FR-CHECKLIST-01, NFR-OBS-01.
 
@@ -31,95 +31,139 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// FLAG OFF (default / fail-closed)
+// DEFAULT ON: unset / empty / non-opt-out values → true (when key present)
 // ---------------------------------------------------------------------------
 
-describe("isCoverageJudgeEnabled: OFF cases (§2.1, NFR-OBS-01)", () => {
-  it("returns false when COVERAGE_JUDGE is unset", () => {
+describe("isCoverageJudgeEnabled: default-ON cases (§2.1, default ON 2026-07-08)", () => {
+  it("returns true when COVERAGE_JUDGE is unset and ANTHROPIC_API_KEY is present", () => {
     delete process.env.COVERAGE_JUDGE;
-    delete process.env.ANTHROPIC_API_KEY;
-    expect(isCoverageJudgeEnabled()).toBe(false);
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns false when COVERAGE_JUDGE is empty string", () => {
+  it("returns true when COVERAGE_JUDGE is empty string and ANTHROPIC_API_KEY is present", () => {
     process.env.COVERAGE_JUDGE = "";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
+    expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns false when COVERAGE_JUDGE is '0'", () => {
-    process.env.COVERAGE_JUDGE = "0";
-    process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
-  });
-
-  it("returns false when COVERAGE_JUDGE is 'false'", () => {
-    process.env.COVERAGE_JUDGE = "false";
-    process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
-  });
-
-  it("returns false when COVERAGE_JUDGE is 'off' (case-insensitive)", () => {
-    process.env.COVERAGE_JUDGE = "off";
-    process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
-  });
-
-  it("returns false when COVERAGE_JUDGE is 'OFF'", () => {
-    process.env.COVERAGE_JUDGE = "OFF";
-    process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
-  });
-
-  it("returns false when COVERAGE_JUDGE is a typo / unrecognized string", () => {
-    process.env.COVERAGE_JUDGE = "yes";
-    process.env.ANTHROPIC_API_KEY = "sk-test-key";
-    expect(isCoverageJudgeEnabled()).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// FLAG ON: requires both COVERAGE_JUDGE=on/true/1 AND ANTHROPIC_API_KEY
-// ---------------------------------------------------------------------------
-
-describe("isCoverageJudgeEnabled: ON cases (§2.1)", () => {
-  it("returns true when COVERAGE_JUDGE='1' and ANTHROPIC_API_KEY is present", () => {
+  it("returns true when COVERAGE_JUDGE is '1' and ANTHROPIC_API_KEY is present", () => {
     process.env.COVERAGE_JUDGE = "1";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns true when COVERAGE_JUDGE='true' (case-insensitive) and key present", () => {
+  it("returns true when COVERAGE_JUDGE is 'true' and ANTHROPIC_API_KEY is present", () => {
     process.env.COVERAGE_JUDGE = "true";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns true when COVERAGE_JUDGE='TRUE' and key present", () => {
+  it("returns true when COVERAGE_JUDGE is 'TRUE' (case-insensitive) and key present", () => {
     process.env.COVERAGE_JUDGE = "TRUE";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns true when COVERAGE_JUDGE='on' and key present", () => {
+  it("returns true when COVERAGE_JUDGE is 'on' and ANTHROPIC_API_KEY is present", () => {
     process.env.COVERAGE_JUDGE = "on";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     expect(isCoverageJudgeEnabled()).toBe(true);
   });
 
-  it("returns true when COVERAGE_JUDGE='ON' and key present", () => {
+  it("returns true when COVERAGE_JUDGE is 'ON' (case-insensitive) and key present", () => {
     process.env.COVERAGE_JUDGE = "ON";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(true);
+  });
+
+  it("returns true when COVERAGE_JUDGE is a typo/unrecognized value ('maybe') and key present", () => {
+    process.env.COVERAGE_JUDGE = "maybe";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(true);
+  });
+
+  it("returns true when COVERAGE_JUDGE is 'yes' (unrecognized) and key present", () => {
+    process.env.COVERAGE_JUDGE = "yes";
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     expect(isCoverageJudgeEnabled()).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// DEGRADE TO OFF when flag is on but ANTHROPIC_API_KEY absent (NFR-OBS-01)
+// EXPLICIT OPT-OUT: 0 / false / off (case-insensitive, whitespace-trimmed) → false
+// even when ANTHROPIC_API_KEY is present
 // ---------------------------------------------------------------------------
 
-describe("isCoverageJudgeEnabled: degrades to OFF when key absent (§2.1, NFR-OBS-01)", () => {
-  it("flag='1', key unset → false (never throw)", () => {
+describe("isCoverageJudgeEnabled: explicit opt-out cases (§2.1)", () => {
+  it("returns false when COVERAGE_JUDGE is '0' even with key present", () => {
+    process.env.COVERAGE_JUDGE = "0";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is 'false' even with key present", () => {
+    process.env.COVERAGE_JUDGE = "false";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is 'False' (mixed case) even with key present", () => {
+    process.env.COVERAGE_JUDGE = "False";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is 'off' even with key present", () => {
+    process.env.COVERAGE_JUDGE = "off";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is 'OFF' (uppercase) even with key present", () => {
+    process.env.COVERAGE_JUDGE = "OFF";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is ' off ' (surrounding whitespace) even with key present", () => {
+    process.env.COVERAGE_JUDGE = " off ";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is ' false ' (surrounding whitespace) even with key present", () => {
+    process.env.COVERAGE_JUDGE = " false ";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("returns false when COVERAGE_JUDGE is ' 0 ' (surrounding whitespace) even with key present", () => {
+    process.env.COVERAGE_JUDGE = " 0 ";
+    process.env.ANTHROPIC_API_KEY = "sk-test-key";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FAIL-SOFT KEY GATE: key absent or empty → false regardless of COVERAGE_JUDGE
+// (NFR-OBS-01: LLM call must degrade to OFF on the hot path, never crash)
+// ---------------------------------------------------------------------------
+
+describe("isCoverageJudgeEnabled: degrades to OFF when ANTHROPIC_API_KEY absent (§2.1, NFR-OBS-01)", () => {
+  it("flag unset, key unset → false (default-on blocked by missing key)", () => {
+    delete process.env.COVERAGE_JUDGE;
+    delete process.env.ANTHROPIC_API_KEY;
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("flag unset, key='' → false", () => {
+    delete process.env.COVERAGE_JUDGE;
+    process.env.ANTHROPIC_API_KEY = "";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("flag='1', key unset → false", () => {
     process.env.COVERAGE_JUDGE = "1";
     delete process.env.ANTHROPIC_API_KEY;
     expect(isCoverageJudgeEnabled()).toBe(false);
@@ -136,6 +180,18 @@ describe("isCoverageJudgeEnabled: degrades to OFF when key absent (§2.1, NFR-OB
     delete process.env.ANTHROPIC_API_KEY;
     expect(isCoverageJudgeEnabled()).toBe(false);
   });
+
+  it("flag='maybe' (typo/default-on), key unset → false", () => {
+    process.env.COVERAGE_JUDGE = "maybe";
+    delete process.env.ANTHROPIC_API_KEY;
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
+
+  it("flag='maybe' (typo/default-on), key='' → false", () => {
+    process.env.COVERAGE_JUDGE = "maybe";
+    process.env.ANTHROPIC_API_KEY = "";
+    expect(isCoverageJudgeEnabled()).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -144,7 +200,7 @@ describe("isCoverageJudgeEnabled: degrades to OFF when key absent (§2.1, NFR-OB
 
 describe("isCoverageJudgeEnabled: non-throwing under all inputs (NFR-OBS-01)", () => {
   it("never throws regardless of env state", () => {
-    const flagValues = ["1", "0", "true", "false", "on", "off", "ON", "TRUE", "", "garbage", undefined];
+    const flagValues = ["1", "0", "true", "false", "on", "off", "ON", "TRUE", "", "garbage", "maybe", undefined];
     const keyValues = ["sk-test", "", undefined];
 
     for (const flag of flagValues) {
@@ -165,8 +221,8 @@ describe("isCoverageJudgeEnabled: non-throwing under all inputs (NFR-OBS-01)", (
   });
 
   it("always returns a boolean", () => {
-    const values = ["1", "true", "on", "0", "false", "off", "", "garbage"];
-    for (const flag of values) {
+    const flagValues = ["1", "true", "on", "0", "false", "off", "", "garbage", "maybe"];
+    for (const flag of flagValues) {
       process.env.COVERAGE_JUDGE = flag;
       process.env.ANTHROPIC_API_KEY = "sk-test-key";
       const result = isCoverageJudgeEnabled();
