@@ -112,7 +112,7 @@ This readiness pass is complete when the repository has:
 - offline verification scripts
 - no sensitive artifacts in the worktree
 
-The human cloud setup remains pending.
+The human cloud setup remains pending. Preview verification now passes as `PHASE 4 PREVIEW VERIFICATION: PASSED`; the overall phase remains pending until Production configuration and Production verification are completed.
 
 ## Codex Offline Verification
 

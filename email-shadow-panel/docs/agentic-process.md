@@ -359,6 +359,7 @@ Selected tools for Phases 0 and 1:
   - `npm run build`: FAIL in the managed Windows sandbox because Vite could not load `@tailwindcss/oxide-win32-x64-msvc` and hit `spawn EPERM` during dependency resolution
   - `npm run verify:phase4`: FAIL for the same managed-environment build limitation after all offline deterministic checks had already passed
   - human local `npm run verify:phase4`: PASS in normal PowerShell, including lint, typecheck, all Phase 0-4 tests, the 109 deterministic checks, client build, SSR build, Nitro build, and the final Phase 4 artifact verifier
+  - human Preview verification later passed in Vercel Preview with provider enabled: inbox generation, message listing, message detail rendering, verification-code detection, and delete/forget cleanup all succeeded, and the overall phase remains pending until Production configuration and Production verification are completed.
   - the final bounded local Nitro runtime smoke against the fresh generated output also passed, confirming the Nitro-owned health route, the provider-disabled inbox create contract, the root SSR page, and the API-owned dynamic message route without unresolved external `.ts` imports or standalone Vercel API entries, while generating no inbox and contacting neither Emailnator nor Upstash during the smoke
 - Environment-specific limitations:
   - no Vercel import, Preview deployment, Upstash provisioning, live Emailnator request, or live smoke verification was attempted by Codex;

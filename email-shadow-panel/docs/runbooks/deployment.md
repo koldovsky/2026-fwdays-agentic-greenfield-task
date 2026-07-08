@@ -157,7 +157,7 @@ The smoke script will:
 11. clear in-process sensitive state
 12. print only a sanitized PASS/FAIL summary
 
-The smoke script also supports `--health-only` for a health-only check.
+The smoke script also supports `--health-only` for a health-only check. Human live result: the provider-enabled Preview smoke later passed, including inbox generation, one harmless test message, message listing, message detail rendering, verification-code detection, and delete/forget cleanup.
 
 Do not run the smoke script automatically in `npm test`, `test:deterministic`, or `verify:phase4`.
 

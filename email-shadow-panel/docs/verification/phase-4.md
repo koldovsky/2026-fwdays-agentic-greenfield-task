@@ -47,10 +47,13 @@ The human-facing evidence is expected to come from:
 
 ## Final Verdict
 
-Phase 4 is not marked passed yet.
+PHASE 4 PREVIEW VERIFICATION: PASSED
 
-This document records readiness only. It will be updated after the human cloud setup and live verification steps are completed.
+Phase 4 is still not fully complete. This document records readiness plus the completed Preview smoke, and the overall phase remains pending until Production configuration and Production verification are completed.
 
+## Live Preview Verification
+
+The human completed a live Preview deployment with provider enabled and successfully exercised the end-to-end flow: inbox generation, one harmless test message, message listing, message detail rendering, verification-code detection, and delete/forget cleanup. Production configuration and Production smoke remain pending.
 ## Codex Offline Verification Results
 
 Codex completed the following offline deterministic checks in the local workspace:
