@@ -68,6 +68,8 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
+            await _mainThreadDispatcher.InvokeAsync(() => PreviewImageBytes = imageBytes).ConfigureAwait(false);
+
             var result = await Task.Run(
                 () => _analysisWorkflow.AnalyzeAsync(
                     imageBytes,
@@ -78,7 +80,11 @@ public partial class MainViewModel : ObservableObject
 
             await _mainThreadDispatcher.InvokeAsync(() =>
             {
-                PreviewImageBytes = result.AnnotatedPreviewPng;
+                if (result.AnnotatedPreviewPng is { Length: > 0 })
+                {
+                    PreviewImageBytes = result.AnnotatedPreviewPng;
+                }
+
                 StatusMessage = result.StatusMessage;
             }).ConfigureAwait(false);
         }

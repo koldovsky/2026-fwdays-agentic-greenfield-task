@@ -12,6 +12,8 @@ public sealed record ImageAnalysisResult(
 
 public static class ImageAnalysisPipeline
 {
+    internal const int DefaultMaxPreviewEdge = 1280;
+
     /// <summary>@trace FR-OVERLAY-01, FR-OVERLAY-02</summary>
     public static async Task<ImageAnalysisResult> AnalyzeAsync(
         IDetector detector,
@@ -26,8 +28,11 @@ public static class ImageAnalysisPipeline
 
         using var source = ImagePreprocessor.DecodeSourceImage(encodedImageBytes.Span);
         var crop = CenterCropCalculator.Calculate(source.Width, source.Height);
-        var resolvedDisplayWidth = displayWidth > 0 ? displayWidth : source.Width;
-        var resolvedDisplayHeight = displayHeight > 0 ? displayHeight : source.Height;
+        var (resolvedDisplayWidth, resolvedDisplayHeight) = ResolvePreviewDimensions(
+            source.Width,
+            source.Height,
+            displayWidth,
+            displayHeight);
         var context = new OverlayGeometryContext(
             source.Width,
             source.Height,
@@ -40,10 +45,35 @@ public static class ImageAnalysisPipeline
         return new ImageAnalysisResult(detections, pngBytes);
     }
 
+    internal static (int Width, int Height) ResolvePreviewDimensions(
+        int sourceWidth,
+        int sourceHeight,
+        int displayWidth,
+        int displayHeight)
+    {
+        if (displayWidth > 0 && displayHeight > 0)
+        {
+            return (displayWidth, displayHeight);
+        }
+
+        var maxEdge = Math.Max(sourceWidth, sourceHeight);
+        if (maxEdge <= DefaultMaxPreviewEdge)
+        {
+            return (sourceWidth, sourceHeight);
+        }
+
+        var scale = DefaultMaxPreviewEdge / (float)maxEdge;
+        return (
+            Math.Max(1, (int)Math.Round(sourceWidth * scale)),
+            Math.Max(1, (int)Math.Round(sourceHeight * scale)));
+    }
+
     private static byte[] EncodePng(SKBitmap bitmap)
     {
         using var image = SKImage.FromBitmap(bitmap);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100)
+            ?? throw new InvalidOperationException("Failed to encode annotated preview PNG.");
+
         return data.ToArray();
     }
 }

@@ -49,6 +49,26 @@ public sealed class ImageAnalysisPipelineTests
         Assert.Empty(result.Detections);
     }
 
+    /// <summary>@trace FR-OVERLAY-02</summary>
+    [Fact]
+    public async Task AnalyzeAsync_WhenSourceIsLarge_CapsAnnotatedPreviewDimensions()
+    {
+        var encodedImage = CreateSolidPng(width: 4032, height: 3024, fill: SKColors.White);
+        var detector = new FakeDetector([]);
+
+        var result = await ImageAnalysisPipeline.AnalyzeAsync(
+            detector,
+            encodedImage,
+            displayWidth: 0,
+            displayHeight: 0);
+
+        Assert.NotEmpty(result.AnnotatedPreviewPng);
+        using var decoded = SKBitmap.Decode(result.AnnotatedPreviewPng);
+        Assert.NotNull(decoded);
+        Assert.Equal(1280, decoded.Width);
+        Assert.Equal(960, decoded.Height);
+    }
+
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     private static byte[] CreateSolidPng(int width, int height, SKColor fill)

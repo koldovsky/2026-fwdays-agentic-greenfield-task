@@ -11,7 +11,8 @@ public sealed class ByteArrayToImageSourceConverter : IValueConverter
             return null;
         }
 
-        return ImageSource.FromStream(() => new MemoryStream(bytes));
+        var imageBytes = bytes.ToArray();
+        return ImageSource.FromStream(() => new MemoryStream(imageBytes, writable: false));
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

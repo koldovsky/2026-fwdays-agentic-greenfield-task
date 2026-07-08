@@ -23,7 +23,7 @@ public sealed class MauiImageInputService : IImageInputService
             return null;
         }
 
-        return await ReadAllBytesAsync(captureResult, cancellationToken).ConfigureAwait(false);
+        return await ReadAllBytesAsync(captureResult, cancellationToken, preferMainThread: true).ConfigureAwait(true);
     }
 
     public async Task<byte[]?> PickPhotoAsync(CancellationToken cancellationToken = default)
@@ -37,14 +37,20 @@ public sealed class MauiImageInputService : IImageInputService
             return null;
         }
 
-        return await ReadAllBytesAsync(pickResult, cancellationToken).ConfigureAwait(false);
+        return await ReadAllBytesAsync(pickResult, cancellationToken).ConfigureAwait(true);
     }
 
-    private static async Task<byte[]?> ReadAllBytesAsync(FileResult fileResult, CancellationToken cancellationToken)
+    private static async Task<byte[]?> ReadAllBytesAsync(
+        FileResult fileResult,
+        CancellationToken cancellationToken,
+        bool preferMainThread = false)
     {
-        await using var stream = await fileResult.OpenReadAsync().ConfigureAwait(false);
+        var continueOnCapturedContext = preferMainThread;
+        await using var stream = await fileResult.OpenReadAsync().ConfigureAwait(continueOnCapturedContext);
         using var buffer = new MemoryStream();
-        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-        return buffer.ToArray();
+        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(continueOnCapturedContext);
+
+        var bytes = buffer.ToArray();
+        return bytes.Length == 0 ? null : bytes;
     }
 }
