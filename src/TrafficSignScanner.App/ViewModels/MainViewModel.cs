@@ -61,7 +61,7 @@ public partial class MainViewModel : ObservableObject
 
     private async Task AnalyzeImageAsync(byte[] imageBytes)
     {
-        if (!TryBeginAnalysis())
+        if (!await TryBeginAnalysisAsync().ConfigureAwait(false))
         {
             return;
         }
@@ -88,27 +88,34 @@ public partial class MainViewModel : ObservableObject
         }
         finally
         {
-            EndAnalysis();
+            await EndAnalysisAsync().ConfigureAwait(false);
         }
     }
 
-    private bool TryBeginAnalysis()
+    private async Task<bool> TryBeginAnalysisAsync()
     {
         if (Interlocked.CompareExchange(ref _activeAnalysisCount, 1, 0) != 0)
         {
             return false;
         }
 
-        IsBusy = true;
-        NotifyAnalyzeCommandsCanExecuteChanged();
+        await _mainThreadDispatcher.InvokeAsync(() =>
+        {
+            IsBusy = true;
+            NotifyAnalyzeCommandsCanExecuteChanged();
+        }).ConfigureAwait(false);
+
         return true;
     }
 
-    private void EndAnalysis()
+    private Task EndAnalysisAsync()
     {
         Interlocked.Exchange(ref _activeAnalysisCount, 0);
-        IsBusy = false;
-        NotifyAnalyzeCommandsCanExecuteChanged();
+        return _mainThreadDispatcher.InvokeAsync(() =>
+        {
+            IsBusy = false;
+            NotifyAnalyzeCommandsCanExecuteChanged();
+        });
     }
 
     private bool CanAnalyze() => !IsBusy;
