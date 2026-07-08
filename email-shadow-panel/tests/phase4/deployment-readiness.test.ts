@@ -65,6 +65,10 @@ test("deployment config parses the documented safe env examples and retains the 
   assertDeployedApiEntrypointContracts();
   assertPreviewOnlyProbeEntrypointContract();
 
+  const viteConfig = readFileSync(resolve(process.cwd(), "vite.config.ts"), "utf8");
+  assert.match(viteConfig, /nitro\(\{\s*serverDir:\s*"\.\/"\s*\}\)/u);
+  assert.doesNotMatch(viteConfig, /serverDir:\s*"\.\/server"/u);
+
   const sessionKey = Buffer.alloc(32, 7).toString("hex");
   const visitorKey = Buffer.alloc(32, 11).toString("base64url");
   const sessionCore = loadSessionCoreConfig({
@@ -302,6 +306,12 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
     ),
   );
   assert.ok(verifyPhase4VercelOutputSource.includes("functions/__server.func"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("functions/api/health.func"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("functions/api/inboxes.func"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("functions/api/inboxes/messages.func"));
+  assert.ok(
+    verifyPhase4VercelOutputSource.includes("functions/api/inboxes/messages/[messageReference].func"),
+  );
   assert.ok(verifyPhase4VercelOutputSource.includes("/api/health"));
   assert.ok(verifyPhase4VercelOutputSource.includes("/api/inboxes"));
   assert.ok(verifyPhase4VercelOutputSource.includes("/api/inboxes/messages"));
@@ -360,6 +370,14 @@ test("Vercel preset output verifier accepts the Nitro-owned route surface and pr
   const functionsRoot = join(vercelOutputRoot, "functions");
   const serverFunctionRoot = join(functionsRoot, "__server.func");
 
+  for (const functionPath of [
+    "api/health.func",
+    "api/inboxes.func",
+    "api/inboxes/messages.func",
+    "api/inboxes/messages/[messageReference].func",
+  ]) {
+    mkdirSync(join(functionsRoot, functionPath), { recursive: true });
+  }
   mkdirSync(serverFunctionRoot, { recursive: true });
   writeFileSync(
     join(vercelOutputRoot, "config.json"),
@@ -398,8 +416,14 @@ test("Vercel preset output verifier accepts the Nitro-owned route surface and pr
 
   const footprint = assertVercelPresetOutputSurface(tempRoot);
 
-  assert.equal(footprint.functionCount, 1);
-  assert.deepEqual(footprint.functionNames, ["functions/__server.func"]);
+  assert.equal(footprint.functionCount, 5);
+  assert.deepEqual(footprint.functionNames, [
+    "functions/__server.func",
+    "functions/api/health.func",
+    "functions/api/inboxes.func",
+    "functions/api/inboxes/messages.func",
+    "functions/api/inboxes/messages/[messageReference].func",
+  ]);
   assert.equal(footprint.frameworkName, "nitro");
   assert.equal(footprint.frameworkVersion, "3.0.260603-beta");
 });

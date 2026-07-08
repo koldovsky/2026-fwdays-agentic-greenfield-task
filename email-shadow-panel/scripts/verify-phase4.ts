@@ -281,13 +281,14 @@ export function assertViteConfigParses(): void {
   assert.match(viteConfigText, /import\s+\{\s*nitro\s*\}\s+from\s+["']nitro\/vite["'];/u);
   assert.match(viteConfigText, /tanstackStart\(\{/u);
   assert.match(viteConfigText, /server:\s*\{\s*entry:\s*"server"\s*\}/u);
-  assert.match(viteConfigText, /nitro\(\)/u);
+  assert.match(viteConfigText, /nitro\(\{\s*serverDir:\s*"\.\/"\s*\}\)/u);
+  assert.doesNotMatch(viteConfigText, /serverDir:\s*"\.\/server"/u);
   assert.ok(
-    viteConfigText.indexOf("tanstackStart({") < viteConfigText.indexOf("nitro()"),
+    viteConfigText.indexOf("tanstackStart({") < viteConfigText.indexOf("nitro({"),
     "TanStack Start should configure before Nitro.",
   );
   assert.ok(
-    viteConfigText.indexOf("nitro()") < viteConfigText.indexOf("react()"),
+    viteConfigText.indexOf("nitro({") < viteConfigText.indexOf("react()"),
     "Nitro should configure before React so the SSR build remains wrapped correctly.",
   );
 }

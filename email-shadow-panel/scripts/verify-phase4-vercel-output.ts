@@ -82,8 +82,14 @@ export function assertVercelPresetOutputSurface(
     .sort((left, right) => left.localeCompare(right));
   assert.deepEqual(
     functionDirs,
-    ["functions/__server.func"],
-    "The Vercel preset should generate exactly one server function.",
+    [
+      "functions/__server.func",
+      "functions/api/health.func",
+      "functions/api/inboxes.func",
+      "functions/api/inboxes/messages.func",
+      "functions/api/inboxes/messages/[messageReference].func",
+    ],
+    "The Vercel preset should generate the Nitro SSR function plus the four public API functions.",
   );
 
   const routes = config.routes ?? [];

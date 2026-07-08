@@ -25,7 +25,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 - `.env.example`
 - `package.json`
 - `vite.config.ts`
-- `routes/api/*`
+- `routes/api/*` (Nitro filesystem routes scanned from the project root with `serverDir: "./"` so the Vercel preset registers them)
 - `server/api/*`
 - `server/session/*`
 - `scripts/*`
@@ -59,14 +59,14 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## Implementation Notes
 
-- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, Nitro-owned public API routes under `routes/api/*` (Nitro filesystem routes rather than TanStack route-tree files), and a server-only Phase 0 probe implementation that remains out of the deployed route inventory.
-- The deployed footprint is now Nitro-owned and provisional until human Preview verification confirms the exact Vercel function count. Do not rely on the retired root `/api` function footprint.
+- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, Nitro-owned public API routes under `routes/api/*` (Nitro filesystem routes rather than TanStack route-tree files) with explicit root scanning via `serverDir: "./"` so the Vercel preset registers them, and a server-only Phase 0 probe implementation that remains out of the deployed route inventory.
+- The deployed footprint is now Nitro-owned and provisional until human Preview verification confirms the exact Vercel function count. The Vercel-preset parity build currently emits five functions total: one `__server` SSR function plus four API functions under `routes/api/*`. Do not rely on the retired root `/api` function footprint.
 - The `/api/health` route is served by the Nitro route layer and returns no-store JSON without importing composition-root, provider, Redis, or environment configuration modules.
 - The Phase 0 probe remains preview-only, disabled by default, and blocked in Production.
 - The health route stays minimal and no-store.
 - The smoke verifier is opt-in only and never part of `npm test` or deterministic verification.
 - Preview and Production secrets must be entered directly into Vercel's UI, never into Codex, docs, or Git.
-- Human local verification passed in normal PowerShell with the full wrapper, including all 108 deterministic tests, the client build, SSR build, Nitro build, and the final Phase 4 artifact verifier.
+- Human local verification passed in normal PowerShell with the full wrapper, including all 109 deterministic tests, the client build, SSR build, Nitro build, and the final Phase 4 artifact verifier.
 
 The final bounded local Nitro runtime smoke against the fresh generated output also passed: `GET /api/health`, `HEAD /api/health`, `POST /api/inboxes` with the provider disabled, `GET /`, and the dynamic message-reference route all behaved as expected without unresolved external `.ts` imports, standalone Vercel API entries, or a public Phase 0 probe route. No inbox was generated, no Emailnator request was made, no direct Upstash request was made, and the local Nitro process plus temporary process environment were cleaned up.
 

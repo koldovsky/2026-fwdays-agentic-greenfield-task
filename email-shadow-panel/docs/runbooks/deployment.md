@@ -17,10 +17,13 @@ The repository currently uses:
 - TanStack Start for SSR
 - Vite plus the Nitro Vite plugin to produce Vercel-compatible SSR output
 - Nitro-owned public API routes under `routes/api/*` (Nitro filesystem routes, not TanStack route-tree files)
+- Nitro must scan the project root with `serverDir: "./"` so those root `routes/api/*` handlers are actually registered by the Vercel preset
 - one server-only Phase 0 probe implementation at `server/providers/emailnator/probe.server.ts` that is not a deployable route and is exercised through the local CLI `npm run probe:emailnator`
 - one TanStack Start server entry at `src/server.ts`
 
-The Nitro server runtime owns SSR and the public API routes. The actual deployed Vercel function count remains provisional until a human Preview deployment confirms it.
+The Nitro server runtime owns SSR and the public API routes. The Vercel-preset parity build currently emits five functions total: one `__server` SSR function plus four API functions under `routes/api/*`. The actual deployed Vercel function count remains provisional until a human Preview deployment confirms it.
+
+The root-scanning Nitro configuration is required in addition to the file moves: keeping the handlers in `routes/api/*` is necessary, but Nitro also has to scan the project root via `serverDir: "./"` for the Vercel preset to register them.
 
 The supported probe is the local CLI `npm run probe:emailnator`. No public HTTP probe route is deployed. The implementation remains server-only for local evidence, but it is not counted as a deployed Vercel function. Do not rely on the old standalone root `/api` function footprint.
 
@@ -34,7 +37,7 @@ When importing the GitHub repository into Vercel, use these settings:
 - Output Directory: do not invent a custom value; keep the framework-detected default unless Vercel explicitly requires a field value
 - Framework Preset: keep the framework preset that Vercel auto-detects for this TanStack Start/Vite project; the Nitro plugin supplies the Vercel-compatible SSR output. Do not add a custom adapter or `vercel.json`
 
-After import, inspect the detected Functions list and confirm the Nitro server runtime is present and that there are no standalone root `/api` functions. Treat the exact deployed function count as provisional until human Preview verification.
+After import, inspect the detected Functions list and confirm the Nitro server runtime owns SSR plus the four public API functions, with no standalone root `/api` functions. Treat the exact deployed function count as provisional until human Preview verification.
 
 ## Secret Handling Rules
 

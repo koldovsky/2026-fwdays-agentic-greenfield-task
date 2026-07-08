@@ -138,7 +138,7 @@ The server therefore:
 
 ## Deployment Topology
 
-The active target remains Vercel Hobby with Nitro-owned public API routes plus a Nitro-generated SSR runtime for the TanStack Start root application. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
+The active target remains Vercel Hobby with Nitro-owned public API routes plus a Nitro-generated SSR runtime for the TanStack Start root application. The Vercel-preset parity build currently emits five functions total: one `__server` SSR function plus four API functions under `routes/api/*`. Upstash Redis Free remains the intended production backing store for temporary encrypted anonymous sessions, rate limits, active-slot reservations, and operation locks once later phases validate deployment behavior.
 
 ## Failure Modes
 
