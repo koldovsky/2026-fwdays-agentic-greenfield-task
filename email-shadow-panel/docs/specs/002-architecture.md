@@ -1,4 +1,4 @@
-﻿# Email Shadow Panel Architecture
+# Email Shadow Panel Architecture
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted baseline with Phase 3 frontend integration implemented locally
 
 ## System Context
 
-Email Shadow Panel uses the existing browser frontend, Nitro-owned public API routes under `src/routes/api/*`, a Nitro-backed TanStack Start SSR runtime, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
+Email Shadow Panel uses the existing browser frontend, Nitro-owned public API routes under `routes/api/*`, a Nitro-backed TanStack Start SSR runtime, shared server-domain contracts, an isolated Emailnator provider adapter, an anonymous session service, a public HTTP transport layer with abuse controls, and temporary persistence. Emailnator remains an undocumented and untrusted upstream dependency.
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ flowchart LR
 ## Component Boundaries
 
 - React frontend: renders the existing UI through a browser-only API client, a focused inbox controller, and versioned local recent-inbox storage; it never handles provider cookies, XSRF values, capability hashes, provider message IDs, or encrypted provider state.
-- Route handlers: live as Nitro server routes under `src/routes/api/*`, stay thin, validate HTTP concerns, enforce same-origin checks for state changes, and delegate to the public API handler composition root.
+- Route handlers: live as Nitro server routes under `routes/api/*`, stay thin, validate HTTP concerns, enforce same-origin checks for state changes, and delegate to the public API handler composition root.
 - Public API transport: owns bearer extraction, visitor-cookie handling, trusted client-IP hashing, public response contracts, error mapping, rate limits, active-slot reservations, per-session locks, request deadlines, and the provider kill switch.
 - Shared server-domain contracts: define runtime-validated anonymous-session records, safe message references, public API envelopes, and stable error codes.
 - Inbox provider abstraction: defines create, list, and detail operations with optional abort signals and no transport knowledge.
@@ -37,9 +37,10 @@ flowchart LR
 ## Repository Boundaries
 
 ```text
+routes/
+  api/
 src/
   routes/
-    api/
 server/
   api/
   providers/

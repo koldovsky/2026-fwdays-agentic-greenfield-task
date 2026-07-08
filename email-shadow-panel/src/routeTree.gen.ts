@@ -10,88 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiInboxesRouteImport } from './routes/api/inboxes'
-import { Route as ApiHealthRouteImport } from './routes/api/health'
-import { Route as ApiInboxesMessagesRouteImport } from './routes/api/inboxes/messages'
-import { Route as ApiInboxesMessagesMessageReferenceRouteImport } from './routes/api/inboxes/messages/$messageReference'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiInboxesRoute = ApiInboxesRouteImport.update({
-  id: '/api/inboxes',
-  path: '/api/inboxes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: '/api/health',
-  path: '/api/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiInboxesMessagesRoute = ApiInboxesMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => ApiInboxesRoute,
-} as any)
-const ApiInboxesMessagesMessageReferenceRoute =
-  ApiInboxesMessagesMessageReferenceRouteImport.update({
-    id: '/$messageReference',
-    path: '/$messageReference',
-    getParentRoute: () => ApiInboxesMessagesRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/health': typeof ApiHealthRoute
-  '/api/inboxes': typeof ApiInboxesRouteWithChildren
-  '/api/inboxes/messages': typeof ApiInboxesMessagesRouteWithChildren
-  '/api/inboxes/messages/$messageReference': typeof ApiInboxesMessagesMessageReferenceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/health': typeof ApiHealthRoute
-  '/api/inboxes': typeof ApiInboxesRouteWithChildren
-  '/api/inboxes/messages': typeof ApiInboxesMessagesRouteWithChildren
-  '/api/inboxes/messages/$messageReference': typeof ApiInboxesMessagesMessageReferenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/health': typeof ApiHealthRoute
-  '/api/inboxes': typeof ApiInboxesRouteWithChildren
-  '/api/inboxes/messages': typeof ApiInboxesMessagesRouteWithChildren
-  '/api/inboxes/messages/$messageReference': typeof ApiInboxesMessagesMessageReferenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/api/health'
-    | '/api/inboxes'
-    | '/api/inboxes/messages'
-    | '/api/inboxes/messages/$messageReference'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/api/health'
-    | '/api/inboxes'
-    | '/api/inboxes/messages'
-    | '/api/inboxes/messages/$messageReference'
-  id:
-    | '__root__'
-    | '/'
-    | '/api/health'
-    | '/api/inboxes'
-    | '/api/inboxes/messages'
-    | '/api/inboxes/messages/$messageReference'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiHealthRoute: typeof ApiHealthRoute
-  ApiInboxesRoute: typeof ApiInboxesRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -103,65 +48,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/inboxes': {
-      id: '/api/inboxes'
-      path: '/api/inboxes'
-      fullPath: '/api/inboxes'
-      preLoaderRoute: typeof ApiInboxesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/health': {
-      id: '/api/health'
-      path: '/api/health'
-      fullPath: '/api/health'
-      preLoaderRoute: typeof ApiHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/inboxes/messages': {
-      id: '/api/inboxes/messages'
-      path: '/messages'
-      fullPath: '/api/inboxes/messages'
-      preLoaderRoute: typeof ApiInboxesMessagesRouteImport
-      parentRoute: typeof ApiInboxesRoute
-    }
-    '/api/inboxes/messages/$messageReference': {
-      id: '/api/inboxes/messages/$messageReference'
-      path: '/$messageReference'
-      fullPath: '/api/inboxes/messages/$messageReference'
-      preLoaderRoute: typeof ApiInboxesMessagesMessageReferenceRouteImport
-      parentRoute: typeof ApiInboxesMessagesRoute
-    }
   }
 }
 
-interface ApiInboxesMessagesRouteChildren {
-  ApiInboxesMessagesMessageReferenceRoute: typeof ApiInboxesMessagesMessageReferenceRoute
-}
-
-const ApiInboxesMessagesRouteChildren: ApiInboxesMessagesRouteChildren = {
-  ApiInboxesMessagesMessageReferenceRoute:
-    ApiInboxesMessagesMessageReferenceRoute,
-}
-
-const ApiInboxesMessagesRouteWithChildren =
-  ApiInboxesMessagesRoute._addFileChildren(ApiInboxesMessagesRouteChildren)
-
-interface ApiInboxesRouteChildren {
-  ApiInboxesMessagesRoute: typeof ApiInboxesMessagesRouteWithChildren
-}
-
-const ApiInboxesRouteChildren: ApiInboxesRouteChildren = {
-  ApiInboxesMessagesRoute: ApiInboxesMessagesRouteWithChildren,
-}
-
-const ApiInboxesRouteWithChildren = ApiInboxesRoute._addFileChildren(
-  ApiInboxesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiHealthRoute: ApiHealthRoute,
-  ApiInboxesRoute: ApiInboxesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

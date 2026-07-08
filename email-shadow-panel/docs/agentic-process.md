@@ -341,7 +341,7 @@ Selected tools for Phases 0 and 1:
 - Principal implementation decisions:
   - namespace split corrected so Preview uses `email-shadow-panel-preview` and Production reserves `email-shadow-panel-production`; the two environments must not share a namespace when they point at the same Upstash database.
   - preserved the TanStack Start app while adding the officially supported Nitro Vite output layer, without adding `vercel.json`;
-  - consolidated the public API into Nitro routes under `src/routes/api/*`, retired the root `/api` function entries, and kept the preview-only Phase 0 probe server-only while the exact deployed function count remains provisional until human Preview verification;
+  - consolidated the public API into Nitro routes under `routes/api/*`, retired the root `/api` function entries, and kept the preview-only Phase 0 probe server-only while the exact deployed function count remains provisional until human Preview verification;
   - remediated `/api/health` into a Nitro-owned health route so Preview health checks do not depend on composition-root startup;
   - created a bounded, opt-in smoke verifier for Preview only;
   - kept the Phase 0 probe preview-only and production-blocked;

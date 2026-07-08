@@ -4,10 +4,10 @@ import { relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const PHASE4_REQUIRED_FILES = [
-  "src/routes/api/health.ts",
-  "src/routes/api/inboxes.ts",
-  "src/routes/api/inboxes/messages.ts",
-  "src/routes/api/inboxes/messages/$messageReference.ts",
+  "routes/api/health.ts",
+  "routes/api/inboxes.ts",
+  "routes/api/inboxes/messages.ts",
+  "routes/api/inboxes/messages/[messageReference].ts",
   "server/providers/emailnator/probe.server.ts",
   "docs/agentic-process.md",
   "docs/runbooks/deployment.md",
@@ -17,6 +17,7 @@ export const PHASE4_REQUIRED_FILES = [
   "package.json",
   "scripts/phase4-smoke.ts",
   "scripts/verify-phase4.ts",
+  "scripts/verify-phase4-vercel-output.ts",
   "src/server.ts",
   "tests/phase4/deployment-readiness.test.ts",
   "tests/phase4/smoke-script.test.ts",
@@ -42,7 +43,7 @@ export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; patter
   {
     name: "api route path",
     pattern:
-      /(?:^|\/)(?:src\/routes\/)?api\/(?:_probe\/emailnator|health|inboxes(?:\/messages(?:\/(?:\$messageReference|\[messageReference\]))?)?)\.(?:t|j)sx?/i,
+      /(?:^|\/)(?:src\/routes\/|routes\/)?api\/(?:_probe\/emailnator|health|inboxes(?:\/messages(?:\/(?:\$messageReference|\[messageReference\]))?)?)\.(?:t|j)sx?/i,
   },
   { name: "phase 0 probe env", pattern: /PHASE0_(?:SESSION_KEY|PROBE_TOKEN|CAPSULE)/i },
   { name: "upstash env", pattern: /UPSTASH_REDIS_REST_(?:URL|TOKEN)/i },
@@ -51,10 +52,10 @@ export const PHASE4_CLIENT_BUNDLE_PATTERNS: ReadonlyArray<{ name: string; patter
 ];
 
 const NITRO_API_ROUTE_FILES = [
-  "src/routes/api/health.ts",
-  "src/routes/api/inboxes.ts",
-  "src/routes/api/inboxes/messages.ts",
-  "src/routes/api/inboxes/messages/$messageReference.ts",
+  "routes/api/health.ts",
+  "routes/api/inboxes.ts",
+  "routes/api/inboxes/messages.ts",
+  "routes/api/inboxes/messages/[messageReference].ts",
 ] as const;
 
 const LEGACY_ROOT_API_ENTRY_FILES = [
@@ -209,11 +210,11 @@ export function assertEnvExampleMatchesCode(): void {
   assert.equal(env.get("PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS"), "2592000");
 }
 
-export function assertDeploymentSurface(): {
+export function assertDeploymentSurface(routeTreeText?: string): {
   nitroApiRouteCount: number;
   legacyRootApiEntryCount: number;
 } {
-  const nitroRouteFiles = walkFiles(resolve(PROJECT_ROOT, "src/routes/api")).filter(
+  const nitroRouteFiles = walkFiles(resolve(PROJECT_ROOT, "routes/api")).filter(
     (filePath) => filePath.endsWith(".ts") && !filePath.endsWith(".d.ts"),
   );
   const nitroRouteEntryFiles = nitroRouteFiles.filter((filePath) => !filePath.endsWith("test.ts"));
@@ -226,6 +227,22 @@ export function assertDeploymentSurface(): {
     [...NITRO_API_ROUTE_FILES].sort((left, right) => left.localeCompare(right)),
     "The Nitro route surface should contain four public API route files.",
   );
+
+  const tanstackApiRouteFiles = [
+    "src/routes/api/health.ts",
+    "src/routes/api/inboxes.ts",
+    "src/routes/api/inboxes/messages.ts",
+    "src/routes/api/inboxes/messages/$messageReference.ts",
+  ].filter((relativePath) => existsSync(resolve(PROJECT_ROOT, relativePath)));
+  assert.deepEqual(
+    tanstackApiRouteFiles,
+    [],
+    "The TanStack route tree should no longer own the public API routes.",
+  );
+
+  if (routeTreeText !== undefined) {
+    assertTanstackGeneratedRouteTreeExcludesPublicApi(routeTreeText);
+  }
 
   const legacyRootApiEntryFiles = LEGACY_ROOT_API_ENTRY_FILES.filter((relativePath) =>
     existsSync(resolve(PROJECT_ROOT, relativePath)),
@@ -250,6 +267,15 @@ export function assertDeploymentSurface(): {
   };
 }
 
+export function assertTanstackGeneratedRouteTreeExcludesPublicApi(routeTreeText: string): void {
+  assert.ok(
+    !/ApiHealthRouteImport|ApiInboxesRouteImport|ApiInboxesMessagesRouteImport|ApiInboxesMessagesMessageReferenceRouteImport|\/api\/health|\/api\/inboxes|\/api\/inboxes\/messages/u.test(
+      routeTreeText,
+    ),
+    "The TanStack generated route tree should not include the public API routes.",
+  );
+}
+
 export function assertViteConfigParses(): void {
   const viteConfigText = readTextFile("vite.config.ts");
   assert.match(viteConfigText, /import\s+\{\s*nitro\s*\}\s+from\s+["']nitro\/vite["'];/u);
@@ -267,45 +293,41 @@ export function assertViteConfigParses(): void {
 }
 
 export function assertHealthEntrypointContract(): void {
-  const healthSource = readTextFile("src/routes/api/health.ts");
+  const healthSource = readTextFile("routes/api/health.ts");
 
-  assert.match(healthSource, /createFileRoute\(["']\/api\/health["']\)/u);
-  assert.match(
-    healthSource,
-    /import\s+\{\s*createFileRoute\s*\}\s+from\s+["']@tanstack\/react-router["'];/u,
-  );
-  assert.doesNotMatch(
-    healthSource,
-    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env|SESSION_ENCRYPTION_KEY|VISITOR_HASH_KEY|UPSTASH_REDIS_REST_/u,
-  );
+  assert.match(healthSource, /defineHandler/u);
+  assert.match(healthSource, /event\.req\.method/u);
   assert.match(healthSource, /"Cache-Control": "no-store"/u);
   assert.match(healthSource, /"Content-Type": "application\/json; charset=utf-8"/u);
   assert.match(healthSource, /status:\s*200/u);
   assert.match(healthSource, /createHealthResponse\(true\)/u);
   assert.match(healthSource, /createHealthResponse\(false\)/u);
-  assert.match(healthSource, /GET:/u);
-  assert.match(healthSource, /HEAD:/u);
-  assert.match(healthSource, /ANY:/u);
+  assert.match(healthSource, /createMethodNotAllowedResponse\(\)/u);
+  assert.match(healthSource, /Allow: "GET, HEAD"/u);
+  assert.doesNotMatch(
+    healthSource,
+    /createFileRoute|createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env|SESSION_ENCRYPTION_KEY|VISITOR_HASH_KEY|UPSTASH_REDIS_REST_/u,
+  );
 }
 
 export function assertDeployedApiEntrypointContracts(): void {
-  const inboxSource = readTextFile("src/routes/api/inboxes.ts");
-  const messagesSource = readTextFile("src/routes/api/inboxes/messages.ts");
-  const messageDetailSource = readTextFile("src/routes/api/inboxes/messages/$messageReference.ts");
+  const inboxSource = readTextFile("routes/api/inboxes.ts");
+  const messagesSource = readTextFile("routes/api/inboxes/messages.ts");
+  const messageDetailSource = readTextFile("routes/api/inboxes/messages/[messageReference].ts");
 
   for (const [relativePath, source, handlerName] of [
-    ["src/routes/api/inboxes.ts", inboxSource, "handleInboxesRoute"],
-    ["src/routes/api/inboxes/messages.ts", messagesSource, "handleMessagesRoute"],
+    ["routes/api/inboxes.ts", inboxSource, "handleInboxesRoute"],
+    ["routes/api/inboxes/messages.ts", messagesSource, "handleMessagesRoute"],
     [
-      "src/routes/api/inboxes/messages/$messageReference.ts",
+      "routes/api/inboxes/messages/[messageReference].ts",
       messageDetailSource,
       "handleMessageDetailRoute",
     ],
   ] as const) {
     assert.match(
       source,
-      /createFileRoute\(["']\/api\//u,
-      `${relativePath} must register a Nitro API route.`,
+      /defineHandler/u,
+      `${relativePath} must register a Nitro API route handler.`,
     );
     assert.match(
       source,
@@ -317,12 +339,29 @@ export function assertDeployedApiEntrypointContracts(): void {
       /createProductionPublicApiDependencies/u,
       `${relativePath} must bind the production dependency factory.`,
     );
-    assert.match(source, /ANY:/u, `${relativePath} must delegate all HTTP methods through ANY.`);
+    if (relativePath.endsWith("[messageReference].ts")) {
+      assert.match(
+        source,
+        /getRouterParam/u,
+        `${relativePath} must read the Nitro route parameter.`,
+      );
+      assert.match(
+        source,
+        /messageReference:\s*getRouterParam\(event, "messageReference"\)/u,
+        `${relativePath} must forward the validated route parameter.`,
+      );
+    }
     assert.match(
       source,
-      new RegExp(`${handlerName}\\(request`, "u"),
+      /event\.req/u,
+      `${relativePath} must pass the Nitro request to the public API handler.`,
+    );
+    assert.match(
+      source,
+      new RegExp(`${handlerName}\\(event\\.req`, "u"),
       `${relativePath} must delegate to the public API handler without duplicating business logic.`,
     );
+    assert.doesNotMatch(source, /createFileRoute|server:\s*\{|ANY:/u);
     assert.doesNotMatch(
       source,
       /assertSameOrigin|resolveAnonymousVisitorCookie|extractBearerCapability|createJsonResponse|normalizePublicApiError|createRequestDeadlineSignal|publicCreateInboxResponseSchema|publicListMessagesResponseSchema|publicMessageDetailResponseSchema/u,
@@ -381,8 +420,9 @@ export function assertClientBundleFreeOfServerOnlyModules(projectRoot = PROJECT_
 export function assertPhase4PostBuildVerification(projectRoot = PROJECT_ROOT): void {
   assertNitroOutputSurface(projectRoot);
   assertClientBundleFreeOfServerOnlyModules(projectRoot);
+  assertDeploymentSurface(readTextFile("src/routeTree.gen.ts"));
   console.log(
-    "Phase 4 post-build Nitro artifact checks passed. The client bundle scan and Nitro output assertions succeeded.",
+    "Phase 4 post-build Nitro artifact checks passed. The client bundle scan, Nitro output assertions, and generated route-tree checks succeeded.",
   );
 }
 

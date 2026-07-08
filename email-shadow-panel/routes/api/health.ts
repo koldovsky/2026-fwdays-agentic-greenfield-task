@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { defineHandler } from "nitro";
 
 const HEALTH_HEADERS = {
   "Cache-Control": "no-store",
@@ -29,12 +29,14 @@ function createMethodNotAllowedResponse(): Response {
   });
 }
 
-export const Route = createFileRoute("/api/health")({
-  server: {
-    handlers: {
-      GET: async () => createHealthResponse(true),
-      HEAD: async () => createHealthResponse(false),
-      ANY: async () => createMethodNotAllowedResponse(),
-    },
-  },
+export default defineHandler((event) => {
+  if (event.req.method === "GET") {
+    return createHealthResponse(true);
+  }
+
+  if (event.req.method === "HEAD") {
+    return createHealthResponse(false);
+  }
+
+  return createMethodNotAllowedResponse();
 });

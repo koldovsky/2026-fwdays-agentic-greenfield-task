@@ -25,7 +25,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 - `.env.example`
 - `package.json`
 - `vite.config.ts`
-- `src/routes/api/*`
+- `routes/api/*`
 - `server/api/*`
 - `server/session/*`
 - `scripts/*`
@@ -38,7 +38,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 - verify the TanStack Start, Vite, and Nitro deployment shape for Vercel Hobby
 - keep the app rooted at `email-shadow-panel`
-- preserve the public API behavior under `src/routes/api/*` and the TanStack Start SSR entry
+- preserve the public API behavior under `routes/api/*` and the TanStack Start SSR entry
 - document the environment matrix from the actual config loaders and `.env.example`
 - preserve a safe, preview-only Phase 0 probe disposition
 - add bounded smoke-verification tooling for Preview
@@ -59,7 +59,7 @@ Prepare Email Shadow Panel for safe Vercel Preview and Production deployment wit
 
 ## Implementation Notes
 
-- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, Nitro-owned public API routes under `src/routes/api/*`, and a server-only Phase 0 probe implementation that remains out of the deployed route inventory.
+- The repository now builds as a TanStack Start app with Vite plus Nitro for Vercel-compatible SSR output, a separate `src/server.ts` SSR entry, Nitro-owned public API routes under `routes/api/*` (Nitro filesystem routes rather than TanStack route-tree files), and a server-only Phase 0 probe implementation that remains out of the deployed route inventory.
 - The deployed footprint is now Nitro-owned and provisional until human Preview verification confirms the exact Vercel function count. Do not rely on the retired root `/api` function footprint.
 - The `/api/health` route is served by the Nitro route layer and returns no-store JSON without importing composition-root, provider, Redis, or environment configuration modules.
 - The Phase 0 probe remains preview-only, disabled by default, and blocked in Production.

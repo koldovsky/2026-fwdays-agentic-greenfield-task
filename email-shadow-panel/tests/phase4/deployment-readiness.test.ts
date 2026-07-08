@@ -14,7 +14,6 @@ import {
 } from "../../server/session/config.server.ts";
 import {
   assertDeployedApiEntrypointContracts,
-  assertDeploymentSurface,
   assertEnvExampleMatchesCode,
   assertHealthEntrypointContract,
   assertNitroDependencyLocked,
@@ -22,10 +21,12 @@ import {
   assertNitroOutputSurface,
   assertPreviewOnlyProbeEntrypointContract,
   assertSmokeScriptIsNotAutoWired,
+  assertTanstackGeneratedRouteTreeExcludesPublicApi,
   assertViteConfigParses,
   parseEnvExample,
   runPhase4ReadinessChecks,
 } from "../../scripts/verify-phase4.ts";
+import { assertVercelPresetOutputSurface } from "../../scripts/verify-phase4-vercel-output.ts";
 
 function createThrowingProxy(label: string): unknown {
   return new Proxy(
@@ -89,15 +90,24 @@ test("deployment config parses the documented safe env examples and retains the 
     PUBLIC_VISITOR_COOKIE_NAME: "esp_anon_v1",
     PUBLIC_VISITOR_COOKIE_MAX_AGE_SECONDS: "2592000",
   });
-  const footprint = assertDeploymentSurface();
+  const cleanRouteTree = [
+    'import { Route as RootRouteImport } from "./routes/root";',
+    "export const routeTree = RootRouteImport;",
+  ].join("\n");
 
+  assert.doesNotThrow(() => assertTanstackGeneratedRouteTreeExcludesPublicApi(cleanRouteTree));
+  assert.throws(
+    () =>
+      assertTanstackGeneratedRouteTreeExcludesPublicApi(
+        'import { Route as ApiHealthRouteImport } from "./routes/api/health";',
+      ),
+    /The TanStack generated route tree should not include the public API routes./u,
+  );
   assert.equal(sessionCore.sessionTtlMs, 900_000);
   assert.equal(upstash.namespace, "email-shadow-panel-local");
   assert.equal(publicConfig.providerEnabled, true);
   assert.equal(publicConfig.operationLockTtlMs, 15_000);
   assert.equal(publicConfig.activeInboxReservationTtlMs, 15_000);
-  assert.equal(footprint.nitroApiRouteCount, 4);
-  assert.equal(footprint.legacyRootApiEntryCount, 0);
 });
 
 test("the Phase 0 probe stays blocked in production and remains server-only", async () => {
@@ -150,21 +160,21 @@ test("health stays minimal, does not require Redis or provider methods, and swal
 });
 
 test("health Nitro route is standalone and avoids server-only imports", () => {
-  const healthRoute = readFileSync(resolve(process.cwd(), "src/routes/api/health.ts"), "utf8");
+  const healthRoute = readFileSync(resolve(process.cwd(), "routes/api/health.ts"), "utf8");
 
   assertHealthEntrypointContract();
-  assert.match(healthRoute, /createFileRoute\(["']\/api\/health["']\)/u);
-  assert.doesNotMatch(
-    healthRoute,
-    /createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env/u,
-  );
+  assert.match(healthRoute, /defineHandler/u);
+  assert.match(healthRoute, /event\.req\.method/u);
   assert.match(healthRoute, /"Cache-Control": "no-store"/u);
   assert.match(healthRoute, /"Content-Type": "application\/json; charset=utf-8"/u);
   assert.match(healthRoute, /createHealthResponse\(true\)/u);
   assert.match(healthRoute, /createHealthResponse\(false\)/u);
-  assert.match(healthRoute, /GET:/u);
-  assert.match(healthRoute, /HEAD:/u);
-  assert.match(healthRoute, /ANY:/u);
+  assert.match(healthRoute, /createMethodNotAllowedResponse\(\)/u);
+  assert.match(healthRoute, /Allow: "GET, HEAD"/u);
+  assert.doesNotMatch(
+    healthRoute,
+    /createFileRoute|createPublicApiHandlers|createProductionPublicApiDependencies|loadPublicApiConfig|server\/api|\.server\.|process\.env/u,
+  );
 });
 
 test("Nitro API routes own the public API surface and the legacy root /api files are absent", () => {
@@ -185,11 +195,24 @@ test("Nitro API routes own the public API surface and the legacy root /api files
     );
   }
 
-  for (const nitroPath of [
+  for (const tanstackPath of [
     "src/routes/api/health.ts",
     "src/routes/api/inboxes.ts",
     "src/routes/api/inboxes/messages.ts",
     "src/routes/api/inboxes/messages/$messageReference.ts",
+  ]) {
+    assert.equal(
+      existsSync(resolve(process.cwd(), tanstackPath)),
+      false,
+      `${tanstackPath} should be absent from the TanStack route tree.`,
+    );
+  }
+
+  for (const nitroPath of [
+    "routes/api/health.ts",
+    "routes/api/inboxes.ts",
+    "routes/api/inboxes/messages.ts",
+    "routes/api/inboxes/messages/[messageReference].ts",
   ]) {
     assert.equal(existsSync(resolve(process.cwd(), nitroPath)), true, `${nitroPath} should exist.`);
   }
@@ -230,7 +253,7 @@ test("deployment docs describe the Nitro-owned API surface and the updated deplo
   );
 
   assert.match(deploymentDocs, /Nitro-owned public API routes/u);
-  assert.match(deploymentDocs, /src\/routes\/api/u);
+  assert.match(deploymentDocs, /routes\/api/u);
   assert.match(deploymentDocs, /deployed Vercel function count remains provisional/u);
   assert.match(phase4VerificationDocs, /Nitro-owned .*public API surface/u);
   assert.match(phase4VerificationDocs, /legacy root API entries/u);
@@ -239,6 +262,10 @@ test("deployment docs describe the Nitro-owned API surface and the updated deplo
 test("Phase 4 verifier targets Nitro public output and keeps the server boundary separate", () => {
   const verifyPhase4Source = readFileSync(
     resolve(process.cwd(), "scripts/verify-phase4.ts"),
+    "utf8",
+  );
+  const verifyPhase4VercelOutputSource = readFileSync(
+    resolve(process.cwd(), "scripts/verify-phase4-vercel-output.ts"),
     "utf8",
   );
 
@@ -255,6 +282,13 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   assert.ok(verifyPhase4Source.includes("assertHealthEntrypointContract()"));
   assert.ok(verifyPhase4Source.includes("assertDeployedApiEntrypointContracts()"));
   assert.ok(verifyPhase4Source.includes("assertPreviewOnlyProbeEntrypointContract()"));
+  assert.ok(verifyPhase4Source.includes("assertTanstackGeneratedRouteTreeExcludesPublicApi"));
+  assert.ok(verifyPhase4Source.includes("routes/api/health.ts"));
+  assert.ok(verifyPhase4Source.includes("routes/api/inboxes.ts"));
+  assert.ok(verifyPhase4Source.includes("routes/api/inboxes/messages.ts"));
+  assert.ok(verifyPhase4Source.includes("routes/api/inboxes/messages/[messageReference].ts"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("assertVercelPresetOutputSurface"));
+  assert.ok(verifyPhase4Source.includes("scripts/verify-phase4-vercel-output.ts"));
   assert.ok(verifyPhase4Source.includes("The Nitro public output is missing."));
   assert.ok(verifyPhase4Source.includes("The Nitro server entry is missing."));
   assert.ok(
@@ -267,6 +301,11 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
       "The legacy root /api Vercel Function entries should be absent now that Nitro owns the public API routes.",
     ),
   );
+  assert.ok(verifyPhase4VercelOutputSource.includes("functions/__server.func"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("/api/health"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("/api/inboxes"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("/api/inboxes/messages"));
+  assert.ok(verifyPhase4VercelOutputSource.includes("__server"));
   assert.ok(!verifyPhase4Source.includes("dist/client"));
   assert.ok(
     !verifyPhase4Source.includes(
@@ -315,8 +354,58 @@ test("post-build Nitro artifact assertions still require output and scan only cl
   assert.throws(() => assertClientBundleFreeOfServerOnlyModules(tempRoot), /server-only pattern/u);
 });
 
+test("Vercel preset output verifier accepts the Nitro-owned route surface and preserves route ordering", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "phase4-vercel-output-"));
+  const vercelOutputRoot = join(tempRoot, ".vercel", "output");
+  const functionsRoot = join(vercelOutputRoot, "functions");
+  const serverFunctionRoot = join(functionsRoot, "__server.func");
+
+  mkdirSync(serverFunctionRoot, { recursive: true });
+  writeFileSync(
+    join(vercelOutputRoot, "config.json"),
+    JSON.stringify(
+      {
+        version: 3,
+        framework: { name: "nitro", version: "3.0.260603-beta" },
+        routes: [
+          { handle: "filesystem" },
+          { src: "^/api/health$", methods: ["GET", "HEAD"] },
+          { src: "^/api/inboxes$" },
+          { src: "^/api/inboxes/messages$" },
+          { src: "^/api/inboxes/messages/(?<messageReference>[^/]+)$" },
+          { src: "^/(.*)$", dest: "/__server" },
+        ],
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  writeFileSync(
+    join(serverFunctionRoot, "index.mjs"),
+    [
+      "export const routes = [",
+      '  "/api/health",',
+      '  "/api/inboxes",',
+      '  "/api/inboxes/messages",',
+      '  "/api/inboxes/messages/[messageReference]",',
+      "];",
+      "export default routes;",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  const footprint = assertVercelPresetOutputSurface(tempRoot);
+
+  assert.equal(footprint.functionCount, 1);
+  assert.deepEqual(footprint.functionNames, ["functions/__server.func"]);
+  assert.equal(footprint.frameworkName, "nitro");
+  assert.equal(footprint.frameworkVersion, "3.0.260603-beta");
+});
+
 test("server-only modules remain lazily wired in source and the health route is standalone", () => {
-  const healthRoute = readFileSync(resolve(process.cwd(), "src/routes/api/health.ts"), "utf8");
+  const healthRoute = readFileSync(resolve(process.cwd(), "routes/api/health.ts"), "utf8");
   const compositionRoot = readFileSync(
     resolve(process.cwd(), "server/api/composition-root.server.ts"),
     "utf8",
@@ -335,6 +424,16 @@ test("server-only modules remain lazily wired in source and the health route is 
   assert.match(verifyPhase4Source, /assertHealthEntrypointContract\(\)/u);
   assert.match(verifyPhase4Source, /assertDeployedApiEntrypointContracts\(\)/u);
   assert.match(verifyPhase4Source, /assertPreviewOnlyProbeEntrypointContract\(\)/u);
+  assert.match(verifyPhase4Source, /routes\/api\/health\.ts/u);
+  assert.match(verifyPhase4Source, /routes\/api\/inboxes\.ts/u);
+  assert.match(verifyPhase4Source, /routes\/api\/inboxes\/messages\.ts/u);
+  assert.match(verifyPhase4Source, /routes\/api\/inboxes\/messages\/\[messageReference\]\.ts/u);
+  assert.ok(!existsSync(resolve(process.cwd(), "src/routes/api/health.ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "src/routes/api/inboxes.ts")));
+  assert.ok(!existsSync(resolve(process.cwd(), "src/routes/api/inboxes/messages.ts")));
+  assert.ok(
+    !existsSync(resolve(process.cwd(), "src/routes/api/inboxes/messages/$messageReference.ts")),
+  );
   assert.ok(!existsSync(resolve(process.cwd(), "api/health.ts")));
   assert.ok(!existsSync(resolve(process.cwd(), "api/inboxes.ts")));
   assert.ok(!existsSync(resolve(process.cwd(), "api/inboxes/messages.ts")));

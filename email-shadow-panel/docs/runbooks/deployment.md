@@ -16,7 +16,7 @@ The repository currently uses:
 
 - TanStack Start for SSR
 - Vite plus the Nitro Vite plugin to produce Vercel-compatible SSR output
-- Nitro-owned public API routes under `src/routes/api/*`
+- Nitro-owned public API routes under `routes/api/*` (Nitro filesystem routes, not TanStack route-tree files)
 - one server-only Phase 0 probe implementation at `server/providers/emailnator/probe.server.ts` that is not a deployable route and is exercised through the local CLI `npm run probe:emailnator`
 - one TanStack Start server entry at `src/server.ts`
 

@@ -1,11 +1,11 @@
-﻿import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const REQUIRED_FILES = [
-  "src/routes/api/health.ts",
-  "src/routes/api/inboxes.ts",
-  "src/routes/api/inboxes/messages.ts",
-  "src/routes/api/inboxes/messages/$messageReference.ts",
+  "routes/api/health.ts",
+  "routes/api/inboxes.ts",
+  "routes/api/inboxes/messages.ts",
+  "routes/api/inboxes/messages/[messageReference].ts",
   "server/api/contracts.server.ts",
   "server/api/handlers.server.ts",
   "server/api/composition-root.server.ts",

@@ -23,7 +23,8 @@
     "verify:phase1": "npm run lint && npm run typecheck && npm run test:phase0 && npm run test:phase1 && npm run build && node --experimental-transform-types ./scripts/verify-phase1.ts",
     "verify:phase2": "npm run lint && npm run typecheck && npm run test:phase0 && npm run test:phase1 && npm run test:phase2 && npm run build && node --experimental-transform-types ./scripts/verify-phase2.ts",
     "verify:phase3": "npm run lint && npm run typecheck && npm run test:phase0 && npm run test:phase1 && npm run test:phase2 && npm run test:phase3 && npm run build && node --experimental-transform-types ./scripts/verify-phase3.ts",
-    "verify:phase4": "npm run lint && npm run typecheck && npm run test:deterministic && npm run build && node --experimental-transform-types ./scripts/verify-phase4.ts"
+    "verify:phase4": "npm run lint && npm run typecheck && npm run test:deterministic && npm run build && node --experimental-transform-types ./scripts/verify-phase4.ts",
+    "verify:phase4:vercel-output": "node --experimental-transform-types ./scripts/verify-phase4-vercel-output.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

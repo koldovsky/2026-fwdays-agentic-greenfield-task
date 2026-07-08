@@ -9,5 +9,5 @@
     "verbatimModuleSyntax": false,
     "noEmit": true
   },
-  "include": ["api/**/*.ts", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+  "include": ["routes/**/*.ts", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
 }

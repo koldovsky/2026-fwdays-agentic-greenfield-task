@@ -1,14 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { defineHandler } from "nitro";
+import { getRouterParam } from "nitro/h3";
 
 import { createProductionPublicApiDependencies } from "../../../../server/api/composition-root.server.ts";
 import { createPublicApiHandlers } from "../../../../server/api/handlers.server.ts";
 
 const handlers = createPublicApiHandlers(createProductionPublicApiDependencies);
 
-export const Route = createFileRoute("/api/inboxes/messages")({
-  server: {
-    handlers: {
-      ANY: async ({ request }) => handlers.handleMessagesRoute(request),
-    },
-  },
-});
+export default defineHandler((event) =>
+  handlers.handleMessageDetailRoute(event.req, {
+    messageReference: getRouterParam(event, "messageReference"),
+  }),
+);
