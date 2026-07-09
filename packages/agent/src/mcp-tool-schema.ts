@@ -19,13 +19,19 @@
 // `zod@4.4.3` is already an installed dependency of the SDK; this module
 // imports the same top-level `"zod"` the SDK's own type import resolves to.
 //
-// This translation is intentionally SHALLOW: `tools.ts`'s schemas only ever
-// use `string`/`integer`, `enum`, and one untyped free-value property
-// (`amend_field`'s `value` — "тип залежить від поля", read by the reducer,
-// not the schema). Defense in depth already lives at `transition()`
-// (design.md Decision 1) — this schema only needs to let a syntactically
-// plausible call surface to `canUseTool`'s capture, never to be the sole
-// validation gate itself.
+// This translation covers every JSON-Schema construct `tools.ts` actually
+// emits: `string`/`integer`/`number`/`boolean`, `enum`, ARRAY (of enum/scalar
+// items) and nested OBJECT (`propose_slots`'s `weekdays`/`timeWindow`), plus
+// one untyped free-value property (`amend_field`'s `value` — "тип залежить від
+// поля", read by the reducer, not the schema). Arrays and objects are
+// translated RECURSIVELY. This is not merely cosmetic typing: the model only
+// ever sees the schema this produces, so degrading `weekdays`/`timeWindow` to
+// `z.any()` (as the earlier shallow version did) made the production
+// ClaudeAgentModelPort offer the model an untyped parameter — it then passed
+// the raw Ukrainian free-text and `validatePreferences` rejected every
+// `propose_slots` call. Defense in depth still lives at `transition()`/
+// `validatePreferences` (design.md Decision 1); faithful schema typing is
+// what lets a well-formed call reach them in the first place.
 import { z } from "zod";
 import type { ZodTypeAny } from "zod";
 import type { ToolDefinition } from "./model-port.ts";
@@ -81,6 +87,11 @@ interface JsonSchemaPropertyShape {
   type?: unknown;
   enum?: unknown;
   description?: unknown;
+  /** `type: "array"` — the element schema (recursively translated). */
+  items?: unknown;
+  /** `type: "object"` — the nested property schemas + their required set. */
+  properties?: unknown;
+  required?: unknown;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -116,6 +127,30 @@ function jsonSchemaPropertyToZod(rawProperty: unknown, isRequired: boolean): Zod
     base = z.boolean();
   } else if (property.type === "string") {
     base = z.string();
+  } else if (property.type === "array") {
+    // `propose_slots`'s `weekdays` (array of the Mon-Fri enum). The element
+    // schema is translated by the SAME function (recursively) — an item is
+    // always "present" within the array, so `isRequired: true`. Missing
+    // `items` degrades to `z.any()` elements rather than throwing (defensive;
+    // tools.ts always supplies `items`). WITHOUT this branch the whole array
+    // fell through to `z.any()`, so the model saw an untyped parameter and
+    // passed raw free-text ("середа") that `validatePreferences` rejected.
+    const element = jsonSchemaPropertyToZod(property.items, true);
+    base = z.array(element);
+  } else if (property.type === "object") {
+    // `propose_slots`'s `timeWindow` ({start, end}). Nested properties are
+    // translated recursively, each optional/required per this object's OWN
+    // `required` list (JSON Schema's per-level optionality). Same rationale
+    // as the array branch: without it, the object degraded to `z.any()`.
+    const nestedProperties = isPlainObject(property.properties) ? property.properties : {};
+    const nestedRequired = new Set(
+      Array.isArray(property.required) ? property.required.filter((n): n is string => typeof n === "string") : [],
+    );
+    const shape: ToolInputShape = {};
+    for (const [key, value] of Object.entries(nestedProperties)) {
+      shape[key] = jsonSchemaPropertyToZod(value, nestedRequired.has(key));
+    }
+    base = z.object(shape);
   } else {
     // No declared `type` at all — exactly `amend_field`'s `value` property
     // (`tools.ts`: "тип залежить від поля"). The reducer (`transition()`,

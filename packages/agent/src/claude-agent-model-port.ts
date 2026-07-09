@@ -112,7 +112,7 @@ export class ClaudeAgentModelPort implements ModelPort {
     config: ModelConfig,
     system: string,
   ): Promise<ModelResponse> {
-    const prompt = extractLatestUserText(messages);
+    const prompt = buildAgentPrompt(messages);
     const mcpServer = createSdkMcpServer({
       name: INTAKE_MCP_SERVER_NAME,
       tools: tools.map((toolDef) => buildNeverRunTool(toolDef)),
@@ -253,17 +253,45 @@ export class ClaudeAgentModelPort implements ModelPort {
  *  legitimately threads more history through `ModelMessage[]` degrades to
  *  "the latest user turn's text" instead of silently reading the wrong
  *  entry. */
-function extractLatestUserText(messages: ModelMessage[]): string {
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const message = messages[i];
-    if (message === undefined || message.role !== "user") continue;
-    if (typeof message.content === "string") return message.content;
-    return message.content
-      .filter((block): block is { type: "text"; text: string } => block.type === "text")
-      .map((block) => block.text)
-      .join("\n");
+/** Renders the turn's `messages` as a role-labelled Ukrainian transcript for
+ *  the Agent SDK's single-`prompt` query. TWO reasons this is a transcript
+ *  rather than just the latest user text (both are live-bot defects this
+ *  replaces):
+ *
+ *   1. CONVERSATION MEMORY. The SDK call is stateless (`maxTurns: 1`), so
+ *      prior turns must be replayed IN the prompt or the model cannot
+ *      accumulate facts a lead gives across several terse turns — the
+ *      experienceComfort loop, where "Немає" (no experience) and "Соромиться"
+ *      (shy) arrive on separate turns and the two-field `save_experience_
+ *      comfort` tool needs both at once. `loop.ts` already threads the
+ *      transcript tail in via `messages`; the previous `extractLatestUserText`
+ *      threw all but the last message away, which is why the fix at the
+ *      `loop.ts`/`messages`-table layer had no effect on the real bot.
+ *
+ *   2. SLASH-COMMAND SAFETY. The `claude` CLI the SDK spawns interprets a
+ *      prompt that STARTS WITH "/" as a slash command — so a lead typing
+ *      "/stats" or "/start" ran a CLI command ("responds with some code")
+ *      instead of talking to the school. Every line here is prefixed with a
+ *      role label, so the prompt never starts with the lead's raw "/..." —
+ *      the command text survives as ordinary lead content the model can
+ *      redirect, never as a CLI directive.
+ *
+ *  The lead is "Лід", the school's assistant is "Школа"; the model answers the
+ *  LAST "Лід:" line in the assistant role its system prompt already defines. */
+export function buildAgentPrompt(messages: ModelMessage[]): string {
+  const lines: string[] = [];
+  for (const message of messages) {
+    const text =
+      typeof message.content === "string"
+        ? message.content
+        : message.content
+            .filter((block): block is { type: "text"; text: string } => block.type === "text")
+            .map((block) => block.text)
+            .join("\n");
+    if (text.trim().length === 0) continue;
+    lines.push(`${message.role === "user" ? "Лід" : "Школа"}: ${text}`);
   }
-  return "";
+  return lines.join("\n");
 }
 
 /** Maps this package's `ThinkingConfig` (model-port.ts) onto the Agent SDK's

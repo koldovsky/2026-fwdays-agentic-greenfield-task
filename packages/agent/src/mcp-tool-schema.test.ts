@@ -96,4 +96,41 @@ describe("jsonSchemaToZodRawShape — translating tools.ts's JSON Schema into a 
       expect(() => jsonSchemaToZodRawShape(tool.input_schema)).not.toThrow();
     }
   });
+
+  // propose_slots is the one tool with NESTED schema (an array-of-enum and an
+  // object) — the shallow converter used to degrade both to `z.any()`, so the
+  // production ClaudeAgentModelPort showed the model an untyped parameter and
+  // it passed the raw Ukrainian free-text ("середа"/"зранку"), which
+  // `validatePreferences` then rejected → propose_slots ALWAYS failed on the
+  // real bot. These pin the array/object translation that fixes it.
+  it("maps an `array` of enum items to a Zod array — rejects a bare string, accepts a list of listed values", () => {
+    const shape = jsonSchemaToZodRawShape({
+      type: "object",
+      properties: {
+        weekdays: { type: "array", items: { type: "string", enum: ["Mon", "Tue", "Wed", "Thu", "Fri"] } },
+      },
+      required: ["weekdays"],
+    });
+    expect(shape.weekdays!.safeParse(["Wed"]).success).toBe(true);
+    expect(shape.weekdays!.safeParse(["Wed", "Fri"]).success).toBe(true);
+    expect(shape.weekdays!.safeParse("середа").success).toBe(false); // the raw-text bug
+    expect(shape.weekdays!.safeParse(["Sat"]).success).toBe(false); // outside the weekday enum
+  });
+
+  it("maps an `object` property to a Zod object — rejects a bare string, requires its declared keys", () => {
+    const shape = jsonSchemaToZodRawShape({
+      type: "object",
+      properties: {
+        timeWindow: {
+          type: "object",
+          properties: { start: { type: "string" }, end: { type: "string" } },
+          required: ["start", "end"],
+        },
+      },
+      required: ["timeWindow"],
+    });
+    expect(shape.timeWindow!.safeParse({ start: "09:00", end: "12:00" }).success).toBe(true);
+    expect(shape.timeWindow!.safeParse("зранку").success).toBe(false); // the raw-text bug
+    expect(shape.timeWindow!.safeParse({ start: "09:00" }).success).toBe(false); // missing required key
+  });
 });
