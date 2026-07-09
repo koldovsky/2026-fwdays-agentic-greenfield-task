@@ -131,6 +131,8 @@ import {
   insertRequest,
   insertBooking,
   insertQuestion,
+  insertMessage,
+  findRecentMessagesForRequest,
   updateRequestFields,
   updateRequestState,
   findLatestRequestForLead,
@@ -187,6 +189,7 @@ import {
   EMPTY_NARRATION_FALLBACK_COPY,
   HOLD_CONFIRMATION_COPY,
   SLOT_COLLISION_NUDGE_COPY,
+  SLOTS_OFFER_COPY,
 } from "./copy.ts";
 import { TELEGRAM_SEND_FAILURE_APOLOGY } from "./apology.ts";
 import type { InboundUpdate, SendMessageOptions, TelegramTransport } from "./telegram-transport.ts";
@@ -314,6 +317,13 @@ async function sendWithRetry(
  *  call site until this task — `HoldStorePort`/`SlotsPort`'s first live
  *  wiring). */
 const PROPOSE_HORIZON_DAYS = 14;
+
+/** Conversation-history slice: how many trailing transcript messages to
+ *  replay to the model each turn. An intake conversation is short (a dozen-ish
+ *  fields), so this bounds the replay generously while keeping token cost
+ *  flat for any pathologically long chat. Counted in individual messages
+ *  (user + assistant), not exchanges. */
+const HISTORY_MESSAGE_LIMIT = 20;
 
 /** Europe/Kyiv LOCAL "YYYY-MM-DD" for "today" — the one place this module
  *  touches a timezone, reusing `timezone.ts`'s own adapter-boundary
@@ -600,6 +610,13 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
      *  — `undefined` for every other turn, so `sendWithRetry` renders no
      *  keyboard at all by default (unchanged S2 behaviour). */
     let replyOptions: SendMessageOptions | undefined;
+    /** Conversation-history slice: the conversational reply to persist as this
+     *  turn's `assistant` transcript message — captured from a free-text turn
+     *  BEFORE the one-time brand-new-lead privacy notice is prepended (that
+     *  notice is not conversational content the model needs replayed).
+     *  `undefined` for a callback turn (button taps are resolved
+     *  deterministically and are not part of the model's replayed transcript). */
+    let assistantReplyForHistory: string | undefined;
 
     if (update.type === "callback") {
       // Step 3: callback updates NEVER reach ModelPort.send().
@@ -743,12 +760,61 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
         process.env.KAMERTON_KB_PATH ?? DEFAULT_KNOWLEDGE_BASE_PATH,
       );
 
-      const result = await runIntakeTurn({
+      // Conversation-history slice: replay the recent transcript tail for THIS
+      // request so the model can accumulate facts a lead gives across several
+      // terse turns (experience + comfort) and never re-asks a field it
+      // already asked. Loaded BEFORE this turn's own messages are persisted
+      // (below), so it never contains the current message. Oldest-first,
+      // already the order `runIntakeTurn` replays them in.
+      const history = findRecentMessagesForRequest(deps.db, request.id, HISTORY_MESSAGE_LIMIT).map(
+        (row) => ({ role: row.role, content: row.content }),
+      );
+
+      const preConversationState = request.state;
+      let result = await runIntakeTurn({
         state: rowToIntakeState(request),
         message: update.text,
         ports,
         kbText,
+        history,
       });
+
+      // Auto-propose on profile completion (flow fix). The turn that collects
+      // the LAST field advances the conversation to `proposing`, but the model
+      // only called the save tool — it did NOT call `propose_slots`, which the
+      // state machine only instructs from a turn that STARTS in `proposing`.
+      // Without this, the conversation dead-ends on the "we'll come back with a
+      // proposal" closing copy and no slots ever arrive (the live-bot deadlock:
+      // "and what do I do next?"). So the instant a turn enters `proposing`
+      // with no slots yet, run ONE more agent turn: the model, now seeing
+      // `proposing` + the replayed transcript, calls `propose_slots` and the
+      // ranked free slots are offered in this same inbound message. An empty
+      // message needs no synthetic lead line (verified: the proposing-state
+      // system prompt + transcript is enough). Guarded to the ENTERING turn
+      // only, so it can never loop; if the propose turn yields no slots (e.g.
+      // calendar down), `result` is left as-is and the lead simply gets the
+      // closing copy, exactly as before.
+      if (
+        preConversationState !== "proposing" &&
+        result.state.conversationState === "proposing" &&
+        result.state.fields.offeredSlots === undefined
+      ) {
+        await deps.transport.sendChatAction(update.telegramChatId, "typing");
+        const proposeResult = await runIntakeTurn({
+          state: result.state,
+          message: "",
+          ports,
+          kbText,
+          history: [
+            ...history,
+            { role: "user", content: update.text },
+            { role: "assistant", content: result.reply },
+          ],
+        });
+        if (proposeResult.state.fields.offeredSlots !== undefined) {
+          result = proposeResult;
+        }
+      }
 
       finalFields = result.state.fields;
       statePatch = capturedPatch;
@@ -767,19 +833,46 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
       replyText = guardrailOverrideFor(result.toolCalls) ?? (result.reply.length > 0 ? result.reply : EMPTY_NARRATION_FALLBACK_COPY);
 
       // booking-hitl design.md Decision 2 (tasks.md C.5): a turn whose
-      // `propose_slots` tool call actually applied always carries real,
-      // tappable slot-chip buttons — closes S2's own "inline-button
-      // rendering... owned by S4" gap for this message.
+      // `propose_slots` tool call actually applied carries real, tappable
+      // slot-chip buttons AND the slot-offer copy — never the
+      // PROFILE_COMPLETE_CLOSING_COPY "we'll come back" text, which would
+      // contradict the very buttons shown beneath it.
       const proposedSlotsThisTurn = result.toolCalls.some(
         (call) => call.tool === "propose_slots" && call.outcome === "applied",
       );
       if (proposedSlotsThisTurn && result.state.fields.offeredSlots !== undefined) {
+        replyText = SLOTS_OFFER_COPY;
         replyOptions = { buttons: buildSlotButtons(result.state.fields.offeredSlots) };
       }
+
+      // Capture the conversational reply for the transcript AFTER any
+      // slot-offer override (conversation-history slice) — persist what the
+      // lead actually saw.
+      assistantReplyForHistory = replyText;
     }
 
     if (isBrandNewLead) {
       replyText = `${ANTHROPIC_PROCESSING_NOTICE}\n\n${replyText}`;
+    }
+
+    // Conversation-history slice: append THIS free-text turn to the transcript
+    // so the NEXT turn replays it (loaded above, before this write, so it
+    // never sees the current message). The lead's message is always recorded —
+    // even on a model error — so a transient Anthropic failure never erases
+    // what the lead just said. The assistant reply is recorded only when the
+    // turn actually produced one (not the deterministic unavailable-apology),
+    // so a retry does not learn the bot "said" an apology. Callback turns are
+    // never recorded (they resolve deterministically, outside the model's
+    // replayed context — `assistantReplyForHistory` stays `undefined`).
+    if (update.type === "text") {
+      insertMessage(deps.db, { requestId: request.id, role: "user", content: update.text });
+      if (!modelErrored && assistantReplyForHistory !== undefined) {
+        insertMessage(deps.db, {
+          requestId: request.id,
+          role: "assistant",
+          content: assistantReplyForHistory,
+        });
+      }
     }
 
     if (modelErrored) {

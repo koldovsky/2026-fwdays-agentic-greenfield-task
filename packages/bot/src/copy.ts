@@ -61,3 +61,15 @@ export const HOLD_CONFIRMATION_COPY: string =
  */
 export const SLOT_COLLISION_NUDGE_COPY: string =
   "На жаль, цей час щойно зайняли. Оберіть, будь ласка, інший варіант зі списку нижче.";
+
+/**
+ * The reply that ACCOMPANIES a freshly-offered set of slot chips (a turn whose
+ * `propose_slots` applied). It replaces the `PROFILE_COMPLETE_CLOSING_COPY`
+ * "we'll come back with a proposal" text, which contradicts buttons shown in
+ * the same message — here the proposal IS in the message. A tap holds the slot
+ * for the administrator's decision; this copy never claims the lesson is
+ * itself confirmed (`@trace FR-GUARD-01`) and carries no pressure vocabulary
+ * (BC-BRAND-01).
+ */
+export const SLOTS_OFFER_COPY: string =
+  "Дякую, профіль зібрано. Ось вільні варіанти часу — оберіть зручний, і я утримаю його до підтвердження адміністратором:";

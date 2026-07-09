@@ -269,6 +269,15 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
       }),
       toolUseResponse("save_weekdays", { weekdays: "вівторок, четвер" }),
       toolUseResponse("save_time_range", { timeRange: "після 16:00" }),
+      // Auto-propose (flow fix): the save_time_range turn enters `proposing`
+      // and the pipeline immediately runs one more agent turn, which the model
+      // answers with propose_slots — so the profile-complete message already
+      // carries the ranked free slots, never dead-ending on a "we'll come
+      // back" note.
+      toolUseResponse("propose_slots", {
+        weekdays: ["Tue", "Thu"],
+        timeWindow: { start: "09:00", end: "20:00" },
+      }),
     ];
     const model = new FakeModelPort(script);
     const deps = makeDeps({ transport, model, calendar });
@@ -300,6 +309,9 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(request.comfort).toBe("трохи хвилюється");
     expect(request.preferred_weekdays).toBe("вівторок, четвер");
     expect(request.preferred_time_range).toBe("після 16:00");
+    // Auto-propose fired: the profile-complete turn already offered ranked
+    // slots (offered_slots persisted) rather than dead-ending.
+    expect(request.offered_slots).not.toBeNull();
 
     const brief = compileFirstLessonBrief(request);
     expect(brief).toContain("Оксана");
