@@ -1,15 +1,5 @@
 import type { ScheduledOperation } from '../types/index.ts'
-
-/** Стабільний ідентифікатор розміщеної операції. */
-export function operationId(op: ScheduledOperation): string {
-  return `${op.bomNodeId}#${op.opNo}`
-}
-
-/** Батьківський bomNodeId зі шляхового id (розділювач `/`); null для кореня. */
-function parentBomNodeId(bomNodeId: string): string | null {
-  const idx = bomNodeId.lastIndexOf('/')
-  return idx === -1 ? null : bomNodeId.slice(0, idx)
-}
+import { parentBomNodeId, operationId } from './dependencies.ts'
 
 /**
  * 9.1 — Критичний шлях замовлення (FR-SCHED-10): найдовший (за сумарною

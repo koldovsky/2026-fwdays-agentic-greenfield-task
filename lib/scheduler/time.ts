@@ -1,3 +1,5 @@
+import type { WorkCalendar } from '../types/index.ts'
+
 /**
  * Внутрішнє представлення моменту часу — епоха-хвилини (number),
  * відповідно до правила «час усередині — хвилини». `Date` лише на межі.
@@ -22,4 +24,23 @@ export interface TimeSlot {
 /** Чи перетинаються два напіввідкриті інтервали. */
 export function overlaps(a: TimeSlot, b: TimeSlot): boolean {
   return a.start < b.end && b.start < a.end
+}
+
+/** UTC-північ доби, до якої належить дата. */
+export function utcMidnightMs(date: Date): number {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
+/** Робочі дні у діапазоні `(from, to]`. */
+export function countWorkingDays(calendar: WorkCalendar[], from: Date, to: Date): number {
+  const fromMs = utcMidnightMs(from)
+  const toMs = utcMidnightMs(to)
+  if (toMs <= fromMs) return 0
+  let count = 0
+  for (const entry of calendar) {
+    if (!entry.isWorking) continue
+    const d = utcMidnightMs(entry.date)
+    if (d > fromMs && d <= toMs) count++
+  }
+  return count
 }

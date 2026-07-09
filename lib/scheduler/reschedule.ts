@@ -5,69 +5,10 @@ import type {
   WorkCalendar,
 } from '../types/index.ts'
 import { addMinutes, nextWorkingDayStart } from './calendar.ts'
-import { findCriticalPath, operationId } from './critical-path.ts'
+import { findCriticalPath } from './critical-path.ts'
+import { buildPredecessors, operationId } from './dependencies.ts'
+import { countWorkingDays } from './time.ts'
 import { fromEpochMin, toEpochMin } from './time.ts'
-
-function parentBomNodeId(bomNodeId: string): string | null {
-  const idx = bomNodeId.lastIndexOf('/')
-  return idx === -1 ? null : bomNodeId.slice(0, idx)
-}
-
-function utcMidnightMs(date: Date): number {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-}
-
-/** Робочі дні у діапазоні `(from, to]`. */
-function countWorkingDays(calendar: WorkCalendar[], from: Date, to: Date): number {
-  const fromMs = utcMidnightMs(from)
-  const toMs = utcMidnightMs(to)
-  if (toMs <= fromMs) return 0
-  let count = 0
-  for (const entry of calendar) {
-    if (!entry.isWorking) continue
-    const d = utcMidnightMs(entry.date)
-    if (d > fromMs && d <= toMs) count++
-  }
-  return count
-}
-
-/** Предки-предшественники кожної операції (маршрут + дочірні вузли BOM). */
-function buildPredecessors(ops: ScheduledOperation[]): Map<string, string[]> {
-  const byNode = new Map<string, ScheduledOperation[]>()
-  for (const op of ops) {
-    const arr = byNode.get(op.bomNodeId)
-    if (arr) arr.push(op)
-    else byNode.set(op.bomNodeId, [op])
-  }
-  for (const arr of byNode.values()) arr.sort((a, b) => a.opNo - b.opNo)
-
-  const childrenByParent = new Map<string, string[]>()
-  for (const nodeId of byNode.keys()) {
-    const parent = parentBomNodeId(nodeId)
-    if (parent === null || !byNode.has(parent)) continue
-    const arr = childrenByParent.get(parent)
-    if (arr) arr.push(nodeId)
-    else childrenByParent.set(parent, [nodeId])
-  }
-
-  const preds = new Map<string, string[]>()
-  for (const [nodeId, nodeOps] of byNode) {
-    for (let i = 0; i < nodeOps.length; i++) {
-      const id = operationId(nodeOps[i]!)
-      if (i > 0) {
-        preds.set(id, [operationId(nodeOps[i - 1]!)])
-      } else {
-        const childPreds: string[] = []
-        for (const childId of childrenByParent.get(nodeId) ?? []) {
-          const childOps = byNode.get(childId)!
-          childPreds.push(operationId(childOps[childOps.length - 1]!))
-        }
-        preds.set(id, childPreds)
-      }
-    }
-  }
-  return preds
-}
 
 /** Топологічний порядок opId за предшественниками (Kahn). */
 function topoOrder(ids: string[], preds: Map<string, string[]>): string[] {

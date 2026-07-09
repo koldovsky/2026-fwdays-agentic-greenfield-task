@@ -1,4 +1,5 @@
 import type { ResourceCenter, WorkCalendar } from '../types/index.ts'
+import { utcMidnightMs } from './time.ts'
 
 /**
  * Виробничий календар: чисті функції для арифметики робочого часу.
@@ -16,11 +17,6 @@ const MS_PER_DAY = 86_400_000
 
 /** Захист від нескінченних циклів (≈273 роки) — не функціональне обмеження. */
 const MAX_DAY_ITERATIONS = 100_000
-
-/** UTC-північ доби, до якої належить дата. */
-function utcMidnightMs(date: Date): number {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-}
 
 /** Кеш індексу календаря за посиланням на масив (перф: не перебудовувати щоразу). */
 const indexCache = new WeakMap<WorkCalendar[], Map<number, WorkCalendar>>()

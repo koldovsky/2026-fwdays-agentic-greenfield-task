@@ -27,7 +27,7 @@ import {
   nextWorkingDayStart,
   previousWorkingDayEnd,
 } from './calendar.ts'
-import { fromEpochMin, toEpochMin } from './time.ts'
+import { countWorkingDays, fromEpochMin, toEpochMin, utcMidnightMs } from './time.ts'
 
 const MS_PER_DAY = 86_400_000
 
@@ -44,23 +44,6 @@ interface Block {
   deficitMaterialId: string | null
 }
 
-function utcMidnightMs(date: Date): number {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-}
-
-/** Кількість робочих днів у діапазоні `(fromDay, toDay]`. */
-function countWorkingDays(calendar: WorkCalendar[], from: Date, to: Date): number {
-  const fromMs = utcMidnightMs(from)
-  const toMs = utcMidnightMs(to)
-  if (toMs <= fromMs) return 0
-  let count = 0
-  for (const entry of calendar) {
-    if (!entry.isWorking) continue
-    const d = utcMidnightMs(entry.date)
-    if (d > fromMs && d <= toMs) count++
-  }
-  return count
-}
 
 /** Консолідувати розгорнуті вузли у блоки за номенклатурою. */
 function buildBlocks(
