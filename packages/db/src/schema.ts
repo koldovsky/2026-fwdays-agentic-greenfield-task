@@ -222,6 +222,30 @@ const CREATE_QUESTIONS_INBOX_INDEX = `
 CREATE INDEX IF NOT EXISTS idx_questions_inbox ON questions(created_at) WHERE answer_source = 'unanswered';
 `;
 
+// messages — the short-term conversation transcript per request (conversation
+// -history slice). Each free-text turn appends the lead's message and the
+// reply the lead saw; `packages/agent/src/loop.ts` replays the recent tail
+// each turn so the model can accumulate facts a lead gives across several
+// terse turns (the experienceComfort two-fact loop) and never re-asks a field
+// it already asked. `request_id` FKs `requests` (`ON DELETE CASCADE` — a
+// transcript is meaningless once its request is gone, and because
+// `requests.lead_id` is itself `ON DELETE CASCADE`, deleting a lead
+// recursively removes that lead's transcript too, NFR-PRIV-02). Created only
+// after `requests` exists.
+const CREATE_MESSAGES_TABLE = `
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id INTEGER NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('user','assistant')),
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+`;
+
+const CREATE_MESSAGES_REQUEST_INDEX = `
+CREATE INDEX IF NOT EXISTS idx_messages_request ON messages(request_id, id);
+`;
+
 /**
  * Create every table this module owns if it doesn't already exist. Safe to
  * call repeatedly (idempotent) — e.g. once per process start, before any
@@ -243,4 +267,7 @@ export function initSchema(db: Database.Database): void {
   // questions FKs both leads and requests — created only after both exist.
   db.exec(CREATE_QUESTIONS_TABLE);
   db.exec(CREATE_QUESTIONS_INBOX_INDEX);
+  // messages FKs requests — created only after CREATE_REQUESTS_TABLE.
+  db.exec(CREATE_MESSAGES_TABLE);
+  db.exec(CREATE_MESSAGES_REQUEST_INDEX);
 }

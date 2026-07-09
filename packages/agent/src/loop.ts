@@ -314,6 +314,17 @@ export interface LoopInput {
   // restart needed" requirement at the one place (`pipeline.ts`) that owns
   // real filesystem I/O for this concern.
   kbText?: string;
+  // Conversation-history slice: the recent prior turns (oldest-first),
+  // replayed to the model BEFORE this turn's `message`. OPTIONAL, defaulting
+  // to `[]` — every existing caller/test that never passes it keeps behaving
+  // byte-for-byte identically (a single current-turn user message). The
+  // PRODUCTION caller (`packages/bot/src/pipeline.ts`) reads the tail of the
+  // `messages` table for the current request and threads it in here; this
+  // package's own unit tests stay hermetic (empty history unless a test
+  // supplies one explicitly). This is what lets the model accumulate facts a
+  // lead gives across several terse turns (the experienceComfort two-fact
+  // loop) instead of re-asking a field it already asked.
+  history?: ModelMessage[];
 }
 
 /** How a single tool-use block resolved once run through the reducer
@@ -400,25 +411,25 @@ export type { ModelConfig };
  * 4.4's six behavioural bullets, implemented below).
  */
 export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
-  const { state, message, ports, kbText = "" } = input;
-  // Review-gate remediation ("the model never receives a system prompt or
-  // any conversation context — each turn is context-free", CRITICAL): the
-  // ONLY thing this loop currently threads through as prior-turn history is
-  // the deterministic `IntakeState` (conversationState + validator-approved
-  // `fields`) it was handed — the persisted `requests` row IS this slice's
-  // conversation memory, per design.md Decision 1/4. `buildSystemPrompt`
-  // (system-prompt.ts) turns that state into the model's dynamic context
-  // EVERY turn, alongside the static voice/guardrail block. `messages`
-  // itself stays a single current-turn user message: replaying a VERBATIM
-  // prior-turn transcript on top of the state summary (e.g. the model's own
-  // previous reply text) would need a message log this slice's schema does
-  // not have (design.md Decision 4 has no such table) — that is a deferred
-  // follow-up for a later hardening pass, not invented here. In practice
-  // this is a low-risk deferral: the state summary already names exactly
-  // which field is missing and what has been collected, so the model does
-  // not need its own prior turn replayed to know what to ask next.
+  const { state, message, ports, kbText = "", history = [] } = input;
+  // The model receives TWO layers of prior-turn context every turn:
+  //   1. the deterministic `IntakeState` (conversationState + validator-
+  //      approved `fields`), turned into the dynamic system block by
+  //      `buildSystemPrompt` — the persisted `requests` row IS the durable,
+  //      validated memory (design.md Decision 1/4); and
+  //   2. `history` — the recent verbatim transcript tail (the lead's own
+  //      words + the replies they saw), replayed as real `messages` BEFORE
+  //      the current turn's user message.
+  // Layer 2 was originally a documented deferred TODO ("each turn is
+  // context-free"); the conversation-history slice added it because the state
+  // summary alone is NOT sufficient for a field that needs several facts the
+  // lead supplies one-per-turn (experience + comfort): without the earlier
+  // turn replayed, the model can never hold both facts at once to fill the
+  // two-field `save_experience_comfort` tool, and loops re-asking forever.
+  // The `messages` table (packages/db/src/messages.ts) is that log; the
+  // production caller (`pipeline.ts`) threads its tail in via `history`.
   const system = buildSystemPrompt(state, kbText);
-  const messages: ModelMessage[] = [{ role: "user", content: message }];
+  const messages: ModelMessage[] = [...history, { role: "user", content: message }];
 
   let response;
   try {

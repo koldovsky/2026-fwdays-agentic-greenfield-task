@@ -56,6 +56,14 @@ export {
   type NotificationRow,
 } from "./notifications.ts";
 export {
+  insertMessage,
+  findRecentMessagesForRequest,
+  MESSAGE_ROLES,
+  type MessageRole,
+  type InsertMessageInput,
+  type MessageRow,
+} from "./messages.ts";
+export {
   insertQuestion,
   findOpenInboxQuestions,
   findQuestionById,
