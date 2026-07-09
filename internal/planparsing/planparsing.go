@@ -1,5 +1,7 @@
 // Package planparsing parses and validates a jarsplit plan file into an
-// ordered list of jar-name/amount entries.
+// ordered list of jar-name/amount entries. Each data line follows the
+// grammar "<amount> - <jar name>": the amount comes first, separated from
+// the jar name by the first '-'.
 package planparsing
 
 import (
@@ -51,30 +53,36 @@ func ParsePlan(r io.Reader) (Plan, []Warning) {
 			continue
 		}
 
-		name, amountStr, ok := strings.Cut(line, "=")
-		name = strings.TrimSpace(name)
+		// Split on the first '-': the amount comes first, the entire
+		// remainder is the jar name (so a jar name may contain '-').
+		amountStr, name, ok := strings.Cut(line, "-")
 		amountStr = strings.TrimSpace(amountStr)
+		name = strings.TrimSpace(name)
 		if !ok {
 			warnings = append(warnings, Warning{
 				Lines:  []int{lineNum},
-				Reason: "missing '=' separator",
-			})
-			continue
-		}
-		if name == "" {
-			warnings = append(warnings, Warning{
-				Lines:  []int{lineNum},
-				Reason: "empty jar name",
+				Reason: "missing '-' separator",
 			})
 			continue
 		}
 
-		amount, err := strconv.Atoi(amountStr)
+		// Strip internal whitespace so a thousands space parses (e.g.
+		// "12 000" -> "12000"). Non-whitespace separators ('_', ',') and
+		// decimals are left in place, so strconv.Atoi still rejects them.
+		amount, err := strconv.Atoi(strings.Join(strings.Fields(amountStr), ""))
 		if err != nil || amount <= 0 {
 			warnings = append(warnings, Warning{
 				Lines:  []int{lineNum},
 				Name:   name,
 				Reason: fmt.Sprintf("invalid amount %q: must be a positive whole integer", amountStr),
+			})
+			continue
+		}
+
+		if name == "" {
+			warnings = append(warnings, Warning{
+				Lines:  []int{lineNum},
+				Reason: "empty jar name",
 			})
 			continue
 		}

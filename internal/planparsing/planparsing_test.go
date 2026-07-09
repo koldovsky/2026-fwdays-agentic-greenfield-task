@@ -15,29 +15,34 @@ func TestParsePlan_Grammar(t *testing.T) {
 		entries []Entry
 	}{
 		{
-			name:    "trims whitespace around name and amount",
-			input:   "  Заощадження   =   5000  ",
+			name:    "trims whitespace around amount and name",
+			input:   "  5000  -  Заощадження  ",
 			entries: []Entry{{Name: "Заощадження", Amount: 5000, Line: 1}},
 		},
 		{
 			name:    "blank and whitespace-only lines are skipped silently",
-			input:   "Подорожі = 3000\n\n   \nПодушка = 1500",
+			input:   "3000 - Подорожі\n\n   \n1500 - Подушка",
 			entries: []Entry{{Name: "Подорожі", Amount: 3000, Line: 1}, {Name: "Подушка", Amount: 1500, Line: 4}},
 		},
 		{
 			name:    "leading '#' comment line is skipped",
-			input:   "# this is a note\nЗаощадження = 5000",
+			input:   "# this is a note\n5000 - Заощадження",
 			entries: []Entry{{Name: "Заощадження", Amount: 5000, Line: 2}},
 		},
 		{
 			name:    "inline trailing comment after whitespace is stripped",
-			input:   "Заощ. = 5000 # note",
+			input:   "5000 - Заощ. # note",
 			entries: []Entry{{Name: "Заощ.", Amount: 5000, Line: 1}},
 		},
 		{
 			name:    "'#' adjacent to non-space text is literal",
-			input:   "C#фонд = 100",
+			input:   "100 - C#фонд",
 			entries: []Entry{{Name: "C#фонд", Amount: 100, Line: 1}},
+		},
+		{
+			name:    "jar name may contain a hyphen",
+			input:   "5000 - новий-рік",
+			entries: []Entry{{Name: "новий-рік", Amount: 5000, Line: 1}},
 		},
 	}
 
@@ -58,7 +63,8 @@ func TestParsePlan_AmountValidation(t *testing.T) {
 		input string
 		want  int
 	}{
-		{"positive whole integer", "Подорожі = 3000", 3000},
+		{"positive whole integer", "3000 - Подорожі", 3000},
+		{"amount with an internal space", "12 000 - donates", 12000},
 	}
 	for _, tc := range valid {
 		t.Run(tc.name, func(t *testing.T) {
@@ -76,11 +82,11 @@ func TestParsePlan_AmountValidation(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"zero amount", "Подушка = 0"},
-		{"negative amount", "Подушка = -100"},
-		{"decimal amount", "Подушка = 100.50"},
-		{"underscore separator", "Подушка = 1_000"},
-		{"comma separator", "Подушка = 1,000"},
+		{"zero amount", "0 - Подушка"},
+		{"negative amount", "-100 - Подушка"},
+		{"decimal amount", "100.50 - Подушка"},
+		{"underscore separator", "1_000 - Подушка"},
+		{"comma separator", "1,000 - Подушка"},
 	}
 	for _, tc := range malformed {
 		t.Run(tc.name, func(t *testing.T) {
@@ -96,7 +102,7 @@ func TestParsePlan_AmountValidation(t *testing.T) {
 }
 
 func TestParsePlan_MalformedLines(t *testing.T) {
-	t.Run("line without '=' is skipped with a warning", func(t *testing.T) {
+	t.Run("line without '-' is skipped with a warning", func(t *testing.T) {
 		plan, warnings := ParsePlan(strings.NewReader("this has no separator"))
 		if len(plan.Entries) != 0 {
 			t.Fatalf("expected no entries, got %+v", plan.Entries)
@@ -104,20 +110,36 @@ func TestParsePlan_MalformedLines(t *testing.T) {
 		if len(warnings) != 1 || warnings[0].Lines[0] != 1 {
 			t.Fatalf("expected 1 warning for line 1, got %+v", warnings)
 		}
+		if warnings[0].Reason != "missing '-' separator" {
+			t.Fatalf("got reason %q, want %q", warnings[0].Reason, "missing '-' separator")
+		}
+	})
+
+	t.Run("old '=' grammar line is skipped with a warning", func(t *testing.T) {
+		plan, warnings := ParsePlan(strings.NewReader("Заощадження = 5000"))
+		if len(plan.Entries) != 0 {
+			t.Fatalf("expected no entries, got %+v", plan.Entries)
+		}
+		if len(warnings) != 1 || warnings[0].Reason != "missing '-' separator" {
+			t.Fatalf("expected a missing-'-'-separator warning, got %+v", warnings)
+		}
 	})
 
 	t.Run("line with empty name is skipped with a warning", func(t *testing.T) {
-		plan, warnings := ParsePlan(strings.NewReader("= 5000"))
+		plan, warnings := ParsePlan(strings.NewReader("5000 -"))
 		if len(plan.Entries) != 0 {
 			t.Fatalf("expected no entries, got %+v", plan.Entries)
 		}
 		if len(warnings) != 1 || warnings[0].Lines[0] != 1 {
 			t.Fatalf("expected 1 warning for line 1, got %+v", warnings)
 		}
+		if warnings[0].Reason != "empty jar name" {
+			t.Fatalf("got reason %q, want %q", warnings[0].Reason, "empty jar name")
+		}
 	})
 
 	t.Run("malformed line does not block remaining valid lines", func(t *testing.T) {
-		plan, warnings := ParsePlan(strings.NewReader("no separator here\nЗаощадження = 5000"))
+		plan, warnings := ParsePlan(strings.NewReader("no separator here\n5000 - Заощадження"))
 		assertEntriesEqual(t, []Entry{{Name: "Заощадження", Amount: 5000, Line: 2}}, plan.Entries)
 		if len(warnings) != 1 {
 			t.Fatalf("expected 1 warning, got %+v", warnings)
@@ -127,7 +149,7 @@ func TestParsePlan_MalformedLines(t *testing.T) {
 
 func TestParsePlan_Duplicates(t *testing.T) {
 	t.Run("same name on multiple lines is skipped for all occurrences", func(t *testing.T) {
-		input := "Заощадження = 5000\nПодорожі = 3000\nЗаощадження = 2000"
+		input := "5000 - Заощадження\n3000 - Подорожі\n2000 - Заощадження"
 		plan, warnings := ParsePlan(strings.NewReader(input))
 		assertEntriesEqual(t, []Entry{{Name: "Подорожі", Amount: 3000, Line: 2}}, plan.Entries)
 		if len(warnings) != 1 {
@@ -136,7 +158,7 @@ func TestParsePlan_Duplicates(t *testing.T) {
 	})
 
 	t.Run("duplicate warning lists all offending line numbers", func(t *testing.T) {
-		input := "Заощадження = 5000\nПодорожі = 3000\nЗаощадження = 2000"
+		input := "5000 - Заощадження\n3000 - Подорожі\n2000 - Заощадження"
 		_, warnings := ParsePlan(strings.NewReader(input))
 		if len(warnings) != 1 {
 			t.Fatalf("expected 1 warning, got %+v", warnings)
@@ -148,7 +170,7 @@ func TestParsePlan_Duplicates(t *testing.T) {
 	})
 
 	t.Run("three occurrences all reported", func(t *testing.T) {
-		input := "Подушка = 100\nПодушка = 200\nПодушка = 300"
+		input := "100 - Подушка\n200 - Подушка\n300 - Подушка"
 		plan, warnings := ParsePlan(strings.NewReader(input))
 		if len(plan.Entries) != 0 {
 			t.Fatalf("expected no entries, got %+v", plan.Entries)
@@ -164,7 +186,7 @@ func TestParsePlan_Duplicates(t *testing.T) {
 }
 
 func TestParsePlan_Order(t *testing.T) {
-	input := "Заощадження = 5000\nbroken line\nЗаощадження = 1\nПодорожі = 3000\nПодушка = 1500"
+	input := "5000 - Заощадження\nbroken line\n1 - Заощадження\n3000 - Подорожі\n1500 - Подушка"
 	plan, warnings := ParsePlan(strings.NewReader(input))
 	assertEntriesEqual(t, []Entry{
 		{Name: "Подорожі", Amount: 3000, Line: 4},
@@ -176,7 +198,7 @@ func TestParsePlan_Order(t *testing.T) {
 }
 
 func TestParsePlan_CRLF(t *testing.T) {
-	input := "Заощадження = 5000\r\nПодорожі = 3000\r\n"
+	input := "5000 - Заощадження\r\n3000 - Подорожі\r\n"
 	plan, warnings := ParsePlan(strings.NewReader(input))
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %+v", warnings)
@@ -191,7 +213,7 @@ func TestParsePlanFile(t *testing.T) {
 	t.Run("valid path returns entries matching ParsePlan", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "plan.txt")
-		content := "Заощадження = 5000\nПодорожі = 3000\n"
+		content := "5000 - Заощадження\n3000 - Подорожі\n"
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatalf("write fixture: %v", err)
 		}
@@ -226,7 +248,7 @@ func TestParsePlanFile(t *testing.T) {
 	t.Run("unreadable path is a fatal error", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "plan.txt")
-		if err := os.WriteFile(path, []byte("Заощадження = 5000\n"), 0o000); err != nil {
+		if err := os.WriteFile(path, []byte("5000 - Заощадження\n"), 0o000); err != nil {
 			t.Fatalf("write fixture: %v", err)
 		}
 		if os.Getuid() == 0 {

@@ -44,7 +44,7 @@ match, ambiguous match) as a line on stderr. No warning kind SHALL be
 silently dropped, and no warning SHALL be rendered on stdout.
 
 #### Scenario: A malformed-line warning is rendered
-- **WHEN** a parse-level warning reports a missing `=` separator on line 4
+- **WHEN** a parse-level warning reports a missing `-` separator on line 4
 - **THEN** stderr contains a line referencing line 4 and the warning's
   reason
 

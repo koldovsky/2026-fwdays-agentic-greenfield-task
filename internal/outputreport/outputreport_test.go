@@ -105,8 +105,8 @@ func TestWriteWarnings_EachKind(t *testing.T) {
 	}{
 		{
 			name:          "missing separator",
-			parseWarnings: []planparsing.Warning{{Lines: []int{4}, Reason: "missing '=' separator"}},
-			want:          "warning: line 4: missing '=' separator",
+			parseWarnings: []planparsing.Warning{{Lines: []int{4}, Reason: "missing '-' separator"}},
+			want:          "warning: line 4: missing '-' separator",
 		},
 		{
 			name:          "empty jar name",
@@ -155,7 +155,7 @@ func TestWriteWarnings_EachKind(t *testing.T) {
 
 func TestWriteWarnings_OrderIsParseBeforeMatchPreservingGroupOrder(t *testing.T) {
 	parseWarnings := []planparsing.Warning{
-		{Lines: []int{1}, Reason: "missing '=' separator"},
+		{Lines: []int{1}, Reason: "missing '-' separator"},
 		{Lines: []int{2}, Name: "Заощадження", Reason: "duplicate jar name"},
 	}
 	matchWarnings := []jarmatching.Warning{
@@ -172,7 +172,7 @@ func TestWriteWarnings_OrderIsParseBeforeMatchPreservingGroupOrder(t *testing.T)
 	if len(lines) != 5 { // 2 parse + 2 match + 1 reconciliation
 		t.Fatalf("got %d lines, want 5:\n%s", len(lines), buf.String())
 	}
-	wantOrder := []string{"missing '=' separator", "duplicate jar name", "Типо", "Подушка"}
+	wantOrder := []string{"missing '-' separator", "duplicate jar name", "Типо", "Подушка"}
 	for i, want := range wantOrder {
 		if !strings.Contains(lines[i], want) {
 			t.Errorf("line %d = %q, want to contain %q", i, lines[i], want)

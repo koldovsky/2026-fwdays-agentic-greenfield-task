@@ -5,6 +5,28 @@ what happened and what to do next. Update this after completing a unit of work.
 
 ## Last action
 
+**2026-07-09T19:26:44+00:00** — Changed the plan-file line grammar from
+`Name = amount` to **`<amount> - <jar name>`** (amount first, separator `-`),
+spec-first via the OpenSpec change `change-plan-syntax`. The line is split on
+its **first** `-` (left = amount, remainder = jar name, so jar names may
+contain `-`), and the amount now tolerates internal whitespace as a thousands
+separator (`12 000` → `12000`) while `_`, `,`, decimals, zero, and negatives
+stay malformed. The old `=` grammar is fully replaced — such lines now skip
+with a `missing '-' separator` warning. Implementation is localized to
+`internal/planparsing/planparsing.go` (split logic + amount whitespace
+stripping + warning text) plus a comment in
+`internal/outputreport/outputreport.go`; the `Entry`/`Warning`/`Plan` structs
+and all downstream stages (matching, linkgen, output) were unchanged. Updated
+the PRD (FR-INPUT-02, FR-PARSE-02, FR-AMOUNT-01, FR-MALFORMED-01), the brief
+example, the OpenSpec delta specs (`plan-parsing`, `output-reporting`), all
+affected tests (added `12 000`→12000 and name-with-hyphen cases), and
+`sample-input.txt` (now a clean new-format example). Full suite
+(`go test ./...`) passes. Also added a reusable `spec-driven-change` skill
+(`.claude/skills/spec-driven-change/`) codifying this propose → gate → apply →
+verify → archive workflow.
+
+### Prior action
+
 **2026-07-03T05:10:00+00:00** — Ran the built `jarsplit` binary against
 the **live** monobank API for the first time (real `MONO_TOKEN`, real
 `client-info` response). This surfaced a real bug that the fixture-based
