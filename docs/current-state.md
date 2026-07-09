@@ -414,6 +414,17 @@
 executing sequentially P0→down (file overlaps on tailor/page.tsx + en.ts/ua.ts force sequential, not parallel).**
 Each task: maker→test-author→checker+verifier in separate contexts, commit per unit.
 
+**STATUS (2026-07-09): T7 ✅ (`37b1868`) → T1 ✅ (`7d1ce25`) → T8 ✅ (`52c6c8e`). T4/T5, T2/T3, T6
+PENDING.** BLOCKER: subagent SESSION LIMIT hit (resets 9am Europe/Kiev) — it killed the
+test-author/checker/verifier stages of T1 + T8 (only the maker stages completed). T1 + T8 were committed
+after I ran the gate INLINE (lint 0/0 + build + 138 files/1305 passed, 0 failed) and reviewed each diff
+independent of the maker subagent (maker≠checker preserved — subagents wrote the code, main thread
+verified). DEFERRED to session reset: dedicated test-author tests — T1 structural mobile-stack
+assertions; T8 sweep-then-complete + double-terminal integration cases. Remaining T4/T5 (tailor auth +
+tier states), T2/T3 (FAQ + privacy), T6 (export PDF) are substantive multi-file changes that REQUIRE the
+maker≠checker subagent split (STRICT, AGENTS.md) — cannot proceed inline without violating it. Resume the
+orchestrated flow after the limit resets.
+
 LOCKED DECISIONS (user, 2026-07-09):
 - **/tailor = authenticated-only.** Anon redirected to sign-in; the free allowance moves to free
   ACCOUNTS. Revises FR-ONBOARD-01 (anon no longer tailors). Gate BOTH the page AND the generate API
