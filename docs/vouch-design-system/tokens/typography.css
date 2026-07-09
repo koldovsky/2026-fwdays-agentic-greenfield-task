@@ -1,0 +1,34 @@
+:root {
+  /* ── Families ── */
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body:    'Hanken Grotesk', sans-serif;
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ── Scale ── */
+  --text-xs:      12px;
+  --text-sm:      13px;
+  --text-base:    15px;
+  --text-md:      16px;
+  --text-lg:      18px;
+  --text-xl:      22px;
+  --text-2xl:     26px;
+  --text-3xl:     34px;
+  --text-4xl:     40px;
+  --text-5xl:     52px;
+  --text-display: 56px;
+
+  /* ── Line height ── */
+  --leading-tight:   1.04;
+  --leading-snug:    1.15;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.55;
+  --leading-loose:   1.6;
+
+  /* ── Letter spacing ── */
+  --tracking-tightest: -0.025em;
+  --tracking-tight:    -0.02em;
+  --tracking-normal:   -0.01em;
+  --tracking-wide:      0.06em;
+  --tracking-wider:     0.12em;
+  --tracking-eyebrow:   0.14em;
+}

@@ -1,0 +1,58 @@
+# Vouch — Design
+
+Vouch is a Ukrainian-first **Honest Resume Tailor**: it rewrites CV bullets to
+fit a job description while grounding every claim in the candidate's real
+experience. The design language is restrained and editorial — navy ink + one
+brand blue, two grotesque typefaces, no emoji, no icon libraries.
+
+The full design system lives in [`docs/vouch-design-system/`](vouch-design-system/)
+(tokens, component specs, UI kit, guidelines). **Read
+`docs/vouch-design-system/readme.md` before designing any new surface.**
+
+## How the system is wired into the app
+
+| Layer | Where | Notes |
+|-------|-------|-------|
+| Tokens | `src/app/globals.css` | Brand tokens live in `@theme` (Tailwind v4) so utilities are generated; spacing scale + semantic aliases in `:root`. |
+| Fonts | `src/app/layout.tsx` | `next/font/google` loads Unbounded (display) + Golos Text (body) with `latin` + `cyrillic` subsets (Ukrainian-first), exposed as `--font-unbounded` / `--font-golos`, mapped to `--font-display` / `--font-body`. |
+| Source of truth | `docs/vouch-design-system/tokens/*.css` | Mirror token values here when they change; keep the two in sync. |
+
+Because tokens sit in `@theme`, you style with Tailwind utilities directly:
+
+```tsx
+<h1 className="font-display text-5xl tracking-tight text-ink">…</h1>
+<button className="rounded-md bg-brand text-white shadow-brand hover:opacity-[0.88]">…</button>
+```
+
+Available namespaces: `*-ink*` / `*-brand*` / `*-surface-*` / status colors
+(`met` `partial` `gap` `overclaim`); `font-display|body|mono`; `text-xs…display`;
+`leading-*`; `tracking-*` (incl. `tracking-eyebrow`); `rounded-xs…3xl|pill`;
+`shadow-card|lifted|float|ink|brand|…`.
+
+## Non-negotiable brand rules
+
+- **Colors:** navy ink `#16243d`, brand blue `#3257c5`, warm paper `#faf7f2`.
+  Never add new brand hues. Status colors are fixed: met `#2f8f5b`,
+  partial `#c79a1e`, gap `#d05151`, overclaim-risk `#e08a3c`.
+- **Type:** Unbounded for display/headlines, Golos Text for body/UI (both carry a
+  Cyrillic subset, Ukrainian-first). Display = tight tracking (`-0.02em`) + tight
+  leading.
+- **Voice:** direct, calm, honest. No hype, **no exclamation points, no emoji**,
+  no invented claims. Second person ("you/your"). Headings sentence case, no
+  trailing period.
+- **Cards:** white bg, hairline border, 14–20px radius, minimal shadow. No
+  colored left-border accents.
+- **Icons:** colored dot indicators + arrow characters (`↑` `→`) only. No icon
+  libraries, no SVG icon paths.
+- **Casing:** status/requirement tokens all-lowercase; section eyebrows
+  UPPERCASE · MONOSPACE · TRACKED.
+- **Motion:** restrained, `opacity`/`transform` only (never layout, so CLS stays
+  0). Tokens in `tokens/motion.css` mirrored into the `globals.css` `:root` block
+  (`--ease-out`, `--reveal-duration`, `--reveal-distance`, `--hover-duration`);
+  they are consumed via raw `var()`, not as Tailwind utilities, so they live in
+  `:root` rather than `@theme`.
+  Scroll-reveal via the `shared/ui` `Reveal` primitive; all motion is disabled
+  under `prefers-reduced-motion` and must not delay the LCP element.
+
+See `docs/vouch-design-system/readme.md` for the complete reference (hover/press
+states, borders, animations, component specs).

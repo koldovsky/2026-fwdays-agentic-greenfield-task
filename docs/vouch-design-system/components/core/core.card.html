@@ -1,0 +1,104 @@
+<!-- @dsCard group="Components" viewport="700x460" name="Core Components" subtitle="Button · Badge · StatusPill · GroundingBadge · ChecklistRow · MatchScore · UploadZone · PricingCard" -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{padding:16px;background:#f4f5f7;font-family:var(--font-body);-webkit-font-smoothing:antialiased;color:#16243d}
+    .section{background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:16px;margin-bottom:12px}
+    .eyebrow{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#94a0b0;margin-bottom:12px}
+    .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    /* buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-body);font-weight:600;cursor:pointer;border:none;line-height:1;white-space:nowrap;font-size:14px;padding:10px 18px;border-radius:11px}
+    /* pills */
+    .pill{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12px;padding:6px 12px;border-radius:999px}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    /* badge */
+    .badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px}
+    /* grounding */
+    .gbadge{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12px;padding:6px 11px;border-radius:999px}
+    .gdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    /* checklist row */
+    .crow{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f5f6f7;align-items:flex-start}
+    .crow:last-child{border-bottom:none}
+    .cdot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0}
+    .crow-body{flex:1}
+    .crow-title{display:flex;align-items:center;gap:7px;margin-bottom:2px}
+    .crow-req{font-weight:600;font-size:14px}
+    .crow-rat{font-size:12.5px;color:#5a6678}
+    .crow-status{font-size:11.5px;font-weight:600;align-self:center;white-space:nowrap;flex-shrink:0}
+    /* match score */
+    .score-ring{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .score-inner{border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+
+  <!-- BUTTONS -->
+  <div class="section">
+    <div class="eyebrow">Button</div>
+    <div class="row">
+      <span class="btn" style="background:#3257c5;color:#fff;box-shadow:0 2px 8px rgba(50,87,197,0.25)">Tailor my CV</span>
+      <span class="btn" style="background:#fff;color:#16243d;border:1px solid #e3e6ea">Re-upload</span>
+      <span class="btn" style="background:transparent;color:#3257c5;padding-left:0;padding-right:0">See the demo →</span>
+      <span class="btn" style="background:#16243d;color:#fff">Export PDF</span>
+      <span class="btn" style="background:#eef0f3;color:#aab2bf;cursor:not-allowed">Disabled</span>
+    </div>
+  </div>
+
+  <!-- STATUS PILLS + BADGES -->
+  <div class="section">
+    <div class="eyebrow">StatusPill &amp; Badge</div>
+    <div class="row">
+      <span class="pill" style="background:#f4f5f7;color:#5a6678"><span class="dot" style="background:#94a0b0"></span>queued</span>
+      <span class="pill" style="background:#eaf0fd;color:#3257c5"><span class="dot" style="background:#3257c5"></span>processing</span>
+      <span class="pill" style="background:#e7f4ec;color:#2f8f5b"><span class="dot" style="background:#2f8f5b"></span>done</span>
+      <span class="pill" style="background:#fbe9e9;color:#c0403d"><span class="dot" style="background:#d05151"></span>failed</span>
+      <span style="width:1px;height:24px;background:#e3e6ea"></span>
+      <span class="badge" style="color:#3257c5;background:#eaf0fd">must</span>
+      <span class="badge" style="color:#94a0b0;background:#f0f1f3">nice</span>
+    </div>
+  </div>
+
+  <!-- GROUNDING BADGES -->
+  <div class="section">
+    <div class="eyebrow">GroundingBadge</div>
+    <div class="row">
+      <span class="gbadge" style="background:#e7f4ec;color:#2f8f5b"><span class="gdot" style="background:#2f8f5b"></span>Linked to CV line 14</span>
+      <span class="gbadge" style="background:#fbf3da;color:#b08816"><span class="gdot" style="background:#c79a1e"></span>Partial match</span>
+      <span class="gbadge" style="background:#fbeede;color:#cf7726"><span class="gdot" style="background:#e08a3c"></span>No evidence found · excluded from export</span>
+      <span class="gbadge" style="background:#f4f5f7;color:#5a6678"><span class="gdot" style="background:#94a0b0"></span>відредаговано вручну</span>
+    </div>
+  </div>
+
+  <!-- CHECKLIST + MATCH SCORE -->
+  <div class="section" style="display:grid;grid-template-columns:1fr 1.6fr;gap:16px">
+    <div>
+      <div class="eyebrow">MatchScore</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="score-ring" style="width:72px;height:72px;background:conic-gradient(#2f8f5b 0 76%,#eef0f3 76% 100%)">
+          <div class="score-inner" style="width:56px;height:56px">
+            <span style="font-family:'Bricolage Grotesque';font-weight:700;font-size:22px;line-height:1;color:#16243d">76</span>
+            <span style="font-size:9px;color:#94a0b0">/ 100</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'Bricolage Grotesque';font-weight:600;font-size:16px;line-height:1.2;margin-bottom:3px">Strong, with two honest gaps</div>
+          <div style="font-size:12px;color:#5a6678">Weighted by must vs nice</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow">ChecklistRow</div>
+      <div class="crow"><span class="cdot" style="background:#2f8f5b"></span><div class="crow-body"><div class="crow-title"><span class="crow-req">5+ years React</span><span class="badge" style="color:#3257c5;background:#eaf0fd">must</span></div><div class="crow-rat">6 років фронтенду на React.</div></div><span class="crow-status" style="color:#2f8f5b">met</span></div>
+      <div class="crow"><span class="cdot" style="background:#c79a1e"></span><div class="crow-body"><div class="crow-title"><span class="crow-req">Team leadership</span><span class="badge" style="color:#3257c5;background:#eaf0fd">must</span></div><div class="crow-rat">Менторив джуніорів, без формального лідерства.</div></div><span class="crow-status" style="color:#b08816">partial</span></div>
+      <div class="crow"><span class="cdot" style="background:#e08a3c"></span><div class="crow-body"><div class="crow-title"><span class="crow-req">Scaled to 1M users</span><span class="badge" style="color:#94a0b0;background:#f0f1f3">nice</span></div><div class="crow-rat">CV згадує зростання, але не цифру 1M.</div></div><span class="crow-status" style="color:#cf7726">overclaim-risk</span></div>
+    </div>
+  </div>
+
+</body>
+</html>
