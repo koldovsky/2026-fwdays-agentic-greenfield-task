@@ -7,6 +7,23 @@
 
 ## Last action
 
+- **T4+T5 `gate-tailor-and-tier-states` (+ `gate-tailor-fixes`) — DONE + gate green (2026-07-09, ultracode).**
+  /tailor is now AUTHENTICATED-ONLY, enforced at the page (redirect to /sign-in?callbackUrl=%2Ftailor,
+  open-redirect-guarded) AND server-side in ALL THREE tailoring routes (analyze + generate + one-shot each
+  return coded 401 for anon before any LLM work, NFR-SEC-04). FREE_TAILORING_LIMIT 2→1. Analyze phase is
+  tier-branched: free-with-run-left = gated PDF zone + banner + résumé text + JD + Analyze; free-exhausted
+  = reused Paywall (reason="tailoring-limit", heading "Unlock full access" — not literally "Upgrade your
+  subscription", flagged) INSTEAD of inputs; premium = enabled drag&drop + premium badge + JD + Analyze,
+  NO résumé textarea (CV from upload; Analyze disabled until cvText non-empty). Server reserve +
+  hasPaidAccess stay the trust boundary; freeExhausted is presentational, lenient on counter read error.
+  PRD synced (FR-ONBOARD-01 revised to sign-in-required + 1/account; NFR-SEC-03/04 drop /tailor from public
+  endpoints). maker(opus)→test-author(sonnet)→checker(opus)+verifier(sonnet), + a follow-up round
+  (gate-tailor-fixes) that gated analyze (checker major), added a paid empty-CV guard, and reconciled 2
+  stale anon-lifecycle tests. Verifier PASS: lint 0/0 + build (33 routes) + **145 files / 1363 passed +
+  5 skipped, 0 failed** (ExportDataButton flaky test now green too). Checker ship, 0 blockers/0 majors;
+  3 minors informational (retained ANON_TAILORING_LIMIT; SignInForm relies on page-level redirect guard —
+  follow-up: add a defense-in-depth client re-check comment). Implements FR-ONBOARD-01(rev), FR-PAYWALL-01/02,
+  NFR-SEC-04, NFR-COST-02, BC-HONESTY (untouched). Heading-string + native UA copy = flagged follow-ups.
 - **T7 P0 payments bug `fix-checkout-session-and-revalidation` — DONE + gate green (2026-07-09, ultracode).**
   maker(opus)→test-author(sonnet, +12 tests)→checker(opus)+verifier(sonnet), separate contexts.
   Verifier PASS: lint 0/0 + build (all 3 return pages confirmed dynamic ƒ: /checkout /tailor
@@ -410,12 +427,49 @@
 
 ## Working on
 
+### T4+T5 `gate-tailor-and-tier-states` — MAKER DONE (2026-07-09), NOT committed
+
+Maker pass complete; lint 0/0 clean; tsc clean on all touched files (the 4 pre-existing tsc errors in
+`maintenance/tailoring-cleanup/route.test.ts`, `evals/coverage-judge-trajectory.test.ts`,
+`llm/coverage-judge.test.ts` are unchanged at HEAD — NOT mine). Tests + checker + verifier are for
+SEPARATE agents (maker≠checker). Touched: `usage-counter.ts` (FREE_TAILORING_LIMIT 2→1), `tailor/page.tsx`
+(auth redirect + freeExhausted signal), `TailorWorkspace.tsx` (freeExhausted prop → Paywall vs inputs),
+`AnalyzeForm.tsx` (paid prop → hide cvText textarea, CV from prop), `PremiumAttachZone.tsx` (premium badge
+on paid branch), `api/tailor/generate/route.ts` + `api/tailor/route.ts` (401 on anon, dead anon paths
+removed), `sign-in/page.tsx` (callbackUrl + open-redirect guard) + `SignInView.tsx` (redirectTo passthrough),
+`cv-agent-requirements.md` (FR-ONBOARD-01 + NFR-SEC-03/04 revised). ANON_TAILORING_LIMIT kept exported
+(still used by pure tailoringLimit("anonymous"); no route admits anon). NEXT: test-author, then
+checker+verifier in clean contexts; then commit.
+
+### Plan — T4+T5 `gate-tailor-and-tier-states` (superseded by maker-done above)
+
+/tailor becomes AUTHENTICATED-ONLY (user decision 2026-07-09, revises FR-ONBOARD-01: anon no longer
+tailors, free allowance = 1 per free ACCOUNT). Server reserve + hasPaidAccess stay the trust boundary
+(NFR-SEC-04); freeExhausted is presentational only. Steps:
+1. `usage-counter.ts`: FREE_TAILORING_LIMIT 2 → 1.
+2. `tailor/page.tsx`: redirect("/sign-in?callbackUrl=/tailor") when userId null (keep force-dynamic);
+   for authed user compute `freeExhausted = !paid && !canTailor(counter ?? {userId,tailoringsUsed:0},"free")`,
+   lenient on read error (false); pass {paid, freeExhausted} to view.
+3. `TailorWorkspace`: accept freeExhausted; analyze phase → if (!paid && freeExhausted) render Paywall
+   reason="tailoring-limit" INSTEAD of inputs (keep section head/lead + WizardSteps); else inputs + pass
+   paid to AnalyzeForm.
+4. `AnalyzeForm`: accept paid?; when paid DON'T render cvText textarea (CV comes from upload zone); keep JD
+   + honeypot + Analyze; cvText still flows from upload path.
+5. `PremiumAttachZone`: render premium badge span on PAID branch too.
+6. `api/tailor/generate/route.ts` + `api/tailor/route.ts`: reject anonymous (401 coded) instead of IP
+   anon rate-limit branch; keep reserve(userId, FREE_TAILORING_LIMIT) for free. Remove dead anon paths.
+7. `sign-in/page.tsx`: read callbackUrl searchParam (await, Next 16 Promise) → SignInForm redirectTo, with
+   open-redirect guard (same-origin relative "/..." only, else /tailor).
+8. i18n: reuse paywall.* (title "Unlock full access" + limitLead) — no new keys.
+9. PRD: revise FR-ONBOARD-01 + NFR-SEC-03/04 wording, cite 2026-07-09 decision.
+Implements FR-ONBOARD-01(revised), FR-PAYWALL-01/02, NFR-SEC-04, NFR-COST-02, FR-AUTH-01, NFR-I18N-01.
+
 **NEW 8-task batch (2026-07-09, ultracode) — investigated (8 parallel investigators), decisions locked,
 executing sequentially P0→down (file overlaps on tailor/page.tsx + en.ts/ua.ts force sequential, not parallel).**
 Each task: maker→test-author→checker+verifier in separate contexts, commit per unit.
 
-**STATUS (2026-07-09): T7 ✅ (`37b1868`) → T1 ✅ (`7d1ce25`) → T8 ✅ (`52c6c8e`). T4/T5, T2/T3, T6
-PENDING.** BLOCKER: subagent SESSION LIMIT hit (resets 9am Europe/Kiev) — it killed the
+**STATUS (2026-07-09): T7 ✅ (`37b1868`) → T1 ✅ (`7d1ce25`) → T8 ✅ (`52c6c8e`) → T4+T5 ✅ (this commit).
+T2/T3, T6 PENDING. Deferred: T1/T8 dedicated test-author tests.** BLOCKER: subagent SESSION LIMIT hit (resets 9am Europe/Kiev) — it killed the
 test-author/checker/verifier stages of T1 + T8 (only the maker stages completed). T1 + T8 were committed
 after I ran the gate INLINE (lint 0/0 + build + 138 files/1305 passed, 0 failed) and reviewed each diff
 independent of the maker subagent (maker≠checker preserved — subagents wrote the code, main thread

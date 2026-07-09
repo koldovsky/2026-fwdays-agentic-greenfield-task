@@ -6,26 +6,18 @@
 // so nothing here is NFR-COST-02 budget-worthy; /api/tailor/generate is the
 // route that actually spends a tailoring (design.md's budget-gating call).
 //
-// This still costs one real LLM call (extract-requirements), so it gets its
-// own generous, stateless per-IP anti-abuse cap — a namespace DISTINCT from
-// both /api/tailor's and /api/tailor/generate's shared NFR-COST-02 budget
-// key ("tailor:ip:"), so probing this endpoint can never itself consume (or
-// be confused with) a caller's actual tailoring budget. Every attempt
-// counts, success or fail — no release path, same "every attempt counts"
-// precedent as src/app/api/cv/parse/route.ts. No session/subscription
-// lookup: this route stays fast and stateless (NFR-SEC-04).
+// Authenticated-only (user decision 2026-07-09, revises NFR-SEC-04): an
+// anonymous caller is rejected with a coded 401 BEFORE any LLM work, mirroring
+// /api/tailor and /api/tailor/generate. The /tailor page's sign-in redirect is
+// UX only; a devtools/script caller with no session is refused here.
+import { currentUserId } from "@/app/auth";
 import { runAnalysisPhase } from "@/features/run-tailoring";
 import type { AnalysisEvent, TailoringRunInput } from "@/features/run-tailoring";
 import { resolveLlmProvider } from "@/shared/lib/llm";
-import { clientIpFrom, reserveHitInMemory } from "@/shared/lib/rate-limit";
 
 export const runtime = "nodejs";
 /** Mirrors /api/tailor: extract is one adaptive-thinking call, but give it headroom over a short window. */
 export const maxDuration = 120;
-
-/** Generous anti-abuse cap, not a product limit (NFR-SEC-04): 10 analyses per IP per hour. */
-const ANALYZE_LIMIT = 10;
-const ANALYZE_WINDOW_MS = 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
 
@@ -45,14 +37,21 @@ export async function POST(request: Request): Promise<Response> {
     jdText: typeof jdText === "string" ? jdText : "",
   };
 
-  const clientIp = clientIpFrom(
-    request.headers.get("x-forwarded-for"),
-    request.headers.get("x-real-ip"),
-  );
-  // Distinct namespace from "tailor:ip:" (the shared /api/tailor +
-  // /api/tailor/generate NFR-COST-02 budget key) — this is a separate,
-  // non-budget anti-abuse cap only.
-  const rateKey = `analyze:ip:${clientIp}`;
+  // Caller identity, resolved BEFORE the LLM provider (NFR-SEC-04). A broken
+  // session read degrades to anonymous — which is now REJECTED, not throttled.
+  let userId: string | null = null;
+  try {
+    userId = await currentUserId();
+  } catch {
+    userId = null;
+  }
+  // Authenticated-only trust boundary (user decision 2026-07-09): reject an
+  // anonymous caller with a coded 401 before any LLM work or stream is opened
+  // (NFR-SEC-04). The /tailor page's sign-in redirect is UX only; a
+  // devtools/script caller with no session is refused here.
+  if (userId === null) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -61,15 +60,6 @@ export async function POST(request: Request): Promise<Response> {
       };
 
       try {
-        // Gate before the provider is even resolved, so a throttled request
-        // never touches the LLM (NFR-SEC-04). Every attempt counts, success
-        // or fail — no release path (mirrors cv/parse/route.ts).
-        if (!reserveHitInMemory(rateKey, ANALYZE_WINDOW_MS, ANALYZE_LIMIT).allowed) {
-          send({ type: "error", code: "rate_limited" });
-          send({ type: "status", phase: "failed" });
-          return;
-        }
-
         // Resolve the provider inside the stream: a missing key / bad config
         // throws here, and must surface as a calm failure event on the open
         // stream — never a raw 500 or a blank body (NFR-OBS-01). No user id

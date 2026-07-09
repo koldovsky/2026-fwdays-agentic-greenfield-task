@@ -1,21 +1,33 @@
 // /tailor route — thin App Router leaf (system-design 5.2): renders exactly one
 // view slice plus the shell top bar. TailorWorkspace is a client component that
 // owns the interactive state; this page stays a server component. The session
-// is read here (app layer) and passed down so the top bar shows signed-in vs
-// anonymous state — but the route itself is NOT gated: an anonymous visitor
-// completes one full tailoring, sign-in appears only at export (FR-ONBOARD-01).
+// is read here (app layer) and passed down.
 //
-// Paid entitlement (add-payments-emulator task 2.1, FR-PAYWALL-01/03) is also
+// AUTHENTICATED-ONLY (user decision 2026-07-09, revises FR-ONBOARD-01): an
+// anonymous visitor is redirected to sign-in with a callbackUrl of /tailor;
+// the free allowance is 1 per free ACCOUNT, not per anonymous session. This is
+// a UX redirect only — the generate API rejects anonymous callers server-side
+// too (NFR-SEC-04), so this is not the trust boundary.
+//
+// Paid entitlement (add-payments-emulator task 2.1, FR-PAYWALL-01/03) is
 // resolved here, server-side, from the subscription state the webhook synced —
 // so returning from a successful checkout (full page load) re-renders the
 // workspace unlocked. An unreadable subscription degrades to the stricter
 // Free gate, never a failure page (NFR-OBS-01).
+//
+// The one free-tailoring allowance is surfaced to the view as `freeExhausted`
+// (PRESENTATIONAL ONLY): a free account that has already spent its run sees an
+// upgrade surface instead of the inputs. The real gate stays the server-side
+// counter reserve in /api/tailor/generate — an unreadable counter here degrades
+// LENIENT (freeExhausted=false) so the server, never the client, decides.
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
+import { canTailor } from "@/entities/usage-counter";
 import { LOCALE_COOKIE, parseLocale } from "@/shared/lib/i18n";
-import { createSubscriptionRepo } from "@/shared/lib/db";
+import { createSubscriptionRepo, createUsageCounterRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { TailorWorkspace } from "@/views/tailor-workspace";
 import { TopBar } from "@/widgets/top-bar";
@@ -33,13 +45,32 @@ export default async function TailorPage() {
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
+  // Authenticated-only (NFR-SEC-04 UX layer): send an anonymous visitor to
+  // sign-in and bring them back here on success. callbackUrl is a fixed
+  // relative literal, so this redirect can never become an open redirect.
+  // Called outside try/catch per Next's redirect() contract (it throws to
+  // unwind rendering).
+  if (userId === null) redirect("/sign-in?callbackUrl=%2Ftailor");
+
   let paid = false;
-  if (userId !== null) {
+  try {
+    const subscription = await createSubscriptionRepo(getDb()).get(userId);
+    paid = hasPaidAccess(subscription, new Date().toISOString());
+  } catch {
+    paid = false;
+  }
+
+  // Presentational free-allowance signal (NEVER the enforcement point). A paid
+  // account is never exhausted. On a counter READ error we degrade LENIENT
+  // (freeExhausted=false): the server reserve remains the real gate, so a DB
+  // blip must not falsely lock a user out of a run they may still be owed.
+  let freeExhausted = false;
+  if (!paid) {
     try {
-      const subscription = await createSubscriptionRepo(getDb()).get(userId);
-      paid = hasPaidAccess(subscription, new Date().toISOString());
+      const counter = await createUsageCounterRepo(getDb()).get(userId);
+      freeExhausted = !canTailor(counter ?? { userId, tailoringsUsed: 0 }, "free");
     } catch {
-      paid = false;
+      freeExhausted = false;
     }
   }
 
@@ -48,7 +79,7 @@ export default async function TailorPage() {
       <TopBar user={session?.user ?? null} locale={locale} />
       <main className="flex flex-1 justify-center px-6 py-12">
         <div className="w-full max-w-5xl">
-          <TailorWorkspace paid={paid} locale={locale} />
+          <TailorWorkspace paid={paid} freeExhausted={freeExhausted} locale={locale} />
         </div>
       </main>
     </div>

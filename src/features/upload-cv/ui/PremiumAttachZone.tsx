@@ -109,6 +109,11 @@ export function PremiumAttachZone({
           (dragActive ? "border-brand bg-brand-wash" : "border-hairline bg-white")
         }
       >
+        {/* Premium badge on the paid branch too (per spec): a paid user sees the
+            same premium marker on the now-live drop target. */}
+        <span className="inline-flex items-center rounded-xs bg-brand-wash px-[7px] py-[2px] font-body text-[10px] font-bold uppercase tracking-wide leading-[1.6] text-brand">
+          {copy.attach.premiumBadge}
+        </span>
         <p className="text-base font-semibold text-ink">
           {copy.attach.addOriginalPdf}
         </p>

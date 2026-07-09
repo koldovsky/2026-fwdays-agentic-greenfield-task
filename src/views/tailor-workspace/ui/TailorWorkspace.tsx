@@ -54,9 +54,21 @@ export interface TailorWorkspaceProps {
    * Resolved by the route from the subscription state — never client-derived.
    */
   readonly paid?: boolean;
+  /**
+   * PRESENTATIONAL free-allowance signal (FR-ONBOARD-01 revised, NFR-COST-02).
+   * True when a NON-paid account has already spent its one free tailoring, so
+   * the analyze phase shows the upgrade surface instead of the inputs. NEVER an
+   * enforcement point — the server-side counter reserve in /api/tailor/generate
+   * is the trust boundary (NFR-SEC-04). Ignored for a paid account.
+   */
+  readonly freeExhausted?: boolean;
 }
 
-export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspaceProps) {
+export function TailorWorkspace({
+  locale = "ua",
+  paid = false,
+  freeExhausted = false,
+}: TailorWorkspaceProps) {
   const copy = t(locale);
   const [phase, setPhase] = useState<WizardPhase>("analyze");
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -208,28 +220,40 @@ export function TailorWorkspace({ locale = "ua", paid = false }: TailorWorkspace
         />
       )}
 
-      {phase === "analyze" && (
-        <>
-          <div className="mb-6">
-            <UploadCvDropzone
-              locale={locale}
-              onExtracted={setCvText}
-              paid={paid}
-              onAttachmentChange={setAttachment}
-              onUpgrade={() => setPaywall("attach")}
-            />
+      {phase === "analyze" &&
+        (!paid && freeExhausted ? (
+          // Free allowance spent (FR-ONBOARD-01 revised, FR-PAYWALL-01): show
+          // the upgrade surface INSTEAD of the inputs. The Paywall widget
+          // (reason="tailoring-limit") already carries the "Unlock full access"
+          // heading + limit lead + plan chooser, so no inputs render here. The
+          // server counter reserve is still the real gate (NFR-SEC-04); this is
+          // the presentational mirror of it.
+          <div className="mt-2">
+            <Paywall reason="tailoring-limit" locale={locale} />
           </div>
-          <AnalyzeForm
-            locale={locale}
-            onAnalysis={handleAnalysis}
-            cvText={cvText}
-            onCvTextChange={setCvText}
-          />
-          <p className="font-body text-base text-ink-soft leading-normal mt-8 max-w-2xl">
-            {copy.workspace.emptyState}
-          </p>
-        </>
-      )}
+        ) : (
+          <>
+            <div className="mb-6">
+              <UploadCvDropzone
+                locale={locale}
+                onExtracted={setCvText}
+                paid={paid}
+                onAttachmentChange={setAttachment}
+                onUpgrade={() => setPaywall("attach")}
+              />
+            </div>
+            <AnalyzeForm
+              locale={locale}
+              onAnalysis={handleAnalysis}
+              cvText={cvText}
+              onCvTextChange={setCvText}
+              paid={paid}
+            />
+            <p className="font-body text-base text-ink-soft leading-normal mt-8 max-w-2xl">
+              {copy.workspace.emptyState}
+            </p>
+          </>
+        ))}
 
       {phase === "confirm" && analysis !== null && (
         <div className="flex flex-col gap-6">
