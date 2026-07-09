@@ -11,7 +11,7 @@ export function ChecklistPreview({ locale = "ua" }: { readonly locale?: Locale }
     <section className="py-16">
       <Wrap>
         <SectionHead kicker={head.kicker} title={head.title} lead={head.lead} />
-        <div className="grid gap-10 sm:grid-cols-[220px_1fr]">
+        <div className="grid gap-10 md:grid-cols-[auto_1fr]">
           <div className="flex flex-col items-start">
             <MatchScore score={score} headline={headline} subtext={subtext} size="lg" />
           </div>

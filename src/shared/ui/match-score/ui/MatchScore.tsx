@@ -58,7 +58,7 @@ export function MatchScore({ score = 76, headline, subtext, size = "md" }: Match
       </div>
 
       {(headline ?? subtext) !== undefined && (
-        <div>
+        <div className="min-w-0">
           {headline !== undefined && (
             <div
               className={

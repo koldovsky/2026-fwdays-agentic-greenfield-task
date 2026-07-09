@@ -52,23 +52,27 @@ export function ChecklistRow({
 }: ChecklistRowProps) {
   return (
     <div
-      className={`flex gap-[14px] py-4 font-body ${last ? "" : "border-b border-hairline"}`}
+      className={`flex flex-col sm:flex-row gap-2 sm:gap-[14px] py-4 font-body ${last ? "" : "border-b border-hairline"}`}
     >
-      <span
-        className={`mt-[5px] w-[11px] h-[11px] rounded-full shrink-0 ${dotClass[status]}`}
-      />
-      <div className="flex-1 min-w-0">
-        <div
-          className={`flex items-center gap-2 flex-wrap ${rationale !== undefined ? "mb-[3px]" : ""}`}
-        >
-          <span className="font-semibold text-base text-ink">{requirement}</span>
-          <Badge priority={priority} />
+      {/* Dot + text: always a row so the dot anchors beside the requirement */}
+      <div className="flex flex-1 min-w-0 gap-[14px]">
+        <span
+          className={`mt-[5px] w-[11px] h-[11px] rounded-full shrink-0 ${dotClass[status]}`}
+        />
+        <div className="flex-1 min-w-0">
+          <div
+            className={`flex items-center gap-2 flex-wrap ${rationale !== undefined ? "mb-[3px]" : ""}`}
+          >
+            <span className="font-semibold text-base text-ink">{requirement}</span>
+            <Badge priority={priority} />
+          </div>
+          {rationale !== undefined && (
+            <div className="text-[13.5px] text-ink-soft leading-[1.45]">{rationale}</div>
+          )}
         </div>
-        {rationale !== undefined && (
-          <div className="text-[13.5px] text-ink-soft leading-[1.45]">{rationale}</div>
-        )}
       </div>
-      <div className="self-center shrink-0">
+      {/* Pill: at sm+ aligns to center of the row; on mobile sits below the text */}
+      <div className="self-start sm:self-center shrink-0 pl-[25px] sm:pl-0">
         <StatusPill status={toPillStatus[status]} locale={locale} />
       </div>
     </div>
