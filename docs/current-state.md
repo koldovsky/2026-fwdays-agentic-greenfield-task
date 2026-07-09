@@ -6,7 +6,37 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-09, ~afternoon (Europe/Kyiv)
+- **Date and time:** 2026-07-10, ~night (Europe/Kyiv)
+- **Post-archive product change + fixes (2026-07-10):** continued live Telegram
+  testing drove an approved product change and a batch of runtime fixes, each
+  test-first, all committed on `feat/music-school-agent`. **(1) 5-step
+  mandatory-only intake** (spec + code): `profiling` (goal/tastes/experience)
+  dropped; flow is name+age → format → weekdays+time → propose → pick, with
+  name+age and weekdays+time asked as one merged step each; FR-INTAKE-03/04/05
+  marked Dropped in `requirements.md`; intake spec updated. **(2)
+  ClaudeAgentModelPort now captures ALL tool_use blocks** from one assistant
+  turn (was: first-only + abort) — the enabler for merged multi-field
+  extraction and adaptive "save whatever the lead gave". **(3) Intake reply
+  fixes:** terse/partial answers saved immediately (no re-ask); merged question
+  asks only the still-missing half of a pair; open preference («будь-який
+  день») accepted → propose across all weekdays / full day; `assembleReply`
+  drops model narration on pure-save turns (killed within-bubble double
+  questions). **(4) slots past-time cutoff** — `proposeSlots` takes `now` and
+  treats the past as busy, so a started slot is never offered. **(5) dashboard:**
+  `agui-hub` moved to `globalThis` (Next 16 split ingest/stream into separate
+  module graphs → live "Розмови" feed was dead); pending card now shows the
+  booked day/time banner + a collapsible "Листування з лідом" that lazy-loads
+  the persisted transcript (new `GET /api/requests/:id/messages` +
+  `findMessagesForRequest`); `next.config.ts` loads the repo-root `.env` and
+  absolutizes `GOOGLE_APPLICATION_CREDENTIALS` so `npm run dev` reaches the
+  calendar without manual env (fixed "Не вдалося передати рішення"). All cadence
+  green after each commit. **Still open:** the intake OpenSpec CHANGE folder was
+  not re-created for the 5-step refactor (edited the baseline spec directly);
+  the new `intake-flow` eval dimension is not yet ratcheted into
+  `quality/eval-baseline.json` (run `eval-suite`); a direct admin→lead chat /
+  agent co-pilot was discussed and is explicitly OUT of scope (would need a new
+  FR). The security review's IDOR flag on the transcript route is acknowledged
+  as N/A under the single-teacher localhost model (documented in the route).
 - **Post-archive live-testing bug-fix session (2026-07-09):** a human ran the
   real bot end-to-end in Telegram for the demo and hit real conversational
   defects that no fake-model test could surface — all traced to the production
