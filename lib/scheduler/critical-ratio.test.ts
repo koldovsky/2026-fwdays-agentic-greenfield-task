@@ -41,6 +41,11 @@ describe('Scenario 4 — Critical Ratio priority', () => {
     expect(cr).toBeCloseTo(1.5, 10)
   })
 
+  it('scales workload by quantity when computing CR', () => {
+    const cr = calcCR(order('C', '2026-01-08T00:00:00Z'), twoDayWorkload, today, calendar, 2)
+    expect(cr).toBeCloseTo(0.75, 10)
+  })
+
   it('sorts B (lower CR) ahead of A (higher CR)', () => {
     const ops = [
       { id: 'A', cr: 2.5 },

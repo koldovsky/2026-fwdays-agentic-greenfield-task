@@ -83,8 +83,9 @@ function topoOrder(ids: string[], preds: Map<string, string[]>): string[] {
   }
   const queue = ids.filter((id) => (indeg.get(id) ?? 0) === 0).sort()
   const order: string[] = []
-  while (queue.length > 0) {
-    const id = queue.shift()!
+  let head = 0
+  while (head < queue.length) {
+    const id = queue[head++]!
     order.push(id)
     for (const s of (succ.get(id) ?? []).slice().sort()) {
       const d = (indeg.get(s) ?? 0) - 1

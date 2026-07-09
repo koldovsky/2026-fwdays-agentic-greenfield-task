@@ -152,7 +152,7 @@ function blockCR(
   for (const orderId of block.orderIds) {
     const order = orderById.get(orderId)
     if (!order) continue
-    const cr = calcCR(order, block.routeOps, today, calendar)
+    const cr = calcCR(order, block.routeOps, today, calendar, block.totalQty)
     if (cr < min) min = cr
   }
   return min

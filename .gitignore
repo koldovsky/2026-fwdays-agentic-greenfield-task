@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 coverage
+.env
+.env.*
+.env.local
+.env.*.local
 *.local
 
 # Claude Code local (machine-specific) settings

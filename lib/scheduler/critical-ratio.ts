@@ -42,9 +42,10 @@ export function calcCR(
   remainingOps: readonly { durationMin: number }[],
   today: Date,
   calendar: WorkCalendar[],
+  quantity = 1,
 ): number {
   const dueDays = workingDaysToDeadline(today, order.dueDate, calendar)
-  const totalMin = remainingOps.reduce((sum, op) => sum + op.durationMin, 0)
+  const totalMin = remainingOps.reduce((sum, op) => sum + op.durationMin * quantity, 0)
   if (totalMin <= EPSILON_MIN) return Infinity
   const workloadDays = totalMin / standardDayMinutes(calendar)
   return dueDays / workloadDays
