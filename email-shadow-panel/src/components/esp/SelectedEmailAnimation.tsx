@@ -143,7 +143,7 @@ export function SelectedEmailAnimation({ activating }: Props) {
     <div className="absolute inset-0 overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 esp-stage-glow" />
 
-      <div className="relative z-10 flex h-full flex-col p-5 sm:p-6">
+      <div className="relative z-10 flex h-full flex-col p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
           <div className="flex items-center gap-2 text-signal/80">
             <Mail className="size-3.5" />
@@ -154,8 +154,8 @@ export function SelectedEmailAnimation({ activating }: Props) {
           </span>
         </div>
 
-        <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-[112px_1fr]">
-          <ul className="hidden flex-col gap-1.5 font-mono-tabular text-[10px] sm:flex">
+        <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-[96px_1fr]">
+          <ul className="hidden flex-col gap-1 font-mono-tabular text-[10px] sm:flex">
             {QUEUE.map((q, i) => {
               const selected = i === selectedQueueIdx;
               return (
@@ -191,9 +191,9 @@ export function SelectedEmailAnimation({ activating }: Props) {
               }`}
             />
 
-            <div key={idx} className="relative h-full w-full p-4 sm:p-5">
+            <div key={idx} className="relative h-full w-full p-3 sm:p-4">
               <div
-                className={`relative mx-auto w-full max-w-[360px] transition-all duration-500 ${
+                className={`relative mx-auto w-full max-w-[320px] transition-all duration-500 ${
                   phase === "land" && !reducedMotion
                     ? "-translate-y-6 opacity-0"
                     : "translate-y-0 opacity-100"
@@ -215,13 +215,13 @@ export function SelectedEmailAnimation({ activating }: Props) {
                         {sample.subject}
                       </div>
                     </div>
-                    <pre className="min-h-[92px] whitespace-pre-wrap px-3 py-2.5 font-mono-tabular text-[11px] leading-[1.55] text-muted-foreground">
+                    <pre className="min-h-[68px] max-h-[112px] overflow-hidden whitespace-pre-wrap px-3 py-2 font-mono-tabular text-[10.5px] leading-[1.45] text-muted-foreground">
                       {typedBody}
                       {phase === "type" && !reducedMotion && <span className="cursor-blink" />}
                     </pre>
                   </div>
 
-                  <div className="relative h-[128px] overflow-hidden rounded-sm border border-hairline bg-surface">
+                  <div className="relative h-[96px] overflow-hidden rounded-sm border border-hairline bg-surface sm:h-[108px]">
                     <div aria-hidden className="absolute inset-0 opacity-40 esp-envelope-lines" />
                     <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between gap-3 font-mono-tabular text-[10px] text-signal/80">
                       <span className="truncate">{sample.fromName}</span>
@@ -243,7 +243,7 @@ export function SelectedEmailAnimation({ activating }: Props) {
                         : "perspective(600px) rotateX(0deg)",
                     }}
                   >
-                    <div className="mx-auto h-[64px] esp-envelope-flap" />
+                    <div className="mx-auto h-[52px] esp-envelope-flap" />
                   </div>
                 </div>
               </div>
@@ -252,14 +252,14 @@ export function SelectedEmailAnimation({ activating }: Props) {
                 className={`pointer-events-none absolute left-1/2 -translate-x-1/2 transition-all duration-500 ${
                   extractOn ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
                 }`}
-                style={{ bottom: 14 }}
+                style={{ bottom: 10 }}
               >
-                <div className="relative rounded-sm border border-signal/60 bg-background/85 px-3 py-2 shadow-[0_0_24px_-6px_var(--signal)]">
+                <div className="relative rounded-sm border border-signal/60 bg-background/85 px-3 py-1.5 shadow-[0_0_24px_-6px_var(--signal)]">
                   <div className="flex items-center gap-2 font-mono-tabular text-[9.5px] uppercase tracking-[0.24em] text-signal">
                     <Sparkles className="size-3" />
                     detected code
                   </div>
-                  <div className="mt-0.5 font-mono-tabular text-[18px] tracking-[0.32em] text-foreground">
+                  <div className="mt-0.5 font-mono-tabular text-[16px] tracking-[0.24em] text-foreground">
                     {sample.code}
                   </div>
                   <div
@@ -280,7 +280,7 @@ export function SelectedEmailAnimation({ activating }: Props) {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground/80">
+        <div className="mt-2 flex items-center justify-between gap-3 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground/80">
           <span>
             phase / <span className="text-signal">{phase}</span>
           </span>

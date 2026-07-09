@@ -15,9 +15,10 @@ interface Props {
   items: RecentInboxRecord[];
   selectedInboxId?: string | null;
   onSelect?: (id: string) => void;
+  actionLabel?: string;
 }
 
-export function RecentSessions({ items, selectedInboxId, onSelect }: Props) {
+export function RecentSessions({ items, selectedInboxId, onSelect, actionLabel = "open" }: Props) {
   if (items.length === 0) return null;
 
   return (
@@ -39,7 +40,7 @@ export function RecentSessions({ items, selectedInboxId, onSelect }: Props) {
               type="button"
               onClick={() => onSelect?.(item.id)}
               className={cn(
-                "group flex min-h-12 items-center gap-3 rounded-md border px-3 py-2.5 text-left",
+                "group flex min-h-12 min-w-0 items-center gap-3 rounded-md border px-3 py-2.5 text-left",
                 "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                 selected
                   ? "border-signal/45 bg-signal/10"
@@ -51,13 +52,13 @@ export function RecentSessions({ items, selectedInboxId, onSelect }: Props) {
                 <div className="truncate font-mono-tabular text-[12px] text-foreground">
                   {item.address}
                 </div>
-                <div className="mt-0.5 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="mt-0.5 break-words font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   opened {formatWhen(item.lastOpenedAt)} / expires{" "}
                   {new Date(item.expiresAt).toLocaleTimeString()}
                 </div>
               </div>
-              <span className="hidden font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal/80 sm:inline">
-                {selected ? "selected" : "open"}
+              <span className="hidden shrink-0 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal/80 sm:inline">
+                {selected ? "selected" : actionLabel}
               </span>
             </button>
           );

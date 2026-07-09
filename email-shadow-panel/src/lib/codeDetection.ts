@@ -1,4 +1,5 @@
-﻿const NUMERIC_CODE_PATTERN = /\b\d{4,8}\b/gu;
+const NUMERIC_CODE_PATTERN = /\b\d{4,8}\b/gu;
+const SEPARATED_NUMERIC_CODE_PATTERN = /\b\d{3,4}[-\s]\d{3,4}\b/gu;
 const ALPHANUMERIC_CODE_PATTERN = /\b[A-Z0-9]{6,8}\b/gu;
 const CONTEXT_WINDOW = 48;
 
@@ -31,11 +32,12 @@ function contextScore(source: string, index: number): number {
 }
 
 function isLikelyFalsePositive(candidate: string, source: string, index: number): boolean {
+  const compactCandidate = candidate.replace(/[-\s]/gu, "");
   if (TIME_PATTERN.test(candidate)) {
     return true;
   }
 
-  if (PHONE_PATTERN.test(candidate)) {
+  if (PHONE_PATTERN.test(compactCandidate)) {
     return true;
   }
 
@@ -45,7 +47,7 @@ function isLikelyFalsePositive(candidate: string, source: string, index: number)
     return true;
   }
 
-  if (candidate.length === 4 && DATE_SEGMENT_PATTERN.test(candidate)) {
+  if (compactCandidate.length === 4 && DATE_SEGMENT_PATTERN.test(compactCandidate)) {
     const nearby = source.slice(Math.max(0, index - 5), index + candidate.length + 5);
     if (/[/-]/u.test(nearby)) {
       return true;
@@ -74,6 +76,21 @@ export function detectCode(text: string | undefined | null): string | null {
       contextScore(source, index) +
       (candidate.length === 6 ? 5 : 3) +
       (candidate.length === 4 || candidate.length === 8 ? 1 : 0);
+    ranked.push({ candidate, score, index });
+  }
+
+  for (const match of source.matchAll(SEPARATED_NUMERIC_CODE_PATTERN)) {
+    const candidate = match[0].replace(/\s+/gu, "-");
+    const compactCandidate = candidate.replace(/-/gu, "");
+    const index = match.index ?? 0;
+    if (isLikelyFalsePositive(candidate, source, index)) {
+      continue;
+    }
+
+    const score =
+      contextScore(source, index) +
+      (compactCandidate.length === 6 ? 5 : 3) +
+      (compactCandidate.length === 8 ? 1 : 0);
     ranked.push({ candidate, score, index });
   }
 

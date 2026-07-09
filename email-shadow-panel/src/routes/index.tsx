@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/esp/AppShell";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Generate a disposable inbox, receive messages, and copy detected OTP codes - one focused control panel.",
+          "Generate a disposable inbox, receive messages, and act on verification links or one-time codes.",
       },
     ],
   }),
@@ -230,10 +230,16 @@ function Index() {
     visible: boolean;
     providerId: ProviderId;
     ready: boolean;
+    address: string | null;
+    errorMessage: string | null;
+    sourceInboxId: string | null;
   }>({
     visible: false,
     providerId: "emailnator",
     ready: false,
+    address: null,
+    errorMessage: null,
+    sourceInboxId: null,
   });
 
   useEffect(() => {
@@ -251,27 +257,91 @@ function Index() {
     }
   }, [panelMode, state.initialized, state.selectedInbox]);
 
+  useEffect(() => {
+    if (
+      !transition.visible ||
+      transition.address ||
+      transition.errorMessage ||
+      !state.selectedInbox
+    ) {
+      return;
+    }
+
+    if (state.selectedInbox.id === transition.sourceInboxId) {
+      return;
+    }
+
+    setTransition((current) =>
+      current.visible && !current.address && !current.errorMessage
+        ? { ...current, address: state.selectedInbox?.address ?? null }
+        : current,
+    );
+  }, [
+    state.selectedInbox,
+    transition.address,
+    transition.errorMessage,
+    transition.sourceInboxId,
+    transition.visible,
+  ]);
+
   const handleGenerate = useCallback(async () => {
-    if (transition.visible || state.generateStatus === "pending") {
+    if ((transition.visible && !transition.errorMessage) || state.generateStatus === "pending") {
       return;
     }
 
     const previousSelectedInboxId = state.selectedInboxId;
-    setTransition({ visible: true, providerId: "emailnator", ready: false });
+    setTransition({
+      visible: true,
+      providerId: "emailnator",
+      ready: false,
+      address: null,
+      errorMessage: null,
+      sourceInboxId: previousSelectedInboxId,
+    });
+
     const minimumPromise = wait(MIN_TRANSITION_MS);
     await controller.generateInbox();
     const generatedState = controller.getState();
+    const generatedInbox = generatedState.selectedInbox;
     const generationSucceeded =
       !generatedState.createError && generatedState.selectedInboxId !== previousSelectedInboxId;
-    if (generationSucceeded) {
-      setTransition({ visible: true, providerId: "emailnator", ready: true });
-    }
+
     await minimumPromise;
-    setTransition((current) => ({ ...current, visible: false, ready: false }));
-    if (generationSucceeded) {
+
+    if (generationSucceeded && generatedInbox) {
+      setTransition({
+        visible: true,
+        providerId: "emailnator",
+        ready: true,
+        address: generatedInbox.address,
+        errorMessage: null,
+        sourceInboxId: previousSelectedInboxId,
+      });
+      await wait(280);
+      setTransition((current) => ({
+        ...current,
+        visible: false,
+        ready: false,
+        errorMessage: null,
+      }));
       setPanelMode("mailbox");
+      return;
     }
-  }, [controller, state.generateStatus, state.selectedInboxId, transition.visible]);
+
+    setTransition((current) => ({
+      ...current,
+      visible: true,
+      ready: false,
+      errorMessage:
+        generatedState.createError?.message ?? "Inbox generation did not return a usable mailbox.",
+    }));
+  }, [
+    controller,
+    state.generateStatus,
+    state.selectedInboxId,
+    transition.errorMessage,
+    transition.visible,
+  ]);
 
   const handleResume = useCallback(
     (id: string) => {
@@ -282,6 +352,16 @@ function Index() {
   );
 
   const handleClose = useCallback(() => {
+    setPanelMode("generate");
+  }, []);
+
+  const handleTransitionBack = useCallback(() => {
+    setTransition((current) => ({
+      ...current,
+      visible: false,
+      ready: false,
+      errorMessage: null,
+    }));
     setPanelMode("generate");
   }, []);
 
@@ -358,7 +438,12 @@ function Index() {
       <TransitionOverlay
         visible={transition.visible}
         providerId={transition.providerId}
+        address={transition.address}
+        mailboxConnected={Boolean(transition.address) && state.messageListStatus !== "idle"}
         ready={transition.ready}
+        errorMessage={transition.errorMessage}
+        onRetry={() => void handleGenerate()}
+        onBack={handleTransitionBack}
       />
     </AppShell>
   );

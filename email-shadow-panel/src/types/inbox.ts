@@ -15,6 +15,8 @@ export interface RecentInboxRecord {
   createdAt: string;
   expiresAt: string;
   lastOpenedAt: string;
+  lastCheckedAt?: string;
+  lastMessageCount?: number;
 }
 
 export interface InboxMessageSummary {

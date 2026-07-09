@@ -432,6 +432,8 @@ export class InboxController {
       this.backoffIndex = 0;
       const snapshot = this.dependencies.storage.selectInbox(selectedInbox.id, {
         expiresAt: listed.inbox.expiresAt,
+        lastCheckedAt: new Date(this.dependencies.scheduler.now()).toISOString(),
+        lastMessageCount: listed.messages.length,
       });
       const selectedMessageReference = this.resolveSelectedMessageReference(listed);
       const messages = listed.messages.map((message) => ({

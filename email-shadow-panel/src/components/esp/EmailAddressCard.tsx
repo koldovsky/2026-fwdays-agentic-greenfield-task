@@ -1,5 +1,23 @@
-﻿import { CopyButton } from "./CopyButton";
-import { RefreshCw, X, Radio, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CopyButton } from "./CopyButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, MoreVertical, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RecentInboxRecord } from "@/types/inbox";
 
@@ -13,6 +31,28 @@ interface Props {
   removing?: boolean;
 }
 
+const secondaryButtonClass =
+  "inline-flex h-12 min-w-12 items-center justify-center gap-3 rounded-md border border-hairline bg-background/30 px-5 text-sm font-medium text-foreground transition-colors hover:border-signal/45 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-65";
+
+function formatOpenedTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function formatExpiresIn(iso: string): string {
+  const diffMs = Date.parse(iso) - Date.now();
+  if (!Number.isFinite(diffMs) || diffMs <= 0) {
+    return "Expired";
+  }
+
+  const minutes = Math.max(1, Math.round(diffMs / 60_000));
+  if (minutes < 60) {
+    return `Expires in ${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  }
+
+  const hours = Math.round(minutes / 60);
+  return `Expires in ${hours} ${hours === 1 ? "hour" : "hours"}`;
+}
+
 export function EmailAddressCard({
   session,
   onRefresh,
@@ -22,95 +62,119 @@ export function EmailAddressCard({
   refreshing,
   removing,
 }: Props) {
+  const [confirmForgetOpen, setConfirmForgetOpen] = useState(false);
+  const expiresLabel = useMemo(() => formatExpiresIn(session.expiresAt), [session.expiresAt]);
+
   return (
-    <div className="panel corner-ticks relative overflow-hidden">
-      <div className="grid gap-4 p-5 sm:p-6 md:grid-cols-[1fr_auto] md:items-center">
+    <div className="panel relative overflow-hidden">
+      <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono-tabular text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-              &gt; inbox
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-signal">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-70" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-signal" />
-              </span>
-              live / emailnator
-            </span>
+          <div className="font-mono-tabular text-[12px] uppercase tracking-[0.18em] text-muted-foreground">
+            INBOX / LIVE / EMAILNATOR
           </div>
-          <div className="mt-2 flex min-w-0 items-baseline gap-1">
-            <span className="truncate font-mono-tabular text-xl text-foreground sm:text-2xl">
-              {session.address}
-            </span>
-            <span className="cursor-blink shrink-0" />
+          <div className="mt-2 min-w-0 truncate font-mono-tabular text-2xl font-semibold tracking-tight text-foreground">
+            {session.address}
           </div>
-          <div className="mt-1.5 font-mono-tabular text-[11px] text-muted-foreground">
-            opened {new Date(session.createdAt).toLocaleTimeString()} / expires{" "}
-            {new Date(session.expiresAt).toLocaleTimeString()}
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <span>Opened {formatOpenedTime(session.createdAt)}</span>
+            <span aria-hidden>/</span>
+            <span className={expiresLabel === "Expired" ? "text-destructive" : "text-signal"}>
+              {expiresLabel}
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        <div className="flex min-w-0 flex-wrap items-center gap-3 lg:justify-end">
           <CopyButton
             value={session.address}
             label="Copy address"
             successMessage="Inbox address copied"
+            className="h-12 border-signal/45 bg-signal/10 px-5 text-base font-semibold text-signal hover:border-signal/70 hover:bg-signal/15"
           />
           <button
             type="button"
             onClick={onRefresh}
             disabled={refreshing || removing}
-            className={cn(
-              "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-raised px-3 font-mono-tabular text-xs uppercase tracking-wider text-foreground transition-colors",
-              "hover:border-signal/40 hover:text-signal",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-              "disabled:opacity-70",
-            )}
+            className={secondaryButtonClass}
           >
-            <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} />
-            {refreshing ? "Syncing" : "Refresh"}
+            <RefreshCw className={cn("size-5", refreshing && "animate-spin")} aria-hidden />
+            {refreshing ? "Refreshing" : "Refresh"}
           </button>
           <button
             type="button"
             onClick={onGenerateNew}
             disabled={removing}
-            className={cn(
-              "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-signal/35 bg-signal/10 px-3 font-mono-tabular text-xs uppercase tracking-wider text-signal transition-colors",
-              "hover:border-signal/60 hover:bg-signal/15",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50",
-              "disabled:opacity-70",
-            )}
+            className={secondaryButtonClass}
           >
-            <Plus className="size-3.5" /> New inbox
+            <Plus className="size-5" aria-hidden /> New inbox
           </button>
-          <button
-            type="button"
-            onClick={onForget}
-            disabled={removing}
-            className={cn(
-              "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-transparent px-3 font-mono-tabular text-xs uppercase tracking-wider text-muted-foreground transition-colors",
-              "hover:border-destructive/50 hover:text-destructive",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-              "disabled:opacity-70",
-            )}
-          >
-            <Trash2 className="size-3.5" /> {removing ? "Forgetting" : "Forget"}
-          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={removing}
+                aria-label="More inbox actions"
+                className="inline-flex h-12 min-w-12 items-center justify-center rounded-md border border-hairline bg-background/30 text-foreground transition-colors hover:border-signal/45 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-65"
+              >
+                <MoreVertical className="size-5" aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="border-hairline bg-surface-raised text-foreground"
+            >
+              <DropdownMenuItem onSelect={onRefresh} disabled={refreshing || removing}>
+                <RefreshCw className="size-4" aria-hidden /> Refresh inbox
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setConfirmForgetOpen(true);
+                }}
+                disabled={removing}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="size-4" aria-hidden /> {removing ? "Forgetting" : "Forget inbox"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <button
             type="button"
             onClick={onClose}
-            className={cn(
-              "inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border border-hairline bg-transparent px-3 font-mono-tabular text-xs uppercase tracking-wider text-muted-foreground transition-colors",
-              "hover:border-signal/40 hover:text-signal",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-            )}
+            className="inline-flex h-12 items-center gap-3 rounded-md border border-transparent bg-transparent px-4 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70"
           >
-            <X className="size-3.5" /> Panel
+            <ArrowLeft className="size-5" aria-hidden /> Back to control panel
           </button>
         </div>
       </div>
-      <div aria-hidden className="absolute inset-x-0 top-0 h-px esp-signal-line" />
-      <Radio aria-hidden className="absolute right-4 top-4 size-4 text-signal/20" />
+
+      <AlertDialog open={confirmForgetOpen} onOpenChange={setConfirmForgetOpen}>
+        <AlertDialogContent className="panel corner-ticks w-[min(92vw,480px)] border-hairline bg-surface-raised text-foreground shadow-panel">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono-tabular text-sm uppercase tracking-[0.18em]">
+              Forget local access?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed text-muted-foreground">
+              This removes this inbox from recent inboxes in this browser and attempts server
+              cleanup. It cannot promise provider-side deletion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:space-x-0">
+            <AlertDialogCancel className="mt-0 border-hairline bg-background/60 font-mono-tabular text-xs uppercase tracking-wider text-foreground hover:border-signal/40 hover:text-signal focus-visible:ring-2 focus-visible:ring-ring/60">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onForget}
+              className="bg-destructive font-mono-tabular text-xs uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-ring/60"
+            >
+              Forget local access
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

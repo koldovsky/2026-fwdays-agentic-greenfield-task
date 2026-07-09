@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 
 import { detectCode } from "../../src/lib/codeDetection.ts";
@@ -8,6 +8,7 @@ test("otp detection finds common numeric and alphanumeric verification codes det
   assert.equal(detectCode("Use code 4827 to continue."), "4827");
   assert.equal(detectCode("Security code: 48273155"), "48273155");
   assert.equal(detectCode("Verification code ABC123 is ready."), "ABC123");
+  assert.equal(detectCode("Your one-time code is 481-902."), "481-902");
 });
 
 test("otp detection avoids dates, times, phone-like values, long ids, and no-code content", () => {

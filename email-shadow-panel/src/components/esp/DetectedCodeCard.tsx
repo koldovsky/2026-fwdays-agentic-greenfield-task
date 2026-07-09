@@ -1,30 +1,40 @@
 ﻿import { CopyButton } from "./CopyButton";
 import { EmptyState } from "./EmptyState";
+import { getDetectedCodePanelState, type MessageDetailStatus } from "@/lib/detectedCodePanelState";
 import { KeyRound, ShieldCheck } from "lucide-react";
 
 interface Props {
   code: string | null;
   hasSelection: boolean;
+  detailStatus: MessageDetailStatus;
+  detailErrorMessage?: string | null;
 }
 
-export function DetectedCodeCard({ code, hasSelection }: Props) {
+export function DetectedCodeCard({ code, hasSelection, detailStatus, detailErrorMessage }: Props) {
+  const panelState = getDetectedCodePanelState({
+    code,
+    hasSelection,
+    detailStatus,
+    detailErrorMessage,
+  });
+
   return (
     <div className="panel corner-ticks relative flex h-full flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
-        <div className="flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-          <ShieldCheck className="size-3.5" /> Detected code
+      <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+          <ShieldCheck className="size-3.5 shrink-0" /> Detected code
         </div>
         {code ? (
-          <span className="font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-signal">
+          <span className="shrink-0 font-mono-tabular text-[10px] uppercase tracking-[0.22em] text-signal">
             heuristic / high
           </span>
         ) : null}
       </div>
 
       {code ? (
-        <div key={code} className="flex flex-1 flex-col justify-center p-5 fade-up">
+        <div key={code} className="flex min-w-0 flex-1 flex-col justify-center p-5 fade-up">
           <div
-            className="select-all py-3 text-center font-mono-tabular text-4xl tracking-[0.18em] text-signal sm:text-5xl"
+            className="max-w-full select-all break-all py-3 text-center font-mono-tabular text-3xl tracking-[0.12em] text-signal sm:text-4xl lg:text-5xl"
             style={{
               textShadow: "0 0 24px color-mix(in oklab, var(--signal) 55%, transparent)",
             }}
@@ -49,15 +59,11 @@ export function DetectedCodeCard({ code, hasSelection }: Props) {
           </p>
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center px-1">
           <EmptyState
             icon={<KeyRound className="size-4" />}
-            title={hasSelection ? "No code found" : "Awaiting selection"}
-            description={
-              hasSelection
-                ? "This message doesn't look like it contains a verification code."
-                : "Select an OTP or verification email to extract a code."
-            }
+            title={panelState.kind === "empty" ? panelState.title : "Detected code"}
+            description={panelState.kind === "empty" ? panelState.description : undefined}
           />
         </div>
       )}

@@ -310,7 +310,9 @@ test("Phase 4 verifier targets Nitro public output and keeps the server boundary
   assert.ok(verifyPhase4VercelOutputSource.includes("functions/api/inboxes.func"));
   assert.ok(verifyPhase4VercelOutputSource.includes("functions/api/inboxes/messages.func"));
   assert.ok(
-    verifyPhase4VercelOutputSource.includes("functions/api/inboxes/messages/[messageReference].func"),
+    verifyPhase4VercelOutputSource.includes(
+      "functions/api/inboxes/messages/[messageReference].func",
+    ),
   );
   assert.ok(verifyPhase4VercelOutputSource.includes("/api/health"));
   assert.ok(verifyPhase4VercelOutputSource.includes("/api/inboxes"));

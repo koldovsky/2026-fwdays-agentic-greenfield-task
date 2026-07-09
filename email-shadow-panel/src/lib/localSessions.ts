@@ -17,6 +17,8 @@ const recentInboxRecordSchema = z.object({
   createdAt: z.string().datetime(),
   expiresAt: z.string().datetime(),
   lastOpenedAt: z.string().datetime(),
+  lastCheckedAt: z.string().datetime().optional(),
+  lastMessageCount: z.number().int().nonnegative().max(1_000).optional(),
 });
 
 const storedRecentInboxSchema = z.object({
@@ -37,7 +39,7 @@ export interface RecentInboxesStorage {
   saveInbox(record: RecentInboxRecord, options?: { select?: boolean }): RecentInboxesSnapshot;
   selectInbox(
     id: string,
-    patch?: Partial<Pick<RecentInboxRecord, "expiresAt">>,
+    patch?: Partial<Pick<RecentInboxRecord, "expiresAt" | "lastCheckedAt" | "lastMessageCount">>,
   ): RecentInboxesSnapshot;
   removeInbox(id: string): RecentInboxesSnapshot;
   clear(): void;
@@ -212,11 +214,13 @@ export function createRecentInboxesStorage(options?: {
 
   function touchRecord(
     record: RecentInboxRecord,
-    patch?: Partial<Pick<RecentInboxRecord, "expiresAt">>,
+    patch?: Partial<Pick<RecentInboxRecord, "expiresAt" | "lastCheckedAt" | "lastMessageCount">>,
   ): RecentInboxRecord {
     return {
       ...record,
       expiresAt: patch?.expiresAt ?? record.expiresAt,
+      lastCheckedAt: patch?.lastCheckedAt ?? record.lastCheckedAt,
+      lastMessageCount: patch?.lastMessageCount ?? record.lastMessageCount,
       lastOpenedAt: now(),
     };
   }

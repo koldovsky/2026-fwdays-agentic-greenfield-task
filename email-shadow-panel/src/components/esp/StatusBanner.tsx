@@ -66,7 +66,7 @@ export function StatusBanner({
           <button
             type="button"
             onClick={onAction}
-            className="shrink-0 rounded-sm border border-hairline bg-background/50 px-2.5 py-1.5 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-signal/40 hover:text-signal"
+            className="shrink-0 rounded-sm border border-hairline bg-background/50 px-2.5 py-1.5 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-signal/40 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
             {actionLabel}
           </button>

@@ -1,5 +1,5 @@
-﻿import { cn } from "@/lib/utils";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ArrowRight, Loader2, Play } from "lucide-react";
 
 interface Props {
   onClick: () => void;
@@ -8,53 +8,43 @@ interface Props {
   label?: string;
 }
 
-export function GenerateButton({ onClick, loading, disabled, label = "Generate Inbox" }: Props) {
+export function GenerateButton({ onClick, loading, disabled, label = "Generate inbox" }: Props) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        "group relative w-full overflow-hidden rounded-md",
-        "h-14 px-6 text-left",
-        "border border-signal/40 bg-gradient-to-b from-signal/25 to-signal/5",
-        "text-foreground font-medium tracking-tight",
-        "transition-[transform,box-shadow,border-color] duration-200",
-        "hover:border-signal/70 hover:shadow-[0_0_0_1px_color-mix(in_oklab,var(--signal)_35%,transparent),0_20px_60px_-20px_color-mix(in_oklab,var(--signal)_60%,transparent)]",
-        "active:translate-y-[1px]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/60",
-        "disabled:opacity-70 disabled:cursor-not-allowed",
+        "group relative h-16 w-full overflow-hidden rounded-md px-6 text-left",
+        "border border-signal/55 bg-gradient-to-b from-signal/30 via-signal/18 to-signal/8",
+        "text-foreground shadow-[0_18px_52px_-32px_var(--signal)]",
+        "transition-[transform,box-shadow,border-color,background-color] duration-200",
+        "hover:border-signal/80 hover:shadow-[0_0_0_1px_color-mix(in_oklab,var(--signal)_28%,transparent),0_22px_70px_-32px_var(--signal)]",
+        "active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "disabled:cursor-not-allowed disabled:opacity-75",
       )}
     >
-      {/* scanline shimmer on hover */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
         style={{
           background:
-            "repeating-linear-gradient(90deg, transparent 0 8px, color-mix(in oklab, var(--signal) 6%, transparent) 8px 9px)",
+            "linear-gradient(100deg, transparent, color-mix(in oklab, white 10%, transparent), transparent)",
         }}
       />
-      <div className="relative flex items-center justify-between gap-4">
-        <div className="flex flex-col">
-          <span className="font-mono-tabular text-[10px] uppercase tracking-[0.28em] text-signal">
-            &gt; run
-          </span>
-          <span className="text-[15px]">{loading ? "Opening channel..." : label}</span>
-        </div>
-        <span
-          className={cn(
-            "grid place-items-center size-9 rounded-sm border border-signal/50 bg-background/40 text-signal",
-            "transition-transform duration-300 group-hover:translate-x-0.5",
-          )}
-        >
+      <span className="relative flex items-center justify-between gap-4">
+        <span className="flex items-center gap-4">
+          <Play className="size-4 text-signal" fill="currentColor" aria-hidden />
+          <span className="text-lg font-semibold">{loading ? "Opening inbox..." : label}</span>
+        </span>
+        <span className="grid size-10 place-items-center rounded-md border border-signal/45 bg-background/35 text-signal transition-transform duration-300 group-hover:translate-x-1">
           {loading ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="size-5 animate-spin" aria-hidden />
           ) : (
-            <ArrowRight className="size-4" strokeWidth={2.25} />
+            <ArrowRight className="size-5" strokeWidth={2.25} aria-hidden />
           )}
         </span>
-      </div>
+      </span>
     </button>
   );
 }

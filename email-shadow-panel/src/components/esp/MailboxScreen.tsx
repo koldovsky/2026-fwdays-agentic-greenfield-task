@@ -1,11 +1,11 @@
-﻿import { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
 import { EmailAddressCard } from "./EmailAddressCard";
 import { MessageList } from "./MessageList";
 import { MessagePreview } from "./MessagePreview";
-import { DetectedCodeCard } from "./DetectedCodeCard";
-import { RecentSessions } from "./RecentSessions";
+import { VerificationActionsPanel } from "./VerificationActionsPanel";
 import { detectCode } from "@/lib/codeDetection";
+import { detectVerificationLink } from "@/lib/verificationActions";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { InboxApiClientError } from "@/lib/inboxApiClient";
@@ -50,8 +50,6 @@ function getDetectedCode(
 
 export function MailboxScreen({
   inbox,
-  recentInboxes,
-  selectedInboxId,
   messages,
   selectedMessageReference,
   detail,
@@ -64,7 +62,6 @@ export function MailboxScreen({
   onGenerateNew,
   onRefresh,
   onForget,
-  onSelectInbox,
   onSelectMessage,
   onRetryDetail,
   notice,
@@ -75,6 +72,10 @@ export function MailboxScreen({
   );
 
   const detectedCode = useMemo(() => getDetectedCode(selected, detail), [detail, selected]);
+  const detectedLink = useMemo(
+    () => (detail?.text ? detectVerificationLink(detail.text) : null),
+    [detail],
+  );
 
   const moveSelection = useCallback(
     (direction: 1 | -1) => {
@@ -91,7 +92,7 @@ export function MailboxScreen({
 
   const copyDetectedCode = useCallback(() => {
     if (!detectedCode) return;
-    void copyToClipboard(detectedCode, { success: "Detected code copied" });
+    void copyToClipboard(detectedCode, { success: "Verification code copied" });
   }, [detectedCode]);
 
   const shortcuts = useMemo(
@@ -110,8 +111,8 @@ export function MailboxScreen({
   useKeyboardShortcuts(shortcuts);
 
   return (
-    <section className="mx-auto max-w-[1400px] px-5 pb-16 pt-4 sm:px-8 warp-in">
-      <div className="grid gap-4 lg:gap-5">
+    <section className="mx-auto max-w-[1500px] px-5 pb-10 pt-5 sm:px-8 warp-in">
+      <div className="grid gap-4">
         {notice}
 
         <EmailAddressCard
@@ -124,15 +125,7 @@ export function MailboxScreen({
           removing={removalStatus === "pending"}
         />
 
-        {recentInboxes.length > 1 ? (
-          <RecentSessions
-            items={recentInboxes}
-            selectedInboxId={selectedInboxId}
-            onSelect={onSelectInbox}
-          />
-        ) : null}
-
-        <div className="grid gap-4 lg:gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)_minmax(280px,320px)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(300px,340px)]">
           <div className="min-h-[320px] lg:h-[640px]">
             <MessageList
               messages={messages}
@@ -144,33 +137,25 @@ export function MailboxScreen({
               onRetry={onRefresh}
             />
           </div>
-          <div className="min-h-[360px] lg:h-[640px]">
+          <div className="min-h-[420px] lg:h-[640px]">
             <MessagePreview
               message={selected}
               detail={detail}
               detailStatus={messageDetailStatus}
               detailError={messageDetailError}
+              recipientAddress={inbox.address}
               onRetry={onRetryDetail}
             />
           </div>
-          <div className="min-h-[260px] lg:h-[640px]">
-            <DetectedCodeCard code={detectedCode} hasSelection={!!selected} />
+          <div className="min-h-[300px] lg:h-[640px]">
+            <VerificationActionsPanel
+              code={detectedCode}
+              link={detectedLink}
+              hasSelection={!!selected}
+              detailStatus={messageDetailStatus}
+              detailErrorMessage={messageDetailError?.message}
+            />
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
-          <span className="rounded-sm border border-hairline bg-background/35 px-2.5 py-1.5">
-            J/K or arrows: select
-          </span>
-          <span className="rounded-sm border border-hairline bg-background/35 px-2.5 py-1.5">
-            C: copy code
-          </span>
-          <span className="rounded-sm border border-hairline bg-background/35 px-2.5 py-1.5">
-            G/N: new inbox
-          </span>
-          <span className="rounded-sm border border-hairline bg-background/35 px-2.5 py-1.5">
-            Esc: control panel
-          </span>
         </div>
       </div>
     </section>

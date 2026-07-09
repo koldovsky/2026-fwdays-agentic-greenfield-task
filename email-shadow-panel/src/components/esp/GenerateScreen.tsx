@@ -1,11 +1,10 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { ProviderSelector } from "./ProviderSelector";
 import { GenerateButton } from "./GenerateButton";
-import { SelectedEmailAnimation } from "./SelectedEmailAnimation";
-import { RecentSessions } from "./RecentSessions";
+import { RecentInboxesPanel } from "./RecentInboxesPanel";
 import type { ProviderId, RecentInboxRecord } from "@/types/inbox";
-import { Radio, ShieldAlert, Zap } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 interface Props {
@@ -15,21 +14,6 @@ interface Props {
   recentInboxes: RecentInboxRecord[];
   selectedInboxId: string | null;
   notice?: ReactNode;
-}
-
-const HANDOFF_STEPS = [
-  "Mint a disposable alias",
-  "Open the mailbox stream",
-  "Detect verification codes",
-] as const;
-
-function ShortcutHint({ keys, label }: { keys: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-sm border border-hairline bg-background/35 px-2.5 py-1.5 font-mono-tabular text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-      <kbd className="text-signal">{keys}</kbd>
-      {label}
-    </span>
-  );
 }
 
 export function GenerateScreen({
@@ -53,83 +37,58 @@ export function GenerateScreen({
 
   return (
     <section
-      className={`mx-auto max-w-[1400px] px-5 pb-16 pt-4 sm:px-8 ${isTransitioning ? "warp-out" : "fade-up"}`}
+      className={`mx-auto max-w-[1500px] px-5 pb-12 pt-6 sm:px-8 ${isTransitioning ? "warp-out" : "fade-up"}`}
     >
-      <div className="grid items-stretch gap-8 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-10">
-        <div className="panel corner-ticks relative overflow-hidden">
-          <div className="p-5 sm:p-7 lg:p-9">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.28em] text-signal">
-                &gt; generate_inbox
-                <span className="cursor-blink" />
+      <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1fr)]">
+        <section
+          className="panel corner-ticks relative overflow-hidden"
+          aria-labelledby="create-inbox-title"
+        >
+          <div className="grid h-full content-start gap-6 p-5 sm:p-7 lg:p-9">
+            <div>
+              <div className="font-mono-tabular text-[12px] uppercase tracking-[0.24em] text-signal">
+                &gt; Create inbox
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-sm border border-signal/30 bg-signal/10 px-2 py-1 font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal">
-                <Radio className="size-3" /> phase 2 api online
-              </span>
-            </div>
-
-            <h1 className="mt-4 text-3xl leading-[1.05] tracking-tight text-foreground sm:text-4xl">
-              Open a temporary
-              <br />
-              <span className="text-signal">mailbox channel.</span>
-            </h1>
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-              Generate a disposable address, restore a recent browser-local inbox, and inspect
-              hostile message content through a server-neutral API without exposing provider state.
-            </p>
-
-            <div className="mt-7 grid gap-5">
-              {notice}
-
-              <ProviderSelector value={provider} onChange={() => undefined} />
-
-              <div className="panel-inset p-3.5">
-                <div className="mb-3 flex items-center gap-2 font-mono-tabular text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  <Zap className="size-3.5 text-amber" /> Handoff sequence
-                </div>
-                <ol className="grid gap-2 sm:grid-cols-3">
-                  {HANDOFF_STEPS.map((step, index) => (
-                    <li
-                      key={step}
-                      className="rounded-sm border border-hairline bg-surface/45 px-3 py-2"
-                    >
-                      <div className="font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-signal/80">
-                        {String(index + 1).padStart(2, "0")}
-                      </div>
-                      <div className="mt-1 text-xs text-foreground/85">{step}</div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              <GenerateButton onClick={() => onGenerate(provider)} loading={isTransitioning} />
-
-              <div className="flex flex-wrap gap-2">
-                <ShortcutHint keys="G / N" label="generate" />
-                <ShortcutHint keys="Esc" label="back from mailbox" />
-              </div>
-
-              <p className="flex items-start gap-2 font-mono-tabular text-[11px] leading-relaxed text-muted-foreground/80">
-                <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-amber" />
-                Recent inbox capability tokens stay in this browser only. Provider cookies, message
-                bodies, and OTP values are never persisted locally.
+              <h1
+                id="create-inbox-title"
+                className="mt-6 text-4xl font-semibold leading-[1.04] tracking-tight text-foreground sm:text-5xl"
+              >
+                Open a temporary
+                <br />
+                <span className="text-signal">mailbox channel.</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                Generate a disposable address, receive signup emails, and complete verification
+                using links or one-time codes.
               </p>
             </div>
 
-            <div className="mt-7">
-              <RecentSessions
-                items={recentInboxes}
-                selectedInboxId={selectedInboxId}
-                onSelect={onResume}
-              />
+            {notice ? <div>{notice}</div> : null}
+
+            <ProviderSelector value={provider} onChange={() => undefined} />
+
+            <GenerateButton onClick={() => onGenerate(provider)} loading={isTransitioning} />
+
+            <div className="mt-auto rounded-md border border-hairline bg-background/30 p-4">
+              <div className="flex items-start gap-4 text-sm leading-relaxed text-muted-foreground">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md border border-signal/25 bg-signal/10 text-signal">
+                  <ShieldCheck className="size-5" aria-hidden />
+                </span>
+                <p>
+                  <span className="text-foreground">Your privacy is protected.</span> Recent inbox
+                  access stays in this browser. Provider cookies, message bodies, and verification
+                  data are never stored locally.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="panel corner-ticks relative min-h-[440px] overflow-hidden md:min-h-[560px]">
-          <SelectedEmailAnimation activating={isTransitioning} />
-          <div aria-hidden className="pointer-events-none absolute inset-0 esp-panel-scanline" />
-        </div>
+        <RecentInboxesPanel
+          items={recentInboxes}
+          selectedInboxId={selectedInboxId}
+          onOpen={onResume}
+        />
       </div>
     </section>
   );
