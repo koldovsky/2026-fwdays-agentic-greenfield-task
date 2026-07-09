@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    # `docker compose up` runs the sync watcher over the mounted corpus, so the
+    # index self-populates and stays fresh. `docker compose run` overrides this
+    # (e.g. cli, ingest, pytest).
+    command: python -m askdocs.sync
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      ASKDOCS_CORPUS: /corpus
+      LLM_BASE_URL: http://host.docker.internal:1234/v1
+      LLM_MODEL: ${LLM_MODEL:-google/gemma-4-e4b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - .:/app
+      - ./corpus:/corpus
+    depends_on:
+      - qdrant
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.0
+    # No named volume on purpose: qdrant state is ephemeral, so
+    # ingest idempotency tests always run against a clean store.

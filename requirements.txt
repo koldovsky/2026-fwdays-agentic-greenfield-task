@@ -1,0 +1,5 @@
+sentence-transformers>=3.0,<6
+qdrant-client>=1.12,<2
+markdown-it-py>=3,<4
+pyyaml>=6,<7
+pytest>=8,<9

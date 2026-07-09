@@ -25,3 +25,12 @@ venv/
 target/
 bin/
 obj/
+
+# Claude Code / OpenSpec tooling.
+# settings.local.json — особисті дозволи, специфічні для машини.
+# .claude/commands + .claude/skills — згенеровані `openspec init --tools <tool>`
+#   під конкретний AI-асистент; кожен розробник генерує їх під свій тул сам
+#   (див. "Передумови" в README.md), тому вони не комітяться.
+.claude/settings.local.json
+.claude/commands/
+.claude/skills/

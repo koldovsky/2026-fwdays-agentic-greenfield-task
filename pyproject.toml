@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+# /app is a host-owned bind mount and the container runs as non-root, so keep
+# the pytest cache in a writable location.
+cache_dir = "/tmp/pytest_cache"

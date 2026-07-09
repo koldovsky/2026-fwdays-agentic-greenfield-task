@@ -1,0 +1,104 @@
+# Golden set для eval askdocs по корпусу ГущоЛіт.
+# in_corpus: true  → очікуємо відповідь із source-файлу (retrieval hit)
+# in_corpus: false → очікуємо чесну відмову "не знаю" (anti-hallucination)
+#
+# Для in-corpus питань обрано факти, що зустрічаються лише в одному файлі,
+# щоб hit-rate вимірювався чесно (без міжфайлової неоднозначності).
+
+# --- README.md ---
+- question: Яка крейсерська висота польоту ГущоЛіт-1?
+  in_corpus: true
+  source: README.md
+- question: Яка максимальна дальність польоту на одному баку гущі?
+  in_corpus: true
+  source: README.md
+- question: Хто очолює відділ паливних систем проєкту?
+  in_corpus: true
+  source: README.md
+- question: Скільки роторів-турбінок має ГущоЛіт?
+  in_corpus: true
+  source: README.md
+
+# --- dvyhun/palyvo.md ---
+- question: Який сорт кавової гущі заборонений як паливо?
+  in_corpus: true
+  source: dvyhun/palyvo.md
+- question: Який сорт гущі рекомендований для двигуна?
+  in_corpus: true
+  source: dvyhun/palyvo.md
+- question: Якою має бути температура гущі під час заправки?
+  in_corpus: true
+  source: dvyhun/palyvo.md
+- question: Який об'єм основного паливного бака?
+  in_corpus: true
+  source: dvyhun/palyvo.md
+- question: Яка питома тяга в арабіки середнього обсмаження?
+  in_corpus: true
+  source: dvyhun/palyvo.md
+
+# --- dvyhun/kalibruvannya.md ---
+- question: Якою утилітою виконується калібрування роторів?
+  in_corpus: true
+  source: dvyhun/kalibruvannya.md
+- question: Перед яким за рахунком польотом потрібне калібрування роторів?
+  in_corpus: true
+  source: dvyhun/kalibruvannya.md
+- question: Скільки хвилин охолодження потрібно перед повторним калібруванням?
+  in_corpus: true
+  source: dvyhun/kalibruvannya.md
+- question: Яка гранична вібраційна межа при тестовому прогоні роторів?
+  in_corpus: true
+  source: dvyhun/kalibruvannya.md
+- question: За якою формою складається акт після дефектоскопії?
+  in_corpus: true
+  source: dvyhun/kalibruvannya.md
+
+# --- bezpeka.md ---
+- question: При якому вітрі заборонені польоти ГущоЛіт?
+  in_corpus: true
+  source: bezpeka.md
+- question: На скільки відсотків злива знижує тягу роторів?
+  in_corpus: true
+  source: bezpeka.md
+- question: З якої висоти розрахована парашутна система ПКС-3?
+  in_corpus: true
+  source: bezpeka.md
+
+# --- proekt.md ---
+- question: Коли відбувся перший політ прототипу ГущоЛіт-0?
+  in_corpus: true
+  source: proekt.md
+- question: Яка була внутрішня кодова назва проєкту на етапі розробки?
+  in_corpus: true
+  source: proekt.md
+- question: Яка компанія постачає гущепаливні елементи ГПЕ-7?
+  in_corpus: true
+  source: proekt.md
+
+# --- ekipazh.md ---
+- question: Скільки годин нальоту потрібно для ліцензії пілота ГущоЛіт?
+  in_corpus: true
+  source: ekipazh.md
+- question: Яка максимальна сумарна вага пасажирів і багажу на борту?
+  in_corpus: true
+  source: ekipazh.md
+
+# --- Out-of-corpus (anti-hallucination) ---
+- question: Яка столиця Австралії?
+  in_corpus: false
+  source: null
+- question: Хто написав роман «Війна і мир»?
+  in_corpus: false
+  source: null
+- question: Скільки днів у високосному році?
+  in_corpus: false
+  source: null
+- question: Як приготувати класичний український борщ?
+  in_corpus: false
+  source: null
+- question: Яка формула площі кола?
+  in_corpus: false
+  source: null
+- question: Хто переміг на Євробаченні 2016 року?
+  in_corpus: false
+  source: null

@@ -1,0 +1,11 @@
+{
+  "//": "OpenSpec artifacts and spec docs legitimately start with ## and pack headings tightly; relax the noisiest rules for this spec-driven repo.",
+  "default": true,
+  "MD013": false,
+  "MD041": false,
+  "MD022": false,
+  "MD012": false,
+  "MD024": { "siblings_only": true },
+  "MD033": false,
+  "MD060": false
+}

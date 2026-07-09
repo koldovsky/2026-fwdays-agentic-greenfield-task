@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: CI only needs to read the repo.
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      # Actions pinned to commit SHA (supply-chain); no repo credentials needed.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: "20"
+      # OpenSpec artifacts under openspec/** follow their own format and are
+      # validated by `openspec validate`; markdownlint covers the hand-authored
+      # docs. Pinned to the version verified locally so CI matches the gate.
+      - name: Lint maintained markdown docs
+        run: >
+          npx --yes markdownlint-cli2@0.23.0
+          "*.md" "docs/**/*.md" ".github/**/*.md" "!.github/pull_request_template.md"
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build app image
+        run: docker compose build
+      # qdrant starts via compose dependency; live-LLM tests auto-skip with no
+      # LM Studio endpoint, so the suite stays green in CI.
+      - name: Run test suite
+        run: docker compose run --rm app pytest -q
