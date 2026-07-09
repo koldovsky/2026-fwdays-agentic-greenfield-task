@@ -8,14 +8,14 @@ Result: PASS, 23 warning(s)
 
 | FR | Spec | Plan | Test trace | Recording |
 |---|---|---|---|---|
-| FR-INTAKE-01 | yes | yes | 10 | - |
-| FR-INTAKE-02 | yes | yes | 30 | - |
+| FR-INTAKE-01 | yes | yes | 11 | - |
+| FR-INTAKE-02 | yes | yes | 31 | - |
 | FR-INTAKE-03 | yes | yes | 13 | - |
 | FR-INTAKE-04 | yes | yes | 8 | - |
 | FR-INTAKE-05 | yes | yes | 4 | - |
 | FR-INTAKE-06 | yes | yes | 7 | - |
 | FR-INTAKE-07 | yes | yes | 16 | - |
-| FR-INTAKE-08 | yes | yes | 7 | - |
+| FR-INTAKE-08 | yes | yes | 8 | - |
 | FR-GUARD-04 | yes | yes | 17 | - |
 | FR-GUARD-05 | yes | yes | 4 | - |
 | FR-FAQ-01 | yes | yes | 6 | - |

@@ -82,7 +82,8 @@
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/db/src/leads.test.ts",
-        "packages/db/src/requests.test.ts"
+        "packages/db/src/requests.test.ts",
+        "evals/cases/fr-intake-01.eval.ts"
       ],
       "recordings": []
     },
@@ -122,7 +123,8 @@
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
-        "packages/db/src/requests.test.ts"
+        "packages/db/src/requests.test.ts",
+        "evals/cases/fr-intake-01.eval.ts"
       ],
       "recordings": []
     },
@@ -241,7 +243,8 @@
         "packages/bot/src/pipeline.test.ts",
         "packages/db/src/leads.test.ts",
         "packages/db/src/requests.test.ts",
-        "packages/db/src/requests.test.ts"
+        "packages/db/src/requests.test.ts",
+        "evals/cases/fr-intake-01.eval.ts"
       ],
       "recordings": []
     },

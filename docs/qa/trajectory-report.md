@@ -14,7 +14,7 @@ Result: PASS, 1 warning(s)
 | 2026-07-06-dashboard | clean | 2 | yes | - |
 | 2026-07-06-intake | clean | 22 | yes | src |
 | 2026-07-07-booking-hitl | clean | 36 | yes | src |
-| 2026-07-07-kb-learning | clean | 14 | yes | src |
+| 2026-07-07-kb-learning | clean | 15 | yes | src |
 
 ## Cross-slice module overlap
 

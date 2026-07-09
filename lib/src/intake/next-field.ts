@@ -66,7 +66,11 @@ export function nextNeededField(state: IntakeState): NextNeededField | null {
 
   if (conversationState === "greeting" || conversationState === "qualifying") {
     if (fields.studentName === undefined) {
-      return { field: "studentName", instruction: "запитайте ім'я учня/учениці (FR-INTAKE-01)." };
+      return {
+        field: "studentName",
+        instruction:
+          "запитайте ім'я учня/учениці (FR-INTAKE-01). Коли лід називає ім'я — навіть коротко, одним словом, як-от «Саша», «Марійка» чи «мене звати Олег» — це і Є відповідь: одразу запишіть його інструментом save_name, не вітайтеся вдруге й не перепитуйте. Перепитуйте текстом (без виклику інструменту) ЛИШЕ якщо ім'я справді не назване (перше «привіт»/«/start», зустрічне запитання, офтоп).",
+      };
     }
     if (fields.studentAge === undefined) {
       return {
@@ -78,7 +82,8 @@ export function nextNeededField(state: IntakeState): NextNeededField | null {
     if (fields.format === undefined) {
       return {
         field: "format",
-        instruction: "запитайте формат занять — індивідуальний чи груповий (FR-INTAKE-02).",
+        instruction:
+          "запитайте формат занять — індивідуальний чи груповий (FR-INTAKE-02). Коли лід називає формат — навіть коротко, одним словом, як-от «груповий», «індивідуально» чи «сам» — це і Є відповідь: одразу запишіть його інструментом save_format, не перепитуйте. Перепитуйте текстом ЛИШЕ справді незрозумілу відповідь.",
       };
     }
     return null;
@@ -89,14 +94,14 @@ export function nextNeededField(state: IntakeState): NextNeededField | null {
       return {
         field: "goalTag",
         instruction:
-          "запитайте мету занять (FR-INTAKE-03) — куди зверніться, лід може завжди пропустити (skip_goal).",
+          "запитайте мету занять (FR-INTAKE-03) — куди зверніться, лід може завжди пропустити (skip_goal). Коли лід називає мету — навіть коротко («для себе», «щоб виступати», «караоке») — це і Є відповідь: одразу запишіть save_goal, не перепитуйте.",
       };
     }
     if (fields.tastes === undefined) {
       return {
         field: "tastes",
         instruction:
-          "запитайте музичні смаки та, за бажанням, пісню-мрію (FR-INTAKE-04) — можна пропустити (skip_tastes).",
+          "запитайте музичні смаки та, за бажанням, пісню-мрію (FR-INTAKE-04) — можна пропустити (skip_tastes). Коли лід називає смаки — навіть коротко («поп», «Океан Ельзи») — це і Є відповідь: одразу запишіть save_tastes, не перепитуйте.",
       };
     }
     if (fields.experience === undefined || fields.comfort === undefined) {
