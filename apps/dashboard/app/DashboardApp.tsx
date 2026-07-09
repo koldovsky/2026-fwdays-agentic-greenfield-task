@@ -171,6 +171,8 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
                   requestId={entry.requestId}
                   showDecisionBar
                   candidateSlots={candidateSlots}
+                  bookedSlotStart={entry.slotStart}
+                  showTranscript
                 />
                 <DeleteLeadButton leadId={entry.leadId} />
               </div>

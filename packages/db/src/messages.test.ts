@@ -14,6 +14,7 @@ import { insertRequest } from "./requests.ts";
 import {
   insertMessage,
   findRecentMessagesForRequest,
+  findMessagesForRequest,
   type MessageRow,
 } from "./messages.ts";
 
@@ -52,6 +53,16 @@ describe("messages row helpers", () => {
       ["user", "Саша"],
       ["assistant", "Скільки років?"],
     ]);
+  });
+
+  it("findMessagesForRequest returns the FULL transcript oldest-first, unbounded", () => {
+    const db = openDatabase(":memory:");
+    const requestId = seedRequest(db);
+    for (let i = 1; i <= 7; i++) {
+      insertMessage(db, { requestId, role: i % 2 ? "user" : "assistant", content: `m${i}` });
+    }
+    const rows = findMessagesForRequest(db, requestId);
+    expect(rows.map((r: MessageRow) => r.content)).toEqual(["m1", "m2", "m3", "m4", "m5", "m6", "m7"]);
   });
 
   it("caps to the last `limit` messages, still oldest-first", () => {

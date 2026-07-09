@@ -69,3 +69,15 @@ export function findRecentMessagesForRequest(
     )
     .all(requestId, limit) as MessageRow[];
 }
+
+/**
+ * Returns the FULL transcript for a request in chronological (oldest-first)
+ * order — every message, unbounded (unlike `findRecentMessagesForRequest`'s
+ * tail cap). The dashboard's per-request transcript view uses this so the
+ * teacher sees the whole conversation a lead had, not just the recent tail.
+ */
+export function findMessagesForRequest(db: Database.Database, requestId: number): MessageRow[] {
+  return db
+    .prepare(`SELECT * FROM messages WHERE request_id = ? ORDER BY id ASC`)
+    .all(requestId) as MessageRow[];
+}

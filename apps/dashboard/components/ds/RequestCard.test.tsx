@@ -27,6 +27,26 @@ function fieldsWith(overrides: Partial<RequestCardFields>): RequestCardFields {
   return { ...EMPTY_REQUEST_CARD_FIELDS, ...overrides };
 }
 
+describe("RequestCard — booked-slot banner (which day/time the lead is booked for)", () => {
+  it("shows a 'Записаний на' banner with the held slot's weekday, date and time", () => {
+    render(
+      <RequestCard
+        fields={fieldsWith({ studentName: "Саша" })}
+        status="pending"
+        bookedSlotStart="2026-07-10T11:00"
+      />,
+    );
+    // 2026-07-10 is a Friday.
+    expect(screen.getByText("Записаний на")).toBeTruthy();
+    expect(screen.getByText("Пт, 10.07 о 11:00")).toBeTruthy();
+  });
+
+  it("omits the banner when no slot is booked yet", () => {
+    render(<RequestCard fields={fieldsWith({ studentName: "Саша" })} />);
+    expect(screen.queryByText("Записаний на")).toBeNull();
+  });
+});
+
 describe("RequestCard — oversized field content (dashboard tasks.md §6.5, baseline spec)", () => {
   it("a multi-thousand-character goal answer stays in a fixed-height, scrollable container", () => {
     const shortText = "Хочу співати для друзів.";

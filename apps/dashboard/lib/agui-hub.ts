@@ -17,8 +17,27 @@ import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 
 export type AguiEventListener = (event: AguiEvent) => void;
 
-// Module-level singleton subscriber list — see this file's header comment.
-const listeners = new Set<AguiEventListener>();
+// The subscriber list is pinned to `globalThis` under a global-registry
+// Symbol, NOT a plain module-level `const`. Reason (live-bot bug, 2026-07-09):
+// a plain `const listeners = new Set()` is shared only among importers of the
+// SAME module instance — true in one test process, but NOT under Next dev
+// (Turbopack, Next 16), which bundles the ingest route (`publish`) and the SSE
+// stream route (`subscribe`) into SEPARATE module graphs. Each then got its
+// OWN `listeners` Set, so events the bot POSTed to /api/agui/ingest were
+// published into a Set no stream subscriber was in — the "Розмови" live feed
+// stayed empty even though ingest returned 200 and the SSE stream was open.
+// A `Symbol.for(...)`-keyed slot on `globalThis` is process-global regardless
+// of how many times the module is instantiated, so every route handler shares
+// one subscriber list. (Integration tests still pass — one process, one
+// globalThis.)
+const LISTENERS_KEY = Symbol.for("kamerton.dashboard.agui-hub.listeners");
+type HubGlobal = typeof globalThis & { [LISTENERS_KEY]?: Set<AguiEventListener> };
+
+function listeners(): Set<AguiEventListener> {
+  const g = globalThis as HubGlobal;
+  g[LISTENERS_KEY] ??= new Set<AguiEventListener>();
+  return g[LISTENERS_KEY];
+}
 
 /**
  * Fans `event` out to every currently-subscribed listener, in subscription
@@ -27,7 +46,7 @@ const listeners = new Set<AguiEventListener>();
  * normal startup case, not an error).
  */
 export function publish(event: AguiEvent): void {
-  for (const listener of listeners) {
+  for (const listener of listeners()) {
     listener(event);
   }
 }
@@ -38,12 +57,12 @@ export function publish(event: AguiEvent): void {
  * the returned function more than once is a no-op (never throws).
  */
 export function subscribe(onEvent: AguiEventListener): () => void {
-  listeners.add(onEvent);
+  listeners().add(onEvent);
   let unsubscribed = false;
   return () => {
     if (unsubscribed) return;
     unsubscribed = true;
-    listeners.delete(onEvent);
+    listeners().delete(onEvent);
   };
 }
 
@@ -55,5 +74,5 @@ export function subscribe(onEvent: AguiEventListener): () => void {
  * behind a test-only build flag.
  */
 export function subscriberCount(): number {
-  return listeners.size;
+  return listeners().size;
 }

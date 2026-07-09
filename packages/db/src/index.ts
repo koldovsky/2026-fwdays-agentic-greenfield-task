@@ -58,6 +58,7 @@ export {
 export {
   insertMessage,
   findRecentMessagesForRequest,
+  findMessagesForRequest,
   MESSAGE_ROLES,
   type MessageRole,
   type InsertMessageInput,
