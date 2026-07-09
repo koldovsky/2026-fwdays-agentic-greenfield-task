@@ -99,6 +99,13 @@ export interface ProposeRequest {
   /** Horizon length in calendar days (production always passes 14). */
   days: number;
   preferences: Preferences;
+  /** "Now" as Europe/Kyiv LOCAL "YYYY-MM-DDTHH:mm" — every slot that has
+   *  already STARTED (start <= now) is excluded, so a lead is never offered a
+   *  time in the past (e.g. today 10:00 when it is already the afternoon).
+   *  OPTIONAL and injected by the caller (the pure core takes no clock,
+   *  TC-PURE-01); omitted in tests that don't exercise the cutoff, in which
+   *  case no past-time filtering is applied. */
+  now?: string;
 }
 
 export type ProposeResult =
@@ -145,6 +152,16 @@ export async function proposeSlots(
     start: utcToKyivWallClock(interval.start),
     end: utcToKyivWallClock(interval.end),
   }));
+
+  // Past-time cutoff (FR-SLOT-01): treat everything from the horizon's start
+  // up to `now` as a synthetic busy interval, so `subtract` (via widenAndRank)
+  // removes any grid slot that has already started — a lead is never offered
+  // today's 10:00 once it is the afternoon. Kyiv wall clock throughout, same
+  // units as `busyKyiv`; a no-op when `now` is omitted (tests that don't
+  // exercise the clock) or falls before the horizon start.
+  if (request.now !== undefined) {
+    busyKyiv.push({ start: `${request.from}T00:00`, end: request.now });
+  }
 
   const { slots, widened, noFreeTimes } = widenAndRank({
     from: request.from,

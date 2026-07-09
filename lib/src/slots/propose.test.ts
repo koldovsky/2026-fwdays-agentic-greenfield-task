@@ -98,6 +98,29 @@ const A_PROPOSE_REQUEST: ProposeRequest = {
   },
 };
 
+describe("proposeSlots — past-time cutoff (never offer a slot that has already started)", () => {
+  // @trace FR-SLOT-01
+  it("excludes every slot at or before `now`, so a lead is never offered a time in the past", async () => {
+    const port = new FakeCalendarPort(); // all free
+    const now = "2026-07-08T14:37"; // Wednesday mid-afternoon (a real clock time, not on a grid hour)
+    const result = await proposeSlots(port, {
+      from: "2026-07-06",
+      days: 14,
+      preferences: { weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri"], timeWindow: { start: "10:00", end: "20:00" } },
+      now,
+    });
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(result.slots.length).toBeGreaterThan(0);
+      for (const slot of result.slots) {
+        // ISO "YYYY-MM-DDTHH:mm" compares lexicographically as chronologically.
+        expect(slot.start > now).toBe(true);
+      }
+    }
+  });
+});
+
 describe("proposeSlots — CALENDAR_UNAVAILABLE_APOLOGY constant (NFR-REL-01, BC-LANG-01, BC-BRAND-01)", () => {
   // @trace NFR-REL-01
   it("is Ukrainian-only: contains no Latin-alphabet (English) letters", () => {

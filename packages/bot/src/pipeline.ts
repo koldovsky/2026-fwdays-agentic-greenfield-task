@@ -334,6 +334,14 @@ function todayKyivDate(): string {
   return utcToKyivWallClock(new Date().toISOString()).slice(0, 10);
 }
 
+/** Europe/Kyiv LOCAL "YYYY-MM-DDTHH:mm" for "now" — the past-time cutoff
+ *  `proposeSlots` uses so a lead is never offered a slot that has already
+ *  started (today 10:00 once it is the afternoon). Same adapter-boundary
+ *  conversion as `todayKyivDate`, just without the date-only slice. */
+function nowKyivWallClock(): string {
+  return utcToKyivWallClock(new Date().toISOString());
+}
+
 /** booking-hitl design.md Decision 2 (tasks.md C.5): the shared async
  *  orchestration function BOTH the free-text `LoopPorts.slots` binding (see
  *  this module's `applyToolUse`-facing `ports` construction, step 4) and a
@@ -361,6 +369,7 @@ async function performProposeSlots(
     from: todayKyivDate(),
     days: PROPOSE_HORIZON_DAYS,
     preferences,
+    now: nowKyivWallClock(),
   });
 
   if (result.status === "calendar_unavailable") {
