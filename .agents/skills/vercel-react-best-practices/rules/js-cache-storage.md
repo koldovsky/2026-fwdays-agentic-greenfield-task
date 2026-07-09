@@ -13,7 +13,8 @@ tags: javascript, localStorage, storage, caching, performance
 
 ```typescript
 function getTheme() {
-  return localStorage.getItem('theme') ?? 'light'
+  if (typeof window === 'undefined') return 'light'
+  return window.localStorage.getItem('theme') ?? 'light'
 }
 // Called 10 times = 10 storage reads
 ```
@@ -24,14 +25,18 @@ function getTheme() {
 const storageCache = new Map<string, string | null>()
 
 function getLocalStorage(key: string) {
+  if (typeof window === 'undefined') return null
+
   if (!storageCache.has(key)) {
-    storageCache.set(key, localStorage.getItem(key))
+    storageCache.set(key, window.localStorage.getItem(key))
   }
   return storageCache.get(key)
 }
 
 function setLocalStorage(key: string, value: string) {
-  localStorage.setItem(key, value)
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(key, value)
+  }
   storageCache.set(key, value)  // keep cache in sync
 }
 ```
@@ -44,6 +49,8 @@ Use a Map (not a hook) so it works everywhere: utilities, event handlers, not ju
 let cookieCache: Record<string, string> | null = null
 
 function getCookie(name: string) {
+  if (typeof document === 'undefined') return undefined
+
   if (!cookieCache) {
     cookieCache = Object.fromEntries(
       document.cookie.split('; ').map(c => c.split('='))
@@ -58,13 +65,17 @@ function getCookie(name: string) {
 If storage can change externally (another tab, server-set cookies), invalidate cache:
 
 ```typescript
-window.addEventListener('storage', (e) => {
-  if (e.key) storageCache.delete(e.key)
-})
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key) storageCache.delete(e.key)
+  })
+}
 
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    storageCache.clear()
-  }
-})
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      storageCache.clear()
+    }
+  })
+}
 ```

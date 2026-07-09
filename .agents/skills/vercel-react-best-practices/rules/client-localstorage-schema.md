@@ -13,8 +13,11 @@ Add version prefix to keys and store only needed fields. Prevents schema conflic
 
 ```typescript
 // No version, stores everything, no error handling
-localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
-const data = localStorage.getItem('userConfig')
+if (typeof window !== 'undefined') {
+  window.localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
+}
+
+const data = typeof window === 'undefined' ? null : window.localStorage.getItem('userConfig')
 ```
 
 **Correct:**
@@ -23,16 +26,20 @@ const data = localStorage.getItem('userConfig')
 const VERSION = 'v2'
 
 function saveConfig(config: { theme: string; language: string }) {
+  if (typeof window === 'undefined') return
+
   try {
-    localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
+    window.localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
   } catch {
     // Throws in incognito/private browsing, quota exceeded, or disabled
   }
 }
 
 function loadConfig() {
+  if (typeof window === 'undefined') return null
+
   try {
-    const data = localStorage.getItem(`userConfig:${VERSION}`)
+    const data = window.localStorage.getItem(`userConfig:${VERSION}`)
     return data ? JSON.parse(data) : null
   } catch {
     return null
@@ -41,12 +48,14 @@ function loadConfig() {
 
 // Migration from v1 to v2
 function migrate() {
+  if (typeof window === 'undefined') return
+
   try {
-    const v1 = localStorage.getItem('userConfig:v1')
+    const v1 = window.localStorage.getItem('userConfig:v1')
     if (v1) {
       const old = JSON.parse(v1)
       saveConfig({ theme: old.darkMode ? 'dark' : 'light', language: old.lang })
-      localStorage.removeItem('userConfig:v1')
+      window.localStorage.removeItem('userConfig:v1')
     }
   } catch {}
 }
@@ -57,8 +66,10 @@ function migrate() {
 ```typescript
 // User object has 20+ fields, only store what UI needs
 function cachePrefs(user: FullUser) {
+  if (typeof window === 'undefined') return
+
   try {
-    localStorage.setItem('prefs:v1', JSON.stringify({
+    window.localStorage.setItem('prefs:v1', JSON.stringify({
       theme: user.preferences.theme,
       notifications: user.preferences.notifications
     }))

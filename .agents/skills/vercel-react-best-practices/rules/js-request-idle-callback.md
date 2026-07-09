@@ -33,17 +33,19 @@ function handleSearch(query: string) {
   setResults(results)
 
   // Defer non-critical work to idle periods
-  requestIdleCallback(() => {
-    analytics.track('search', { query })
-  })
+  if (typeof window !== 'undefined') {
+    requestIdleCallback(() => {
+      analytics.track('search', { query })
+    })
 
-  requestIdleCallback(() => {
-    saveToRecentSearches(query)
-  })
+    requestIdleCallback(() => {
+      saveToRecentSearches(query)
+    })
 
-  requestIdleCallback(() => {
-    prefetchTopResults(results.slice(0, 3))
-  })
+    requestIdleCallback(() => {
+      prefetchTopResults(results.slice(0, 3))
+    })
+  }
 }
 ```
 
@@ -51,16 +53,20 @@ function handleSearch(query: string) {
 
 ```typescript
 // Ensure analytics fires within 2 seconds even if browser stays busy
-requestIdleCallback(
-  () => analytics.track('page_view', { path: location.pathname }),
-  { timeout: 2000 }
-)
+if (typeof window !== 'undefined') {
+  requestIdleCallback(
+    () => analytics.track('page_view', { path: window.location.pathname }),
+    { timeout: 2000 }
+  )
+}
 ```
 
 **Chunking large tasks:**
 
 ```typescript
 function processLargeDataset(items: Item[]) {
+  if (typeof window === 'undefined') return
+
   let index = 0
 
   function processChunk(deadline: IdleDeadline) {
@@ -83,7 +89,10 @@ function processLargeDataset(items: Item[]) {
 **With fallback for unsupported browsers:**
 
 ```typescript
-const scheduleIdleWork = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 1))
+const scheduleIdleWork =
+  typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? window.requestIdleCallback
+    : ((cb: () => void) => setTimeout(cb, 1))
 
 scheduleIdleWork(() => {
   // Non-critical work

@@ -12,10 +12,14 @@ When a value changes frequently and you don't want a re-render on every update (
 **Incorrect (renders every update):**
 
 ```tsx
+'use client'
+
 function Tracker() {
   const [lastX, setLastX] = useState(0)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const onMove = (e: MouseEvent) => setLastX(e.clientX)
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
@@ -39,11 +43,15 @@ function Tracker() {
 **Correct (no re-render for tracking):**
 
 ```tsx
+'use client'
+
 function Tracker() {
   const lastXRef = useRef(0)
   const dotRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const onMove = (e: MouseEvent) => {
       lastXRef.current = e.clientX
       const node = dotRef.current

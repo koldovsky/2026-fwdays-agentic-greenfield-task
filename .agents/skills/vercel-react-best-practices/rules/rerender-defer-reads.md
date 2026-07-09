@@ -27,8 +27,12 @@ function ShareButton({ chatId }: { chatId: string }) {
 **Correct (reads on demand, no subscription):**
 
 ```tsx
+'use client'
+
 function ShareButton({ chatId }: { chatId: string }) {
   const handleShare = () => {
+    if (typeof window === 'undefined') return
+
     const params = new URLSearchParams(window.location.search)
     const ref = params.get('ref')
     shareChat(chatId, { ref })

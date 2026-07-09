@@ -43,21 +43,30 @@ This pattern also applies to `useEffect` when combining unrelated side effects:
 **Incorrect (both effects run when either dependency changes):**
 
 ```tsx
+'use client'
+
 useEffect(() => {
   analytics.trackPageView(pathname)
-  document.title = `${pageTitle} | My App`
+
+  if (typeof document !== 'undefined') {
+    document.title = `${pageTitle} | My App`
+  }
 }, [pathname, pageTitle])
 ```
 
 **Correct (effects run independently):**
 
 ```tsx
+'use client'
+
 useEffect(() => {
   analytics.trackPageView(pathname)
 }, [pathname])
 
 useEffect(() => {
-  document.title = `${pageTitle} | My App`
+  if (typeof document !== 'undefined') {
+    document.title = `${pageTitle} | My App`
+  }
 }, [pageTitle])
 ```
 

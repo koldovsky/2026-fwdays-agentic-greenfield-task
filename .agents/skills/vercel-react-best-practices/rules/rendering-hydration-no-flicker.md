@@ -12,15 +12,21 @@ When rendering content that depends on client-side storage (localStorage, cookie
 **Incorrect (breaks SSR):**
 
 ```tsx
+'use client'
+
 function ThemeWrapper({ children }: { children: ReactNode }) {
-  // localStorage is not available on server - throws error
-  const theme = localStorage.getItem('theme') || 'light'
-  
-  return (
-    <div className={theme}>
-      {children}
-    </div>
-  )
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem('theme')
+    if (stored) {
+      setTheme(stored)
+    }
+  }, [])
+
+  return <div className={theme}>{children}</div>
 }
 ```
 
@@ -29,22 +35,22 @@ Server-side rendering will fail because `localStorage` is undefined.
 **Incorrect (visual flickering):**
 
 ```tsx
+'use client'
+
 function ThemeWrapper({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState('light')
-  
+
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     // Runs after hydration - causes visible flash
-    const stored = localStorage.getItem('theme')
+    const stored = window.localStorage.getItem('theme')
     if (stored) {
       setTheme(stored)
     }
   }, [])
-  
-  return (
-    <div className={theme}>
-      {children}
-    </div>
-  )
+
+  return <div className={theme}>{children}</div>
 }
 ```
 
@@ -53,18 +59,19 @@ Component first renders with default value (`light`), then updates after hydrati
 **Correct (no flicker, no hydration mismatch):**
 
 ```tsx
+'use client'
+
 function ThemeWrapper({ children }: { children: ReactNode }) {
   return (
     <>
-      <div id="theme-wrapper">
-        {children}
-      </div>
+      <div id="theme-wrapper">{children}</div>
       <script
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
               try {
-                var theme = localStorage.getItem('theme') || 'light';
+                if (typeof window === 'undefined' || typeof document === 'undefined') return;
+                var theme = window.localStorage.getItem('theme') || 'light';
                 var el = document.getElementById('theme-wrapper');
                 if (el) el.className = theme;
               } catch (e) {}

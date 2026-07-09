@@ -64,7 +64,11 @@ function isLoggedIn(): boolean {
   if (isLoggedInCache !== null) {
     return isLoggedInCache
   }
-  
+
+  if (typeof document === 'undefined') {
+    return false
+  }
+
   isLoggedInCache = document.cookie.includes('auth=')
   return isLoggedInCache
 }

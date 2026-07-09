@@ -1378,8 +1378,14 @@ Use `useSWRSubscription()` to share global event listeners across component inst
 **Incorrect: N instances = N listeners**
 
 ```tsx
+'use client'
+
+import { useEffect } from 'react'
+
 function useKeyboardShortcut(key: string, callback: () => void) {
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && e.key === key) {
         callback()
@@ -1396,6 +1402,9 @@ When using the `useKeyboardShortcut` hook multiple times, each instance will reg
 **Correct: N instances = 1 listener**
 
 ```tsx
+'use client'
+
+import { useEffect } from 'react'
 import useSWRSubscription from 'swr/subscription'
 
 // Module-level Map to track callbacks per key
@@ -1426,6 +1435,8 @@ function useKeyboardShortcut(key: string, callback: () => void) {
         keyCallbacks.get(e.key)!.forEach(cb => cb())
       }
     }
+    if (typeof window === 'undefined') return () => undefined
+
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   })
@@ -1433,7 +1444,7 @@ function useKeyboardShortcut(key: string, callback: () => void) {
 
 function Profile() {
   // Multiple shortcuts will share the same listener
-  useKeyboardShortcut('p', () => { /* ... */ }) 
+  useKeyboardShortcut('p', () => { /* ... */ })
   useKeyboardShortcut('k', () => { /* ... */ })
   // ...
 }
@@ -1447,36 +1458,56 @@ Add `{ passive: true }` to touch and wheel event listeners to enable immediate s
 
 **Incorrect:**
 
-```typescript
-useEffect(() => {
-  const handleTouch = (e: TouchEvent) => console.log(e.touches[0].clientX)
-  const handleWheel = (e: WheelEvent) => console.log(e.deltaY)
-  
-  document.addEventListener('touchstart', handleTouch)
-  document.addEventListener('wheel', handleWheel)
-  
-  return () => {
-    document.removeEventListener('touchstart', handleTouch)
-    document.removeEventListener('wheel', handleWheel)
-  }
-}, [])
+```tsx
+'use client'
+
+import { useEffect } from 'react'
+
+export function PassiveListenerExample() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const handleTouch = (e: TouchEvent) => console.log(e.touches[0].clientX)
+    const handleWheel = (e: WheelEvent) => console.log(e.deltaY)
+
+    document.addEventListener('touchstart', handleTouch)
+    document.addEventListener('wheel', handleWheel)
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouch)
+      document.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
+
+  return null
+}
 ```
 
 **Correct:**
 
-```typescript
-useEffect(() => {
-  const handleTouch = (e: TouchEvent) => console.log(e.touches[0].clientX)
-  const handleWheel = (e: WheelEvent) => console.log(e.deltaY)
-  
-  document.addEventListener('touchstart', handleTouch, { passive: true })
-  document.addEventListener('wheel', handleWheel, { passive: true })
-  
-  return () => {
-    document.removeEventListener('touchstart', handleTouch)
-    document.removeEventListener('wheel', handleWheel)
-  }
-}, [])
+```tsx
+'use client'
+
+import { useEffect } from 'react'
+
+export function PassiveListenerExample() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const handleTouch = (e: TouchEvent) => console.log(e.touches[0].clientX)
+    const handleWheel = (e: WheelEvent) => console.log(e.deltaY)
+
+    document.addEventListener('touchstart', handleTouch, { passive: true })
+    document.addEventListener('wheel', handleWheel, { passive: true })
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouch)
+      document.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
+
+  return null
+}
 ```
 
 **Use passive when:** tracking/analytics, logging, any listener that doesn't call `preventDefault()`.
@@ -1545,8 +1576,11 @@ Add version prefix to keys and store only needed fields. Prevents schema conflic
 
 ```typescript
 // No version, stores everything, no error handling
-localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
-const data = localStorage.getItem('userConfig')
+if (typeof window !== 'undefined') {
+  window.localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
+}
+
+const data = typeof window === 'undefined' ? null : window.localStorage.getItem('userConfig')
 ```
 
 **Correct:**
@@ -1555,16 +1589,20 @@ const data = localStorage.getItem('userConfig')
 const VERSION = 'v2'
 
 function saveConfig(config: { theme: string; language: string }) {
+  if (typeof window === 'undefined') return
+
   try {
-    localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
+    window.localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
   } catch {
     // Throws in incognito/private browsing, quota exceeded, or disabled
   }
 }
 
 function loadConfig() {
+  if (typeof window === 'undefined') return null
+
   try {
-    const data = localStorage.getItem(`userConfig:${VERSION}`)
+    const data = window.localStorage.getItem(`userConfig:${VERSION}`)
     return data ? JSON.parse(data) : null
   } catch {
     return null
@@ -1573,12 +1611,14 @@ function loadConfig() {
 
 // Migration from v1 to v2
 function migrate() {
+  if (typeof window === 'undefined') return
+
   try {
-    const v1 = localStorage.getItem('userConfig:v1')
+    const v1 = window.localStorage.getItem('userConfig:v1')
     if (v1) {
       const old = JSON.parse(v1)
       saveConfig({ theme: old.darkMode ? 'dark' : 'light', language: old.lang })
-      localStorage.removeItem('userConfig:v1')
+      window.localStorage.removeItem('userConfig:v1')
     }
   } catch {}
 }
@@ -1589,8 +1629,10 @@ function migrate() {
 ```typescript
 // User object has 20+ fields, only store what UI needs
 function cachePrefs(user: FullUser) {
+  if (typeof window === 'undefined') return
+
   try {
-    localStorage.setItem('prefs:v1', JSON.stringify({
+    window.localStorage.setItem('prefs:v1', JSON.stringify({
       theme: user.preferences.theme,
       notifications: user.preferences.notifications
     }))
@@ -1670,8 +1712,12 @@ function ShareButton({ chatId }: { chatId: string }) {
 **Correct: reads on demand, no subscription**
 
 ```tsx
+'use client'
+
 function ShareButton({ chatId }: { chatId: string }) {
   const handleShare = () => {
+    if (typeof window === 'undefined') return
+
     const params = new URLSearchParams(window.location.search)
     const ref = params.get('ref')
     shareChat(chatId, { ref })
@@ -1987,21 +2033,30 @@ This pattern also applies to `useEffect` when combining unrelated side effects:
 **Incorrect: both effects run when either dependency changes**
 
 ```tsx
+'use client'
+
 useEffect(() => {
   analytics.trackPageView(pathname)
-  document.title = `${pageTitle} | My App`
+
+  if (typeof document !== 'undefined') {
+    document.title = `${pageTitle} | My App`
+  }
 }, [pathname, pageTitle])
 ```
 
 **Correct: effects run independently**
 
 ```tsx
+'use client'
+
 useEffect(() => {
   analytics.trackPageView(pathname)
 }, [pathname])
 
 useEffect(() => {
-  document.title = `${pageTitle} | My App`
+  if (typeof document !== 'undefined') {
+    document.title = `${pageTitle} | My App`
+  }
 }, [pageTitle])
 ```
 
@@ -2119,11 +2174,13 @@ Pass a function to `useState` for expensive initial values. Without the function
 **Incorrect: runs on every render**
 
 ```tsx
+'use client'
+
 function FilteredList({ items }: { items: Item[] }) {
   // buildSearchIndex() runs on EVERY render, even after initialization
   const [searchIndex, setSearchIndex] = useState(buildSearchIndex(items))
   const [query, setQuery] = useState('')
-  
+
   // When query changes, buildSearchIndex runs again unnecessarily
   return <SearchResults index={searchIndex} query={query} />
 }
@@ -2131,9 +2188,9 @@ function FilteredList({ items }: { items: Item[] }) {
 function UserProfile() {
   // JSON.parse runs on every render
   const [settings, setSettings] = useState(
-    JSON.parse(localStorage.getItem('settings') || '{}')
+    typeof window === 'undefined' ? {} : JSON.parse(window.localStorage.getItem('settings') || '{}')
   )
-  
+
   return <SettingsForm settings={settings} onChange={setSettings} />
 }
 ```
@@ -2145,17 +2202,21 @@ function FilteredList({ items }: { items: Item[] }) {
   // buildSearchIndex() runs ONLY on initial render
   const [searchIndex, setSearchIndex] = useState(() => buildSearchIndex(items))
   const [query, setQuery] = useState('')
-  
+
   return <SearchResults index={searchIndex} query={query} />
 }
+
+'use client'
 
 function UserProfile() {
   // JSON.parse runs only on initial render
   const [settings, setSettings] = useState(() => {
-    const stored = localStorage.getItem('settings')
+    if (typeof window === 'undefined') return {}
+
+    const stored = window.localStorage.getItem('settings')
     return stored ? JSON.parse(stored) : {}
   })
-  
+
   return <SettingsForm settings={settings} onChange={setSettings} />
 }
 ```
@@ -2173,9 +2234,13 @@ Mark frequent, non-urgent state updates as transitions to maintain UI responsive
 **Incorrect: blocks UI on every scroll**
 
 ```tsx
+'use client'
+
 function ScrollTracker() {
   const [scrollY, setScrollY] = useState(0)
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handler = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
@@ -2186,11 +2251,15 @@ function ScrollTracker() {
 **Correct: non-blocking updates**
 
 ```tsx
+'use client'
+
 import { startTransition } from 'react'
 
 function ScrollTracker() {
   const [scrollY, setScrollY] = useState(0)
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handler = () => {
       startTransition(() => setScrollY(window.scrollY))
     }
@@ -2266,10 +2335,14 @@ When a value changes frequently and you don't want a re-render on every update (
 **Incorrect: renders every update**
 
 ```tsx
+'use client'
+
 function Tracker() {
   const [lastX, setLastX] = useState(0)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const onMove = (e: MouseEvent) => setLastX(e.clientX)
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
@@ -2293,11 +2366,15 @@ function Tracker() {
 **Correct: no re-render for tracking**
 
 ```tsx
+'use client'
+
 function Tracker() {
   const lastXRef = useRef(0)
   const dotRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const onMove = (e: MouseEvent) => {
       lastXRef.current = e.clientX
       const node = dotRef.current
@@ -2486,39 +2563,45 @@ When rendering content that depends on client-side storage (localStorage, cookie
 **Incorrect: breaks SSR**
 
 ```tsx
-function ThemeWrapper({ children }: { children: ReactNode }) {
-  // localStorage is not available on server - throws error
-  const theme = localStorage.getItem('theme') || 'light'
-  
-  return (
-    <div className={theme}>
-      {children}
-    </div>
-  )
-}
-```
+'use client'
 
-Server-side rendering will fail because `localStorage` is undefined.
-
-**Incorrect: visual flickering**
-
-```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState('light')
-  
+
   useEffect(() => {
-    // Runs after hydration - causes visible flash
-    const stored = localStorage.getItem('theme')
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem('theme')
     if (stored) {
       setTheme(stored)
     }
   }, [])
-  
-  return (
-    <div className={theme}>
-      {children}
-    </div>
-  )
+
+  return <div className={theme}>{children}</div>
+}
+```
+
+Server-side rendering will fail because the initial render would attempt to access browser storage before hydration.
+
+**Incorrect: visual flickering**
+
+```tsx
+'use client'
+
+function ThemeWrapper({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    // Runs after hydration - causes visible flash
+    const stored = window.localStorage.getItem('theme')
+    if (stored) {
+      setTheme(stored)
+    }
+  }, [])
+
+  return <div className={theme}>{children}</div>
 }
 ```
 
@@ -2527,18 +2610,19 @@ Component first renders with default value (`light`), then updates after hydrati
 **Correct: no flicker, no hydration mismatch**
 
 ```tsx
+'use client'
+
 function ThemeWrapper({ children }: { children: ReactNode }) {
   return (
     <>
-      <div id="theme-wrapper">
-        {children}
-      </div>
+      <div id="theme-wrapper">{children}</div>
       <script
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
               try {
-                var theme = localStorage.getItem('theme') || 'light';
+                if (typeof window === 'undefined' || typeof document === 'undefined') return;
+                var theme = window.localStorage.getItem('theme') || 'light';
                 var el = document.getElementById('theme-wrapper');
                 if (el) el.className = theme;
               } catch (e) {}
@@ -3221,16 +3305,20 @@ function handleSearch(query: string) {
 
 ```typescript
 // Ensure analytics fires within 2 seconds even if browser stays busy
-requestIdleCallback(
-  () => analytics.track('page_view', { path: location.pathname }),
-  { timeout: 2000 }
-)
+if (typeof window !== 'undefined') {
+  requestIdleCallback(
+    () => analytics.track('page_view', { path: window.location.pathname }),
+    { timeout: 2000 }
+  )
+}
 ```
 
 **Chunking large tasks:**
 
 ```typescript
 function processLargeDataset(items: Item[]) {
+  if (typeof window === 'undefined') return
+
   let index = 0
 
   function processChunk(deadline: IdleDeadline) {
@@ -3253,7 +3341,10 @@ function processLargeDataset(items: Item[]) {
 **With fallback for unsupported browsers:**
 
 ```typescript
-const scheduleIdleWork = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 1))
+const scheduleIdleWork =
+  typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? window.requestIdleCallback
+    : ((cb: () => void) => setTimeout(cb, 1))
 
 scheduleIdleWork(() => {
   // Non-critical work

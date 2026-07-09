@@ -12,8 +12,14 @@ Use `useSWRSubscription()` to share global event listeners across component inst
 **Incorrect (N instances = N listeners):**
 
 ```tsx
+'use client'
+
+import { useEffect } from 'react'
+
 function useKeyboardShortcut(key: string, callback: () => void) {
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && e.key === key) {
         callback()
@@ -30,6 +36,9 @@ When using the `useKeyboardShortcut` hook multiple times, each instance will reg
 **Correct (N instances = 1 listener):**
 
 ```tsx
+'use client'
+
+import { useEffect } from 'react'
 import useSWRSubscription from 'swr/subscription'
 
 // Module-level Map to track callbacks per key
@@ -60,6 +69,8 @@ function useKeyboardShortcut(key: string, callback: () => void) {
         keyCallbacks.get(e.key)!.forEach(cb => cb())
       }
     }
+    if (typeof window === 'undefined') return () => undefined
+
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   })
@@ -67,7 +78,7 @@ function useKeyboardShortcut(key: string, callback: () => void) {
 
 function Profile() {
   // Multiple shortcuts will share the same listener
-  useKeyboardShortcut('p', () => { /* ... */ }) 
+  useKeyboardShortcut('p', () => { /* ... */ })
   useKeyboardShortcut('k', () => { /* ... */ })
   // ...
 }
