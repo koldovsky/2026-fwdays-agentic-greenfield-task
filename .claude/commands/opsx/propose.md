@@ -33,13 +33,13 @@ When ready to implement, run /opsx:apply
 
 2. **Create the change directory**
    ```bash
-   openspec new change "<name>"
+   openspec new change "<name>" --store <id>
    ```
-   This creates a scaffolded change in the planning home resolved by the CLI with `.openspec.yaml`.
+   This creates a scaffolded change in the planning home resolved by the CLI with `.openspec.yaml`. Use the same selected store id from the earlier store lookup; if no store is selected, omit the flag to use the nearest local `openspec/` root.
 
 3. **Get the artifact build order**
    ```bash
-   openspec status --change "<name>" --json
+   openspec status --change "<name>" --json --store <id>
    ```
    Parse the JSON to get:
    - `applyRequires`: array of artifact IDs needed before implementation (e.g., `["tasks"]`)
@@ -55,7 +55,7 @@ When ready to implement, run /opsx:apply
    a. **For each artifact that is `ready` (dependencies satisfied)**:
       - Get instructions:
         ```bash
-        openspec instructions <artifact-id> --change "<name>" --json
+        openspec instructions <artifact-id> --change "<name>" --json --store <id>
         ```
       - The instructions JSON includes:
         - `context`: Project background (constraints for you - do NOT include in output)
@@ -70,7 +70,7 @@ When ready to implement, run /opsx:apply
       - Show brief progress: "Created <artifact-id>"
 
    b. **Continue until all `applyRequires` artifacts are complete**
-      - After creating each artifact, re-run `openspec status --change "<name>" --json`
+      - After creating each artifact, re-run `openspec status --change "<name>" --json --store <id>`
       - Check if every artifact ID in `applyRequires` has `status: "done"` in the artifacts array
       - Stop when all `applyRequires` artifacts are done
 
@@ -80,7 +80,7 @@ When ready to implement, run /opsx:apply
 
 5. **Show final status**
    ```bash
-   openspec status --change "<name>"
+   openspec status --change "<name>" --store <id>
    ```
 
 **Output**
