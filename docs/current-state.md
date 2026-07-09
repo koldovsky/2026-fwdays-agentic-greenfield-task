@@ -6,7 +6,47 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-07-07, ~evening (Europe/Kyiv)
+- **Date and time:** 2026-07-09, ~afternoon (Europe/Kyiv)
+- **Post-archive live-testing bug-fix session (2026-07-09):** a human ran the
+  real bot end-to-end in Telegram for the demo and hit real conversational
+  defects that no fake-model test could surface — all traced to the production
+  `ClaudeAgentModelPort` (Agent-SDK/`claude`-CLI boundary) and one flow gap.
+  **Five root-cause fixes, each test-first (RED→GREEN) and verified on the live
+  model (`claude-sonnet-5`):**
+  (1) **Terse-answer instructions** (`lib/src/intake/next-field.ts`) — a bare
+  «Саша»/«груповий» in a collect state now saves the field instead of the model
+  re-greeting; mirrors the age instruction's existing precedent to name/format/
+  goal/tastes. `Refs: FR-INTAKE-01`.
+  (2) **Conversation history** (new `messages` table + `packages/db/src/messages.ts`;
+  `loop.ts` gains optional `history`; `pipeline.ts` persists each free-text turn
+  and replays the tail) — fixes the experienceComfort loop where a lead answers a
+  two-fact field one fact per turn and the model, context-free, re-asked forever.
+  `messages.request_id` is `ON DELETE CASCADE` so a lead delete still wipes the
+  transcript (NFR-PRIV-02). `Slice: conversation-history`.
+  (3) **Transcript prompt** (`buildAgentPrompt` in `claude-agent-model-port.ts`) —
+  the port used to send ONLY the latest user text (so history #2 never reached the
+  model) AND passed a raw `/stats`/`/start` that the `claude` CLI ran as a slash
+  command ("responds with some code"). Now a role-labelled `Лід:/Школа:` transcript:
+  the model sees context and the prompt never starts with `/`.
+  (4) **Nested MCP schema** (`mcp-tool-schema.ts`) — `jsonSchemaToZodRawShape`
+  degraded `type:"array"`/`"object"` to `z.any()`, so through the production port
+  `propose_slots`' `weekdays`/`timeWindow` were untyped and the model passed raw
+  Ukrainian text → `validatePreferences` rejected EVERY propose → slots never
+  appeared. Now translated recursively; the model emits `weekdays:["Wed"]`,
+  `timeWindow:{start,end}` and propose applies.
+  (5) **Auto-propose on profile completion** (`pipeline.ts` + `SLOTS_OFFER_COPY`)
+  — the turn that collected the last field entered `proposing` but only called the
+  save tool, dead-ending on the "we'll come back" closing copy. The pipeline now
+  runs one more agent turn on entering `proposing` (empty message; the model
+  proposes) and sends the ranked slot chips with a slot-offer copy instead.
+  **State after session: 577 unit tests green** (+15 this session), lint/build
+  clean, `openspec validate --all --strict` 5/5, traceability 0 failures. New eval
+  cases in `evals/cases/fr-intake-01.eval.ts` (dimension `intake-flow`, not yet
+  ratcheted into `quality/eval-baseline.json` — run the `eval-suite` workflow to
+  establish that baseline). The `intake` OpenSpec spec was NOT re-opened for these
+  fixes (post-archive bug fixes to existing capabilities); consider a follow-up
+  spec touch-up if the conversation-history/auto-propose behavior should be pinned
+  as a requirement. MVP history (all 5 slices, archived) below is unchanged.
 - **Current phase:** **Slice S5 `kb-learning` COMPLETE and ARCHIVED
   (`openspec/changes/archive/2026-07-07-kb-learning/`) — the FINAL MVP slice.
   ALL 5 MVP SLICES DONE, the signed Phase 3 DAG is CLOSED, all 30 MVP FRs
