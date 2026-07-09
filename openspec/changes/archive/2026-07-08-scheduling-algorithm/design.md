@@ -216,9 +216,10 @@ cursor = order.dueDate (кінець останнього робочого дн�
       → перейти на forward scheduling для цієї операції і всіх наступних
       → зафіксувати delayDays для замовлення
     assign RC:
-      rcGroup = rcGroups[op.rcGroupId]
+      rcGroup = rcGroups.find(g => g.id === op.rcGroupId)
       candidates = rcGroup.rcIds
-        .filter(rc => op.opType in rc.allowedOpTypes)
+        .map(rcId => resourceCenters.find(rc => rc.id === rcId))
+        .filter(rc => rc.allowedOpTypes.includes(op.opType))
         .filter(rc → слот [startAt, endAt] не перевантажений)
       якщо candidates порожній:
         найти найраніший вільний слот серед усіх RC групи
