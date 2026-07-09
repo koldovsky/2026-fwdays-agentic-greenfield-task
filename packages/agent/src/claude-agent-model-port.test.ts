@@ -164,6 +164,48 @@ describe("ClaudeAgentModelPort.send()", () => {
     expect(toolUseBlocks[0]).toMatchObject({ type: "tool_use", name: "answer_faq", input: { question: "Скільки триває заняття?" } });
   });
 
+  // @trace FR-INTAKE-01, FR-INTAKE-02
+  it("returns ALL tool_use blocks from one assistant turn (multi-field extraction: save_name + save_age)", async () => {
+    const nameCall = mcpToolName("save_name");
+    const ageCall = mcpToolName("save_age");
+    mockedQuery.mockImplementation(({ options }) => {
+      const content = [
+        { type: "text" as const, text: "Записала." },
+        { type: "tool_use" as const, id: "t1", name: nameCall, input: { name: "Саша" } },
+        { type: "tool_use" as const, id: "t2", name: ageCall, input: { age: 7 } },
+      ];
+      const assistantMessage = fakeAssistantMessage(content);
+      const generator = (async function* () {
+        yield assistantMessage;
+        const abortSignal = options?.abortController?.signal;
+        await options?.canUseTool?.(nameCall, { name: "Саша" }, {
+          signal: abortSignal as AbortSignal,
+          toolUseID: "t1",
+          requestId: "test-request",
+        });
+        const abortError = new Error("The operation was aborted.");
+        abortError.name = "AbortError";
+        throw abortError;
+      })();
+      return generator as unknown as Query;
+    });
+
+    const port = new ClaudeAgentModelPort();
+    const response = await port.send(
+      [{ role: "user", content: "Саша, 7" }],
+      TOOLS,
+      MODEL_CONFIG,
+      "system prompt",
+    );
+
+    // Before this fix the port captured only the FIRST tool call and aborted,
+    // so a merged "name AND age" answer saved only the name — the live-bot
+    // "записала 7 років… скільки років?" duplicate. Both must survive now.
+    const toolUseBlocks = response.content.filter((block) => block.type === "tool_use");
+    expect(toolUseBlocks.map((b) => (b.type === "tool_use" ? b.name : ""))).toEqual(["save_name", "save_age"]);
+    expect(toolUseBlocks[1]).toMatchObject({ type: "tool_use", name: "save_age", input: { age: 7 } });
+  });
+
   // Proves the merge this fix introduces is UNIFORM — not special-cased to
   // `answer_faq`/`log_question` — so a `save_*` response with accompanying
   // text is composed the same way. This is INERT for existing intake

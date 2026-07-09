@@ -120,6 +120,17 @@ export class ClaudeAgentModelPort implements ModelPort {
 
     const abortController = new AbortController();
     let captured: CapturedToolUse | null = null;
+    // ALL tool_use blocks the model emits in its single assistant turn, read
+    // straight from that message's content (which the SDK surfaces in full
+    // BEFORE it calls `canUseTool` for any tool). The model can call several
+    // tools in one turn — save_name AND save_age from a merged "Саша, 7", or
+    // save_weekdays AND save_time_range from "середа зранку" — and `loop.ts`
+    // already dispatches a list. The older `canUseTool`-only capture kept just
+    // the FIRST and aborted, so a merged answer saved one field and re-asked
+    // the other (the live-bot "записала 7 років… скільки років?" duplicate).
+    // Collecting from the assistant message fixes that; `canUseTool` below is
+    // now only the execution guard + stream terminator.
+    const capturedToolUses: CapturedToolUse[] = [];
 
     // Captures the FIRST proposed tool call and immediately aborts — no
     // tool this adapter registers is ever actually executed (`loop.ts`
@@ -195,6 +206,7 @@ export class ClaudeAgentModelPort implements ModelPort {
         collectMessageText(message, textParts, (text) => {
           resultText = text;
         });
+        collectToolUses(message, capturedToolUses);
         if (message.type === "result") break;
       }
     } catch (error) {
@@ -212,32 +224,29 @@ export class ClaudeAgentModelPort implements ModelPort {
       // nothing left for this turn to wait on.
     }
 
-    if (captured !== null) {
-      const applied: CapturedToolUse = captured;
-      // CRITICAL production defect (live kb-learning eval probe, stage H):
-      // this branch used to return ONLY the `tool_use` block, discarding
-      // `textParts` outright. That is harmless for `save_*`/`amend_field`
-      // (loop.ts's `assembleReply` composes a deterministic ack+next-question
-      // reply on top of any/no narration for an "applied" outcome — see
-      // `assembleReply`'s own header comment), but `answer_faq`/`log_question`
-      // are dispatched as `outcome: "logged"` (kb-learning design.md
-      // Decision 4), NOT `"applied"` — `runIntakeTurn` does not override that
-      // reply, so the model's OWN narrated KB answer must survive onto this
-      // response for a pure-FAQ turn to have any reply text at all. Emitting
-      // the collected text FIRST (a `text` block, only when non-empty) ahead
-      // of the `tool_use` block restores that narration without touching the
-      // abort/capture strategy above; the `save_*` path is unaffected in
-      // KIND (loop.ts still overrides an "applied" outcome's reply via
-      // `assembleReply`) even though the narration this exposes may now
-      // legitimately surface as `assembleReply`'s ack prefix instead of the
-      // `DEFAULT_ACK_COPY` fallback — that substitution is `assembleReply`'s
-      // OWN documented behaviour ("the model's own accompanying text if it
-      // gave any ... never discarded when present"), not a new one
-      // introduced here.
+    // Prefer the full list read from the assistant message; fall back to the
+    // single `canUseTool` capture only if the message-level read found nothing
+    // (defensive — an SDK timing where the abort beat the message surfacing).
+    const toolUses: CapturedToolUse[] =
+      capturedToolUses.length > 0 ? capturedToolUses : captured !== null ? [captured] : [];
+
+    if (toolUses.length > 0) {
+      // The narration (if any) leads, then EVERY captured tool_use block, in
+      // the order the model emitted them — `loop.ts` dispatches the list
+      // through the reducer, so a merged turn advances every field at once.
       const text = textParts.join("\n").trim();
       const content: ModelResponse["content"] = [];
       if (text.length > 0) content.push({ type: "text", text });
-      content.push({ type: "tool_use", id: randomUUID(), name: applied.name, input: applied.input });
+      for (const toolUse of toolUses) {
+        content.push({ type: "tool_use", id: randomUUID(), name: toolUse.name, input: toolUse.input });
+      }
+      // NOTE (kb-learning stage-H fix, preserved): the narration is emitted as
+      // a `text` block AHEAD of the tool_use blocks above. That is load-bearing
+      // for answer_faq/log_question turns, dispatched `outcome: "logged"` —
+      // `runIntakeTurn` does not override their reply, so the model's own
+      // narrated KB answer must survive onto this response or the lead gets a
+      // blank message. For save_*/amend the narration is harmless (assembleReply
+      // composes the deterministic ack+next-question anyway).
       return { content };
     }
 
@@ -338,5 +347,20 @@ function collectMessageText(
   }
   if (message.type === "result" && message.subtype === "success") {
     onResultText(message.result);
+  }
+}
+
+/** Collects EVERY `tool_use` block from an assistant message into `out`, in
+ *  emission order, with the `mcp__intake__` prefix stripped to the bare tool
+ *  name `loop.ts` dispatches on. The SDK surfaces the assistant message with
+ *  all its content blocks before it calls `canUseTool` for any tool, so this
+ *  captures a multi-tool turn (e.g. save_name + save_age) that the older
+ *  first-tool-then-abort capture truncated to one. */
+function collectToolUses(message: SDKMessage, out: CapturedToolUse[]): void {
+  if (message.type !== "assistant") return;
+  for (const block of message.message.content) {
+    if (block.type === "tool_use") {
+      out.push({ name: stripMcpToolPrefix(block.name), input: block.input as Record<string, unknown> });
+    }
   }
 }

@@ -20,7 +20,7 @@
     {
       "slice": "2026-07-06-intake",
       "reviewEvidence": "clean",
-      "trailerCommits": 22,
+      "trailerCommits": 23,
       "libDomains": [
         "src"
       ],
