@@ -179,3 +179,88 @@ describe("ExportDataButton — pending state (NFR-OBS-01)", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
+
+// PDF-contract tests (2026-07-09: route now returns application/pdf, vouch-export.pdf).
+// Verify the component sets the correct download filename and blob type on the
+// synthetic anchor — the trigger button must never carry an href (NFR-OBS-01,
+// NFR-GDPR-01).
+describe("ExportDataButton — PDF contract (NFR-GDPR-01, 2026-07-09 decision)", () => {
+  it("sets download='vouch-export.pdf' on the synthetic anchor (not vouch-export.json)", async () => {
+    // Simulate a PDF response (the real server now returns application/pdf).
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(new Blob(["%PDF-1.4 fake"], { type: "application/pdf" }), { status: 200 }),
+    );
+
+    let capturedAnchor: HTMLAnchorElement | null = null;
+    const realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag, ...rest) => {
+      const el = realCreateElement(tag, ...rest);
+      if (tag === "a") {
+        capturedAnchor = el as HTMLAnchorElement;
+        el.click = vi.fn();
+      }
+      return el;
+    });
+
+    render(<ExportDataButton />);
+    fireEvent.click(screen.getByRole("button", { name: ua.profile.exportAction }));
+
+    // Wait for the download flow to complete (anchor click fires).
+    await waitFor(() => expect(capturedAnchor).not.toBeNull());
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalled());
+
+    expect(capturedAnchor!.download).toBe("vouch-export.pdf");
+  });
+
+  it("passes the object URL (blob:) to the anchor href — no direct /api href on the trigger", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(new Blob(["%PDF-1.4 fake"], { type: "application/pdf" }), { status: 200 }),
+    );
+
+    let capturedAnchorHref: string | null = null;
+    const realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag, ...rest) => {
+      const el = realCreateElement(tag, ...rest);
+      if (tag === "a") {
+        el.click = vi.fn();
+        // Capture the href after click (the component sets href before clicking).
+        Object.defineProperty(el, "href", {
+          set(v: string) { capturedAnchorHref = v; },
+          get() { return capturedAnchorHref ?? ""; },
+          configurable: true,
+        });
+      }
+      return el;
+    });
+
+    render(<ExportDataButton />);
+    fireEvent.click(screen.getByRole("button", { name: ua.profile.exportAction }));
+
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalled());
+
+    // The synthetic anchor gets the blob: object URL (not a raw /api path).
+    expect(capturedAnchorHref).toBe("blob:fake-url");
+    // The trigger button itself must never carry an href (no page navigation).
+    const trigger = screen.getByRole("button", { name: ua.profile.exportAction });
+    expect(trigger).not.toHaveAttribute("href");
+  });
+
+  it("calls fetch('/api/account/export') — correct endpoint (NFR-GDPR-01)", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(new Blob(["%PDF-1.4 fake"], { type: "application/pdf" }), { status: 200 }),
+    );
+    const realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag, ...rest) => {
+      const el = realCreateElement(tag, ...rest);
+      if (tag === "a") el.click = vi.fn();
+      return el;
+    });
+
+    render(<ExportDataButton />);
+    fireEvent.click(screen.getByRole("button", { name: ua.profile.exportAction }));
+
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalled());
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/account/export");
+  });
+});

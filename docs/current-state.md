@@ -7,6 +7,21 @@
 
 ## Last action
 
+- **T6 `export-account-pdf` — DONE + gate green (2026-07-09, ultracode).** "Download my data" now returns a
+  human-readable PT Sans PDF (vouch-export.pdf, application/pdf), REPLACING the JSON export (user decision).
+  New `account-export-pdf.tsx` (@react-pdf/renderer, PT Sans registered like resume/cover-letter routes):
+  Account (id/name/email/created), CV profiles (skills + rawText; decryptionFailed → placeholder, not a
+  crash), tailoring history. Route returns the PDF + keeps auth-gate + per-profile decrypt guard + calm
+  coded 500 + no-plaintext-logging (NFR-SEC-01/NFR-OBS-01); export stays FREE + owner-only. next.config
+  outputFileTracingIncludes adds /api/account/export fonts (Vercel). ExportDataButton downloads .pdf.
+  PRD synced (NFR-GDPR-01: PDF, portability tradeoff noted). maker→test-author→checker+verifier. Verifier
+  PASS (145 files / 1367 passed + 5 skipped). Checker fix-first was a FALSE ALARM (predicted a jsdom
+  Blob.stream red that does NOT reproduce here — verified 25/25 export tests green); I applied its 2 real
+  minors inline (typo `TailoringDisplayRow`; added Account ID row) + a GUARDED `Blob.prototype.stream`
+  polyfill in vitest.setup.ts (portability for older-jsdom CI, retires the recurring pre-existing-red note).
+  Gate re-run inline: lint 0/0 + build + **145 files / 1367 passed + 5 skipped, 0 failed.** Implements
+  NFR-GDPR-01(revised), NFR-GDPR-02, NFR-SEC-01, NFR-OBS-01. Follow-up: JD text still not in the export
+  (GDPR completeness) — flagged, not in scope.
 - **T4+T5 `gate-tailor-and-tier-states` (+ `gate-tailor-fixes`) — DONE + gate green (2026-07-09, ultracode).**
   /tailor is now AUTHENTICATED-ONLY, enforced at the page (redirect to /sign-in?callbackUrl=%2Ftailor,
   open-redirect-guarded) AND server-side in ALL THREE tailoring routes (analyze + generate + one-shot each
@@ -469,7 +484,8 @@ executing sequentially P0→down (file overlaps on tailor/page.tsx + en.ts/ua.ts
 Each task: maker→test-author→checker+verifier in separate contexts, commit per unit.
 
 **STATUS (2026-07-09): T7 ✅ (`37b1868`) → T1 ✅ (`7d1ce25`) → T8 ✅ (`52c6c8e`) → T4+T5 ✅ (this commit).
-T2/T3, T6 PENDING. Deferred: T1/T8 dedicated test-author tests.** BLOCKER: subagent SESSION LIMIT hit (resets 9am Europe/Kiev) — it killed the
+T4+T5 ✅ (`30f2962`) → T6 ✅ (this commit). T2/T3 PENDING (last functional unit). Deferred: T1/T8
+dedicated test-author tests (final cleanup). ExportDataButton Blob.stream red = RETIRED (polyfilled in T6).** BLOCKER: subagent SESSION LIMIT hit (resets 9am Europe/Kiev) — it killed the
 test-author/checker/verifier stages of T1 + T8 (only the maker stages completed). T1 + T8 were committed
 after I ran the gate INLINE (lint 0/0 + build + 138 files/1305 passed, 0 failed) and reviewed each diff
 independent of the maker subagent (maker≠checker preserved — subagents wrote the code, main thread

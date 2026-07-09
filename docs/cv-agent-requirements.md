@@ -157,7 +157,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | NFR-SEC-02   | CV data is never sent to the LLM provider with identifying metadata; user ID is not included in LLM request payloads       | proposed |
 | NFR-SEC-03   | Public endpoints (auth) set standard security headers on every response (CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`). Tailoring endpoints are authenticated (revised 2026-07-09) and set the same headers | proposed |
 | NFR-SEC-04   | Public unauthenticated endpoints (register, auth) carry a lightweight bot-resistance check (honeypot field) and are rate-limited per IP; tailoring endpoints are authenticated-only (revised 2026-07-09) — anonymous callers are rejected with a coded 401 and the free allowance is enforced server-side via the usage counter; requests failing any check are rejected calmly and never processed | proposed |
-| NFR-GDPR-01  | Users can export all their stored data (CV profile + tailoring history) as JSON on request                                 | proposed |
+| NFR-GDPR-01  | Users can export all their stored data (CV profile + tailoring history) as a human-readable PDF on request (2026-07-09: PDF replaces JSON per user decision; trades machine-readability / portability for human-readability) | proposed |
 | NFR-GDPR-02  | Users can permanently delete their account and all associated data; deletion propagates within 24 h                        | proposed |
 
 ---
