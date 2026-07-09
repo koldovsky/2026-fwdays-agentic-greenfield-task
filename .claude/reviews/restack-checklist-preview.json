@@ -1,0 +1,22 @@
+{
+  "change": "restack-checklist-preview",
+  "reviewer": "checker (Claude Opus 4.8, clean context)",
+  "date": "2026-07-09",
+  "commit": "34cdd5e",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 0,
+  "requirementIds": ["FR-SALES-02", "FR-CHECKLIST-02", "FR-CHECKLIST-04", "BC-BRAND-01", "NFR-I18N-01"],
+  "findings": [
+    {
+      "severity": "minor",
+      "path": "src/views/landing/ui/ChecklistPreview.tsx",
+      "line": 33,
+      "requirement": "FR-SALES-02",
+      "problem": "PRIOR REVIEW (two-column-div structure): mobile stack dropped the hairline divider at the junction between the two sub-lists because the left column's final row carried last=true.",
+      "fix": "Superseded — maker replaced the two-div split with a single flat grid using auto-rows-fr and CSS arbitrary-variant border-drop selectors; the mobile mid-list divider is now present. No longer applicable.",
+      "status": "fixed"
+    }
+  ]
+}

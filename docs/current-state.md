@@ -7,6 +7,23 @@
 
 ## Last action
 
+- **`restack-checklist-preview` — DONE + gate green (2026-07-09). Landing "Know exactly where you
+  stand" section reworked (user ask).** `src/views/landing/ui/ChecklistPreview.tsx` ONLY: the
+  "Strong fit, honestly scored" MatchScore now sits in a card container on TOP (`rounded-xl border
+  border-hairline bg-surface-card px-6 py-5`, matches Pillars/HowItWorks/Pricing cards, no new hue/accent);
+  the checklist bullets render as a two-column grid below (was a single stacked list). Two iterations on
+  user feedback: (1) first pass split rows into two dividered sub-lists — checker caught a mobile-only
+  junction-divider gap; (2) user reported column SHIFT (unequal row heights) → restructured to a SINGLE
+  flat `grid auto-rows-fr sm:grid-cols-2` of direct ChecklistRow cells (equal-height rows fix the shift),
+  trailing dividers dropped via CSS arbitrary variants (`[&>*:last-child]:border-b-0`
+  `sm:[&>*:nth-last-child(2)]:border-b-0`) — no shared-component change. maker(me)→test-author(sonnet,
+  17 tests, structural + auto-rows-fr locked)→checker(opus), separate contexts (maker≠checker). Checker
+  SHIP, 0 blockers/majors/minors (prior mobile-divider minor marked fixed): verified divider correctness
+  both breakpoints for the real 6 rows, arbitrary-variant specificity (0,2,1) beats ChecklistRow border-b,
+  auto-rows-fr is a real shift fix with CLS 0 / no overflow, DESIGN/FSD/i18n clean. Gate: lint 0/0 +
+  build (29 routes) + ChecklistPreview 17/17. Review artifact `.claude/reviews/restack-checklist-preview.json`
+  (validator 3/3). Implements FR-SALES-02, FR-CHECKLIST-02/04, BC-BRAND-01, NFR-I18N-01. Follow-up:
+  perf-audit still Chrome-blocked (landing layout changed — re-run Lighthouse when available, NFR-PERF-04).
 - **T2+T3 `fix-faq-and-privacy-accuracy` — DONE + gate green (2026-07-09, ultracode). LAST functional
   unit of the 8-task batch.** i18n-only accuracy fixes across en.ts/ua.ts + legal page.
   maker(opus)→test-author(sonnet,+14)→checker(opus)+verifier(sonnet), separate contexts (Workflow
@@ -468,7 +485,32 @@
 
 ## Working on
 
-**Nothing in flight — 8-task batch COMPLETE.** T2+T3 shipped (see Last action). Remaining items are all
+### `restack-checklist-preview` — DONE (2026-07-09) — see Last action
+
+Landing "Know exactly where you stand" section rework (user ask). Today: `md:grid-cols-[auto_1fr]`
+with MatchScore in the left column + a single stacked ChecklistRow list on the right. Want: the
+"Strong fit, honestly scored" MatchScore in a CONTAINER on TOP (full width), and the bullets as a
+GRID below (2 columns) instead of a single-column list. FR-SALES-02, FR-CHECKLIST-02/04, BC-BRAND-01,
+NFR-I18N-01.
+
+**Plan:**
+1. `src/views/landing/ui/ChecklistPreview.tsx` (ONLY file): wrap MatchScore in a card container on top
+   (`rounded-xl border border-hairline bg-surface-card px-6 py-5`, matching Pricing/Pillars cards, no
+   colored accents); render rows as `mt-8 grid gap-x-12 sm:grid-cols-2`, splitting rows into two
+   dividered sub-lists (ceil(n/2) left, rest right) so each column preserves ChecklistRow's border-b
+   divider + `last` handling (no shared-component edit needed). Collapses to 1 col below sm.
+2. Maker (me) → checker subagent + test-author subagent (clean contexts, maker≠checker). Update the
+   existing ChecklistPreview.test.tsx for the new structure.
+3. Gate: lint + build + touched tests. Commit. perf-audit remains Chrome-blocked (flag).
+
+DEFERRED same-session (Ultra-claims accuracy, investigated wf a5dbdbb): all 13 Ultra/Pro "flagship
+model / priority / high-volume" strings (en+ua upgrade.planFeature, billing.planBenefits,
+landing.pricing) are UNFOUNDED — code has ONE global model (opus-4-8), binary hasPaidAccess, no
+queue/priority, no per-plan limit. Needs a user decision (soften to honest-now vs mark "coming soon"
+vs implement routing) before editing marketing copy. Plus the 3 quick fixes (offer Stripe line,
+privacy date, marketing flagship claim). Not doing until the checklist rework lands + decision made.
+
+**Nothing else in flight — 8-task batch COMPLETE.** T2+T3 shipped (see Last action). Remaining items are all
 environment/tooling/human-review blocked (no code) — see Remaining. Flagged code follow-ups from T2+T3:
 pricing.ultra "flagship model" marketing overclaim + legal.offer Stripe payment line (both pre-existing,
 own small change); UA privacy native review; legal-counsel [TODO] placeholders.
