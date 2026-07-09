@@ -86,6 +86,16 @@ describe('Scenario C — moving earlier does not drag dependents back', () => {
   })
 })
 
+describe('Scenario D — moving onto a non-working time aligns the placement', () => {
+  it('uses the next working slot for the moved operation', () => {
+    const ops = [op(10, 'RC-1', '2026-01-05T00:00:00Z', '2026-01-05T01:00:00Z', 60)]
+    const result = applyManualMove(ops, 'O1#X#10', new Date('2026-01-03T12:00:00Z'), ORDERS, CAL)
+    const moved = result.operations[0]!
+    expect(moved.startAt.toISOString()).toBe('2026-01-05T00:00:00.000Z')
+    expect(moved.endAt.toISOString()).toBe('2026-01-05T01:00:00.000Z')
+  })
+})
+
 describe('applyManualMove — unknown op id is a no-op recompute', () => {
   it('returns operations unchanged and recomputed orders', () => {
     const ops = [op(10, 'RC-1', '2026-01-05T00:00:00Z', '2026-01-05T01:00:00Z', 60)]

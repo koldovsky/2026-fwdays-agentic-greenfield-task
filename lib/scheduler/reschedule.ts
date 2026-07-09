@@ -4,7 +4,7 @@ import type {
   ScheduledOperation,
   WorkCalendar,
 } from '../types/index.ts'
-import { addMinutes, nextWorkingDayStart } from './calendar.ts'
+import { addMinutes, alignToWorkingTime, nextWorkingDayStart } from './calendar.ts'
 import { findCriticalPath } from './critical-path.ts'
 import { buildPredecessors, operationId } from './dependencies.ts'
 import { countWorkingDays } from './time.ts'
@@ -92,7 +92,8 @@ export function applyManualMove(
     return { operations: ops, orders: recomputeOrders(ops, orders, calendar) }
   }
 
-  const startMin = toEpochMin(newStart)
+  const alignedStart = alignToWorkingTime(newStart, calendar)
+  const startMin = toEpochMin(alignedStart)
   moved.startAt = fromEpochMin(startMin)
   moved.endAt = addMinutes(fromEpochMin(startMin), moved.durationMin, calendar)
 
