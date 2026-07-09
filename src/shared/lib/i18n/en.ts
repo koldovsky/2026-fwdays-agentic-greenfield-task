@@ -315,24 +315,60 @@ export const en: Dictionary = {
           heading: "What we store",
           paragraphs: [
             "Account: your email address and name.",
-            "Résumé: your CV text, stored encrypted at rest.",
-            "Tailoring history: the saved results of your tailoring runs.",
+            "Credentials: a password hash. We never store your password in plaintext.",
+            "Résumé: your CV text, stored encrypted at rest (AES-256-GCM).",
+            "Tailoring history: the job-description text you paste, the requirements we extract from it, the tailored results, and match scores.",
+            "Usage: a counter that tracks how many tailorings you have used.",
+            "Cookies: a session and authentication cookie, plus a cookie that remembers your language preference. No third-party trackers or analytics run on any page.",
           ],
         },
         {
           heading: "How we protect your data",
           paragraphs: [
             "CV text is personal data. It is encrypted at rest (AES-256-GCM) and never logged in plaintext.",
-            "We never use your résumé to train models.",
+            "We never use your résumé or job descriptions to train models.",
             "No third-party trackers or analytics run on any page.",
+          ],
+        },
+        {
+          heading: "Subprocessors and international transfer",
+          paragraphs: [
+            "Anthropic (United States) processes your CV text and job-description text to generate and ground your tailored result. User identifiers are excluded from those payloads.",
+            "Payments currently run through an in-app emulator; no live payment processor receives your data yet. A production payment processor: [TODO: pending legal review].",
+            "Hosting and database providers store your data at rest.",
+            "Because a subprocessor is located in the United States, your data may be transferred internationally under appropriate safeguards. Transfer mechanism: [TODO: pending legal review].",
+          ],
+        },
+        {
+          heading: "Retention",
+          paragraphs: [
+            "Your account, résumé, and tailoring history are retained while your account exists.",
+            "When you delete your account, this data is deleted and the deletion propagates within 24 hours.",
+          ],
+        },
+        {
+          heading: "Legal basis",
+          paragraphs: [
+            "We process your data to perform the service you request (contract) and on the basis of your consent.",
+            "Specific legal-basis determinations that depend on the operating legal entity: [TODO: pending legal review].",
           ],
         },
         {
           heading: "Your rights (GDPR)",
           paragraphs: [
-            "You can export all your stored data (résumé profile and tailoring history) as JSON.",
+            "You can export your account, résumé profiles, and tailoring history as a PDF. Job-description text, extracted requirements, and tailored results are not yet included in the export; this is being expanded.",
             "You can permanently delete your account and all associated data; deletion propagates within 24 hours.",
-            "Exercise both from the Profile section of your account.",
+            "You have the rights of access, rectification, erasure, portability, and to lodge a complaint with a supervisory authority.",
+            "Exercise export and deletion from the Profile section of your account.",
+          ],
+        },
+        {
+          heading: "Contact and controller",
+          paragraphs: [
+            "Data controller: [TODO: pending legal registration].",
+            "Controller address: [TODO: pending legal registration].",
+            "Data Protection contact: [TODO: pending legal registration].",
+            "Supervisory authority: [TODO: pending legal review].",
           ],
         },
       ],
@@ -353,9 +389,10 @@ export const en: Dictionary = {
         {
           heading: "Plans",
           paragraphs: [
-            "Free — one free tailoring.",
-            "Pro — a subscription with full access to tailoring and export.",
-            "Job-hunt Pass — access for a fixed period.",
+            "Free: one free tailoring.",
+            "Pro: a subscription with full access to tailoring and export.",
+            "Ultra: a higher-priced subscription tier.",
+            "Job-hunt Pass: access for a fixed period.",
             "Current prices are shown on the pricing page.",
           ],
         },
@@ -500,7 +537,7 @@ export const en: Dictionary = {
       },
       free: {
         name: "Free",
-        cadence: "2 tailorings, lifetime",
+        cadence: "1 tailoring, lifetime",
         features: [
           "Full match checklist",
           "Grounded rewrites + overclaim flags",
@@ -557,12 +594,12 @@ export const en: Dictionary = {
       coverLetter: {
         question: "Can it write my cover letter too?",
         answer:
-          "Yes. Pro turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
+          "Yes. Any paid plan turns your vouched, grounded bullets into a cover letter for the role, drawing only on what your CV supports, so it stays as honest as the resume. Every tailoring is also saved to your history, so you can reopen and reuse past results.",
       },
       attach: {
         question: "Can I attach my original PDF?",
         answer:
-          "Yes, on Pro. Extraction turns your CV into plain text and drops the structure the original carried, so Pro lets you attach the original PDF and the tailor works from your full document, layout and detail included, for a more faithful rewrite. It only widens what the tailor reads while writing: the attached PDF never enters the grounding pass and never adds experience your CV doesn't support, so the result stays as honest as always.",
+          "Yes, on any paid plan. Extraction turns your CV into plain text and drops the structure the original carried, so a paid plan lets you attach the original PDF and the tailor works from your full document, layout and detail included, for a more faithful rewrite. It only widens what the tailor reads while writing: the attached PDF never enters the grounding pass and never adds experience your CV doesn't support, so the result stays as honest as always.",
       },
       chatgpt: {
         question: "How is this different from ChatGPT?",

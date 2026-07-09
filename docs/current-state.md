@@ -7,6 +7,32 @@
 
 ## Last action
 
+- **T2+T3 `fix-faq-and-privacy-accuracy` — DONE + gate green (2026-07-09, ultracode). LAST functional
+  unit of the 8-task batch.** i18n-only accuracy fixes across en.ts/ua.ts + legal page.
+  maker(opus)→test-author(sonnet,+14)→checker(opus)+verifier(sonnet), separate contexts (Workflow
+  wf_34126d8a-625). **T2 FAQ/pricing:** `faq.coverLetter`+`faq.attach` "Pro"→"any paid plan" (gate is
+  `hasPaidAccess`=pro/ultra/job_hunt_pass, not Pro-only; both in-sentence "Pro" mentions fixed);
+  `pricing.free.cadence` "2 tailorings"→"1 tailoring" (FREE_TAILORING_LIMIT=1). **T3 privacy:** rewrote
+  `legal.privacy` 3→7-section full best-effort GDPR draft (data inventory incl. credentials-hash + JD
+  text + cookies/no-trackers; subprocessors; retention; legal basis; rights; contact/controller), kept
+  the draft banner, added Ultra to `legal.offer` Plans; FIXED export claim JSON→PDF and dropped the
+  "all your data" overclaim (names what the PDF actually holds). Verifier PASS: lint 0/0 + build (29
+  routes) + **145 files / 1380 passed + 5 skipped, 0 failed.** Checker fix-first, 0 blockers; applied
+  its findings INLINE (I was orchestrator, not maker — maker≠checker preserved): (1 major, BC-PRIVACY-02)
+  removed the false Stripe-subprocessor disclosure — Stripe has ZERO code presence (only the in-repo
+  emulator, hard-disabled in prod) → now "in-app emulator; no live processor yet + [TODO] production
+  processor"; (2 minors) broadened the export caveat (requirements + tailored results also not yet
+  exported, not just JD text) and softened the legal Ultra line to "higher-priced subscription tier"
+  (code has no per-plan model routing / limit differential). Re-ran gate inline after fixes: lint 0/0 +
+  build compiled + 35/35 touched tests green + no dangling refs. Implements BC-HONESTY-01, BC-PRIVACY-01/02,
+  NFR-GDPR-01/02, NFR-SEC-02, FR-COVERLETTER-01, FR-CV-01, FR-ONBOARD-01, NFR-COST-02, FR-BILLING-01.
+  Follow-ups (flagged, NOT in scope): (a) pre-existing pricing.ultra marketing claim "flagship Claude
+  model on every tailoring" (en.ts:135/175/566) is the SAME unshipped per-plan-model overclaim — should
+  be softened in a T2-marketing follow-up; (b) `legal.offer` payment line still names Stripe (pre-existing
+  offer copy, out of this privacy-accuracy scope); (c) legal.privacy `updated` date still "4 July 2026"
+  though body rewritten 2026-07-09; (d) UA privacy + Ultra copy wants native marketing/legal review;
+  (e) legal-counsel facts (entity/DPA/authority/transfer mechanism) ship as clearly-marked [TODO]
+  placeholders. **8-task batch now COMPLETE (T7/T1/T8/T4+T5/T6/T2+T3 all shipped).**
 - **T6 `export-account-pdf` — DONE + gate green (2026-07-09, ultracode).** "Download my data" now returns a
   human-readable PT Sans PDF (vouch-export.pdf, application/pdf), REPLACING the JSON export (user decision).
   New `account-export-pdf.tsx` (@react-pdf/renderer, PT Sans registered like resume/cover-letter routes):
@@ -441,6 +467,50 @@
 | 10 | Whole-app UA/EN toggle | **DONE** (`add-language-toggle`: Unbounded+Golos fonts, cookie locale, LanguageSwitch); perf-audit + archive pending | P2 |
 
 ## Working on
+
+**Nothing in flight — 8-task batch COMPLETE.** T2+T3 shipped (see Last action). Remaining items are all
+environment/tooling/human-review blocked (no code) — see Remaining. Flagged code follow-ups from T2+T3:
+pricing.ultra "flagship model" marketing overclaim + legal.offer Stripe payment line (both pre-existing,
+own small change); UA privacy native review; legal-counsel [TODO] placeholders.
+
+### T2+T3 `fix-faq-and-privacy-accuracy` — DONE (2026-07-09, ultracode) — see Last action
+
+Last functional unit of the 8-task batch. Copy/honesty accuracy fixes across i18n + legal page, no
+new runtime. maker(opus)→test-author(sonnet)→checker(opus)+verifier(sonnet), separate contexts.
+Root-caused (investigator, this session): defects are stale copy that drifted from shipped behavior.
+
+**Plan (numbered):**
+1. **T2 FAQ + pricing accuracy** (`en.ts`/`ua.ts` `landing.*`):
+   - `faq.coverLetter`: "Pro turns…" → "Any paid plan…" (cover-letter export gated by
+     `hasPaidAccess` = pro/ultra/job_hunt_pass, not Pro-only). BC-HONESTY-01, FR-COVERLETTER-01.
+   - `faq.attach`: "Yes, on Pro." → "Yes, on any paid plan." (attach gate = `hasPaidAccess`,
+     server-enforced in api/tailor/generate). NFR-SEC-04, FR-CV-01.
+   - `pricing.free.cadence`: "2 tailorings, lifetime" → "1 tailoring, lifetime" (FREE_TAILORING_LIMIT
+     is 1 since T4+T5; matches finalCta "first tailoring is free"). NFR-COST-02, FR-ONBOARD-01.
+2. **T3 privacy full GDPR draft** (`en.ts`/`ua.ts` `legal.privacy` + `legal.offer`):
+   - Fix export format: "export…as JSON" → "as a PDF" (T6 replaced JSON w/ PDF). NFR-GDPR-01.
+   - Drop the "all your data" overclaim → enumerate what the PDF actually contains (account, résumé
+     profiles, tailoring history); note JD text not yet included (best-effort draft caveat).
+     BC-HONESTY-01, NFR-GDPR-01.
+   - Expand to a full best-effort GDPR draft (locked decision 2026-07-09): data inventory (account
+     email/name, credentials/password hash, CV text encrypted, tailoring history incl. JD text,
+     usage counter, session+locale cookies — no trackers), subprocessors (Anthropic US for
+     gen/grounding — CV+JD sent, user IDs excluded NFR-SEC-02; Stripe test-mode payments; hosting),
+     retention, legal basis, international transfer (US subprocessor), rights (access/export/delete/
+     rectify/portability/complaint), CLEARLY-MARKED placeholders for legal entity / DPA contact /
+     supervisory authority. KEEP the draft banner. BC-PRIVACY-01/02, NFR-GDPR-01/02, NFR-SEC-02.
+   - `legal.offer.Plans`: add the Ultra tier (Free/Pro/Ultra/Job-hunt Pass) — currently missing.
+     FR-BILLING-01.
+3. **Tests** (test-author, separate ctx): en-locale Faq assertions (no "Pro"-gated wording for
+   attach/coverLetter), LegalView privacy asserts PDF (not JSON) + Ultra present + placeholder markers
+   + draft banner.
+4. **PRD sync** where wording changed (NFR-GDPR-01 already PDF from T6; add privacy-draft note if needed).
+5. checker(opus) + verifier(sonnet), separate ctx. Commit. Refresh handoff.
+
+UA copy = flagged for native marketing/legal review (non-blocking). Legal-counsel facts (entity/DPA/
+authority) ship as marked TODO placeholders.
+
+---
 
 ### T4+T5 `gate-tailor-and-tier-states` — MAKER DONE (2026-07-09), NOT committed
 

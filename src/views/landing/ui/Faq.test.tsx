@@ -39,3 +39,41 @@ describe("Faq", () => {
     expect(summary).toHaveFocus();
   });
 });
+
+// fix-faq-and-privacy-accuracy (BC-HONESTY-01): attach + cover-letter answers
+// must gate on "any paid plan" (matches hasPaidAccess, which is true for Pro,
+// Ultra, and Job-hunt Pass), never on "Pro" specifically — the old copy
+// falsely implied Ultra/Pass subscribers were locked out.
+describe("Faq — paid-plan gating language (fix-faq-and-privacy-accuracy)", () => {
+  it("EN: attach and cover-letter answers say 'any paid plan', not Pro-only", () => {
+    const enItems = faqSection("en").items;
+    const attach = enItems.find((i) => /attach my original PDF/i.test(i.question));
+    const coverLetter = enItems.find((i) => /write my cover letter/i.test(i.question));
+    expect(attach).toBeDefined();
+    expect(coverLetter).toBeDefined();
+    expect(attach?.answer).toMatch(/any paid plan/i);
+    expect(coverLetter?.answer).toMatch(/any paid plan/i);
+    expect(attach?.answer).not.toMatch(/\bPro\b/);
+    expect(coverLetter?.answer).not.toMatch(/\bPro\b/);
+  });
+
+  it("UA: attach and cover-letter answers say 'будь-який платний тариф', not Pro-only", () => {
+    const uaItems = faqSection("ua").items;
+    const attach = uaItems.find((i) => /оригінальний PDF/i.test(i.question));
+    const coverLetter = uaItems.find((i) => /супровідний лист/i.test(i.question));
+    expect(attach).toBeDefined();
+    expect(coverLetter).toBeDefined();
+    expect(attach?.answer).toMatch(/будь-як(ому|ий) платн(ому|ий) тариф/i);
+    expect(coverLetter?.answer).toMatch(/будь-як(ому|ий) платн(ому|ий) тариф/i);
+    expect(attach?.answer).not.toMatch(/\bPro\b/);
+    expect(coverLetter?.answer).not.toMatch(/\bPro\b/);
+  });
+
+  it("renders the corrected EN attach answer through the component (locale prop)", () => {
+    render(<Faq locale="en" />);
+    const enItems = faqSection("en").items;
+    const attach = enItems.find((i) => /attach my original PDF/i.test(i.question));
+    expect(attach).toBeDefined();
+    expect(screen.getByText(attach!.answer)).toBeInTheDocument();
+  });
+});
