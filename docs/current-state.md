@@ -7,6 +7,13 @@
 
 ## Last action
 
+- **Vercel deploy runbook added to `README.md` (2026-07-09).** Appended a "Deploy to Vercel"
+  section: prereqs (Vercel + managed Postgres + Anthropic key), required env (`DATABASE_URL`,
+  `CV_ENCRYPTION_KEY`, `AUTH_SECRET`, `ANTHROPIC_API_KEY`) + optional env (`NEXT_PUBLIC_SITE_URL`
+  build-inlined, `COVERAGE_JUDGE`, `MAINTENANCE_SECRET`, LLM/SSL/Sentry), manual idempotent
+  `yarn db:migrate`, deploy, and the optional cleanup-cron curl. Facts verified against env.ts /
+  auth.ts / next.config.ts / migrate.mjs (not guessed). Payments emulator noted as hard-disabled in
+  prod. Docs-only; no code change.
 - **Live honesty-eval `add-live-honesty-eval` DONE + live-verified + reviewed (2026-07-08, ultracode).**
   New KEY-GATED live harness `src/views/evals/honesty-live.eval.test.ts` (views layer — cross-layer
   composition, imports downward via public barrels; FSD-clean). Runs the REAL shipped honesty paths
