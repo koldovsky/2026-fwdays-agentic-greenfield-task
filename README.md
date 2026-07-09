@@ -1,47 +1,42 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+# Focus Blocks
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+Plan your day in plain text — and instantly see the timeline, overlaps, and focus time.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+You write lines like `9:00-10:30 deep work`, and the app parses them into time
+blocks, validates them, finds conflicts and gaps, and draws a scaled vertical timeline.
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+## Quick start
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-## Що зробити
+## Commands
+| Command           | What it does                                 |
+|-------------------|----------------------------------------------|
+| `npm run dev`     | Dev server                                   |
+| `npm run build`   | Production build (checks it all compiles)     |
+| `npm run test`    | Unit tests + eval set                        |
+| `npm run lint`    | Type check (tsc)                             |
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+## Structure
+```
+docs/SPEC.md        — specification (source of truth, SDD)
+docs/REVIEW.md      — maker != checker review pass
+AGENTS.md           — rules for the AI agent (static context)
+src/lib/            — pure logic (parser, time) — covered by tests
+src/app/            — Next.js UI (display only)
+tests/              — Vitest: unit tests (R1-R5) + eval set
+```
 
-## Як здати
+## Agentic Engineering practices
+Details are in the PR description. In short:
+- **SDD:** `docs/SPEC.md` with rules R1-R5 and Definition of Done was written first, then the code.
+- **Context engineering:** `AGENTS.md` as static context; the task and test failures are dynamic context.
+- **Loop engineering:** the "code -> `npm run test` -> fix" cycle instead of manual step-by-step prompting.
+- **Verification:** unit tests for each rule + a separate edge-case eval set.
+- **Maker != checker:** a separate review pass found a bug in overlap detection
+  (only adjacent blocks were compared) — documented in `docs/REVIEW.md`.
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
-
-## Як оцінюється
-
-Дивимось на **докази процесу**, а не на стек:
-
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
-
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
-
----
-
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+## Boundaries (deliberately out of scope)
+Blocks crossing midnight, server persistence, authentication, time zones. See `docs/SPEC.md` section 7.
