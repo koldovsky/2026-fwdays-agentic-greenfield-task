@@ -511,7 +511,7 @@ describe("runIntakeTurn", () => {
     });
 
     // @trace FR-INTAKE-03
-    it("a save_format tool-use that completes qualifying asks the first profiling question (goal) next", async () => {
+    it("a save_format tool-use that completes qualifying asks the merged days+time question (collecting) next", async () => {
       const state: IntakeState = {
         conversationState: "qualifying",
         fields: { studentName: "Богдан", studentAge: 9 },
@@ -521,8 +521,10 @@ describe("runIntakeTurn", () => {
 
       const result = await runIntakeTurn({ state, message: "Індивідуальні, будь ласка", ports });
 
-      expect(result.state.conversationState).toBe("profiling");
-      expect(result.reply).toContain("мета занять");
+      // Profiling is dropped (2026-07-09) — qualifying completion advances
+      // straight to collecting, whose merged step asks days AND time together.
+      expect(result.state.conversationState).toBe("collecting");
+      expect(result.reply).toContain("дні тижня");
     });
 
     // @trace FR-GUARD-05
@@ -581,17 +583,22 @@ describe("runIntakeTurn", () => {
       expect(result.reply).toBe(PROFILE_COMPLETE_CLOSING_COPY);
     });
 
-    // @trace FR-GUARD-04
-    it("the model's own accompanying text (when present) is used as the ack prefix, not discarded, ahead of the deterministic question", async () => {
+    // @trace FR-INTAKE-01
+    it("a pure save_* turn uses the deterministic ack (NOT the model's own narration) + next question — the model's follow-up question is dropped so it is never asked twice in one message", async () => {
       const state = initialIntakeState();
       const model = new FakeModelPort([
-        toolUseResponse("save_name", { name: "Оксана" }, { text: "Записала ім'я." }),
+        // The model narrates its OWN follow-up question — exactly the live-bot
+        // shape that used to double with the deterministic one.
+        toolUseResponse("save_name", { name: "Оксана" }, { text: "Записала: Оксана. А скільки Оксані років?" }),
       ]);
       const ports = makePorts(model);
 
-      const result = await runIntakeTurn({ state, message: "Мене звати Оксана", ports });
+      const result = await runIntakeTurn({ state, message: "Оксана", ports });
 
-      expect(result.reply.startsWith("Записала ім'я.")).toBe(true);
+      // Deterministic ack, not the model's narration; the age question appears
+      // exactly once (from `nextLeadFacingStep`, not the dropped narration).
+      expect(result.reply.startsWith(DEFAULT_ACK_COPY)).toBe(true);
+      expect(result.reply).not.toContain("А скільки Оксані років?");
       expect(result.reply).toContain("Скільки років");
     });
 
@@ -835,16 +842,13 @@ describe("runIntakeTurn", () => {
     // runs (driven by the field-save's own "applied" outcome), with the
     // model's own FAQ-plus-ack narration as its prefix.
     // @trace FR-FAQ-02
-    it("a MIXED turn (save_tastes applied AND log_question logged in the same response) still produces the deterministic ack+next-question reply, with the model's narration as the ack prefix", async () => {
+    it("a MIXED turn (save_format applied AND log_question logged in the same response) still produces the deterministic ack+next-question reply, with the model's narration as the ack prefix", async () => {
+      // Uses save_format (a LIVE mandatory-flow tool) rather than the dropped
+      // save_tastes: completing qualifying advances to collecting, whose merged
+      // days+time question is what the deterministic next-question appends.
       const state: IntakeState = {
-        conversationState: "profiling",
-        fields: {
-          studentName: "Богдан",
-          studentAge: 9,
-          format: "individual",
-          goalTag: "hobby",
-          goalText: "для душі",
-        },
+        conversationState: "qualifying",
+        fields: { studentName: "Богдан", studentAge: 9 },
       };
       const questions = new FakeQuestionsPort();
       const narration = "Дякую! До речі, щодо знижок — уточню це в адміністраторки.";
@@ -852,13 +856,13 @@ describe("runIntakeTurn", () => {
       // text block plus several tool_use blocks) — built here as a raw
       // `ModelResponse` literal rather than via `toolUseResponse()` (this
       // package's own test-infra builder only ever attaches ONE tool_use
-      // block per call), so both `save_tastes` and `log_question` are
+      // block per call), so both `save_format` and `log_question` are
       // dispatched from the SAME model turn, exactly as the bullet names.
       const model = new FakeModelPort([
         {
           content: [
             { type: "text", text: narration },
-            { type: "tool_use", id: "tool-1", name: "save_tastes", input: { tastes: "поп, рок" } },
+            { type: "tool_use", id: "tool-1", name: "save_format", input: { format: "individual" } },
             {
               type: "tool_use",
               id: "tool-2",
@@ -870,9 +874,9 @@ describe("runIntakeTurn", () => {
       ]);
       const ports = makePorts(model, { questions });
 
-      const result = await runIntakeTurn({ state, message: "Поп і рок, а ще яка у вас знижка?", ports });
+      const result = await runIntakeTurn({ state, message: "Індивідуальні, а ще яка у вас знижка?", ports });
 
-      expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "save_tastes", outcome: "applied" }));
+      expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "save_format", outcome: "applied" }));
       expect(result.toolCalls).toContainEqual(expect.objectContaining({ tool: "log_question", outcome: "logged" }));
       expect(questions.unanswered).toEqual(["яка у вас знижка на двох дітей"]);
       expect(result.reply.startsWith(narration)).toBe(true);

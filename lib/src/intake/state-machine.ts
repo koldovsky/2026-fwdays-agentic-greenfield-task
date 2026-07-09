@@ -40,9 +40,11 @@
 //   out-of-state `save_*`/`skip_*` event with `error:
 //   "FIELD_NOT_OWNED_BY_STATE"`, state/fields UNCHANGED):
 //     - "qualifying" owns save_name, save_age, save_format
-//     - "profiling" owns save_goal, skip_goal, save_tastes, skip_tastes,
-//       save_experience_comfort
 //     - "collecting" owns save_weekdays, save_time_range
+//     - "profiling" (DORMANT, dropped from the happy path 2026-07-09) still
+//       nominally owns save_goal, skip_goal, save_tastes, skip_tastes,
+//       save_experience_comfort — reachable only if a caller constructs a
+//       `profiling` state by hand; the live flow never enters it.
 //   `amend` is the one exception (FR-INTAKE-07): accepted in ANY
 //   non-terminal state, re-running the same field's validator; if the new
 //   value fails it (e.g. amended age < 4), it drives the same terminal
@@ -52,7 +54,13 @@
 //
 //   Once ALL fields owned by the current state are present and valid, the
 //   reducer advances to the next state in the happy-path chain:
-//   qualifying -> profiling -> collecting -> proposing. A guardrail
+//   qualifying -> collecting -> proposing (the MVP is mandatory-only, 5 steps,
+//   2026-07-09 — the former "profiling" stage collecting goal/tastes/
+//   experience is DROPPED from the flow; the `profiling` state value and its
+//   save_goal/skip_goal/save_tastes/skip_tastes/save_experience_comfort event
+//   handling remain in this reducer as DORMANT code — never reached on the
+//   happy path and never offered to the model — kept only so the type surface
+//   and the DB CHECK constraint stay stable without a migration). A guardrail
 //   violation (age below 4) short-circuits straight to the terminal
 //   "soft_decline" instead of advancing, from ANY state the violation is
 //   detected in (first save, or a later amend) — spec.md "no request in
@@ -301,9 +309,11 @@ function ageBelowMin(): TransitionResult {
   };
 }
 
-/** Qualifying auto-advances to profiling once name/age/format are ALL
+/** Qualifying auto-advances to collecting once name/age/format are ALL
  *  present and valid — a genuine completeness check (no skip variants exist
- *  for these three fields, so truthiness is an unambiguous signal). */
+ *  for these three fields, so truthiness is an unambiguous signal). The
+ *  former intermediate "profiling" stage is dropped from the happy path
+ *  (2026-07-09, mandatory-only 5-step MVP). */
 function qualifyingComplete(fields: IntakeFields): boolean {
   return (
     fields.studentName !== undefined && fields.studentAge !== undefined && fields.format !== undefined
@@ -418,7 +428,7 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
   switch (event.type) {
     case "save_name": {
       const fields: IntakeFields = { ...state.fields, studentName: event.name };
-      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      const conversationState = qualifyingComplete(fields) ? "collecting" : "qualifying";
       return { state: { conversationState, fields }, detour: null };
     }
 
@@ -428,7 +438,7 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
         return ageBelowMin();
       }
       const fields: IntakeFields = { ...state.fields, studentAge: validation.age };
-      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      const conversationState = qualifyingComplete(fields) ? "collecting" : "qualifying";
       return { state: { conversationState, fields }, detour: null };
     }
 
@@ -441,7 +451,7 @@ export function transition(state: IntakeState, event: IntakeEvent): TransitionRe
         return { state, detour: "scope_violation" };
       }
       const fields: IntakeFields = { ...state.fields, format: validation.format };
-      const conversationState = qualifyingComplete(fields) ? "profiling" : "qualifying";
+      const conversationState = qualifyingComplete(fields) ? "collecting" : "qualifying";
       return { state: { conversationState, fields }, detour: null };
     }
 

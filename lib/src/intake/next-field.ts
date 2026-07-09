@@ -69,7 +69,7 @@ export function nextNeededField(state: IntakeState): NextNeededField | null {
       return {
         field: "studentName",
         instruction:
-          "запитайте ім'я учня/учениці (FR-INTAKE-01). Коли лід називає ім'я — навіть коротко, одним словом, як-от «Саша», «Марійка» чи «мене звати Олег» — це і Є відповідь: одразу запишіть його інструментом save_name, не вітайтеся вдруге й не перепитуйте. Перепитуйте текстом (без виклику інструменту) ЛИШЕ якщо ім'я справді не назване (перше «привіт»/«/start», зустрічне запитання, офтоп).",
+          "запитайте ОДНИМ повідомленням І ім'я, І вік учня/учениці (FR-INTAKE-01/02). ГОЛОВНЕ ПРАВИЛО: спершу збережіть КОЖЕН факт, який лід назвав У ЦЬОМУ повідомленні — і лише потім відповідайте текстом. Назвав ім'я (навіть саме лише «Саша») → ОДРАЗУ save_name; назвав вік → save_age; назвав обидва («Саша, 7») → обидва інструменти в цьому ж ході. НІКОЛИ не відповідайте на назване ім'я самим текстом («гарне ім'я, а скільки років?»), не викликавши спершу save_name — інакше ім'я загубиться. Не перепитуйте вже назване. Перепитуйте текстом (без інструмента) ЛИШЕ коли ім'я справді не назване (перше «привіт»/«/start», зустрічне запитання, офтоп).",
       };
     }
     if (fields.studentAge === undefined) {
@@ -89,36 +89,20 @@ export function nextNeededField(state: IntakeState): NextNeededField | null {
     return null;
   }
 
-  if (conversationState === "profiling") {
-    if (fields.goalTag === undefined) {
-      return {
-        field: "goalTag",
-        instruction:
-          "запитайте мету занять (FR-INTAKE-03) — куди зверніться, лід може завжди пропустити (skip_goal). Коли лід називає мету — навіть коротко («для себе», «щоб виступати», «караоке») — це і Є відповідь: одразу запишіть save_goal, не перепитуйте.",
-      };
-    }
-    if (fields.tastes === undefined) {
-      return {
-        field: "tastes",
-        instruction:
-          "запитайте музичні смаки та, за бажанням, пісню-мрію (FR-INTAKE-04) — можна пропустити (skip_tastes). Коли лід називає смаки — навіть коротко («поп», «Океан Ельзи») — це і Є відповідь: одразу запишіть save_tastes, не перепитуйте.",
-      };
-    }
-    if (fields.experience === undefined || fields.comfort === undefined) {
-      return {
-        field: "experienceComfort",
-        instruction: "запитайте попередній досвід і рівень комфорту зі співом (FR-INTAKE-05).",
-      };
-    }
-    return null;
-  }
-
+  // The former "profiling" stage (goal/tastes/experience) is DROPPED from the
+  // MVP flow (2026-07-09, mandatory-only 5-step intake) — `nextNeededField`
+  // no longer asks for those fields, so a `profiling` state (only reachable if
+  // constructed by hand) falls through to the trailing `null` below.
   if (conversationState === "collecting") {
     if (fields.preferredWeekdays === undefined) {
-      return { field: "preferredWeekdays", instruction: "запитайте бажані дні тижня (FR-INTAKE-06)." };
+      return {
+        field: "preferredWeekdays",
+        instruction:
+          "запитайте ОДНИМ повідомленням І бажані дні тижня, І бажаний час доби для занять (FR-INTAKE-06). Орієнтуйтесь на відповідь ліда: якщо він назве і дні, і час (навіть коротко — «середа зранку»), одразу запишіть ОБИДВА — save_weekdays і save_time_range в цьому ж ході — і не перепитуйте; якщо лише дні — save_weekdays, час запитаєте наступним кроком; якщо лише час — save_time_range. ВІДКРИТА відповідь — «будь-який день», «будь-коли», «все одно», «немає різниці» — це ПОВНОЦІННА відповідь, а не привід відмовляти: запишіть її як є (save_weekdays «будь-який день» та/або save_time_range «будь-який час») і рухайтесь далі до пропозиції слотів. НІКОЛИ не просіть ліда звузити діапазон і не кажіть, що діапазон «задовгий» — підбір найкращих варіантів робить код (rankSlots), а не лід.",
+      };
     }
     if (fields.preferredTimeRange === undefined) {
-      return { field: "preferredTimeRange", instruction: "запитайте бажаний часовий проміжок (FR-INTAKE-06)." };
+      return { field: "preferredTimeRange", instruction: "запитайте бажаний часовий проміжок доби (FR-INTAKE-06)." };
     }
     return null;
   }

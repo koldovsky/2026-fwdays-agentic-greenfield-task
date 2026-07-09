@@ -51,10 +51,10 @@ function qualifying(fields: IntakeState["fields"] = {}): IntakeState {
 
 const PROPOSING_OR_LATER = ["proposing", "awaiting_admin", "done"] as const;
 
-describe("transition() — happy path: qualifying -> profiling -> collecting -> proposing", () => {
+describe("transition() — happy path: qualifying -> collecting -> proposing (profiling dropped 2026-07-09)", () => {
   // @trace FR-INTAKE-01
   // @trace FR-INTAKE-02
-  it("advances qualifying -> profiling only once name, age, and format are all saved", () => {
+  it("advances qualifying -> collecting (NOT profiling) only once name, age, and format are all saved", () => {
     let result = transition(qualifying(), { type: "save_name", name: "Оксана" });
     expect(result.state.fields.studentName).toBe("Оксана");
     expect(result.state.conversationState).toBe("qualifying");
@@ -68,63 +68,11 @@ describe("transition() — happy path: qualifying -> profiling -> collecting -> 
 
     result = transition(result.state, { type: "save_format", format: "individual" });
     expect(result.state.fields.format).toBe("individual");
-    expect(result.state.conversationState).toBe("profiling");
+    // The MVP intake is mandatory-only (5 steps) — qualifying now advances
+    // STRAIGHT to collecting, skipping the dropped "profiling" stage.
+    expect(result.state.conversationState).toBe("collecting");
     expect(result.error).toBeUndefined();
     expect(result.detour).toBeNull();
-  });
-
-  // @trace FR-INTAKE-03
-  // @trace FR-INTAKE-04
-  // @trace FR-INTAKE-05
-  it("advances profiling -> collecting once goal, tastes, and experience/comfort are all saved", () => {
-    const base = { conversationState: "profiling", fields: { studentName: "Оксана", studentAge: 9, format: "individual" } } as IntakeState;
-
-    let result = transition(base, {
-      type: "save_goal",
-      goalTag: "karaoke",
-      goalText: "хочу співати в караоке з друзями",
-    });
-    expect(result.state.fields.goalTag).toBe("karaoke");
-    expect(result.state.fields.goalText).toBe("хочу співати в караоке з друзями");
-    expect(result.state.conversationState).toBe("profiling");
-
-    result = transition(result.state, {
-      type: "save_tastes",
-      tastes: "любить сучасну поп-музику",
-      dreamSong: "River Flows in You (спів)",
-    });
-    expect(result.state.fields.tastes).toBe("любить сучасну поп-музику");
-    expect(result.state.conversationState).toBe("profiling");
-
-    result = transition(result.state, {
-      type: "save_experience_comfort",
-      experience: "співала у шкільному хорі",
-      comfort: "з фонограмою",
-    });
-    expect(result.state.fields.experience).toBe("співала у шкільному хорі");
-    expect(result.state.fields.comfort).toBe("з фонограмою");
-    expect(result.state.conversationState).toBe("collecting");
-  });
-
-  // @trace FR-INTAKE-03
-  // @trace FR-INTAKE-04
-  it("advances profiling -> collecting when goal and tastes are explicitly skipped", () => {
-    const base = { conversationState: "profiling", fields: { studentName: "Оксана", studentAge: 9, format: "individual" } } as IntakeState;
-
-    let result = transition(base, { type: "skip_goal" });
-    expect(result.state.fields.goalTag).toBeUndefined();
-    expect(result.state.conversationState).toBe("profiling");
-
-    result = transition(result.state, { type: "skip_tastes" });
-    expect(result.state.fields.tastes).toBeUndefined();
-    expect(result.state.conversationState).toBe("profiling");
-
-    result = transition(result.state, {
-      type: "save_experience_comfort",
-      experience: "ніякого",
-      comfort: "акапела",
-    });
-    expect(result.state.conversationState).toBe("collecting");
   });
 
   // @trace FR-INTAKE-06

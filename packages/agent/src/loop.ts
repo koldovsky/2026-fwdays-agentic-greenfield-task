@@ -512,31 +512,44 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
   const stateAdvanced = currentState.conversationState !== state.conversationState;
   const hasAppliedToolCall = toolCalls.some((call) => call.outcome === "applied");
   const reply =
-    hasAppliedToolCall || stateAdvanced ? assembleReply(narratedText, currentState) : narratedText;
+    hasAppliedToolCall || stateAdvanced
+      ? assembleReply(
+          // Keep the model's narration as the ack ONLY when this turn also
+          // logged a FAQ (answer_faq/log_question) — then the narration is the
+          // lead's KB answer, not a re-asked next question. A pure save_* turn
+          // passes "" so the ack is the deterministic DEFAULT_ACK_COPY (no
+          // within-bubble double-question).
+          toolCalls.some((call) => call.outcome === "logged") ? narratedText : "",
+          currentState,
+        )
+      : narratedText;
 
   return { reply, state: currentState, toolCalls };
 }
 
 /** Assembles the deterministic lead-facing reply for a turn whose tool-use
  *  dispatch actually recorded a field or advanced/ended the conversation
- *  (see the call site's comment for exactly which outcomes qualify). When
- *  another field is still needed, the reply is a warm acknowledgement —
- *  the model's own accompanying text if it gave any (rare, per this
- *  bugfix's root cause, but never discarded when present), else the
- *  deterministic `DEFAULT_ACK_COPY` — followed by the deterministic
- *  Ukrainian question for the NEXT needed field of the RESULTING state
- *  (`nextLeadFacingStep`, `@kamerton/lib/src/intake/questions.ts`). When the
- *  resulting state has no next field (reached `proposing`, or a
- *  terminal/`awaiting_admin` state), the closing copy is used standalone —
- *  never composed with the model's narration, so the deterministic control
- *  in `questions.ts` can never be second-guessed by an off-script model
- *  sentence at exactly the moment the conversation ends. */
-function assembleReply(narratedText: string, resultState: IntakeState): string {
+ *  (see the call site's comment for exactly which outcomes qualify). The CODE
+ *  owns the next question deterministically: a warm `DEFAULT_ACK_COPY` ack
+ *  plus the Ukrainian question for the NEXT needed field of the RESULTING
+ *  state (`nextLeadFacingStep`, `@kamerton/lib/src/intake/questions.ts`).
+ *
+ *  `ackText` is the acknowledgement prefix: the caller passes the model's own
+ *  narration ONLY for a turn that also LOGGED a FAQ (answer_faq/log_question),
+ *  where that narration is the lead's actual KB answer and must survive; for a
+ *  pure save_* turn it passes `""`, so the ack falls back to the deterministic
+ *  `DEFAULT_ACK_COPY`. This is deliberate: on a plain save turn the model
+ *  usually narrates its OWN follow-up question ("Записала: Саша. А скільки
+ *  років?"), which doubled with `step.text` — the same question twice in one
+ *  message (a within-bubble duplicate seen on the live bot). When the
+ *  resulting state has no next field (reached `proposing`, or a terminal/
+ *  `awaiting_admin` state), the closing copy is used standalone. */
+function assembleReply(ackText: string, resultState: IntakeState): string {
   const step = nextLeadFacingStep(resultState);
   if (step.kind === "closing") {
     return step.text;
   }
-  const ack = narratedText.trim().length > 0 ? narratedText.trim() : DEFAULT_ACK_COPY;
+  const ack = ackText.trim().length > 0 ? ackText.trim() : DEFAULT_ACK_COPY;
   return `${ack} ${step.text}`;
 }
 

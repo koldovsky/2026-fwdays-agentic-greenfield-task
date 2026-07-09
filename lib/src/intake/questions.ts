@@ -49,6 +49,14 @@ export const CANCELLED_CLOSING_COPY: string =
 export const AWAITING_ADMIN_CLOSING_COPY: string =
   "Дякую, усе зібрано — тепер дочекаємось рішення адміністратора і одразу повідомимо.";
 
+/** Asked when a lead gave the age but not the name in step 1 (the merged
+ *  name+age question) — asks ONLY the missing name, never re-asking the age. */
+export const NAME_ONLY_QUESTION: string = "А як звати майбутнього учня чи ученицю?";
+
+/** Asked when a lead gave the time but not the weekdays — asks ONLY the
+ *  missing weekdays, never re-asking the time. */
+export const WEEKDAYS_ONLY_QUESTION: string = "А які дні тижня зручні для занять?";
+
 /** One deterministic, warm, Ukrainian, curiosity-shaped question per
  *  next-needed field — `parentAddressed` (BC-AGE-02) only changes wording
  *  for the questions that are actually ABOUT the student (goal/tastes/
@@ -57,8 +65,11 @@ export const AWAITING_ADMIN_CLOSING_COPY: string =
 function questionFor(field: NeededField, parentAddressed: boolean): string {
   switch (field) {
     case "studentName":
-      return "Як звати учня чи ученицю, яку записуємо на пробне заняття?";
+      // Merged name+age question (2026-07-09, 5-step MVP) — asked together so
+      // a lead who answers both («Саша, 7») completes step 1 in one turn.
+      return "Як звати учня чи ученицю і скільки їй/йому років?";
     case "studentAge":
+      // Fallback when the lead gave a name but no age in step 1.
       return "Скільки років учню чи учениці?";
     case "format":
       return "Який формат занять цікавить — індивідуальний чи груповий?";
@@ -75,8 +86,12 @@ function questionFor(field: NeededField, parentAddressed: boolean): string {
         ? "Чи є в дитини попередній досвід співу, і наскільки їй комфортно співати?"
         : "Чи є попередній досвід співу, і наскільки вам комфортно співати?";
     case "preferredWeekdays":
-      return "Які дні тижня зручні для занять?";
+      // Merged weekdays+time question (2026-07-09, 5-step MVP) — asked together
+      // so a lead who answers both («середа зранку») completes the step in one
+      // turn.
+      return "Які дні тижня та час доби зручні для занять — наприклад, «середа зранку»?";
     case "preferredTimeRange":
+      // Fallback when the lead gave weekdays but no time.
       return "У який час доби зручніше — зранку, вдень чи ввечері?";
     case "slots":
       // Reached only for conversationState "proposing" — nextLeadFacingStep
@@ -118,6 +133,19 @@ export function nextLeadFacingStep(state: IntakeState): { kind: "question" | "cl
     // with `nextNeededField`'s own state coverage; never a dangling empty
     // string regardless.
     return { kind: "closing", text: PROFILE_COMPLETE_CLOSING_COPY };
+  }
+
+  // Ask ONLY the still-missing half of a merged pair. The name+age and
+  // weekdays+time questions are merged so a lead who gives both finishes the
+  // step in one turn — but if only one arrived (the lead split the answer, or
+  // the model saved only one), re-asking the WHOLE pair repeats a fact just
+  // given (the live-bot "записала 7… як звати і скільки років?" duplicate).
+  // When the pair's OTHER field is already present, ask just the missing one.
+  if (next.field === "studentName" && fields.studentAge !== undefined) {
+    return { kind: "question", text: NAME_ONLY_QUESTION };
+  }
+  if (next.field === "preferredWeekdays" && fields.preferredTimeRange !== undefined) {
+    return { kind: "question", text: WEEKDAYS_ONLY_QUESTION };
   }
 
   const parentAddressed = fields.studentAge !== undefined && addressesParent(fields.studentAge);

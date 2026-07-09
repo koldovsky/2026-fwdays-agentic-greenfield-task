@@ -249,49 +249,39 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
   // --- bullet 4: full happy-path transcript persists matching columns; ----
   // --- first-lesson brief compilable, skipped fields explicitly marked ----
   // @trace FR-INTAKE-01
+  // @trace FR-INTAKE-01
   // @trace FR-INTAKE-02
-  // @trace FR-INTAKE-03
-  // @trace FR-INTAKE-04
-  // @trace FR-INTAKE-05
   // @trace FR-INTAKE-06
-  it("a full happy-path transcript (with goal/tastes explicitly skipped) persists matching requests columns and compiles into a first-lesson brief with skipped fields marked", async () => {
+  it("a full 5-step mandatory-only happy path (name+age merged, format, weekdays+time merged) reaches proposing with ranked slots offered", async () => {
     const transport = new FakeTelegramTransport();
     const calendar = new FakeCalendarPort();
+    // The MVP intake is mandatory-only (2026-07-09): the two naturally-paired
+    // facts are collected in ONE turn each — the model returns a multi-block
+    // response (two tool_use blocks) it extracts from the lead's single
+    // answer. No goal/tastes/experience step exists anymore.
     const script: ModelResponse[] = [
-      toolUseResponse("save_name", { name: "Оксана" }),
-      toolUseResponse("save_age", { age: 9 }),
+      // Turn 1 — "Оксана, 9 років": name AND age in one turn.
+      { content: [
+        { type: "tool_use", id: "t1", name: "save_name", input: { name: "Оксана" } },
+        { type: "tool_use", id: "t2", name: "save_age", input: { age: 9 } },
+      ] },
+      // Turn 2 — format.
       toolUseResponse("save_format", { format: "individual" }),
-      toolUseResponse("skip_goal", {}),
-      toolUseResponse("skip_tastes", {}),
-      toolUseResponse("save_experience_comfort", {
-        experience: "ніколи не займалась",
-        comfort: "трохи хвилюється",
-      }),
-      toolUseResponse("save_weekdays", { weekdays: "вівторок, четвер" }),
-      toolUseResponse("save_time_range", { timeRange: "після 16:00" }),
-      // Auto-propose (flow fix): the save_time_range turn enters `proposing`
-      // and the pipeline immediately runs one more agent turn, which the model
-      // answers with propose_slots — so the profile-complete message already
-      // carries the ranked free slots, never dead-ending on a "we'll come
-      // back" note.
-      toolUseResponse("propose_slots", {
-        weekdays: ["Tue", "Thu"],
-        timeWindow: { start: "09:00", end: "20:00" },
-      }),
+      // Turn 3 — "Вівторок і четвер, після 16:00": weekdays AND time in one turn
+      // (completes the profile -> proposing).
+      { content: [
+        { type: "tool_use", id: "t3", name: "save_weekdays", input: { weekdays: "вівторок, четвер" } },
+        { type: "tool_use", id: "t4", name: "save_time_range", input: { timeRange: "після 16:00" } },
+      ] },
+      // Auto-propose turn: the pipeline runs one more agent turn on entering
+      // proposing; the model answers with propose_slots so the profile-complete
+      // message already carries the ranked free slots.
+      toolUseResponse("propose_slots", { weekdays: ["Tue", "Thu"], timeWindow: { start: "09:00", end: "20:00" } }),
     ];
     const model = new FakeModelPort(script);
     const deps = makeDeps({ transport, model, calendar });
 
-    const messages = [
-      "Мене звати Оксана",
-      "Їй 9 років",
-      "Індивідуальні, будь ласка",
-      "Поки не думали про мету",
-      "Смаки поки не скажу",
-      "Ніколи не займалась, трохи хвилюється",
-      "Вівторок і четвер",
-      "Після 16:00",
-    ];
+    const messages = ["Оксана, 9 років", "Індивідуальні, будь ласка", "Вівторок і четвер, після 16:00"];
     for (const text of messages) {
       await handleUpdate(textUpdate({ text }), deps);
     }
@@ -302,11 +292,12 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     expect(request.student_name).toBe("Оксана");
     expect(request.student_age).toBe(9);
     expect(request.format).toBe("individual");
+    // The dropped profiling fields are never collected.
     expect(request.goal_tag).toBeNull();
     expect(request.goal_text).toBeNull();
     expect(request.tastes).toBeNull();
-    expect(request.experience).toBe("ніколи не займалась");
-    expect(request.comfort).toBe("трохи хвилюється");
+    expect(request.experience).toBeNull();
+    expect(request.comfort).toBeNull();
     expect(request.preferred_weekdays).toBe("вівторок, четвер");
     expect(request.preferred_time_range).toBe("після 16:00");
     // Auto-propose fired: the profile-complete turn already offered ranked
@@ -316,8 +307,6 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     const brief = compileFirstLessonBrief(request);
     expect(brief).toContain("Оксана");
     expect(brief).toContain("9");
-    expect(brief.toLowerCase()).toMatch(/не назвав.*мет|пропущен/);
-    expect(brief.toLowerCase()).toMatch(/не назвав.*смак|пропущен/);
   });
 
   // --- bullet 5: age-3 path ------------------------------------------------
@@ -369,7 +358,9 @@ describe("handleUpdate (packages/bot/src/pipeline.ts, tasks.md 5.4)", () => {
     await handleUpdate(textUpdate({ text: "Ну добре, тоді пробне заняття з вокалу" }), deps);
 
     request2 = findLatestRequestForLead(db, lead!.id)!;
-    expect(request2.state).toBe("profiling");
+    // Qualifying completion now advances straight to collecting (profiling
+    // dropped, mandatory-only 5-step MVP).
+    expect(request2.state).toBe("collecting");
     expect(request2.format).toBe("individual");
   });
 

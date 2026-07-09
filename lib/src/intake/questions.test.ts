@@ -46,37 +46,48 @@ describe("nextLeadFacingStep", () => {
 
   // @trace FR-INTAKE-03
   // @trace BC-AGE-02
-  it("phrases the goal question about the CHILD when studentAge < 10 (parent-addressed)", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: { studentName: "Богдан", studentAge: 7, format: "individual" },
-    };
-    const step = nextLeadFacingStep(state);
+  // The goal/tastes/experience ("profiling") questions are DROPPED from the
+  // MVP flow (2026-07-09, mandatory-only 5-step intake), so there are no
+  // longer any parent-vs-student-addressed get-to-know questions to phrase.
+  // The merged name+age question is asked as one neutral fact instead.
+  // @trace FR-INTAKE-01
+  it("asks name and age together (merged step 1), with no assessment/grading language", () => {
+    const step = nextLeadFacingStep(initialIntakeState());
     expect(step.kind).toBe("question");
-    expect(step.text).toContain("дитини");
-  });
-
-  // @trace FR-INTAKE-03
-  // @trace BC-AGE-02
-  it("phrases the goal question directly to the student when studentAge >= 10", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: { studentName: "Оксана", studentAge: 14, format: "individual" },
-    };
-    const step = nextLeadFacingStep(state);
-    expect(step.kind).toBe("question");
-    expect(step.text).not.toContain("дитини");
-  });
-
-  // @trace FR-INTAKE-03
-  it("goal/tastes questions never use assessment/grading language", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: { studentName: "Богдан", studentAge: 9, format: "individual" },
-    };
-    const step = nextLeadFacingStep(state);
+    expect(step.text).toContain("звати");
+    expect(step.text).toContain("років");
     expect(step.text.toLowerCase()).not.toContain("перевір");
     expect(step.text.toLowerCase()).not.toContain("рівень");
+  });
+
+  // @trace FR-INTAKE-06
+  it("asks weekdays and time together (merged step 3)", () => {
+    const step = nextLeadFacingStep({
+      conversationState: "collecting",
+      fields: { studentName: "Б", studentAge: 9, format: "individual" },
+    });
+    expect(step.kind).toBe("question");
+    expect(step.text).toContain("дні тижня");
+    expect(step.text).toContain("час доби");
+  });
+
+  // @trace FR-INTAKE-01
+  it("asks ONLY the name (not the merged pair) when age is already collected — no re-asking a given fact", () => {
+    const step = nextLeadFacingStep({ conversationState: "qualifying", fields: { studentAge: 7 } });
+    expect(step.kind).toBe("question");
+    expect(step.text).toContain("звати");
+    expect(step.text).not.toContain("років"); // must NOT re-ask the age just given
+  });
+
+  // @trace FR-INTAKE-06
+  it("asks ONLY the weekdays (not the merged pair) when the time is already collected", () => {
+    const step = nextLeadFacingStep({
+      conversationState: "collecting",
+      fields: { studentName: "Б", studentAge: 9, format: "individual", preferredTimeRange: "зранку" },
+    });
+    expect(step.kind).toBe("question");
+    expect(step.text).toContain("дні тижня");
+    expect(step.text).not.toContain("час доби"); // must NOT re-ask the time just given
   });
 
   // @trace FR-INTAKE-06

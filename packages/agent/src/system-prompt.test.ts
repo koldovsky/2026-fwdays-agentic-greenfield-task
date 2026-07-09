@@ -136,14 +136,16 @@ describe("buildSystemPrompt — dynamic block (state-derived context)", () => {
     expect(system).toContain("studentName");
   });
 
-  // @trace FR-INTAKE-03
-  it("names goalTag as the next needed field once name/age/format are collected", () => {
+  // @trace FR-INTAKE-06
+  it("names preferredWeekdays as the next needed field once name/age/format are collected (profiling dropped)", () => {
+    // Qualifying completion now advances straight to collecting (mandatory-only
+    // 5-step MVP), so the next needed field is the days+time step, not a goal.
     const state: IntakeState = {
-      conversationState: "profiling",
+      conversationState: "collecting",
       fields: { studentName: "Богдан", studentAge: 9, format: "individual" },
     };
     const system = buildSystemPrompt(state);
-    expect(system).toContain("goalTag");
+    expect(system).toContain("preferredWeekdays");
   });
 
   // @trace FR-INTAKE-06

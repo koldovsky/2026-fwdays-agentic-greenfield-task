@@ -29,38 +29,15 @@ describe("nextNeededField", () => {
     expect(nextNeededField(state)?.field).toBe("format");
   });
 
-  // @trace FR-INTAKE-03
-  it("names goalTag first in profiling", () => {
+  // The former "profiling" stage (goalTag/tastes/experienceComfort) is DROPPED
+  // from the MVP flow (2026-07-09, mandatory-only 5-step intake) — a
+  // hand-constructed `profiling` state now has nothing to actively collect.
+  it("returns null for a (dropped) profiling state — goal/tastes/experience are no longer asked", () => {
     const state: IntakeState = {
       conversationState: "profiling",
       fields: { studentName: "Богдан", studentAge: 9, format: "individual" },
     };
-    expect(nextNeededField(state)?.field).toBe("goalTag");
-  });
-
-  // @trace FR-INTAKE-04
-  it("names tastes once goalTag is collected", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: { studentName: "Богдан", studentAge: 9, format: "individual", goalTag: "hobby", goalText: "хобі" },
-    };
-    expect(nextNeededField(state)?.field).toBe("tastes");
-  });
-
-  // @trace FR-INTAKE-05
-  it("names experienceComfort once goal and tastes are collected", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: {
-        studentName: "Богдан",
-        studentAge: 9,
-        format: "individual",
-        goalTag: "hobby",
-        goalText: "хобі",
-        tastes: "поп",
-      },
-    };
-    expect(nextNeededField(state)?.field).toBe("experienceComfort");
+    expect(nextNeededField(state)).toBeNull();
   });
 
   // @trace FR-INTAKE-06
@@ -84,23 +61,6 @@ describe("nextNeededField", () => {
       },
     };
     expect(nextNeededField(state)?.field).toBe("preferredTimeRange");
-  });
-
-  it("returns null once profiling is fully collected", () => {
-    const state: IntakeState = {
-      conversationState: "profiling",
-      fields: {
-        studentName: "Богдан",
-        studentAge: 9,
-        format: "individual",
-        goalTag: "hobby",
-        goalText: "хобі",
-        tastes: "поп",
-        experience: "трохи",
-        comfort: "комфортно",
-      },
-    };
-    expect(nextNeededField(state)).toBeNull();
   });
 
   it("returns null for terminal states (done, soft_decline) and awaiting_admin", () => {

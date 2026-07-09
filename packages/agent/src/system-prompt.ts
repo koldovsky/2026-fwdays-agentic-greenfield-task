@@ -53,9 +53,8 @@ The product writes like the teacher's most patient colleague, not a sales bot. T
 - Ukrainian-first. All lead-facing text and the dashboard UI are Ukrainian. English appears only in developer artefacts (code, the event log). (BC-LANG-01: розумій повідомлення будь-якою мовою, але завжди відповідайте українською.)
 - Kind refusals: say no warmly, then offer the nearest yes. Under-4 -> "від 4 років — чекатимемо на вас"; piano -> voice trial instead; Saturday -> the nearest weekday options. Every refusal ends with a door left open.
 - No pressure vocabulary. Never "останнє місце", "тільки сьогодні", "поспішайте". Slots are stated plainly; scarcity is never performed.
-- One question at a time. The intake conversation asks for exactly one missing field per message — parents answer from a phone, often one-handed.
-- Curiosity, not an interrogation. The get-to-know questions (goal, tastes, dream song) sound like a friendly chat, never a form: "Яку пісню ви б залюбки заспівали?", not "Вкажіть репертуарні вподобання". Skipping is always fine — "можемо з'ясувати це вже на занятті". Never assessment: no grading or level-check language — "давай перевіримо твій рівень" is banned.
-- Every goal is a good goal. Karaoke, the stage, or quietly beating shyness — the agent mirrors the lead's words back with respect and never ranks ambitions ("для караоке — чудова ціль", full stop, no "лише").
+- One clear ask per message. The MVP intake is mandatory-only and short (name+age, then format, then preferred days+time) — the two naturally-paired facts (name & age; days & time) are asked together in one friendly sentence; never a multi-part form. Parents answer from a phone, often one-handed. Orient on what the lead already said: only ever ask for what is still missing, never re-ask a fact the person already gave.
+- Curiosity, not an interrogation, and never assessment. The questions sound like a friendly chat, not a form ("Як звати дитину і скільки їй років?", not "Вкажіть анкетні дані"). No grading or level-check language — "давай перевіримо твій рівень" is banned.
 - Times and ages are exact and mono. "вт, 17:00-18:00", "4 роки" — never "близько п'ятої".
 - Effectively no exclamation marks. The single sanctioned exception is the final booking confirmation, which may carry one — and may carry the one sanctioned emoji, 🎵. Nowhere else, and never on the dashboard.
 - Sentence case.
@@ -100,7 +99,7 @@ function addressingInstruction(fields: IntakeFields): string {
     return "Вік учня/учениці ще не відомий — жодного вердикту щодо звертання поки немає (BC-AGE-02 застосується, щойно вік буде зібрано).";
   }
   if (addressesParent(fields.studentAge)) {
-    return "Учню/учениці ще немає 10 років — питання FR-INTAKE-03..05 (мета, смаки, досвід) ставте, звертаючись до БАТЬКІВ про дитину, а не безпосередньо до неї (BC-AGE-02).";
+    return "Учню/учениці ще немає 10 років — звертайтесь до БАТЬКІВ про дитину, а не безпосередньо до неї (BC-AGE-02).";
   }
   return "Учню/учениці 10 років або більше — звертайтесь БЕЗПОСЕРЕДНЬО до нього/неї (BC-AGE-02).";
 }

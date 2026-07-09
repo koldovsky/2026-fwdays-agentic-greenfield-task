@@ -29,11 +29,9 @@ const EXPECTED_TOOL_NAMES = [
   "save_name",
   "save_age",
   "save_format",
-  "save_goal",
-  "skip_goal",
-  "save_tastes",
-  "skip_tastes",
-  "save_experience_comfort",
+  // save_goal / skip_goal / save_tastes / skip_tastes / save_experience_comfort
+  // REMOVED 2026-07-09: the MVP intake is mandatory-only (5 steps), the model
+  // is never offered a goal/tastes/experience tool.
   "save_weekdays",
   "save_time_range",
   "amend_field",

@@ -115,41 +115,26 @@ export const cases: EvalCase[] = [
     rubric: [
       'CRITICAL: toolCalls contains "save_format" — the bare choice is saved, not re-asked',
       'CRITICAL: fieldSaves records a format patch with value "group" — the one-word answer «груповий» is mapped to the group format',
-      'CRITICAL: conversationStateAfter is "profiling" — collecting the last qualifying field advanced the conversation; it did NOT stay in "qualifying"',
+      'CRITICAL: conversationStateAfter is "collecting" — saving the last qualifying field advances STRAIGHT to collecting (the MVP is mandatory-only, the former "profiling" stage is dropped); it did NOT stay in "qualifying"',
       "CRITICAL: the reply does NOT re-ask which format the lead wants — it accepts «груповий» and moves forward",
       "the reply is in Ukrainian, kind and pressure-free (BC-LANG-01, BC-BRAND-01)",
     ],
   },
   {
-    id: "eval-fr-intake-01-two-fact-experience-comfort-across-turns",
-    trace: ["FR-INTAKE-05", "NFR-REL-01"],
+    id: "eval-fr-intake-01-merged-name-and-age-in-one-turn",
+    trace: ["FR-INTAKE-01", "FR-INTAKE-02"],
     dimension: "intake-flow",
     capability: "intake",
     scenario:
-      "The `profiling` field pending is experience+comfort — a SINGLE field that needs TWO facts. The lead gave " +
-      "the first fact (no prior experience → «Немає») on the previous turn, which is now in the replayed " +
-      "conversation history; on THIS turn the lead gives the second fact — «Соромиться» (feels shy). With both " +
-      "facts now visible (one in history, one current), the agent must finally record them together, not re-ask a " +
-      "third time (the live loop bug: with no history the model could never hold both facts at once).",
-    produce: () =>
-      runIntakeProbe(
-        {
-          conversationState: "profiling",
-          fields: { studentName: "Саша", studentAge: 9, format: "individual", goalTag: "hobby", goalText: "", tastes: "поп" },
-        },
-        "Соромиться",
-        [
-          { role: "assistant", content: "Чи є в Саші попередній досвід співу, і наскільки йому комфортно співати?" },
-          { role: "user", content: "Немає" },
-          { role: "assistant", content: "Зрозуміло. А наскільки Саші комфортно співати — вільно чи трохи соромиться?" },
-        ],
-      ),
+      "Step 1 of the mandatory-only 5-step intake asks name AND age together. The lead answers both in one terse " +
+      "message — «Саша, 7» — orienting the agent: it should record BOTH facts this turn and move on to the format " +
+      "question, never re-asking for a name or age it already has.",
+    produce: () => runIntakeProbe(initialIntakeState(), "Саша, 7"),
     rubric: [
-      'CRITICAL: toolCalls contains "save_experience_comfort" — with the first fact in priorTurns and the second in leadMessage, the agent records BOTH; it does NOT re-ask a third time',
-      "CRITICAL: fieldSaves records an experience/comfort patch capturing BOTH the no-prior-experience fact (from «Немає» in priorTurns) AND the shyness fact (from «Соромиться»)",
-      'CRITICAL: conversationStateAfter is "collecting" — recording the last profiling field advanced the conversation out of "profiling"',
-      "CRITICAL: the reply does NOT ask again about experience or comfort — it accepts both and moves forward (e.g. to preferred days/time)",
-      "the reply is in Ukrainian, kind and pressure-free — shyness is met warmly, never with pressure (BC-LANG-01, BC-BRAND-01)",
+      'CRITICAL: toolCalls contains BOTH "save_name" and "save_age" — the agent extracts both facts from the single answer, not just one',
+      'CRITICAL: fieldSaves capture studentName "Саша" and studentAge 7 (as an integer)',
+      "CRITICAL: the reply does NOT re-ask for the name or the age — it moves forward (e.g. asks the lesson format)",
+      "the reply is in Ukrainian, kind and pressure-free (BC-LANG-01, BC-BRAND-01)",
     ],
   },
 ];

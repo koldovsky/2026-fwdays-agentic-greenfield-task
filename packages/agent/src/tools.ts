@@ -54,17 +54,6 @@ import type { ToolDefinition } from "./model-port.ts";
  *  header already gives for `GoalTag`. */
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"] as const;
 
-/** The GoalTag enum, duplicated here (not imported from
- *  `@kamerton/lib/src/intake/state-machine.ts`) deliberately: a tool JSON
- *  Schema is data the Anthropic API validates against, a wire-format
- *  contract that must stay stable even if the reducer's internal type
- *  changes shape — same reasoning `lib/src/intake/format.ts`'s header gives
- *  for keeping `CandidateFormat` as the shared source of truth for
- *  `save_format` specifically (imported below), while the less
- *  guardrail-critical `goalTag` enum is simply kept in sync by hand and
- *  covered by tools.test.ts. */
-const GOAL_TAGS = ["karaoke", "performance", "confidence", "hobby", "other"] as const;
-
 /** The exact candidate-format enum `save_format` accepts — BOTH the two
  *  bookable formats and the two detour values (`unsure`/`instrument`), so
  *  the reducer's own `validateFormat` (defense in depth) is what turns a
@@ -75,8 +64,12 @@ const CANDIDATE_FORMATS = ["individual", "group", "unsure", "instrument"] as con
 /**
  * The closed tool set for this slice (design.md Decision 2; kb-learning
  * design.md Decision 4 adds `answer_faq`/`log_question`) — exactly these
- * eighteen tools, no more, no fewer. `tools.test.ts` pins this list's shape;
- * changing it is a spec-level decision, not a casual edit.
+ * thirteen tools, no more, no fewer. The five former "profiling" tools
+ * (save_goal/skip_goal/save_tastes/skip_tastes/save_experience_comfort) were
+ * REMOVED 2026-07-09 when the MVP intake became mandatory-only (5 steps:
+ * name+age, format, weekdays+time, propose, pick) — the model is no longer
+ * offered any goal/tastes/experience tool. `tools.test.ts` pins this list's
+ * shape; changing it is a spec-level decision, not a casual edit.
  */
 export const TOOLS: ToolDefinition[] = [
   {
@@ -108,52 +101,6 @@ export const TOOLS: ToolDefinition[] = [
         format: { type: "string", enum: [...CANDIDATE_FORMATS], description: "Обраний або названий формат." },
       },
       required: ["format"],
-    },
-  },
-  {
-    name: "save_goal",
-    description: "Записати мету занять — код-тег плюс дослівний текст ліда (FR-INTAKE-03).",
-    input_schema: {
-      type: "object",
-      properties: {
-        goalTag: { type: "string", enum: [...GOAL_TAGS], description: "Найближчий код-тег мети." },
-        goalText: { type: "string", description: "Дослівна відповідь ліда про мету занять." },
-      },
-      required: ["goalTag", "goalText"],
-    },
-  },
-  {
-    name: "skip_goal",
-    description: "Лід не назвав конкретну мету — пропустити поле без запису значення (FR-INTAKE-03).",
-    input_schema: { type: "object", properties: {} },
-  },
-  {
-    name: "save_tastes",
-    description: "Записати музичні смаки, і опційно мрію-пісню, які назвав лід (FR-INTAKE-03).",
-    input_schema: {
-      type: "object",
-      properties: {
-        tastes: { type: "string", description: "Дослівний опис музичних смаків ліда." },
-        dreamSong: { type: "string", description: "Пісня-мрія, якщо лід її назвав." },
-      },
-      required: ["tastes"],
-    },
-  },
-  {
-    name: "skip_tastes",
-    description: "Лід не назвав музичні смаки — пропустити поле без запису значення (FR-INTAKE-03).",
-    input_schema: { type: "object", properties: {} },
-  },
-  {
-    name: "save_experience_comfort",
-    description: "Записати досвід і рівень комфорту зі співом, які описав лід (FR-INTAKE-04/05).",
-    input_schema: {
-      type: "object",
-      properties: {
-        experience: { type: "string", description: "Дослівний опис попереднього досвіду." },
-        comfort: { type: "string", description: "Дослівний опис рівня комфорту зі співом." },
-      },
-      required: ["experience", "comfort"],
     },
   },
   {
@@ -223,7 +170,7 @@ export const TOOLS: ToolDefinition[] = [
   {
     name: "propose_slots",
     description:
-      "Профіль зібрано повністю (стан 'proposing') — запропонувати вільні слоти на основі бажаних днів тижня та часового проміжку, які лід щойно назвав текстом (booking-hitl design.md Decision 2, wraps S1 proposeSlots). Модель ПОВТОРНО виокремлює ці два параметри зі свіжої відповіді ліда — реєстратор (validatePreferences) перевіряє їх ще раз, перш ніж звертатись до календаря.",
+      "Профіль зібрано повністю (стан 'proposing') — запропонувати вільні слоти на основі бажаних днів тижня та часового проміжку, які лід назвав текстом (booking-hitl design.md Decision 2, wraps S1 proposeSlots). Модель виокремлює ці два параметри з відповіді ліда; реєстратор (validatePreferences) перевіряє їх, перш ніж звертатись до календаря. Якщо преференція ВІДКРИТА («будь-який день», «будь-коли», «все одно», «немає різниці») — передавайте УСІ робочі дні weekdays=['Mon','Tue','Wed','Thu','Fri'] та/або повне денне вікно timeWindow={start:'10:00',end:'20:00'} (заняття йдуть з 10:00 до 20:00); код (rankSlots) сам обере найкращі 2-3 варіанти. НІКОЛИ не відмовляйтесь пропонувати через «задовгий діапазон».",
     input_schema: {
       type: "object",
       properties: {
