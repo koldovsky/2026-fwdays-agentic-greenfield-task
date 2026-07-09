@@ -383,6 +383,54 @@
 
 ## Working on
 
+**NEW 8-task batch (2026-07-09, ultracode) — investigated (8 parallel investigators), decisions locked,
+executing sequentially P0→down (file overlaps on tailor/page.tsx + en.ts/ua.ts force sequential, not parallel).**
+Each task: maker→test-author→checker+verifier in separate contexts, commit per unit.
+
+LOCKED DECISIONS (user, 2026-07-09):
+- **/tailor = authenticated-only.** Anon redirected to sign-in; the free allowance moves to free
+  ACCOUNTS. Revises FR-ONBOARD-01 (anon no longer tailors). Gate BOTH the page AND the generate API
+  (server-side, NFR-SEC-04) — not just a UI redirect.
+- **Free account = 1 free tailoring** (`FREE_TAILORING_LIMIT` 2→1). Makes "first tailoring is free"
+  copy accurate. Anon tailoring path retired.
+- **Download my data = PDF (replace JSON).** Update NFR-GDPR-01 (drop the JSON constraint); note the
+  portability tradeoff. Reuse the PT Sans @react-pdf renderer. GDPR export stays free (not paywalled).
+- **Privacy = full best-effort GDPR draft** with clearly-marked placeholders for legal-entity/DPA/
+  supervisory-authority; keep the draft banner.
+
+PRIORITY ORDER + per-task scope (root-caused, file:line evidence in the wf_f5cbb546-be7 investigation):
+1. **T7 payment (P0, S)** `fix-checkout-session-and-revalidation`: (a) checkout/page.tsx never calls
+   auth()→TopBar shows "Sign in"; add `auth()` + pass user. (b) DB write DOES land (signed-token
+   userId, correct upsert) — "stays free" is stale Next Router Cache; add force-dynamic on return pages
+   (tailor, account/billing) + revalidate/router.refresh after webhook 200. READ node_modules/next docs
+   (caching breaking changes). IDs FR-PAYWALL-03/01, FR-SHELL-01.
+2. **T1 landing UA UI (P1, S)** `fix-landing-checklist-ua-layout`: MatchScore.tsx add min-w-0;
+   ChecklistPreview grid `sm:grid-cols-[220px_1fr]`→auto; ChecklistRow mobile stack. CSS-only, no new
+   hues (DESIGN.md). IDs NFR-I18N-01, BC-BRAND-01, FR-SALES-02.
+3. **T8 history race (P2, S)** `guard-tailoring-status-transitions`: tailoring-repo.updateStatus add
+   `AND status='pending'` to both UPDATEs + skip child inserts on 0 rows-affected. IDs FR-TAILOR-04.
+4. **T4+T5 tailor auth+tier states (P1, S/M)** `gate-tailor-and-tier-states`: gate page+API (anon→
+   sign-in, decision A); FREE_TAILORING_LIMIT→1; page reads usage-counter→pass `freeExhausted`+`paid`
+   to view (presentational; server reserve stays trust boundary, NFR-SEC-04); TailorWorkspace: used-free
+   →Upgrade UI instead of inputs; AnalyzeForm: premium suppresses résumé textarea (the corruption);
+   PremiumAttachZone: show premium badge on paid branch; sign-in page reads callbackUrl (open-redirect
+   guard). i18n upgrade copy. IDs FR-ONBOARD-01(revised), FR-PAYWALL-01/02, NFR-COST-02, NFR-SEC-04.
+5. **T2 FAQ + T3 privacy (P1, S)** `fix-faq-and-privacy-accuracy`: FAQ attach/coverLetter "Pro"→"any
+   paid plan" (hasPaidAccess); free-limit copy→"first tailoring is free" (now 1, accurate); a11y comment
+   honesty; en-locale Faq test. Privacy: full GDPR draft (subprocessor=Anthropic US, qualify no-training,
+   full data inventory incl. JD/credentials/cookies, retention, legal basis, rights, intl transfer),
+   fix "all your data" claim, add Ultra plan, entity/DPA placeholders. IDs BC-HONESTY-01, NFR-SEC-02,
+   BC-PRIVACY-01/02, NFR-GDPR-01/02. UA copy → native review (flag). NOTE: en.ts/ua.ts touched by T5,
+   T2, T3, T6 — sequence them to avoid churn.
+6. **T6 download PDF (P2, S)** `export-account-pdf`: replace JSON export with a PT Sans PDF render of
+   AccountExport; route content-type/filename; ExportDataButton downloads .pdf; update NFR-GDPR-01.
+   NOTE: also fold the ExportDataButton jsdom Blob.stream test (was flaky/env — verify current).
+
+Deferred/flagged: marketing-voice UA rewrites (native review); privacy legal-counsel facts (entity/DPA/
+authority) as TODO placeholders; the periodic cleanup-cron invoker (ops).
+
+---
+
 **`harden-agentic-loop` — ✅ DONE + gate green + verified (see Last action). Ready to commit.**
 Caps: `.github/`, `.claude/` (hooks/agents/skills/schema/reviews), `scripts/`, `package.json`,
 plus 4 pre-existing test files + vitest.setup.ts (fixing the reds the new gates surfaced).
