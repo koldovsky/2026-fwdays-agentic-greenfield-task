@@ -3,9 +3,9 @@
   "requirements": {
     "FR-INTAKE-01": "MVP",
     "FR-INTAKE-02": "MVP",
-    "FR-INTAKE-03": "MVP",
-    "FR-INTAKE-04": "MVP",
-    "FR-INTAKE-05": "MVP",
+    "FR-INTAKE-03": "Dropped",
+    "FR-INTAKE-04": "Dropped",
+    "FR-INTAKE-05": "Dropped",
     "FR-INTAKE-06": "MVP",
     "FR-INTAKE-07": "MVP",
     "FR-INTAKE-08": "MVP",
@@ -56,7 +56,7 @@
     "BC-SCOPE-01": "MVP",
     "BC-SCOPE-02": "MVP",
     "BC-AGE-01": "MVP",
-    "BC-AGE-02": "MVP",
+    "BC-AGE-02": "Dropped",
     "BC-FORMAT-01": "MVP",
     "BC-SCHEDULE-01": "MVP",
     "BC-PRICE-01": "MVP",
@@ -76,8 +76,13 @@
         "lib/src/intake/first-lesson-brief.test.ts",
         "lib/src/intake/next-field.test.ts",
         "lib/src/intake/questions.test.ts",
+        "lib/src/intake/questions.test.ts",
+        "lib/src/intake/questions.test.ts",
         "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/claude-agent-model-port.test.ts",
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
@@ -110,6 +115,7 @@
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
+        "packages/agent/src/claude-agent-model-port.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
@@ -129,61 +135,6 @@
       "recordings": []
     },
     {
-      "id": "FR-INTAKE-03",
-      "specs": [
-        "openspec/specs/intake/spec.md"
-      ],
-      "planned": true,
-      "tests": [
-        "lib/src/intake/first-lesson-brief.test.ts",
-        "lib/src/intake/first-lesson-brief.test.ts",
-        "lib/src/intake/next-field.test.ts",
-        "lib/src/intake/questions.test.ts",
-        "lib/src/intake/questions.test.ts",
-        "lib/src/intake/questions.test.ts",
-        "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts",
-        "packages/agent/src/loop.test.ts",
-        "packages/agent/src/system-prompt.test.ts",
-        "packages/bot/src/pipeline.test.ts",
-        "packages/bot/src/pipeline.test.ts",
-        "packages/bot/src/pipeline.test.ts"
-      ],
-      "recordings": []
-    },
-    {
-      "id": "FR-INTAKE-04",
-      "specs": [
-        "openspec/specs/intake/spec.md"
-      ],
-      "planned": true,
-      "tests": [
-        "lib/src/intake/audience.test.ts",
-        "lib/src/intake/audience.test.ts",
-        "lib/src/intake/audience.test.ts",
-        "lib/src/intake/audience.test.ts",
-        "lib/src/intake/next-field.test.ts",
-        "lib/src/intake/state-machine.test.ts",
-        "lib/src/intake/state-machine.test.ts",
-        "packages/bot/src/pipeline.test.ts"
-      ],
-      "recordings": []
-    },
-    {
-      "id": "FR-INTAKE-05",
-      "specs": [
-        "openspec/specs/intake/spec.md"
-      ],
-      "planned": true,
-      "tests": [
-        "lib/src/intake/next-field.test.ts",
-        "lib/src/intake/state-machine.test.ts",
-        "packages/bot/src/pipeline.test.ts",
-        "packages/bot/src/pipeline.test.ts"
-      ],
-      "recordings": []
-    },
-    {
       "id": "FR-INTAKE-06",
       "specs": [
         "openspec/specs/booking-hitl/spec.md",
@@ -194,8 +145,11 @@
         "lib/src/intake/next-field.test.ts",
         "lib/src/intake/next-field.test.ts",
         "lib/src/intake/questions.test.ts",
+        "lib/src/intake/questions.test.ts",
+        "lib/src/intake/questions.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/agent/src/system-prompt.test.ts",
         "packages/bot/src/pipeline.test.ts"
       ],
@@ -267,7 +221,6 @@
         "lib/src/intake/questions.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
-        "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/bot/src/pipeline.test.ts",
@@ -478,6 +431,7 @@
         "lib/src/intake/state-machine.test.ts",
         "lib/src/intake/state-machine.test.ts",
         "lib/src/slots/grid.test.ts",
+        "lib/src/slots/propose.test.ts",
         "lib/src/slots/subtract.test.ts",
         "lib/src/slots/subtract.test.ts",
         "lib/src/slots/subtract.test.ts",
@@ -733,18 +687,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-INTAKE-02 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-INTAKE-03 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-INTAKE-04 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-INTAKE-05 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

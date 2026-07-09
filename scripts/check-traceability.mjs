@@ -77,7 +77,17 @@ const requirements = new Map(); // id -> { phase }
 for (const line of (reqText ?? "").split("\n")) {
   const m = line.match(/^\|\s*((?:FR|NFR|TC|BC)-(?:[A-Z0-9]+-)?\d+)\s*\|/);
   if (!m) continue;
-  const phase = /\|\s*Future\s*\|/i.test(line) ? "Future" : "MVP";
+  // Phase column: "Future" (planned, not this milestone) and "Dropped"
+  // (explicitly removed from scope, e.g. the goal/tastes/experience intake
+  // fields cut on 2026-07-09) are BOTH excluded from the MVP chain checks
+  // below — a dropped requirement needs no spec citation, plan ownership, or
+  // test/recording evidence. Anything else is treated as MVP (fully checked),
+  // so this never weakens the gate for a live requirement.
+  const phase = /\|\s*Future\s*\|/i.test(line)
+    ? "Future"
+    : /\|\s*Dropped\s*\|/i.test(line)
+      ? "Dropped"
+      : "MVP";
   requirements.set(m[1], { phase });
 }
 const mvpFRs = [...requirements.keys()].filter(

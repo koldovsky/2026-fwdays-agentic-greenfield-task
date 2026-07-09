@@ -3,15 +3,24 @@
 ## Purpose
 
 The `intake` capability is the conversation layer that turns a Telegram
-message from a lead into a complete trial-lesson request: it collects and
-code-validates the qualifying fields (name, age, format), runs the
-get-to-know profiling questions (goal, tastes, experience), gathers schedule
-preferences, and compiles the first-lesson brief for the teacher. It owns the
-conversation state machine (ADR-0001 §6:
-`greeting → qualifying → profiling → collecting → proposing → awaiting_admin → done`,
-with terminal `soft_decline` and resumable detours) and the two guardrails
-that live in the conversation layer: the minimum-age rule (FR-GUARD-04) and
-off-topic steering (FR-GUARD-05).
+message from a lead into a complete trial-lesson request. As of 2026-07-09 the
+MVP intake is **mandatory-only, 5 steps**: it collects and code-validates the
+qualifying fields (name+age asked together, then format), gathers schedule
+preferences (weekdays+time asked together), then the agent proposes ranked
+slots and the lead picks one. The agent orients on the lead's answers —
+recording whatever facts a message contains and only asking for what is still
+missing. It owns the conversation state machine (ADR-0001 §6:
+`greeting → qualifying → collecting → proposing → awaiting_admin → done`, with
+terminal `soft_decline` and resumable detours).
+
+The former get-to-know **profiling** stage (goal, tastes, experience/comfort —
+FR-INTAKE-03..05) is **DROPPED from MVP** (2026-07-09): the model is offered no
+goal/tastes/experience tool and the flow never enters `profiling`. The
+`profiling` state value and its reducer branches remain as dormant code (never
+reached on the happy path) so the type surface and the DB CHECK constraint stay
+stable without a migration. This capability also owns the two conversation-layer
+guardrails: the minimum-age rule (FR-GUARD-04) and off-topic steering
+(FR-GUARD-05).
 
 Intentionally out of scope for this capability in MVP (not bugs):
 
@@ -122,7 +131,7 @@ is proposed; the system prompt alone is never the enforcement mechanism.
 
 - **GIVEN** the lead provided name, age 9, and format `individual`
 - **WHEN** the code-level validator runs
-- **THEN** validation passes and the conversation advances from `qualifying` to `profiling`
+- **THEN** validation passes and the conversation advances from `qualifying` straight to `collecting` (the former `profiling` stage is dropped, 2026-07-09)
 
 #### Scenario: Validation happens before slots, not after
 
@@ -144,104 +153,44 @@ is proposed; the system prompt alone is never the enforcement mechanism.
 - **WHEN** the code-level validator runs
 - **THEN** it rejects the value (BC-SCOPE-01/02) and the conversation takes the scope-explanation detour instead of advancing
 
-### Requirement: Lesson goal capture
+### Requirement: Get-to-know profiling stage is dropped from MVP
 
-During `profiling` the agent SHALL ask what brings the lead in — karaoke with
-friends, performing on stage, overcoming shyness, or their own words — and
-store exactly one predefined tag (`karaoke` / `performance` / `confidence` /
-`hobby` / `other`) plus the lead's verbatim answer. (FR-INTAKE-03)
+The agent SHALL NOT run any get-to-know profiling stage: the goal
+(FR-INTAKE-03), musical-tastes (FR-INTAKE-04), and prior-experience/comfort
+(FR-INTAKE-05) questions are removed from the MVP intake (2026-07-09), which is
+mandatory-only and 5 steps. The agent MUST be offered no goal, tastes, or
+experience/comfort tool for any turn. The reducer's `profiling` state and its
+event branches remain as dormant code — never entered on the happy path —
+purely to keep the type surface and the DB CHECK constraint stable without a
+migration.
 
-#### Scenario: Goal matching a predefined tag
+#### Scenario: The flow never enters profiling
 
-- **GIVEN** the agent asked about the goal
-- **WHEN** the lead answers "хочу співати в караоке з друзями"
-- **THEN** the tag `karaoke` and the verbatim answer are stored on the request
+- **GIVEN** a lead has provided name, age, and format
+- **WHEN** the qualifying fields are complete
+- **THEN** the conversation advances directly to `collecting` (weekdays+time), never to `profiling`
+- **AND** the agent asks no goal, tastes, or experience/comfort question
 
-#### Scenario: Goal in the lead's own words
+#### Scenario: No goal/tastes/experience tool is offered to the model
 
-- **GIVEN** the agent asked about the goal
-- **WHEN** the lead answers something outside the predefined options (e.g. "хочу записати пісню для дружини")
-- **THEN** the tag `other` and the verbatim answer are stored
-- **AND** the agent mirrors the goal back with respect and never ranks it (BC-BRAND-01: "для караоке — чудова ціль", no "лише")
-
-#### Scenario: Skipping the goal question is allowed
-
-- **GIVEN** the agent asked about the goal
-- **WHEN** the lead declines to answer or says they don't know
-- **THEN** the agent responds that it can be figured out at the lesson ("можемо з'ясувати це вже на занятті") and moves on
-- **AND** the flow continues without the field, with no repeated pressure
-
-### Requirement: Musical tastes capture
-
-During `profiling` the agent SHALL ask about musical tastes — favourite
-artists/songs, what's on the lead's playlist, and one song they would love to
-sing; when the student is younger than 10 the questions SHALL be addressed to
-the parent (favourite cartoons, songs the child sings along to). (FR-INTAKE-04,
-BC-AGE-02)
-
-#### Scenario: Tastes questions for a student aged 10 or older
-
-- **GIVEN** the student's validated age is 14
-- **WHEN** the agent asks the tastes questions
-- **THEN** it asks about favourite artists/songs, the playlist, and one song they would love to sing, one question per message
-- **AND** the answers are stored on the request
-
-#### Scenario: Tastes questions for a student younger than 10 address the parent
-
-- **GIVEN** the student's validated age is 7
-- **WHEN** the agent asks the tastes questions
-- **THEN** the questions are addressed to the parent about the child (favourite cartoons, songs the child sings along to)
-- **AND** the phrasing never addresses the child directly (BC-AGE-02)
-
-#### Scenario: Skipping tastes questions is allowed
-
-- **GIVEN** the agent asked a tastes question
-- **WHEN** the lead skips it
-- **THEN** the agent accepts the skip kindly and continues; the brief later marks the field as not provided
-
-### Requirement: Experience and comfort capture
-
-During `profiling` the agent SHALL ask about prior experience (choir,
-lessons) and whether singing a cappella or with a backing track feels more
-comfortable; both answers SHALL be stored. The questions sound like curiosity,
-never assessment (BC-BRAND-01). (FR-INTAKE-05)
-
-#### Scenario: Prior training is asked and stored
-
-- **GIVEN** the tastes questions are done
-- **WHEN** the agent asks about previous training
-- **THEN** the answer (e.g. "співала у шкільному хорі" or "ніякого") is stored on the request
-
-#### Scenario: A cappella vs backing-track comfort is asked and stored
-
-- **GIVEN** prior training is answered
-- **WHEN** the agent asks whether a cappella or a backing track feels more comfortable
-- **THEN** the answer is stored on the request
-
-#### Scenario: No grading or level-check language
-
-- **GIVEN** any experience/comfort question is asked
-- **WHEN** the message text is inspected
-- **THEN** it contains no assessment framing — phrases like "перевіримо твій рівень" never appear (BC-BRAND-01 rubric anchor)
+- **GIVEN** the closed tool set the agent is given for any turn
+- **WHEN** the tool names are inspected
+- **THEN** none of `save_goal`, `skip_goal`, `save_tastes`, `skip_tastes`, `save_experience_comfort` is present
 
 ### Requirement: First-lesson brief
 
-The system SHALL compile goal, tastes (including the dream song), and
-experience/comfort answers into a first-lesson brief on the request card, so
-the teacher can prepare the trial lesson around music the student already
-loves. (FR-INTAKE-06, BC-LESSON-01)
+The system SHALL compile the collected mandatory data into a first-lesson brief
+on the request card, so the teacher can prepare the trial lesson. Since the
+profiling fields are dropped (2026-07-09), the brief summarises name, age,
+format, and the requested schedule; it never invents goal/tastes/experience
+content. (FR-INTAKE-06, BC-LESSON-01)
 
-#### Scenario: Complete brief on the request card
+#### Scenario: Brief on the request card
 
-- **GIVEN** a lead answered the goal, tastes, and experience questions
+- **GIVEN** a lead completed the mandatory intake (name, age, format, weekdays, time)
 - **WHEN** the request reaches `pending` and appears on the dashboard
-- **THEN** the request card shows a first-lesson brief containing the goal tag + verbatim goal, tastes, the dream song, and experience/comfort
-
-#### Scenario: Brief with skipped answers
-
-- **GIVEN** a lead skipped the tastes questions
-- **WHEN** the brief is compiled
-- **THEN** skipped fields are explicitly marked as not provided (never invented or filled with model guesses)
+- **THEN** the request card shows a first-lesson brief containing the student name, age, format, and requested schedule
+- **AND** no goal/tastes/experience content is invented or filled with model guesses
 
 ### Requirement: Amend and cancel before the decision
 
@@ -255,12 +204,6 @@ sets the booking to `cancelled`. (FR-INTAKE-07)
 - **WHEN** the lead writes "насправді їй 7, не 6"
 - **THEN** the age field is updated to 7, the change is re-validated in code (FR-INTAKE-02)
 - **AND** the conversation resumes at the state where it left off
-
-#### Scenario: Amending a field that changes question addressing
-
-- **GIVEN** profiling questions were addressed to the parent because the recorded age was 9
-- **WHEN** the lead corrects the age to 12
-- **THEN** subsequent questions address the student directly per BC-AGE-02 applied to the corrected age
 
 #### Scenario: Cancelling releases the held slot
 
@@ -293,7 +236,7 @@ earlier requests are never overwritten. (FR-INTAKE-08, TC-DATA-01)
 
 - **GIVEN** a parent whose first request (child A, age 12) is `confirmed`
 - **WHEN** they write to book a trial for child B, age 6
-- **THEN** the new request carries child B's own profile (name, age, tastes)
+- **THEN** the new request carries child B's own profile (name, age, format)
 - **AND** child A's request and profile are intact and separately readable
 
 ### Requirement: Minimum-age guardrail
@@ -335,10 +278,10 @@ detour, never a reset. (FR-GUARD-05, ADR-0001 §6)
 
 #### Scenario: Off-topic question mid-intake
 
-- **GIVEN** the conversation is in `profiling` waiting for the goal answer
+- **GIVEN** the conversation is in `collecting` waiting for the weekdays+time answer
 - **WHEN** the lead asks a political question
 - **THEN** the single reply contains no substantive answer to the question and redirects to the school topic
-- **AND** the same reply (or the immediately following turn) re-asks the pending goal question — the state is still `profiling`
+- **AND** the same reply (or the immediately following turn) re-asks the pending schedule question — the state is still `collecting`
 
 #### Scenario: Repeated off-topic messages
 
