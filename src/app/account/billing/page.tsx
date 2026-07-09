@@ -19,6 +19,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Render per-request, never from a cached prerender: this route shows the live
+// subscription snapshot the payments webhook syncs (FR-BILLING-01), so a
+// visitor returning from a successful checkout sees the fresh plan immediately,
+// not a stale free render. Cache Components is off, so the classic
+// route-segment directive applies (next 16.2.9,
+// caching-without-cache-components#route-segment-config).
+export const dynamic = "force-dynamic";
+
 export default async function AccountBillingPage() {
   const session = await auth();
   const userId = session?.user?.id ?? null;

@@ -7,6 +7,7 @@
 // On success the user returns to exactly the screen they left (FR-PAYWALL-03);
 // on failure they stay Free with calm copy and a retry CTA (FR-BILLING-03).
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { t, type Locale } from "@/shared/lib/i18n";
 import type { PaymentsPlan } from "@/shared/lib/payments";
@@ -21,9 +22,13 @@ export interface CheckoutViewProps {
   readonly token: string;
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
-  /** Navigation seam — injectable in tests; defaults to a full page load so
-   * server components re-read the fresh subscription state. */
+  /** Navigation seam — injectable in tests; defaults to a client router push
+   * to the return path (see the completion flow for why refresh precedes it). */
   readonly navigate?: (path: string) => void;
+  /** Client-cache refresh seam — injectable in tests; defaults to
+   * router.refresh(). Called after a successful webhook so the return segment
+   * is refetched, not served stale from the client Router Cache (FR-PAYWALL-03). */
+  readonly refresh?: () => void;
 }
 
 type Phase = "idle" | "pending" | "redirecting" | "declined" | "error";
@@ -33,17 +38,28 @@ export function CheckoutView({
   returnTo,
   token,
   locale = "ua",
-  navigate = (path) => window.location.assign(path),
+  navigate,
+  refresh,
 }: CheckoutViewProps) {
   const copy = t(locale).checkout;
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
+  // Defaults wired to the client router (seams stay injectable for tests).
+  const doNavigate = navigate ?? ((path: string) => router.push(path));
+  const doRefresh = refresh ?? (() => router.refresh());
 
   async function complete(outcome: CheckoutOutcome) {
     setPhase("pending");
     const result = await completeEmulatedCheckout(token, outcome);
     if (result === "completed") {
       setPhase("redirecting");
-      navigate(returnTo);
+      // The webhook already wrote the paid state (the sole subscription
+      // writer). Clear the client Router Cache FIRST so the return segment is
+      // refetched from the server instead of served as its stale pre-payment
+      // render — otherwise the subscription appears free until an unrelated
+      // refresh (the reported P0). Then navigate to the fresh return page.
+      doRefresh();
+      doNavigate(returnTo);
       return;
     }
     setPhase(result === "declined" ? "declined" : "error");

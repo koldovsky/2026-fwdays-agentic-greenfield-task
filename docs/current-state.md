@@ -7,6 +7,33 @@
 
 ## Last action
 
+- **T7 P0 payments bug `fix-checkout-session-and-revalidation` — DONE + gate green (2026-07-09, ultracode).**
+  maker(opus)→test-author(sonnet, +12 tests)→checker(opus)+verifier(sonnet), separate contexts.
+  Verifier PASS: lint 0/0 + build (all 3 return pages confirmed dynamic ƒ: /checkout /tailor
+  /account/billing) + **138 files / 1305 passed + 5 skipped, 0 failed.** Checker ship, 0 blockers; 1 major
+  = diagnosis nuance (load-bearing fix is force-dynamic — the return pages were STATIC prerenders, so even
+  the original full-reload showed stale "free"; router.push+refresh is a consistent secondary change),
+  no code change needed. Implements FR-PAYWALL-03, FR-SHELL-01. Two fixes:
+  - FIX 1 (header showed "Sign in" for a logged-in user on /checkout): `src/app/checkout/page.tsx`
+    now `await auth()` like its siblings (/tailor, /account/billing) and passes `user` to TopBar.
+    Display-only; the HMAC-signed-token write path is untouched — no blocking token-vs-session IDOR
+    check added (would regress completion when the auth cookie is absent), left as a noted follow-up.
+  - FIX 2 (FR-PAYWALL-03, subscription stayed "free" after "simulate a successful payment"): the DB
+    write already lands; the stale state was the Next client Router Cache serving a pre-payment
+    render of the return page. (a) Added `export const dynamic = "force-dynamic"` to
+    `src/app/tailor/page.tsx` + `src/app/account/billing/page.tsx` so the subscription-bearing return
+    pages render per-request (landing verified NOT paid-dependent → skipped). (b) `CheckoutView` now
+    injects a `useRouter` seam: after the webhook returns 200 it calls `router.refresh()` (clears the
+    client Router Cache for the current route, refetches Server Components per the 16.2.9 use-router
+    doc) BEFORE navigating, and navigation is now `router.push` (SPA into the freshly-cached segment).
+    `navigate`/`refresh` stay injectable seams for tests.
+  - API decision (Cache Components is OFF in next.config → classic route-segment config is valid;
+    v16 only removes `dynamic` when cacheComponents is enabled): used `dynamic = "force-dynamic"` +
+    client `router.refresh()`. Did NOT use server-action `revalidatePath`/`refresh` from `next/cache`
+    because the completion path posts to a Route Handler (the webhook), not a Server Action, so those
+    APIs aren't reachable without adding a server action — the client refresh is the idiomatic fit.
+  Follow-up (not done, noted): optional token-vs-session IDOR check on /checkout (defense-in-depth).
+  **NEXT in batch-8 order: T1 landing UA UI → T8 history race → T4+T5 tailor → T2+T3 → T6.**
 - **`harden-agentic-loop` DONE + gate green + independently verified (2026-07-09, ultracode) —
   raised C3 (loop/automation) + C5 (maker≠checker) from convention/prose to enforcement/artifact
   after a rubric self-assessment scored both 3/4.** Shipped: **(C3)** `.github/workflows/ci.yml`

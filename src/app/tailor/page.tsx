@@ -20,6 +20,14 @@ import { getDb } from "@/shared/lib/db/pg";
 import { TailorWorkspace } from "@/views/tailor-workspace";
 import { TopBar } from "@/widgets/top-bar";
 
+// Render per-request, never from a cached prerender: this route reflects
+// paid entitlement synced by the payments webhook (FR-PAYWALL-03), so a
+// visitor returning from a successful checkout must see the freshly unlocked
+// state, not a stale pre-payment render. Cache Components is not enabled, so
+// the classic route-segment directive applies (next 16.2.9,
+// caching-without-cache-components#route-segment-config).
+export const dynamic = "force-dynamic";
+
 export default async function TailorPage() {
   const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const session = await auth();
