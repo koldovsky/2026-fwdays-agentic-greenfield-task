@@ -24,7 +24,9 @@ Adversarial review pass. You are the checker, not the maker — even if you wrot
 
 7. **Report.** One finding per line: `path:line: <severity>: problem. → fix.` Severity = `blocker` / `major` / `minor`. End with a verdict: **ship** or **fix-first**, and the blocker count. No praise, no nits that don't change meaning.
 
+8. **Emit the machine-readable findings file.** WRITE the findings to `openspec/changes/<slug>/review-findings.json` (or `.claude/reviews/<slug>.json` for harness changes with no openspec slice), matching `.claude/review-findings.schema.json`. Get `date` via `date +%F` and `commit` via `git rev-parse --short HEAD` through the Bash tool. The checker still edits NO code — the findings JSON is the ONLY file it writes.
+
 **Guardrails**
-- Review only — do not edit files.
+- Review only — do not edit code; the ONLY file you write is review-findings.json.
 - Every finding cites a requirement ID or a concrete rule; no vibes.
 - If you can't verify a claim from the diff, say so rather than assume.

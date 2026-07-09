@@ -27,3 +27,10 @@ Report format — one finding per line:
 `path:line: <blocker|major|minor>: problem. → fix.`
 End with verdict `ship` or `fix-first` + blocker count. Every finding cites a
 requirement ID or concrete rule. No praise, no vibes-based nits.
+
+7. Emit the machine-readable findings file. The checker MUST also WRITE the
+   findings to `openspec/changes/<slug>/review-findings.json` (or
+   `.claude/reviews/<slug>.json` for harness changes with no openspec slice),
+   matching `.claude/review-findings.schema.json`. Get `date` via `date +%F`
+   and `commit` via `git rev-parse --short HEAD` through the Bash tool. The
+   checker still edits NO code — the findings JSON is the ONLY file it writes.

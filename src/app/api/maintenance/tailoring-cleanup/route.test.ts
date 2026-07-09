@@ -18,7 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // when the module graph resolves.
 // ---------------------------------------------------------------------------
 
-const getMaintenanceSecretMock = vi.hoisted(() => vi.fn<[], string>());
+const getMaintenanceSecretMock = vi.hoisted(() => vi.fn<() => string>());
 vi.mock("@/shared/config", () => ({
   getMaintenanceSecret: getMaintenanceSecretMock,
 }));
@@ -26,7 +26,9 @@ vi.mock("@/shared/config", () => ({
 const getDbMock = vi.hoisted(() => vi.fn());
 vi.mock("@/shared/lib/db/pg", () => ({ getDb: getDbMock }));
 
-const markAbandonedPendingMock = vi.hoisted(() => vi.fn<[unknown, number], Promise<number>>());
+const markAbandonedPendingMock = vi.hoisted(() =>
+  vi.fn<(db: unknown, olderThanMs: number) => Promise<number>>(),
+);
 vi.mock("@/shared/lib/db/tailoring-cleanup", () => ({
   markAbandonedPending: markAbandonedPendingMock,
 }));

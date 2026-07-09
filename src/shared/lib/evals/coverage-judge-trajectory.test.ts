@@ -97,12 +97,14 @@ describe("gradeTrajectory: judge-coverage pipeline order (§2.5, BC-HONESTY-01)"
 describe("gradeTrajectory: GROUNDING_FORBIDDEN judge keys fail grounding-isolation (§2.5)", () => {
   it("ground-bullet sees 'requirements' → grounding-isolation fails", () => {
     const leaky = mutateTrace((t) => {
-      t.steps[t.steps.length - 1] = {
+      const steps = [...t.steps];
+      steps[steps.length - 1] = {
         skill: "ground-bullet",
         attempts: 1,
         // 'requirements' is in GROUNDING_FORBIDDEN (trajectory.ts)
         contextKeys: ["bullet", "cvText", "requirements"],
       };
+      t.steps = steps;
     });
     const grade = gradeTrajectory(leaky);
     expect(grade.checks.find((c) => c.id === "grounding-isolation")?.ok).toBe(false);
@@ -111,11 +113,13 @@ describe("gradeTrajectory: GROUNDING_FORBIDDEN judge keys fail grounding-isolati
 
   it("ground-bullet sees 'coverageJudge' → grounding-isolation fails (BC-HONESTY-01)", () => {
     const leaky = mutateTrace((t) => {
-      t.steps[t.steps.length - 1] = {
+      const steps = [...t.steps];
+      steps[steps.length - 1] = {
         skill: "ground-bullet",
         attempts: 1,
         contextKeys: ["bullet", "cvText", "coverageJudge"],
       };
+      t.steps = steps;
     });
     const grade = gradeTrajectory(leaky);
     expect(grade.checks.find((c) => c.id === "grounding-isolation")?.ok).toBe(false);
@@ -124,11 +128,13 @@ describe("gradeTrajectory: GROUNDING_FORBIDDEN judge keys fail grounding-isolati
 
   it("ground-bullet sees 'coverageVerdicts' → grounding-isolation fails (BC-HONESTY-01)", () => {
     const leaky = mutateTrace((t) => {
-      t.steps[t.steps.length - 1] = {
+      const steps = [...t.steps];
+      steps[steps.length - 1] = {
         skill: "ground-bullet",
         attempts: 1,
         contextKeys: ["bullet", "cvText", "coverageVerdicts"],
       };
+      t.steps = steps;
     });
     const grade = gradeTrajectory(leaky);
     expect(grade.checks.find((c) => c.id === "grounding-isolation")?.ok).toBe(false);
@@ -165,14 +171,16 @@ describe("gradeTrajectory: GROUNDING_FORBIDDEN judge keys fail grounding-isolati
     for (const key of forbiddenJudgeKeys) {
       const leaky = mutateTrace((t) => {
         // Replace a ground-bullet step so it sees the forbidden key.
-        const lastGround = [...t.steps].reverse().find((s) => s.skill === "ground-bullet");
+        const steps = [...t.steps];
+        const lastGround = [...steps].reverse().find((s) => s.skill === "ground-bullet");
         if (lastGround) {
-          const idx = t.steps.indexOf(lastGround);
-          t.steps[idx] = {
+          const idx = steps.indexOf(lastGround);
+          steps[idx] = {
             skill: "ground-bullet",
             attempts: 1,
             contextKeys: ["bullet", "cvText", key],
           };
+          t.steps = steps;
         }
       });
       const grade = gradeTrajectory(leaky);

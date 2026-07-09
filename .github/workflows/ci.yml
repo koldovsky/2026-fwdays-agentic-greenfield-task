@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn lint
+
+      - run: yarn typecheck
+
+      # env.ts / key.ts read every secret lazily at request time, so `next build`
+      # (static analysis only) needs no runtime env — none is set here on purpose,
+      # keeping the workflow free of anything resembling a committed secret.
+      - run: yarn build
+
+      - run: yarn test
+
+      - run: node scripts/check-review-findings.mjs

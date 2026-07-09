@@ -3,9 +3,32 @@
 > Live handoff between agent sessions. Read first, update before finishing.
 > Keep short, overwrite stale content, don't append endlessly.
 
-**Updated:** 2026-07-06
+**Updated:** 2026-07-09
 
 ## Last action
+
+- **`harden-agentic-loop` DONE + gate green + independently verified (2026-07-09, ultracode) —
+  raised C3 (loop/automation) + C5 (maker≠checker) from convention/prose to enforcement/artifact
+  after a rubric self-assessment scored both 3/4.** Shipped: **(C3)** `.github/workflows/ci.yml`
+  (push+PR, node 20, frozen-lockfile, `lint→typecheck→build→test→check-review-findings`) + new
+  `typecheck` script (`tsc --noEmit`) + **blocking `yarn lint` gate** in the Stop hook (fires on
+  code-file changes before the handoff check; full test suite stays in CI to keep the local loop
+  fast) + Stop timeout 15s→120s. **(C5)** `.claude/review-findings.schema.json` (draft-07) +
+  zero-dep `scripts/check-review-findings.mjs` validator (wired into CI) + `checker.md` /
+  `checker-review` SKILL now EMIT `review-findings.json` per change — **dogfooded** as
+  `.claude/reviews/harden-agentic-loop.json`. Workflow: 4 parallel makers (sonnet, disjoint files)
+  → verifier (sonnet) → checker (opus), all separate contexts. **The new gates immediately paid
+  off**: `typecheck` surfaced 7 real pre-existing TS errors that `next build` was masking, and the
+  `test` gate surfaced the long-documented ExportDataButton `Blob.stream` red — all fixed for real
+  (vi.fn generic form; readonly-array spread-copy; `as unknown as` cast; `Blob.prototype.stream`
+  polyfill in vitest.setup.ts), not suppressed. Checker (opus, fresh ctx) verdict fix-first →
+  1 blocker + 2 majors (real CV_ENCRYPTION_KEY-looking value in ci.yml → build env block dropped;
+  reproducible-green goal) + 1 minor, ALL fixed → dogfood artifact reconciled to ship/0-open.
+  Verifier (fresh ctx) PASS on all 5 gates + secret check + hook dry-runs + schema shape. Final
+  gate: **lint 0 · typecheck 0 · build ok · 135 files / 1293 passed + 5 skipped · validator 1/1.**
+  Refs: AGENTS.md (loop, separation-of-duties, plan-first), NFR-OBS-01, NFR-SEC-01, BC-PRIVACY-01.
+  Follow-up (not blocking): presence-enforcement (CI failing when a change LACKS a findings file)
+  deferred — validator only shape-checks existing files today.
 
 - **Vercel deploy runbook added to `README.md` (2026-07-09).** Appended a "Deploy to Vercel"
   section: prereqs (Vercel + managed Postgres + Anthropic key), required env (`DATABASE_URL`,
@@ -360,6 +383,29 @@
 
 ## Working on
 
+**`harden-agentic-loop` — ✅ DONE + gate green + verified (see Last action). Ready to commit.**
+Caps: `.github/`, `.claude/` (hooks/agents/skills/schema/reviews), `scripts/`, `package.json`,
+plus 4 pre-existing test files + vitest.setup.ts (fixing the reds the new gates surfaced).
+Refs: AGENTS.md (loop, separation-of-duties, plan-first), NFR-OBS-01, NFR-SEC-01, BC-PRIVACY-01.
+
+### Plan (numbered — all complete)
+1. **C3 CI** — `.github/workflows/ci.yml`: push+PR, node 20, frozen-lockfile,
+   `lint → typecheck → build → test → node scripts/check-review-findings.mjs`; `typecheck`
+   script (`tsc --noEmit`) added to package.json; placeholder env in build step.
+2. **C3 Stop hook** — `current-state-stop-check.sh`: blocking `yarn lint` on code-file changes
+   before the handoff check (stop_hook_active guard kept); Stop timeout 15s→120s in settings.json.
+3. **C5 artifact** — `.claude/review-findings.schema.json` (draft-07) + zero-dep
+   `scripts/check-review-findings.mjs` (scans openspec/changes/**+.claude/reviews/*, shape-checks,
+   exit 1 on malformed) + `checker.md`/`checker-review` SKILL emit `review-findings.json` per change.
+4. **Verify + review (separate ctx)** — verifier runs the gate + dry-runs the hook + validator;
+   checker reviews the whole diff and DOGFOODS `.claude/reviews/harden-agentic-loop.json`.
+5. **Close** — fix blockers, re-verify, commit, refresh this handoff.
+
+Non-goals: presence-enforcement (validator only shape-checks existing files); full test suite in
+the Stop hook (CI owns it). openspec archive stays blocked (CLI unavailable).
+
+---
+
 **Live honesty-eval harness (change `add-live-honesty-eval`) — ✅ DONE + live-verified 7/7 (see Last action).**
 User scope decision: **free-user surface = coverage judge; premium surface = all three** (judge +
 grounded cover letter + structured resume). Real Anthropic spend accepted (`ANTHROPIC_API_KEY` in `.env`).
@@ -554,13 +600,12 @@ keep the deterministic letter, or promote the LLM path (needs honesty-eval + `AN
 
 ## Blockers / open questions
 
-- **PRE-EXISTING SUITE RED (2 tests, not from any current task):**
-  `src/features/export-data-button/ui/ExportDataButton.test.tsx` fails 2 (`TypeError: object.stream is
-  not a function`) at lines 44/76 where it does `new Response(new Blob([...]))` — this session's
-  jsdom `Blob` has no `.stream()`, so undici's `Response` body-consume throws. Env/version-sensitive;
-  green when T3 shipped, red at HEAD `27d4861` with all later work stashed. **Fix belongs in the T3
-  slice's test** (polyfill `Blob.prototype.stream` in the vitest setup, or build the mock Response
-  from a string body instead of a Blob) as its own small change — do NOT bundle into an unrelated task.
+- **RESOLVED (2026-07-09, by `harden-agentic-loop`): the 2 pre-existing ExportDataButton reds are
+  fixed.** `src/features/export-data-button/ui/ExportDataButton.test.tsx` used to fail 2
+  (`TypeError: object.stream is not a function`) because jsdom's `Blob` has no `.stream()`. The new
+  CI/typecheck+test gate surfaced it as a blocking red, so a `Blob.prototype.stream` polyfill
+  (ReadableStream from blob bytes) was added to `vitest.setup.ts`. ExportDataButton now 12/12 green;
+  full suite 1293 passed / 0 failed.
 - **Prod env not set / DB not provisioned** (task 3 operational). `yarn db:migrate` must run against
   prod before history/GDPR work end to end.
 - **Cyrillic fonts unwired** blocks task 10 (layout.tsx loads latin-only subsets).

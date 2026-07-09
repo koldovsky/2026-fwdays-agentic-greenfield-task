@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vouch.internal/schemas/review-findings.schema.json",
+  "title": "Review Findings",
+  "description": "Shape of a review-findings.json artifact produced by a checker/reviewer agent for a Vouch change (openspec/changes/<slug>/review-findings.json or .claude/reviews/<slug>.json).",
+  "type": "object",
+  "required": ["change", "reviewer", "date", "verdict", "blockers", "majors", "minors", "findings"],
+  "additionalProperties": true,
+  "properties": {
+    "change": {
+      "type": "string",
+      "description": "Change slug the review targets, e.g. harden-agentic-loop."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Identifier of the reviewing agent/person."
+    },
+    "date": {
+      "type": "string",
+      "description": "Review date, YYYY-MM-DD.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "commit": {
+      "type": "string",
+      "description": "Commit SHA the review was performed against."
+    },
+    "verdict": {
+      "type": "string",
+      "description": "Overall review outcome.",
+      "enum": ["ship", "fix-first"]
+    },
+    "blockers": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of blocker-severity findings."
+    },
+    "majors": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of major-severity findings."
+    },
+    "minors": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of minor-severity findings."
+    },
+    "requirementIds": {
+      "type": "array",
+      "description": "PRD requirement IDs (FR-*/NFR-*/TC-*/BC-*) covered by this review.",
+      "items": { "type": "string" }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Individual review findings.",
+      "items": {
+        "type": "object",
+        "required": ["severity", "problem", "fix"],
+        "additionalProperties": true,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "major", "minor"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Repo-relative file path the finding is in."
+          },
+          "line": {
+            "type": "integer",
+            "description": "1-indexed line the finding anchors to."
+          },
+          "requirement": {
+            "type": "string",
+            "description": "Requirement ID this finding relates to."
+          },
+          "problem": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What is wrong."
+          },
+          "fix": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What should change to resolve it."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "fixed"]
+          }
+        }
+      }
+    }
+  }
+}

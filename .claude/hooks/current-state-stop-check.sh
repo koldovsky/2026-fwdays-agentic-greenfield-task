@@ -15,6 +15,19 @@ cd "$root" || exit 0
 changes=$(git status --porcelain 2>/dev/null)
 [ -z "$changes" ] && exit 0
 
+# Blocking lint gate: if any changed file is code, lint must pass before Stop
+# is allowed to proceed to the handoff-staleness check below.
+if printf '%s' "$changes" | grep -qE '\.(ts|tsx|js|mjs)$'; then
+  lint_output=$(yarn lint 2>&1)
+  lint_status=$?
+  if [ "$lint_status" -ne 0 ]; then
+    tail_output=$(printf '%s' "$lint_output" | tail -n 15)
+    reason=$(printf 'yarn lint failed (exit %s) — fix lint errors before finishing.\n\nLast ~15 lines of eslint output:\n%s' "$lint_status" "$tail_output" | jq -Rs .)
+    printf '{"decision":"block","reason":%s}\n' "$reason"
+    exit 0
+  fi
+fi
+
 # Handoff itself touched (unstaged, staged, or untracked) — fine.
 printf '%s' "$changes" | grep -q "docs/current-state.md" && exit 0
 

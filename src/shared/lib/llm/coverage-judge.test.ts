@@ -81,7 +81,7 @@ describe("buildCoverageJudgePrompt: payload composition (§2.2)", () => {
     const prompt = buildCoverageJudgePrompt(input);
     // Bullets come from generation, never from this prompt's input shape.
     // Verify the input type has no bullets field.
-    expect((input as Record<string, unknown>)["bullets"]).toBeUndefined();
+    expect((input as unknown as Record<string, unknown>)["bullets"]).toBeUndefined();
     // Structural assertion: the prompt has exactly two messages.
     expect(prompt.messages.length).toBe(2);
     expect(prompt.messages.map((m) => m.role)).toEqual(["system", "user"]);
