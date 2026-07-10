@@ -43,6 +43,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- c019a60 commands: add the /run-slice loop orchestrator [Refs: BC-PROC-01]
 - bc64d3d evals: add the trajectory-quality rubric and evals README [Refs: BC-TRAIL-01]
 - a2c0b8d agents: add isolated-context sub-agents for the slice loop [Refs: BC-PROC-01]
 - 95fb931 docs: bridge docs/specs to OpenSpec and document the per-slice flow [Refs: BC-TRAIL-01]

@@ -63,8 +63,38 @@ cd ../frontend; npm run build           # tsc strict + bundle
   checks, adjudicates Checker findings, and (for eval work) rates outputs. **Only the Judge
   marks a task complete.**
 
+## Sub-agents & the loop
+
+The roles above are mechanized as **isolated-context sub-agents** in
+[`.claude/agents/`](.claude/agents/), driven by the [`/run-slice`](.claude/commands/run-slice.md)
+orchestrator. Each agent runs in a **fresh context**, so `maker ≠ checker ≠ judge` is
+structural, not honor-system: a review cannot be the author re-grading themselves.
+
+- **Agents** — `test-engineer` (writes RED tests from the acceptance checks, test-first),
+  `capability-implementer` (the maker: product code + migrations to green), `code-reviewer`
+  and `security-reviewer` (read-only, independent checkers), and `eval-judge` (a generic
+  strict judge that applies a rubric to one case and returns `{score, pass, criteriaMet,
+  criteriaMissed, reasoning}`).
+- **The loop** (`/run-slice`, owner must ratify the spec first) — test-first RED → implement
+  to green → a capped loop of `gate-slice` + parallel review + a **trajectory-eval**
+  (eval-judge over [`evals/rubrics/`](evals/rubrics/)). The loop is capped at **3
+  iterations** and **escalates to the owner** rather than looping forever or weakening tests
+  to force green; the trajectory-eval returns a **diagnosis for rework and never rolls back**
+  (no destructive action on an LLM verdict). The **Judge runs once at the end** and is the
+  only role that marks a slice done.
+- **Rubrics** — the `eval-judge` applies rubrics in [`evals/rubrics/`](evals/rubrics/):
+  `trajectory-quality.md` (how a slice was built) now; the coach output-eval rubric + cases
+  arrive with slice 006.
+
 ## Reporting rules
 
+- **Declare skills first.** Begin every agent report with a `Skills used:` line naming each
+  skill you loaded and why (e.g. `Skills used: python-fastapi (backend conventions),
+  brainstorming (spec gate)`), or `Skills used: none`. This declaration is complemented by
+  **artifact-bound verification** where possible: a skill whose use leaves an artifact is
+  verified by that artifact, not by the claim — the spec-before-code (`brainstorming`) gate
+  is already enforced by `check-trajectory`, and the frontend skill's "SVG, never emoji"
+  rule will be checked by an emoji grep + `check-a11y` at the UI slice.
 - Structure every report as **Summary · Changes · Verification · Risks/Follow-ups**.
 - Verification means **the commands you ran and their real output** — never "looks good".
 - State plainly what you did **not** do, skipped, or couldn't verify. No silent failures.

@@ -1,13 +1,45 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Project context — shown to the AI when it generates OpenSpec artifacts (proposals,
+# specs, designs, tasks) for a slice. Keep it aligned with AGENTS.md and docs/.
+context: |
+  Product: Cadence — a per-user time-tracking app (timer, sessions, categories, heatmap,
+  metrics, an AI coach, and a browser extension), built one vertical slice at a time behind
+  an authenticated, per-user boundary.
+
+  Stack:
+  - Backend: Python + FastAPI, async everywhere, SQLAlchemy 2.0 + Alembic, Pydantic v2,
+    PostgreSQL. Tests in pytest; DB-touching tests are gated behind RUN_DB_TESTS=1.
+  - Frontend: React + Vite + TypeScript (strict).
+
+  Language & UI: English only. No emoji anywhere — every icon is an inline SVG (stroke 1.5,
+  currentColor), per docs/DESIGN.md (NFR-DES-01).
+
+  Backend conventions (see .claude/skills/python-fastapi):
+  - async def for routes, DB access, and I/O; never block an async handler.
+  - All config via app/config.py (pydantic-settings); never read os.environ elsewhere.
+  - DB access via the SessionDep dependency; commit explicitly.
+  - Per-user isolation: every repository method that touches a user's data takes user_id
+    and scopes every query by it (FR-AUTH-07); the only exceptions are the auth-bootstrap
+    methods that establish identity.
+  - Passwords: bcrypt cost 12 via passlib[bcrypt]. Session cookie is HttpOnly; SameSite=None;
+    Path=/ with env-driven Secure; mutating requests require the CSRF double-submit header.
+  - Every schema change ships one Alembic migration with hand-reviewed SQL.
+
+  Frontend conventions: all HTTP goes through src/api.ts, which sends credentials and
+  attaches the CSRF header on every mutating request.
+
+  Requirement ids: stable form <PREFIX>-<CAPABILITY>-<NN>, where PREFIX is FR (functional),
+  NFR (non-functional: qualities/constraints), TC (technical constraint), or BC (business
+  constraint) — e.g. FR-TIMER-03, NFR-SEC-01. docs/requirements.md is the source of truth;
+  ids are assigned once and never renumbered. Every OpenSpec requirement SHALL name its
+  FR/NFR id, and specs, tests, and commit trailers reference the ids (Refs: FR-..., and the
+  @trace FR-... docstring the traceability harness reads).
+
+  Process: spec-first (an OpenSpec change is ratified by the owner before any code);
+  test-first (tests go RED before the implementation makes them green); no test is weakened,
+  skipped, or deleted to force a gate green; maker != checker != judge (independent passes);
+  scripts/verify.* must be green before "done".
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

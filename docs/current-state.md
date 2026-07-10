@@ -4,10 +4,12 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 10:04 (Europe/Kyiv, EEST)
+- **Date and time:** 2026-07-10 10:37 (Europe/Kyiv, EEST)
 - **Phase:** 1 — slice **001 email+password auth** implemented by the Maker; **awaiting Checker +
   Judge**. Not yet done (maker ≠ checker ≠ judge). The **deterministic verification harness** (the
-  loop-first gate layer) is now built and proven on 001; see below.
+  loop-first gate layer) is built and proven on 001, and the **agent layer** (isolated-context
+  sub-agents + the `/run-slice` loop orchestrator) that drives slices through it is now built; see
+  below.
 
 ## What exists (done)
 
@@ -50,6 +52,24 @@ tests, verify the repo and update this file.
   - **Wired alongside the Python gates:** CI `harness` job runs `python scripts/check-openspec
     --require`; pre-commit runs `openspec validate --all --strict` when a commit touches `openspec/`.
     `openspec validate --all --strict` is green on the 001 contract.
+- **Agent layer** (isolated-context sub-agents + the loop orchestrator) — built 2026-07-10:
+  - Sub-agents in [`.claude/agents/`](../.claude/agents/): `test-engineer` (RED tests, test-first),
+    `capability-implementer` (the maker → green), `code-reviewer` + `security-reviewer` (read-only
+    checkers), `eval-judge` (generic strict rubric judge). Each runs in a **fresh context**, so
+    maker ≠ checker ≠ judge is structural, not honor-system.
+  - Orchestrator [`/run-slice`](../.claude/commands/run-slice.md): owner ratifies the spec → RED →
+    implement → **capped 3-iteration loop** (`gate-slice` ‖ parallel review ‖ trajectory-eval) →
+    escalate to the owner on non-convergence → **Judge once at the end** → `openspec archive`. The
+    trajectory-eval returns a **diagnosis for rework and never rolls back** (no destructive action
+    on an LLM verdict).
+  - Trajectory rubric
+    [`evals/rubrics/trajectory-quality.md`](../evals/rubrics/trajectory-quality.md) — CRITICAL:
+    test-first (RED before green) and no test weakened/skipped/deleted to force green; plus scope,
+    loop, and honest reporting. This is the LLM judgment layer that `check-trajectory` defers to.
+  - `AGENTS.md` gained a `Skills used:` reporting rule + a "Sub-agents & the loop" section;
+    `openspec/config.yaml` `context:` now carries the stack + key conventions for slices 002+.
+  - **Not yet exercised end-to-end:** the full loop runs only once a ratified slice (002+) is
+    queued; this session built and self-checked the agents/orchestrator, it did not run a slice.
 
 ## In review (implemented by Maker, not yet signed off)
 
