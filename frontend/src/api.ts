@@ -123,3 +123,95 @@ export const updateCategory = (
 
 export const deleteCategory = (id: number): Promise<void> =>
   apiFetch<void>(`/api/categories/${id}`, { method: 'DELETE' })
+
+// --- Timer, sessions & undo (slice 003) -------------------------------------
+// The core loop over the timer, saved sessions and the undo notification. All
+// requests ride apiFetch, so credentials flow and mutations carry the CSRF
+// header. gross/net come derived from the server (never stored); timestamps are
+// ISO-8601 UTC strings.
+
+export interface Pause {
+  paused_at: string
+  resumed_at: string
+}
+
+export interface ActiveTimer {
+  id: number
+  category_id: number
+  started_at: string
+  state: 'running' | 'paused'
+  pause_started_at: string | null
+  accumulated_pauses: Pause[]
+  version: number
+}
+
+export interface SavedSession {
+  id: number
+  category_id: number
+  started_at: string
+  ended_at: string
+  notes: string | null
+  source: 'timer' | 'manual'
+  gross_seconds: number
+  net_seconds: number
+  pauses: Pause[]
+}
+
+export interface UndoToken {
+  undo_token: string
+}
+
+export type SessionWithUndo = SavedSession & UndoToken
+
+export interface ManualSessionInput {
+  category_id: number
+  started_at: string
+  ended_at: string
+  notes?: string | null
+  pauses: Pause[]
+}
+
+export interface SessionEdit {
+  category_id?: number
+  started_at?: string
+  ended_at?: string
+  notes?: string | null
+  pauses?: Pause[]
+}
+
+export const startTimer = (categoryId: number): Promise<ActiveTimer> =>
+  apiFetch<ActiveTimer>('/api/timer/start', { method: 'POST', body: { category_id: categoryId } })
+
+export const pauseTimer = (version: number): Promise<ActiveTimer> =>
+  apiFetch<ActiveTimer>('/api/timer/pause', { method: 'POST', body: { version } })
+
+export const continueTimer = (version: number): Promise<ActiveTimer> =>
+  apiFetch<ActiveTimer>('/api/timer/continue', { method: 'POST', body: { version } })
+
+export const stopTimer = (
+  version: number,
+  categoryId: number,
+  notes: string | null,
+): Promise<SavedSession> =>
+  apiFetch<SavedSession>('/api/timer/stop', {
+    method: 'POST',
+    body: { version, category_id: categoryId, notes },
+  })
+
+export const discardTimer = (version: number): Promise<UndoToken> =>
+  apiFetch<UndoToken>('/api/timer/discard', { method: 'POST', body: { version } })
+
+export const listSessions = (): Promise<SavedSession[]> =>
+  apiFetch<SavedSession[]>('/api/sessions')
+
+export const addSession = (input: ManualSessionInput): Promise<SavedSession> =>
+  apiFetch<SavedSession>('/api/sessions', { method: 'POST', body: input })
+
+export const editSession = (id: number, changes: SessionEdit): Promise<SessionWithUndo> =>
+  apiFetch<SessionWithUndo>(`/api/sessions/${id}`, { method: 'PATCH', body: changes })
+
+export const deleteSession = (id: number): Promise<UndoToken> =>
+  apiFetch<UndoToken>(`/api/sessions/${id}`, { method: 'DELETE' })
+
+export const applyUndo = (token: string): Promise<void> =>
+  apiFetch<void>(`/api/undo/${token}`, { method: 'POST' })

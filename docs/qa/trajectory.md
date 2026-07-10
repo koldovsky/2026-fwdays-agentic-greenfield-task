@@ -70,11 +70,16 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/003.md - absent
 - Commits:
+  - f359689 test(timer-sessions): RED acceptance tests for the 003 contract [Refs: FR-TIMER-01, FR-SESS-01, FR-NOTIF-01]
   - 0220018 harness(frontend): add a minimal vitest unit runner, wired into verify [Refs: FR-TIMER-05]
   - 2697dc3 docs(timer-sessions): ratify the slice 003 contract (spec-first) [Refs: FR-TIMER-01]
-- Touched code paths (0):
-  - (none)
-- Other files touched (docs/config): 13
+- Touched code paths (5):
+  - backend/tests/test_durations.py
+  - backend/tests/test_sessions.py
+  - backend/tests/test_timer.py
+  - backend/tests/test_undo.py
+  - frontend/src/pages/Timer/resolveShortcut.test.ts
+- Other files touched (docs/config): 14
 
 ## Process / infra commits (traced, not a feature slice)
 

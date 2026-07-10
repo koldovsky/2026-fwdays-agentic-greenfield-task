@@ -3,11 +3,15 @@ import { useEffect, useState } from 'react'
 import { ApiError, getMe, logout, type User } from './api'
 import AuthPage from './pages/AuthPage'
 import CategoriesPage from './pages/Categories/CategoriesPage'
+import TimerPage from './pages/Timer/TimerPage'
 
 type Session = { status: 'loading' } | { status: 'anon' } | { status: 'authed'; user: User }
 
+type Tab = 'timer' | 'categories'
+
 export default function App() {
   const [session, setSession] = useState<Session>({ status: 'loading' })
+  const [tab, setTab] = useState<Tab>('timer')
 
   useEffect(() => {
     getMe()
@@ -42,9 +46,24 @@ export default function App() {
     }
   }
 
-  // Minimal authenticated view: a slim top bar (identity + sign out) over the
-  // Categories screen (slice 002). A full nav shell (Timer / Stats / Categories)
-  // is a later slice, so this stays deliberately minimal.
+  // Minimal authenticated view: a slim top bar (identity + a two-item nav +
+  // sign out) over the Timer screen (slice 003, the home) with Categories
+  // (slice 002) still reachable. A full nav shell is a later slice, so this
+  // stays deliberately minimal.
+  const navBtn = (target: Tab, label: string) => (
+    <button
+      type="button"
+      className="link-btn"
+      onClick={() => setTab(target)}
+      style={{
+        color: tab === target ? 'var(--text-primary)' : 'var(--text-secondary)',
+        fontWeight: tab === target ? 600 : 400,
+      }}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div style={{ minHeight: '100vh' }}>
       <header
@@ -56,12 +75,16 @@ export default function App() {
           borderBottom: '1px solid var(--border-subtle)',
         }}
       >
-        <span className="micro-label">{session.user.email}</span>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <span className="micro-label">{session.user.email}</span>
+          {navBtn('timer', 'Timer')}
+          {navBtn('categories', 'Categories')}
+        </nav>
         <button className="link-btn" type="button" onClick={onSignOut}>
           Sign out
         </button>
       </header>
-      <CategoriesPage />
+      {tab === 'timer' ? <TimerPage /> : <CategoriesPage />}
     </div>
   )
 }
