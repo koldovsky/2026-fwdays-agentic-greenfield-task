@@ -45,3 +45,20 @@
 ---
 
 Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+
+---
+
+## Проєкт / Project scaffold
+
+Повноцінний старт зібрано **агентно**. Стек: **FastAPI + Uvicorn + PostgreSQL (async
+SQLAlchemy + Alembic) + React (Vite + TypeScript)**. Наразі це перевірений мінімальний
+зріз, що доводить готовність стеку; функціональні/нефункціональні вимоги додаються далі
+через специфікації у [`docs/specs/`](docs/specs/).
+
+- **Правила для агентів / context:** [`AGENTS.md`](AGENTS.md) (+ [`CLAUDE.md`](CLAUDE.md))
+- **Рішення щодо стеку (ADR):** [`docs/adr/0001-tech-stack.md`](docs/adr/0001-tech-stack.md)
+- **Скіли агента + аудит безпеки:** [`.claude/skills/README.md`](.claude/skills/README.md)
+- **Верифікація (один цикл):** `scripts/verify.ps1` (Windows) / `scripts/verify.sh`
+
+Запуск і перевірка — див. [`AGENTS.md`](AGENTS.md).
+

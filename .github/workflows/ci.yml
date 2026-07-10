@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/app
+      RUN_DB_TESTS: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Lint (ruff)
+        run: python -m ruff check .
+      - name: Type check (mypy)
+        run: python -m mypy app
+      - name: Migrate
+        run: python -m alembic upgrade head
+      - name: Test (pytest, with DB)
+        run: python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm install
+      - name: Build (typecheck + bundle)
+        run: npm run build
