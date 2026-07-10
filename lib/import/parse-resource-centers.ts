@@ -35,10 +35,10 @@ function splitList(v: string | undefined): string[] {
 }
 
 /**
- * Parses resource-center rows and groups valid centers by group identifier.
+ * Parses resource-center rows into valid resource centers and groups them by group identifier.
  *
  * @param rows - Input rows containing resource-center and group data
- * @returns Parsed resource-center groups, valid resource centers, and validation errors
+ * @returns Resource-center groups, valid resource centers, and validation errors
  */
 export function parseResourceCenters(rows: RawRow[]): ResourceCentersResult {
   const resourceCenters: ResourceCenter[] = []

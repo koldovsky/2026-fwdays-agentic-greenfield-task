@@ -9,10 +9,10 @@ export interface GrossRequirement {
 }
 
 /**
- * 4.1 — Брутто-потреба в куплених матеріалах (FR-MRP-01).
+ * Aggregates gross material requirements by nomenclature.
  *
- * Агрегує `effectiveQty` по `nomenclatureId` лише для вузлів типу `material`.
- * Детермінований результат: сортування за `nomenclatureId`.
+ * @param expandedNodes - Expanded nodes whose material entries are included in the aggregation
+ * @returns Gross requirements with unique consuming order IDs, sorted by nomenclature ID
  */
 export function calcGrossRequirements(expandedNodes: ExpandedNode[]): GrossRequirement[] {
   const byNom = new Map<string, { gross: number; orders: Set<string> }>()

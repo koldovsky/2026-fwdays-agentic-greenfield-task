@@ -54,7 +54,7 @@ function allowedRcs(
 }
 
 /**
- * Selects an allowed resource center that is free during the specified slot.
+ * Selects an eligible resource center with the lowest occupied load for a time slot.
  *
  * @param opType - Operation type used to filter eligible resource centers
  * @param slot - Time interval that must be available
@@ -132,7 +132,7 @@ export function findEarliestSlot(
 }
 
 /**
- * Finds the latest available working slot for an operation before its deadline.
+ * Finds the latest feasible working slot for an operation that ends by the deadline.
  *
  * @param opType - The operation type the resource center must support
  * @param deadline - The latest permitted slot end time in epoch minutes

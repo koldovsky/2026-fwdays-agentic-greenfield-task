@@ -165,12 +165,12 @@ export function optionalString(row: RawRow, aliases: string[]): string | undefin
 }
 
 /**
- * Перетворює обов’язкове значення клітинки на число та додає помилки валідації за потреби.
+ * Перетворює обов’язкове значення клітинки на число та перевіряє задані обмеження.
  *
  * @param field - Назва поля для повідомлень про помилки
  * @param rowNo - Номер рядка для повідомлень про помилки
  * @param opts - Додаткові обмеження числового значення
- * @returns Розібране число; `Number.NaN`, якщо значення порожнє або не є числом
+ * @returns Розібране число; `Number.NaN`, якщо значення порожнє або некоректне
  */
 export function requireNumber(
   row: RawRow,
@@ -199,12 +199,12 @@ export function requireNumber(
 }
 
 /**
- * Зчитує необов'язкове числове поле та перевіряє його значення.
+ * Зчитує необов'язкове числове поле.
  *
  * @param field - Назва поля для повідомлення про помилку
  * @param rowNo - Номер рядка для повідомлення про помилку
- * @param errors - Масив, до якого додається помилка некоректного числа
- * @returns Числове значення, `undefined` для порожнього поля або некоректного числа
+ * @param errors - Масив для накопичення помилки некоректного числа
+ * @returns Числове значення, або `undefined` для порожнього чи некоректного значення
  */
 export function optionalNumber(
   row: RawRow,
@@ -224,11 +224,12 @@ export function optionalNumber(
 }
 
 /**
- * Зчитує та перевіряє обов’язкову дату як дату опівночі за UTC.
+ * Зчитує та перевіряє обов’язкове значення дати.
  *
  * @param field - Назва поля для повідомлення про помилку
  * @param rowNo - Номер рядка для повідомлення про помилку
- * @returns Розпізнана дата або `Invalid Date`, якщо значення відсутнє чи некоректне
+ * @param errors - Масив для накопичення помилок валідації
+ * @returns Дата опівночі за UTC або `Invalid Date`, якщо значення відсутнє чи некоректне
  */
 export function requireDate(
   row: RawRow,
@@ -251,13 +252,13 @@ export function requireDate(
 }
 
 /**
- * Перевіряє обов'язкове значення та перетворює його на канонічне значення за мапою псевдонімів.
+ * Визначає канонічне значення обов'язкового поля за мапою псевдонімів.
  *
  * @param field - Назва поля для повідомлення про помилку
  * @param rowNo - Номер рядка для повідомлення про помилку
  * @param errors - Масив для додавання помилок валідації
  * @param mapping - Мапа нормалізованих псевдонімів на канонічні значення
- * @returns Канонічне значення, якщо вхідне значення допустиме; `null` і помилку в масиві `errors` — якщо значення відсутнє або недопустиме
+ * @returns Канонічне значення або `null`, якщо значення відсутнє чи не відповідає мапі
  */
 export function requireEnum<T extends string>(
   row: RawRow,
@@ -283,10 +284,10 @@ export function requireEnum<T extends string>(
 }
 
 /**
- * Determines whether a cell represents a true value.
+ * Determines whether a cell contains a truthy value.
  *
- * @param truthy - Values interpreted as `true` after normalization
- * @returns `true` if the cell contains a boolean `true` or matches a truthy value, `false` otherwise
+ * @param truthy - String values interpreted as `true` after normalization
+ * @returns `true` if the cell contains `true` or a normalized value from `truthy`, `false` otherwise
  */
 export function optionalBoolean(
   row: RawRow,

@@ -1,10 +1,10 @@
 import type { ExpandedNode, SharedNode } from '../types/index.ts'
 
 /**
- * Визначає номенклатури, що входять до кількох замовлень.
+ * Identifies nomenclatures that occur across multiple orders.
  *
- * @param expandedNodes - Розгорнуті вузли для аналізу
- * @returns Вузли зі спільними номенклатурами, сумарною кількістю `effectiveQty` та відсортованими ідентифікаторами замовлень
+ * @param expandedNodes - Expanded nodes to analyze
+ * @returns Shared nomenclature nodes with aggregated quantities, sorted order IDs, and sorted nomenclature IDs
  */
 export function findSharedNodes(expandedNodes: ExpandedNode[]): SharedNode[] {
   const byNom = new Map<string, { total: number; orders: Set<string> }>()

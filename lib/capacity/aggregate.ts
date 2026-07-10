@@ -81,10 +81,10 @@ function round2(x: number): number {
 }
 
 /**
- * Builds a capacity utilization histogram for the requested date range and aggregation level.
+ * Builds a capacity utilization view for the requested date range and aggregation level.
  *
  * @param opts - Capacity data, calendar, resources, operations, and date boundaries used to build the view
- * @returns A capacity view containing utilization series, histogram rows, operations by cell, and summary KPIs
+ * @returns Utilization series and bucketed data, operations grouped by cell, and summary KPIs
  */
 export function buildCapacityView(opts: BuildCapacityOptions): CapacityView {
   const unit = pickUnit(opts.today, opts.horizon)

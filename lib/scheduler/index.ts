@@ -148,13 +148,13 @@ function commit(occupied: OccupiedSlots, placements: OpPlacement[]): void {
 }
 
 /**
- * Determines the block's critical ratio from its consuming orders.
+ * Computes the scheduling priority ratio for a block across its consuming orders.
  *
  * @param block - The block whose consuming orders are evaluated
  * @param orderById - Orders indexed by identifier
- * @param today - The date used for critical-ratio calculation
- * @param calendar - The working calendar used for critical-ratio calculation
- * @returns The smallest critical ratio among matching orders, or `Infinity` when none are found
+ * @param today - The date used for the calculation
+ * @param calendar - The working calendar used for the calculation
+ * @returns The smallest ratio among matching orders, or `Infinity` when none are found
  */
 function blockCR(
   block: Block,
@@ -412,7 +412,7 @@ function defaultDeadline(orders: Order[]): Date {
 }
 
 /**
- * Converts block placements into scheduled operations with order, timing, capacity, and status details.
+ * Converts scheduled block placements into operations with order references, timing, duration, and delivery status.
  *
  * @returns Deterministically ordered scheduled operations, including material-blocking and delivery-risk statuses.
  */

@@ -38,7 +38,12 @@ function indexCalendar(calendar: WorkCalendar[]): Map<number, WorkCalendar> {
   return map
 }
 
-/** Робочі хвилини календарного дня (0 якщо неробочий / відсутній). */
+/**
+ * Determines the working minutes available for a calendar day.
+ *
+ * @param dayMs - The UTC midnight timestamp identifying the day
+ * @returns The day's working minutes, or `0` when the day is unavailable or non-working
+ */
 function dayWorkingMinutes(map: Map<number, WorkCalendar>, dayMs: number): number {
   const entry = map.get(dayMs)
   if (!entry || !entry.isWorking || entry.workingMinutes <= 0) return 0
@@ -75,7 +80,7 @@ export function getWorkingMinutesForRc(
  * @param endAt - The date from which to subtract working minutes
  * @param minutes - The number of working minutes to subtract
  * @param calendar - The working-time calendar
- * @returns The resulting date after subtracting the working minutes
+ * @returns The date reached after subtracting the requested working minutes
  * @throws If the calendar is exhausted before all minutes are consumed
  */
 export function subtractMinutes(
@@ -111,13 +116,13 @@ export function subtractMinutes(
 }
 
 /**
- * Adds working minutes to a start time, advancing through the calendar.
+ * Adds working minutes from a starting date and time.
  *
  * @param startAt - The starting date and time.
  * @param minutes - The number of working minutes to add.
  * @param calendar - The work calendar used to determine available time.
  * @returns The date and time reached after adding the working minutes.
- * @throws If the calendar is exhausted before all minutes are placed.
+ * @throws Error if the calendar is exhausted before all minutes are added.
  */
 export function addMinutes(
   startAt: Date,
@@ -197,9 +202,12 @@ export function nextWorkingDayStart(date: Date, calendar: WorkCalendar[]): Date 
 }
 
 /**
- * Кінець робочого вікна найпізнішого робочого дня строго перед днем `date`.
- * Використовується у backward scheduling як дедлайн попередньої операції
- * маршруту (інверсія міжопераційного дня, FR-SCHED-04).
+ * Finds the end of the latest working window on the working day before the day containing `date`.
+ *
+ * @param date - The date whose preceding working day is searched
+ * @param calendar - The work calendar used to identify working days
+ * @returns The end of the preceding working day's working window
+ * @throws Error if no preceding working day is found within the search limit
  */
 export function previousWorkingDayEnd(date: Date, calendar: WorkCalendar[]): Date {
   const map = indexCalendar(calendar)

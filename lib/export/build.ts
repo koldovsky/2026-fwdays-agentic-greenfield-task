@@ -16,7 +16,11 @@ import type { ExportCell, SheetData } from './types.ts'
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
-/** Дата+час у UTC: `YYYY-MM-DD HH:mm`. */
+/**
+ * Форматує дату й час у UTC.
+ *
+ * @returns Рядок у форматі `YYYY-MM-DD HH:mm`
+ */
 function fmtDateTime(d: Date): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }

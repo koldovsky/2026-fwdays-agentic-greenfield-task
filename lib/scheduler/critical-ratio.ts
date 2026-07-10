@@ -4,10 +4,12 @@ import type { Order, WorkCalendar } from '../types/index.ts'
 const EPSILON_MIN = 1e-9
 
 /**
- * Counts working days in the interval `(today, dueDate]` according to the calendar.
+ * Counts calendar-designated working days between today and the due date.
  *
- * @param calendar - Calendar entries used to determine working days.
- * @returns The number of working days after `today` and on or before `dueDate`.
+ * @param today - The start date, excluded from the interval.
+ * @param dueDate - The end date, included in the interval.
+ * @param calendar - Calendar entries used to identify working days.
+ * @returns The number of working days in the interval `(today, dueDate]`.
  */
 function workingDaysToDeadline(today: Date, dueDate: Date, calendar: WorkCalendar[]): number {
   const from = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())

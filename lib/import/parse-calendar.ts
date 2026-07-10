@@ -23,10 +23,10 @@ const DAY_TYPE_MAP: Record<string, DayType> = {
 }
 
 /**
- * Parses production calendar rows into validated calendar entries.
+ * Parses production calendar rows into validated calendar entries, collecting validation errors for invalid rows.
  *
  * @param rows - Raw table rows containing dates, day types, and working durations
- * @returns Parsed calendar entries and validation errors
+ * @returns Successfully parsed calendar entries and validation errors
  */
 export function parseCalendar(rows: RawRow[]): ParseResult<WorkCalendar> {
   const data: WorkCalendar[] = []

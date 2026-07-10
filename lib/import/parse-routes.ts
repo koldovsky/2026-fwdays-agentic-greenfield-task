@@ -12,10 +12,10 @@ const A = {
 }
 
 /**
- * Parses route-operation rows and collects validation errors.
+ * Parses route-operation rows and accumulates validation errors.
  *
- * Missing operation types default to the operation name. Rows with validation
- * errors are excluded from the parsed data.
+ * Missing operation types default to the operation name. Rows with error-severity
+ * validation errors are excluded from the parsed data.
  *
  * @param rows - Input rows containing route-operation fields
  * @returns Parsed route operations and accumulated validation errors

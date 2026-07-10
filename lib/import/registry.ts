@@ -43,9 +43,9 @@ export const IMPORT_TABLES: { table: ImportTable; label: string }[] = [
 ]
 
 /**
- * Parses rows according to the specified import table type.
+ * Parses raw rows according to the specified import table type.
  *
- * @param table - The import table type that determines the parser and result field
+ * @param table - The import table type that selects the parser and result field
  * @param rows - The raw rows to parse
  * @returns The parsed data and any validation errors
  * @throws If an unsupported table type is provided

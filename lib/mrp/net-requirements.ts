@@ -4,8 +4,9 @@ import type { GrossRequirement } from './gross-requirements.ts'
 /**
  * Calculates the net material deficit at the operation start date.
  *
- * @param receipts - Planned receipts to evaluate for confirmed quantities available by the operation start date
- * @returns The gross need minus stock and qualifying receipts; may be negative when material is in surplus
+ * @param receipts - Planned receipts confirmed for availability by the operation start date
+ * @param operationStartDate - Date used to determine which receipts are available
+ * @returns The gross need minus stock and qualifying receipts; may be negative when available material exceeds the need
  */
 export function calcNetDeficit(
   grossNeed: number,
