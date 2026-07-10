@@ -112,6 +112,39 @@ describe("TailorWorkspace wizard (FR-WIZARD-01/05)", () => {
     expect(await screen.findByText(overclaimBullet.text)).toBeInTheDocument();
   });
 
+  it("shows the generating status and a skeleton placeholder grid during generate (NFR-OBS-01, NFR-PERF-04)", async () => {
+    // Hold the generator open on an explicit gate (never yields the terminal
+    // `result` until released) so the generate phase is observable rather than
+    // racing straight through to export.
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    streamGenerateMock.mockImplementation(() =>
+      (async function* () {
+        await gate;
+        for (const event of RESULT_EVENTS) yield event;
+      })(),
+    );
+    render(<TailorWorkspace />);
+
+    await analyze();
+    await proceed();
+
+    // The spoken progress line is preserved from the pre-skeleton contract.
+    expect(await screen.findByRole("status")).toHaveTextContent(ua.wizard.generating);
+
+    // The decorative skeleton grid is aria-hidden and renders alongside it.
+    const status = screen.getByRole("status");
+    const generateContainer = status.parentElement as HTMLElement;
+    const skeletons = generateContainer.querySelectorAll('[aria-hidden="true"] .skeleton');
+    expect(skeletons.length).toBeGreaterThan(0);
+
+    // Resolves to the export step once generation completes.
+    release();
+    expect(await screen.findByText(overclaimBullet.text)).toBeInTheDocument();
+  });
+
   it("forwards the analyze-phase careerStage into the generate request (§3.5 wizard flow)", async () => {
     // Regression: the split analyze→generate flow must not drop the inferred
     // stage at the client boundary, or the seniority call runs in analysis and

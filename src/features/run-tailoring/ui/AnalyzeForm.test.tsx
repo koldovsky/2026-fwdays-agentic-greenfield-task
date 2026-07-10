@@ -2,7 +2,7 @@
 // NFR-SEC-04). `streamAnalyze` is mocked with scripted async generators so these
 // exercise the form's own state machine, not NDJSON parsing (that's
 // stream-analyze.test.ts's job).
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -82,6 +82,33 @@ describe("AnalyzeForm (FR-WIZARD-01)", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(ua.tailorRun.failed);
     expect(onAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("shows an aria-hidden skeleton preview while the analyze run is in flight (NFR-OBS-01)", async () => {
+    let releaseNext: (() => void) | undefined;
+    streamAnalyzeMock.mockImplementation(() =>
+      (async function* () {
+        yield { type: "status", phase: "processing" } as const;
+        await new Promise<void>((resolve) => {
+          releaseNext = resolve;
+        });
+        yield ANALYSIS_EVENT;
+      })(),
+    );
+    const onAnalysis = renderForm();
+
+    await fillAndSubmit();
+
+    // In-flight: the spoken status is up and the decorative preview renders.
+    expect(await screen.findByRole("status")).toHaveTextContent(ua.tailorRun.processing);
+    const skeletons = document.querySelectorAll('[aria-hidden="true"] .skeleton');
+    expect(skeletons.length).toBeGreaterThan(0);
+
+    releaseNext?.();
+
+    await waitFor(() => expect(onAnalysis).toHaveBeenCalledTimes(1));
+    // Once settled, the in-flight preview is gone.
+    expect(document.querySelectorAll('[aria-hidden="true"] .skeleton').length).toBe(0);
   });
 
   it("silently drops a submission with a filled honeypot (NFR-SEC-04)", async () => {

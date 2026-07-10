@@ -35,7 +35,7 @@ import {
 import { UploadCvDropzone } from "@/features/upload-cv";
 import type { ConfirmedAnswerEvidence, DocumentAttachment } from "@/shared/lib/llm";
 import { t, type Locale } from "@/shared/lib/i18n";
-import { Button } from "@/shared/ui";
+import { Button, Skeleton } from "@/shared/ui";
 import { BulletList } from "@/widgets/bullet-list";
 import { ChecklistPanel, type ChecklistPanelRow } from "@/widgets/checklist-panel";
 import { ExportStepper } from "@/widgets/export-stepper";
@@ -45,6 +45,53 @@ import { toConfirmedAnswers } from "../lib/confirmed-answers";
 import { WizardSteps, type WizardStep } from "./WizardSteps";
 
 type WizardPhase = WizardStep | "failed";
+
+/**
+ * In-flight placeholder for the generation phase (FR-WIZARD-01, NFR-OBS-01).
+ * The two-pass tailoring runs 5–15s; without this the result area is blank the
+ * whole time and reads as a frozen app. Mirrors the ResultView two-column frame
+ * (checklist left, bullets right) with pulsing skeleton blocks so the user sees
+ * where the result will land. `role="status"` carries the spoken progress; the
+ * skeleton grid is aria-hidden decoration. Opacity-only pulse → no layout shift
+ * (CLS 0, NFR-PERF-04); DESIGN.md tokens only (white cards, hairline, rounded).
+ */
+function GenerateSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <p role="status" className="font-body text-base text-ink-soft">
+        {label}
+      </p>
+      <div
+        aria-hidden="true"
+        className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-2 lg:items-start"
+      >
+        <div className="flex flex-col gap-4 rounded-xl border border-hairline bg-white p-6">
+          <Skeleton className="h-10 w-24" />
+          <div className="flex flex-col gap-4">
+            {[0, 1, 2, 3, 4].map((row) => (
+              <div key={row} className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-4">
+          {[0, 1, 2, 3].map((card) => (
+            <div
+              key={card}
+              className="flex flex-col gap-2 rounded-xl border border-hairline bg-white p-4"
+            >
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export interface TailorWorkspaceProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
@@ -301,11 +348,7 @@ export function TailorWorkspace({
         />
       )}
 
-      {phase === "generate" && (
-        <p role="status" className="font-body text-base text-ink-soft">
-          {copy.wizard.generating}
-        </p>
-      )}
+      {phase === "generate" && <GenerateSkeleton label={copy.wizard.generating} />}
 
       {phase === "export" && result !== null && (
         <div className="flex flex-col gap-6">

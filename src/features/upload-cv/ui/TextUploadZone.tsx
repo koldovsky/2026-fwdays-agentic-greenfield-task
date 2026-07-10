@@ -66,6 +66,8 @@ export function TextUploadZone({ locale = "ua", onExtracted }: TextUploadZonePro
     unsupported_type: copy.error.unsupportedType,
     too_large: copy.error.tooLarge,
     unparseable: copy.error.unparseable,
+    rate_limited: copy.error.rateLimited,
+    server_error: copy.error.serverError,
     failed: copy.error.failed,
   };
 

@@ -6,7 +6,38 @@
 
 **Updated:** 2026-07-10
 
+## Working on
+
+Nothing actively in progress. Just shipped the PROD hotfix batch (3 Vercel issues) — see Last action.
+
+**One human action to activate prod payments for the demo:** set `PAYMENTS_EMULATOR_IN_PROD=1` in
+Vercel env (and ensure `PAYMENTS_WEBHOOK_SECRET` is set). OFF/unset keeps payments hard-disabled.
+Emulator grants a plan with NO real charge — demo/beta only.
+
+**Deferred (env access blocked by org policy this session):** add a `PAYMENTS_EMULATOR_IN_PROD` line to
+`.env.example` (the flag is fully documented in `src/shared/config/env.ts`). Optional cosmetic follow-up
+(checker minor): a `console.warn` when the emulator runs live in prod, for ops visibility.
+
 ## Last action (most recent first)
+
+- **PROD hotfix batch (3 Vercel issues) DONE (2026-07-10).** maker(main) ≠ test-author(sonnet, `d17a5de`)
+  ≠ checker(opus, SHIP: 0 blockers/majors, 2 cosmetic minors) + verifier(sonnet). Three commits:
+  - **`b3b443e` #3 payments** — every subscription showed "Не вдалося розпочати оплату" because prod
+    hard-throws the emulator BY DESIGN. Added fail-safe `PAYMENTS_EMULATOR_IN_PROD` flag (unset/0/false/off
+    → still disabled; 1/true/on → emulator in prod, NO real charge, demo only). One helper drives BOTH
+    gates (`getPaymentsProviderName` checkout-start + `isPaymentsEmulatorEnabled` /checkout page +
+    complete) → no half-open state (checker-verified). TC-STACK-06, FR-PAYWALL-02/03, NFR-OBS-01.
+  - **`ae947de` #1 CV upload** — generic "Не вдалося завантажити файл" hid every cause and the route
+    swallowed errors (Sentry never saw them). Client now splits `server_error` (5xx/non-JSON crash) from
+    network `failed` and passes `rate_limited` through; route `console.error`s the cause (name+message+
+    docType ONLY, no bytes/text — NFR-SEC-01, checker-verified). UA+EN copy added. FR-CV-01, NFR-OBS-01.
+    NOTE: this SURFACES + LOGS the failure; the exact prod root cause still needs the Vercel logs (now
+    non-silent). `serverExternalPackages` already lists pdf-parse/mammoth (not a bundling issue).
+  - **`31aad68` #2 skeletons** — generate phase was a bare `<p>` (5–15s blank); added `shared/ui/skeleton`
+    primitive (opacity-only pulse, CLS 0, reduced-motion-safe, DESIGN tokens only) + ResultView-shaped
+    generate skeleton + analyze pending preview. FR-WIZARD-01, NFR-PERF-04, DESIGN.md.
+  - Tests (`d17a5de`): full suite GREEN 153 files / 1545 pass / 5 pre-existing skips; lint clean.
+    Findings artifact: `.claude/reviews/prod-hotfix-batch.json`.
 
 - **`add-docker-dev-env` (impl, Sections 1+2) DONE (2026-07-10).** Added `docker-compose.yml`
   (`postgres:16-alpine` + `redis:7-alpine`, `127.0.0.1`-bound, named volume `vouch_pg`, healthchecks,
