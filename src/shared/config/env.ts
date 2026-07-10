@@ -91,21 +91,34 @@ export function getLlmModel(): string | undefined {
 export type PaymentsProviderName = "emulator";
 
 /**
+ * Explicit opt-in to run the payments EMULATOR in production
+ * (`PAYMENTS_EMULATOR_IN_PROD`). OFF by default and fail-safe: unset / empty /
+ * `0` / `false` / `off` keeps prod hard-disabled; only `1` / `true` / `on`
+ * opens it. INTEGRITY NOTE: the emulator grants a plan with NO real charge —
+ * this flag is for demo / beta / pitch environments only, never a live paid
+ * product. A real merchant-of-record adapter (TC-STACK-06) supersedes it.
+ */
+function isEmulatorAllowedInProd(): boolean {
+  const raw = process.env.PAYMENTS_EMULATOR_IN_PROD?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "on";
+}
+
+/**
  * Payments provider selector (`PAYMENTS_PROVIDER`, TC-STACK-06). The emulator
- * is the only adapter today and the default outside production. It is
- * HARD-disabled in production (add-payments-emulator design "never in
- * production"; asserted by task 4.2): selecting it — explicitly or by default —
- * with NODE_ENV=production throws. A real MoR adapter later extends the union
- * and becomes the only valid production value.
+ * is the only adapter today and the default outside production. In production it
+ * is HARD-disabled (add-payments-emulator design "never in production") UNLESS
+ * `PAYMENTS_EMULATOR_IN_PROD` explicitly opts in (demo/beta only, no real
+ * charge) — otherwise selecting it, explicitly or by default, throws. A real
+ * MoR adapter later extends the union and becomes the true production value.
  */
 export function getPaymentsProviderName(): PaymentsProviderName {
   const name = process.env.PAYMENTS_PROVIDER;
   if (name !== undefined && name !== "" && name !== "emulator") {
     throw new Error(`Unknown PAYMENTS_PROVIDER "${name}" (expected "emulator")`);
   }
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && !isEmulatorAllowedInProd()) {
     throw new Error(
-      "The payments emulator is disabled in production. Configure a real merchant-of-record adapter (TC-STACK-06).",
+      "The payments emulator is disabled in production. Set PAYMENTS_EMULATOR_IN_PROD=1 for a demo (no real charge) or configure a real merchant-of-record adapter (TC-STACK-06).",
     );
   }
   return "emulator";
@@ -113,11 +126,14 @@ export function getPaymentsProviderName(): PaymentsProviderName {
 
 /**
  * Whether the payments emulator surfaces (/checkout screen, emulator sign
- * endpoint) may run: never in production, and only when the emulator is the
- * selected provider. Non-throwing so route handlers can 404 calmly (NFR-OBS-01).
+ * endpoint) may run: only when the emulator is the selected provider, and in
+ * production only when `PAYMENTS_EMULATOR_IN_PROD` opts in (demo only). This
+ * gates the /checkout page and /api/payments/checkout/complete so the full
+ * emulator loop opens with the same flag. Non-throwing so route handlers can
+ * 404 calmly (NFR-OBS-01).
  */
 export function isPaymentsEmulatorEnabled(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.NODE_ENV === "production" && !isEmulatorAllowedInProd()) return false;
   const name = process.env.PAYMENTS_PROVIDER;
   return name === undefined || name === "" || name === "emulator";
 }
