@@ -10,7 +10,13 @@ import { buildPredecessors, operationId } from './dependencies.ts'
 import { countWorkingDays } from './time.ts'
 import { fromEpochMin, toEpochMin } from './time.ts'
 
-/** Топологічний порядок opId за предшественниками (Kahn). */
+/**
+ * Produces a deterministic ordering of operation identifiers based on their predecessor relationships.
+ *
+ * @param ids - The operation identifiers to order
+ * @param preds - The predecessor identifiers for each operation
+ * @returns An ordering that satisfies the predecessor relationships, with unresolved identifiers appended afterward
+ */
 function topoOrder(ids: string[], preds: Map<string, string[]>): string[] {
   const indeg = new Map<string, number>()
   const succ = new Map<string, string[]>()
@@ -39,6 +45,14 @@ function topoOrder(ids: string[], preds: Map<string, string[]>): string[] {
   return order
 }
 
+/**
+ * Recomputes readiness dates, delays, and critical paths for orders.
+ *
+ * @param ops - Scheduled operations used to calculate each order's readiness.
+ * @param orders - Orders whose scheduling results are recalculated.
+ * @param calendar - Working calendar used to calculate delay days.
+ * @returns The recalculated scheduling results for each order.
+ */
 function recomputeOrders(
   ops: ScheduledOperation[],
   orders: Order[],
@@ -70,13 +84,13 @@ function recomputeOrders(
 }
 
 /**
- * 2.1 — Перерахунок розкладу після ручного перетягування операції (FR-GANTT-07).
+ * Reschedules an operation and propagates forward-only changes to dependent operations.
  *
- * Переміщена операція фіксується на `newStart`; залежні операції (наступні у
- * маршруті та операції батьківських вузлів BOM) зсуваються вперед так, щоб
- * `start ≥ nextWorkingDayStart(кінець предка)`. Розповсюдження лише вперед —
- * залежні ніколи не тягнуться раніше свого поточного старту. РЦ-призначення не
- * змінюються (MVP). Функція чиста: повертає нові масиви, не мутуючи вхід.
+ * @param operations - The scheduled operations to reschedule.
+ * @param movedOpId - The identifier of the operation being moved.
+ * @param newStart - The requested start date for the moved operation.
+ * @param orders - The orders whose results are recalculated.
+ * @returns Updated operation copies and recalculated order results.
  */
 export function applyManualMove(
   operations: ScheduledOperation[],

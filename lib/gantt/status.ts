@@ -12,6 +12,13 @@ const STATUS_CLASS: Record<OperationStatus, string> = {
   'blocked-material': 'gop gop--blocked',
 }
 
+/**
+ * Builds the CSS class string for a task status and lock state.
+ *
+ * @param status - The task's operation status
+ * @param locked - Whether to include the locked-state class
+ * @returns The CSS classes associated with the status and lock state
+ */
 export function taskCssClass(status: OperationStatus, locked = false): string {
   const base = STATUS_CLASS[status]
   return locked ? `${base} gop--locked` : base

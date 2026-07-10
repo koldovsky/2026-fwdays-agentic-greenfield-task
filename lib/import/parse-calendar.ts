@@ -23,11 +23,10 @@ const DAY_TYPE_MAP: Record<string, DayType> = {
 }
 
 /**
- * 2.7 — Парсер виробничого календаря (FR-IMP-08).
+ * Parses production calendar rows into validated calendar entries.
  *
- * `isWorking` = тип дня не «вихідний». Робочі хвилини беруться з колонки
- * хвилин або обчислюються з годин (× 60); для вихідного — 0. Для робочого дня
- * без вказаної тривалості — помилка.
+ * @param rows - Raw table rows containing dates, day types, and working durations
+ * @returns Parsed calendar entries and validation errors
  */
 export function parseCalendar(rows: RawRow[]): ParseResult<WorkCalendar> {
   const data: WorkCalendar[] = []

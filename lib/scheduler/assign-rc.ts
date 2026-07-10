@@ -14,6 +14,12 @@ export interface EarliestSlot {
 /** Захист від нескінченних циклів при пошуку вільного слота. */
 const MAX_SLOT_ITERATIONS = 100_000
 
+/**
+ * Calculates the total occupied time for a resource center.
+ *
+ * @param occupied - The resource center's occupied time intervals
+ * @returns The total occupied duration in minutes
+ */
 function rcLoadMinutes(occupied: TimeSlot[] | undefined): number {
   if (!occupied) return 0
   let sum = 0
@@ -21,6 +27,13 @@ function rcLoadMinutes(occupied: TimeSlot[] | undefined): number {
   return sum
 }
 
+/**
+ * Determines whether a time slot is available.
+ *
+ * @param occupied - Intervals currently occupied by a resource center
+ * @param slot - Time slot to check
+ * @returns `true` if the slot does not overlap any occupied interval, `false` otherwise
+ */
 function isFree(occupied: TimeSlot[] | undefined, slot: TimeSlot): boolean {
   if (!occupied) return true
   return !occupied.some((i) => overlaps(i, slot))
@@ -41,12 +54,11 @@ function allowedRcs(
 }
 
 /**
- * 5.1 — Обрати РЦ всередині ГРЦ для слота `[startAt, endAt]` (FR-SCHED-07):
- *  (а) тип операції має бути у `allowedOpTypes`;
- *  (б) РЦ вільний у цьому слоті;
- *  (в) серед вільних — з мінімальним поточним завантаженням.
+ * Selects an allowed resource center that is free during the specified slot.
  *
- * Повертає `rcId` або `null`, якщо всі допустимі РЦ зайняті у слоті.
+ * @param opType - Operation type used to filter eligible resource centers
+ * @param slot - Time interval that must be available
+ * @returns The selected resource center ID, or `null` if no eligible resource center is available
  */
 export function findAvailableRc(
   rcGroup: RcGroup,
@@ -73,12 +85,11 @@ export function findAvailableRc(
 }
 
 /**
- * 5.2 — Найраніший вільний слот тривалості `durationMin` серед усіх РЦ групи,
- * коли всі перевантажені у бажаному слоті (FR-SCHED-08).
+ * Finds the earliest available working slot of the specified duration among the allowed resource centers.
  *
- * Для кожного допустимого РЦ шукає найраніше робоче вікно, що не раніше
- * `notBefore` і не перетинається з його зайнятістю; повертає найраніший
- * (за початком) слот серед усіх РЦ.
+ * @param notBefore - The earliest permitted start time in epoch minutes
+ * @param durationMin - The required slot duration in minutes
+ * @returns The earliest available resource center and slot, or `null` if no allowed resource center has a feasible slot
  */
 export function findEarliestSlot(
   rcGroup: RcGroup,
@@ -121,11 +132,12 @@ export function findEarliestSlot(
 }
 
 /**
- * Найпізніший вільний слот тривалості `durationMin`, що завершується не пізніше
- * `deadline`, серед усіх допустимих РЦ групи. Використовується у backward
- * scheduling (операція розміщується якомога пізніше до дедлайну).
+ * Finds the latest available working slot for an operation before its deadline.
  *
- * Вибір: максимальний `end`; при рівності — мінімальне завантаження, потім `rcId`.
+ * @param opType - The operation type the resource center must support
+ * @param deadline - The latest permitted slot end time in epoch minutes
+ * @param durationMin - The required working duration in minutes
+ * @returns The selected resource center and slot, or `null` if no eligible slot is available
  */
 export function findLatestSlot(
   rcGroup: RcGroup,

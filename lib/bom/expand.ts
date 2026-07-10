@@ -4,15 +4,15 @@ import type { BomNode, ExpandedNode, Order } from '../types/index.ts'
 const MAX_BOM_DEPTH = 1000
 
 /**
- * 3.1 — Рекурсивне розгортання BOM у плоский список вузлів.
+ * Expands each order's product BOM into a flat list of nodes.
  *
- * Для кожного замовлення обхід дерева починається з `order.productId`
- * (корінь, level 0). Кількість множиться на кожному рівні:
- * `effectiveQty(child) = effectiveQty(parent) × qtyPer` (FR-BOM-01).
+ * Quantities are propagated through the BOM by multiplying each parent's
+ * effective quantity by the edge quantity.
  *
- * Кожен розгорнутий вузол отримує стабільний шляховий `id`, тому одна й та сама
- * номенклатура під різними батьками — це окремі вузли (консолідація потреби
- * виконується окремо: `findSharedRequirements` / MRP).
+ * @param orders - Orders whose products serve as BOM roots
+ * @param bomNodes - BOM edges defining parent-child relationships
+ * @returns The expanded nodes for all orders
+ * @throws Error if a BOM exceeds the permitted depth
  */
 export function expandBom(orders: Order[], bomNodes: BomNode[]): ExpandedNode[] {
   const childrenByParent = new Map<string, BomNode[]>()

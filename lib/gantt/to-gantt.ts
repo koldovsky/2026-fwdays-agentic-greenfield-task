@@ -2,16 +2,32 @@ import type { RcGroup, ResourceCenter, ScheduledOperation } from '../types/index
 import type { GanttData, GanttTask } from './types.ts'
 import { taskCssClass } from './status.ts'
 
-/** Стабільний id операції (узгоджено з `operationId` / `OrderResult.criticalPath`). */
+/**
+ * Creates a stable identifier for a scheduled operation.
+ *
+ * @param op - The operation identifiers used to construct the task ID
+ * @returns An identifier in the format `bomNodeId#opNo`
+ */
 export function operationTaskId(op: Pick<ScheduledOperation, 'bomNodeId' | 'opNo'>): string {
   return `${op.bomNodeId}#${op.opNo}`
 }
 
+/**
+ * Converts a number to a string padded with a leading zero to at least two characters.
+ *
+ * @param n - The number to format
+ * @returns The padded string
+ */
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-/** Формат дати для dhtmlx (`%Y-%m-%d %H:%i`), у UTC-компонентах. */
+/**
+ * Formats a date as a dhtmlx-compatible UTC datetime string.
+ *
+ * @param d - The date to format
+ * @returns The date in `%Y-%m-%d %H:%i` format
+ */
 function fmt(d: Date): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
@@ -27,11 +43,13 @@ export interface BuildGanttOptions {
 }
 
 /**
- * 1.3 — Побудова моделі Гантта: трирівневе дерево ГРЦ → РЦ → операція
- * (FR-GANTT-01), з текстом смуги «операція · замовлення · номенклатура»
- * (FR-GANTT-02) і класом кольору за статусом (FR-GANTT-03).
+ * Формує детерміновану трирівневу ієрархію ГРЦ → РЦ → операція для Gantt-діаграми.
  *
- * Включаються лише ГРЦ/РЦ, що мають хоч одну операцію. Детермінований порядок.
+ * До результату потрапляють лише групи та ресурсні центри, пов’язані з операціями.
+ * Операції містять часові межі, текстову мітку, статус, CSS-класи та службові атрибути.
+ *
+ * @param opts - Операції, групи ресурсних центрів, ресурсні центри та набори заблокованих або критичних операцій
+ * @returns Модель Gantt-даних із вузлами груп, ресурсних центрів і операцій
  */
 export function buildGanttData(opts: BuildGanttOptions): GanttData {
   const locked = new Set(opts.lockedOpIds ?? [])

@@ -23,7 +23,14 @@ const TYPE_MAP: Record<string, BomNode['type']> = {
   куповане: 'material',
 }
 
-/** 2.2 — Парсер BOM (FR-IMP-03). `parentId` порожній → корінь (null). */
+/**
+ * Parses BOM rows into validated nodes and collects validation errors.
+ *
+ * An empty or missing `parentId` is represented as `null`, identifying a root node.
+ *
+ * @param rows - The raw BOM rows to parse
+ * @returns The successfully parsed nodes and all validation errors
+ */
 export function parseBom(rows: RawRow[]): ParseResult<BomNode> {
   const data: BomNode[] = []
   const errors: ValidationError[] = []

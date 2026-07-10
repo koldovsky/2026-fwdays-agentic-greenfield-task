@@ -2,15 +2,11 @@ import type { ScheduledOperation } from '../types/index.ts'
 import { parentBomNodeId, operationId } from './dependencies.ts'
 
 /**
- * 9.1 — Критичний шлях замовлення (FR-SCHED-10): найдовший (за сумарною
- * трудомісткістю) ланцюжок операцій, що визначає найранішу дату готовності.
+ * Finds the critical operation path for an order.
  *
- * Залежності відновлюються зі структури:
- *  - у межах вузла: операція залежить від попередньої за `opNo` (finish-to-start);
- *  - перша операція вузла залежить від останньої операції кожного дочірнього
- *    вузла BOM (FR-SCHED-05).
- *
- * Повертає масив `operationId` від кореня ланцюжка до фінальної операції.
+ * @param scheduledOps - Scheduled operations to evaluate
+ * @param orderId - Identifier of the order whose path should be found
+ * @returns An ordered list of operation identifiers from the path's start to its final operation, or an empty array when the order has no scheduled operations
  */
 export function findCriticalPath(
   scheduledOps: ScheduledOperation[],

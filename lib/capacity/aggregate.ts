@@ -29,11 +29,23 @@ export interface BuildCapacityOptions {
   level: CapacityLevel
 }
 
+/**
+ * Gets the UTC timestamp for the start of the specified date.
+ *
+ * @param date - The date whose UTC calendar day determines the timestamp
+ * @returns The timestamp at 00:00 UTC on the specified date
+ */
 function utcMidnightMs(date: Date): number {
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
 }
 
-/** Початок бакета для дня: день / понеділок тижня / перше число місяця. */
+/**
+ * Determines the UTC start timestamp for a histogram bucket containing a day.
+ *
+ * @param dayMs - The UTC midnight timestamp for the day
+ * @param unit - The bucket granularity
+ * @returns The UTC timestamp for the start of the day, Monday of its week, or first day of its month
+ */
 function bucketStartMs(dayMs: number, unit: CapacityUnit): number {
   if (unit === 'day') return dayMs
   const d = new Date(dayMs)
@@ -44,6 +56,13 @@ function bucketStartMs(dayMs: number, unit: CapacityUnit): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
 }
 
+/**
+ * Formats a UTC bucket start timestamp as a month or day label.
+ *
+ * @param startMs - The bucket start timestamp in milliseconds
+ * @param unit - The time unit represented by the bucket
+ * @returns A `MM.YYYY` label for month buckets or a `DD.MM` label otherwise
+ */
 function bucketLabel(startMs: number, unit: CapacityUnit): string {
   const d = new Date(startMs)
   const p = (n: number) => String(n).padStart(2, '0')
@@ -51,16 +70,21 @@ function bucketLabel(startMs: number, unit: CapacityUnit): string {
   return `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}`
 }
 
+/**
+ * Rounds a number to two decimal places.
+ *
+ * @param x - The number to round
+ * @returns The rounded number
+ */
 function round2(x: number): number {
   return Math.round(x * 100) / 100
 }
 
 /**
- * 1.3 — Побудова моделі гістограми завантаженості (FR-CAP-01/02/04/05).
+ * Builds a capacity utilization histogram for the requested date range and aggregation level.
  *
- * Прохід по робочих днях горизонту × усіх РЦ; доступний фонд обчислюється з
- * календаря (`getWorkingMinutesForRc`), тому у знаменник входять і дні простою.
- * Завантаження серії у бакеті = Σused / Σavail × 100. Чиста функція.
+ * @param opts - Capacity data, calendar, resources, operations, and date boundaries used to build the view
+ * @returns A capacity view containing utilization series, histogram rows, operations by cell, and summary KPIs
  */
 export function buildCapacityView(opts: BuildCapacityOptions): CapacityView {
   const unit = pickUnit(opts.today, opts.horizon)

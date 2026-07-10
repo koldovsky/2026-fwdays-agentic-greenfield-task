@@ -21,7 +21,12 @@ const MAX_DAY_ITERATIONS = 100_000
 /** Кеш індексу календаря за посиланням на масив (перф: не перебудовувати щоразу). */
 const indexCache = new WeakMap<WorkCalendar[], Map<number, WorkCalendar>>()
 
-/** Індекс календаря за ключем UTC-півночі для O(1) пошуку дня. */
+/**
+ * Indexes calendar entries by their UTC midnight timestamp for efficient day lookup.
+ *
+ * @param calendar - The calendar entries to index
+ * @returns A map from UTC midnight timestamps to calendar entries
+ */
 function indexCalendar(calendar: WorkCalendar[]): Map<number, WorkCalendar> {
   const cached = indexCache.get(calendar)
   if (cached) return cached
@@ -41,11 +46,15 @@ function dayWorkingMinutes(map: Map<number, WorkCalendar>, dayMs: number): numbe
 }
 
 /**
- * 2.1 — Доступні робочі хвилини конкретного РЦ у заданий день.
+ * Calculates the effective working minutes available for a resource center on a given day.
  *
- * Враховує кількість змін і коефіцієнт ефективності (FR-RC-03).
- * Спрощення MVP: у скорочений день доступне вікно РЦ обмежується
- * меншим із {номінал РЦ, вікно календарного дня}.
+ * The available time is limited by the smaller of the resource center's nominal capacity
+ * and the calendar day's working minutes, then adjusted by the resource center's efficiency.
+ *
+ * @param rc - The resource center whose capacity and efficiency are used
+ * @param date - The date to evaluate
+ * @param calendar - The work calendar defining available minutes for each day
+ * @returns The effective working minutes available for the resource center
  */
 export function getWorkingMinutesForRc(
   rc: ResourceCenter,
@@ -61,8 +70,13 @@ export function getWorkingMinutesForRc(
 }
 
 /**
- * 2.2 — Відняти `minutes` робочих хвилин від `endAt` назад по календарю,
- * пропускаючи неробочий час і неробочі дні (для backward scheduling).
+ * Subtracts working minutes from a date while skipping non-working time and days.
+ *
+ * @param endAt - The date from which to subtract working minutes
+ * @param minutes - The number of working minutes to subtract
+ * @param calendar - The working-time calendar
+ * @returns The resulting date after subtracting the working minutes
+ * @throws If the calendar is exhausted before all minutes are consumed
  */
 export function subtractMinutes(
   endAt: Date,
@@ -97,8 +111,13 @@ export function subtractMinutes(
 }
 
 /**
- * 2.3 — Додати `minutes` робочих хвилин до `startAt` вперед по календарю
- * (для forward scheduling).
+ * Adds working minutes to a start time, advancing through the calendar.
+ *
+ * @param startAt - The starting date and time.
+ * @param minutes - The number of working minutes to add.
+ * @param calendar - The work calendar used to determine available time.
+ * @returns The date and time reached after adding the working minutes.
+ * @throws If the calendar is exhausted before all minutes are placed.
  */
 export function addMinutes(
   startAt: Date,
@@ -132,9 +151,12 @@ export function addMinutes(
 }
 
 /**
- * Найраніший робочий момент, що не раніше за `date`.
- * Якщо `date` вже всередині робочого вікна — повертає його без змін;
- * інакше — початок наступного доступного робочого вікна.
+ * Aligns a date to the earliest available working time on or after it.
+ *
+ * @param date - The date to align.
+ * @param calendar - The working calendar used to determine available time.
+ * @returns The earliest working moment at or after `date`.
+ * @throws Error if no working time is found within the calendar search limit.
  */
 export function alignToWorkingTime(date: Date, calendar: WorkCalendar[]): Date {
   const map = indexCalendar(calendar)
@@ -155,8 +177,12 @@ export function alignToWorkingTime(date: Date, calendar: WorkCalendar[]): Date {
 }
 
 /**
- * 2.4 — Початок наступного робочого дня строго після дня `date`
- * (міжопераційний час, FR-SCHED-04 / TC-ALGO-02).
+ * Finds the start of the first working day after the day containing `date`.
+ *
+ * @param date - The date whose day is excluded from the search
+ * @param calendar - The work calendar to search
+ * @returns The UTC midnight at the start of the next working day
+ * @throws Error if no working day is found within the search limit
  */
 export function nextWorkingDayStart(date: Date, calendar: WorkCalendar[]): Date {
   const map = indexCalendar(calendar)

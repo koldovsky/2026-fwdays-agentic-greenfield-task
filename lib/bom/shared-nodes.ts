@@ -1,13 +1,10 @@
 import type { ExpandedNode, SharedNode } from '../types/index.ts'
 
 /**
- * 3.2 — Виявлення спільних вузлів між замовленнями (FR-BOM-03).
+ * Визначає номенклатури, що входять до кількох замовлень.
  *
- * Групує розгорнуті вузли за `nomenclatureId`; повертає ті номенклатури,
- * що зустрічаються у більш ніж одному замовленні, із консолідованою
- * загальною потребою `totalQty` (сума `effectiveQty` по всіх входженнях).
- *
- * Детермінований результат: сортування за `nomenclatureId`.
+ * @param expandedNodes - Розгорнуті вузли для аналізу
+ * @returns Вузли зі спільними номенклатурами, сумарною кількістю `effectiveQty` та відсортованими ідентифікаторами замовлень
  */
 export function findSharedNodes(expandedNodes: ExpandedNode[]): SharedNode[] {
   const byNom = new Map<string, { total: number; orders: Set<string> }>()

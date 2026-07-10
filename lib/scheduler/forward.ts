@@ -29,14 +29,15 @@ export interface ForwardParams {
 }
 
 /**
- * 8.1 — Forward scheduling операцій маршруту вузла (FR-SCHED-03).
+ * Schedules a node's route operations in ascending operation order.
  *
- * Операції розставляються від `startFrom` вперед: перша — не раніше `startFrom`,
- * кожна наступна — з початку наступного робочого дня після завершення
- * попередньої (міжопераційний день, FR-SCHED-04). РЦ обирається як найраніший
- * вільний слот у ГРЦ.
+ * Operations start at or after `startFrom`, and each subsequent operation
+ * begins on the next working day after the previous operation ends. Existing
+ * occupied slots are read without modification.
  *
- * Функція чиста: `occupiedSlots` лише читається.
+ * @param params - Scheduling inputs, including the node, route operations, resources, and work calendar
+ * @returns The operation placements and the end time of the final placement, or `null` when no operations are scheduled
+ * @throws Error if an operation references an unknown resource group or no eligible resource-center slot is available
  */
 export function scheduleForward(params: ForwardParams): ForwardResult {
   const ops = [...params.routeOps].sort((a, b) => a.opNo - b.opNo)

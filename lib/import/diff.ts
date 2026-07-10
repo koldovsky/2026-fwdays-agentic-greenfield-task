@@ -1,11 +1,23 @@
 import type { RawRow, RowDiff, TableDiff } from './types.ts'
 
+/**
+ * Normalizes a cell value to a trimmed string.
+ *
+ * @param v - The cell value to normalize
+ * @returns An empty string for `undefined` or `null`; otherwise, the trimmed string representation of `v`
+ */
 function cellString(v: RawRow[string] | undefined): string {
   if (v === undefined || v === null) return ''
   return String(v).trim()
 }
 
-/** Поля, значення яких відрізняються між двома рядками (об'єднання ключів). */
+/**
+ * Identifies fields with different values between two rows.
+ *
+ * Values are compared after conversion to trimmed strings, and the resulting field names are sorted lexicographically.
+ *
+ * @returns The sorted field names whose normalized values differ.
+ */
 function differingFields(prev: RawRow, next: RawRow): string[] {
   const keys = new Set([...Object.keys(prev), ...Object.keys(next)])
   const changed: string[] = []
@@ -16,9 +28,10 @@ function differingFields(prev: RawRow, next: RawRow): string[] {
 }
 
 /**
- * 3.1 — Diff між попереднім і новим імпортом таблиці (FR-IMP-10).
- * Рядки зіставляються за стабільним ключем `keyOf`; повертає кількості й перелік
- * доданих / видалених / змінених рядків (для змінених — які поля відрізняються).
+ * Compares two table snapshots by stable row key and summarizes their differences.
+ *
+ * @param keyOf - Extracts the stable identifier used to match corresponding rows.
+ * @returns Counts and details of added, removed, and changed rows.
  */
 export function diffRows(
   prev: RawRow[],

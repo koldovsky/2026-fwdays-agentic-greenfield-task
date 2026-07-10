@@ -3,9 +3,9 @@ import type { CapacityUnit } from './types.ts'
 const MS_PER_DAY = 86_400_000
 
 /**
- * 1.2 — Одиниця осі X за довжиною горизонту (FR-CAP-03):
- * ≤ 35 днів → день (≈ 3 тижні), ≤ 110 днів → тиждень (≈ 3 місяці),
- * інакше → місяць (рік).
+ * Selects the time unit for an axis based on the horizon length.
+ *
+ * @returns `day` for horizons up to 35 days, `week` for horizons up to 110 days, and `month` for longer horizons.
  */
 export function pickUnit(today: Date, horizon: Date): CapacityUnit {
   const days = Math.round((horizon.getTime() - today.getTime()) / MS_PER_DAY)

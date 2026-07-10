@@ -12,7 +12,12 @@ const A = {
 /** Значення що трактуються як «підтверджено». */
 const CONFIRMED_TRUTHY = ['confirmed', 'підтверджено', 'так', 'yes', 'true', '1']
 
-/** 2.6 — Парсер плану надходжень (FR-IMP-07). */
+/**
+ * Parses planned receipt rows into validated records and collects row-level validation errors.
+ *
+ * @param rows - Raw receipt rows to parse
+ * @returns Parsed planned receipts and validation errors
+ */
 export function parseReceipts(rows: RawRow[]): ParseResult<PlannedReceipt> {
   const data: PlannedReceipt[] = []
   const errors: ValidationError[] = []

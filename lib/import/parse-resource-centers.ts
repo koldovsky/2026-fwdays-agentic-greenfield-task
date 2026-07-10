@@ -20,6 +20,12 @@ export interface ResourceCentersResult {
   errors: ValidationError[]
 }
 
+/**
+ * Splits a delimited string into trimmed, non-empty values.
+ *
+ * @param v - The string to split.
+ * @returns An array of trimmed values, or an empty array when `v` is empty or undefined.
+ */
 function splitList(v: string | undefined): string[] {
   if (!v) return []
   return v
@@ -29,8 +35,10 @@ function splitList(v: string | undefined): string[] {
 }
 
 /**
- * 2.4 — Парсер ГРЦ/РЦ (FR-IMP-05). Кожен рядок = один РЦ; ГРЦ збираються
- * групуванням за `groupId` зі збереженням порядку появи РЦ.
+ * Parses resource-center rows and groups valid centers by group identifier.
+ *
+ * @param rows - Input rows containing resource-center and group data
+ * @returns Parsed resource-center groups, valid resource centers, and validation errors
  */
 export function parseResourceCenters(rows: RawRow[]): ResourceCentersResult {
   const resourceCenters: ResourceCenter[] = []

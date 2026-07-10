@@ -10,7 +10,12 @@ const A = {
   priority: ['priority', 'пріоритет'],
 }
 
-/** 2.1 — Парсер замовлень (FR-IMP-02). */
+/**
+ * Parses raw rows into orders and collects validation errors.
+ *
+ * @param rows - Raw rows containing order field values
+ * @returns Parsed orders from rows without error-level validation issues and all validation errors
+ */
 export function parseOrders(rows: RawRow[]): ParseResult<Order> {
   const data: Order[] = []
   const errors: ValidationError[] = []

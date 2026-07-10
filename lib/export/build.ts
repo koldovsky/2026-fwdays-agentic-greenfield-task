@@ -7,6 +7,12 @@ import type {
 import type { OrderRow, OrderStatus } from '../dashboard/index.ts'
 import type { ExportCell, SheetData } from './types.ts'
 
+/**
+ * Formats a number as a two-character string by adding a leading zero when needed.
+ *
+ * @param n - The number to format
+ * @returns The two-character formatted string
+ */
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
@@ -33,8 +39,14 @@ const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
 }
 
 /**
- * 1.2 — Аркуш розкладу операцій (FR-EXP-01). «Виріб» — номенклатура готового
- * виробу замовлення; «Вузол BOM» — номенклатура вузла операції.
+ * Формує аркуш «Розклад операцій» для експорту запланованих операцій.
+ *
+ * Операції сортуються за часом початку, вузлом BOM і номером операції. Дати
+ * форматуються за UTC, а статуси подаються українськими мітками.
+ *
+ * @param operations - Заплановані операції
+ * @param orders - Замовлення для визначення виробу за ідентифікатором замовлення
+ * @returns Дані аркуша з назвою, заголовками та рядками операцій
  */
 export function buildOperationsSheet(
   operations: ScheduledOperation[],
@@ -77,7 +89,12 @@ export function buildOperationsSheet(
   }
 }
 
-/** 1.3 — Аркуш дефіцитів матеріалів (FR-EXP-02). */
+/**
+ * Створює аркуш експорту з інформацією про дефіцити матеріалів.
+ *
+ * @param deficits - Записи про потребу в матеріалах, залишки, надходження та заблоковані замовлення
+ * @returns Структура аркуша з локалізованими заголовками та рядками дефіцитів
+ */
 export function buildDeficitsSheet(deficits: MaterialDeficit[]): SheetData {
   const rows: ExportCell[][] = deficits.map((d) => [
     d.nomenclatureId,
@@ -103,7 +120,12 @@ export function buildDeficitsSheet(deficits: MaterialDeficit[]): SheetData {
   }
 }
 
-/** 1.4 — Аркуш зведення по замовленнях (FR-EXP-03) з рядків дашборду. */
+/**
+ * Builds the order summary sheet from dashboard order rows.
+ *
+ * @param orderRows - Dashboard rows containing order details and status
+ * @returns Sheet data with order identifiers, quantities, dates, delays, and Ukrainian status labels
+ */
 export function buildOrderSummarySheet(orderRows: OrderRow[]): SheetData {
   const rows: ExportCell[][] = orderRows.map((r) => [
     r.orderId,

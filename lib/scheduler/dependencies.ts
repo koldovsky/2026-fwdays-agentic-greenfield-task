@@ -1,17 +1,36 @@
 import type { ScheduledOperation } from '../types/index.ts'
 
-/** Стабільний ідентифікатор розміщеної операції. */
+/**
+ * Формує стабільний ідентифікатор запланованої операції.
+ *
+ * @param op - Запланована операція
+ * @returns Ідентифікатор у форматі `bomNodeId#opNo`
+ */
 export function operationId(op: ScheduledOperation): string {
   return `${op.bomNodeId}#${op.opNo}`
 }
 
-/** Батьківський bomNodeId зі шляхового id (розділювач `/`); null для кореня. */
+/**
+ * Determines the parent BOM node identifier from a path-like node identifier.
+ *
+ * @param bomNodeId - The path-like BOM node identifier
+ * @returns The substring before the last `/`, or `null` if the identifier has no `/`
+ */
 export function parentBomNodeId(bomNodeId: string): string | null {
   const idx = bomNodeId.lastIndexOf('/')
   return idx === -1 ? null : bomNodeId.slice(0, idx)
 }
 
-/** Предки-предшественники кожної операції (маршрут + дочірні вузли BOM). */
+/**
+ * Builds predecessor relationships for scheduled operations.
+ *
+ * Operations within a BOM node depend on the preceding operation by operation
+ * number. The first operation in a node depends on the final operation of each
+ * existing child BOM node.
+ *
+ * @param ops - Scheduled operations to organize into predecessor relationships
+ * @returns A map from each operation identifier to its predecessor identifiers
+ */
 export function buildPredecessors(ops: ScheduledOperation[]): Map<string, string[]> {
   const byNode = new Map<string, ScheduledOperation[]>()
   for (const op of ops) {

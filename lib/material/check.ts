@@ -8,12 +8,22 @@ import type {
 import type { GrossRequirement } from '../mrp/gross-requirements.ts'
 import { buildMaterialDeficits } from '../mrp/net-requirements.ts'
 
-/** Критичний дефіцит — жодне надходження не покриває (FR-MAT-02). */
+/**
+ * Determines whether a material deficit is critical.
+ *
+ * @param deficit - The material deficit to classify
+ * @returns `true` if no planned receipt can cover the deficit, `false` otherwise
+ */
 export function isCriticalDeficit(deficit: MaterialDeficit): boolean {
   return deficit.earliestCoverDate === null
 }
 
-/** Поділ дефіцитів на критичні і покривні (FR-MAT-02). */
+/**
+ * Separates material deficits into critical and coverable groups.
+ *
+ * @param deficits - The material deficits to classify
+ * @returns An object containing critical deficits and deficits with a planned receipt that can cover them
+ */
 export function splitDeficits(deficits: MaterialDeficit[]): {
   critical: MaterialDeficit[]
   coverable: MaterialDeficit[]
@@ -34,11 +44,13 @@ export interface MaterialCheck {
 }
 
 /**
- * 1.2 — Матеріальна перевірка: таблиця дефіцитів + поділ на критичні/покривні
- * (FR-MAT-01/02). Це і є точка перерахунку для FR-MAT-03: виклик з новими
- * `stock`/`receipts` дає миттєвий результат без перепланування розкладу.
+ * Computes material deficits and classifies them as critical or coverable.
  *
- * Чиста функція: `grossReqs` фіксується при плануванні, тут не змінюється.
+ * @param grossReqs - Gross material requirements to evaluate
+ * @param stock - Available inventory
+ * @param receipts - Planned material receipts
+ * @param demandDateByMaterial - Optional material demand dates used to evaluate coverage
+ * @returns The complete deficit list and its critical and coverable subsets
  */
 export function computeMaterialCheck(
   grossReqs: GrossRequirement[],
@@ -52,9 +64,11 @@ export function computeMaterialCheck(
 }
 
 /**
- * 1.3 — Дата споживання кожного матеріалу = найраніший старт операції вузла-
- * споживача (батька матеріалу в BOM). Використовується як `demandDate` для
- * розрахунку нетто-дефіциту й дати закриття.
+ * Determines the earliest demand date for each material from its parent operations in the BOM.
+ *
+ * @param operations - Scheduled operations used to determine parent start times
+ * @param bom - BOM relationships linking materials to their parent items
+ * @returns A map from material ID to its earliest demand date; materials without a known parent start time are omitted
  */
 export function demandDatesByMaterial(
   operations: ScheduledOperation[],

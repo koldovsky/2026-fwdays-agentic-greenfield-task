@@ -2,11 +2,10 @@ import type { MaterialDeficit, PlannedReceipt, StockItem } from '../types/index.
 import type { GrossRequirement } from './gross-requirements.ts'
 
 /**
- * 4.2 — Нетто-потреба для одного матеріалу (FR-MRP-02):
- * `нетто = брутто − залишки − підтверджені надходження до дати старту операції`.
+ * Calculates the net material deficit at the operation start date.
  *
- * Враховуються лише підтверджені (`confirmed`) надходження з датою ≤ дати
- * старту операції-споживача. Значення може бути від'ємним (профіцит).
+ * @param receipts - Planned receipts to evaluate for confirmed quantities available by the operation start date
+ * @returns The gross need minus stock and qualifying receipts; may be negative when material is in surplus
  */
 export function calcNetDeficit(
   grossNeed: number,
@@ -21,17 +20,17 @@ export function calcNetDeficit(
 }
 
 /**
- * 4.3 — Повний розрахунок дефіцитів матеріалів (FR-MRP-03..05).
+ * Calculates material deficits and identifies the orders blocked by each deficit.
  *
- * Для кожного матеріалу з `netDeficit > 0` повертає запис з:
- *  - `plannedReceipts` — сума врахованих підтверджених надходжень;
- *  - `earliestCoverDate` — найраніша дата, коли `stock + Σreceipts ≥ gross`;
- *    `null` означає критичний дефіцит (не покривається взагалі, FR-MRP-04);
- *  - `blockedOrderIds` — замовлення, заблоковані цим дефіцитом (FR-MRP-05).
+ * Only materials with a positive net deficit are included. Confirmed receipts
+ * after the material's demand date are excluded from the deficit calculation
+ * but considered when determining the earliest coverage date.
  *
- * `demandDateByMaterial` (необов'язково) задає дату старту операції-споживача;
- * надходження після цієї дати не враховуються у `netDeficit`, але враховуються
- * при пошуку `earliestCoverDate`.
+ * @param grossReqs - Gross material requirements to evaluate
+ * @param stock - Available stock items
+ * @param receipts - Planned material receipts
+ * @param demandDateByMaterial - Optional demand date for each material
+ * @returns Material deficit records sorted by nomenclature ID
  */
 export function buildMaterialDeficits(
   grossReqs: GrossRequirement[],

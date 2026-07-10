@@ -45,7 +45,19 @@ interface Block {
 }
 
 
-/** Консолідувати розгорнуті вузли у блоки за номенклатурою. */
+/**
+ * Consolidates expanded nodes into blocks grouped by nomenclature.
+ *
+ * Each block aggregates required quantity and order identifiers, and includes
+ * route operations, BOM relationships, and the first child nomenclature with a
+ * material deficit, when applicable.
+ *
+ * @param expandedNodes - Expanded BOM nodes to consolidate
+ * @param bom - BOM relationships used to build parent and child nomenclature links
+ * @param routes - Route operations associated with each nomenclature
+ * @param deficits - Material deficits associated with child nomenclatures
+ * @returns Blocks keyed by nomenclature identifier
+ */
 function buildBlocks(
   expandedNodes: ExpandedNode[],
   bom: BomNode[],
@@ -97,6 +109,12 @@ function buildBlocks(
   return blocks
 }
 
+/**
+ * Creates a synthetic expanded node representing a scheduling block.
+ *
+ * @param block - The block to represent as an expanded node
+ * @returns An expanded node containing the block's nomenclature, quantity, type, and primary order
+ */
 function syntheticNode(block: Block): ExpandedNode {
   return {
     id: `#${block.nomenclatureId}`,
@@ -115,7 +133,12 @@ interface PlacementState {
   completionByBlock: Map<string, number>
 }
 
-/** Зафіксувати розміщення операцій блоку у зайнятості РЦ. */
+/**
+ * Records operation placements in the occupied time slots for each resource center.
+ *
+ * @param occupied - The shared map of occupied time slots keyed by resource center ID.
+ * @param placements - The operation placements to record.
+ */
 function commit(occupied: OccupiedSlots, placements: OpPlacement[]): void {
   for (const p of placements) {
     const arr = occupied.get(p.rcId)
@@ -124,7 +147,15 @@ function commit(occupied: OccupiedSlots, placements: OpPlacement[]): void {
   }
 }
 
-/** CR блоку = мінімум CR серед замовлень-споживачів (найурочніший). */
+/**
+ * Determines the block's critical ratio from its consuming orders.
+ *
+ * @param block - The block whose consuming orders are evaluated
+ * @param orderById - Orders indexed by identifier
+ * @param today - The date used for critical-ratio calculation
+ * @param calendar - The working calendar used for critical-ratio calculation
+ * @returns The smallest critical ratio among matching orders, or `Infinity` when none are found
+ */
 function blockCR(
   block: Block,
   orderById: Map<string, Order>,
@@ -142,7 +173,16 @@ function blockCR(
 }
 
 /**
- * min-lateness: backward від дедлайнів по DAG (корінь → листя), пріоритет за CR.
+ * Schedules blocks backward from their deadlines using critical-ratio priority and dependency ordering.
+ *
+ * @param blocks - Blocks to schedule, keyed by nomenclature identifier
+ * @param orders - Orders that determine block deadlines
+ * @param orderById - Orders indexed by identifier
+ * @param rcGroups - Resource-center groups available for scheduling
+ * @param rcById - Resource centers indexed by identifier
+ * @param calendar - Working calendar used for scheduling and deadline calculations
+ * @param today - Current scheduling date
+ * @returns Placement state containing block operation placements, start times, and completion times
  */
 function backwardPass(
   blocks: Map<string, Block>,
@@ -256,8 +296,11 @@ function backwardPass(
 }
 
 /**
- * min-idle: forward від сьогодні по DAG (листя → корінь), пріоритет за
- * найкоротшою трудомісткістю (SPT), щільне заповнення слотів.
+ * Schedules blocks forward from today using shortest-processing-time priority, progressing from leaf blocks to their parents.
+ *
+ * Blocks start after all scheduled child blocks complete and the next working day begins. Blocks without route operations or representing materials receive no placements.
+ *
+ * @returns The resulting placements and start and completion times for each block.
  */
 function forwardPass(
   blocks: Map<string, Block>,
@@ -355,6 +398,12 @@ function forwardPass(
   return state
 }
 
+/**
+ * Determines the fallback deadline for blocks without a root order deadline.
+ *
+ * @param orders - Orders whose due dates are considered
+ * @returns The latest order due date, or the Unix epoch when no orders are provided
+ */
 function defaultDeadline(orders: Order[]): Date {
   // Найпізніший дедлайн як запасний варіант для блоків без замовлення-кореня.
   let latest = orders[0]?.dueDate ?? new Date(0)
@@ -362,7 +411,11 @@ function defaultDeadline(orders: Order[]): Date {
   return latest
 }
 
-/** Побудувати вихідні ScheduledOperation з розміщень блоків. */
+/**
+ * Converts block placements into scheduled operations with order, timing, capacity, and status details.
+ *
+ * @returns Deterministically ordered scheduled operations, including material-blocking and delivery-risk statuses.
+ */
 function buildOperations(
   blocks: Map<string, Block>,
   state: PlacementState,
@@ -431,7 +484,16 @@ function buildOperations(
   return operations
 }
 
-/** Побудувати OrderResult[] через per-order подання дерева. */
+/**
+ * Builds per-order scheduling results from the expanded BOM and block placements.
+ *
+ * @param orders - Orders for which to build results
+ * @param state - Scheduling placements and block completion times
+ * @param expandedNodes - BOM-expanded nodes associated with each order
+ * @param routes - Route operations for the expanded nomenclatures
+ * @param calendar - Work calendar used to calculate delay days
+ * @returns Scheduling results in the same order as `orders`
+ */
 function buildOrderResults(
   orders: Order[],
   state: PlacementState,
@@ -507,7 +569,14 @@ function buildOrderResults(
   return results
 }
 
-/** Побудувати CapacitySlot[] по кожному РЦ і робочому дню. */
+/**
+ * Computes resource-center capacity utilization for each working day covered by scheduled operations.
+ *
+ * @param operations - Scheduled operations whose resource-center usage is measured
+ * @param resourceCenters - Resource centers used to determine daily capacity
+ * @param calendar - Working calendar used to determine daily planning windows
+ * @returns Capacity slots containing used minutes, total capacity, and utilization percentage
+ */
 function buildCapacity(
   operations: ScheduledOperation[],
   resourceCenters: ResourceCenter[],
@@ -564,11 +633,11 @@ function buildCapacity(
 }
 
 /**
- * 10.1 — Головна функція планування (FR-SCHED-*). Чиста: приймає і повертає
- * plain-об'єкти, без залежностей від React/DOM.
+ * Builds a production schedule from orders, BOM data, materials, routes, resources, and calendar constraints.
  *
- * @param input виробничі дані та горизонт
- * @param mode  `min-lateness` (backward, CR) або `min-idle` (forward, SPT)
+ * @param input - Production data and scheduling horizon.
+ * @param mode - Scheduling strategy: `min-lateness` uses backward scheduling with critical-ratio priority; `min-idle` uses forward scheduling with shortest-processing-time priority.
+ * @returns The scheduled operations, per-order results, capacity utilization, material deficits, and aggregate scheduling metrics.
  */
 export function schedule(input: ScheduleInput, mode: ScheduleMode): ScheduleResult {
   const orderById = new Map(input.orders.map((o) => [o.id, o]))

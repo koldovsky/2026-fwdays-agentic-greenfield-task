@@ -6,9 +6,10 @@ import type { BuildOverviewOptions, Overview } from './types.ts'
 const TOP_DELAYS = 5
 
 /**
- * 1.2 — Зведення головного дашборду (FR-DASH-01). Композиція наявних чистих
- * функцій: статуси й запізнення — з `buildOrderDashboard`, критичні дефіцити —
- * з `splitDeficits`, перевантажені слоти — фільтр `loadPct > 100`.
+ * Builds the overview data for order statuses, delays, critical deficits, and overloaded capacity cells.
+ *
+ * @param opts - Source orders, results, deficits, calendar, and capacity data.
+ * @returns The overview containing status counts, top delays, critical deficits, and overloaded cells.
  */
 export function buildOverview(opts: BuildOverviewOptions): Overview {
   const dashboard = buildOrderDashboard({

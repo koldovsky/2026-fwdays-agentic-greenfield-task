@@ -1,15 +1,22 @@
 import type { MetricKey, Comparison, ScenarioSummary } from './types.ts'
 import { DIRECTIONS, MAX_SCENARIOS, METRIC_KEYS } from './types.ts'
 
-/** 1.3 — Чи можна додати ще один сценарій (ліміт 3, FR-SCEN-01). */
+/**
+ * Determines whether another scenario can be added within the configured scenario limit.
+ *
+ * @param count - The number of scenarios currently present
+ * @returns `true` if the count is below the maximum, `false` otherwise
+ */
 export function canAddScenario(count: number): boolean {
   return count < MAX_SCENARIOS
 }
 
 /**
- * 1.2 — Таблиця порівняння сценаріїв (FR-SCEN-02). Для кожної метрики визначає
- * найкращий(і) сценарій(ї) за напрямком «краще»; позначає прийнятий сценарій.
- * Чиста функція.
+ * Builds a comparison table for scenarios and identifies the best scenario or scenarios for each metric.
+ *
+ * @param scenarios - The scenario summaries to compare
+ * @param acceptedId - The ID of the accepted scenario, or `null` if none is accepted
+ * @returns Comparison rows, best scenario IDs by metric, and metric directions
  */
 export function buildComparison(
   scenarios: ScenarioSummary[],

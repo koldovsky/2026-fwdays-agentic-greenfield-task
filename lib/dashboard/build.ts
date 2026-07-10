@@ -21,11 +21,24 @@ const SEVERITY: Record<OrderStatus, number> = {
   'blocked-material': 3,
 }
 
+/**
+ * Converts a date to the timestamp for midnight on the same UTC calendar day.
+ *
+ * @param date - The date to convert
+ * @returns The UTC midnight timestamp in milliseconds
+ */
 function utcMidnightMs(date: Date): number {
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
 }
 
-/** Робочі дні у діапазоні `(from, to]`. */
+/**
+ * Counts working days in the date range `(from, to]`.
+ *
+ * @param calendar - The work calendar entries to evaluate
+ * @param from - The exclusive start date
+ * @param to - The inclusive end date
+ * @returns The number of working days in the range
+ */
 function countWorkingDays(calendar: WorkCalendar[], from: Date, to: Date): number {
   const fromMs = utcMidnightMs(from)
   const toMs = utcMidnightMs(to)
@@ -39,7 +52,12 @@ function countWorkingDays(calendar: WorkCalendar[], from: Date, to: Date): numbe
   return count
 }
 
-/** Найгірший (найкритичніший) статус із набору статусів операцій. */
+/**
+ * Determines the highest-severity order status represented by operation statuses.
+ *
+ * @param statuses - Operation statuses to evaluate
+ * @returns The highest-severity order status, or `on-schedule` when the list is empty
+ */
 function worstStatus(statuses: OperationStatus[]): OrderStatus {
   let worst: OrderStatus = 'on-schedule'
   for (const s of statuses) {
@@ -57,8 +75,10 @@ export interface BuildDashboardOptions {
 }
 
 /**
- * 1.2 — Таблиця замовлень зі статусами, сортуванням і підсумком
- * (FR-ORD-01/02/04/05). Чиста функція.
+ * Builds an order dashboard with computed statuses, sorted rows, and status totals.
+ *
+ * @param opts - Orders, scheduling results, material deficits, and work calendar data.
+ * @returns The sorted order rows and aggregated status summary.
  */
 export function buildOrderDashboard(opts: BuildDashboardOptions): OrderDashboard {
   const resultById = new Map(opts.orderResults.map((r) => [r.orderId, r]))
@@ -109,17 +129,23 @@ export function buildOrderDashboard(opts: BuildDashboardOptions): OrderDashboard
   return { rows, summary }
 }
 
+/**
+ * Gets the parent path identifier for a BOM node.
+ *
+ * @param bomNodeId - The BOM node path identifier
+ * @returns The path before the final `/`, or `null` when the identifier has no parent path
+ */
 function parentBomNodeId(bomNodeId: string): string | null {
   const idx = bomNodeId.lastIndexOf('/')
   return idx === -1 ? null : bomNodeId.slice(0, idx)
 }
 
 /**
- * 1.3 — Дерево BOM замовлення з плановими датами і статусами вузлів (FR-ORD-03).
+ * Builds the BOM tree for an order from its scheduled operations.
  *
- * Вузол = група операцій одного `bomNodeId`: `plannedStart = min(start)`,
- * `plannedEnd = max(end)`, статус = найгірший статус операцій. Ієрархія
- * відновлюється з шляхових id; повертаються корені. Чиста функція.
+ * @param operations - Scheduled operations to group by BOM node
+ * @param orderId - Identifier of the order whose operations are included
+ * @returns The root BOM nodes with planned dates, aggregated statuses, and hierarchical children
  */
 export function buildBomTree(operations: ScheduledOperation[], orderId: string): BomTreeNode[] {
   const own = operations.filter((o) => o.orderId === orderId)

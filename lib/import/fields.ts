@@ -6,12 +6,23 @@ import type { CellValue, RawRow, ValidationError } from './types.ts'
  * `errors`, повертаючи найкраще доступне значення.
  */
 
-/** Нормалізувати назву колонки для порівняння (регістр, пробіли, підкреслення). */
+/**
+ * Нормалізує назву колонки для зіставлення з псевдонімами.
+ *
+ * @param key - Назва колонки
+ * @returns Назва в нижньому регістрі без пробілів, підкреслень і дефісів
+ */
 function norm(key: string): string {
   return key.toLowerCase().replace(/[\s_-]+/g, '').trim()
 }
 
-/** Прочитати сире значення клітинки за будь-яким із псевдонімів. */
+/**
+ * Знаходить значення клітинки за одним із псевдонімів назви колонки.
+ *
+ * @param row - Рядок із сирими значеннями клітинок
+ * @param aliases - Допустимі псевдоніми назви колонки
+ * @returns Перше знайдене визначене значення або `undefined`
+ */
 export function readCell(row: RawRow, aliases: string[]): CellValue | undefined {
   const wanted = aliases.map(norm)
   for (const key of Object.keys(row)) {
@@ -23,10 +34,24 @@ export function readCell(row: RawRow, aliases: string[]): CellValue | undefined 
   return undefined
 }
 
+/**
+ * Determines whether a cell value is blank.
+ *
+ * @param v - The cell value to check
+ * @returns `true` if the value is `undefined`, `null`, or an empty string after trimming, `false` otherwise.
+ */
 function isBlank(v: CellValue | undefined): boolean {
   return v === undefined || v === null || (typeof v === 'string' && v.trim() === '')
 }
 
+/**
+ * Adds a validation error to the provided collection.
+ *
+ * @param errors - The collection to which the error is added
+ * @param row - The row number associated with the error
+ * @param field - The field associated with the error
+ * @param reason - The reason for the validation error
+ */
 function pushError(
   errors: ValidationError[],
   row: number,
@@ -36,7 +61,12 @@ function pushError(
   errors.push({ row, field, reason, severity: 'error' })
 }
 
-/** Розпарсити число (підтримує десятковий кому і пробіли-роздільники). */
+/**
+ * Перетворює значення клітинки на скінченне число.
+ *
+ * @param v - Значення клітинки; пробіли видаляються, а десяткова кома замінюється крапкою
+ * @returns Число або `null`, якщо значення не можна перетворити на скінченне число
+ */
 function toNumber(v: CellValue): number | null {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
   if (typeof v === 'boolean') return null
@@ -46,7 +76,12 @@ function toNumber(v: CellValue): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-/** Розпарсити дату у UTC-північ (Date, ISO `yyyy-mm-dd`, `dd.mm.yyyy`, `dd/mm/yyyy`). */
+/**
+ * Перетворює значення на дату опівночі за UTC.
+ *
+ * @param v - Значення дати або рядок у форматі `yyyy-mm-dd`, `yyyy/mm/dd`, `dd.mm.yyyy` чи `dd/mm/yyyy`
+ * @returns Дата за UTC або `null`, якщо значення порожнє, має непідтримуваний формат чи містить некоректну календарну дату
+ */
 export function toDate(v: CellValue): Date | null {
   if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : utcMidnight(v)
   if (typeof v !== 'string') return null
@@ -64,9 +99,23 @@ export function toDate(v: CellValue): Date | null {
   return null
 }
 
+/**
+ * Creates a date at UTC midnight for the same calendar day as the input.
+ *
+ * @param d - The source date
+ * @returns A new date set to midnight UTC on the source date's calendar day.
+ */
 function utcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
 }
+/**
+ * Creates a UTC date from year, month, and day components.
+ *
+ * @param y - The UTC year
+ * @param m - The zero-based UTC month
+ * @param d - The UTC day of the month
+ * @returns The resulting date, or `null` if the components do not form a valid calendar date
+ */
 function mk(y: number, m: number, d: number): Date | null {
   const date = new Date(Date.UTC(y, m, d))
   if (Number.isNaN(date.getTime())) return null
@@ -80,7 +129,14 @@ function mk(y: number, m: number, d: number): Date | null {
   return date
 }
 
-/** Обов'язковий рядковий рядок. Порожньо → помилка, повертає ''. */
+/**
+ * Зчитує обов’язкове текстове значення з рядка.
+ *
+ * @param field - Назва поля для повідомлення про помилку
+ * @param rowNo - Номер рядка для повідомлення про помилку
+ * @param errors - Масив для додавання помилки валідації
+ * @returns Обрізане текстове значення або порожній рядок, якщо поле порожнє
+ */
 export function requireString(
   row: RawRow,
   aliases: string[],
@@ -96,13 +152,26 @@ export function requireString(
   return String(v).trim()
 }
 
-/** Необов'язковий рядок (порожньо → undefined). */
+/**
+ * Reads an optional text value from a row.
+ *
+ * @param row - The source row
+ * @param aliases - Column names accepted for the value
+ * @returns The trimmed text value, or `undefined` when the cell is blank
+ */
 export function optionalString(row: RawRow, aliases: string[]): string | undefined {
   const v = readCell(row, aliases)
   return isBlank(v) ? undefined : String(v).trim()
 }
 
-/** Обов'язкове число. Порожньо/некоректно → помилка. `gtZero` вимагає > 0. */
+/**
+ * Перетворює обов’язкове значення клітинки на число та додає помилки валідації за потреби.
+ *
+ * @param field - Назва поля для повідомлень про помилки
+ * @param rowNo - Номер рядка для повідомлень про помилки
+ * @param opts - Додаткові обмеження числового значення
+ * @returns Розібране число; `Number.NaN`, якщо значення порожнє або не є числом
+ */
 export function requireNumber(
   row: RawRow,
   aliases: string[],
@@ -129,7 +198,14 @@ export function requireNumber(
   return n
 }
 
-/** Необов'язкове число (порожньо → undefined; некоректно → помилка + undefined). */
+/**
+ * Зчитує необов'язкове числове поле та перевіряє його значення.
+ *
+ * @param field - Назва поля для повідомлення про помилку
+ * @param rowNo - Номер рядка для повідомлення про помилку
+ * @param errors - Масив, до якого додається помилка некоректного числа
+ * @returns Числове значення, `undefined` для порожнього поля або некоректного числа
+ */
 export function optionalNumber(
   row: RawRow,
   aliases: string[],
@@ -147,7 +223,13 @@ export function optionalNumber(
   return n
 }
 
-/** Обов'язкова дата (UTC-північ). Некоректно → помилка. */
+/**
+ * Зчитує та перевіряє обов’язкову дату як дату опівночі за UTC.
+ *
+ * @param field - Назва поля для повідомлення про помилку
+ * @param rowNo - Номер рядка для повідомлення про помилку
+ * @returns Розпізнана дата або `Invalid Date`, якщо значення відсутнє чи некоректне
+ */
 export function requireDate(
   row: RawRow,
   aliases: string[],
@@ -168,7 +250,15 @@ export function requireDate(
   return d
 }
 
-/** Обов'язкове значення з переліку. Мапить псевдоніми на канонічне значення. */
+/**
+ * Перевіряє обов'язкове значення та перетворює його на канонічне значення за мапою псевдонімів.
+ *
+ * @param field - Назва поля для повідомлення про помилку
+ * @param rowNo - Номер рядка для повідомлення про помилку
+ * @param errors - Масив для додавання помилок валідації
+ * @param mapping - Мапа нормалізованих псевдонімів на канонічні значення
+ * @returns Канонічне значення, якщо вхідне значення допустиме; `null` і помилку в масиві `errors` — якщо значення відсутнє або недопустиме
+ */
 export function requireEnum<T extends string>(
   row: RawRow,
   aliases: string[],
@@ -192,7 +282,12 @@ export function requireEnum<T extends string>(
   return match
 }
 
-/** Розпарсити булеве (підтверджено/так/true → true). */
+/**
+ * Determines whether a cell represents a true value.
+ *
+ * @param truthy - Values interpreted as `true` after normalization
+ * @returns `true` if the cell contains a boolean `true` or matches a truthy value, `false` otherwise
+ */
 export function optionalBoolean(
   row: RawRow,
   aliases: string[],

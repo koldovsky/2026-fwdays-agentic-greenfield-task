@@ -12,10 +12,13 @@ const A = {
 }
 
 /**
- * 2.3 — Парсер маршрутів МК (FR-IMP-04).
+ * Parses route-operation rows and collects validation errors.
  *
- * Звіт з 1С не містить типу операції; якщо колонки `opType` немає, значення
- * за замовчуванням = `opName` (похідне, не помилка). Явна колонка перекриває.
+ * Missing operation types default to the operation name. Rows with validation
+ * errors are excluded from the parsed data.
+ *
+ * @param rows - Input rows containing route-operation fields
+ * @returns Parsed route operations and accumulated validation errors
  */
 export function parseRoutes(rows: RawRow[]): ParseResult<RouteOperation> {
   const data: RouteOperation[] = []

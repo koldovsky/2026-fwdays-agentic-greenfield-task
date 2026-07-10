@@ -42,7 +42,14 @@ export const IMPORT_TABLES: { table: ImportTable; label: string }[] = [
   { table: 'calendar', label: 'Виробничий календар' },
 ]
 
-/** 2.8 — Диспетчер парсингу за типом таблиці. */
+/**
+ * Parses rows according to the specified import table type.
+ *
+ * @param table - The import table type that determines the parser and result field
+ * @param rows - The raw rows to parse
+ * @returns The parsed data and any validation errors
+ * @throws If an unsupported table type is provided
+ */
 export function parseTable(table: ImportTable, rows: RawRow[]): ParsedTable {
   switch (table) {
     case 'orders': {
@@ -80,6 +87,13 @@ export function parseTable(table: ImportTable, rows: RawRow[]): ParsedTable {
   }
 }
 
+/**
+ * Extracts a trimmed string key from a row using the provided column aliases.
+ *
+ * @param row - The row from which to read the key value
+ * @param aliases - Column names to try when locating the key value
+ * @returns The trimmed key value, or an empty string when no value is found
+ */
 function key(row: RawRow, aliases: string[]): string {
   const v = readCell(row, aliases)
   return v === undefined || v === null ? '' : String(v).trim()

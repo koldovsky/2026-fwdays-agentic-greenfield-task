@@ -42,6 +42,12 @@ export interface BackwardParams {
   today: Date
 }
 
+/**
+ * Converts a date to the epoch-minute value for midnight UTC on the same calendar day.
+ *
+ * @param date - The date whose UTC calendar day determines the result
+ * @returns The epoch-minute value at UTC midnight
+ */
 function utcMidnightMin(date: Date): number {
   return toEpochMin(
     new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())),
@@ -49,17 +55,17 @@ function utcMidnightMin(date: Date): number {
 }
 
 /**
- * 7.1 — Backward scheduling операцій маршруту вузла (FR-SCHED-02).
+ * Schedules route operations backward from the node deadline.
  *
- * Операції розставляються від `deadline` назад: остання операція завершується
- * до дедлайну, кожна попередня — до кінця попереднього робочого дня відносно
- * старту наступної (міжопераційний день, FR-SCHED-04). РЦ обирається як
- * найпізніший вільний слот у ГРЦ.
+ * Each operation uses the latest available slot in its resource group, with
+ * preceding operations constrained to end by the end of the previous working
+ * day. If scheduling reaches before `today`, no placements are returned and
+ * the result identifies the operation where forward scheduling should begin.
  *
- * 7.2 — Якщо старт будь-якої операції < `today`, повертає `needsForward: true`
- * з `fromOpNo`; розміщення не фіксуються (вузол перепланується forward).
- *
- * Функція чиста: `occupiedSlots` лише читається, не мутується.
+ * @param params - Scheduling inputs, including route operations, resources,
+ *   occupancy, calendar, deadline, and reference date
+ * @returns The placements in route order, earliest start time, and whether
+ *   forward scheduling is required
  */
 export function scheduleBackward(params: BackwardParams): BackwardResult {
   const ops = [...params.routeOps].sort((a, b) => a.opNo - b.opNo)
