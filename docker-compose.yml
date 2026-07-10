@@ -1,0 +1,26 @@
+# Local development infrastructure (ADR-0005: local + prod only).
+# Runs MySQL only — the app itself runs via `npm run dev` (Nx dev servers)
+# or as the production Docker image (see Dockerfile).
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: servicedesk-mysql
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: servicedesk
+      MYSQL_USER: servicedesk
+      MYSQL_PASSWORD: servicedesk
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Grants for the Prisma Migrate shadow DB (runs on first init only)
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  mysql-data:

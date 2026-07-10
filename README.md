@@ -45,3 +45,35 @@
 ---
 
 Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+
+---
+
+## Проєкт цього форку: Сервіс-деск Mini
+
+Мінімальний сервіс-деск (заявки для мешканців будинку) як POC агентної
+spec-driven розробки. Уся документація — в [`docs/`](./docs/) (PRD, ADR,
+план зрізів); робочий SDD-шар — [`openspec/`](./openspec/).
+
+### Локальний старт (одна команда)
+
+Потрібні Node 22+ і Docker. Далі:
+
+```sh
+npm ci
+npm run dev
+```
+
+`npm run dev` сам створить `.env` з `.env.example`, підніме MySQL у Docker,
+застосує міграції Prisma і запустить dev-сервери: SPA —
+<http://localhost:4200>, API — <http://localhost:3000/api>
+(health-чек: `GET /api/health`).
+
+### Продакшн-образ
+
+```sh
+docker build -t servicedesk-mini .
+docker run -p 3000:3000 -e DATABASE_URL="mysql://user:pass@host:3306/db" servicedesk-mini
+```
+
+Один контейнер роздає і API, і статику SPA (ADR-0002); міграції
+застосовуються на старті. Деплой — Railway (ADR-0005).

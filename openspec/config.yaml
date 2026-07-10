@@ -1,0 +1,69 @@
+schema: spec-driven
+
+context: |
+  Service-desk Mini — a minimal service-desk app (tickets for building
+  residents), built as a POC of spec-driven, agent-driven development.
+
+  Tech stack: Nx monorepo; Angular 21 SPA (standalone components, SCSS) in
+  web/; NestJS + Prisma + MySQL in api/; REST/JSON + OpenAPI; deploy is a
+  single Docker container on Railway (NestJS serves the SPA statics).
+  Engineering decisions are fixed in docs/adr/ (MADR, immutable) — do not
+  re-decide them.
+
+  Source-of-truth hierarchy (ADR-0007):
+  - docs/PRD.md (Ukrainian) is normative: requirement codes FR-*, NFR-*,
+    TC-*, BC-* are the single source of truth. openspec/specs/ is the
+    derived working layer for agents; on any conflict the PRD wins.
+  - Every spec requirement must reference the PRD code(s) it implements.
+  - Product decisions are NOT made in openspec artifacts: record them as a
+    Р- entry in docs/assumptions-open-questions.md + PRD changelog edit.
+    Engineering decisions get a new ADR in docs/adr/.
+  - docs/glossary.md is the single source of terminology.
+
+  Language: openspec artifacts (proposals, specs, tasks) are written in
+  English; user-facing strings in the product are Ukrainian.
+
+rules:
+  proposal:
+    - One change = one capability slice from docs/mvp-capability-plan.md =
+      one unit of agentic work, landing as a coherent series of
+      `feat(S-NN):` commits on the `service-desk-mini` trunk branch
+      (trunk-based, no working branches or PRs — ADR-0008/0012; `main`
+      mirrors the course starter, the only PR is the final course
+      submission). A proposal is created from a referenced plan item;
+      link the slice ID in the proposal.
+    - Every slice is vertical (UI -> API -> DB, full contour) and
+      self-contained - deployable to production as soon as it lands on
+      the trunk.
+    - Reference the PRD requirement codes (FR-*/NFR-*) the slice covers.
+    - Include a "Non-goals" section; scope that does not fit the slice is
+      cut, not stretched.
+    - API error contract (fixed in S-02, design D6) - endpoints answer
+      with locale-free machine-readable codes (`{ code, message }`,
+      message in English); Ukrainian copy lives only in the SPA, which
+      maps the codes. New capabilities extend this contract - artifacts
+      must not specify "Ukrainian error messages" at the API level.
+    - Before describing existing behavior in a new requirement ("this
+      already exists and is folded into the spec"), verify it against the
+      code - including its comments, which may document a wider or
+      narrower design than assumed. Specs pin actual behavior, not
+      intent (S-08 - only failed OTP sends were logged, and the
+      dev-sender exception was wider than first specced).
+  tasks:
+    - Final tasks of every change, in order — (1) all task checkboxes [x];
+      (2) `npm run verify` (format, lint, typecheck, fallow audit,
+      openspec validate, tests, build - all blocking); (3) smoke test on a
+      real DB - create/update/delete the slice's data, check invariants;
+      (4) Playwright e2e (web-e2e) for the slice's critical paths, derived
+      from the acceptance scenarios; (5) adversarial review by the
+      slice-reviewer subagent (ADR-0010) - clean context, different model,
+      one pass over the slice diff; critical/high findings must be fixed
+      (re-run verify), medium/low at the author's discretion with
+      dispositions logged in the retro; (6) launch-and-look check - run
+      the app, walk the slice happy path, confirm it works; (7) archive
+      the change and confirm `npx openspec list` is empty; (8) update
+      docs/current-state.md (phase, done, next, blockers) and
+      docs/traceability-matrix.md (FR -> spec -> test -> demo check);
+      (9) session retrospective via the /slice-retro skill - metrics and
+      friction recorded in docs/cycles/S-NN.md - before declaring the
+      slice done.

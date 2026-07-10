@@ -7,6 +7,9 @@ Thumbs.db
 .vscode/
 *.log
 
+# Claude Code — personal local settings
+.claude/settings.local.json
+
 # Секрети / змінні середовища
 .env
 .env.*
@@ -25,3 +28,19 @@ venv/
 target/
 bin/
 obj/
+
+
+
+# Generated Prisma client (npx prisma generate)
+api/src/generated/
+
+# Local attachment storage (S-07, ADR-0003 — dev default for ATTACHMENTS_DIR)
+.data/
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+.angular
+
+__screenshots__/
+.claude/settings.local.json.tmp.*

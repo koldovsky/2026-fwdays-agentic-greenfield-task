@@ -1,0 +1,195 @@
+// Prisma schema — Сервіс-деск Mini (TC-STACK-01: Prisma + MySQL).
+// Entities follow PRD §9.1; auth tables per ADR-0004 and s02-otp-auth D1.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  // The api app is CommonJS (webpack build + jest); the default ESM output
+  // uses import.meta and breaks both
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        BigInt    @id @default(autoincrement())
+  phone     String    @unique @db.VarChar(13)
+  name      String?   @db.VarChar(120)
+  createdAt DateTime  @default(now()) @map("created_at")
+  sessions  Session[]
+  houses    House[]
+  tickets   Ticket[]
+  feedItems TicketFeedItem[]
+
+  @@map("user")
+}
+
+// Personal houses directory (FR-HOUSE-01/02): owner-scoped, `name` is the
+// single name/address line per PRD §7.2. Tickets reference house from S-04
+// (FK with onDelete: Restrict + service check backing FR-HOUSE-02).
+model House {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(255)
+  note      String?  @db.VarChar(1000)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tickets   Ticket[]
+
+  @@index([userId])
+  @@map("house")
+}
+
+// Fixed category list, PRD §5.2. English keys on the wire (locale-free API,
+// S-02 D6); Ukrainian labels live only in the SPA (ticket-labels.ts).
+enum TicketCategory {
+  PLUMBING // Сантехніка
+  HEATING // Опалення / теплопостачання
+  ELECTRICITY // Електропостачання
+  ELEVATOR // Ліфт
+  ROOF_FACADE // Покрівля та фасад
+  COMMON_AREAS // Під'їзд і МЗК
+  GROUNDS // Прибудинкова територія / благоустрій
+  ACCESS_SYSTEMS // Домофон / шлагбаум / відеоспостереження
+  OTHER // Інше
+}
+
+// PRD §5.3, default NORMAL («Звичайна»).
+enum TicketPriority {
+  EMERGENCY // Аварійна
+  HIGH // Висока
+  NORMAL // Звичайна
+}
+
+// PRD §5.1 lifecycle. Transitions are validated against the §5.1 table in
+// tickets.service (ALLOWED_TRANSITIONS); CLOSED and REJECTED are terminal.
+enum TicketStatus {
+  NEW // Нова
+  IN_PROGRESS // В роботі
+  DONE // Виконана
+  CLOSED // Закрита
+  REJECTED // Відхилена
+}
+
+// Ticket (FR-TICKET-01/02/04): owner-scoped, id doubles as the human-visible
+// number #N (PRD §9.1). house FK is Restrict — the DB backstop for
+// FR-HOUSE-02 (the deterministic check lives in houses.service). due_date is
+// a calendar date (PRD §5.4), wire format YYYY-MM-DD — no timezone drift.
+model Ticket {
+  id             BigInt         @id @default(autoincrement())
+  userId         BigInt         @map("user_id")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  houseId        BigInt         @map("house_id")
+  house          House          @relation(fields: [houseId], references: [id], onDelete: Restrict)
+  title          String         @db.VarChar(255)
+  description    String?        @db.Text
+  category       TicketCategory
+  priority       TicketPriority @default(NORMAL)
+  status         TicketStatus   @default(NEW)
+  requesterName  String?        @map("requester_name") @db.VarChar(255)
+  requesterPhone String?        @map("requester_phone") @db.VarChar(32)
+  executor       String?        @db.VarChar(255)
+  dueDate        DateTime?      @map("due_date") @db.Date
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  feedItems      TicketFeedItem[]
+  attachments    Attachment[]
+
+  // Composite indexes for the owner-scoped filtered list (NFR-PERF-01,
+  // S-06 design D6); [userId, status] also keeps the userId FK indexed.
+  @@index([userId, status])
+  @@index([userId, houseId])
+  @@map("ticket")
+}
+
+// Single append-only feed per ticket (PRD §5.5, FR-FEED-01/02): user NOTEs
+// and system EVENTs in one table — chronological order is ORDER BY id.
+enum TicketFeedItemType {
+  NOTE // user text note
+  EVENT // system event
+}
+
+// Which ticket field a system EVENT records (FR-STATUS-03, FR-TICKET-03).
+// ATTACHMENT covers add/delete of a photo (FR-FEED-02, S-07 design D5):
+// add → newValue = original file name, delete → oldValue = original file name.
+enum TicketEventField {
+  STATUS
+  HOUSE
+  CATEGORY
+  PRIORITY
+  EXECUTOR
+  DUE_DATE
+  ATTACHMENT
+}
+
+// Items are immutable (no updatedAt, no update/delete API). EVENT values are
+// locale-free snapshots (enum keys, YYYY-MM-DD, house *name* at change time —
+// history must survive renames); the SPA composes the Ukrainian sentences.
+model TicketFeedItem {
+  id        BigInt             @id @default(autoincrement())
+  ticketId  BigInt             @map("ticket_id")
+  ticket    Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  BigInt             @map("author_id")
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  type      TicketFeedItemType
+  text      String?            @db.Text // NOTE only
+  field     TicketEventField? // EVENT only
+  oldValue  String?            @map("old_value") @db.VarChar(255)
+  newValue  String?            @map("new_value") @db.VarChar(255)
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@index([ticketId, id])
+  @@map("ticket_feed_item")
+}
+
+// Photo attachment metadata (FR-ATTACH-01…03, ADR-0003, S-07 design D2).
+// Ownership is derived through the ticket — no denormalized userId to drift.
+// `storedName` is the generated on-disk name (never leaves the API);
+// `fileName` is the original upload name shown to the user. The original
+// bytes live in ATTACHMENTS_DIR (Railway Volume in prod, NFR-STOR-01).
+model Attachment {
+  id         BigInt   @id @default(autoincrement())
+  ticketId   BigInt   @map("ticket_id")
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fileName   String   @map("file_name") @db.VarChar(255)
+  storedName String   @unique @map("stored_name") @db.VarChar(64)
+  mimeType   String   @map("mime_type") @db.VarChar(32)
+  size       Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@map("attachment")
+}
+
+// Transit store for OTP delivery and rate limiting (ADR-0004). Send limits
+// (1/60s, 5/24h) are derived by querying rows per phone — the table doubles
+// as the send log; rows older than 24h are dropped by the cleanup job.
+model OtpCode {
+  id         BigInt    @id @default(autoincrement())
+  phone      String    @db.VarChar(13)
+  codeHash   String    @map("code_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at")
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([phone, createdAt])
+  @@map("otp_code")
+}
+
+// Server-side session store (NFR-SEC-01): the cookie carries an opaque
+// random token; only its SHA-256 hash is persisted.
+model Session {
+  id        BigInt   @id @default(autoincrement())
+  tokenHash String   @unique @map("token_hash") @db.VarChar(64)
+  userId    BigInt   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("session")
+}

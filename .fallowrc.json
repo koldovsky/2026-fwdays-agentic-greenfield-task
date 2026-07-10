@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["api/src/main.ts", "web/src/main.ts"],
+  "ignorePatterns": ["**/src/support/**", "jest.preset.js"],
+  "ignoreDependencies": [
+    "@angular-devkit/core",
+    "@angular-devkit/schematics",
+    "@angular/language-service",
+    "@eslint/js",
+    "@nestjs/schematics",
+    "@nx/devkit",
+    "@schematics/angular",
+    "@swc/helpers",
+    "@typescript-eslint/utils",
+    "angular-eslint",
+    "eslint-config-prettier",
+    "jest-environment-node",
+    "jest-util",
+    "typescript-eslint"
+  ]
+}
