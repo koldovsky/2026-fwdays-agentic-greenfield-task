@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import type {
   InboxApiErrorKind,
   InboxMessageDetail,
@@ -79,6 +79,8 @@ const messageDetailResponseSchema = z.object({
       reference: messageReferenceSchema,
       contentType: z.string().min(1),
       bodyLength: z.number().int().nonnegative(),
+      htmlBody: z.string().nullable().optional(),
+      textBody: z.string().nullable().optional(),
       text: z.string(),
       textPreview: z.string(),
       markerFound: z.boolean(),

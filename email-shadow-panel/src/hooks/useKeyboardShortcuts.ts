@@ -10,13 +10,25 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return target.isContentEditable || tag === "input" || tag === "textarea" || tag === "select";
 }
 
+function hasActiveOverlay(): boolean {
+  if (typeof document === "undefined") return false;
+
+  return Boolean(
+    document.querySelector(
+      '[role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper]',
+    ),
+  );
+}
+
 export function useKeyboardShortcuts(shortcuts: ShortcutMap, enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       if (isTypingTarget(event.target)) return;
+      if (hasActiveOverlay()) return;
 
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
       const handler = shortcuts[key];

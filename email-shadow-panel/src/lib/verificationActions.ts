@@ -27,7 +27,9 @@ const LINK_CONTEXT_HINTS = [
   "verify",
   "verification",
   "confirm",
+  "confirmation",
   "activate",
+  "magic",
   "login",
   "sign in",
   "account",
@@ -64,9 +66,9 @@ function toVerificationLink(candidate: string): VerificationLink | null {
   }
 }
 
-export function detectVerificationLink(text: string | null | undefined): VerificationLink | null {
-  if (!text) {
-    return null;
+export function extractSafeLinks(text: string | null | undefined): VerificationLink[] {
+  if (typeof text !== "string" || text.trim().length === 0) {
+    return [];
   }
 
   const candidates: Array<{ link: VerificationLink; score: number; index: number }> = [];
@@ -109,7 +111,18 @@ export function detectVerificationLink(text: string | null | undefined): Verific
     return left.index - right.index;
   });
 
-  return candidates[0]?.link ?? null;
+  const deduped = new Map<string, VerificationLink>();
+  for (const candidate of candidates) {
+    if (!deduped.has(candidate.link.url)) {
+      deduped.set(candidate.link.url, candidate.link);
+    }
+  }
+
+  return [...deduped.values()];
+}
+
+export function detectVerificationLink(text: string | null | undefined): VerificationLink | null {
+  return extractSafeLinks(text)[0] ?? null;
 }
 
 export function getVerificationActionsPanelState(input: {
@@ -130,8 +143,8 @@ export function getVerificationActionsPanelState(input: {
   if (!input.hasSelection) {
     return {
       kind: "empty",
-      title: "Awaiting selection",
-      description: "Select a message to inspect verification links or one-time codes.",
+      title: "Select a message",
+      description: "Select a message to see verification actions.",
     };
   }
 
@@ -143,27 +156,17 @@ export function getVerificationActionsPanelState(input: {
     };
   }
 
-  if (input.detailStatus === "error") {
+  if (input.detailStatus === "error" || input.detailStatus === "idle") {
     return {
       kind: "empty",
-      title: "Verification unavailable",
-      description:
-        input.detailErrorMessage ??
-        "Message detail could not be loaded, so verification extraction cannot run.",
-    };
-  }
-
-  if (input.detailStatus === "idle") {
-    return {
-      kind: "empty",
-      title: "Awaiting message body",
-      description: "Open the message detail before treating this as a no-action result.",
+      title: "Message content is not available for verification",
+      description: "Message content is not available for verification.",
     };
   }
 
   return {
     kind: "empty",
-    title: "No verification action detected.",
+    title: "No verification action detected",
     description: "This message does not contain a clear verification link or one-time code.",
   };
 }

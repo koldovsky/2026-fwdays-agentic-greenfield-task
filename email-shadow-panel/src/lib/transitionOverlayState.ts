@@ -1,4 +1,4 @@
-import type { ProviderId } from "../types/inbox.ts";
+﻿import type { ProviderId } from "../types/inbox.ts";
 
 export const TRANSITION_PROGRESS_STEPS = [
   {
@@ -92,4 +92,18 @@ export function getTransitionStatusText(input: {
   }
 
   return `Generating an ${provider} inbox address.`;
+}
+
+export function getTransitionFooterState(input: { failed: boolean; ready: boolean }) {
+  if (input.failed) {
+    return {
+      label: "Inbox not opened",
+      description: "No link or code was opened automatically.",
+    };
+  }
+
+  return {
+    label: input.ready ? "Inbox ready" : "Inbox ready soon",
+    description: "You'll be taken to your mailbox automatically.",
+  };
 }

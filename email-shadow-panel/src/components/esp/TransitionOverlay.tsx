@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowLeft, Check, Loader2, Mail, Radio, RotateCcw } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
+  getTransitionFooterState,
   getTransitionProgressState,
   getTransitionProviderLabel,
   getTransitionStatusText,
@@ -28,22 +29,22 @@ function StepIcon({
   reducedMotion: boolean;
 }) {
   if (status === "complete") {
-    return <Check className="size-5" strokeWidth={3} aria-hidden />;
+    return <Check className="size-4" strokeWidth={3} aria-hidden />;
   }
 
   if (status === "error") {
-    return <AlertTriangle className="size-5" aria-hidden />;
+    return <AlertTriangle className="size-4" aria-hidden />;
   }
 
   if (status === "active") {
     return reducedMotion ? (
-      <Radio className="size-5" aria-hidden />
+      <Radio className="size-4" aria-hidden />
     ) : (
-      <Loader2 className="size-5 animate-spin" aria-hidden />
+      <Loader2 className="size-4 animate-spin" aria-hidden />
     );
   }
 
-  return <span className="size-2.5 rounded-full bg-muted-foreground/45" aria-hidden />;
+  return <span className="size-2 rounded-full bg-muted-foreground/45" aria-hidden />;
 }
 
 export function TransitionOverlay({
@@ -73,6 +74,7 @@ export function TransitionOverlay({
     ready,
     failed,
   });
+  const footer = getTransitionFooterState({ failed, ready });
 
   return (
     <div
@@ -86,46 +88,45 @@ export function TransitionOverlay({
       <div aria-hidden className="absolute inset-0 grid-lines opacity-25" />
       <div
         aria-hidden
-        className="absolute inset-x-8 top-28 hidden max-w-[1500px] grid-cols-[320px_minmax(0,1fr)_320px] gap-4 opacity-25 lg:grid"
+        className="absolute inset-x-8 top-24 hidden max-w-[1760px] grid-cols-[clamp(280px,25vw,420px)_minmax(0,1fr)] gap-4 opacity-20 xl:grid"
       >
-        <div className="panel h-[520px]" />
-        <div className="panel h-[520px]" />
-        <div className="panel h-[520px]" />
+        <div className="panel h-[460px]" />
+        <div className="panel h-[460px]" />
       </div>
 
       <section
         aria-labelledby="handoff-title"
-        className="panel corner-ticks relative flex max-h-[calc(100dvh-1.5rem)] w-[min(680px,94vw)] flex-col overflow-hidden border-signal/35 p-5 shadow-[0_0_0_1px_color-mix(in_oklab,var(--signal)_16%,transparent),0_30px_90px_-50px_var(--signal)] sm:p-7"
+        className="panel corner-ticks relative flex max-h-[calc(100dvh-1.5rem)] w-[min(660px,94vw)] flex-col overflow-hidden border-signal/35 p-4 shadow-[0_0_0_1px_color-mix(in_oklab,var(--signal)_16%,transparent),0_26px_80px_-52px_var(--signal)] sm:p-5"
       >
         <div role="status" aria-live="polite" className="sr-only">
           {statusText}
         </div>
 
-        <div className="font-mono-tabular text-[12px] uppercase tracking-[0.24em] text-signal">
+        <div className="font-mono-tabular text-[11px] uppercase tracking-[0.18em] text-signal/80">
           &gt; Shadow handoff
         </div>
         <h2
           id="handoff-title"
-          className="mt-3 font-mono-tabular text-2xl font-semibold uppercase tracking-[0.08em] text-foreground sm:mt-4 sm:text-3xl"
+          className="mt-2 text-[2rem] font-semibold leading-tight tracking-tight text-foreground sm:text-[2.35rem]"
         >
           Opening inbox
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
           {failed
             ? "The mailbox could not be prepared. You can retry generation or return to the control panel."
             : "Generating your address and preparing the mailbox view."}
         </p>
 
-        <div className="mt-4 rounded-md border border-hairline bg-background/35 p-3 sm:mt-5 sm:p-4">
-          <div className="flex min-w-0 items-center gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-md border border-signal/25 bg-signal/10 text-signal">
-              <Mail className="size-6" aria-hidden />
+        <div className="mt-3 rounded-xl border border-hairline bg-background/35 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-signal/25 bg-signal/10 text-signal">
+              <Mail className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="truncate font-mono-tabular text-lg font-semibold text-foreground sm:text-xl">
+              <div className="truncate font-mono-tabular text-[1.08rem] font-semibold text-foreground sm:text-[1.28rem]">
                 {address ?? "Preparing temporary address"}
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span className="size-2 rounded-full bg-signal" aria-hidden />
                 Temporary address <span aria-hidden>/</span>{" "}
                 {hasAddress ? "Created just now" : providerLabel}
@@ -134,16 +135,16 @@ export function TransitionOverlay({
           </div>
         </div>
 
-        <ol className="mt-4 grid gap-4 sm:mt-5">
+        <ol className="mt-3 grid gap-3">
           {progress.steps.map((step, index) => (
-            <li key={step.id} className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
+            <li key={step.id} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
               <div className="relative flex justify-center">
                 {index < progress.steps.length - 1 ? (
-                  <span aria-hidden className="absolute bottom-[-24px] top-8 w-px bg-signal/30" />
+                  <span aria-hidden className="absolute bottom-[-18px] top-7 w-px bg-signal/24" />
                 ) : null}
                 <span
                   className={cn(
-                    "relative z-10 grid size-8 place-items-center rounded-full border",
+                    "relative z-10 grid size-7 place-items-center rounded-full border",
                     step.status === "complete" && "border-signal bg-signal text-primary-foreground",
                     step.status === "active" && "border-signal bg-signal/10 text-signal",
                     step.status === "pending" &&
@@ -152,7 +153,7 @@ export function TransitionOverlay({
                       "border-destructive bg-destructive/15 text-destructive",
                     step.status === "active" &&
                       !reducedMotion &&
-                      "shadow-[0_0_24px_-6px_var(--signal)]",
+                      "shadow-[0_0_16px_-8px_var(--signal)]",
                   )}
                 >
                   <StepIcon status={step.status} reducedMotion={reducedMotion} />
@@ -160,14 +161,14 @@ export function TransitionOverlay({
               </div>
               <div className="pt-0.5">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-mono-tabular text-[11px] font-semibold text-signal sm:text-sm">
+                  <span className="font-mono-tabular text-[10px] font-semibold text-signal sm:text-xs">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-base font-semibold text-foreground sm:text-lg">
+                  <span className="text-[0.95rem] font-semibold text-foreground sm:text-base">
                     {step.label}
                   </span>
                 </div>
-                <p className="mt-1 text-[13px] leading-snug text-muted-foreground sm:text-sm">
+                <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground sm:text-[13px]">
                   {step.description}
                 </p>
               </div>
@@ -176,46 +177,48 @@ export function TransitionOverlay({
         </ol>
 
         {failed ? (
-          <div className="mt-4 rounded-md border border-destructive/35 bg-destructive/10 p-3 text-sm leading-relaxed text-destructive sm:mt-5 sm:p-4">
+          <div className="mt-3 rounded-xl border border-destructive/35 bg-destructive/10 p-3 text-sm leading-relaxed text-destructive">
             {errorMessage}
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-center gap-3 sm:mt-5">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full border border-signal/20 bg-signal/10">
+        <div className="mt-3 flex items-center gap-3">
+          <div className="h-2 flex-1 overflow-hidden rounded-full border border-signal/20 bg-signal/10">
             <div
               className="h-full rounded-full bg-signal transition-[width] duration-300"
               style={{ width: `${progress.progressPercent}%` }}
             />
           </div>
-          <span className="w-11 text-right font-mono-tabular text-xs text-signal sm:w-12 sm:text-sm">
+          <span className="w-10 text-right font-mono-tabular text-xs text-signal">
             {progress.progressPercent}%
           </span>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4 sm:mt-5">
-          <div className="max-w-[360px] text-sm leading-relaxed text-muted-foreground">
-            <span className="font-semibold text-signal">
-              {failed ? "Inbox not opened" : ready ? "Inbox ready" : "Inbox ready soon"}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-t border-hairline pt-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm leading-relaxed text-muted-foreground">
+            <span className="inline-flex items-center gap-2 font-semibold text-signal">
+              <Radio
+                className={cn("size-4", !reducedMotion && !failed && "animate-pulse")}
+                aria-hidden
+              />
+              {footer.label}
             </span>
-            <span className="mx-3 text-hairline">|</span>
-            {failed
-              ? "No link or code was opened automatically."
-              : "You'll be taken to your mailbox automatically."}
+            <span aria-hidden className="hidden h-4 w-px bg-hairline sm:inline-block" />
+            <span>{footer.description}</span>
           </div>
           {failed ? (
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onBack}
-                className="inline-flex h-9 items-center gap-2 rounded-md border border-hairline bg-background/35 px-3 text-xs text-foreground transition-colors hover:border-signal/40 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-hairline bg-background/35 px-3 text-xs text-foreground transition-colors hover:border-signal/40 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70"
               >
                 <ArrowLeft className="size-4" aria-hidden /> Back
               </button>
               <button
                 type="button"
                 onClick={onRetry}
-                className="inline-flex h-9 items-center gap-2 rounded-md border border-signal/45 bg-signal/10 px-3 text-xs font-semibold text-foreground transition-colors hover:border-signal/70 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-signal/45 bg-signal/10 px-3 text-xs font-semibold text-foreground transition-colors hover:border-signal/70 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70"
               >
                 <RotateCcw className="size-4" aria-hidden /> Retry
               </button>

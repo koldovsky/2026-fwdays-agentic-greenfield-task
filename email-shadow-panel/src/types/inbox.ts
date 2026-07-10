@@ -1,4 +1,4 @@
-﻿export type ProviderId = "emailnator";
+export type ProviderId = "emailnator";
 
 export interface InboxMetadata {
   address: string;
@@ -31,6 +31,8 @@ export interface InboxMessageDetail {
   reference: string;
   contentType: string;
   bodyLength: number;
+  htmlBody?: string | null;
+  textBody?: string | null;
   text: string;
   textPreview: string;
   markerFound: boolean;

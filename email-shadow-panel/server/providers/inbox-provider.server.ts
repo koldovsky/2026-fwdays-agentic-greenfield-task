@@ -8,6 +8,8 @@ export interface ProviderInboxMessageSummary {
 export interface ProviderInboxMessageDetail {
   contentType: string;
   bodyLength: number;
+  htmlBody?: string | null;
+  textBody?: string | null;
   text: string;
   textPreview: string;
   markerFound: boolean;

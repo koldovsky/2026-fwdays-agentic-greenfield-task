@@ -116,6 +116,8 @@ export const listSessionMessagesResultSchema = z.object({
 export const safeMessageDetailSchema = z.object({
   contentType: z.string().min(1),
   bodyLength: z.number().int().nonnegative(),
+  htmlBody: z.string().nullable().optional(),
+  textBody: z.string().nullable().optional(),
   text: z.string(),
   textPreview: z.string(),
   markerFound: z.boolean(),

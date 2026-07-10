@@ -393,6 +393,39 @@ export class InboxController {
     }
   }
 
+  forgetRecentInbox(id: string): void {
+    if (this.state.removalStatus === "pending") {
+      return;
+    }
+
+    const removingSelected = this.state.selectedInboxId === id;
+    if (removingSelected) {
+      this.clearPollTimer();
+      this.abortListRequest();
+      this.abortDetailRequest();
+      this.detailCache.clear();
+    }
+
+    const snapshot = this.dependencies.storage.removeInbox(id);
+    this.applySnapshot(snapshot);
+    this.setState({
+      removalNotice: "Inbox removed from this browser.",
+      sessionNotice: null,
+      createError: null,
+      ...(removingSelected
+        ? {
+            messages: [],
+            messageListStatus: "idle" as const,
+            messageListError: null,
+            selectedMessageReference: null,
+            selectedMessageDetail: null,
+            messageDetailStatus: "idle" as const,
+            messageDetailError: null,
+          }
+        : {}),
+    });
+  }
+
   private async loadSelectedInbox(options: {
     reason: "initial" | "generated" | "switch" | "manual" | "restored";
   }) {

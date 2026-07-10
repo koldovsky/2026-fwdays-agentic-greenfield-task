@@ -6,7 +6,6 @@ import {
   type MessageDetailStatus,
   type VerificationLink,
 } from "@/lib/verificationActions";
-import { cn } from "@/lib/utils";
 import { ExternalLink, Info, KeyRound, Link2, ShieldCheck } from "lucide-react";
 
 interface Props {
@@ -18,7 +17,22 @@ interface Props {
 }
 
 function ActionCard({ children }: { children: ReactNode }) {
-  return <div className="rounded-md border border-hairline bg-background/30 p-4">{children}</div>;
+  return (
+    <div className="rounded-xl border border-hairline/55 bg-background/24 p-4 sm:p-5">
+      {children}
+    </div>
+  );
+}
+
+function openExternal(url: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (opened) {
+    opened.opener = null;
+  }
 }
 
 export function VerificationActionsPanel({
@@ -37,14 +51,11 @@ export function VerificationActionsPanel({
   });
 
   const openLink = useCallback(() => {
-    if (!link || typeof window === "undefined") {
+    if (!link) {
       return;
     }
 
-    const opened = window.open(link.url, "_blank", "noopener,noreferrer");
-    if (opened) {
-      opened.opener = null;
-    }
+    openExternal(link.url);
   }, [link]);
 
   return (
@@ -52,14 +63,17 @@ export function VerificationActionsPanel({
       className="panel corner-ticks relative flex h-full flex-col overflow-hidden"
       aria-labelledby="verification-actions-title"
     >
-      <div className="border-b border-hairline px-5 py-4">
+      <div className="border-b border-hairline/45 px-5 py-4">
         <div className="flex items-center gap-3">
           <ShieldCheck className="size-5 text-signal" aria-hidden />
           <div>
-            <h2 id="verification-actions-title" className="text-lg font-semibold text-foreground">
+            <h2
+              id="verification-actions-title"
+              className="text-[1.08rem] font-semibold text-foreground"
+            >
               Verification actions
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Actions update with the selected message.
             </p>
           </div>
@@ -71,69 +85,83 @@ export function VerificationActionsPanel({
       </div>
 
       {panelState.kind === "actions" ? (
-        <div className="grid flex-1 content-start gap-4 p-5">
+        <div className="esp-scrollbar grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4 sm:p-5">
           {panelState.link ? (
             <ActionCard>
-              <div className="flex items-center gap-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-full border border-signal/20 bg-signal/10 text-signal">
+              <div className="flex items-start gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full border border-signal/18 bg-signal/10 text-signal">
                   <Link2 className="size-6" aria-hidden />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 text-base font-semibold text-foreground">
-                    Verification link
-                    <span className="size-2 rounded-full bg-signal" aria-hidden />
+                <div className="flex min-w-0 flex-1 flex-wrap items-start gap-3.5">
+                  <div className="min-w-[11rem] flex-1">
+                    <div className="text-[1rem] font-semibold leading-tight text-foreground">
+                      Verification link
+                    </div>
+                    <div
+                      className="mt-1 truncate text-sm text-muted-foreground"
+                      title={panelState.link.hostname}
+                    >
+                      {panelState.link.hostname}
+                    </div>
                   </div>
-                  <div className="mt-1 truncate text-sm text-muted-foreground">
-                    {panelState.link.hostname}
+                  <div className="flex flex-wrap gap-2">
+                    <CopyButton
+                      value={panelState.link.url}
+                      label="Copy link"
+                      successMessage="Verification link copied"
+                    />
+                    <button
+                      type="button"
+                      onClick={openLink}
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-signal/35 bg-signal/10 px-3 text-sm font-semibold text-foreground transition-colors hover:border-signal/70 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      Open link
+                      <ExternalLink className="size-4" aria-hidden />
+                    </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={openLink}
-                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-signal/35 bg-signal/10 px-3 text-sm font-semibold text-foreground transition-colors hover:border-signal/70 hover:text-signal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  Open link
-                  <ExternalLink className="size-4" aria-hidden />
-                </button>
               </div>
             </ActionCard>
           ) : null}
 
           {panelState.code ? (
             <ActionCard>
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-full border border-signal/20 bg-signal/10 text-signal">
+              <div className="flex items-start gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full border border-signal/18 bg-signal/10 text-signal">
                   <KeyRound className="size-6" aria-hidden />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 text-base font-semibold text-foreground">
-                    One-time code
-                    <span className="size-2 rounded-full bg-signal" aria-hidden />
+                <div className="flex min-w-0 flex-1 flex-wrap items-start gap-3.5">
+                  <div className="min-w-[11rem] flex-1">
+                    <div className="text-[1rem] font-semibold leading-tight text-foreground">
+                      One-time code
+                    </div>
+                    <div className="mt-2 font-mono-tabular text-[clamp(2rem,0.9vw+1.7rem,2.75rem)] leading-none tracking-[0.08em] text-signal">
+                      {panelState.code}
+                    </div>
                   </div>
-                  <div className="mt-1 select-all break-all font-mono-tabular text-2xl text-signal">
-                    {panelState.code}
-                  </div>
+                  <CopyButton
+                    value={panelState.code}
+                    label="Copy code"
+                    successMessage="Verification code copied"
+                  />
                 </div>
-                <CopyButton
-                  value={panelState.code}
-                  label="Copy code"
-                  successMessage="Verification code copied"
-                />
               </div>
             </ActionCard>
           ) : null}
 
-          <div className="mt-1 rounded-md border border-hairline bg-background/25 p-4 text-sm leading-relaxed text-muted-foreground">
-            <Info className="mr-2 inline size-4" aria-hidden />
-            Links open in a new tab. Codes are copied to your clipboard.
+          <div className="mt-1 rounded-xl bg-background/22 p-4 text-sm leading-relaxed text-muted-foreground">
+            <Info className="mr-2 inline size-4 text-signal" aria-hidden />
+            Links open in a new tab with safe rel attributes. Codes and URLs are copied to your
+            clipboard.
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center px-1">
+        <div className="flex flex-1 items-center justify-center px-3 py-6">
           <EmptyState
             icon={<KeyRound className="size-4" />}
             title={panelState.title}
             description={panelState.description}
+            className="py-10"
           />
         </div>
       )}

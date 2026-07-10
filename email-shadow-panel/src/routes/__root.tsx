@@ -19,7 +19,7 @@ function NotFoundComponent() {
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <div className="mt-6">
           <Link
@@ -42,7 +42,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          This page didn&apos;t load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
@@ -68,6 +68,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     </div>
   );
 }
+
+const faviconVersion = "esp-envelope-20260710";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -107,7 +109,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      {
+        rel: "icon",
+        href: `/favicon.svg?v=${faviconVersion}`,
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+      {
+        rel: "icon",
+        href: `/favicon-32x32.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
+        rel: "icon",
+        href: `/favicon-16x16.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "16x16",
+      },
+      { rel: "shortcut icon", href: `/favicon.ico?v=${faviconVersion}`, sizes: "any" },
+      {
+        rel: "apple-touch-icon",
+        href: `/apple-touch-icon.png?v=${faviconVersion}`,
+        sizes: "180x180",
+      },
     ],
   }),
   shellComponent: RootShell,

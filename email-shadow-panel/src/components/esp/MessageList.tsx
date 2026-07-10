@@ -1,7 +1,8 @@
 import type { InboxApiClientError } from "@/lib/inboxApiClient";
+import { getSenderInitials } from "@/lib/senderInitials";
 import type { InboxMessageSummary } from "@/types/inbox";
 import { cn } from "@/lib/utils";
-import { Inbox, Loader2, Mail, Radio, RotateCcw, TriangleAlert, Waves } from "lucide-react";
+import { Inbox, Loader2, Mail, Radio, RotateCcw, TriangleAlert } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
 interface Props {
@@ -11,15 +12,21 @@ interface Props {
   loading?: boolean;
   refreshing?: boolean;
   error?: InboxApiClientError | null;
+  lastCheckedAt?: string;
   onRetry?: () => void;
 }
 
-function senderInitials(sender: string): string {
-  const cleaned = sender.replace(/<.*?>/gu, "").trim();
-  const words = cleaned.split(/\s+/u).filter(Boolean);
-  if (words.length === 0) return "?";
-  if (words.length === 1) return words[0]?.slice(0, 2).toUpperCase() ?? "?";
-  return `${words[0]?.[0] ?? ""}${words[1]?.[0] ?? ""}`.toUpperCase();
+function formatLastCheckedLabel(lastCheckedAt: string | undefined): string {
+  if (!lastCheckedAt) {
+    return "Waiting for the first inbox check";
+  }
+
+  const timestamp = Date.parse(lastCheckedAt);
+  if (!Number.isFinite(timestamp)) {
+    return "Last checked recently";
+  }
+
+  return `Last checked ${new Date(timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
 }
 
 export function MessageList({
@@ -29,30 +36,62 @@ export function MessageList({
   loading,
   refreshing,
   error,
+  lastCheckedAt,
   onRetry,
 }: Props) {
+  const statusLabel = loading
+    ? "Listening"
+    : refreshing
+      ? "Refreshing"
+      : error
+        ? "Last check failed"
+        : "Listening";
+  const statusDescription =
+    refreshing || loading
+      ? "Refreshing mailbox"
+      : error
+        ? "Last check failed"
+        : "Listening for new messages";
+  const lastCheckedLabel = formatLastCheckedLabel(lastCheckedAt);
+
   return (
     <div className="panel flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-foreground">Messages</h2>
-          <span className="rounded-md border border-hairline bg-muted/35 px-2.5 py-1 text-sm text-muted-foreground">
+      <div className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-hairline/45 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <h2 className="text-[1.45rem] font-semibold leading-tight text-foreground">Messages</h2>
+          <span className="shrink-0 whitespace-nowrap rounded-md border border-hairline/55 bg-muted/24 px-2.5 py-1 text-sm text-muted-foreground">
             {messages.length} total
           </span>
         </div>
-        {loading || refreshing ? (
-          <span className="inline-flex items-center gap-2 text-sm text-signal">
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            {loading ? "Listening" : "Refreshing"}
+        <div className="flex min-w-[7.75rem] shrink-0 justify-end">
+          <span
+            className={cn(
+              "inline-flex h-5 shrink-0 items-center gap-2 text-sm",
+              refreshing || loading
+                ? "text-signal"
+                : error
+                  ? "text-amber"
+                  : "text-muted-foreground",
+            )}
+          >
+            {refreshing || loading ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Radio className="size-4" aria-hidden />
+            )}
+            <span>{statusLabel}</span>
           </span>
-        ) : null}
+        </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="esp-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {loading && messages.length === 0 ? (
-          <div className="divide-y divide-hairline">
+          <div className="grid gap-1.5 p-2">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="animate-pulse space-y-3 px-5 py-5">
+              <div
+                key={i}
+                className="animate-pulse space-y-3 rounded-xl bg-background/18 px-5 py-5"
+              >
                 <div className="h-3 w-1/3 rounded bg-muted/70" />
                 <div className="h-4 w-2/3 rounded bg-muted/60" />
                 <div className="h-3 w-1/2 rounded bg-muted/40" />
@@ -85,54 +124,58 @@ export function MessageList({
             description="This inbox is open and listening. Refresh manually or wait for the next bounded poll."
           />
         ) : (
-          <ul className="divide-y divide-hairline">
+          <ul className="grid min-w-0 max-w-full gap-1.5 overflow-hidden p-2">
             {messages.map((message) => {
               const active = message.reference === selectedId;
               return (
-                <li key={message.reference}>
+                <li key={message.reference} className="min-w-0 max-w-full overflow-hidden">
                   <button
                     type="button"
                     onClick={() => onSelect(message)}
                     aria-current={active ? "true" : undefined}
                     className={cn(
-                      "group relative flex min-h-[82px] w-full items-start gap-4 px-5 py-4 text-left transition-colors",
-                      "hover:bg-surface-raised/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/65",
-                      active &&
-                        "bg-signal/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--signal)_38%,transparent)]",
+                      "group relative box-border flex min-h-[88px] w-full max-w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl border px-3.5 py-3 text-left transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/65",
+                      active
+                        ? "border-signal/36 bg-signal/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--signal)_26%,transparent)]"
+                        : "border-hairline/45 bg-background/16 hover:border-signal/18 hover:bg-surface-raised/55",
                     )}
                   >
                     <span
                       aria-hidden
                       className={cn(
-                        "grid size-11 shrink-0 place-items-center rounded-full border font-mono-tabular text-sm font-semibold",
+                        "grid size-10 shrink-0 place-items-center rounded-full border font-mono-tabular text-[0.8rem] font-semibold",
                         active
-                          ? "border-signal/40 bg-signal/25 text-signal"
-                          : "border-hairline bg-background/45 text-muted-foreground",
+                          ? "border-signal/34 bg-signal/20 text-signal"
+                          : "border-hairline/45 bg-background/40 text-muted-foreground",
                       )}
                     >
-                      {senderInitials(message.from)}
+                      {getSenderInitials(message.from)}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-base font-semibold text-foreground">
+                    <span className="min-w-0 flex-1 overflow-hidden">
+                      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 overflow-hidden">
+                        <span className="truncate whitespace-nowrap text-[0.93rem] font-semibold leading-snug text-foreground">
                           {message.from}
                         </span>
-                        <span className="shrink-0 text-sm text-muted-foreground">
+                        <span className="shrink-0 whitespace-nowrap text-[0.8rem] text-muted-foreground">
                           {message.time}
                         </span>
                       </span>
-                      <span className="mt-1 block truncate text-sm text-foreground/90">
+                      <span className="mt-0.5 block truncate whitespace-nowrap text-[0.9rem] leading-snug text-foreground/92">
                         {message.subject}
                       </span>
-                      <span className="mt-1 block truncate break-all text-sm text-muted-foreground">
+                      <span className="mt-0.5 block truncate whitespace-nowrap text-[0.82rem] leading-snug text-muted-foreground">
                         {message.preview}
                       </span>
                       {active ? <span className="sr-only">Selected message</span> : null}
                     </span>
                     {active ? (
-                      <Radio className="mt-1 size-4 shrink-0 text-signal" aria-hidden />
+                      <Radio className="mt-0.5 size-3.5 shrink-0 text-signal" aria-hidden />
                     ) : (
-                      <Mail className="mt-1 size-4 shrink-0 text-muted-foreground/55" aria-hidden />
+                      <Mail
+                        className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/55"
+                        aria-hidden
+                      />
                     )}
                   </button>
                 </li>
@@ -145,13 +188,24 @@ export function MessageList({
       <div
         role="status"
         aria-live="polite"
-        className="border-t border-hairline px-5 py-3 text-sm text-muted-foreground"
+        className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-hairline/45 bg-background/14 px-4 py-2.5 text-sm text-muted-foreground"
       >
-        <span className="inline-flex items-center gap-2 text-signal">
-          <Waves className="size-4" aria-hidden /> Listening for new messages
+        <span
+          className={cn(
+            "inline-flex min-w-0 items-center gap-2",
+            refreshing || loading ? "text-signal" : error ? "text-amber" : "text-muted-foreground",
+          )}
+        >
+          {refreshing || loading ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Radio className="size-4" aria-hidden />
+          )}
+          <span className="truncate">{statusDescription}</span>
         </span>
-        <span className="mx-3 text-hairline">/</span>
-        Last checked just now
+        <span className="shrink-0 justify-self-end whitespace-nowrap text-right">
+          {lastCheckedLabel}
+        </span>
       </div>
     </div>
   );

@@ -1,20 +1,17 @@
-import { useCallback, useMemo } from "react";
-import type { ReactNode } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { EmailAddressCard } from "./EmailAddressCard";
 import { MessageList } from "./MessageList";
 import { MessagePreview } from "./MessagePreview";
-import { VerificationActionsPanel } from "./VerificationActionsPanel";
-import { detectCode } from "@/lib/codeDetection";
-import { detectVerificationLink } from "@/lib/verificationActions";
-import { copyToClipboard } from "@/lib/clipboard";
+import { ShortcutsHelp } from "./ShortcutsHelp";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { copyToClipboard } from "@/lib/clipboard";
 import type { InboxApiClientError } from "@/lib/inboxApiClient";
+import { createMessageRenderModel } from "@/lib/messageRenderModel";
+import { getMailboxShortcutSections } from "@/lib/shortcutsCatalog";
 import type { InboxMessageDetail, InboxMessageSummary, RecentInboxRecord } from "@/types/inbox";
 
 interface Props {
   inbox: RecentInboxRecord;
-  recentInboxes: RecentInboxRecord[];
-  selectedInboxId: string | null;
   messages: InboxMessageSummary[];
   selectedMessageReference: string | null;
   detail: InboxMessageDetail | null;
@@ -27,25 +24,18 @@ interface Props {
   onGenerateNew: () => void;
   onRefresh: () => void;
   onForget: () => void;
-  onSelectInbox: (id: string) => void;
   onSelectMessage: (reference: string | null) => void;
-  onRetryDetail: () => void;
-  notice?: ReactNode;
 }
 
-function getDetectedCode(
-  message: InboxMessageSummary | null,
-  detail: InboxMessageDetail | null,
-): string | null {
-  if (detail?.text) {
-    return detectCode(detail.text) ?? detectCode(detail.textPreview);
+function openExternalLink(url: string) {
+  if (typeof window === "undefined") {
+    return;
   }
 
-  if (!message) {
-    return null;
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (opened) {
+    opened.opener = null;
   }
-
-  return detectCode(message.subject) ?? detectCode(message.preview);
 }
 
 export function MailboxScreen({
@@ -63,19 +53,25 @@ export function MailboxScreen({
   onRefresh,
   onForget,
   onSelectMessage,
-  onRetryDetail,
-  notice,
 }: Props) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [confirmForgetOpen, setConfirmForgetOpen] = useState(false);
+
   const selected = useMemo(
     () => messages.find((message) => message.reference === selectedMessageReference) ?? null,
     [messages, selectedMessageReference],
   );
-
-  const detectedCode = useMemo(() => getDetectedCode(selected, detail), [detail, selected]);
-  const detectedLink = useMemo(
-    () => (detail?.text ? detectVerificationLink(detail.text) : null),
-    [detail],
+  const selectedDetail = useMemo(
+    () => (selected && detail?.reference === selected.reference ? detail : null),
+    [detail, selected],
   );
+
+  const renderModel = useMemo(
+    () => createMessageRenderModel(selected, selectedDetail),
+    [selected, selectedDetail],
+  );
+  const detectedCode = renderModel?.verificationCode ?? null;
+  const detectedLink = renderModel?.verificationLink ?? null;
 
   const moveSelection = useCallback(
     (direction: 1 | -1) => {
@@ -90,10 +86,31 @@ export function MailboxScreen({
     [messages, onSelectMessage, selectedMessageReference],
   );
 
+  const copyInboxAddress = useCallback(() => {
+    void copyToClipboard(inbox.address, { success: "Inbox address copied" });
+  }, [inbox.address]);
+
   const copyDetectedCode = useCallback(() => {
     if (!detectedCode) return;
     void copyToClipboard(detectedCode, { success: "Verification code copied" });
   }, [detectedCode]);
+
+  const openDetectedLink = useCallback(() => {
+    if (!detectedLink) {
+      return;
+    }
+
+    openExternalLink(detectedLink.url);
+  }, [detectedLink]);
+
+  const shortcutSections = useMemo(
+    () =>
+      getMailboxShortcutSections({
+        hasVerificationLink: Boolean(detectedLink),
+        hasVerificationCode: Boolean(detectedCode),
+      }),
+    [detectedCode, detectedLink],
+  );
 
   const shortcuts = useMemo(
     () => ({
@@ -101,20 +118,34 @@ export function MailboxScreen({
       k: () => moveSelection(-1),
       ArrowDown: () => moveSelection(1),
       ArrowUp: () => moveSelection(-1),
-      c: copyDetectedCode,
+      r: onRefresh,
+      c: copyInboxAddress,
+      o: detectedCode ? copyDetectedCode : undefined,
+      l: detectedLink ? openDetectedLink : undefined,
       g: onGenerateNew,
       n: onGenerateNew,
+      Delete: () => setConfirmForgetOpen(true),
+      Backspace: () => setConfirmForgetOpen(true),
+      "?": () => setHelpOpen(true),
       Escape: onClose,
     }),
-    [copyDetectedCode, moveSelection, onClose, onGenerateNew],
+    [
+      copyDetectedCode,
+      copyInboxAddress,
+      detectedCode,
+      detectedLink,
+      moveSelection,
+      onClose,
+      onGenerateNew,
+      onRefresh,
+      openDetectedLink,
+    ],
   );
-  useKeyboardShortcuts(shortcuts);
+  useKeyboardShortcuts(shortcuts, !helpOpen && !confirmForgetOpen);
 
   return (
-    <section className="mx-auto max-w-[1500px] px-5 pb-10 pt-5 sm:px-8 warp-in">
-      <div className="grid gap-4">
-        {notice}
-
+    <section className="mx-auto flex h-full max-w-[1760px] flex-col overflow-y-auto px-4 pb-3 pt-2 sm:px-8 sm:pb-4 sm:pt-3 warp-in">
+      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-2.5 lg:overflow-hidden">
         <EmailAddressCard
           session={inbox}
           onRefresh={onRefresh}
@@ -123,10 +154,20 @@ export function MailboxScreen({
           onGenerateNew={onGenerateNew}
           refreshing={messageListStatus === "refreshing" || messageListStatus === "loading"}
           removing={removalStatus === "pending"}
+          confirmForgetOpen={confirmForgetOpen}
+          onConfirmForgetOpenChange={setConfirmForgetOpen}
+          auxiliaryActions={
+            <ShortcutsHelp
+              open={helpOpen}
+              onOpenChange={setHelpOpen}
+              sections={shortcutSections}
+              className="h-10 px-3.5 text-sm font-medium text-foreground"
+            />
+          }
         />
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(300px,340px)]">
-          <div className="min-h-[320px] lg:h-[640px]">
+        <div className="grid min-h-0 flex-1 gap-2.5 lg:grid-cols-[clamp(280px,25vw,420px)_minmax(0,1fr)] lg:overflow-hidden">
+          <div className="min-h-[300px] min-w-0 lg:min-h-0">
             <MessageList
               messages={messages}
               selectedId={selectedMessageReference}
@@ -134,26 +175,17 @@ export function MailboxScreen({
               loading={messageListStatus === "loading"}
               refreshing={messageListStatus === "refreshing"}
               error={messageListError}
+              lastCheckedAt={inbox.lastCheckedAt}
               onRetry={onRefresh}
             />
           </div>
-          <div className="min-h-[420px] lg:h-[640px]">
+          <div className="min-h-[360px] min-w-0 lg:min-h-0">
             <MessagePreview
               message={selected}
-              detail={detail}
+              renderModel={renderModel}
               detailStatus={messageDetailStatus}
               detailError={messageDetailError}
               recipientAddress={inbox.address}
-              onRetry={onRetryDetail}
-            />
-          </div>
-          <div className="min-h-[300px] lg:h-[640px]">
-            <VerificationActionsPanel
-              code={detectedCode}
-              link={detectedLink}
-              hasSelection={!!selected}
-              detailStatus={messageDetailStatus}
-              detailErrorMessage={messageDetailError?.message}
             />
           </div>
         </div>

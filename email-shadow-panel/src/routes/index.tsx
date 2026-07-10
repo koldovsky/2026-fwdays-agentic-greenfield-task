@@ -7,6 +7,7 @@ import { MailboxScreen } from "@/components/esp/MailboxScreen";
 import { StatusBanner } from "@/components/esp/StatusBanner";
 import { TransitionOverlay } from "@/components/esp/TransitionOverlay";
 import { useInboxController, useInboxControllerState } from "@/hooks/useInboxController";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { InboxApiClientError } from "@/lib/inboxApiClient";
 import type { ProviderId } from "@/types/inbox";
 
@@ -52,7 +53,6 @@ function buildRetrySuffix(error: InboxApiClientError | null): string {
 function buildGenerateNotice(
   error: InboxApiClientError | null,
   sessionNotice: string | null,
-  removalNotice: string | null,
   onRetry: () => void,
 ): ReactNode {
   if (error) {
@@ -124,102 +124,11 @@ function buildGenerateNotice(
     }
   }
 
-  if (removalNotice) {
-    return <StatusBanner tone="success" title="Inbox forgotten" description={removalNotice} />;
-  }
-
   if (sessionNotice) {
     return <StatusBanner title="Browser storage recovered" description={sessionNotice} />;
   }
 
   return null;
-}
-
-function buildMailboxNotice(
-  error: InboxApiClientError | null,
-  sessionNotice: string | null,
-  removalNotice: string | null,
-  onRetry: () => void,
-): ReactNode {
-  if (sessionNotice) {
-    return <StatusBanner title="Inbox session updated" description={sessionNotice} />;
-  }
-
-  if (removalNotice) {
-    return <StatusBanner tone="success" title="Inbox forgotten" description={removalNotice} />;
-  }
-
-  if (!error) {
-    return null;
-  }
-
-  switch (error.kind) {
-    case "rateLimited":
-      return (
-        <StatusBanner
-          tone="warning"
-          title="Read rate limited"
-          description={`Too many refresh requests were sent for this inbox.${buildRetrySuffix(error)}`}
-        />
-      );
-    case "refreshInProgress":
-      return (
-        <StatusBanner
-          title="Refresh already running"
-          description="The selected inbox is already being refreshed."
-        />
-      );
-    case "providerDisabled":
-      return (
-        <StatusBanner
-          tone="warning"
-          title="Inbox provider paused"
-          description="Automatic polling stopped because the provider is disabled. Manual retry stays available."
-          actionLabel="Retry"
-          onAction={onRetry}
-        />
-      );
-    case "providerUnavailable":
-      return (
-        <StatusBanner
-          tone="error"
-          title="Provider unavailable"
-          description="Automatic polling backed off after a transient provider failure."
-          actionLabel="Retry"
-          onAction={onRetry}
-        />
-      );
-    case "timeout":
-      return (
-        <StatusBanner
-          tone="warning"
-          title="Refresh timed out"
-          description="The selected inbox took too long to refresh. Automatic polling backed off safely."
-          actionLabel="Retry"
-          onAction={onRetry}
-        />
-      );
-    case "offline":
-      return (
-        <StatusBanner
-          tone="error"
-          title="Offline or network blocked"
-          description="The selected inbox could not reach the same-origin API."
-          actionLabel="Retry"
-          onAction={onRetry}
-        />
-      );
-    default:
-      return (
-        <StatusBanner
-          tone="error"
-          title="Inbox refresh failed"
-          description={error.message}
-          actionLabel="Retry"
-          onAction={onRetry}
-        />
-      );
-  }
 }
 
 function Index() {
@@ -369,45 +278,26 @@ function Index() {
     void controller.refreshMessages();
   }, [controller]);
 
-  const handleRetryDetail = useCallback(() => {
-    if (!state.selectedMessageReference) {
-      return;
-    }
-
-    void controller.selectMessage(state.selectedMessageReference);
-  }, [controller, state.selectedMessageReference]);
+  const transitionShortcuts = useMemo(
+    () => ({
+      Escape: transition.visible ? () => handleTransitionBack() : undefined,
+    }),
+    [handleTransitionBack, transition.visible],
+  );
+  useKeyboardShortcuts(transitionShortcuts, transition.visible);
 
   const generateNotice = useMemo(
-    () =>
-      buildGenerateNotice(
-        state.createError,
-        state.sessionNotice,
-        state.removalNotice,
-        handleGenerate,
-      ),
-    [handleGenerate, state.createError, state.removalNotice, state.sessionNotice],
-  );
-
-  const mailboxNotice = useMemo(
-    () =>
-      buildMailboxNotice(
-        state.messageListError,
-        state.sessionNotice,
-        state.removalNotice,
-        handleRefresh,
-      ),
-    [handleRefresh, state.messageListError, state.removalNotice, state.sessionNotice],
+    () => buildGenerateNotice(state.createError, state.sessionNotice, handleGenerate),
+    [handleGenerate, state.createError, state.sessionNotice],
   );
 
   const showMailbox = panelMode === "mailbox" && !!state.selectedInbox;
 
   return (
-    <AppShell>
+    <AppShell variant={showMailbox ? "mailbox" : "default"}>
       {showMailbox && state.selectedInbox ? (
         <MailboxScreen
           inbox={state.selectedInbox}
-          recentInboxes={state.recentInboxes}
-          selectedInboxId={state.selectedInboxId}
           messages={state.messages}
           selectedMessageReference={state.selectedMessageReference}
           detail={state.selectedMessageDetail}
@@ -420,15 +310,13 @@ function Index() {
           onGenerateNew={handleGenerate}
           onRefresh={handleRefresh}
           onForget={() => void controller.forgetSelectedInbox()}
-          onSelectInbox={handleResume}
           onSelectMessage={(reference) => void controller.selectMessage(reference)}
-          onRetryDetail={handleRetryDetail}
-          notice={mailboxNotice}
         />
       ) : (
         <GenerateScreen
           onGenerate={() => void handleGenerate()}
           onResume={handleResume}
+          onForgetRecent={(id) => controller.forgetRecentInbox(id)}
           isTransitioning={transition.visible}
           recentInboxes={state.recentInboxes}
           selectedInboxId={state.selectedInboxId}

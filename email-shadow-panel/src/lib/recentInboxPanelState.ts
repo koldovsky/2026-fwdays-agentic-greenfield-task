@@ -6,11 +6,12 @@ export interface RecentInboxPanelRow {
   lastUsedLabel: string;
   messageBadgeLabel: string;
   expired: boolean;
+  forgetLabel: string;
 }
 
 export interface RecentInboxPanelState {
   kind: "empty" | "saved";
-  savedCountLabel: string;
+  savedCountLabel: string | null;
   rows: RecentInboxPanelRow[];
 }
 
@@ -42,6 +43,14 @@ function formatRelativeTime(iso: string, nowMs: number): string {
   return `${days} days ago`;
 }
 
+function formatMessageBadgeLabel(count: number | undefined): string {
+  if (count === undefined) {
+    return "0 new";
+  }
+
+  return `${count} ${count === 1 ? "message" : "messages"}`;
+}
+
 export function getRecentInboxPanelState(
   items: RecentInboxRecord[],
   nowMs = Date.now(),
@@ -49,7 +58,6 @@ export function getRecentInboxPanelState(
   const rows = items.map((item) => {
     const expired = Date.parse(item.expiresAt) <= nowMs;
     const lastUsed = formatRelativeTime(item.lastOpenedAt, nowMs);
-    const count = item.lastMessageCount ?? 0;
 
     return {
       id: item.id,
@@ -58,13 +66,14 @@ export function getRecentInboxPanelState(
       lastUsedLabel: expired
         ? `Expired ${formatRelativeTime(item.expiresAt, nowMs)}`
         : `Last used ${lastUsed}`,
-      messageBadgeLabel: item.lastMessageCount === undefined ? "0 new" : `${count} total`,
+      messageBadgeLabel: formatMessageBadgeLabel(item.lastMessageCount),
+      forgetLabel: `Forget recent inbox ${item.address}`,
     };
   });
 
   return {
     kind: rows.length > 0 ? "saved" : "empty",
-    savedCountLabel: `${rows.length} saved`,
+    savedCountLabel: rows.length > 0 ? `${rows.length} saved` : null,
     rows,
   };
 }

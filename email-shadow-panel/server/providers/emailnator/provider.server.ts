@@ -51,6 +51,8 @@ export interface ListedInboxResult {
 export interface SanitizedDetailResult {
   contentType: string;
   bodyLength: number;
+  htmlBody?: string | null;
+  textBody?: string | null;
   text: string;
   textPreview: string;
   markerFound: boolean;
@@ -581,13 +583,16 @@ function sanitizeHtmlToText(html: string): string {
 }
 
 function buildSanitizedDetail(body: string, contentType: string): SanitizedDetailResult {
-  const text = contentType.includes("html") ? sanitizeHtmlToText(body) : body.trim();
-  const normalizedText = text.replace(/\s+/g, " ").trim();
+  const isHtml = contentType.toLowerCase().includes("html");
+  const textBody = isHtml ? sanitizeHtmlToText(body) : body.trim();
+  const normalizedText = textBody.replace(/\s+/g, " ").trim();
 
   return {
     contentType,
     bodyLength: body.length,
-    text,
+    htmlBody: isHtml ? body : null,
+    textBody,
+    text: textBody,
     textPreview: normalizedText.slice(0, 200),
     markerFound: KNOWN_TEST_MARKERS.some((marker) => normalizedText.includes(marker)),
   };

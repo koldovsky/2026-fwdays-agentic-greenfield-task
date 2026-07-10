@@ -1,18 +1,31 @@
 import type { ReactNode } from "react";
-import { Archive, Clock3, LockKeyhole, Terminal } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { LockKeyhole } from "lucide-react";
+import { AppLogo } from "./AppLogo";
+import { APP_SHELL_NOTICE } from "@/lib/appShellState";
+
+export type AppShellVariant = "default" | "mailbox";
 
 function HeaderStatusItem({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+    <span className="inline-flex items-center gap-2 text-[0.86rem] text-muted-foreground sm:text-[0.9rem]">
       {icon}
       <span>{label}</span>
     </span>
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  variant = "default",
+}: {
+  children: ReactNode;
+  variant?: AppShellVariant;
+}) {
+  const showHeader = variant !== "mailbox";
+
   return (
-    <div className="relative min-h-dvh overflow-x-hidden">
+    <div className="relative flex h-dvh min-h-dvh flex-col overflow-hidden">
       <div aria-hidden className="pointer-events-none fixed inset-0 grid-lines opacity-35" />
       <div
         aria-hidden
@@ -26,50 +39,43 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 h-28"
+        className="pointer-events-none fixed inset-x-0 top-0 h-24"
         style={{
           background:
             "linear-gradient(180deg, color-mix(in oklab, var(--background) 94%, transparent), transparent)",
         }}
       />
 
-      <header className="relative z-10 border-b border-hairline/80 bg-background/55 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-5 px-5 py-4 sm:px-8">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="relative grid size-10 shrink-0 place-items-center rounded-md border border-signal/45 bg-surface-raised text-signal shadow-[0_0_24px_-10px_var(--signal)]">
-              <Terminal className="size-5" strokeWidth={2.2} />
+      {showHeader ? (
+        <header className="relative z-10 shrink-0 bg-background/50 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-[1760px] items-center justify-between gap-4 px-4 py-1.5 sm:px-8 sm:py-2">
+            <Link
+              to="/"
+              aria-label="Email Shadow Panel home"
+              className="group flex min-w-0 items-center gap-2.5 rounded-md outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:gap-3"
+            >
+              <AppLogo className="size-7 shrink-0 sm:size-8" />
+              <span
+                className="min-w-0 truncate font-mono-tabular text-[0.78rem] font-semibold uppercase tracking-[0.2em] sm:text-[0.92rem] sm:tracking-[0.24em]"
+                aria-label="Email Shadow Panel"
+              >
+                <span className="text-foreground">EMAIL</span>{" "}
+                <span className="text-signal">SHADOW PANEL</span>
+              </span>
+            </Link>
+
+            <div className="hidden items-center gap-3 sm:flex sm:gap-5">
+              <HeaderStatusItem
+                icon={<LockKeyhole className="size-4" />}
+                label={APP_SHELL_NOTICE}
+              />
             </div>
-            <div className="min-w-0">
-              <div className="truncate font-mono-tabular text-base font-semibold uppercase tracking-[0.18em] text-foreground sm:text-lg">
-                EMAIL SHADOW PANEL
-              </div>
-            </div>
           </div>
+          <div aria-hidden className="esp-header-divider absolute inset-x-0 bottom-0 h-px" />
+        </header>
+      ) : null}
 
-          <div className="hidden items-center gap-5 md:flex">
-            <HeaderStatusItem
-              icon={
-                <span className="size-2.5 rounded-full bg-signal shadow-[0_0_14px_var(--signal)]" />
-              }
-              label="Service online"
-            />
-            <span aria-hidden className="h-6 w-px bg-hairline" />
-            <HeaderStatusItem
-              icon={<LockKeyhole className="size-4" />}
-              label="Stored in this browser"
-            />
-            <span aria-hidden className="h-6 w-px bg-hairline" />
-            <HeaderStatusItem icon={<Clock3 className="size-4" />} label="Recent inboxes" />
-          </div>
-
-          <div className="flex items-center gap-2 md:hidden" aria-label="Application status">
-            <span className="size-2.5 rounded-full bg-signal shadow-[0_0_14px_var(--signal)]" />
-            <Archive className="size-4 text-muted-foreground" />
-          </div>
-        </div>
-      </header>
-
-      <main className="relative z-10">{children}</main>
+      <main className="relative z-10 min-h-0 flex-1 overflow-hidden">{children}</main>
     </div>
   );
 }
