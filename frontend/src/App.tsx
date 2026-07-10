@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { ApiError, getMe, logout, type User } from './api'
 import AuthPage from './pages/AuthPage'
+import CategoriesPage from './pages/Categories/CategoriesPage'
 
 type Session = { status: 'loading' } | { status: 'anon' } | { status: 'authed'; user: User }
 
@@ -41,17 +42,26 @@ export default function App() {
     }
   }
 
-  // Minimal authenticated placeholder — confirms the session is live. The real
-  // app shell (Timer / Stats / Categories) is a later slice.
+  // Minimal authenticated view: a slim top bar (identity + sign out) over the
+  // Categories screen (slice 002). A full nav shell (Timer / Stats / Categories)
+  // is a later slice, so this stays deliberately minimal.
   return (
-    <main className="placeholder">
-      <div>
-        <span className="micro-label">Signed in as</span>
-        <p className="email">{session.user.email}</p>
-        <button className="btn-primary" type="button" onClick={onSignOut} style={{ maxWidth: 200 }}>
+    <div style={{ minHeight: '100vh' }}>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 28px',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}
+      >
+        <span className="micro-label">{session.user.email}</span>
+        <button className="link-btn" type="button" onClick={onSignOut}>
           Sign out
         </button>
-      </div>
-    </main>
+      </header>
+      <CategoriesPage />
+    </div>
   )
 }

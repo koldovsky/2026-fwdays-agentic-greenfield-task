@@ -66,6 +66,15 @@ exclude = ["alembic/"]
 [tool.coverage.run]
 source = ["app"]
 branch = false
+# SQLAlchemy's async engine runs each query on a greenlet, so coverage.py's tracer
+# detaches when a coroutine resumes after `await session.<execute/flush/commit>()`
+# and the resuming lines (returns, `except` handlers) read as uncovered even though
+# the tests run them. Greenlet awareness measures the async repos/services/routers
+# honestly. Slice 002 (the first async-DB-heavy data slice) surfaced this: with it
+# on, the category code goes from 30% to 100% traced by the same acceptance tests —
+# an accuracy fix, not a floor change. Needs the `greenlet` package, already an
+# install-time SQLAlchemy[asyncio] dependency.
+concurrency = ["greenlet"]
 omit = ["tests/*", "alembic/*"]
 
 [tool.coverage.report]

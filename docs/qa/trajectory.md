@@ -40,6 +40,16 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/pages/AuthPage.tsx
 - Other files touched (docs/config): 11
 
+## Slice 002
+
+- Done: no (requirements: proposed)
+- Review evidence: docs/qa/reviews/002.md - absent
+- Commits:
+  - ec0c30d test(categories): ratified contract + RED acceptance tests [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
+- Touched code paths (1):
+  - backend/tests/test_categories.py
+- Other files touched (docs/config): 10
+
 ## Process / infra commits (traced, not a feature slice)
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.

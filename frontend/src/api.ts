@@ -91,3 +91,35 @@ export const login = (email: string, password: string): Promise<LoginResponse> =
 export const logout = (): Promise<void> => apiFetch<void>('/api/auth/logout', { method: 'POST' })
 
 export const getMe = (): Promise<User> => apiFetch<User>('/api/auth/me')
+
+// --- Categories (slice 002) -------------------------------------------------
+// CRUD over the per-user categories capability. All requests ride apiFetch, so
+// credentials flow and mutations carry the CSRF double-submit header. Delete is
+// server-side archive (FR-CAT-03); the list returns only active categories.
+
+export interface Category {
+  id: number
+  name: string
+  color: string
+  description: string | null
+}
+
+export interface CategoryInput {
+  name: string
+  color: string
+  description?: string | null
+}
+
+export const listCategories = (): Promise<Category[]> => apiFetch<Category[]>('/api/categories')
+
+export const createCategory = (input: CategoryInput): Promise<Category> =>
+  apiFetch<Category>('/api/categories', { method: 'POST', body: input })
+
+export const updateCategory = (
+  id: number,
+  changes: Partial<CategoryInput>,
+): Promise<Category> =>
+  apiFetch<Category>(`/api/categories/${id}`, { method: 'PATCH', body: changes })
+
+export const deleteCategory = (id: number): Promise<void> =>
+  apiFetch<void>(`/api/categories/${id}`, { method: 'DELETE' })
