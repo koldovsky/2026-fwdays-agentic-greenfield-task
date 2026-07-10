@@ -43,12 +43,26 @@ This report proves only the process facts git can show: trailers, review-evidenc
 ## Slice 002
 
 - Done: no (requirements: proposed)
-- Review evidence: docs/qa/reviews/002.md - absent
+- Review evidence: docs/qa/reviews/002.md - clean
 - Commits:
+  - 3db7600 feat(categories): per-user CRUD + delete-as-archive to green [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
   - ec0c30d test(categories): ratified contract + RED acceptance tests [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
-- Touched code paths (1):
+- Touched code paths (14):
+  - backend/alembic/versions/0002_categories.py
+  - backend/app/api/categories.py
+  - backend/app/main.py
+  - backend/app/models/__init__.py
+  - backend/app/models/category.py
+  - backend/app/repos/categories.py
+  - backend/app/schemas/categories.py
+  - backend/app/services/categories.py
   - backend/tests/test_categories.py
-- Other files touched (docs/config): 10
+  - backend/tests/test_categories_extra.py
+  - frontend/src/App.tsx
+  - frontend/src/api.ts
+  - frontend/src/pages/Categories/CategoriesPage.tsx
+  - frontend/src/pages/Categories/categories.css
+- Other files touched (docs/config): 12
 
 ## Process / infra commits (traced, not a feature slice)
 
@@ -78,7 +92,7 @@ Two slices co-editing the same business-logic module (an ownership conflict). Ov
 
 Overlap limited to allowlisted entry-point / aggregation files (the app factory, the single HTTP boundary, the model package, the app shell). Every slice appends to these, so it is normal participation, not an ownership conflict -- reported here, not failed. A pure-deletion edit to a co-owned entry point is still a violation (listed below and above).
 
-- (none)
+- slices 001 and 002: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 
 ## Unattributed product-code commits (informational)
 

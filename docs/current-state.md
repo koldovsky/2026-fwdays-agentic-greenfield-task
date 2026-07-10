@@ -4,8 +4,20 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 15:46 (Europe/Kyiv, EEST)
-- **Phase:** 1 — slice **001 email+password auth** is **engineering-complete, independently
+- **Date and time:** 2026-07-10 19:22 (Europe/Kyiv, EEST)
+- **Phase:** 2 — slice **002 categories** ran end-to-end through `/run-slice` (the first full pass
+  through the factory) and is **engineering-DONE**: the maker≠checker≠judge loop converged in **one
+  iteration** — `gate-slice` GREEN (27 passed, coverage 97.04%), `check-trajectory` clean, both
+  independent reviewers 0 BLOCKING, trajectory-eval pass (93), Judge DONE. `openspec archive
+  add-categories` applied (`openspec/specs/categories/spec.md`). Same single outstanding DoD sub-item
+  as slice 001 — **CodeRabbit at PR time** (no push/PR here; the owner opens it). Full observable
+  trace: [`docs/agent-runs/002-categories-trace.md`](agent-runs/002-categories-trace.md); review
+  evidence [`docs/qa/reviews/002.md`](qa/reviews/002.md); run record
+  [`docs/agent-runs/002-categories-run.md`](agent-runs/002-categories-run.md). One process artifact:
+  `check-trajectory` gained a small, tested `ENTRY_POINT_ALLOWLIST` (owner-directed) so entry-point
+  *sharing* is no longer miscounted as a cross-slice ownership conflict (commit `5a8a3b8`,
+  `Refs: BC-PROC-01`).
+- **Phase (prior):** 1 — slice **001 email+password auth** is **engineering-complete, independently
   audit-verified GREEN, and its trail is now committed — but NOT yet fully DONE**. An independent
   audit (2026-07-10, see [`docs/agent-runs/001-auth-review-close.md`](agent-runs/001-auth-review-close.md))
   re-ran the gates (`gate-slice` GREEN, exit 0: ruff/mypy/alembic/pytest 11-passed/frontend build +
@@ -120,9 +132,14 @@ tests, verify the repo and update this file.
 3. Once CodeRabbit is clean, flip the slice-001 requirement statuses to `shipped` in
    `docs/requirements.md` (the "done" signal `check-trajectory` reads) and regenerate
    `docs/qa/trajectory.md`.
-4. Then proceed to the next ratified slice through `/run-slice` (brainstorm → OpenSpec change → RED →
-   maker → gated loop → Judge). Note: an untracked slice-002 (categories) spec has already appeared in
-   the tree (`docs/specs/002-categories.md`, `openspec/changes/add-categories/`).
+4. **Slice 002 (categories) is engineering-DONE** on `feat/002-categories` (branch left for the
+   owner; no push/PR). Open its PR for CodeRabbit — the sole outstanding DoD sub-item — carrying the
+   accepted MINOR follow-ups: PATCH `{"name": null}` → 409 not 422 (`schemas/categories.py`);
+   server-side hex-color validation once design Open question 5 is resolved; and scope the DB-test
+   cleanup per-created-id (or mark the suite serial) so it is safe under parallel pytest.
+5. Then proceed to the next ratified slice. Note: an untracked slice-003 (timer/sessions) spec is
+   already in the tree (`docs/specs/003-timer-sessions.md`, `openspec/changes/add-timer-sessions/`);
+   ratify it before running `/run-slice 003`. It was left untouched by the slice-002 run.
 
 ## Key decisions
 
