@@ -16,6 +16,12 @@ jobs:
     # dev machine, NFR-SEC-01). Stale template vars removed per review-gate.
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: check-trajectory audits commit trailers (Slice:/Refs:)
+          # via git log — the default shallow clone (depth 1) sees none of them,
+          # so the regenerated report differs from the committed one and the
+          # --check-fresh gate false-fails on every PR run.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
