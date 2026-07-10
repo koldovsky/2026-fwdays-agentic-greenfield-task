@@ -59,13 +59,16 @@ type PaidPlan = (typeof PAID_PLANS)[number];
 // Expected benefit counts per plan, per spec (task 4.4).
 const EXPECTED_PLAN_FEATURE_LENGTHS: Record<PaidPlan, number> = {
   pro: 5,
-  ultra: 6,
+  // ultra dropped the "flagship model" line: the flagship model is already used
+  // for every plan, so it is not an Ultra differentiator (honest-plan-claims).
+  ultra: 5,
   job_hunt_pass: 3,
 };
 
 const EXPECTED_PLAN_BENEFITS_LENGTHS: Record<PaidPlan, number> = {
   pro: 5,
-  ultra: 6,
+  // ultra dropped the "flagship model" line (see EXPECTED_PLAN_FEATURE_LENGTHS).
+  ultra: 5,
   job_hunt_pass: 3,
 };
 
@@ -263,5 +266,154 @@ describe("export.coverLetter framing keys — ua/en parity (T5 §3.5, NFR-I18N-0
     for (const s of framingStrings) {
       expect(s).not.toMatch(EM_DASH);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// honest-plan-claims — product truth: ONE global model for all users, binary
+// paid access, NO queue/priority, NO per-plan volume limit. "Flagship model",
+// "priority generation", and "high-volume/daily" tailoring are NOT shipped.
+// Every claim of that kind must be presented as unfounded (marked
+// "(coming soon)" / "(незабаром)"), never as a live/shipped feature
+// (BC-HONESTY-01, NFR-I18N-01).
+// ---------------------------------------------------------------------------
+
+const UNFOUNDED_CLAIM_MARKERS_EN = [/flagship/i, /priority/i, /first in line/i, /high-volume/i];
+const UNFOUNDED_CLAIM_MARKERS_UA = [/Флагманськ/i, /Пріоритетн/i, /Першими в черзі/i, /щоденн/i];
+
+const COMING_SOON_EN = "(coming soon)";
+const COMING_SOON_UA = "(незабаром)";
+
+/** Lines that assert an unfounded claim (flagship model / priority / high-volume). */
+function unfoundedClaimLines(lines: readonly string[], markers: readonly RegExp[]): string[] {
+  return lines.filter((line) => markers.some((marker) => marker.test(line)));
+}
+
+describe("honest-plan-claims — unfounded feature claims stay marked (BC-HONESTY-01, NFR-I18N-01)", () => {
+  const enSources: Record<string, readonly string[]> = {
+    "upgrade.planFeature.pro": en.upgrade.planFeature.pro,
+    "upgrade.planFeature.ultra": en.upgrade.planFeature.ultra,
+    "billing.planBenefits.pro": en.billing.planBenefits.pro,
+    "billing.planBenefits.ultra": en.billing.planBenefits.ultra,
+    "landing.pricing.pro.features": en.landing.pricing.pro.features,
+    "landing.pricing.ultra.features": en.landing.pricing.ultra.features,
+  };
+
+  const uaSources: Record<string, readonly string[]> = {
+    "upgrade.planFeature.pro": ua.upgrade.planFeature.pro,
+    "upgrade.planFeature.ultra": ua.upgrade.planFeature.ultra,
+    "billing.planBenefits.pro": ua.billing.planBenefits.pro,
+    "billing.planBenefits.ultra": ua.billing.planBenefits.ultra,
+    "landing.pricing.pro.features": ua.landing.pricing.pro.features,
+    "landing.pricing.ultra.features": ua.landing.pricing.ultra.features,
+  };
+
+  for (const [path, lines] of Object.entries(enSources)) {
+    it(`en ${path}: every flagship/priority/high-volume claim ends with "${COMING_SOON_EN}"`, () => {
+      const claims = unfoundedClaimLines(lines, UNFOUNDED_CLAIM_MARKERS_EN);
+      // Guard against a vacuous pass: this source must actually carry at
+      // least one of the claim types under test.
+      expect(claims.length).toBeGreaterThan(0);
+      for (const claim of claims) {
+        expect(claim.trim().endsWith(COMING_SOON_EN)).toBe(true);
+      }
+    });
+  }
+
+  for (const [path, lines] of Object.entries(uaSources)) {
+    it(`ua ${path}: every flagship/priority/high-volume claim ends with "${COMING_SOON_UA}"`, () => {
+      const claims = unfoundedClaimLines(lines, UNFOUNDED_CLAIM_MARKERS_UA);
+      expect(claims.length).toBeGreaterThan(0);
+      for (const claim of claims) {
+        expect(claim.trim().endsWith(COMING_SOON_UA)).toBe(true);
+      }
+    });
+  }
+
+  it("en upgrade.planFeature.ultra intro does not claim a Pro daily cap", () => {
+    const intro = en.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).not.toMatch(/every single day/i);
+    expect(intro.length).toBeGreaterThan(0);
+  });
+
+  it("ua upgrade.planFeature.ultra intro does not claim a Pro daily cap", () => {
+    const intro = ua.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).not.toMatch(/щодня\b/i);
+    expect(intro.length).toBeGreaterThan(0);
+  });
+
+  it("en upgrade.planFeature.ultra intro carries an honest replacement (references Pro, not a limit)", () => {
+    const intro = en.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).toMatch(/Pro/);
+  });
+
+  it("ua upgrade.planFeature.ultra intro carries an honest replacement (references Pro, not a limit)", () => {
+    const intro = ua.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).toMatch(/Pro/);
+  });
+
+  // The genuinely-shipped Pro features (unlimited tailorings, PDF/DOCX export,
+  // attach original PDF, history + cover letters) stay unmarked and true —
+  // sanity-check they are NOT flagged as unfounded claims.
+  it("en shipped Pro features (unlimited/export/attach/history) are not treated as unfounded claims", () => {
+    const shipped = en.upgrade.planFeature.pro.filter(
+      (line) => !unfoundedClaimLines([line], UNFOUNDED_CLAIM_MARKERS_EN).length,
+    );
+    expect(shipped.some((l) => /unlimited|as many as/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /PDF and DOCX/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /original PDF/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /history/i.test(l))).toBe(true);
+    for (const line of shipped) {
+      expect(line).not.toContain(COMING_SOON_EN);
+    }
+  });
+
+  it("ua shipped Pro features (unlimited/export/attach/history) are not treated as unfounded claims", () => {
+    const shipped = ua.upgrade.planFeature.pro.filter(
+      (line) => !unfoundedClaimLines([line], UNFOUNDED_CLAIM_MARKERS_UA).length,
+    );
+    expect(shipped.some((l) => /Годі економити|Необмежен/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /PDF і DOCX/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /оригінального PDF/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /Історія/i.test(l))).toBe(true);
+    for (const line of shipped) {
+      expect(line).not.toContain(COMING_SOON_UA);
+    }
+  });
+});
+
+describe("honest-plan-claims — legal.offer payment copy names no live processor (BC-HONESTY-01)", () => {
+  function offerPaymentText(locale: typeof en): string {
+    return locale.legal.offer.sections.map((s) => s.paragraphs.join(" ")).join(" ");
+  }
+
+  it("en legal.offer never names Stripe", () => {
+    expect(offerPaymentText(en)).not.toMatch(/stripe/i);
+  });
+
+  it("ua legal.offer never names Stripe", () => {
+    expect(offerPaymentText(ua)).not.toMatch(/stripe/i);
+  });
+
+  it("en legal.offer payment section mentions the in-app emulator and a [TODO placeholder", () => {
+    const text = offerPaymentText(en);
+    expect(text).toMatch(/emulator/i);
+    expect(text).toMatch(/\[TODO/);
+  });
+
+  it("ua legal.offer payment section mentions the in-app emulator and a [TODO placeholder", () => {
+    const text = offerPaymentText(ua);
+    expect(text).toMatch(/емулятор/i);
+    expect(text).toMatch(/\[TODO/);
+  });
+
+  it("en legal.privacy.updated and legal.offer.updated both read 9 July 2026", () => {
+    expect(en.legal.privacy.updated).toMatch(/9 July 2026/);
+    expect(en.legal.offer.updated).toMatch(/9 July 2026/);
+  });
+
+  it("ua legal.privacy.updated and legal.offer.updated both read 9 липня 2026", () => {
+    expect(ua.legal.privacy.updated).toMatch(/9\s*липня\s*2026/);
+    expect(ua.legal.offer.updated).toMatch(/9\s*липня\s*2026/);
   });
 });

@@ -128,13 +128,12 @@ export const en: Dictionary = {
         "Clean PDF and DOCX export, no more copy-paste into a template",
         "Tailor from your original PDF, not just its stripped text",
         "Tailoring history and cover letters, kept in one place",
-        "Priority generation when the queue is busy",
+        "Priority generation when the queue is busy (coming soon)",
       ],
       ultra: [
-        "Everything in Pro, plus room to apply every single day",
-        "The flagship Claude model on every tailoring, not just the fast one",
-        "High-volume daily tailoring for an all-out search",
-        "First in line for generation, even at peak",
+        "Everything in Pro, with more on the way",
+        "High-volume daily tailoring for an all-out search (coming soon)",
+        "First in line for generation, even at peak (coming soon)",
         "Interview prep (coming soon)",
         "Private community (coming soon)",
       ],
@@ -168,13 +167,12 @@ export const en: Dictionary = {
         "Clean PDF and DOCX export",
         "Tailor from your original PDF",
         "Tailoring history and cover letters",
-        "Priority generation",
+        "Priority generation (coming soon)",
       ],
       ultra: [
         "Everything in Pro",
-        "The flagship Claude model on every tailoring",
-        "High-volume daily tailoring",
-        "Priority generation at peak",
+        "High-volume daily tailoring (coming soon)",
+        "Priority generation at peak (coming soon)",
         "Interview prep (coming soon)",
         "Private community (coming soon)",
       ],
@@ -307,7 +305,7 @@ export const en: Dictionary = {
     privacy: {
       title: "Privacy Policy",
       description: "What data Vouch holds, how it is protected, and how you control it.",
-      updated: "Updated: 4 July 2026",
+      updated: "Updated: 9 July 2026",
       intro:
         "Vouch tailors your résumé honestly and respects your data. Below is what we store, how we protect it, and the rights you have.",
       sections: [
@@ -376,7 +374,7 @@ export const en: Dictionary = {
     offer: {
       title: "Public Offer",
       description: "The terms of service and plans for Vouch.",
-      updated: "Updated: 4 July 2026",
+      updated: "Updated: 9 July 2026",
       intro:
         "This public offer describes the terms of using Vouch. By completing payment you accept these terms.",
       sections: [
@@ -399,7 +397,7 @@ export const en: Dictionary = {
         {
           heading: "Payment and refunds",
           paragraphs: [
-            "Payment is processed by a payments provider (Stripe; test mode at this stage).",
+            "Payments currently run through an in-app emulator; a production payment processor: [TODO: pending legal review].",
             "Refund terms will be finalized after legal-counsel review.",
           ],
         },
@@ -553,7 +551,7 @@ export const en: Dictionary = {
           "Clean PDF + DOCX export",
           "Tailor from your original PDF, not just its text",
           "Tailoring history + cover letters",
-          "Priority generation",
+          "Priority generation (coming soon)",
         ],
         cta: "Go Pro",
         badge: "Popular",
@@ -563,9 +561,8 @@ export const en: Dictionary = {
         cadence: "per month, renews at $30",
         features: [
           "Everything in Pro",
-          "The flagship Claude model on every tailoring",
-          "High-volume daily tailoring",
-          "Priority generation at peak",
+          "High-volume daily tailoring (coming soon)",
+          "Priority generation at peak (coming soon)",
           "Interview prep (coming soon)",
           "Private community (coming soon)",
         ],

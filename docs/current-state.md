@@ -7,6 +7,29 @@
 
 ## Last action
 
+- **`fix-billing-locale` (bug) DONE + committed `70ff874` (2026-07-10).** User-reported: subscription screen
+  (/account/billing) header language switch to English did nothing. Root cause: the page never read the
+  locale cookie (unlike its sibling /account/profile), so TopBar + AccountBillingView fell back to the "ua"
+  default. Fix (page-only, mirror profile): resolve `parseLocale(cookies().get(LOCALE_COOKIE))`, thread
+  `locale` to TopBar + AccountBillingView (both already accept it); force-dynamic retained. Workflow
+  (wf_42baf08b): maker(sonnet)→test-author(sonnet, +4 page tests: en→en, absent/invalid→ua)→checker(sonnet
+  SHIP, 0 findings)+verifier(sonnet PASS: lint + build 33 routes + 146 files/1415 passed). NFR-I18N-01,
+  FR-BILLING-01, FR-SHELL-01. FOLLOW-UP: audit other authed pages for the same missing-locale-read bug
+  (checkout, history) — profile is correct; billing was the reported one.
+- **`honest-plan-claims` DONE + gate green (2026-07-10).** Marked the unfounded Ultra/Pro differentiators
+  "(coming soon)"/"(незабаром)" per user decision (one global model for all, binary paid access, no
+  queue/priority, no per-plan limit — investigated). maker(opus)→test-author(sonnet, i18n.test.ts marker +
+  parity tests)→checker(opus). Checker fix-first, 0 blockers, 1 major + 1 minor — both real HONESTY catches:
+  the flagship model (claude-opus-4-8) is ALREADY used for every plan, so "flagship... not just the fast one"
+  falsely implied free/Pro get a lesser tier, and marking "flagship (coming soon)" implied today's tailorings
+  use a worse model. APPLIED: REMOVED the flagship-model bullet from ultra in all 3 locations × 2 locales
+  (upgrade.planFeature.ultra, billing.planBenefits.ultra, landing.pricing.ultra) — it is neither a current
+  nor future Ultra perk since Opus is universal; kept priority/high-volume "(coming soon)". Reconciled the
+  ultra length constants 6→5 (EXPECTED_PLAN_FEATURE_LENGTHS + EXPECTED_PLAN_BENEFITS_LENGTHS). Also in this
+  change: Pro "priority generation" marked "(coming soon)" (no queue exists); ultra intro no longer implies a
+  Pro daily cap; legal.offer payment line de-Stripe'd (emulator + [TODO], matching the privacy fix);
+  legal.privacy + legal.offer `updated` → 9 July 2026. Gate: lint 0/0 + build (29 routes) + 146 files/1415
+  passed/0 failed. BC-HONESTY-01, BC-BRAND-01, BC-PRIVACY-02, FR-BILLING-01, FR-SALES-03, NFR-I18N-01.
 - **`restack-checklist-preview` — DONE + gate green (2026-07-09). Landing "Know exactly where you
   stand" section reworked (user ask).** `src/views/landing/ui/ChecklistPreview.tsx` ONLY: the
   "Strong fit, honestly scored" MatchScore now sits in a card container on TOP (`rounded-xl border
@@ -510,7 +533,61 @@ queue/priority, no per-plan limit. Needs a user decision (soften to honest-now v
 vs implement routing) before editing marketing copy. Plus the 3 quick fixes (offer Stripe line,
 privacy date, marketing flagship claim). Not doing until the checklist rework lands + decision made.
 
-**Nothing else in flight — 8-task batch COMPLETE.** T2+T3 shipped (see Last action). Remaining items are all
+**Nothing in flight. `fix-billing-locale` + `honest-plan-claims` both DONE (see Last action).**
+
+### `fix-billing-locale` — DONE `70ff874` (2026-07-10) — see Last action
+
+User-reported: on the subscription screen (/account/billing) the header language switch to English does
+nothing. ROOT CAUSE (confirmed): `src/app/account/billing/page.tsx` never reads the locale cookie — unlike
+its sibling `src/app/account/profile/page.tsx` which does `parseLocale((await cookies()).get(LOCALE_COOKIE))`
+and threads `locale` to TopBar + view. Billing passes NO locale, so TopBar + AccountBillingView fall back to
+the "ua" default and the switch appears dead. `AccountBillingView` + `BillingPortal` ALREADY accept a
+`locale?` prop — the fix is page-only. NFR-I18N-01, FR-BILLING-01, FR-SHELL-01.
+**Plan:** billing/page.tsx — import `cookies` + `LOCALE_COOKIE`/`parseLocale`, read locale, pass to
+`<TopBar locale=…>` + `<AccountBillingView locale=…>` (mirror profile/page.tsx). Keep force-dynamic (already
+per-request). maker→test-author (page threads cookie locale; en cookie → en copy) →checker+verifier. Commit.
+Note: audit other authed pages for the same missing-locale bug (history, checkout) as a follow-up.
+
+### `honest-plan-claims` — IN PROGRESS (2026-07-10): maker+tests done, checker pending
+
+Maker copy applied (en.ts/ua.ts, all unfounded Ultra/Pro flagship/priority/high-volume lines marked
+"(coming soon)"/"(незабаром)"; ultra intro de-implies a Pro cap; offer Stripe line → emulator+[TODO];
+privacy+offer `updated` → 9 July). test-author finished before the session limit hit: `i18n.test.ts`
+61/61 GREEN. Session limit KILLED the checker (no verdict) + this earlier bug's original checker/test-author.
+Checker (a4f7a81, 2026-07-10) = fix-first, 0 blockers, 1 major + 1 minor (both HONESTY, real):
+the flagship model (claude-opus-4-8) is ALREADY used for ALL plans, so (major) "flagship model... not
+just the fast one" falsely implies free/Pro get a lesser "fast" tier (none exists); (minor) marking
+"flagship model (coming soon)" implies today's tailorings use a worse model (inverts reality). FIX to
+apply: REMOVE the flagship-model bullet from ultra in ALL 3 locations × 2 locales (upgrade.planFeature.ultra,
+billing.planBenefits.ultra, landing.pricing.ultra) — it can't honestly be a current or future Ultra perk
+since Opus is already universal. Keep priority/high-volume "(coming soon)". Then reconcile i18n.test.ts
+flagship assertions (test-author). HELD until the concurrent fix-billing-locale workflow lands (its verifier
+runs the full suite over en.ts/ua.ts — avoid the edit race). Everything else in the change = checker-clean.
+NEXT: after billing lands → apply flagship removal + test reconcile → commit. Uncommitted: en.ts, ua.ts, i18n.test.ts.
+
+### `honest-plan-claims` plan (superseded header above)
+
+User decision (2026-07-09): mark the unfounded Ultra/Pro differentiators "(coming soon)" (not soften,
+not implement). Investigation wf a5dbdbb confirmed: ONE global model (opus-4-8) for all, binary
+hasPaidAccess, NO queue/priority, NO per-plan limit. So "flagship model / priority generation /
+high-volume daily" misrepresent shipped state. BC-HONESTY-01, BC-BRAND-01, FR-BILLING-01, FR-SALES-03.
+
+**Plan (maker opus → test-author sonnet → checker opus, separate ctx):**
+1. Mark unfounded plan-feature strings "(coming soon)" / "(незабаром)" in en.ts + ua.ts, matching the
+   existing "Interview prep (coming soon)" convention:
+   - Ultra flagship/high-volume/priority: `upgrade.planFeature.ultra` (en 135/136/137), `billing.planBenefits.ultra`
+     (en 175/176/177), `landing.pricing.ultra` (en 566/567/568) + ua mirrors.
+   - Pro "priority generation" (also unfounded — no queue): `upgrade.planFeature.pro` (en 131),
+     `billing.planBenefits.pro` (en 171), `landing.pricing.pro` (en 556) + ua mirrors.
+   - `upgrade.planFeature.ultra` intro (en 134 "plus room to apply every single day") falsely implies a
+     Pro volume cap (Pro is also unlimited) → make honest ("Everything in Pro" or similar).
+2. Remaining accuracy fixes (same files): `legal.offer` payment line still names Stripe (no Stripe in
+   code, emulator only) → align w/ the privacy fix (emulator, no live processor); `legal.privacy.updated`
+   date "4 July 2026" → "9 July 2026" (body rewritten today).
+3. test-author: assert marked strings carry "(coming soon)"/"(незабаром)"; checker verifies no unfounded
+   claim remains unmarked + brand rules. Gate + commit.
+
+**Nothing else in flight — 8-task batch COMPLETE (T2+T3 was the last); restack-checklist-preview shipped.** T2+T3 shipped (see Last action). Remaining items are all
 environment/tooling/human-review blocked (no code) — see Remaining. Flagged code follow-ups from T2+T3:
 pricing.ultra "flagship model" marketing overclaim + legal.offer Stripe payment line (both pre-existing,
 own small change); UA privacy native review; legal-counsel [TODO] placeholders.
