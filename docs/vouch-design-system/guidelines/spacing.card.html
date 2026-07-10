@@ -1,0 +1,32 @@
+<!-- @dsCard group="Spacing" viewport="700x198" subtitle="4px base unit — space-1 through space-16" name="Spacing Scale" -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{padding:20px 24px;background:#fff;font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+    .grid{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;align-items:center;gap:12px}
+    .bar{background:#3257c5;border-radius:3px;height:12px;flex-shrink:0}
+    .meta{display:flex;gap:10px;font-size:11px}
+    .token{font-family:ui-monospace,monospace;color:#3257c5;min-width:90px}
+    .val{font-family:ui-monospace,monospace;color:#94a0b0}
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="row"><div class="bar" style="width:4px;opacity:0.35"></div><div class="meta"><span class="token">--space-1</span><span class="val">4px</span></div></div>
+    <div class="row"><div class="bar" style="width:8px;opacity:0.45"></div><div class="meta"><span class="token">--space-2</span><span class="val">8px</span></div></div>
+    <div class="row"><div class="bar" style="width:12px;opacity:0.55"></div><div class="meta"><span class="token">--space-3</span><span class="val">12px</span></div></div>
+    <div class="row"><div class="bar" style="width:16px;opacity:0.6"></div><div class="meta"><span class="token">--space-4</span><span class="val">16px</span></div></div>
+    <div class="row"><div class="bar" style="width:20px;opacity:0.65"></div><div class="meta"><span class="token">--space-5</span><span class="val">20px</span></div></div>
+    <div class="row"><div class="bar" style="width:24px;opacity:0.7"></div><div class="meta"><span class="token">--space-6</span><span class="val">24px</span></div></div>
+    <div class="row"><div class="bar" style="width:32px;opacity:0.75"></div><div class="meta"><span class="token">--space-8</span><span class="val">32px</span></div></div>
+    <div class="row"><div class="bar" style="width:48px;opacity:0.85"></div><div class="meta"><span class="token">--space-12</span><span class="val">48px · nav padding</span></div></div>
+    <div class="row"><div class="bar" style="width:64px"></div><div class="meta"><span class="token">--space-16</span><span class="val">64px · section padding</span></div></div>
+  </div>
+</body>
+</html>

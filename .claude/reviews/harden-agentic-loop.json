@@ -1,0 +1,59 @@
+{
+  "change": "harden-agentic-loop",
+  "reviewer": "checker (fresh context, maker != checker)",
+  "date": "2026-07-09",
+  "commit": "78a531d",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 0,
+  "requirementIds": ["NFR-OBS-01", "NFR-SEC-01", "BC-PRIVACY-01"],
+  "resolution": {
+    "originalVerdict": "fix-first",
+    "originalCounts": { "blockers": 1, "majors": 2, "minors": 1 },
+    "note": "All 4 findings fixed by the maker after review; independently re-verified fresh-context (verifier: lint 0, typecheck 0 cold-run, build ok, test 135 files / 1293 passed, validator ok, no secret in ci.yml). Counts above are OPEN findings (all now 0), so verdict flips to ship.",
+    "verifiedBy": "verifier (fresh context)"
+  },
+  "findings": [
+    {
+      "severity": "blocker",
+      "path": ".github/workflows/ci.yml",
+      "line": 24,
+      "requirement": "NFR-OBS-01",
+      "problem": "The new `yarn typecheck` (tsc --noEmit) step + package.json:12 script fails on the current tree with 7 pre-existing type errors (src/app/api/maintenance/tailoring-cleanup/route.test.ts:21,29; src/shared/lib/evals/coverage-judge-trajectory.test.ts:100,114,127,171; src/shared/lib/llm/coverage-judge.test.ts:84). Reproduced: `yarn typecheck` exits 2. CI would be RED on the first push, defeating the change's stated goal of an authoritative, reproducible green gate (proposal.md 'authoritative full gate'). The maker wired a step that never passes without confirming it green.",
+      "fix": "Make `yarn typecheck` exit 0 before wiring it into CI: fix the 7 type errors, or scope typecheck away from test files (e.g. a tsconfig `exclude`/dedicated tsconfig for tests). Verify locally, then keep it in CI.",
+      "status": "fixed",
+      "resolvedNote": "7 real type errors fixed (not suppressed): vi.fn<[],T>() -> vi.fn<() => T>() single-arg generic; readonly-array index-write -> spread-copy + whole-array reassign; unsound cast -> `as unknown as Record`. The new typecheck gate correctly surfaced defects `next build`'s narrower TS pass was masking. Cold `tsc --noEmit` now exits 0."
+    },
+    {
+      "severity": "major",
+      "path": ".github/workflows/ci.yml",
+      "line": 30,
+      "requirement": "NFR-SEC-01",
+      "problem": "The build-step `CV_ENCRYPTION_KEY` is a valid 64-hex AES-256 key committed to the repo, not an obvious placeholder like the sibling values (DATABASE_URL: postgres://placeholder, AUTH_SECRET: placeholder). It is indistinguishable from a real secret, violating the proposal's 'placeholder env (no real secret committed)' goal. It is also unnecessary: src/shared/config/env.ts and src/shared/lib/crypto/key.ts read every secret LAZILY at request time (never at import) so `next build`/prerender requires none of these envs (their own header comments state this).",
+      "fix": "Replace the hex value with an obvious sentinel (e.g. \"placeholder\") or drop the build-step env block entirely since build reads no secrets; if a valid-length key is ever genuinely needed, generate it at CI runtime rather than committing it.",
+      "status": "fixed",
+      "resolvedNote": "Build-step env block removed entirely (stronger than a placeholder) — `next build` reads no runtime secret, so the workflow now contains nothing resembling a key. A comment records why."
+    },
+    {
+      "severity": "major",
+      "path": ".github/workflows/ci.yml",
+      "line": 33,
+      "requirement": "NFR-OBS-01",
+      "problem": "The wired `yarn test` gate is red on the current tree: src/features/export-data-button/ui/ExportDataButton.test.tsx fails 2 tests (jsdom Blob lacks .stream() under undici's Response, lines 44/76). Reproduced locally (2 failed / 10 passed). This is a documented pre-existing red (see docs/current-state.md Blockers) that lives in src/ (outside this change's caps), but the change turns it into a blocking CI gate. undici is bundled with Node (not pinned by yarn.lock), so behavior on CI's node 20 may differ from local node 22 — hence PLAUSIBLE rather than confirmed for CI.",
+      "fix": "Resolve or quarantine ExportDataButton.test.tsx in its owning T3 slice (polyfill Blob.prototype.stream in the vitest setup, or build the mock Response from a string body), or confirm CI is green on node 20 before landing. A landing gate must not ship red.",
+      "status": "fixed",
+      "resolvedNote": "Real fix: `Blob.prototype.stream` polyfill (ReadableStream from blob bytes) added to vitest.setup.ts, so undici's Response body-consume works under jsdom. ExportDataButton now 12/12 green; not a skip. Clears the long-standing documented pre-existing red."
+    },
+    {
+      "severity": "minor",
+      "path": "openspec/changes/harden-agentic-loop/tasks.md",
+      "line": 5,
+      "requirement": "NFR-OBS-01",
+      "problem": "Task 1.1 states the CI step order as `lint -> build -> test -> validator` and omits typecheck from that sequence (1.2 adds it 'after lint'). The implemented ci.yml correctly runs lint -> typecheck -> build -> test -> validator per the shared contract, so the task text drifts from what shipped.",
+      "fix": "Update task 1.1 to list typecheck inline in the step sequence so the spec matches ci.yml and the shared contract.",
+      "status": "fixed",
+      "resolvedNote": "tasks.md 1.1 now lists `lint -> typecheck -> build -> test -> validator`, matching ci.yml; 1.3 reworded (no build env, lazy-read rationale)."
+    }
+  ]
+}

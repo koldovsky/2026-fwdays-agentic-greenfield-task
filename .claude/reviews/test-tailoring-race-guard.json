@@ -1,0 +1,30 @@
+{
+  "change": "test-tailoring-race-guard",
+  "reviewer": "checker (fresh context, opus-tier)",
+  "date": "2026-07-10",
+  "commit": "d109922",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 1,
+  "requirementIds": ["FR-TAILOR-04", "NFR-OBS-01", "NFR-COST-02", "TC-PURE-01"],
+  "findings": [
+    {
+      "severity": "minor",
+      "path": "src/shared/lib/db/tailoring-lifecycle.integration.test.ts",
+      "line": 570,
+      "requirement": "FR-TAILOR-04",
+      "problem": "Case (a) calls markAbandonedPending(db, -60_000), which computes a cutoff 60s in the future and therefore sweeps EVERY currently-pending row in the shared PGlite instance for the whole file (including the never-cleaned-up 'Pending Role' row left behind by the listByUser test at line ~360), not just the row under test. The aggregate assertion expect(swept).toBeGreaterThanOrEqual(1) tolerates this, and the test's real assertions are scoped to the specific row id, so this is not a false-green today, but it is a broad, undocumented-scope side effect on shared DB state that could bite a future test appended after this describe block (a new test relying on a lingering pending row would be silently swept).",
+      "fix": "Either scope the sweep-simulation to the row under test (e.g. back-date created_at for this one row like the existing TTL tests do, instead of a future global cutoff), or keep this describe block last in the file (as it is today) and add a one-line comment noting the intentional file-wide sweep side effect so a future test author does not get surprised."
+    }
+  ],
+  "notes": [
+    "Verified by mutation testing: temporarily removed 'AND status = '\\''pending'\\''' from both guarded UPDATEs in src/shared/lib/db/tailoring-repo.ts (updateStatus, both the payload and no-payload/failed branches) and re-ran the file. All 3 new cases (a/b/c) failed with the expected status/score mismatches; all 20 pre-existing tests in the file still passed. Reverted the production file (git status clean afterward, no code change made).",
+    "Case (a) uses the real markAbandonedPending sweeper (not a hand-set status) before racing a late updateStatus('complete', payload) in — genuine sweep-then-complete race, asserts status stays 'failed', match_score stays null, and childRowCount(id) is 0 (no orphan checklist_items/bullets).",
+    "Case (b) asserts a true no-op via child ROW COUNT before/after (2 -> 2, not just status), covering both a duplicate-complete race and a complete-then-failed race in one test; without the guard this would duplicate children to 4 and flip status to 'failed'.",
+    "Case (c) pre-sets status='failed' via the repo (not a raw SQL hand-set) then completes, proving the 0-rows-affected path skips both the status/score write AND the child inserts (childRowCount 0).",
+    "Full file re-run green: 23/23 tests (20 pre-existing + 3 new). yarn eslint on the file: 0 problems.",
+    "Test-only change, no production code touched; reuses the existing PGlite integration harness (adapter/insertUser/insertJd/beforeAll) already established in this file. FSD: shared/lib/db, no framework imports, consistent with TC-PURE-01 scope for this layer's tests.",
+    "docs/current-state.md also shows as dirty in git status (plan-first entry for this change) — out of scope per the review brief (test file is the only reviewed diff); no issue observed in a quick read."
+  ]
+}

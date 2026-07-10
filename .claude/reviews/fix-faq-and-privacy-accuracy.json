@@ -1,0 +1,40 @@
+{
+  "change": "fix-faq-and-privacy-accuracy",
+  "reviewer": "checker (opus, fresh context)",
+  "date": "2026-07-09",
+  "commit": "3c09f7b",
+  "verdict": "fix-first",
+  "blockers": 0,
+  "majors": 1,
+  "minors": 2,
+  "requirementIds": ["BC-HONESTY-01","BC-PRIVACY-01","BC-PRIVACY-02","NFR-GDPR-01","NFR-GDPR-02","NFR-SEC-02","FR-COVERLETTER-01","FR-CV-01","FR-ONBOARD-01","NFR-COST-02","FR-BILLING-01"],
+  "findings": [
+    {
+      "severity": "major",
+      "path": "src/shared/lib/i18n/en.ts",
+      "line": 337,
+      "requirement": "BC-PRIVACY-02",
+      "problem": "New privacy 'Subprocessors' section names Stripe as an active payment subprocessor ('Stripe processes payments (test mode at this stage).' / ua.ts:340), but Stripe has ZERO code presence in the repo. The only payments provider is the in-repo emulator (src/shared/config/env.ts: PaymentsProviderName = 'emulator', hard-disabled in production). Disclosing a subprocessor data-flow that does not exist is an inaccurate legal statement in a change whose sole purpose is privacy accuracy. (Precedent: the offer doc line en.ts:402 pre-dates this diff, so the inaccuracy already existed there, but this diff newly asserts it in the GDPR privacy policy.)",
+      "fix": "Either mark the Stripe line as a planned/TODO placeholder like the other unresolved legal facts ('[TODO: pending payment-provider integration]'), or describe the actual current mechanism (payments emulator, no live processor), so the subprocessor disclosure matches the code.",
+      "status": "open"
+    },
+    {
+      "severity": "minor",
+      "path": "src/shared/lib/i18n/en.ts",
+      "line": 359,
+      "requirement": "NFR-GDPR-01",
+      "problem": "The 'Your rights' export line caveats only that 'Job-description text is not yet included', but the PDF export (src/app/api/account/export/account-export-pdf.tsx) also omits the extracted requirements and the tailored results/bullets — it exports only jobTitle, matchScore, date, and status. The 'What we store' section lists all of those as stored, so a reader is under-informed about export completeness (portability gap wider than disclosed).",
+      "fix": "Broaden the caveat to note that requirements and tailored results are also not yet exported, or generalize to 'tailoring metadata only', keeping the 'being expanded' hedge.",
+      "status": "open"
+    },
+    {
+      "severity": "minor",
+      "path": "src/shared/lib/i18n/en.ts",
+      "line": 394,
+      "requirement": "BC-HONESTY-01",
+      "problem": "Legal 'Plans' summary states 'Ultra: a higher-tier subscription with the flagship model and higher limits.' There is no per-plan model routing or per-plan limit differential in code — resolveLlmProvider() uses a single global getLlmModel(), and paid access (hasPaidAccess) is binary across pro/ultra/job_hunt_pass. Restates a pre-existing marketing claim (T2) onto a legal page without substantiation. Root cause is the pre-existing model-routing gap, outside this diff's scope.",
+      "fix": "Either implement per-plan model selection to back the 'flagship model' claim, or soften the legal-page wording to what is true today (e.g. 'a higher-priced tier'), or mark the flagship-model capability 'coming soon' consistent with the pricing card treatment.",
+      "status": "open"
+    }
+  ]
+}

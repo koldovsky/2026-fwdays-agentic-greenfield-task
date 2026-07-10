@@ -1,0 +1,31 @@
+{
+  "change": "honest-plan-claims",
+  "reviewer": "checker (Opus 4.8, independent)",
+  "date": "2026-07-10",
+  "commit": "62e686e",
+  "verdict": "fix-first",
+  "blockers": 0,
+  "majors": 1,
+  "minors": 1,
+  "requirementIds": ["BC-HONESTY-01", "BC-BRAND-01", "FR-BILLING-01", "FR-SALES-03", "NFR-I18N-01", "BC-PRIVACY-02"],
+  "findings": [
+    {
+      "severity": "major",
+      "path": "src/shared/lib/i18n/en.ts",
+      "line": 135,
+      "requirement": "BC-HONESTY-01",
+      "problem": "Ultra planFeature reads 'The flagship Claude model on every tailoring, not just the fast one (coming soon)'. The 'not just the fast one' clause asserts a false CURRENT state: every tailoring already runs claude-opus-4-8 (the flagship) via the single global resolveLlmProvider/getLlmModel (shared/lib/llm/factory.ts, claude.ts DEFAULT_CLAUDE_MODEL). There is no per-plan model, no 'fast' tier for free/Pro. The copy tells users today's product uses a lesser model, which is untrue.",
+      "fix": "Drop the 'not just the fast one' clause (align with the billing/landing wording) and/or reframe so it does not claim a model tier that does not exist.",
+      "status": "open"
+    },
+    {
+      "severity": "minor",
+      "path": "src/shared/lib/i18n/en.ts",
+      "line": 175,
+      "requirement": "BC-HONESTY-01",
+      "problem": "'The flagship Claude model on every tailoring (coming soon)' (also en.ts:566, ua.ts:137/177/570) marks flagship-model-on-every-tailoring as a coming-soon Ultra differentiator, but claude-opus-4-8 (flagship) is already shipped for EVERY plan (no model-tier architecture). Marking a shipped reality 'coming soon' is the audit's own 'hiding a shipped feature' case; the intended per-plan differentiator does not exist in code.",
+      "fix": "Either remove the flagship-model line entirely (no model tiering exists) or reword to a clearly future per-plan differentiator that does not imply current tailorings run a lesser model.",
+      "status": "open"
+    }
+  ]
+}

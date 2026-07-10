@@ -1,0 +1,419 @@
+import { describe, expect, it } from "vitest";
+
+import { dictionaries, en, parseLocale, t, ua } from "./index";
+
+const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️]/u;
+
+/** Flatten nested string values into path->string pairs for structural comparison. */
+function flattenKeys(obj: unknown, prefix = ""): string[] {
+  if (obj === null || typeof obj !== "object") return [prefix];
+  return Object.entries(obj as Record<string, unknown>)
+    .flatMap(([k, v]) => flattenKeys(v, prefix ? `${prefix}.${k}` : k))
+    .sort();
+}
+
+function flattenValues(obj: unknown): string[] {
+  if (typeof obj === "string") return [obj];
+  if (obj === null || typeof obj !== "object") return [];
+  return Object.values(obj as Record<string, unknown>).flatMap(flattenValues);
+}
+
+describe("i18n (NFR-I18N-01, BC-BRAND-01)", () => {
+  it("ua and en have identical key sets (structural parity)", () => {
+    expect(flattenKeys(ua)).toEqual(flattenKeys(en));
+  });
+
+  it("ua values contain no emoji and no exclamation points (BC-BRAND-01)", () => {
+    for (const value of flattenValues(ua)) {
+      expect(value).not.toMatch(EMOJI);
+      expect(value).not.toContain("!");
+    }
+  });
+
+  it("t() returns ua as the default fallback", () => {
+    expect(t("ua")).toBe(ua);
+    expect(t("en")).toBe(en);
+    expect(dictionaries.ua).toBe(ua);
+  });
+
+  it("parseLocale coerces cookie values Ukrainian-first (add-language-toggle)", () => {
+    expect(parseLocale("en")).toBe("en");
+    expect(parseLocale("ua")).toBe("ua");
+    // Anything unrecognized falls back to Ukrainian (default), never throws.
+    expect(parseLocale(undefined)).toBe("ua");
+    expect(parseLocale(null)).toBe("ua");
+    expect(parseLocale("")).toBe("ua");
+    expect(parseLocale("fr")).toBe("ua");
+    expect(parseLocale("EN")).toBe("ua");
+  });
+});
+
+// Task 4.4 — upgrade.planFeature + billing.planBenefits parity + brand audit
+// (NFR-I18N-01, BC-BRAND-01, BC-HONESTY-01, TC-PURE-01)
+const EM_DASH = /—/;
+const EXCLAMATION = /!/;
+
+const PAID_PLANS = ["pro", "ultra", "job_hunt_pass"] as const;
+type PaidPlan = (typeof PAID_PLANS)[number];
+
+// Expected benefit counts per plan, per spec (task 4.4).
+const EXPECTED_PLAN_FEATURE_LENGTHS: Record<PaidPlan, number> = {
+  pro: 5,
+  // ultra dropped the "flagship model" line: the flagship model is already used
+  // for every plan, so it is not an Ultra differentiator (honest-plan-claims).
+  ultra: 5,
+  job_hunt_pass: 3,
+};
+
+const EXPECTED_PLAN_BENEFITS_LENGTHS: Record<PaidPlan, number> = {
+  pro: 5,
+  // ultra dropped the "flagship model" line (see EXPECTED_PLAN_FEATURE_LENGTHS).
+  ultra: 5,
+  job_hunt_pass: 3,
+};
+
+describe("upgrade.planFeature parity (task 4.4, NFR-I18N-01)", () => {
+  it("ua and en have identical plan keys for upgrade.planFeature", () => {
+    expect(Object.keys(ua.upgrade.planFeature).sort()).toEqual(
+      Object.keys(en.upgrade.planFeature).sort(),
+    );
+  });
+
+  for (const plan of PAID_PLANS) {
+    it(`upgrade.planFeature[${plan}] array lengths match between ua and en`, () => {
+      expect(ua.upgrade.planFeature[plan]).toHaveLength(en.upgrade.planFeature[plan].length);
+    });
+
+    it(`upgrade.planFeature[${plan}] has the expected length (${String(EXPECTED_PLAN_FEATURE_LENGTHS[plan])})`, () => {
+      expect(en.upgrade.planFeature[plan]).toHaveLength(EXPECTED_PLAN_FEATURE_LENGTHS[plan]);
+      expect(ua.upgrade.planFeature[plan]).toHaveLength(EXPECTED_PLAN_FEATURE_LENGTHS[plan]);
+    });
+  }
+});
+
+describe("billing.planBenefits parity (task 4.4, NFR-I18N-01)", () => {
+  it("ua and en have identical plan keys for billing.planBenefits", () => {
+    expect(Object.keys(ua.billing.planBenefits).sort()).toEqual(
+      Object.keys(en.billing.planBenefits).sort(),
+    );
+  });
+
+  for (const plan of PAID_PLANS) {
+    it(`billing.planBenefits[${plan}] array lengths match between ua and en`, () => {
+      expect(ua.billing.planBenefits[plan]).toHaveLength(en.billing.planBenefits[plan].length);
+    });
+
+    it(`billing.planBenefits[${plan}] has the expected length (${String(EXPECTED_PLAN_BENEFITS_LENGTHS[plan])})`, () => {
+      expect(en.billing.planBenefits[plan]).toHaveLength(EXPECTED_PLAN_BENEFITS_LENGTHS[plan]);
+      expect(ua.billing.planBenefits[plan]).toHaveLength(EXPECTED_PLAN_BENEFITS_LENGTHS[plan]);
+    });
+  }
+});
+
+describe("checkout.planName and checkout.planPrice contain 'ultra' (task 4.4)", () => {
+  it("checkout.planName has an 'ultra' key in en", () => {
+    expect("ultra" in en.checkout.planName).toBe(true);
+    expect(typeof en.checkout.planName.ultra).toBe("string");
+  });
+
+  it("checkout.planName has an 'ultra' key in ua", () => {
+    expect("ultra" in ua.checkout.planName).toBe(true);
+    expect(typeof ua.checkout.planName.ultra).toBe("string");
+  });
+
+  it("checkout.planPrice has an 'ultra' key in en", () => {
+    expect("ultra" in en.checkout.planPrice).toBe(true);
+    expect(typeof en.checkout.planPrice.ultra).toBe("string");
+  });
+
+  it("checkout.planPrice has an 'ultra' key in ua", () => {
+    expect("ultra" in ua.checkout.planPrice).toBe(true);
+    expect(typeof ua.checkout.planPrice.ultra).toBe("string");
+  });
+});
+
+describe("benefit strings — brand audit (task 4.4, BC-BRAND-01)", () => {
+  function allBenefitStrings(locale: typeof en): string[] {
+    return [
+      ...Object.values(locale.upgrade.planFeature).flat(),
+      ...Object.values(locale.billing.planBenefits).flat(),
+    ];
+  }
+
+  it("en benefit strings contain no emoji (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(en)) {
+      expect(s).not.toMatch(EMOJI);
+    }
+  });
+
+  it("ua benefit strings contain no emoji (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(ua)) {
+      expect(s).not.toMatch(EMOJI);
+    }
+  });
+
+  it("en benefit strings contain no exclamation points (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(en)) {
+      expect(s).not.toMatch(EXCLAMATION);
+    }
+  });
+
+  it("ua benefit strings contain no exclamation points (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(ua)) {
+      expect(s).not.toMatch(EXCLAMATION);
+    }
+  });
+
+  it("en benefit strings contain no em-dashes (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(en)) {
+      expect(s).not.toMatch(EM_DASH);
+    }
+  });
+
+  it("ua benefit strings contain no em-dashes (BC-BRAND-01)", () => {
+    for (const s of allBenefitStrings(ua)) {
+      expect(s).not.toMatch(EM_DASH);
+    }
+  });
+
+  it("ultra unbuilt features carry a coming-soon label in en", () => {
+    const ultraFeatures = en.upgrade.planFeature.ultra;
+    const comingSoon = ultraFeatures.filter((f) => f.includes("coming soon"));
+    expect(comingSoon.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("ultra unbuilt features carry a coming-soon label in ua", () => {
+    const ultraFeatures = ua.upgrade.planFeature.ultra;
+    const comingSoon = ultraFeatures.filter((f) => f.includes("незабаром"));
+    expect(comingSoon.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T5 §3.5 — cover-letter framing i18n (NFR-I18N-01, BC-BRAND-01)
+// ExportStepper builds CoverLetterContext.framing from
+//   copy.export.coverLetter.{greeting, closing, headline}
+// plus copy.export.footer (only when not paid). These keys must exist in both
+// locales, carry no emoji/!/em-dash (BC-BRAND-01), and be non-empty.
+// ---------------------------------------------------------------------------
+
+describe("export.coverLetter framing keys — ua/en parity (T5 §3.5, NFR-I18N-01)", () => {
+  it("ua and en both have export.coverLetter.greeting", () => {
+    expect(typeof ua.export.coverLetter.greeting).toBe("string");
+    expect(typeof en.export.coverLetter.greeting).toBe("string");
+    expect(ua.export.coverLetter.greeting.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.greeting.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.closing", () => {
+    expect(typeof ua.export.coverLetter.closing).toBe("string");
+    expect(typeof en.export.coverLetter.closing).toBe("string");
+    expect(ua.export.coverLetter.closing.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.closing.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.headline", () => {
+    expect(typeof ua.export.coverLetter.headline).toBe("string");
+    expect(typeof en.export.coverLetter.headline).toBe("string");
+    expect(ua.export.coverLetter.headline.length).toBeGreaterThan(0);
+    expect(en.export.coverLetter.headline.length).toBeGreaterThan(0);
+  });
+
+  it("ua and en both have export.coverLetter.action (button label)", () => {
+    expect(typeof ua.export.coverLetter.action).toBe("string");
+    expect(typeof en.export.coverLetter.action).toBe("string");
+  });
+
+  it("cover-letter framing strings contain no emoji (BC-BRAND-01)", () => {
+    const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toMatch(EMOJI);
+    }
+  });
+
+  it("cover-letter framing strings contain no exclamation points (BC-BRAND-01)", () => {
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toContain("!");
+    }
+  });
+
+  it("cover-letter framing strings contain no em-dashes (BC-BRAND-01)", () => {
+    const EM_DASH = /—/;
+    const framingStrings = [
+      ua.export.coverLetter.greeting,
+      ua.export.coverLetter.closing,
+      ua.export.coverLetter.headline,
+      en.export.coverLetter.greeting,
+      en.export.coverLetter.closing,
+      en.export.coverLetter.headline,
+    ];
+    for (const s of framingStrings) {
+      expect(s).not.toMatch(EM_DASH);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// honest-plan-claims — product truth: ONE global model for all users, binary
+// paid access, NO queue/priority, NO per-plan volume limit. "Flagship model",
+// "priority generation", and "high-volume/daily" tailoring are NOT shipped.
+// Every claim of that kind must be presented as unfounded (marked
+// "(coming soon)" / "(незабаром)"), never as a live/shipped feature
+// (BC-HONESTY-01, NFR-I18N-01).
+// ---------------------------------------------------------------------------
+
+const UNFOUNDED_CLAIM_MARKERS_EN = [/flagship/i, /priority/i, /first in line/i, /high-volume/i];
+const UNFOUNDED_CLAIM_MARKERS_UA = [/Флагманськ/i, /Пріоритетн/i, /Першими в черзі/i, /щоденн/i];
+
+const COMING_SOON_EN = "(coming soon)";
+const COMING_SOON_UA = "(незабаром)";
+
+/** Lines that assert an unfounded claim (flagship model / priority / high-volume). */
+function unfoundedClaimLines(lines: readonly string[], markers: readonly RegExp[]): string[] {
+  return lines.filter((line) => markers.some((marker) => marker.test(line)));
+}
+
+describe("honest-plan-claims — unfounded feature claims stay marked (BC-HONESTY-01, NFR-I18N-01)", () => {
+  const enSources: Record<string, readonly string[]> = {
+    "upgrade.planFeature.pro": en.upgrade.planFeature.pro,
+    "upgrade.planFeature.ultra": en.upgrade.planFeature.ultra,
+    "billing.planBenefits.pro": en.billing.planBenefits.pro,
+    "billing.planBenefits.ultra": en.billing.planBenefits.ultra,
+    "landing.pricing.pro.features": en.landing.pricing.pro.features,
+    "landing.pricing.ultra.features": en.landing.pricing.ultra.features,
+  };
+
+  const uaSources: Record<string, readonly string[]> = {
+    "upgrade.planFeature.pro": ua.upgrade.planFeature.pro,
+    "upgrade.planFeature.ultra": ua.upgrade.planFeature.ultra,
+    "billing.planBenefits.pro": ua.billing.planBenefits.pro,
+    "billing.planBenefits.ultra": ua.billing.planBenefits.ultra,
+    "landing.pricing.pro.features": ua.landing.pricing.pro.features,
+    "landing.pricing.ultra.features": ua.landing.pricing.ultra.features,
+  };
+
+  for (const [path, lines] of Object.entries(enSources)) {
+    it(`en ${path}: every flagship/priority/high-volume claim ends with "${COMING_SOON_EN}"`, () => {
+      const claims = unfoundedClaimLines(lines, UNFOUNDED_CLAIM_MARKERS_EN);
+      // Guard against a vacuous pass: this source must actually carry at
+      // least one of the claim types under test.
+      expect(claims.length).toBeGreaterThan(0);
+      for (const claim of claims) {
+        expect(claim.trim().endsWith(COMING_SOON_EN)).toBe(true);
+      }
+    });
+  }
+
+  for (const [path, lines] of Object.entries(uaSources)) {
+    it(`ua ${path}: every flagship/priority/high-volume claim ends with "${COMING_SOON_UA}"`, () => {
+      const claims = unfoundedClaimLines(lines, UNFOUNDED_CLAIM_MARKERS_UA);
+      expect(claims.length).toBeGreaterThan(0);
+      for (const claim of claims) {
+        expect(claim.trim().endsWith(COMING_SOON_UA)).toBe(true);
+      }
+    });
+  }
+
+  it("en upgrade.planFeature.ultra intro does not claim a Pro daily cap", () => {
+    const intro = en.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).not.toMatch(/every single day/i);
+    expect(intro.length).toBeGreaterThan(0);
+  });
+
+  it("ua upgrade.planFeature.ultra intro does not claim a Pro daily cap", () => {
+    const intro = ua.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).not.toMatch(/щодня\b/i);
+    expect(intro.length).toBeGreaterThan(0);
+  });
+
+  it("en upgrade.planFeature.ultra intro carries an honest replacement (references Pro, not a limit)", () => {
+    const intro = en.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).toMatch(/Pro/);
+  });
+
+  it("ua upgrade.planFeature.ultra intro carries an honest replacement (references Pro, not a limit)", () => {
+    const intro = ua.upgrade.planFeature.ultra[0] ?? "";
+    expect(intro).toMatch(/Pro/);
+  });
+
+  // The genuinely-shipped Pro features (unlimited tailorings, PDF/DOCX export,
+  // attach original PDF, history + cover letters) stay unmarked and true —
+  // sanity-check they are NOT flagged as unfounded claims.
+  it("en shipped Pro features (unlimited/export/attach/history) are not treated as unfounded claims", () => {
+    const shipped = en.upgrade.planFeature.pro.filter(
+      (line) => !unfoundedClaimLines([line], UNFOUNDED_CLAIM_MARKERS_EN).length,
+    );
+    expect(shipped.some((l) => /unlimited|as many as/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /PDF and DOCX/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /original PDF/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /history/i.test(l))).toBe(true);
+    for (const line of shipped) {
+      expect(line).not.toContain(COMING_SOON_EN);
+    }
+  });
+
+  it("ua shipped Pro features (unlimited/export/attach/history) are not treated as unfounded claims", () => {
+    const shipped = ua.upgrade.planFeature.pro.filter(
+      (line) => !unfoundedClaimLines([line], UNFOUNDED_CLAIM_MARKERS_UA).length,
+    );
+    expect(shipped.some((l) => /Годі економити|Необмежен/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /PDF і DOCX/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /оригінального PDF/i.test(l))).toBe(true);
+    expect(shipped.some((l) => /Історія/i.test(l))).toBe(true);
+    for (const line of shipped) {
+      expect(line).not.toContain(COMING_SOON_UA);
+    }
+  });
+});
+
+describe("honest-plan-claims — legal.offer payment copy names no live processor (BC-HONESTY-01)", () => {
+  function offerPaymentText(locale: typeof en): string {
+    return locale.legal.offer.sections.map((s) => s.paragraphs.join(" ")).join(" ");
+  }
+
+  it("en legal.offer never names Stripe", () => {
+    expect(offerPaymentText(en)).not.toMatch(/stripe/i);
+  });
+
+  it("ua legal.offer never names Stripe", () => {
+    expect(offerPaymentText(ua)).not.toMatch(/stripe/i);
+  });
+
+  it("en legal.offer payment section mentions the in-app emulator and a [TODO placeholder", () => {
+    const text = offerPaymentText(en);
+    expect(text).toMatch(/emulator/i);
+    expect(text).toMatch(/\[TODO/);
+  });
+
+  it("ua legal.offer payment section mentions the in-app emulator and a [TODO placeholder", () => {
+    const text = offerPaymentText(ua);
+    expect(text).toMatch(/емулятор/i);
+    expect(text).toMatch(/\[TODO/);
+  });
+
+  it("en legal.privacy.updated and legal.offer.updated both read 9 July 2026", () => {
+    expect(en.legal.privacy.updated).toMatch(/9 July 2026/);
+    expect(en.legal.offer.updated).toMatch(/9 July 2026/);
+  });
+
+  it("ua legal.privacy.updated and legal.offer.updated both read 9 липня 2026", () => {
+    expect(ua.legal.privacy.updated).toMatch(/9\s*липня\s*2026/);
+    expect(ua.legal.offer.updated).toMatch(/9\s*липня\s*2026/);
+  });
+});

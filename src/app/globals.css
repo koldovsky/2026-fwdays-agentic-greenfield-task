@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/*
+ * Vouch design tokens.
+ * Source of truth: docs/vouch-design-system/tokens/*.css (+ DESIGN.md).
+ * Tailwind-namespaced tokens live in @theme so utilities are generated
+ * (bg-ink, text-brand, font-display, rounded-xl, shadow-card, …).
+ * Font families resolve to next/font variables set in layout.tsx.
+ */
+@theme inline {
+  /* ── Fonts (wired to next/font in layout.tsx). Display + body carry a Cyrillic
+   * subset so Ukrainian renders on-brand (add-language-toggle, NFR-I18N-01). ── */
+  --font-display: var(--font-unbounded);
+  --font-body: var(--font-golos);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-golos);
+
+  /* ── Brand ── */
+  --color-ink: #16243d;
+  --color-ink-soft: #5a6678;
+  --color-ink-muted: #94a0b0;
+  --color-ink-faint: #b3bcc8;
+  --color-brand: #3257c5;
+  --color-brand-hover: #2a47a8;
+  --color-brand-wash: #eaf0fd;
+
+  /* ── Surfaces ── */
+  --color-surface-card: #ffffff;
+  --color-surface-canvas: #f4f5f7;
+  --color-surface-warm: #faf7f2;
+  --color-surface-ink: #16243d;
+  --color-hairline: #e3e6ea;
+  --color-hairline-warm: #ece7dd;
+
+  /* ── Status: met / partial / gap / overclaim-risk ── */
+  --color-met: #2f8f5b;
+  --color-met-bg: #e7f4ec;
+  --color-partial: #c79a1e;
+  --color-partial-bg: #fbf3da;
+  --color-partial-text: #b08816;
+  --color-gap: #d05151;
+  --color-gap-bg: #fbe9e9;
+  --color-gap-text: #c0403d;
+  --color-overclaim: #e08a3c;
+  --color-overclaim-bg: #fbeede;
+  --color-overclaim-text: #cf7726;
+
+  /* ── Type scale (font-size utilities) ── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 26px;
+  --text-3xl: 34px;
+  --text-4xl: 40px;
+  --text-5xl: 52px;
+  --text-display: 56px;
+
+  /* ── Line height ── */
+  --leading-tight: 1.04;
+  --leading-snug: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.55;
+  --leading-loose: 1.6;
+
+  /* ── Letter spacing ── */
+  --tracking-tightest: -0.025em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: -0.01em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.12em;
+  --tracking-eyebrow: 0.14em;
+
+  /* ── Border radius ── */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 18px;
+  --radius-3xl: 20px;
+  --radius-pill: 999px;
+
+  /* ── Elevation ── */
+  --shadow-card: 0 1px 3px rgba(22, 36, 61, 0.08);
+  --shadow-lifted: 0 4px 16px -4px rgba(22, 36, 61, 0.18);
+  --shadow-float: 0 18px 40px -24px rgba(22, 36, 61, 0.35);
+  --shadow-deep: 0 40px 80px -30px rgba(0, 0, 0, 0.55);
+  --shadow-ink: 0 24px 50px -24px rgba(22, 36, 61, 0.5);
+  --shadow-brand: 0 2px 8px rgba(50, 87, 197, 0.25);
+  --shadow-brand-strong: 0 8px 24px -6px rgba(50, 87, 197, 0.6);
+}
+
+:root {
+  /* ── Spacing scale (4px base) — raw vars, not Tailwind's --spacing ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  /* ── Semantic aliases ── */
+  --text-primary: var(--color-ink);
+  --text-secondary: var(--color-ink-soft);
+  --text-muted: var(--color-ink-muted);
+  --surface-page: var(--color-surface-canvas);
+  --border: var(--color-hairline);
+  --accent: var(--color-brand);
+
+  /* ── Motion (mirrors docs/vouch-design-system/tokens/motion.css) ──
+   * Restrained editorial motion. Only opacity/transform animate (CLS 0);
+   * all of it is disabled under prefers-reduced-motion below. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-duration: 520ms;
+  --reveal-distance: 16px;
+  --hover-duration: 150ms;
+}
+
+body {
+  background: var(--color-surface-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+/* Smooth in-page anchor scroll; disabled under reduced-motion below.
+ * scroll-padding-top matches the sticky h-16 (64px) top bar so anchor targets
+ * land below it instead of hidden behind it (FR-SHELL-01, NFR-OBS-02). */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
+}
+
+/* Visible keyboard focus on every interactive element (NFR-A11Y-01):
+ * brand-wash halo + brand ring, applied only for keyboard/AT focus. */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--color-brand-wash),
+    0 0 0 4px var(--color-brand);
+  border-radius: var(--radius-sm);
+}
+
+/* Scroll-reveal primitive (shared/ui Reveal). Motion is opacity/transform only,
+ * so it never shifts layout (CLS stays 0). SSR renders revealed (visible without
+ * JS); the client hides then reveals once on intersection. The `fade="false"`
+ * variant keeps opacity at 1 so an LCP element paints on first render. */
+/* Transition is armed a frame AFTER the initial hide so the hide itself is
+ * instant (no fade-out flash); only the reveal that follows animates. */
+[data-reveal][data-armed="true"] {
+  transition:
+    opacity var(--reveal-duration) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal][data-revealed="false"] {
+  opacity: 0;
+  transform: translateY(var(--reveal-distance));
+}
+[data-reveal][data-fade="false"][data-revealed="false"] {
+  opacity: 1;
+}
+
+/* Hero entrance: a one-shot CSS load animation on the hero's supporting elements
+ * (lead, CTAs, note). It never touches the h1 or the demo card, so whichever is
+ * the LCP element paints on first render. Runs without JS; the 0% state (not a
+ * painted-then-hidden state) means no flash. Reduced-motion below removes the
+ * animation entirely and forces the visible end state. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise-in var(--reveal-duration) var(--ease-out) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Skeleton loading placeholder (shared/ui Skeleton). A gentle opacity pulse on a
+ * solid block signals in-flight work without layout shift (CLS 0) — only opacity
+ * animates, matching the motion contract above. The reduced-motion catch-all
+ * below neutralizes the animation to a static block (NFR-A11Y-01). */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.skeleton {
+  animation: skeleton-pulse 1.4s var(--ease-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* Belt-and-suspenders: even before the JS matchMedia guard runs, keep every
+   * scroll-reveal AND the hero entrance fully visible and unmoved. Removing the
+   * animation outright (not just its duration) closes the delay window where a
+   * `both`-filled .rise-in would otherwise hold the hidden `from` state before
+   * snapping visible (NFR-A11Y-01). */
+  [data-reveal],
+  .rise-in {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}

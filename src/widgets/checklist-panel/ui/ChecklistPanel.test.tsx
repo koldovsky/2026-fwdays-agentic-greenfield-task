@@ -1,0 +1,62 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import type { Requirement } from "@/entities/requirement";
+import { en, ua } from "@/shared/lib/i18n";
+
+import { ChecklistPanel, type ChecklistPanelRow } from "./ChecklistPanel";
+
+const req = (id: string, text: string, importance: Requirement["importance"]): Requirement => ({
+  id,
+  text,
+  importance,
+  keywords: [],
+});
+
+const rows: ChecklistPanelRow[] = [
+  { requirement: req("a", "5+ years React", "must-have"), status: "met", rationale: "CV підтверджує React." },
+  { requirement: req("b", "GraphQL", "nice-to-have"), status: "partial", rationale: "Дотичний досвід." },
+  { requirement: req("c", "Team lead", "must-have"), status: "overclaim-risk", rationale: "Немає підтвердження в CV." },
+  { requirement: req("d", "React Native", "nice-to-have"), status: "info", rationale: "Дотичний досвід «react»." },
+];
+
+describe("ChecklistPanel (FR-CHECKLIST-02, FR-CHECKLIST-04)", () => {
+  it("renders the 0–100 match score in the header", () => {
+    render(<ChecklistPanel score={76} rows={rows} />);
+    expect(screen.getByText("76")).toBeInTheDocument();
+    expect(screen.getByText(ua.checklist.scoreHeadline)).toBeInTheDocument();
+  });
+
+  it("renders one row per requirement, in order", () => {
+    render(<ChecklistPanel score={50} rows={rows} />);
+    for (const row of rows) {
+      expect(screen.getByText(row.requirement.text)).toBeInTheDocument();
+    }
+  });
+
+  it("visually distinguishes an overclaim-risk row via its status label", () => {
+    render(<ChecklistPanel score={50} rows={rows} />);
+    // The overclaim-risk row surfaces the dedicated Ukrainian status label,
+    // distinct from met/partial — asserted via copy, not CSS classes.
+    expect(
+      screen.getByText(ua.checklist.statusLabel["overclaim-risk"]),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
+  });
+
+  it("renders the blue info status with its own label, distinct from gap (FR-CHECKLIST-02)", () => {
+    render(<ChecklistPanel score={50} rows={rows} />);
+    expect(screen.getByText(ua.checklist.statusLabel.info)).toBeInTheDocument();
+    expect(screen.queryByText(ua.checklist.statusLabel.gap)).not.toBeInTheDocument();
+  });
+
+  it("forwards locale to the status pills so EN visitors see English labels (NFR-I18N-01)", () => {
+    render(<ChecklistPanel score={50} rows={rows} locale="en" />);
+    // The overclaim-risk row's pill must resolve to the English label, proving
+    // locale threads Panel -> ChecklistRow -> StatusPill on the workspace/history paths.
+    expect(screen.getByText(en.checklist.statusLabel["overclaim-risk"])).toBeInTheDocument();
+    expect(
+      screen.queryByText(ua.checklist.statusLabel["overclaim-risk"]),
+    ).not.toBeInTheDocument();
+  });
+});

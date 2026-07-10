@@ -1,0 +1,35 @@
+{
+  "change": "prod-hotfix-batch",
+  "reviewer": "checker (opus, fresh-context, maker != checker)",
+  "date": "2026-07-10",
+  "commit": "31aad68",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 2,
+  "requirementIds": [
+    "TC-STACK-06", "FR-PAYWALL-02", "FR-PAYWALL-03", "NFR-SEC-01", "NFR-OBS-01",
+    "FR-CV-01", "FR-CV-02", "NFR-I18N-01", "FR-WIZARD-01", "FR-TAILOR-01",
+    "NFR-PERF-04", "NFR-A11Y-01", "TC-PURE-01"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "path": "src/shared/config/env.ts",
+      "line": 100,
+      "requirement": "TC-STACK-06",
+      "problem": "isEmulatorAllowedInProd is a fail-safe integrity relaxation (grants a plan with no real charge). It is well-documented and unit-tested, but nothing prevents it being left set in a real revenue environment; there is no runtime warning log when it is active in production.",
+      "fix": "Optional: console.warn once at startup when NODE_ENV=production and the flag is on, so the no-charge posture is visible in prod logs. Not blocking.",
+      "status": "open"
+    },
+    {
+      "severity": "minor",
+      "path": "src/features/run-tailoring/ui/AnalyzeForm.tsx",
+      "line": 168,
+      "requirement": "FR-WIZARD-01",
+      "problem": "The AnalyzeForm in-flight skeleton previews a checklist card during the analyze pending state. FR-WIZARD-01 says analyze shows score+checklist first then PAUSES for confirmation; the skeleton shape (score block + 3 rows) is a faithful preview and aria-hidden, so no honesty/a11y issue, but the comment cites NFR-OBS-01 progress while the spoken status line lives in the parent form; confirm one role=status is spoken, not zero, during analyze.",
+      "fix": "Verify the analyze phase renders a role=status progress line alongside this decorative skeleton (generate phase already does via GenerateSkeleton). Cosmetic traceability only.",
+      "status": "open"
+    }
+  ]
+}
