@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-09T21:54:45Z",
+  "title": "Design System: Edda",
+  "extensions": {
+    "colorMeta": {
+      "terre-verte": {
+        "role": "primary",
+        "displayName": "Terre Verte",
+        "canonical": "oklch(47.6% 0.036 132.0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.036 132.0)",
+          "oklch(27.0% 0.036 132.0)",
+          "oklch(39.0% 0.036 132.0)",
+          "oklch(51.0% 0.036 132.0)",
+          "oklch(63.0% 0.036 132.0)",
+          "oklch(74.0% 0.036 132.0)",
+          "oklch(85.0% 0.036 132.0)",
+          "oklch(95.0% 0.036 132.0)"
+        ]
+      },
+      "terre-verte-deep": {
+        "role": "primary",
+        "displayName": "Terre Verte Deep",
+        "canonical": "oklch(41.3% 0.033 130.4)",
+        "tonalRamp": [
+          "oklch(15.0% 0.033 130.4)",
+          "oklch(27.0% 0.033 130.4)",
+          "oklch(39.0% 0.033 130.4)",
+          "oklch(51.0% 0.033 130.4)",
+          "oklch(63.0% 0.033 130.4)",
+          "oklch(74.0% 0.033 130.4)",
+          "oklch(85.0% 0.033 130.4)",
+          "oklch(95.0% 0.033 130.4)"
+        ]
+      },
+      "terre-verte-wash": {
+        "role": "primary",
+        "displayName": "Terre Verte Wash",
+        "canonical": "oklch(92.2% 0.020 116.0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.020 116.0)",
+          "oklch(27.0% 0.020 116.0)",
+          "oklch(39.0% 0.020 116.0)",
+          "oklch(51.0% 0.020 116.0)",
+          "oklch(63.0% 0.020 116.0)",
+          "oklch(74.0% 0.020 116.0)",
+          "oklch(85.0% 0.020 116.0)",
+          "oklch(95.0% 0.020 116.0)"
+        ]
+      },
+      "sap-green": {
+        "role": "secondary",
+        "displayName": "Sap Green",
+        "canonical": "oklch(49.7% 0.076 129.7)",
+        "tonalRamp": [
+          "oklch(15.0% 0.076 129.7)",
+          "oklch(27.0% 0.076 129.7)",
+          "oklch(39.0% 0.076 129.7)",
+          "oklch(51.0% 0.076 129.7)",
+          "oklch(63.0% 0.076 129.7)",
+          "oklch(74.0% 0.076 129.7)",
+          "oklch(85.0% 0.076 129.7)",
+          "oklch(95.0% 0.076 129.7)"
+        ]
+      },
+      "orpiment": {
+        "role": "secondary",
+        "displayName": "Orpiment",
+        "canonical": "oklch(50.1% 0.084 84.0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.084 84.0)",
+          "oklch(27.0% 0.084 84.0)",
+          "oklch(39.0% 0.084 84.0)",
+          "oklch(51.0% 0.084 84.0)",
+          "oklch(63.0% 0.084 84.0)",
+          "oklch(74.0% 0.084 84.0)",
+          "oklch(85.0% 0.084 84.0)",
+          "oklch(95.0% 0.084 84.0)"
+        ]
+      },
+      "vellum": {
+        "role": "neutral",
+        "displayName": "Vellum",
+        "canonical": "oklch(94.9% 0.007 88.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 88.6)",
+          "oklch(27.0% 0.007 88.6)",
+          "oklch(39.0% 0.007 88.6)",
+          "oklch(51.0% 0.007 88.6)",
+          "oklch(63.0% 0.007 88.6)",
+          "oklch(74.0% 0.007 88.6)",
+          "oklch(85.0% 0.007 88.6)",
+          "oklch(95.0% 0.007 88.6)"
+        ]
+      },
+      "laid-paper": {
+        "role": "neutral",
+        "displayName": "Laid Paper",
+        "canonical": "oklch(97.0% 0.007 88.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 88.6)",
+          "oklch(27.0% 0.007 88.6)",
+          "oklch(39.0% 0.007 88.6)",
+          "oklch(51.0% 0.007 88.6)",
+          "oklch(63.0% 0.007 88.6)",
+          "oklch(74.0% 0.007 88.6)",
+          "oklch(85.0% 0.007 88.6)",
+          "oklch(95.0% 0.007 88.6)"
+        ]
+      },
+      "blind-tool": {
+        "role": "neutral",
+        "displayName": "Blind Tool",
+        "canonical": "oklch(91.1% 0.016 86.4)",
+        "tonalRamp": [
+          "oklch(15.0% 0.016 86.4)",
+          "oklch(27.0% 0.016 86.4)",
+          "oklch(39.0% 0.016 86.4)",
+          "oklch(51.0% 0.016 86.4)",
+          "oklch(63.0% 0.016 86.4)",
+          "oklch(74.0% 0.016 86.4)",
+          "oklch(85.0% 0.016 86.4)",
+          "oklch(95.0% 0.016 86.4)"
+        ]
+      },
+      "oak-gall": {
+        "role": "neutral",
+        "displayName": "Oak Gall",
+        "canonical": "oklch(28.5% 0.009 88.8)",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 88.8)",
+          "oklch(27.0% 0.009 88.8)",
+          "oklch(39.0% 0.009 88.8)",
+          "oklch(51.0% 0.009 88.8)",
+          "oklch(63.0% 0.009 88.8)",
+          "oklch(74.0% 0.009 88.8)",
+          "oklch(85.0% 0.009 88.8)",
+          "oklch(95.0% 0.009 88.8)"
+        ]
+      },
+      "silverpoint": {
+        "role": "neutral",
+        "displayName": "Silverpoint",
+        "canonical": "oklch(50.0% 0.027 82.0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.027 82.0)",
+          "oklch(27.0% 0.027 82.0)",
+          "oklch(39.0% 0.027 82.0)",
+          "oklch(51.0% 0.027 82.0)",
+          "oklch(63.0% 0.027 82.0)",
+          "oklch(74.0% 0.027 82.0)",
+          "oklch(85.0% 0.027 82.0)",
+          "oklch(95.0% 0.027 82.0)"
+        ]
+      },
+      "ruling": {
+        "role": "neutral",
+        "displayName": "Ruling",
+        "canonical": "oklch(88.0% 0.020 87.5)",
+        "tonalRamp": [
+          "oklch(15.0% 0.020 87.5)",
+          "oklch(27.0% 0.020 87.5)",
+          "oklch(39.0% 0.020 87.5)",
+          "oklch(51.0% 0.020 87.5)",
+          "oklch(63.0% 0.020 87.5)",
+          "oklch(74.0% 0.020 87.5)",
+          "oklch(85.0% 0.020 87.5)",
+          "oklch(95.0% 0.020 87.5)"
+        ]
+      },
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "canonical": "oklch(96.2% 0.009 84.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 84.6)",
+          "oklch(27.0% 0.009 84.6)",
+          "oklch(39.0% 0.009 84.6)",
+          "oklch(51.0% 0.009 84.6)",
+          "oklch(63.0% 0.009 84.6)",
+          "oklch(74.0% 0.009 84.6)",
+          "oklch(85.0% 0.009 84.6)",
+          "oklch(95.0% 0.009 84.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles and the book title on its detail page. Newsreader at 2.25rem, stepping to 3rem at md on book titles only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The Edda wordmark and titles overlaid on cover art."
+      },
+      "title": { "displayName": "Title", "purpose": "Card and panel headings." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The workhorse. Nearly all UI text. Literata at 0.875rem; prose caps at 65-75ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, active nav rows, anything that must read as actionable. Weight carries emphasis, not color."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Machine facts only: ids, versions, byte sizes, page counts, server descriptors, badge counts, sidebar section labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 2px rgb(44 42 37 / 0.04), 0 1px 3px rgb(44 42 37 / 0.05)",
+        "purpose": "Resting shadow on cards and panels. Tinted with the ink color rather than black, so it stays inside the warm palette. 4% and 5% alpha: a whisper."
+      },
+      {
+        "name": "riser",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "The raised segment of a segmented control, and the toggle thumb. Says 'this one sits on top of the track.'"
+      },
+      {
+        "name": "hover",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "The only state-responsive shadow. Applied to interactive cards on hover via transition-shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-standard",
+        "value": "150ms",
+        "purpose": "Default transition duration. Motion conveys state; users are in a task and should not wait for choreography."
+      },
+      {
+        "name": "press-scale",
+        "value": "scale(0.97)",
+        "purpose": "The entire tactile vocabulary of the system. Applied on :active to buttons; suppressed when disabled."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation-duration: 0.001ms; transition-duration: 0.001ms",
+        "purpose": "Global collapse under prefers-reduced-motion: reduce. Both an accessibility requirement and the determinism guarantee for the visual-regression suite."
+      }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "phone", "value": "390px" },
+      { "name": "desktop", "value": "1300px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single forest action. 'Continue reading', 'Connect'. One per screen region.",
+      "html": "<button class=\"ds-btn-primary\">Continue reading</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--color-primary); color: var(--color-on-primary); font-family: var(--font-reading); font-size: 0.875rem; font-weight: 500; padding: 0.625rem 1rem; border: none; border-radius: var(--radius-control); cursor: pointer; transition: background-color 150ms, transform 150ms; } .ds-btn-primary:hover { background: var(--color-primary-strong); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Bordered surface action. 'Cancel', 'Offline', an available extension's 'Install'.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); font-family: var(--font-reading); font-size: 0.875rem; font-weight: 500; padding: 0.625rem 1rem; border-radius: var(--radius-control); cursor: pointer; transition: background-color 150ms, transform 150ms; } .ds-btn-secondary:hover { background: var(--color-sunken); } .ds-btn-secondary:active { transform: scale(0.97); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }"
+    },
+    {
+      "name": "Capability Chip",
+      "kind": "chip",
+      "refersTo": "chip-capability",
+      "description": "Declares a capability the connector actually has. Never clickable.",
+      "html": "<span class=\"ds-chip-capability\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg>Progress sync</span>",
+      "css": ".ds-chip-capability { display: inline-flex; align-items: center; gap: 0.375rem; background: var(--color-active); color: var(--color-primary); border: 1px solid transparent; border-radius: var(--radius-pill); padding: 0.25rem 0.75rem; font-family: var(--font-reading); font-size: 0.875rem; line-height: 1; }"
+    },
+    {
+      "name": "Neutral Chip",
+      "kind": "chip",
+      "refersTo": "chip-neutral",
+      "description": "Metadata pill. '432 pages'. Never carries an action.",
+      "html": "<span class=\"ds-chip-neutral\">432 pages</span>",
+      "css": ".ds-chip-neutral { display: inline-flex; align-items: center; background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); border-radius: var(--radius-pill); padding: 0.25rem 0.75rem; font-family: var(--font-reading); font-size: 0.875rem; line-height: 1; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Raised surface on canvas. Hairline border does the separating; the shadow only softens the edge beneath. Never nested.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Keep reading</h3><p class=\"ds-card-body\">The Long Ships</p></div>",
+      "css": ".ds-card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-card); padding: 1.25rem; box-shadow: var(--shadow-card); transition: box-shadow 150ms; } .ds-card-title { font-family: var(--font-display); font-size: 1.125rem; line-height: 1.375; color: var(--color-ink); margin: 0 0 0.5rem; } .ds-card-body { font-family: var(--font-reading); font-size: 0.875rem; color: var(--color-muted); margin: 0; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Focus shifts the border to the accent and raises a 40% ring. Composite rows use focus-within so the whole row lights up.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"https://komga.local:25600\" />",
+      "css": ".ds-input { width: 100%; background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); border-radius: var(--radius-control); padding: 0.625rem 0.75rem; font-family: var(--font-reading); font-size: 0.875rem; outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: var(--color-muted); } .ds-input:focus { border-color: var(--color-primary); } .ds-input:focus-visible { box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-primary) 40%, transparent); }"
+    },
+    {
+      "name": "Sidebar Link (active)",
+      "kind": "nav",
+      "refersTo": "sidebar-link-active",
+      "description": "The active nav row. Carries aria-current=\"page\" as well as the wash; the badge count is monospace in a Blind Tool well.",
+      "html": "<a class=\"ds-nav-link ds-nav-link--active\" href=\"#\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z\"/></svg><span>Library</span><span class=\"ds-nav-badge\">12</span></a>",
+      "css": ".ds-nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-control); font-family: var(--font-reading); font-size: 0.875rem; color: var(--color-ink); text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-link:hover { background: var(--color-surface); } .ds-nav-link--active { background: var(--color-active); color: var(--color-primary); font-weight: 500; } .ds-nav-link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; } .ds-nav-badge { margin-left: auto; background: var(--color-sunken); color: var(--color-muted); font-family: var(--font-mono); font-size: 0.75rem; padding: 0.125rem 0.375rem; border-radius: 0.375rem; }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "custom",
+      "refersTo": "toggle-on",
+      "description": "ARIA switch. On is the accent; off is a recessed well. The thumb rides on the riser shadow.",
+      "html": "<button class=\"ds-toggle ds-toggle--on\" role=\"switch\" aria-checked=\"true\" aria-label=\"Enable extension\"><span class=\"ds-toggle-thumb\"></span></button>",
+      "css": ".ds-toggle { position: relative; display: inline-flex; align-items: center; height: 1.5rem; width: 2.5rem; padding: 0.125rem; border: none; border-radius: var(--radius-pill); background: var(--color-sunken); cursor: pointer; transition: background-color 150ms; } .ds-toggle--on { background: var(--color-primary); } .ds-toggle-thumb { height: 1.25rem; width: 1.25rem; border-radius: 9999px; background: var(--color-on-primary); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: transform 150ms; } .ds-toggle--on .ds-toggle-thumb { transform: translateX(1rem); } .ds-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; } .ds-toggle:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "refersTo": "progress-bar",
+      "description": "Reading progress. A recessed track (darker) with an accent fill. The one place the accent expresses a quantity.",
+      "html": "<div class=\"ds-progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"64\" aria-label=\"Reading progress\"><div class=\"ds-progress-fill\" style=\"width: 64%\"></div></div>",
+      "css": ".ds-progress { height: 0.375rem; width: 100%; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-sunken); } .ds-progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-active",
+      "description": "Grid/list switch, Paged/Scroll. The container is a recessed well; the selected segment rises out of it as a lighter sheet.",
+      "html": "<div class=\"ds-segmented\" role=\"group\" aria-label=\"View mode\"><button class=\"ds-segment ds-segment--active\" aria-pressed=\"true\">Paged</button><button class=\"ds-segment\" aria-pressed=\"false\">Scroll</button></div>",
+      "css": ".ds-segmented { display: inline-flex; gap: 0.125rem; padding: 0.125rem; border-radius: var(--radius-control); background: var(--color-sunken); } .ds-segment { border: none; background: transparent; color: var(--color-muted); font-family: var(--font-reading); font-size: 0.875rem; padding: 0.375rem 0.75rem; border-radius: calc(var(--radius-control) - 0.25rem); cursor: pointer; transition: color 150ms, background-color 150ms; } .ds-segment:hover { color: var(--color-ink); } .ds-segment--active { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-segment:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Dot",
+      "kind": "custom",
+      "refersTo": "status-dot",
+      "description": "Machine state beside a connected source. Sap Green means reachable and is never used decoratively.",
+      "html": "<span class=\"ds-status-row\"><span class=\"ds-status-dot\" role=\"img\" aria-label=\"Reachable\"></span><span class=\"ds-status-name\">Komga</span><span class=\"ds-status-desc\">komga · localhost:25600</span></span>",
+      "css": ".ds-status-row { display: inline-flex; align-items: baseline; gap: 0.625rem; font-family: var(--font-reading); } .ds-status-dot { display: inline-block; width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 9999px; background: var(--color-status); } .ds-status-name { font-size: 0.875rem; color: var(--color-ink); } .ds-status-desc { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-muted); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Scriptorium",
+    "overview": "A scriptorium is the room where manuscripts are kept, copied, and repaired. It is warm, quiet, and full of paper — and it is also a workshop, with sharp tools laid out in plain sight because the person in the room knows how to use them. Edda is that room. The user self-hosts their own library; they own the server, the files, and the shelf. The interface owes them both the warmth of the reading room and the honesty of the workbench.\n\nThis resolves the system's central tension. Everything a reader touches is soft: warm parchment surfaces, serif type, generous spacing, corners rounded like a well-handled board cover. Everything a keeper touches is exact: monospace for ids, versions, byte counts and server descriptors; a status dot that says Reachable and means it; capabilities named rather than silently degraded. Neither half apologizes for the other. Warmth is not a disguise for the machinery, and legible machinery is not a license for visual neglect.\n\nThe name is not incidental. The Edda is a collection of medieval Icelandic manuscripts, and the palette is that fact made literal: iron-gall ink on vellum, ruled with faint lines, with a single green-earth pigment for anything the user can act on. This system explicitly rejects the Kindle / Kobo web reader — store-first chrome that competes with the book — and the Calibre desktop UI — engineer-first density with no visual care. The second is the more dangerous of the two, because the audience overlaps almost exactly.",
+    "keyCharacteristics": [
+      "Warm, near-neutral parchment ground; depth by lightness, never by shadow.",
+      "Exactly one action color. Its rarity is what makes it read as 'you may act here.'",
+      "Two serifs on a display/text contrast axis, plus monospace as a third, strictly semantic voice.",
+      "Flat at rest. Hairline rules do the work borders normally ask shadows to do.",
+      "Fixed rem type scale — this is product UI, not a landing page. Nothing is fluid.",
+      "The book is never styled by this system. Chrome stops at the iframe boundary."
+    ],
+    "rules": [
+      {
+        "name": "The One Green Rule",
+        "body": "Terre Verte is the only accent in the system. It marks action, selection, and focus — never decoration, never a mood, never a section divider. A screen with two accent colors has one too many. If a new state needs a color, the answer is almost always a neutral plus a shape change.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Palettes Rule",
+        "body": "Chrome colors live in src/app/styles/main.css under @theme. Book colors live in readium-css inside the reader frame. These never cross. No Tailwind class may style the page content, and no reading-theme value may leak into the app shell. The origin isolation of the reader frame is a security boundary; treat the palette split as its visual counterpart.",
+        "section": "colors"
+      },
+      {
+        "name": "The Darker-Means-Deeper Rule",
+        "body": "Elevation in this system is lightness. Raised surfaces go lighter (Laid Paper); recessed wells go darker (Blind Tool). Never invert this to make something 'pop.'",
+        "section": "colors"
+      },
+      {
+        "name": "The Monospace-Means-Machine Rule",
+        "body": "Monospace is reserved for facts the machine produced and the user may need to read character by character: komga · localhost:25600, v1.2.0, 432 pages, 14.2 MB. It is never used for prose, never for emphasis, and never for style. This rule is the 'legible machinery' principle expressed in type — it is how the interface tells a self-hoster which strings are load-bearing.",
+        "section": "typography"
+      },
+      {
+        "name": "The 14px Test",
+        "body": "Newsreader and Literata are both serifs, which is exactly the pairing hazard the rules warn about. They are distinguishable because they operate at different sizes. Newsreader below 1rem loses its contrast and starts to look like a slightly wrong Literata. Audit test: set a Newsreader string at 0.875rem next to a Literata one; if you cannot tell them apart at a glance, the pairing has failed and that string should be Literata.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fixed-Scale Rule",
+        "body": "This is product UI. The scale is fixed rem, never clamp(). A heading that shrinks inside a sidebar looks broken, not responsive. Book titles step text-4xl → md:text-5xl at a breakpoint, and that is the only size change in the system.",
+        "section": "typography"
+      },
+      {
+        "name": "The Whisper Rule",
+        "body": "If you notice the shadow before you notice the border, the shadow is too dark. The hairline is the primary separator; the shadow only softens the edge beneath it.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "Surfaces are flat until the user interacts. No element is born elevated. Shadow is a response — hover, press — not a decoration applied at render.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do define every chrome color in src/app/styles/main.css under @theme, and reference it by token. The file's own comment is the law: 'Every chrome color lives here; components reference tokens (no ad-hoc hex elsewhere).'",
+      "Do reserve Terre Verte (#55614c) for action, selection, and focus. See The One Green Rule.",
+      "Do use monospace for machine facts — ids, versions, byte sizes, page counts — and nothing else.",
+      "Do go lighter to raise a surface (#f7f5f0) and darker to recess one (#e6e1d6).",
+      "Do separate surfaces with a 1px Ruling (#ddd7c9) hairline first; reach for shadow only to soften the edge underneath.",
+      "Do keep the type scale fixed in rem. Product UI, not a landing page.",
+      "Do give every interactive control all seven states: default, hover, focus, active, disabled, loading, error. Shipping four of seven is shipping a broken control.",
+      "Do let the global :where(...):focus-visible ring stand. It is written at zero specificity so a component may restyle the indicator but can never accidentally remove it.",
+      "Do teach the interface in empty states. 'No sources yet' should explain how to add one."
+    ],
+    "donts": [
+      "Don't build anything that resembles the Kindle / Kobo web reader: no store surfaces, no upsells, no recommendations, no chrome competing with the book. The user already owns every book here.",
+      "Don't slide toward the Calibre desktop UI: no cramped toolbars, no dialogs stacked on dialogs, no surfacing every option at equal weight. A technical user still deserves a considered interface. Legible machinery is not a license for visual neglect.",
+      "Don't let chrome styling cross into the book. No Tailwind class may style page content; the reader frame is a separate origin and a separate palette. See The Two Palettes Rule.",
+      "Don't define a reading-theme color in more than one place. The four themes are currently duplicated between reader-frame/reader-css.ts and components/reader/DisplayPanel.vue — a swatch that disagrees with the CSS it previews is a lie. Extract a shared constant.",
+      "Don't introduce a second accent color. If a new state needs distinguishing, change the shape, the weight, or the neutral — not the hue.",
+      "Don't use text-white, bg-white, or a raw hex anywhere except a cover overlay, where the background is unknowable artwork.",
+      "Don't use clamp() for UI type. A heading that resizes inside a sidebar looks broken.",
+      "Don't set Newsreader below 1rem in body contexts. Apply The 14px Test.",
+      "Don't nest cards. Ever.",
+      "Don't animate anything that doesn't convey state. No orchestrated entrances; the app loads into a task.",
+      "Don't reach for a modal first. The capability-missing sheet earns its modal because it interrupts a genuinely blocked action; almost nothing else does.",
+      "Don't ship a shadow you can see before you see the border."
+    ]
+  }
+}

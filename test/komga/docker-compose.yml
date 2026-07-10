@@ -1,0 +1,62 @@
+# Komga test server for Edda's `connector-komga` development & e2e.
+#
+# Brings up Komga pre-loaded with the repo's ../../test-epubs (mounted read-only)
+# and a non-admin "reader" account, so the connector has a real server + real
+# books to talk to. The `provision` sidecar does the seeding via Komga's REST API
+# and is idempotent (safe to re-run).
+#
+#   docker compose -f test/komga/docker-compose.yml up -d        # start + provision
+#   docker compose -f test/komga/docker-compose.yml logs -f provision
+#   docker compose -f test/komga/docker-compose.yml down         # stop (keeps Komga DB)
+#   docker compose -f test/komga/docker-compose.yml down -v      # stop + wipe Komga DB
+#
+# Copy .env.example -> .env (in this dir) to override credentials / port / image.
+# Convenience: `pnpm komga:up`, `pnpm komga:provision`, `pnpm komga:down`, `pnpm komga:reset`.
+
+name: edda-komga-test
+
+services:
+  komga:
+    image: ${KOMGA_IMAGE:-gotson/komga:1.24.4}
+    container_name: edda-komga
+    environment:
+      SERVER_PORT: '25600'
+      TZ: ${TZ:-UTC}
+      # CORS is a HOST concern (not the plugin's): for browser `fetch`, allowlist the app origin.
+      # Default covers Vite's dev (:5173) + preview (:4173) AND the reader-frame origin (:5174, ADR-013
+      # — book content renders on a separate origin, so its fetches are cross-origin too); override in
+      # test/komga/.env. (Node integration tests need none of this — they run without CORS. See README.)
+      KOMGA_CORS_ALLOWED_ORIGINS: ${KOMGA_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5174,http://localhost:4173}
+    volumes:
+      - komga-config:/config
+      # the repo's sample EPUBs, mounted read-only as the library root.
+      # relative path is resolved against THIS file's dir -> repo-root/test-epubs.
+      - ../../test-epubs:/data/books:ro
+    ports:
+      - '${KOMGA_PORT:-25600}:25600'
+    restart: unless-stopped
+
+  # One-shot: waits for Komga, claims it (creates the admin), creates the reader
+  # test user, then creates + scans the library over the mounted EPUBs.
+  # Exits 0 once the books are indexed. Re-running is a no-op.
+  provision:
+    image: ${CURL_IMAGE:-curlimages/curl:8.11.1}
+    container_name: edda-komga-provision
+    depends_on:
+      - komga
+    environment:
+      KOMGA_URL: http://komga:25600
+      KOMGA_ADMIN_EMAIL: ${KOMGA_ADMIN_EMAIL:-admin@edda.test}
+      KOMGA_ADMIN_PASSWORD: ${KOMGA_ADMIN_PASSWORD:-edda-admin-pw}
+      KOMGA_USER_EMAIL: ${KOMGA_USER_EMAIL:-reader@edda.test}
+      KOMGA_USER_PASSWORD: ${KOMGA_USER_PASSWORD:-edda-reader-pw}
+      KOMGA_LIBRARY_NAME: ${KOMGA_LIBRARY_NAME:-Test EPUBs}
+      KOMGA_LIBRARY_ROOT: /data/books
+      KOMGA_EXPECTED_BOOKS: '2'
+    volumes:
+      - ./provision.sh:/provision.sh:ro
+    entrypoint: ['sh', '/provision.sh']
+    restart: 'no'
+
+volumes:
+  komga-config:

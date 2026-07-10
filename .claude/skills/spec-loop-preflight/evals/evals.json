@@ -1,0 +1,29 @@
+{
+  "skill_name": "spec-loop-preflight",
+  "evals": [
+    {
+      "id": 0,
+      "name": "empty-backlog-stops",
+      "prompt": "Before I kick off the implementation loop, sanity-check the OpenSpec backlog for me: validate that the pending changes are sound and implementable, set up the run, and give me a go/no-go. Don't start building.",
+      "expected_output": "Runs the Step-0 assessment (loop-status.sh), detects there are NO pending OpenSpec changes, and STOPS to tell the user to propose one (e.g. /opsx:propose) — there is nothing to validate. Does NOT invent/auto-create a spec, does NOT fabricate a manifest or STATE work entries, and does NOT mint a throwaway run just to have one.",
+      "fixture": "repo copy with an empty OpenSpec backlog (no active changes)",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "dangling-contract-flagged",
+      "prompt": "Preflight the spec backlog before we build it — validate every pending change, check they actually trace together (no spec depending on something nothing provides), plan them, and set up the loop run. Stop and show me a go/no-go when you're done.",
+      "expected_output": "Selects/mints the run under loop/runs/<run-id>/ with a loop/latest pointer (never touching source or specs); seeds STATE + one task per pending change; builds the cross-spec dependency map; spawns a spec-loop-planner per change (read-only, concurrent) for Gate 0; writes loop/latest/manifest.md with the dependency map + a per-spec verdict summary. It FLAGS the dangling contract — the change that consumes a datum/route/contract no spec (archived or pending) provides — as a GAP in both the verdict summary and that spec's traceability, and surfaces it as a human blocker. Then STOPS for a go/no-go review and hands off to spec-loop. Does NOT implement code, mark tasks.md [x], or modify anything under openspec/ or src/.",
+      "fixture": "repo copy with a multi-spec backlog where one pending change consumes an unprovided datum (a dangling contract) and the others trace cleanly",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "midflight-run-syncs",
+      "prompt": "I've already got a loop run going and I just added a spec and tweaked another — re-preflight the backlog and update the run before I keep going.",
+      "expected_output": "Reads loop/latest, detects the run is MID-FLIGHT (its STATE has specs not yet done/blocked), and SYNCS into that same run rather than minting a new one: it re-validates only the new/changed specs, refreshes loop/latest/manifest.md in place, and reconciles STATE + the task list (idempotent) — added/changed/removed specs. It does NOT mint a second run, does NOT repoint loop/latest at a fresh run, and does NOT clobber the in-flight run's prior manifest/evidence. Stops for review; does not implement.",
+      "fixture": "repo copy with a mid-flight loop/latest (STATE has in-progress rows) plus one newly added spec and one edited spec",
+      "files": []
+    }
+  ]
+}

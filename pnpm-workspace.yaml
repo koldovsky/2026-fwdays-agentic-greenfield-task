@@ -1,0 +1,24 @@
+# pnpm settings (pnpm 11 reads workspace-level config from here).
+# stack.md: single-package now; add `packages:` when the native target lands.
+
+# @readium/shared resolves one transitive (@edrlab/thorium-locales) from a git repo.
+# pnpm blocks git-sourced subdependencies by default; allow it for this required core dep.
+blockExoticSubdeps: false
+
+# unrs-resolver (native, used by eslint-import-resolver-typescript) compiles a binary on install.
+allowBuilds:
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@fallow-cli/darwin-arm64@2.103.0'
+  - '@fallow-cli/darwin-x64@2.103.0'
+  - '@fallow-cli/linux-arm64-gnu@2.103.0'
+  - '@fallow-cli/linux-arm64-musl@2.103.0'
+  - '@fallow-cli/linux-x64-gnu@2.103.0'
+  - '@fallow-cli/linux-x64-musl@2.103.0'
+  - '@fallow-cli/win32-arm64-msvc@2.103.0'
+  - '@fallow-cli/win32-x64-msvc@2.103.0'
+  - eslint-plugin-import-x@4.17.1
+  - fallow@2.103.0
+  - pdfjs-dist@6.1.200
+  - prettier@3.9.1

@@ -1,0 +1,7 @@
+{
+  // Dependency vulnerability gate (audit-ci over `pnpm audit`).
+  // Fail the build on moderate-or-higher advisories. Add reviewed, accepted
+  // advisory IDs to "allowlist" with a comment when a fix is unavailable.
+  "moderate": true,
+  "allowlist": [],
+}
