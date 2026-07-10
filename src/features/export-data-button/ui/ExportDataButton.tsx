@@ -18,7 +18,8 @@ export interface ExportDataButtonProps {
 
 type Phase = "idle" | "pending" | "error";
 
-const EXPORT_FILENAME = "vouch-export.json";
+// The export is now a human-readable PDF (NFR-GDPR-01, 2026-07-09 decision).
+const EXPORT_FILENAME = "vouch-export.pdf";
 
 export function ExportDataButton({ locale = "ua" }: ExportDataButtonProps) {
   const copy = t(locale).profile;

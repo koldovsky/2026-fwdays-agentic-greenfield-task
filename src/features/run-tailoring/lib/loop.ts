@@ -471,6 +471,12 @@ export type GenerationEvent =
   | { readonly type: "status"; readonly phase: TailorRunPhase }
   | { readonly type: "step"; readonly skill: SkillName }
   | { readonly type: "result"; readonly result: TailoringRunResult }
+  // Route-emitted (not produced by the pure phase generator): the persisted
+  // pending-row id for the authenticated caller, so the client can pass it to the
+  // export request for the server-side membership honesty gate
+  // (server-side-export-gate, T5 #8, BC-HONESTY-02). The generator itself never
+  // yields this — it is injected by the route after createPending.
+  | { readonly type: "persisted"; readonly tailoringId: string }
   | { readonly type: "error"; readonly code: TailorErrorCode };
 
 /**

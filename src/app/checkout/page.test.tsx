@@ -22,6 +22,11 @@ vi.mock("@/views/checkout", () => ({
 }));
 vi.mock("@/widgets/top-bar", () => ({ TopBar: () => <div data-testid="top-bar" /> }));
 
+// auth() is now called by the page (P0 fix: TopBar session prop) — stub it so
+// the 404-matrix tests stay focused on the token guard, not the session read.
+const auth = vi.hoisted(() => vi.fn(() => Promise.resolve(null)));
+vi.mock("@/app/auth", () => ({ auth }));
+
 import CheckoutPage from "./page";
 
 function searchParams(token?: string) {

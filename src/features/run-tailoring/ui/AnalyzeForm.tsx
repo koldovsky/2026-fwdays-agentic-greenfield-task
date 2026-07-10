@@ -30,6 +30,13 @@ export interface AnalyzeFormProps {
   /** Controlled CV textarea value (lifted by the view for the upload path, FR-CV-01/03). */
   readonly cvText: string;
   readonly onCvTextChange: (text: string) => void;
+  /**
+   * Server-resolved paid entitlement (FR-PAYWALL-01). When true the résumé text
+   * field is hidden — a premium user supplies their CV via the enabled
+   * drag&drop upload zone, whose extracted text flows in through `cvText`. The
+   * JD field, honeypot, and Analyze button are unchanged. Never client-derived.
+   */
+  readonly paid?: boolean;
 }
 
 const fieldClass =
@@ -38,7 +45,13 @@ const fieldClass =
 
 const labelClass = "block text-sm font-semibold text-ink";
 
-export function AnalyzeForm({ locale = "ua", onAnalysis, cvText, onCvTextChange }: AnalyzeFormProps) {
+export function AnalyzeForm({
+  locale = "ua",
+  onAnalysis,
+  cvText,
+  onCvTextChange,
+  paid = false,
+}: AnalyzeFormProps) {
   const copy = t(locale);
   const [phase, setPhase] = useState<TailorRunPhase | null>(null);
   const [error, setError] = useState<TailorErrorCode | null>(null);
@@ -47,7 +60,9 @@ export function AnalyzeForm({ locale = "ua", onAnalysis, cvText, onCvTextChange 
   async function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     const form = new FormData(formEvent.currentTarget);
-    const cv = String(form.get("cvText") ?? "");
+    // For a paid user the résumé textarea isn't rendered, so read the CV from
+    // the controlled prop (fed by the upload zone) rather than the form field.
+    const cv = paid ? cvText : String(form.get("cvText") ?? "");
     const jdText = String(form.get("jdText") ?? "");
 
     // Honeypot (NFR-SEC-04): a filled value means a scripted submitter — silently
@@ -91,17 +106,23 @@ export function AnalyzeForm({ locale = "ua", onAnalysis, cvText, onCvTextChange 
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <label className={labelClass}>
-        {copy.workspace.cvLabel}
-        <textarea
-          name="cvText"
-          rows={8}
-          required
-          className={`mt-1 ${fieldClass}`}
-          value={cvText}
-          onChange={(e) => onCvTextChange(e.target.value)}
-        />
-      </label>
+      {/* Résumé text field: free/anon paste path (FR-CV-03). Hidden for a paid
+          user, who uploads their CV via the enabled drag&drop zone; that zone's
+          extracted text flows in through the `cvText` prop and is read in
+          handleSubmit, so the CV still reaches analysis on the premium path. */}
+      {!paid && (
+        <label className={labelClass}>
+          {copy.workspace.cvLabel}
+          <textarea
+            name="cvText"
+            rows={8}
+            required
+            className={`mt-1 ${fieldClass}`}
+            value={cvText}
+            onChange={(e) => onCvTextChange(e.target.value)}
+          />
+        </label>
+      )}
 
       <label className={labelClass}>
         {copy.workspace.jdLabel}
@@ -132,7 +153,11 @@ export function AnalyzeForm({ locale = "ua", onAnalysis, cvText, onCvTextChange 
         </label>
       </div>
 
-      <Button type="submit" size="md" disabled={pending}>
+      <Button
+        type="submit"
+        size="md"
+        disabled={pending || (paid && cvText.trim() === "")}
+      >
         {copy.wizard.analyzeAction}
       </Button>
     </form>

@@ -10,7 +10,7 @@
 // call), so every test uses its own IP to stay isolated.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT } from "@/entities/usage-counter";
+import { FREE_TAILORING_LIMIT } from "@/entities/usage-counter";
 import type { GenerationEvent } from "@/features/run-tailoring";
 import { createFakeProvider, fakeGeneration, fakeGrounding } from "@/shared/lib/llm/testing/fake-provider";
 
@@ -120,7 +120,10 @@ const PAID_SUBSCRIPTION = {
 };
 
 describe("POST /api/tailor/generate", () => {
+  // Authenticated-only (user decision 2026-07-09): tests use an authenticated
+  // free user as the baseline to reach the streaming path.
   it("streams NDJSON events ending in a result (FR-WIZARD-01/04)", async () => {
+    currentUserId.mockResolvedValue("user-authed");
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(VALID_BODY, "203.0.113.30"));
@@ -150,6 +153,10 @@ describe("POST /api/tailor/generate", () => {
   });
 
   it("fails calm on a malformed cvProfile/requirements without calling the LLM, and refunds the reservation (NFR-OBS-01)", async () => {
+    // Reconciled (2026-07-09): the test now uses an authenticated free user.
+    // The retry assertion previously depended on the anon per-IP window; it
+    // now uses a fresh authenticated user id so the reserve gate admits it.
+    currentUserId.mockResolvedValue("user-malformed");
     resolveLlmProvider.mockReturnValue(groundedProvider());
     const ip = "203.0.113.31";
 
@@ -161,7 +168,8 @@ describe("POST /api/tailor/generate", () => {
     expect(resolveLlmProvider).not.toHaveBeenCalled();
 
     // The malformed attempt's reservation was released, so the same
-    // anonymous IP (ANON_TAILORING_LIMIT === 1) can still succeed.
+    // authenticated user can still succeed on a well-formed retry.
+    usageCounterRepo.reserve.mockResolvedValue(true); // reset after the release
     const retry = await POST(post(VALID_BODY, ip));
     const retryEvents = await readNdjson(retry);
     expect(retryEvents.find((e) => e.type === "result")).toBeDefined();
@@ -169,46 +177,31 @@ describe("POST /api/tailor/generate", () => {
 });
 
 describe("POST /api/tailor/generate gating (NFR-COST-02, NFR-SEC-04)", () => {
-  it("blocks an anonymous second run from the same IP with a calm rate_limited stream", async () => {
-    resolveLlmProvider.mockReturnValue(groundedProvider());
-    const ip = "198.51.100.40";
-    const first = await POST(post(VALID_BODY, ip));
-    expect((await readNdjson(first)).find((e) => e.type === "result")).toBeDefined();
+  // Reconciled (2026-07-09): anonymous callers are rejected with 401 before
+  // reaching the per-IP window. Detailed 401 assertions live in
+  // generate/route.auth.test.ts. Tests below cover the per-account free logic.
 
-    resolveLlmProvider.mockClear();
-    const second = await POST(post(VALID_BODY, ip));
-
-    expect(second.status).toBe(200);
-    const events = await readNdjson(second);
-    expect(events).toContainEqual({ type: "error", code: "rate_limited" });
-    expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
-    expect(events.find((e) => e.type === "result")).toBeUndefined();
+  it("rejects an anonymous caller outright with 401 (NFR-SEC-04, 2026-07-09)", async () => {
+    const res = await POST(post(VALID_BODY, "198.51.100.40"));
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
     expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
-  it("caps concurrent anonymous requests from the same IP at the limit", async () => {
-    resolveLlmProvider.mockReturnValue(groundedProvider());
+  it("anonymous concurrent requests all receive 401 (auth gate fires before any throttle)", async () => {
     const ip = "198.51.100.41";
-
     const responses = await Promise.all(Array.from({ length: 5 }, () => POST(post(VALID_BODY, ip))));
-    const allEvents = await Promise.all(responses.map(readNdjson));
-    const successCount = allEvents.filter((events) => events.some((e) => e.type === "result")).length;
-
-    expect(successCount).toBe(ANON_TAILORING_LIMIT);
+    for (const res of responses) {
+      expect(res.status).toBe(401);
+    }
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
-  it("releases the anonymous reservation on a failed run and lets a retry succeed (FR-TAILOR-03)", async () => {
-    resolveLlmProvider.mockImplementation(() => {
-      throw new Error("boom");
-    });
-    const ip = "198.51.100.42";
-    const failed = await POST(post(VALID_BODY, ip));
-    expect(await readNdjson(failed)).toContainEqual({ type: "error", code: "failed" });
-
-    resolveLlmProvider.mockReturnValue(groundedProvider());
-    const retry = await POST(post(VALID_BODY, ip));
-    const events = await readNdjson(retry);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
+  it("an anonymous failed run returns 401, not a coded failure event (auth gate fires first)", async () => {
+    resolveLlmProvider.mockImplementation(() => { throw new Error("boom"); });
+    const res = await POST(post(VALID_BODY, "198.51.100.42"));
+    expect(res.status).toBe(401);
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
   it("blocks a logged-in free user at the lifetime limit before the LLM", async () => {
@@ -277,15 +270,17 @@ describe("POST /api/tailor/generate gating (NFR-COST-02, NFR-SEC-04)", () => {
     expect(usageCounterRepo.increment).toHaveBeenCalledWith("user-paid");
   });
 
-  it("treats a broken session read as anonymous instead of failing (NFR-OBS-01)", async () => {
+  it("treats a broken session read as anonymous and returns 401 (NFR-OBS-01, 2026-07-09)", async () => {
+    // A session read error degrades to null userId, which is rejected 401 —
+    // the prior behavior (admitted on the anonymous per-IP window) is gone.
     currentUserId.mockRejectedValue(new Error("AUTH_SECRET is not set"));
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(VALID_BODY, "198.51.100.47"));
 
-    expect(res.status).toBe(200);
-    const events = await readNdjson(res);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
     expect(usageCounterRepo.reserve).not.toHaveBeenCalled();
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
   });
@@ -317,6 +312,42 @@ describe("POST /api/tailor/generate history persistence (add-tailoring-history, 
     expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
 
+  // server-side-export-gate (T5 #8, BC-HONESTY-02): the route hands the
+  // persisted pending-row id to the client as a `persisted` event so the export
+  // request can later prove membership against it. Must carry the SAME id
+  // createPending returned, and arrive BEFORE the terminal `result` event so
+  // the client has it in hand before the export step ever renders.
+  it("emits a `persisted` event carrying the createPending id, before the terminal result", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue("t-pending-xyz");
+
+    const events = await readNdjson(await POST(post(VALID_BODY, "198.51.100.63")));
+
+    const persistedIndex = events.findIndex((e) => e.type === "persisted");
+    const resultIndex = events.findIndex((e) => e.type === "result");
+    expect(persistedIndex).toBeGreaterThanOrEqual(0);
+    expect(events[persistedIndex]).toEqual({ type: "persisted", tailoringId: "t-pending-xyz" });
+    expect(resultIndex).toBeGreaterThan(persistedIndex);
+  });
+
+  // When persistence is best-effort-skipped (createPending resolves null, e.g.
+  // an anonymous-shaped edge or a swallowed pre-LLM failure), the route must
+  // NOT fabricate a `persisted` event — the client then falls back to
+  // shape-only export validation (non-breaking).
+  it("emits no `persisted` event when createPending yields no row id", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue(null);
+
+    const events = await readNdjson(await POST(post(VALID_BODY, "198.51.100.64")));
+
+    expect(events.some((e) => e.type === "persisted")).toBe(false);
+    expect(events.find((e) => e.type === "result")).toBeDefined();
+  });
+
   // persist-tailoring-lifecycle: persistence is now for ALL logged-in users,
   // including free users — the old paid-only guard is removed (FR-TAILOR-04).
   it("persists history for a logged-in free user via createPending+updateStatus", async () => {
@@ -337,14 +368,15 @@ describe("POST /api/tailor/generate history persistence (add-tailoring-history, 
     expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
 
-  // persist-tailoring-lifecycle: anonymous runs (no userId) never create a
-  // pending row — persistence requires a userId for ownership.
-  it("does not persist history for an anonymous run", async () => {
+  // Reconciled (2026-07-09): anonymous runs now return 401 instead of reaching
+  // the stream path — persistence is moot because the route short-circuits.
+  it("does not persist history for an anonymous caller (rejected 401 before the stream, NFR-SEC-04)", async () => {
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(VALID_BODY, "198.51.100.62"));
-    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
 
+    // 401 means the stream was never opened and no persistence attempt was made.
+    expect(res.status).toBe(401);
     expect(tailoringRepo.createPending).not.toHaveBeenCalled();
     expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
@@ -404,16 +436,18 @@ describe("POST /api/tailor/generate PDF attachment (add-premium-pdf-attach T5)",
     }
   });
 
-  it("anonymous caller: an attached PDF is ignored, run degrades to text-only (FR-PAYWALL-02)", async () => {
+  it("anonymous caller: rejected with 401 — PDF never reaches generation (NFR-SEC-04, 2026-07-09)", async () => {
+    // Reconciled: anonymous is rejected at the auth gate before the stream opens;
+    // the attached PDF never reaches generation (even text-only degradation is
+    // now moot because the caller is rejected entirely).
     const provider = groundedProvider();
     resolveLlmProvider.mockReturnValue(provider);
 
     const res = await POST(post({ ...VALID_BODY, attachment: PDF_ATTACHMENT }, "198.51.100.71"));
-    expect((await readNdjson(res)).find((e) => e.type === "result")).toBeDefined();
 
-    expect(userAttachmentsOf(provider, "generation")[0]).toBeUndefined();
-    const genCall = provider.calls.find((c) => c.phase === "generation");
-    expect(genCall?.payload).not.toContain("Оригінал резюме (PDF)");
+    expect(res.status).toBe(401);
+    // The provider was never called — no generation, no attachment processing.
+    expect(provider.calls).toHaveLength(0);
   });
 
   it("logged-in free caller: an attached PDF is ignored (server-side entitlement, not a client flag)", async () => {

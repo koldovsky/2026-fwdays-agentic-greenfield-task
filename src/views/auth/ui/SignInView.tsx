@@ -8,14 +8,20 @@ import { t, type Locale } from "@/shared/lib/i18n";
 export interface SignInViewProps {
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
+  /**
+   * Post-auth destination, already open-redirect-guarded by the page (a
+   * same-origin relative path). Forwarded to the form; omitted → the form's
+   * own /tailor default applies.
+   */
+  readonly redirectTo?: string;
 }
 
-export function SignInView({ locale = "ua" }: SignInViewProps) {
+export function SignInView({ locale = "ua", redirectTo }: SignInViewProps) {
   const copy = t(locale);
   return (
     <section className="mx-auto w-full max-w-md">
       <div className="rounded-xl border border-hairline bg-surface-card p-6 shadow-card sm:p-8">
-        <SignInForm locale={locale} />
+        <SignInForm locale={locale} {...(redirectTo !== undefined ? { redirectTo } : {})} />
       </div>
       <p className="mt-4 text-center text-sm text-ink-soft">{copy.auth.lead}</p>
     </section>

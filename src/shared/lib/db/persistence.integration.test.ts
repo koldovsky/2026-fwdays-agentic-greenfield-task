@@ -4,33 +4,28 @@
 // ciphertext and decrypts back (NFR-SEC-01), and DELETE FROM users cascades to
 // cv_profiles (NFR-GDPR-02, FR-CV-05).
 import { randomBytes } from "node:crypto";
-import { PGlite } from "@electric-sql/pglite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import type { CvProfile } from "@/shared/lib/scoring";
 import { createCvProfileRepo } from "./cv-profile-repo";
 import { runMigrations } from "./migrate";
 import type { Queryable } from "./port";
+import { makeTestDb, type TestDb } from "./test-db";
 import { createTailoringRepo } from "./tailoring-repo";
 import { createUsageCounterRepo } from "./usage-counter-repo";
-
-function adapter(pg: PGlite): Queryable {
-  return {
-    async query<Row>(sql: string, params?: readonly unknown[]) {
-      const res = await pg.query<Row>(sql, params ? [...params] : undefined);
-      return { rows: res.rows };
-    },
-  };
-}
 
 const key = randomBytes(32);
 const profile: CvProfile = { skills: ["react", "node.js"], sentences: ["Built an API"] };
 const rawText = "Ada Lovelace — React Native engineer, 7 років досвіду";
 
 let db: Queryable;
+let t: TestDb;
 
 beforeAll(async () => {
-  db = adapter(new PGlite());
+  t = await makeTestDb();
+  db = t.db;
 }, 30_000);
+
+afterAll(() => t.close());
 
 describe("migrations", () => {
   it("apply the init migration, then are idempotent", async () => {

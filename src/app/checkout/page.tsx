@@ -7,6 +7,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { auth } from "@/app/auth";
 import { getPaymentsWebhookSecret, isPaymentsEmulatorEnabled } from "@/shared/config";
 import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { verifyCheckoutToken } from "@/shared/lib/payments";
@@ -41,9 +42,16 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
   // Resolve locale only once past the 404 guards (no cookie read on 404 paths).
   const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  // Resolve the session like the sibling app-layer routes (/tailor,
+  // /account/billing) so the top bar shows signed-in vs anonymous state
+  // instead of always falling back to the anonymous "Sign in" branch. This is
+  // display-only: the write path still trusts the HMAC-signed token, so no
+  // blocking token-vs-session IDOR check is added here (a hard check would
+  // regress completion when the auth cookie is absent). Follow-up noted.
+  const authSession = await auth();
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar locale={locale} />
+      <TopBar user={authSession?.user ?? null} locale={locale} />
       <main className="flex flex-1 justify-center px-6 py-12">
         <CheckoutView locale={locale} plan={session.plan} returnTo={session.returnTo} token={raw} />
       </main>

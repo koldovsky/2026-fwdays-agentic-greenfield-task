@@ -47,6 +47,23 @@ describe("Pricing — plan names and prices (task 5.3, FR-SALES-03)", () => {
   });
 });
 
+// fix-faq-and-privacy-accuracy: the free cadence copy must read "1 tailoring"
+// (FREE_TAILORING_LIMIT is 1, per gate-tailor-and-tier-states) so "first
+// tailoring is free" stays literally true (BC-HONESTY-01).
+describe("Pricing — free cadence matches the 1-tailoring limit (fix-faq-and-privacy-accuracy)", () => {
+  it("EN: free plan cadence reads '1 tailoring'", () => {
+    render(<Pricing locale="en" />);
+    expect(en.landing.pricing.free.cadence).toMatch(/1 tailoring/i);
+    expect(screen.getByText(en.landing.pricing.free.cadence)).toBeInTheDocument();
+  });
+
+  it("UA: free plan cadence reads '1 адаптація'", () => {
+    render(<Pricing locale="ua" />);
+    expect(ua.landing.pricing.free.cadence).toMatch(/1 адаптація/i);
+    expect(screen.getByText(ua.landing.pricing.free.cadence)).toBeInTheDocument();
+  });
+});
+
 describe("Pricing — Ultra is the only featured card (task 5.3)", () => {
   it("Ultra card has the inverted (bg-ink) treatment — only one such card", () => {
     render(<Pricing locale="en" />);

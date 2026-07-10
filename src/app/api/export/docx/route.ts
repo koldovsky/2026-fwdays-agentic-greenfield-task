@@ -8,16 +8,21 @@
 // non-paid caller (anonymous or free) gets 402, never a render.
 //
 // CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): same as /api/export/pdf —
-// the body is shape-validated but the section/bullet TEXT is client-authored, where
-// buildExportDocument applies the includedInExport honesty gate; the server renders
-// it verbatim. Accepted (self-authored export of the candidate's own resume; same
-// boundary as the flat-bullets path). Defense-in-depth follow-up in docs/current-state.md.
+// the body is shape-validated but the section/bullet TEXT is client-authored.
+// enforceExportGrounding requires every bullet text to be a MEMBER of the caller's
+// persisted, complete tailoring so a crafted POST cannot inject fabricated text.
+// The gate is MANDATORY for a bullet-bearing export (caller past the paywall is
+// always authed+paid): omitting `tailoringId` is rejected `missing_tailoring` (400),
+// not waved through to shape-only validation (harden-export-gate, T5 #8). Membership,
+// not an `included` filter, so re-included overclaim-risk bullets (FR-BULLETS-02)
+// still export. A bulletless document has nothing to ground.
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";
 import { createSubscriptionRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 
+import { enforceExportGrounding, groundingErrorResponse } from "../lib/enforce-grounding";
 import { renderResumeDocx } from "./resume-docx";
 
 export const runtime = "nodejs";
@@ -124,6 +129,27 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (!paid) {
     return Response.json({ error: "payment_required" }, { status: 402 });
+  }
+
+  // Server-side honesty gate (harden-export-gate, T5 #8, BC-HONESTY-02,
+  // NFR-SEC-04). Same contract as /api/export/pdf: runs AFTER the paywall (so
+  // `userId` is non-null), every bullet text in `doc` MUST be a member of the
+  // caller's persisted, complete tailoring, and a bullet-bearing export with no
+  // valid `tailoringId` is rejected (`missing_tailoring`) — the gate is mandatory,
+  // not opt-in from the body. A bulletless document has nothing to ground.
+  const rawTailoringId = (body as { tailoringId?: unknown } | null)?.tailoringId;
+  const tailoringId =
+    typeof rawTailoringId === "string" && rawTailoringId.length > 0 ? rawTailoringId : null;
+  if (userId !== null) {
+    try {
+      const rejection = groundingErrorResponse(
+        await enforceExportGrounding(doc, tailoringId, userId),
+      );
+      if (rejection !== null) return rejection;
+    } catch (error) {
+      console.error("[api/export/docx] grounding gate failed", error);
+      return Response.json({ error: "export_failed" }, { status: 500 });
+    }
   }
 
   try {

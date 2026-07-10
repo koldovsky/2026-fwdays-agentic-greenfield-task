@@ -100,13 +100,23 @@ export function createTailoringRepo(db: Queryable) {
     /**
      * Move a `pending` tailoring to its terminal state (persist-tailoring-lifecycle).
      *
-     * - `'complete'` with a `payload`: set status + match_score, then insert the
-     *   checklist items and bullets. All statements run on the passed `db`; wrap it
-     *   in a tx-scoped Queryable at the call site for all-or-nothing writes (the
-     *   port stays transaction-agnostic).
+     * Transitions are **guarded + idempotent**: every UPDATE carries
+     * `AND status = 'pending'` so a row that has already left the `pending` state
+     * (e.g. swept to `failed` by the cleanup job, or already completed) is never
+     * touched again. This enforces the one-way lifecycle pending → complete | failed
+     * and makes the outcome order-independent (guard-tailoring-status-transitions).
+     *
+     * - `'complete'` with a `payload`: atomically set status + match_score while the
+     *   row is still `pending`, then insert the checklist items and bullets. When the
+     *   guarded UPDATE affects 0 rows (row already left `pending`) the child inserts
+     *   are **skipped** — completion becomes a clean no-op and no orphan children are
+     *   created. All statements run on the passed `db`; wrap it in a tx-scoped
+     *   Queryable at the call site for all-or-nothing writes (the port stays
+     *   transaction-agnostic).
      * - `'complete'` with no `payload`: set status only — a safe partial completion
      *   for a run that produced no children.
-     * - `'failed'`: set status only.
+     * - `'failed'`: set status only (guard ensures a `complete` row is never
+     *   overwritten by a late failure path).
      */
     async updateStatus(
       id: string,
@@ -114,10 +124,18 @@ export function createTailoringRepo(db: Queryable) {
       payload?: CompletePayload,
     ): Promise<void> {
       if (status === "complete" && payload) {
-        await db.query(`UPDATE tailorings SET status = 'complete', match_score = $2 WHERE id = $1`, [
-          id,
-          payload.matchScore,
-        ]);
+        // Guard: only transition while the row is still `pending`. RETURNING id lets
+        // us detect rows-affected via rows.length without a rowCount field (the port
+        // exposes only `rows`, TC-PURE-01).
+        const { rows: updated } = await db.query<{ id: string }>(
+          `UPDATE tailorings SET status = 'complete', match_score = $2
+           WHERE id = $1 AND status = 'pending'
+           RETURNING id`,
+          [id, payload.matchScore],
+        );
+        // If 0 rows were updated the row has already left `pending` — skip child
+        // inserts so completion is a clean no-op (no orphan checklist_items/bullets).
+        if (updated.length === 0) return;
         for (const item of payload.checklist) {
           await db.query(
             `INSERT INTO checklist_items (tailoring_id, requirement, importance, status, rationale)
@@ -134,7 +152,12 @@ export function createTailoringRepo(db: Queryable) {
         }
         return;
       }
-      await db.query(`UPDATE tailorings SET status = $2 WHERE id = $1`, [id, status]);
+      // Guard: only transition while the row is still `pending` (covers both the
+      // no-payload complete path and the failed path).
+      await db.query(
+        `UPDATE tailorings SET status = $2 WHERE id = $1 AND status = 'pending'`,
+        [id, status],
+      );
     },
 
     /**
@@ -230,6 +253,37 @@ export function createTailoringRepo(db: Queryable) {
         createdAt: toIso(t.created_at),
         checklist: [...checklist.rows],
         bullets: [...bullets.rows],
+      };
+    },
+
+    /**
+     * Minimal read for the server-side export honesty gate
+     * (server-side-export-gate, T5 #8, BC-HONESTY-02, NFR-SEC-04). Returns the
+     * tailoring's owner + lifecycle status + the TEXTS of every persisted bullet
+     * (regardless of `included` — see membership-gate.ts), or null if absent.
+     *
+     * Leaner than `findById` on purpose: the export gate needs neither the
+     * checklist nor the JD/score/timestamps, only ownership (IDOR check), status
+     * (must be `complete`), and the allowed bullet texts. No PII, no CV text.
+     */
+    async findExportGrant(
+      id: string,
+    ): Promise<{ id: string; userId: string; status: string; bullets: { text: string }[] } | null> {
+      const { rows } = await db.query<{ id: string; user_id: string; status: string }>(
+        `SELECT id, user_id, status FROM tailorings WHERE id = $1`,
+        [id],
+      );
+      if (rows.length === 0) return null;
+      const t = rows[0];
+      const bullets = await db.query<{ text: string }>(
+        `SELECT text FROM bullets WHERE tailoring_id = $1 ORDER BY ord`,
+        [id],
+      );
+      return {
+        id: t.id,
+        userId: t.user_id,
+        status: t.status,
+        bullets: bullets.rows.map((b) => ({ text: b.text })),
       };
     },
 

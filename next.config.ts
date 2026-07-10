@@ -54,6 +54,9 @@ const nextConfig: NextConfig = {
     "/api/export/pdf": ["./public/fonts/ptsans/**"],
     // The cover-letter export embeds the same Cyrillic PT Sans (§4).
     "/api/export/cover-letter": ["./public/fonts/ptsans/**"],
+    // The GDPR account data export now renders a PT Sans PDF (NFR-GDPR-01,
+    // 2026-07-09: PDF replaces JSON). Mirrors the two entries above.
+    "/api/account/export": ["./public/fonts/ptsans/**"],
   },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

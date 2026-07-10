@@ -20,15 +20,21 @@
 // jobDescription and whatever confirmedAnswers the wizard's clarify step
 // collected.
 //
-// Abuse gating (NFR-COST-02, NFR-SEC-04) mirrors src/app/api/tailor/route.ts
-// exactly: budget is RESERVED atomically before the LLM call, not charged
-// after it, so no window exists for a concurrent request to slip through. A
-// reservation that doesn't end in a "result" event is rolled back — failed
-// runs never consume budget (FR-TAILOR-03).
+// Authenticated-only (user decision 2026-07-09, revises FR-ONBOARD-01): an
+// anonymous caller is rejected with a coded 401 BEFORE any LLM work — anonymous
+// tailoring no longer exists, so there is no per-IP anon budget here. This is
+// the server-side trust boundary (NFR-SEC-04): the /tailor page's sign-in
+// redirect is UX only; a devtools/script caller with no session is refused here.
+//
+// Abuse gating (NFR-COST-02, NFR-SEC-04) mirrors src/app/api/tailor/route.ts:
+// for a free account, budget is RESERVED atomically before the LLM call, not
+// charged after it, so no window exists for a concurrent request to slip
+// through. A reservation that doesn't end in a "result" event is rolled back —
+// failed runs never consume budget (FR-TAILOR-03).
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { TailoringChecklistRow } from "@/entities/tailoring";
-import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT, type AccountKind } from "@/entities/usage-counter";
+import { FREE_TAILORING_LIMIT, type AccountKind } from "@/entities/usage-counter";
 import { runGenerationPhase } from "@/features/run-tailoring";
 import type {
   GenerationEvent,
@@ -49,16 +55,12 @@ import {
   type DocumentAttachment,
 } from "@/shared/lib/llm";
 import { MAX_ATTACHMENT_BYTES, PDF_MIME, sniffDocumentType } from "@/shared/lib/parse-document";
-import { clientIpFrom, releaseHitInMemory, reserveHitInMemory } from "@/shared/lib/rate-limit";
 import { extractJobTitle, type CvProfile, type Requirement } from "@/shared/lib/scoring";
 import type { BulletInput, ChecklistItemInput, CompletePayload } from "@/shared/lib/db";
 
 export const runtime = "nodejs";
 /** Mirrors /api/tailor — generate + ground×N adaptive-thinking calls can outlast a short window. */
 export const maxDuration = 300;
-
-/** Same NFR-COST-02 window as /api/tailor's anonymous gate — one shared budget. */
-const ANON_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
 
@@ -176,19 +178,22 @@ export async function POST(request: Request): Promise<Response> {
   const parsed = parseGenerateBody(body);
 
   // Caller identity, resolved BEFORE the LLM provider (NFR-SEC-04). A broken
-  // session read degrades to anonymous — the stricter limit — never a raw 500.
+  // session read degrades to anonymous — which is now REJECTED, not throttled.
   let userId: string | null = null;
   try {
     userId = await currentUserId();
   } catch {
     userId = null;
   }
-  const clientIp = clientIpFrom(
-    request.headers.get("x-forwarded-for"),
-    request.headers.get("x-real-ip"),
-  );
-  // Same key namespace /api/tailor uses — one shared NFR-COST-02 budget pool.
-  const anonKey = `tailor:ip:${clientIp}`;
+  // Authenticated-only trust boundary (user decision 2026-07-09): reject an
+  // anonymous caller with a coded 401 before any LLM work or stream is opened.
+  // Anonymous tailoring no longer exists (revises FR-ONBOARD-01); the free
+  // allowance moved to free accounts and is gated below via the counter reserve.
+  if (userId === null) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  // Narrow for the closure: past the guard, userId is a non-null string.
+  const authedUserId: string = userId;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -213,9 +218,9 @@ export async function POST(request: Request): Promise<Response> {
       // but a successful one is still tallied (unconditional, non-gating
       // increment; no atomicity concerns since nothing depends on the value).
       let paidTallyUserId: string | null = null;
-      // Persisted pending-row id for ALL logged-in users (free + paid), created
-      // at run START before the LLM. null when creation was skipped (anonymous)
-      // or failed best-effort — the run continues either way (NFR-OBS-01).
+      // Persisted pending-row id for the authenticated caller (free + paid),
+      // created at run START before the LLM. null when creation failed
+      // best-effort — the run continues either way (NFR-OBS-01).
       let pendingId: string | null = null;
       // Server-side entitlement for the PDF attachment (T5): true ONLY for a
       // confirmed paid caller. A client flag is never trusted; anon/free runs
@@ -224,42 +229,32 @@ export async function POST(request: Request): Promise<Response> {
       let attachmentAllowed = false;
       try {
         // Gate before the provider is even resolved, so a throttled request
-        // never touches the LLM (NFR-COST-02). Each branch reserves budget
-        // atomically — check and record happen in one step, so no window
+        // never touches the LLM (NFR-COST-02). The caller is authenticated
+        // (anonymous was rejected above). Real plan lookup (add-payments-
+        // emulator task 2.2): an active — or canceled-but-not-yet-lapsed
+        // (FR-BILLING-02) — paid subscription lifts the lifetime cap. An
+        // unreadable subscription degrades to the stricter "free" gate, never a
+        // raw failure. A free account reserves against the durable lifetime
+        // counter atomically — check and record in one step, so no window
         // exists for a concurrent request to slip through.
-        if (userId === null) {
-          const reservation = reserveHitInMemory(anonKey, ANON_WINDOW_MS, ANON_TAILORING_LIMIT);
-          if (!reservation.allowed) {
+        let kind: AccountKind = "free";
+        try {
+          const subscription = await createSubscriptionRepo(getDb()).get(authedUserId);
+          if (hasPaidAccess(subscription, new Date().toISOString())) kind = "paid";
+        } catch {
+          kind = "free";
+        }
+        if (kind === "paid") {
+          paidTallyUserId = authedUserId;
+          attachmentAllowed = true;
+        } else {
+          const counters = createUsageCounterRepo(getDb());
+          const granted = await counters.reserve(authedUserId, FREE_TAILORING_LIMIT);
+          if (!granted) {
             rejectRateLimited();
             return;
           }
-          const token = reservation.token as number;
-          releaseReservation = async () => releaseHitInMemory(anonKey, ANON_WINDOW_MS, token);
-        } else {
-          // Real plan lookup (add-payments-emulator task 2.2, NFR-COST-02):
-          // an active — or canceled-but-not-yet-lapsed (FR-BILLING-02) — paid
-          // subscription lifts the lifetime cap. An unreadable subscription
-          // degrades to the stricter "free" gate, never a raw failure.
-          let kind: AccountKind = "free";
-          try {
-            const subscription = await createSubscriptionRepo(getDb()).get(userId);
-            if (hasPaidAccess(subscription, new Date().toISOString())) kind = "paid";
-          } catch {
-            kind = "free";
-          }
-          if (kind === "paid") {
-            paidTallyUserId = userId;
-            attachmentAllowed = true;
-          } else {
-            // Free accounts reserve against the durable lifetime counter.
-            const counters = createUsageCounterRepo(getDb());
-            const granted = await counters.reserve(userId, FREE_TAILORING_LIMIT);
-            if (!granted) {
-              rejectRateLimited();
-              return;
-            }
-            releaseReservation = () => counters.release(userId);
-          }
+          releaseReservation = () => counters.release(authedUserId);
         }
 
         // A malformed body is a CLEAN pre-LLM failure: the LLM never runs, so
@@ -278,20 +273,19 @@ export async function POST(request: Request): Promise<Response> {
           send({ type: "error", code: "failed" });
           send({ type: "status", phase: "failed" });
         } else {
-          // Persist a PENDING row at run START for ALL logged-in users (free +
-          // paid), before the LLM (persist-tailoring-lifecycle, FR-TAILOR-04).
+          // Persist a PENDING row at run START (the caller is authenticated),
+          // before the LLM (persist-tailoring-lifecycle, FR-TAILOR-04).
           // Best-effort: a failure is logged and the run continues with
           // pendingId=null — persistence NEVER blocks the result stream
           // (NFR-OBS-01). Only the JD row + non-PII job title are written here;
           // no CV text / PII reaches the pending row (NFR-SEC-01).
-          if (userId !== null) {
-            const startUserId: string = userId;
+          {
             const jobDescription = parsed.value.jobDescription;
             try {
               pendingId = await withTransaction(async (tx) => {
-                const jd = await createJobDescriptionRepo(tx).save(startUserId, jobDescription);
+                const jd = await createJobDescriptionRepo(tx).save(authedUserId, jobDescription);
                 return createTailoringRepo(tx).createPending(
-                  startUserId,
+                  authedUserId,
                   jd.id,
                   extractJobTitle(jobDescription),
                 );
@@ -300,6 +294,15 @@ export async function POST(request: Request): Promise<Response> {
               console.error("[api/tailor/generate] createPending failed", pendingError);
               pendingId = null;
             }
+          }
+
+          // Hand the persisted row id to the client (server-side-export-gate,
+          // T5 #8): the export request echoes it back so the pdf/docx routes can
+          // enforce the bullet-membership honesty gate (BC-HONESTY-02). Only
+          // when a row was actually persisted; a best-effort null skips it (the
+          // export then falls back to shape-only validation, NFR-OBS-01).
+          if (pendingId !== null) {
+            send({ type: "persisted", tailoringId: pendingId });
           }
 
           // Resolve the provider inside the stream: a missing key / bad

@@ -35,7 +35,7 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 
 | ID              | Description                                                                                                       | Status   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------- | -------- |
-| FR-ONBOARD-01   | Anonymous visitor may complete one full tailoring (CV upload → result) without signing in; paywall appears at export | proposed |
+| FR-ONBOARD-01   | `/tailor` requires sign-in (revised 2026-07-09): an anonymous visitor is redirected to sign-in (server also rejects anonymous generate calls, NFR-SEC-04). The free allowance is 1 tailoring per free ACCOUNT (server-enforced via the usage counter); paywall appears at export and when the free account has spent its run | proposed |
 | FR-AUTH-01      | Sign-up and sign-in via email + password                                                                          | proposed |
 | FR-AUTH-02      | Sign-in via Google OAuth                                                                                           | proposed |
 | FR-AUTH-03      | Password-reset flow via email link                                                                                 | proposed |
@@ -155,9 +155,9 @@ Status values: `proposed` · `accepted` · `shipped` · `dropped`.
 | NFR-I18N-01  | Product UI strings centralised in `lib/i18n/uk.ts`; English fallback in `en.ts`; no runtime i18n library in MVP           | proposed |
 | NFR-SEC-01   | CV text stored encrypted at rest (AES-256 or provider-native); never logged in plaintext                                   | proposed |
 | NFR-SEC-02   | CV data is never sent to the LLM provider with identifying metadata; user ID is not included in LLM request payloads       | proposed |
-| NFR-SEC-03   | Public endpoints (auth, tailor) set standard security headers on every response (CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`) | proposed |
-| NFR-SEC-04   | Public unauthenticated endpoints (register, tailor) are rate-limited per IP and carry a lightweight bot-resistance check (honeypot field); requests failing either are rejected calmly and never processed | proposed |
-| NFR-GDPR-01  | Users can export all their stored data (CV profile + tailoring history) as JSON on request                                 | proposed |
+| NFR-SEC-03   | Public endpoints (auth) set standard security headers on every response (CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`). Tailoring endpoints are authenticated (revised 2026-07-09) and set the same headers | proposed |
+| NFR-SEC-04   | Public unauthenticated endpoints (register, auth) carry a lightweight bot-resistance check (honeypot field) and are rate-limited per IP; tailoring endpoints are authenticated-only (revised 2026-07-09) — anonymous callers are rejected with a coded 401 and the free allowance is enforced server-side via the usage counter; requests failing any check are rejected calmly and never processed | proposed |
+| NFR-GDPR-01  | Users can export all their stored data (CV profile + tailoring history) as a human-readable PDF on request (2026-07-09: PDF replaces JSON per user decision; trades machine-readability / portability for human-readability) | proposed |
 | NFR-GDPR-02  | Users can permanently delete their account and all associated data; deletion propagates within 24 h                        | proposed |
 
 ---

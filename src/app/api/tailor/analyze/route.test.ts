@@ -1,12 +1,12 @@
 // Route-level tests for POST /api/tailor/analyze (FR-WIZARD-01, NFR-OBS-01,
-// NFR-SEC-04). Only resolveLlmProvider is mocked (spread importOriginal,
-// override that one fn) so the real analysis phase, prompt builders, and
-// parsers run unchanged against the fake provider — no ANTHROPIC_API_KEY, no
-// network. This route has no session/subscription lookup (design.md's
-// budget-gating call — analysis isn't NFR-COST-02 budget-worthy), so nothing
-// else needs mocking; the anti-abuse limiter runs for real against its
-// module-level in-memory store, so every test uses its own IP to stay
-// isolated.
+// NFR-SEC-04). resolveLlmProvider is mocked (spread importOriginal, override
+// that one fn) so the real analysis phase, prompt builders, and parsers run
+// unchanged against the fake provider — no ANTHROPIC_API_KEY, no network.
+// currentUserId is also mocked: the route is authenticated-only (2026-07-09);
+// all functional tests here run as an authenticated caller. Auth-gate edge
+// cases (anonymous / broken session) are covered in route.auth.test.ts.
+// The anti-abuse limiter runs for real against its module-level in-memory
+// store, so every test uses its own IP to stay isolated.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AnalysisEvent } from "@/features/run-tailoring";
@@ -18,6 +18,9 @@ vi.mock("@/shared/lib/llm", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/lib/llm")>();
   return { ...actual, resolveLlmProvider };
 });
+
+const currentUserId = vi.hoisted(() => vi.fn());
+vi.mock("@/app/auth", () => ({ currentUserId }));
 
 import { POST } from "./route";
 
@@ -55,6 +58,9 @@ async function readNdjson(res: Response): Promise<AnalysisEvent[]> {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // All functional tests run as an authenticated caller. Anonymous path is
+  // covered in route.auth.test.ts.
+  currentUserId.mockResolvedValue("user-analyze-tests");
 });
 
 describe("POST /api/tailor/analyze", () => {
@@ -119,44 +125,35 @@ describe("POST /api/tailor/analyze", () => {
     expect(provider.calls).toHaveLength(0);
   });
 
-  it("caps repeated analyze attempts from the same IP with a distinct, generous anti-abuse limit (NFR-SEC-04)", async () => {
+  it("authenticated callers are not per-IP rate-limited — route is auth-gated, no per-IP cap (NFR-SEC-04, 2026-07-09)", async () => {
+    // The per-IP anti-abuse cap was removed when the route moved to
+    // authenticated-only (2026-07-09). Authenticated callers can call the
+    // analyze endpoint repeatedly without hitting a rate_limited error.
+    // Anonymous callers are rejected with 401 instead (route.auth.test.ts).
     resolveLlmProvider.mockReturnValue(analysisProvider());
     const ip = "203.0.113.23";
 
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       const res = await POST(post(INPUT, ip));
+      expect(res.status).toBe(200);
       const events = await readNdjson(res);
+      // Each call produces a real analysis — no rate_limited error.
       expect(events.find((e) => e.type === "analysis")).toBeDefined();
+      expect(events.find((e) => e.type === "error")).toBeUndefined();
     }
-
-    resolveLlmProvider.mockClear();
-    const blocked = await POST(post(INPUT, ip));
-
-    // Normal 200 NDJSON stream, not a raw 429 (NFR-OBS-01).
-    expect(blocked.status).toBe(200);
-    const events = await readNdjson(blocked);
-    expect(events).toContainEqual({ type: "error", code: "rate_limited" });
-    expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
-    // The 11th attempt never even resolves the LLM provider.
-    expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
-  it("gates every attempt (success or fail) the same way cv/parse does — no release path", async () => {
+  it("a provider failure on an authenticated request emits a calm error — no rate_limited code (NFR-OBS-01, 2026-07-09)", async () => {
+    // The per-IP rate limiter is gone. A provider failure emits the generic
+    // `failed` code, never `rate_limited` (that code no longer applies here).
     resolveLlmProvider.mockImplementation(() => {
       throw new Error("boom");
     });
     const ip = "203.0.113.24";
 
-    for (let i = 0; i < 10; i += 1) {
-      await POST(post(INPUT, ip));
-    }
-
-    // A working provider on the 11th attempt still gets blocked — the 10
-    // earlier failed attempts consumed the cap, unlike the tailor route's
-    // success-only budget.
-    resolveLlmProvider.mockReturnValue(analysisProvider());
     const res = await POST(post(INPUT, ip));
     const events = await readNdjson(res);
-    expect(events).toContainEqual({ type: "error", code: "rate_limited" });
+    expect(events).toContainEqual({ type: "error", code: "failed" });
+    expect(events).not.toContainEqual({ type: "error", code: "rate_limited" });
   });
 });

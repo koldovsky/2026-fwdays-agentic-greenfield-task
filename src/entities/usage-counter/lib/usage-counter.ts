@@ -1,10 +1,13 @@
 // Pure gating helpers for the usage-counter entity. Deterministic, no IO.
-// Limits mirror the product: anonymous visitors get 1 free tailoring
-// (FR-ONBOARD-01), free accounts 2 lifetime, paid is unlimited.
+// Limits mirror the product: /tailor is authenticated-only (user decision
+// 2026-07-09, revises FR-ONBOARD-01) — anonymous visitors can no longer tailor;
+// the free allowance moved to free ACCOUNTS (1 lifetime), paid is unlimited.
+// ANON_TAILORING_LIMIT is retained for any remaining anonymous-scoped rate
+// helpers but is no longer used to admit an anonymous tailoring run.
 import type { AccountKind, UsageCounter } from "../model/types";
 
 export const ANON_TAILORING_LIMIT = 1;
-export const FREE_TAILORING_LIMIT = 2;
+export const FREE_TAILORING_LIMIT = 1;
 
 /** Lifetime tailoring limit for an account kind; `null` means unlimited (paid). */
 export function tailoringLimit(kind: AccountKind): number | null {

@@ -144,6 +144,31 @@ describe("ExportStepper (FR-EXPORT-01/02/03, FR-PAYWALL-01)", () => {
     expect(onDownload).toHaveBeenCalledWith(blob, "vouch-resume.docx");
   });
 
+  // server-side-export-gate (T5 #8, BC-HONESTY-02): the optional tailoringId
+  // prop (streamed as a `persisted` event upstream) must reach requestExport so
+  // the server can enforce the bullet-membership honesty gate.
+  it("paid: PDF click forwards the tailoringId prop to requestExport when supplied", async () => {
+    const blob = new Blob(["pdf"], { type: "application/pdf" });
+    requestExportMock.mockResolvedValueOnce(blob);
+    setup({ paid: true, tailoringId: "t-999" });
+
+    await userEvent.click(screen.getByRole("button", { name: copy.export.pdfAction }));
+
+    expect(requestExportMock).toHaveBeenCalledTimes(1);
+    expect(requestExportMock.mock.calls[0][2]).toBe("t-999");
+  });
+
+  it("paid: PDF click passes undefined as the tailoringId arg when the prop is absent (non-breaking fallback)", async () => {
+    const blob = new Blob(["pdf"], { type: "application/pdf" });
+    requestExportMock.mockResolvedValueOnce(blob);
+    setup({ paid: true });
+
+    await userEvent.click(screen.getByRole("button", { name: copy.export.pdfAction }));
+
+    expect(requestExportMock).toHaveBeenCalledTimes(1);
+    expect(requestExportMock.mock.calls[0][2]).toBeUndefined();
+  });
+
   it("paid: a rejected onCopyText shows the error state", async () => {
     const onCopyText = vi.fn().mockRejectedValueOnce(new Error("clipboard denied"));
     setup({ paid: true, onCopyText });

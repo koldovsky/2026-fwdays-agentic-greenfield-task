@@ -47,7 +47,7 @@
 
 - [x] 4.1 Complete the `CvDocument` sections in `entities/cv-profile`: contact (name/email/phone/links), summary, role bullets, skills, education; omit undetected sections, never fabricate. +tests on messy CVs.
 - [x] 4.2 Extend `entities/export-document/model/types.ts` with optional structured sections (contact, summary, experience roles+dates, skills, education); framework-free (TC-PURE-01).
-- [x] 4.3 Resume builder merge: kept (`includedInExport`) bullets replace the original bullets of their source roles; untouched roles/sections pass through in the CV's original language; excluded overclaim bullets appear in no section (BC-HONESTY-02). +tests.
+- [x] 4.3 Resume builder merge: kept (`includedInExport`) bullets land under their source role — best-effort, derived client-side from grounding evidence, with most-recent-role fallback for unattributable bullets (T5 #7, `role-provenance-best-effort`); untouched roles/sections pass through in the CV's original language; excluded overclaim bullets appear in no section (BC-HONESTY-02). +tests.
 - [x] 4.4 Renderers: `src/app/api/export/pdf/resume-pdf.tsx` + `src/app/api/export/docx/resume-docx.ts` + the clipboard builder render the sections consistently; flat-document fallback when no sections; PT Sans Cyrillic rendering kept; footer + 402 paywall behavior unchanged (FR-EXPORT-01/02/03/04).
 - [x] 4.5 PII guards: contact fields never added to LLM payloads (NFR-SEC-02) and never logged in plaintext (NFR-SEC-01); test asserting no contact section in recorded LLM contexts.
 - [x] 4.6 Verify group 4: lint + build + test green; format-parity test (clipboard/PDF/DOCX same sections + footer state); Cyrillic round-trip on the PDF.

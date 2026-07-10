@@ -8,7 +8,7 @@
 // stay isolated.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ANON_TAILORING_LIMIT, FREE_TAILORING_LIMIT } from "@/entities/usage-counter";
+import { FREE_TAILORING_LIMIT } from "@/entities/usage-counter";
 import type { TailorRunEvent } from "@/features/run-tailoring";
 import {
   createFakeProvider,
@@ -84,7 +84,10 @@ beforeEach(() => {
 });
 
 describe("POST /api/tailor", () => {
+  // Authenticated-only (user decision 2026-07-09): tests that send requests
+  // now use an authenticated free user as the baseline.
   it("streams NDJSON events ending in a result + done (FR-TAILOR-01/02)", async () => {
+    currentUserId.mockResolvedValue("user-authed");
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(INPUT, "203.0.113.10"));
@@ -109,6 +112,7 @@ describe("POST /api/tailor", () => {
   });
 
   it("fails calm on the open stream when the provider can't be resolved (NFR-OBS-01)", async () => {
+    currentUserId.mockResolvedValue("user-authed");
     resolveLlmProvider.mockImplementation(() => {
       throw new Error("ANTHROPIC_API_KEY is not set");
     });
@@ -134,6 +138,7 @@ describe("POST /api/tailor", () => {
   });
 
   it("emits empty_input for blank cv/jd without calling the LLM", async () => {
+    currentUserId.mockResolvedValue("user-authed");
     const provider = groundedProvider();
     resolveLlmProvider.mockReturnValue(provider);
 
@@ -148,47 +153,36 @@ describe("POST /api/tailor", () => {
 });
 
 describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
-  it("blocks an anonymous second run from the same IP with a calm rate_limited stream", async () => {
-    resolveLlmProvider.mockReturnValue(groundedProvider());
-    const first = await POST(post(INPUT, "198.51.100.1"));
-    expect((await readNdjson(first)).find((e) => e.type === "result")).toBeDefined();
+  // Reconciled (2026-07-09): anonymous callers are now rejected with 401 BEFORE
+  // the per-IP window — the anon-window tests below are updated to reflect the
+  // new authenticated-only contract. Detailed 401 assertions live in
+  // route.auth.test.ts; the tests below verify the per-account free-limit logic.
 
-    resolveLlmProvider.mockClear();
-    const second = await POST(post(INPUT, "198.51.100.1"));
-
-    // Normal 200 NDJSON stream, not a raw 429 (NFR-OBS-01).
-    expect(second.status).toBe(200);
-    const events = await readNdjson(second);
-    expect(events).toContainEqual({ type: "error", code: "rate_limited" });
-    expect(events.at(-1)).toEqual({ type: "status", phase: "failed" });
-    expect(events.find((e) => e.type === "result")).toBeUndefined();
-    // The LLM provider is never even resolved for a throttled request.
+  it("rejects an anonymous caller outright with 401 (NFR-SEC-04, 2026-07-09)", async () => {
+    // Anonymous tailoring no longer exists — per-IP throttle is not reached.
+    const res = await POST(post(INPUT, "198.51.100.1"));
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
     expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
-  it("caps concurrent anonymous requests from the same IP at the limit — the race a check-then-record-later gate allows", async () => {
-    resolveLlmProvider.mockReturnValue(groundedProvider());
+  it("anonymous concurrent requests all receive 401, never a result (auth gate fires before any throttle)", async () => {
+    // The per-IP concurrent cap no longer applies — all anonymous requests are
+    // rejected synchronously before reaching the window logic.
     const ip = "198.51.100.30";
-
     const responses = await Promise.all(Array.from({ length: 5 }, () => POST(post(INPUT, ip))));
-    const allEvents = await Promise.all(responses.map(readNdjson));
-    const successCount = allEvents.filter((events) => events.some((e) => e.type === "result")).length;
-
-    expect(successCount).toBe(ANON_TAILORING_LIMIT);
+    for (const res of responses) {
+      expect(res.status).toBe(401);
+    }
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
-  it("does not charge the anonymous per-IP window for a failed run (FR-TAILOR-03)", async () => {
-    resolveLlmProvider.mockImplementation(() => {
-      throw new Error("ANTHROPIC_API_KEY is not set");
-    });
-    const failed = await POST(post(INPUT, "198.51.100.2"));
-    expect(await readNdjson(failed)).toContainEqual({ type: "error", code: "failed" });
-
-    // Same IP retries and succeeds — the failed attempt consumed nothing.
-    resolveLlmProvider.mockReturnValue(groundedProvider());
-    const retry = await POST(post(INPUT, "198.51.100.2"));
-    const events = await readNdjson(retry);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
+  it("a failed run by an anonymous caller returns 401, not a coded failure event", async () => {
+    // The route short-circuits at the auth gate; provider errors are never reached.
+    resolveLlmProvider.mockImplementation(() => { throw new Error("boom"); });
+    const res = await POST(post(INPUT, "198.51.100.2"));
+    expect(res.status).toBe(401);
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
   });
 
   it("blocks a logged-in free user at the lifetime limit before the LLM", async () => {
@@ -308,16 +302,17 @@ describe("POST /api/tailor gating (NFR-COST-02, NFR-SEC-04)", () => {
     expect(usageCounterRepo.reserve).toHaveBeenCalledWith("user-db-down", FREE_TAILORING_LIMIT);
   });
 
-  it("treats a broken session read as anonymous instead of failing (NFR-OBS-01)", async () => {
+  it("treats a broken session read as anonymous and returns 401 (NFR-OBS-01, 2026-07-09)", async () => {
+    // A session read error degrades to null userId, which is now rejected 401 —
+    // the prior behavior (admitted on the anonymous per-IP window) is gone.
     currentUserId.mockRejectedValue(new Error("AUTH_SECRET is not set"));
     resolveLlmProvider.mockReturnValue(groundedProvider());
 
     const res = await POST(post(INPUT, "198.51.100.6"));
 
-    expect(res.status).toBe(200);
-    const events = await readNdjson(res);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
-    // Anonymous path: the durable counter is never touched.
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
     expect(usageCounterRepo.reserve).not.toHaveBeenCalled();
     expect(usageCounterRepo.increment).not.toHaveBeenCalled();
   });

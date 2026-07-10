@@ -289,14 +289,20 @@ describe("POST /api/tailor/generate — persist-on-start wiring (task 5.4, FR-TA
     expect(events.find((e) => e.type === "error")).toBeUndefined();
   });
 
-  it("anonymous callers create no pending row (not logged in)", async () => {
-    // currentUserId returns null (default in beforeEach).
-    resolveLlmProvider.mockReturnValue(groundedProvider());
+  it("anonymous callers are rejected with 401 coded unauthorized — no stream, no persistence (NFR-SEC-04, 2026-07-09)", async () => {
+    // currentUserId returns null (default in beforeEach). The route now rejects
+    // anonymous callers with a coded 401 BEFORE any LLM work or stream is
+    // opened (authenticated-only trust boundary). Prior contract ("anonymous
+    // can tailor via the per-IP window") is removed.
+    // resolveLlmProvider intentionally NOT configured — it must never be called.
 
     const res = await POST(post(VALID_BODY, freshIp()));
 
-    const events = await readNdjson(res);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    // The LLM provider is never resolved — no computation, no cost.
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
+    // No persistence calls — the reject fires before any persistence path.
     expect(tailoringRepo.createPending).not.toHaveBeenCalled();
     expect(tailoringRepo.updateStatus).not.toHaveBeenCalled();
   });

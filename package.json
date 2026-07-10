@@ -5,13 +5,22 @@
   "scripts": {
     "dev": "next dev",
     "dev:db": "node scripts/dev-pglite-server.mjs",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres redis",
     "db:migrate": "node scripts/migrate.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "demo:capture": "playwright test",
+    "demo:convert": "node scripts/demo-convert.mjs",
+    "demo:studio": "remotion studio remotion/index.ts",
+    "demo:render": "remotion render remotion/index.ts Main out/final.mp4",
+    "demo": "yarn demo:capture && yarn demo:convert && yarn demo:render",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:pg": "vitest run --project pure src/shared/lib/db src/shared/lib/account src/shared/lib/auth"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",
@@ -29,6 +38,10 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.3",
     "@electric-sql/pglite-socket": "0.2.6",
+    "@playwright/test": "^1.61.1",
+    "@remotion/bundler": "^4.0.486",
+    "@remotion/cli": "^4.0.486",
+    "@remotion/renderer": "^4.0.486",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -41,6 +54,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
+    "remotion": "^4.0.486",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3"

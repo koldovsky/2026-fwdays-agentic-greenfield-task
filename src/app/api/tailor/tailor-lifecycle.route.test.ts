@@ -312,15 +312,20 @@ describe("POST /api/tailor — persist-on-start wiring (task 5.4, FR-TAILOR-04, 
     expect(events.find((e) => e.type === "error")).toBeUndefined();
   });
 
-  it("anonymous callers create no pending row (not logged in)", async () => {
-    // currentUserId returns null — anonymous path.
-    resolveLlmProvider.mockReturnValue(groundedProvider());
+  it("anonymous callers are rejected with 401 coded unauthorized — no stream, no persistence (NFR-SEC-04, 2026-07-09)", async () => {
+    // currentUserId returns null — anonymous path. The route now rejects
+    // anonymous callers with a coded 401 BEFORE any LLM work or stream is
+    // opened (authenticated-only trust boundary). Prior contract ("anonymous
+    // can tailor via the per-IP window") is removed.
+    // resolveLlmProvider intentionally NOT configured — it must never be called.
 
     const res = await POST(post(INPUT, freshIp()));
 
-    const events = await readNdjson(res);
-    expect(events.find((e) => e.type === "result")).toBeDefined();
-    // No persistence calls for anonymous callers.
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    // The LLM provider is never resolved — no computation, no cost.
+    expect(resolveLlmProvider).not.toHaveBeenCalled();
+    // No persistence calls — the reject fires before any persistence path.
     expect(tailoringRepo.createPending).not.toHaveBeenCalled();
     expect(tailoringRepo.updateStatus).not.toHaveBeenCalled();
   });
@@ -346,5 +351,39 @@ describe("POST /api/tailor — persist-on-start wiring (task 5.4, FR-TAILOR-04, 
       (c: unknown[]) => c[1] === "complete",
     );
     expect(completeCalls).toHaveLength(1);
+  });
+
+  // server-side-export-gate (T5 #8, BC-HONESTY-02): the createPending id is
+  // handed to the client as a `persisted` event so the résumé export request
+  // can later prove bullet-membership against it. Must arrive BEFORE the
+  // terminal `result` event and carry the SAME id createPending returned.
+  it("emits a `persisted` event carrying the createPending id, before the terminal result", async () => {
+    currentUserId.mockResolvedValue("user-free-persisted-event");
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue("pending-id-persisted-event");
+
+    const res = await POST(post(INPUT, freshIp()));
+    const events = await readNdjson(res);
+
+    const persistedIndex = events.findIndex((e) => e.type === "persisted");
+    const resultIndex = events.findIndex((e) => e.type === "result");
+    expect(persistedIndex).toBeGreaterThanOrEqual(0);
+    expect(events[persistedIndex]).toEqual({
+      type: "persisted",
+      tailoringId: "pending-id-persisted-event",
+    });
+    expect(resultIndex).toBeGreaterThan(persistedIndex);
+  });
+
+  it("emits no `persisted` event when createPending throws (pendingId stays null, non-breaking)", async () => {
+    currentUserId.mockResolvedValue("user-createpending-throws-2");
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockRejectedValue(new Error("DB unavailable"));
+
+    const res = await POST(post(INPUT, freshIp()));
+    const events = await readNdjson(res);
+
+    expect(events.some((e) => e.type === "persisted")).toBe(false);
+    expect(events.find((e) => e.type === "result")).toBeDefined();
   });
 });
