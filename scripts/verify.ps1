@@ -43,9 +43,10 @@ finally {
 
 Push-Location "$root/frontend"
 try {
-    Write-Host "==> [4/4] Frontend: install + typecheck + build" -ForegroundColor Cyan
+    Write-Host "==> [4/4] Frontend: install + typecheck + build + unit tests" -ForegroundColor Cyan
     npm install; Assert-LastExit "npm install"
     npm run build; Assert-LastExit "npm build"
+    npm test; Assert-LastExit "npm test"
 }
 finally {
     Pop-Location

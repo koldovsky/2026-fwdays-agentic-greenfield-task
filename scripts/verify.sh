@@ -30,9 +30,10 @@ echo "==> [3/4] Backend: lint + types + migrations + tests (with DB)"
 "$py" -m alembic upgrade head
 RUN_DB_TESTS=1 "$py" -m pytest -q
 
-echo "==> [4/4] Frontend: install + typecheck + build"
+echo "==> [4/4] Frontend: install + typecheck + build + unit tests"
 cd "$root/frontend"
 npm install
 npm run build
+npm test
 
 echo "==> Verification complete. The stack is wired end-to-end. ✅"
