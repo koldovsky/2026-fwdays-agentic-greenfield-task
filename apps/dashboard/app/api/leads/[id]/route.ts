@@ -39,6 +39,7 @@
 
 import { openDatabase, deleteLeadCascade } from "@kamerton/db";
 import { releaseHold } from "@kamerton/lib/src/slots/hold.ts";
+import { CalendarError } from "@kamerton/lib/src/slots/calendar-port.ts";
 import { publish } from "../../../../lib/agui-hub.ts";
 import { resolveCalendarPort } from "../../../../lib/calendar-port.ts";
 import { currentWeekStartIso, readDashboardSnapshot, resolveDbPath } from "../../../../lib/dashboard-db.ts";
@@ -119,7 +120,14 @@ export async function DELETE(
           await releaseHold(calendar, row.calendar_event_id);
         }
       }
-    } catch {
+    } catch (error) {
+      // Only a genuine calendar failure degrades to the deterministic 502; a
+      // non-`CalendarError` throw (e.g. a bug in releaseHold or the loop) must
+      // NOT be masked as a "calendar error" — rethrow it so it surfaces as a
+      // real 500 instead of a misleading, retry-suggesting 502 (CodeRabbit).
+      if (!(error instanceof CalendarError)) {
+        throw error;
+      }
       // Calendar-before-DB ordering: bail out BEFORE touching the DB — the
       // lead's rows (and the still-live tentative event) are untouched, a
       // safe, retryable state (never an orphaned calendar event).

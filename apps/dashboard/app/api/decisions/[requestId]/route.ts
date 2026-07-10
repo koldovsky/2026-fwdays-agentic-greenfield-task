@@ -401,7 +401,20 @@ export async function POST(
         start: kyivWallClockToUtc(booking.slot_start),
         end: kyivWallClockToUtc(booking.slot_end),
       };
-      const busy = await freshBusyForSlots(calendar, slots, ownRangeUtc);
+      // Step 4's confirm/decline/propose paths each wrap their calendar call
+      // in this same `CalendarError -> {status:"unavailable"}` guard; step 3's
+      // per-slot `freshBusyForSlots` fan-out must too, or a free/busy failure
+      // here escapes as a raw 500 — contradicting this route's own convention
+      // that only a non-`CalendarError` bug ever reaches a 500 (CodeRabbit).
+      let busy: Awaited<ReturnType<typeof freshBusyForSlots>>;
+      try {
+        busy = await freshBusyForSlots(calendar, slots, ownRangeUtc);
+      } catch (error) {
+        if (error instanceof CalendarError) {
+          return Response.json({ status: "unavailable", message: UNAVAILABLE_MESSAGE }, { status: 200 });
+        }
+        throw error;
+      }
       const otherPendingSlots = findOtherPendingSlots(db, requestId);
       const validation = validateAdminProposedSlots({ slots, busy, otherPendingSlots });
       if (!validation.ok) {

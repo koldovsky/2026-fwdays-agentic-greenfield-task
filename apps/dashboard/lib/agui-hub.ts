@@ -47,7 +47,17 @@ function listeners(): Set<AguiEventListener> {
  */
 export function publish(event: AguiEvent): void {
   for (const listener of listeners()) {
-    listener(event);
+    // Isolate each listener: one throwing subscriber (e.g. a broken SSE
+    // stream write after a client disconnect) must never block delivery to
+    // the rest, nor propagate to the caller — the ingest/leads/decisions
+    // routes call publish() without their own try/catch, so an unguarded
+    // throw would 500 the request (and, in leads/decisions, only AFTER the
+    // DB commit already succeeded). CodeRabbit finding.
+    try {
+      listener(event);
+    } catch {
+      // A single bad listener is swallowed; siblings still receive the event.
+    }
   }
 }
 

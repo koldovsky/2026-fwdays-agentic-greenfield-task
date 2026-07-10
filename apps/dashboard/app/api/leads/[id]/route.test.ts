@@ -151,9 +151,13 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     // overriding `deleteEvent` to reject), since the real adapter's
     // `deleteEvent` rejects on any Google Calendar API failure
     // (`packages/calendar/src/google-calendar.ts`'s `mapCalendarError`).
+    // A realistic calendar outage rejects with a `CalendarError` subclass
+    // (the real adapter's `mapCalendarError`), which is what degrades to the
+    // deterministic 502 — a plain `Error` would now (correctly) surface as a
+    // 500 instead, covered by the companion test below.
     class ThrowingCalendarPort extends FakeCalendarPort {
       override async deleteEvent(): Promise<void> {
-        throw new Error("Calendar unavailable (simulated)");
+        throw new CalendarApiError("Calendar unavailable (simulated)", { status: 503 });
       }
     }
 
@@ -189,6 +193,49 @@ describe("DELETE /api/leads/:id (dashboard tasks.md §5.6, @trace NFR-PRIV-02)",
     const verifyDb = openDatabase(dbPath);
     const stillThere = verifyDb.prepare(`SELECT * FROM leads WHERE id = ?`).get(lead.id);
     expect(stillThere).toBeDefined();
+    verifyDb.close();
+  });
+
+  it("a NON-calendar bug during release is NOT masked as a 502 — it propagates (real 500), not a misleading retry response", async () => {
+    // CodeRabbit: the release catch used to swallow EVERY error as a
+    // "calendar error" 502. A non-`CalendarError` throw (a bug in the loop,
+    // a TypeError) must surface as a genuine failure, never a deterministic-
+    // looking 502 that tells the teacher to "try again".
+    class BuggyCalendarPort extends FakeCalendarPort {
+      override async deleteEvent(): Promise<void> {
+        throw new TypeError("unexpected bug, not a calendar outage");
+      }
+    }
+
+    const db = openDatabase(dbPath);
+    const calendar = new BuggyCalendarPort();
+    setCalendarPortForTesting(calendar);
+    const { eventId } = await calendar.createTentative(
+      { start: "2026-07-06T07:00:00Z", end: "2026-07-06T08:00:00Z" },
+      "itest hold",
+    );
+    const lead = insertLead(db, {
+      telegramUserId: "tg-user-3",
+      telegramChatId: "tg-chat-3",
+      telegramDisplayName: "Третій Лід",
+    });
+    const request = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-3" });
+    updateRequestState(db, request.id, "awaiting_admin");
+    db.prepare(
+      `INSERT INTO bookings (slot_start, slot_end, status, calendar_event_id, request_id)
+       VALUES (?, ?, 'pending', ?, ?)`,
+    ).run("2026-07-08T10:00:00+03:00", "2026-07-08T11:00:00+03:00", eventId, request.id);
+    db.close();
+
+    // The non-calendar bug propagates (framework maps it to a 500) rather
+    // than being caught and returned as a 502.
+    await expect(DELETE(new Request(leadsUrl(lead.id), { method: "DELETE" }), paramsFor(lead.id))).rejects.toThrow(
+      "unexpected bug",
+    );
+
+    // And the DB rows are still intact (the throw happened before the cascade).
+    const verifyDb = openDatabase(dbPath);
+    expect(verifyDb.prepare(`SELECT * FROM leads WHERE id = ?`).get(lead.id)).toBeDefined();
     verifyDb.close();
   });
 

@@ -125,7 +125,7 @@ import type {
   ToolUseBlock,
 } from "./model-port.ts";
 import { MODEL_CONFIG } from "./model-port.ts";
-import { TOOLS } from "./tools.ts";
+import { TOOLS, TOOL_NAMES } from "./tools.ts";
 import { ANTHROPIC_UNAVAILABLE_APOLOGY, QUESTION_LOGGING_UNAVAILABLE_APOLOGY } from "./apology.ts";
 import { buildSystemPrompt } from "./system-prompt.ts";
 import { transition } from "@kamerton/lib/src/intake/state-machine.ts";
@@ -370,7 +370,14 @@ export type ToolCallOutcome = "applied" | "rejected" | "detour" | "pass_through"
  *  react to this" signal (tasks.md C.3's own wording) without widening the
  *  pure reducer's own error vocabulary for a concern (calendar collision)
  *  the reducer itself never touches. */
-export type LoopErrorCode = TransitionErrorCode | "SLOT_COLLISION";
+export type LoopErrorCode =
+  | TransitionErrorCode
+  | "SLOT_COLLISION"
+  // Loop-layer guardrails outside the pure reducer's vocabulary (CodeRabbit
+  // review batch): a tool name outside the offered `TOOLS` set, and a
+  // propose_slots time window that is provided but malformed (start >= end).
+  | "UNKNOWN_TOOL"
+  | "INVALID_TIME_RANGE";
 
 /** One deterministic log entry per tool-use block the model's response
  *  contained, appended by the loop itself (ADR-0001 §5 analog) —
@@ -733,6 +740,18 @@ async function applyToolUse(
   state: IntakeState,
   ports: LoopPorts,
 ): Promise<AppliedToolUse> {
+  // FR-GUARD-01 closed-tool discipline: only a tool actually offered this
+  // turn may execute. A name outside the current `TOOLS` set — the
+  // dropped-from-MVP `save_goal`/`skip_goal`/`save_tastes`/`skip_tastes`/
+  // `save_experience_comfort`, or any hallucinated/compromised name — is
+  // rejected WITHOUT dispatch, so it never reaches `toIntakeEvent`'s dormant
+  // profiling branches or mutates a dormant field (CodeRabbit finding).
+  if (!TOOL_NAMES.includes(block.name)) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: "UNKNOWN_TOOL" },
+    };
+  }
   // booking-hitl design.md Decision 2 (tasks.md C.3): `propose_slots`/
   // `request_hold` need the `ports.slots`/`ports.holdStore` seams and an
   // async round trip BEFORE any `transition()` call, so they are handled as
@@ -902,16 +921,28 @@ async function applyProposeSlots(
     ...(date !== undefined ? { date } : {}),
   };
 
-  // The weekday/time validator guards the WEEKDAY path only — when the lead
-  // named a concrete day, `date` IS the constraint and `weekdays` may be a
-  // filler value, so the validator is skipped (the pipeline validates the
-  // date instead).
+  // When the lead named a concrete day, `date` IS the weekday constraint and
+  // `weekdays` may be filler — so the full weekday+time validator is skipped
+  // for that path. But the time-of-day still must be valid (CodeRabbit): a
+  // named date replaces the weekday constraint, not time validation. An
+  // EMPTY window ({"",""}) is the legitimate "any time that day" signal (the
+  // lead said only "завтра") — the pipeline fills the full teaching day — so
+  // only a PROVIDED-but-malformed window (start >= end) is rejected here.
   if (date === undefined) {
     const validation = validatePreferences(input);
     if (!validation.ok) {
       return {
         state,
         logEntry: { tool: block.name, input: block.input, outcome: "rejected" },
+      };
+    }
+  } else {
+    const tw = input.timeWindow;
+    const windowProvided = tw.start !== "" || tw.end !== "";
+    if (windowProvided && tw.start >= tw.end) {
+      return {
+        state,
+        logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: "INVALID_TIME_RANGE" },
       };
     }
   }
@@ -977,6 +1008,22 @@ async function applyRequestHold(
     };
   }
 
+  // Preflight the PURE pick_slot transition BEFORE creating any external
+  // hold (CodeRabbit critical): a valid index but a wrong conversation state
+  // — e.g. a repeated hold after the booking already reached `awaiting_admin`
+  // (a stale slot button tapped twice) — must reject WITHOUT a side effect.
+  // Running `holdSlot()` first and only then discovering the transition
+  // rejects would leave an orphaned tentative calendar event + pending
+  // booking. The transition is pure/idempotent, so running it as a preflight
+  // and again after the hold is free and safe.
+  const preflight = transition(state, { type: "pick_slot", slotIndex });
+  if (preflight.error !== undefined) {
+    return {
+      state,
+      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: preflight.error },
+    };
+  }
+
   const result = await ports.holdStore.holdSlot(slotIndex, offeredSlots);
   if (result.status === "unavailable") {
     throw new Error("Kamerton: calendar unavailable during request_hold");
@@ -988,23 +1035,12 @@ async function applyRequestHold(
     };
   }
 
-  // {status: "held"} — commit the pick_slot transition (proposing ->
-  // awaiting_admin). The bounds check above already guarantees this
-  // transition succeeds; a defensive fallback is kept anyway, never trusting
-  // a reducer call to be infallible just because this call site expects it
-  // to be.
-  const transitionResult = transition(state, { type: "pick_slot", slotIndex });
-  if (transitionResult.error !== undefined) {
-    return {
-      state,
-      logEntry: { tool: block.name, input: block.input, outcome: "rejected", error: transitionResult.error },
-    };
-  }
-
-  await ports.persistence.saveState(transitionResult.state.conversationState);
+  // {status: "held"} — the preflight already proved the pick_slot transition
+  // (proposing -> awaiting_admin) succeeds, so commit its result.
+  await ports.persistence.saveState(preflight.state.conversationState);
 
   return {
-    state: transitionResult.state,
+    state: preflight.state,
     logEntry: { tool: block.name, input: block.input, outcome: "applied" },
   };
 }

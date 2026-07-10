@@ -131,16 +131,14 @@ export const TOOLS: ToolDefinition[] = [
         field: {
           type: "string",
           description: "Назва поля профілю, яке лід виправляє.",
+          // Only the mandatory-only MVP fields (2026-07-09): goal/tastes/
+          // dream-song/experience/comfort were dropped, so they are NOT
+          // amendable — the closed tool set must not expose a field the flow
+          // never collects (CodeRabbit; mirrors the toIntakeEvent guard).
           enum: [
             "studentName",
             "studentAge",
             "format",
-            "goalTag",
-            "goalText",
-            "tastes",
-            "dreamSong",
-            "experience",
-            "comfort",
             "preferredWeekdays",
             "preferredTimeRange",
           ],

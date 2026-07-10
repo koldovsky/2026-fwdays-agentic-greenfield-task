@@ -84,4 +84,23 @@ describe("agui-hub (apps/dashboard/lib/agui-hub.ts, dashboard tasks.md §5.1)", 
     unsubscribeB();
     expect(subscriberCount()).toBe(0);
   });
+
+  // CodeRabbit finding: one throwing listener (e.g. a broken SSE write after a
+  // client disconnect) must not block delivery to the rest, nor propagate to
+  // the caller (the ingest/leads/decisions routes call publish() with no
+  // try/catch — an unguarded throw would 500 the request).
+  it("isolates a throwing listener: siblings still receive the event and publish never throws", () => {
+    const received: AguiEvent[] = [];
+    const unsubBad = subscribe(() => {
+      throw new Error("broken SSE stream write");
+    });
+    const unsubGood = subscribe((event) => received.push(event));
+
+    const event = runStarted("tg-chat-1", "run-1");
+    expect(() => publish(event)).not.toThrow();
+    expect(received).toEqual([event]);
+
+    unsubBad();
+    unsubGood();
+  });
 });

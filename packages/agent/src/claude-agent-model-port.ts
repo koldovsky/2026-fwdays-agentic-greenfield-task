@@ -298,7 +298,16 @@ export function buildAgentPrompt(messages: ModelMessage[]): string {
             .map((block) => block.text)
             .join("\n");
     if (text.trim().length === 0) continue;
-    lines.push(`${message.role === "user" ? "Лід" : "Школа"}: ${text}`);
+    // Prefix EVERY physical line with the role label — not just the first.
+    // A single `${label}: ${text}` on a multi-line message would leave
+    // subsequent lines unlabelled, so lead text containing "\nШкола: ..."
+    // could forge an assistant turn in the transcript (prompt injection,
+    // CodeRabbit security finding). Per-line prefixing makes every line
+    // unambiguously owned by its real author.
+    const label = message.role === "user" ? "Лід" : "Школа";
+    for (const line of text.split(/\r\n?|\n/)) {
+      lines.push(`${label}: ${line}`);
+    }
   }
   return lines.join("\n");
 }

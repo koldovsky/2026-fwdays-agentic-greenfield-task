@@ -983,3 +983,74 @@ describe("runIntakeTurn", () => {
     });
   });
 });
+
+// CodeRabbit review-batch fixes (PR #2): closed-tool discipline, hold
+// preflight, and time-window validation on the date path.
+describe("runIntakeTurn — CodeRabbit review-batch fixes", () => {
+  const SLOTS: OfferedSlot[] = [
+    { start: "2026-07-08T10:00", end: "2026-07-08T11:00" },
+    { start: "2026-07-08T11:00", end: "2026-07-08T12:00" },
+  ];
+
+  // #8 FR-GUARD-01: a tool name outside the offered set never dispatches.
+  it("rejects a dropped tool name (save_goal) as UNKNOWN_TOOL without dispatch or mutation", async () => {
+    const state: IntakeState = { conversationState: "qualifying", fields: { studentName: "Оля", studentAge: 9 } };
+    const persistence = new FakePersistencePort();
+    const model = new FakeModelPort([toolUseResponse("save_goal", { goalTag: "stage", goalText: "сцена" })]);
+    const ports = makePorts(model, { persistence });
+
+    const result = await runIntakeTurn({ state, message: "хочу на сцену", ports });
+
+    expect(result.toolCalls[0]).toMatchObject({ tool: "save_goal", outcome: "rejected", error: "UNKNOWN_TOOL" });
+    expect(result.state.conversationState).toBe("qualifying");
+    expect(persistence.fieldSaves).toHaveLength(0);
+  });
+
+  // #11: a valid index but wrong state must reject BEFORE the external hold.
+  it("request_hold in a non-proposing state rejects WITHOUT creating a hold (no orphaned calendar event)", async () => {
+    const state: IntakeState = {
+      conversationState: "awaiting_admin",
+      fields: { studentName: "Оля", studentAge: 9, offeredSlots: SLOTS },
+    };
+    const holdStore = new FakeHoldStorePort({ status: "held", bookingId: 1 });
+    const model = new FakeModelPort([toolUseResponse("request_hold", { slotIndex: 0 })]);
+    const ports = makePorts(model, { holdStore });
+
+    const result = await runIntakeTurn({ state, message: "беру перший", ports });
+
+    expect(result.toolCalls[0]).toMatchObject({ tool: "request_hold", outcome: "rejected" });
+    expect(holdStore.calls).toHaveLength(0); // holdSlot NEVER called -> no orphaned hold
+    expect(result.state.conversationState).toBe("awaiting_admin");
+  });
+
+  // #10: the date path still validates a PROVIDED time window.
+  it("propose_slots with a date and a MALFORMED time window is rejected before the calendar is called", async () => {
+    const state: IntakeState = { conversationState: "proposing", fields: { studentName: "Оля", studentAge: 9 } };
+    const slots = new FakeSlotsPort({ status: "ok", slots: SLOTS });
+    const model = new FakeModelPort([
+      toolUseResponse("propose_slots", { weekdays: ["Mon"], timeWindow: { start: "18:00", end: "10:00" }, date: "2026-07-08" }),
+    ]);
+    const ports = makePorts(model, { slots });
+
+    const result = await runIntakeTurn({ state, message: "у вівторок після 18", ports });
+
+    expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "rejected", error: "INVALID_TIME_RANGE" });
+    expect(slots.calls).toHaveLength(0);
+  });
+
+  // #10: an EMPTY window on the date path is the "any time that day" signal.
+  it("propose_slots with a date and an EMPTY time window still proposes (lead named only a day)", async () => {
+    const state: IntakeState = { conversationState: "proposing", fields: { studentName: "Оля", studentAge: 9 } };
+    const slots = new FakeSlotsPort({ status: "ok", slots: SLOTS });
+    const model = new FakeModelPort([
+      toolUseResponse("propose_slots", { weekdays: ["Mon"], timeWindow: { start: "", end: "" }, date: "2026-07-08" }),
+    ]);
+    const ports = makePorts(model, { slots });
+
+    const result = await runIntakeTurn({ state, message: "можна завтра?", ports });
+
+    expect(slots.calls).toHaveLength(1);
+    expect(slots.calls[0]).toMatchObject({ date: "2026-07-08" });
+    expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "applied" });
+  });
+});

@@ -54,6 +54,17 @@ function pendingAnsweredQuestion(id: number, text: string): FakeQuestionRow {
   };
 }
 
+function deliveredAnsweredQuestion(id: number, text: string): FakeQuestionRow {
+  return {
+    id,
+    text,
+    status: "answered",
+    delivery_status: "delivered",
+    admin_answer: "Так, є.",
+    answer_source: "unanswered",
+  };
+}
+
 function jsonResponse(
   body: unknown,
   ok = true,
@@ -148,6 +159,24 @@ describe("QuestionInbox (kb-learning tasks.md E.6, design.md Decision 2)", () =>
     expect(screen.queryByRole("button", { name: /повторити|retry/i })).not.toBeInTheDocument();
     // A distinct, non-color-only "sending" indicator is present instead.
     expect(screen.getByText(/надсилається|надсилаємо|в черзі на доставку/i)).toBeInTheDocument();
+  });
+
+  // CodeRabbit: a `delivered` answered row must NOT show the "sending…"
+  // indicator (delivery already succeeded) — and still never the answer form.
+  // The inbox API filters these out; this is defense in depth in the view.
+  it("renders an answered+delivered row as 'delivered' — never 'sending…', never an answer form", async () => {
+    const rows = [deliveredAnsweredQuestion(9, "скільки триває заняття?")];
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(rows));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<QuestionInbox />);
+
+    await waitFor(() => {
+      expect(screen.getByText("скільки триває заняття?")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByText(/надсилається|надсилаємо|в черзі на доставку/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/доставлено/i)).toBeInTheDocument();
   });
 
   // @trace FR-KB-03

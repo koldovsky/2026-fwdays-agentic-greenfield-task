@@ -185,6 +185,14 @@ function SendingRowIndicator() {
   );
 }
 
+function DeliveredRowIndicator() {
+  return (
+    <p className="text-sm font-medium text-text-secondary" role="status" aria-live="polite">
+      ✓ Відповідь доставлено ліду
+    </p>
+  );
+}
+
 export function QuestionInbox() {
   const [questions, setQuestions] = useState<QuestionRow[] | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -236,10 +244,13 @@ export function QuestionInbox() {
       {questions.map((question) => {
         const isAnswered = question.status === "answered";
         const isFailed = isAnswered && question.delivery_status === "failed";
-        // Already answered but not (yet) failed — still `pending` or already
-        // `delivered`. Never re-offer an editable answer form on it
-        // (review-gate Fix 2).
-        const isSending = isAnswered && !isFailed;
+        const isDelivered = isAnswered && question.delivery_status === "delivered";
+        // Answered and still in flight — delivery `pending`, not yet
+        // `delivered`/`failed`. `delivered` is handled by its own branch (it
+        // is NOT "sending" — CodeRabbit), and neither state re-offers an
+        // editable answer form (review-gate Fix 2). The inbox API already
+        // filters out answered+delivered rows; this is defense in depth.
+        const isSending = isAnswered && !isFailed && !isDelivered;
         return (
           <li
             key={question.id}
@@ -255,6 +266,8 @@ export function QuestionInbox() {
             <p className="text-sm font-medium text-text">{question.text}</p>
             {isFailed ? (
               <FailedRowRetry question={question} onRetried={loadQuestions} />
+            ) : isDelivered ? (
+              <DeliveredRowIndicator />
             ) : isSending ? (
               <SendingRowIndicator />
             ) : (
