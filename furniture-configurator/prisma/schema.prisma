@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// --- Controlled dictionaries (admin-managed, no free text) ---
+
+model Color {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  active        Boolean         @default(true)
+  catalogEntries CatalogEntry[]
+}
+
+model Material {
+  id                     Int             @id @default(autoincrement())
+  name                   String          @unique
+  active                 Boolean         @default(true)
+  catalogEntriesFacade   CatalogEntry[]  @relation("FacadeMaterial")
+  catalogEntriesCorpus   CatalogEntry[]  @relation("CorpusMaterial")
+}
+
+model HardwareItem {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  sku            String           @unique
+  active         Boolean          @default(true)
+  hardwareOptions HardwareOption[]
+}
+
+enum DimensionType {
+  WIDTH
+  HEIGHT
+  DEPTH
+}
+
+model StandardSize {
+  id            Int           @id @default(autoincrement())
+  dimensionType DimensionType
+  valueCm       Int
+  active        Boolean       @default(true)
+
+  @@unique([dimensionType, valueCm])
+}
+
+// --- Product structure ---
+
+enum PartRole {
+  TOP
+  BOTTOM
+  FACADE
+  CORPUS
+}
+
+model ProductType {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  partSpecs  PartSpec[]
+  catalogEntries CatalogEntry[]
+}
+
+model PartSpec {
+  id               Int         @id @default(autoincrement())
+  productType      ProductType @relation(fields: [productTypeId], references: [id])
+  productTypeId    Int
+  partRole         PartRole
+  allowsCustomSize Boolean     @default(false)
+  minCm            Int?
+  maxCm            Int?
+
+  @@unique([productTypeId, partRole])
+}
+
+// --- Catalog (standard batches) ---
+
+model CatalogEntry {
+  id               Int              @id @default(autoincrement())
+  sku              String           @unique
+  isStandard       Boolean          @default(true)
+  active           Boolean          @default(true)
+
+  productType      ProductType      @relation(fields: [productTypeId], references: [id])
+  productTypeId    Int
+
+  topSizeCm        Int
+  bottomSizeCm     Int
+
+  facadeColor      Color            @relation(fields: [facadeColorId], references: [id])
+  facadeColorId    Int
+  facadeMaterial   Material         @relation("FacadeMaterial", fields: [facadeMaterialId], references: [id])
+  facadeMaterialId Int
+
+  corpusMaterial   Material         @relation("CorpusMaterial", fields: [corpusMaterialId], references: [id])
+  corpusMaterialId Int
+
+  hardwareOptions  HardwareOption[]
+
+  createdAt        DateTime         @default(now())
+}
+
+model HardwareOption {
+  id             Int          @id @default(autoincrement())
+  catalogEntry   CatalogEntry @relation(fields: [catalogEntryId], references: [id])
+  catalogEntryId Int
+  hardwareItem   HardwareItem @relation(fields: [hardwareItemId], references: [id])
+  hardwareItemId Int
+
+  @@unique([catalogEntryId, hardwareItemId])
+}
