@@ -1,8 +1,5 @@
 PR submission — Vitalii Yurkov
 
-    Ready-to-paste body for the homework PR on
-    arabuga/2026-fwdays-agentic-greenfield-task.
-    Add video URL before opening the PR.
 
 Автор
 
