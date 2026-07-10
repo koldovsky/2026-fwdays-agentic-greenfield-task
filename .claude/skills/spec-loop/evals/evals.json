@@ -1,0 +1,21 @@
+{
+  "skill_name": "spec-loop",
+  "evals": [
+    {
+      "id": 0,
+      "name": "empty-backlog-asks",
+      "prompt": "Work through this project's spec backlog autonomously: implement every pending OpenSpec change all the way through implementation, testing (lints + an end-to-end check with a recorded demo if possible), and docs — tracking your progress in a state file with timestamps — and keep going until all the changes are implemented and archived. If anything is unclear or there's nothing to do, tell me.",
+      "expected_output": "Runs Step-0 assessment, detects there are no pending OpenSpec changes, and STOPS to ask the user to propose a change (e.g. /opsx:propose). Does NOT invent/auto-create a spec, does NOT fabricate STATE work entries, and does NOT start implementing.",
+      "fixture": "repo copy with empty OpenSpec backlog",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "full-loop-theme-toggle",
+      "prompt": "Work through this project's spec backlog autonomously: implement every pending OpenSpec change all the way through implementation, testing (lints + an end-to-end check with a recorded demo if possible), and docs — tracking your progress in a state file with timestamps — and keep going until all the changes are implemented and archived. If anything is unclear or there's nothing to do, tell me.",
+      "expected_output": "Drives the pending change `add-app-theme-toggle` through the gates: Gate 0 (planner, opus) checks spec sanity + cross-spec traceability and emits a distilled brief + the real-journey acceptance; Gate 1 (implementer, sonnet) implements the theme state + toggle UI + persistence, wired for real (no placeholder/stub/demo-data shortcut), reusing the project's hooks as it edits; Gate 2 runs the project's own deterministic gate (loop_verify) OFF-MODEL (project hooks / verify-gate.sh, logs to loop/latest/artifacts), then an independent verifier (≠ maker) authors an honest hollow-failing test AND runs a real-stack user journey (toggle persists across a real reload — no fixture seed, no video), while a gated reviewer checks security/architecture/correctness; Gate 3 syncs the spec delta + updates docs; archives + commits the change. A checkpoint commit is made before writing. STATE.md records every gate with consistent-timezone timestamps in the spec→stage→progress→comment→timestamp→resolution format and is mirrored to the task list. No check suppressions; final deterministic gate + journey are green.",
+      "fixture": "repo copy seeded with the validated add-app-theme-toggle change",
+      "files": []
+    }
+  ]
+}

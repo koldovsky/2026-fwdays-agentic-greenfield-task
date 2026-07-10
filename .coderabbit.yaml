@@ -11,6 +11,22 @@ tone_instructions: >-
 
 reviews:
   profile: "assertive"
+  # Тримаємо кількість файлів під лімітом CodeRabbit (~150): виключаємо вендорені
+  # дзеркала skills, спеки/доки/артефакти циклів і тести — рев'ю фокусується на
+  # продуктовому коді; опис практик CodeRabbit читає з тіла PR.
+  path_filters:
+    - "!.agents/**"
+    - "!.claude/**"
+    - "!.github/skills/**"
+    - "!openspec/**"
+    - "!doc/**"
+    - "!loop/**"
+    - "!e2e/**"
+    - "!**/*.test.ts"
+    - "!**/*.spec.ts"
+    - "!vendor/**"
+    - "!test-epubs/**"
+    - "!pnpm-lock.yaml"
   request_changes_workflow: false
   high_level_summary: true
   poem: false

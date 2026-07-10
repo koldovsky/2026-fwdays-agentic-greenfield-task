@@ -1,0 +1,288 @@
+{
+  "_comment": [
+    "Demo storyboard, replayed by record-demo.mjs. REAL STACK: connects to the live Komga test server",
+    "(pnpm komga:up) through the app's own Add-a-source UI and reads a real EPUB. No fixture seed.",
+    "",
+    "PROGRESS IS DEMONSTRATED, NOT ASSERTED. Komga's readProgress starts null after a library rescan, so",
+    "the demo WRITES progress (page turns), shows it on the Library card, RELOADS the whole app, and",
+    "reopens the book to prove the position survived. That is a stronger claim than a pre-seeded number,",
+    "and it cannot silently lie if the server state changes.",
+    "",
+    "Do NOT hardcode the source id: it is a fresh UUID on every connect. Select books by title text.",
+    "The recorder uses a clean browser context, so no source is persisted -> the add-source flow always runs.",
+    "The read button says 'Start reading' with no progress and 'Continue reading' with progress: match on",
+    "the substring 'reading' so both work.",
+    "",
+    "Step keys: caption(+ms) | goto | click | hover | type(+value,delayMs) | fill(+value) |",
+    "press(+times,betweenMs) | waitFor(+timeout) | wait | scroll | resize | pauseMs | frame.",
+    "",
+    "BEFORE EACH TAKE, reset the demo book's server-side progress or the \"Nothing read yet\" caption lies:",
+    "  curl -X DELETE -u reader@edda.test:edda-reader-pw http://localhost:25600/api/v1/books/0QV3QQ301F9W9/read-progress",
+    "",
+    "GOTCHA: the Scroll->Paged toggle rebuilds the navigator. Page-turn clicks fired within ~1.5s of",
+    "that rebuild are SWALLOWED (3 clicks advanced only 1 page). Hence the settle wait before turning,",
+    "and 5 turns so the resumed spread is visibly past the opening spread.",
+    "",
+    "HONESTY NOTE: progress is stored per PAGE, and the paged view resumes to the SPREAD containing that",
+    "page — leave at p.3-4, reopen at p.2-3. The caption says \"the position the server stored\", not",
+    "\"exactly where you left off\", because the frame would contradict the stronger claim."
+  ],
+  "baseUrl": "http://localhost:5183",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "slowMo": 90,
+  "defaultPauseMs": 1600,
+  "outDir": "loop/impeccable/demo",
+  "headless": true,
+  "steps": [
+    {
+      "caption": "Edda — a self-hosted library e-reader. Offline-first PWA.",
+      "ms": 1530
+    },
+    {
+      "caption": "Connect a real server. Edda probes it and detects the rest.",
+      "ms": 1420
+    },
+    {
+      "goto": "/settings/sources/add",
+      "pauseMs": 1400
+    },
+    {
+      "type": "input[placeholder=\"https://komga.myhome.net\"]",
+      "value": "http://localhost:25600",
+      "delayMs": 55,
+      "pauseMs": 1000
+    },
+    {
+      "waitFor": "text=Adapter ready"
+    },
+    {
+      "caption": "Reachable · Komga server · adapter ready — with its capabilities.",
+      "ms": 1638
+    },
+    {
+      "fill": "input[autocomplete=\"username\"]",
+      "value": "reader@edda.test",
+      "pauseMs": 800
+    },
+    {
+      "fill": "input[autocomplete=\"current-password\"]",
+      "value": "edda-reader-pw",
+      "pauseMs": 900
+    },
+    {
+      "caption": "Credentials stay on this device.",
+      "ms": 1100
+    },
+    {
+      "click": "button:has-text(\"Connect\")",
+      "pauseMs": 2600
+    },
+    {
+      "waitFor": "[data-testid=\"library-counts\"]"
+    },
+    {
+      "caption": "The library, served from Komga — real books, real cover art.",
+      "ms": 1638
+    },
+    {
+      "hover": "a:has-text(\"Pensées\")",
+      "pauseMs": 1300
+    },
+    {
+      "click": "a:has-text(\"Pensées\")",
+      "pauseMs": 2200
+    },
+    {
+      "caption": "Book detail. Nothing read yet.",
+      "ms": 1311
+    },
+    {
+      "click": "button:has-text(\"reading\")",
+      "pauseMs": 2400
+    },
+    {
+      "waitFor": "[data-testid=\"reader-title\"]"
+    },
+    {
+      "wait": 2080
+    },
+    {
+      "caption": "A real EPUB. Book content renders on a separate origin (ADR-013).",
+      "ms": 1638
+    },
+    {
+      "caption": "Reading themes live behind the “Aa” control.",
+      "ms": 1100
+    },
+    {
+      "click": "button[aria-label=\"Reading preferences\"]",
+      "pauseMs": 1600
+    },
+    {
+      "waitFor": "[data-testid=\"display-panel\"]"
+    },
+    {
+      "caption": "Sepia.",
+      "ms": 1100
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button[aria-label=\"Sepia\"]",
+      "pauseMs": 2100
+    },
+    {
+      "caption": "Dark — the chrome follows the page, not just the text.",
+      "ms": 1420
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button[aria-label=\"Dark\"]",
+      "pauseMs": 2600
+    },
+    {
+      "caption": "Parchment.",
+      "ms": 1100
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button[aria-label=\"Parchment\"]",
+      "pauseMs": 2300
+    },
+    {
+      "caption": "Typeface too — Newsreader to Literata.",
+      "ms": 1100
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button[aria-label=\"Literata\"]",
+      "pauseMs": 2000
+    },
+    {
+      "caption": "And the page model: paged spread, or continuous scroll.",
+      "ms": 1201
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button:has-text(\"Scroll\")",
+      "pauseMs": 2400
+    },
+    {
+      "click": "[data-testid=\"display-panel\"] button:has-text(\"Paged\")",
+      "pauseMs": 2000
+    },
+    {
+      "click": "button[aria-label=\"Close preferences\"]",
+      "pauseMs": 1500
+    },
+    {
+      "wait": 1800,
+      "note": "navigator settles after the Scroll->Paged rebuild; early clicks are swallowed"
+    },
+    {
+      "click": "button[aria-label=\"Next page\"]",
+      "pauseMs": 1700
+    },
+    {
+      "click": "button[aria-label=\"Next page\"]",
+      "pauseMs": 1700
+    },
+    {
+      "click": "button[aria-label=\"Next page\"]",
+      "pauseMs": 1700
+    },
+    {
+      "click": "button[aria-label=\"Next page\"]",
+      "pauseMs": 1700
+    },
+    {
+      "click": "button[aria-label=\"Next page\"]",
+      "pauseMs": 1700
+    },
+    {
+      "wait": 2200,
+      "note": "let the outbox drain to Komga before we navigate away"
+    },
+    {
+      "caption": "Turn the page. Each position is written back to the server.",
+      "ms": 1420
+    },
+    {
+      "caption": "Back to the library.",
+      "ms": 1100
+    },
+    {
+      "click": "button[aria-label=\"Library\"], button:has-text(\"Library\")",
+      "pauseMs": 2600
+    },
+    {
+      "waitFor": "[data-testid=\"library-counts\"]"
+    },
+    {
+      "caption": "“Keep reading” now shows where we stopped.",
+      "ms": 1638
+    },
+    {
+      "caption": "Reload the whole app — progress is not a page variable.",
+      "ms": 1420
+    },
+    {
+      "goto": "/library",
+      "pauseMs": 1950
+    },
+    {
+      "waitFor": "[data-testid=\"library-counts\"]"
+    },
+    {
+      "caption": "Still there, after a full restart.",
+      "ms": 1530
+    },
+    {
+      "click": "a:has-text(\"Pensées\")",
+      "pauseMs": 2000
+    },
+    {
+      "caption": "And it reopens at the position the server stored.",
+      "ms": 1201
+    },
+    {
+      "click": "button:has-text(\"reading\")",
+      "pauseMs": 2400
+    },
+    {
+      "waitFor": "[data-testid=\"reader-readout\"]",
+      "timeout": 30000
+    },
+    {
+      "wait": 2240
+    },
+    {
+      "caption": "Connectors and formats are plugins, installed on demand.",
+      "ms": 1311
+    },
+    {
+      "goto": "/settings/extensions",
+      "pauseMs": 1500
+    },
+    {
+      "waitFor": "[data-testid=\"extensions-screen\"]"
+    },
+    {
+      "click": "[data-testid=\"install-format.pdf\"]",
+      "pauseMs": 1200
+    },
+    {
+      "waitFor": "[data-testid=\"toggle-format.pdf\"]",
+      "timeout": 45000
+    },
+    {
+      "caption": "PDF support installed — a lazy chunk, not a download.",
+      "ms": 1420
+    },
+    {
+      "hover": "[data-testid=\"toggle-format.pdf\"]",
+      "pauseMs": 2000
+    },
+    {
+      "caption": "Edda — quiet, precise, self-hosted.",
+      "ms": 1748
+    }
+  ]
+}

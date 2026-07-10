@@ -1,0 +1,15 @@
+{
+  // Edda codebase-intelligence config (fallow). Most detection is zero-config;
+  // these few keys reflect Edda's plugin model so findings stay accurate.
+  "entry": ["src/main.ts", "sw.ts"],
+  // loop/** is spec-loop process evidence (gate logs + Playwright report vendor JS), not app source.
+  "ignorePatterns": ["vendor/**", "dist/**", "dev-dist/**", "coverage/**", "loop/**"],
+  // Plugins are loaded lazily via dynamic import() ("install" = a lazy chunk, not a server download),
+  // so they are reachable even though nothing imports them statically. Without this they read as unused.
+  "dynamicallyLoaded": ["src/plugins/**/*.ts"],
+  "rules": {
+    "unused-exports": "warn",
+    "circular-dependency": "warn",
+    "re-export-cycle": "warn",
+  },
+}

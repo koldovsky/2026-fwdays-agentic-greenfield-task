@@ -1,0 +1,7 @@
+{
+  "files": ["index.html"],
+  "exclude": ["src/platform/web/reader-frame/**", "vendor/**"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

@@ -1,0 +1,7 @@
+app-shell.spec.ts :: General becomes active when navigating to /settings/general
+app-shell.spec.ts :: Settings sidebar: SETTINGS region replaces SOURCES after clicking Settings
+app-shell.spec.ts :: parchment shell + sidebar renders on /home
+extensions-capability.spec.ts :: renders INSTALLED·3 bundled + AVAILABLE catalog; bundled toggles are locked; install PDF
+gate2-extensions-capability.spec.ts :: INSTALLED·3 bundled rows + AVAILABLE grid match design spec
+visual/extensions.spec.ts :: desktop matches the maket (Tier-1) and the golden (Tier-2)
+visual/states.spec.ts :: hover changes a nav item background (hover affordance)

@@ -1,0 +1,24 @@
+# Build output & deps
+dist
+dev-dist
+coverage
+vendor
+node_modules
+pnpm-lock.yaml
+
+# spec-loop process evidence (STATE + gate artifacts) — committed, but not app source
+loop
+
+# Pre-existing project artifacts (homework docs, agent configs) — not app source, leave as authored
+doc
+.agents
+.claude
+.github
+openspec
+*.md
+*.html
+.coderabbit.yaml
+skills-lock.json
+
+# Playwright MCP session snapshots — machine-generated, not source
+.playwright-mcp

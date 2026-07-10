@@ -1,0 +1,232 @@
+@import 'tailwindcss';
+
+/*
+ * Edda design system — the maket's "parchment" visual language as Tailwind 4 tokens.
+ * doc/web/ is the visual source of truth; hex values validated by sampling 01/02/05/06.
+ * Tailwind styles APP CHROME ONLY — book typography is readium-css (add-reading-preferences).
+ * Every chrome color lives here; components reference tokens (no ad-hoc hex elsewhere).
+ */
+@theme {
+  /* Color — warm parchment palette (sampled from doc/web/01,02,05,06). */
+  --color-canvas: #f0eee9; /* app/page background */
+  --color-surface: #f7f5f0; /* raised cards & panels — lighter than canvas */
+  --color-sunken: #e6e1d6; /* wells: progress tracks, input fields */
+  --color-primary: #55614c; /* single forest/olive action color */
+  --color-primary-strong: #454f3c; /* hover/active on primary */
+  --color-on-primary: #f5f2ec; /* text/icon on primary */
+  --color-ink: #2c2a25; /* warm near-black — headings & body text */
+  --color-muted: #6b6252; /* muted secondary text & descriptors — darkened from the maket's #857c6b to
+                             clear WCAG 2.1 AA (4.5:1) on canvas/surface/sunken (visual-polish ch11 §a11y) */
+  --color-line: #ddd7c9; /* hairline borders & dividers */
+  --color-active: #e4e7d8; /* active nav wash (pale green) */
+  --color-status: #546b3b; /* connected status dot + "Reachable" — darkened from the maket's #6f8f4f to
+                              clear WCAG AA (4.5:1) as text on light chrome (visual-polish ch11 §a11y) */
+  --color-warning: #7a5f24; /* warnings (e.g. "no progress API") — darkened from #b08f4e for WCAG AA text */
+
+  /*
+   * Reader-chrome tokens — the reader's own surround (top bar, position bar, edge chevrons, the
+   * parchment "mat" around the page), kept in a SEPARATE namespace from the app-wide tokens above.
+   * Defaults here equal the `light` reading theme's chrome (identical hex to canvas/ink/muted/line/
+   * sunken/surface/primary — the reader looks exactly as before when the reading theme is `light`).
+   * The `[data-reader-theme="…"]` overrides below repaint ONLY these tokens for sepia/dark/parchment,
+   * so nothing outside `src/app/components/reader/{ReaderTopBar,ReaderPositionBar,ReaderSpread,
+   * ReaderChevrons}.vue` (which are the only consumers) is ever affected — chrome tokens only, per
+   * CLAUDE.md/DESIGN.md's Two Palettes Rule; the book itself is still styled exclusively by
+   * reader-css.ts inside the origin-isolated frame. (Theming fix, impeccable cycle 1b.)
+   */
+  --color-reader-chrome-bg: var(--color-canvas);
+  --color-reader-chrome-mat-1: #f6f1e4; /* the paper "sheet" gradient, top → mid → bottom stop */
+  --color-reader-chrome-mat-2: #efe7d3;
+  --color-reader-chrome-mat-3: #e8dfc8;
+  --color-reader-chrome-ink: var(--color-ink);
+  --color-reader-chrome-muted: var(--color-muted);
+  --color-reader-chrome-line: var(--color-line);
+  --color-reader-chrome-sunken: var(--color-sunken);
+  --color-reader-chrome-surface: var(--color-surface);
+  --color-reader-chrome-primary: var(
+    --color-primary
+  ); /* still Terre Verte — see override note below */
+
+  /* Typography — serif display + serif reading + system monospace, all self-hosted. */
+  --font-display: 'Newsreader', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-reading: 'Literata', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* Radius & elevation — calm, generous, softly rounded (matches the maket). */
+  --radius-control: 0.625rem; /* buttons, inputs, chips' container */
+  --radius-card: 0.875rem; /* cards & panels */
+  --radius-pill: 9999px;
+  --shadow-card: 0 1px 2px rgb(44 42 37 / 0.04), 0 1px 3px rgb(44 42 37 / 0.05);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-reading);
+    /* Keep the fallback metrically close to the web font during `font-display: swap`
+       to avoid layout shift (modern-web-guidance: visually-stable-font-fallbacks). */
+    font-size-adjust: from-font;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+  }
+
+  /*
+   * Visible keyboard focus on every interactive control (WCAG 2.4.7 + the maket's calm parchment).
+   * Zero-specificity `:where()` so any component-level focus style (the reader scrubber, the form
+   * inputs' ring) overrides it — but nothing is ever left without an indicator (add-visual-polish-e2e
+   * ch11; modern-web-guidance accessibility §5). The forest ring on parchment clears WCAG AA non-text
+   * contrast (3:1). Pointer focus is intentionally excluded via `:focus-visible`.
+   */
+  :where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role='button'],
+    [role='switch'],
+    [role='tab'],
+    [role='link'],
+    [tabindex]
+  ):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Reader-chrome theme variants — repaint the reader-chrome tokens (declared in `@theme` above, defaulted
+ * to the `light` look) when the ACTIVE READING THEME is sepia/dark/parchment. `ReaderView.vue` sets
+ * `data-reader-theme="<the active ReadingPreferences theme>"` on its own root element; these rules only
+ * ever redefine the `--color-reader-chrome-*` custom-property namespace, so they cannot leak into any
+ * token the rest of the app reads (`--color-canvas`, `--color-ink`, etc. are untouched) — a fixer/reader
+ * looking at this file can confirm the blast radius by grep: `--color-reader-chrome-`.
+ *
+ * Kept OUTSIDE any `@layer` (like the reduced-motion block below) so — per the CSS cascade-layers spec —
+ * these unlayered declarations always beat the layered `@theme` defaults, regardless of source order.
+ *
+ * `dark` also relights the accent (`--color-reader-chrome-primary`): unchanged Terre Verte (#55614c) on
+ * the dark chrome background/well measures 2.57:1 / 2.28:1 — under the 3:1 AA non-text minimum a focus
+ * ring and the bookmark icon need. #94a682 is the SAME hue lightened for the dark surface (6.46:1 /
+ * 5.72:1), the same technique this system already uses elsewhere (Sap Green / Orpiment / Muted were each
+ * darkened from their maket value to clear AA as text) — not a second accent color (The One Green Rule).
+ * sepia/parchment keep the stock Terre Verte: 4.73:1/4.30:1 and 3.41:1/3.15:1 both already clear 3:1.
+ */
+[data-reader-theme='sepia'] {
+  --color-reader-chrome-bg: #e8dab8;
+  --color-reader-chrome-mat-1: #f4ead0;
+  --color-reader-chrome-mat-2: #ecdfc0;
+  --color-reader-chrome-mat-3: #e2d2ab;
+  --color-reader-chrome-ink: #584734; /* the same corrected sepia reading fg (READING_THEME_COLORS) */
+  --color-reader-chrome-muted: #63523a;
+  --color-reader-chrome-line: #d9c9a0;
+  --color-reader-chrome-sunken: #e0d0aa;
+  --color-reader-chrome-surface: #f4ead0;
+}
+[data-reader-theme='dark'] {
+  --color-reader-chrome-bg: #211c17;
+  --color-reader-chrome-mat-1: #2a241d;
+  --color-reader-chrome-mat-2: #221d18;
+  --color-reader-chrome-mat-3: #1c1712;
+  --color-reader-chrome-ink: #e7e1d4; /* the same dark reading fg (READING_THEME_COLORS) */
+  --color-reader-chrome-muted: #ab9f8c;
+  --color-reader-chrome-line: #3a332a;
+  --color-reader-chrome-sunken: #2c261f;
+  --color-reader-chrome-surface: #221d18;
+  --color-reader-chrome-primary: #94a682;
+}
+[data-reader-theme='parchment'] {
+  --color-reader-chrome-bg: #c9ba90;
+  --color-reader-chrome-mat-1: #ddd3b4;
+  --color-reader-chrome-mat-2: #d3c7a2;
+  --color-reader-chrome-mat-3: #c7b98d;
+  --color-reader-chrome-ink: #3a3424; /* the same parchment reading fg (READING_THEME_COLORS) */
+  --color-reader-chrome-muted: #4d4430;
+  --color-reader-chrome-line: #b3a476;
+  --color-reader-chrome-sunken: #c1b389;
+  --color-reader-chrome-surface: #ddd3b4;
+}
+
+/*
+ * Reader-chrome controls (`.reader-chrome` marks the top bar, position bar, mat and edge chevrons) point
+ * their focus ring at the reader-chrome accent instead of the global one — identical to Terre Verte in
+ * three of the four reading themes, lightened for `dark` (see above), so a focused control never goes
+ * low-contrast against whichever chrome is active. This is exactly the allowance the global rule (in
+ * `@layer base` above) is written for: it is zero-specificity so a component may restyle the indicator,
+ * and it never loses the indicator entirely (a real, higher-specificity selector, not `:where()`).
+ */
+.reader-chrome :focus-visible {
+  outline-color: var(--color-reader-chrome-primary);
+}
+
+/*
+ * Honour reduced-motion: dampen every transition/animation (the spinner, hover transitions, the
+ * toggle thumb). Also the determinism guarantee for the visual-regression capture — Playwright forces
+ * `prefers-reduced-motion: reduce`, so captures never race an in-flight animation (modern-web-guidance
+ * accessibility §10). Kept out of `@layer base` so it wins regardless of layer ordering.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * `.tap-target` — grows a control's TOUCH hit area to the WCAG 2.5.5 / Material 44px minimum on
+ * coarse pointers (phone/tablet touch) without changing its VISUAL size on any pointer, fine or
+ * coarse (impeccable cycle 2 "adapt": sub-44px controls in the library toolbar + reader chrome,
+ * loop/impeccable/cycles/02/audit.md P3). An invisible `::after` grows past the element's own box;
+ * a tap landing on it is a tap on the host element (generated content hit-tests to its host), so this
+ * is correct for anything where a tap ANYWHERE in the region performs one identical action — icon
+ * buttons, toggles, links. It is NOT appropriate for text inputs or range-slider thumbs, where the
+ * exact tap position inside the box is meaningful (see ReaderPositionBar.vue's own coarse-pointer rule,
+ * and the search field's `pointer-coarse:` padding, for those cases).
+ *
+ * `@media (pointer: coarse)` never matches in this project's Playwright gates: every project's `use`
+ * spreads `devices['Desktop Chrome']`, which has `hasTouch: false` (confirmed in playwright.config.ts),
+ * so no golden/responsive snapshot can move because of this rule — it is inert everywhere but a real
+ * touch device.
+ *
+ * Usage: add `class="tap-target"` to any `position: relative` (or default `static`, since `position:
+ * relative` is set here) button/link under 44px. Buttons packed tightly (e.g. the reader top bar's
+ * TOC/Bookmark/Aa cluster, `gap-1` apart) will have slightly overlapping hit-slop in the few-px seam
+ * between them — an accepted, standard trade-off (iOS/Material toolbars do the same); every tap still
+ * lands on ONE of the two adjacent controls, never on neither.
+ */
+@layer utilities {
+  .tap-target {
+    position: relative;
+  }
+
+  @media (pointer: coarse) {
+    .tap-target::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+    }
+  }
+}
