@@ -13,27 +13,27 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-AUTH-03 | COVERED | 001 | backend/tests/test_auth.py::test_logout_clears_session |
 | FR-AUTH-06 | COVERED | 001 | backend/tests/test_auth.py::test_protected_route_401_without_session |
 | FR-AUTH-07 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
-| FR-TIMER-01 | GAP | 003 | (none) |
-| FR-TIMER-02 | GAP | 003 | (none) |
-| FR-TIMER-03 | GAP | 003 | (none) |
-| FR-TIMER-04 | GAP | 003 | (none) |
-| FR-TIMER-05 | GAP | 003 | (none) |
-| FR-TIMER-06 | GAP | 003 | (none) |
-| FR-SESS-01 | GAP | 003 | (none) |
-| FR-SESS-02 | GAP | 003 | (none) |
-| FR-SESS-03 | GAP | 003 | (none) |
-| FR-SESS-04 | GAP | 003 | (none) |
-| FR-SESS-05 | GAP | 003 | (none) |
-| FR-SESS-06 | GAP | 003 | (none) |
+| FR-TIMER-01 | COVERED | 003 | backend/tests/test_timer.py::test_start_creates_running_active_session<br>backend/tests/test_timer.py::test_start_on_foreign_category_is_404_and_creates_nothing |
+| FR-TIMER-02 | COVERED | 003 | backend/tests/test_timer.py::test_continue_paused_timer_closes_pause_segment<br>backend/tests/test_timer.py::test_continue_while_running_is_409_unchanged<br>backend/tests/test_timer.py::test_pause_running_timer_opens_pause_segment<br>backend/tests/test_timer.py::test_pause_while_paused_is_409_unchanged |
+| FR-TIMER-03 | COVERED | 003 | backend/tests/test_timer.py::test_stop_final_category_overrides_start_category<br>backend/tests/test_timer.py::test_stop_persists_session_and_two_pauses_atomically<br>backend/tests/test_timer.py::test_stop_with_no_active_session_is_404 |
+| FR-TIMER-04 | COVERED | 003 | backend/tests/test_timer.py::test_discard_deletes_active_writes_undo_and_no_session<br>backend/tests/test_timer.py::test_discarded_session_leaves_no_trace_in_log |
+| FR-TIMER-05 | COVERED | 003 | frontend/src/pages/Timer/resolveShortcut.test.ts |
+| FR-TIMER-06 | COVERED | 003 | backend/tests/test_timer.py::test_active_session_is_shared_across_the_users_clients<br>backend/tests/test_timer.py::test_second_start_while_active_is_409<br>backend/tests/test_timer.py::test_stale_version_timer_action_is_409_unchanged |
+| FR-SESS-01 | COVERED | 003 | backend/tests/test_sessions.py::test_ended_not_after_started_is_422_persists_nothing<br>backend/tests/test_sessions.py::test_pause_outside_session_bounds_is_422_persists_nothing<br>backend/tests/test_sessions.py::test_two_pauses_stored_as_two_discrete_segments |
+| FR-SESS-02 | COVERED | 003 | backend/tests/test_durations.py::test_gross_is_end_minus_start_in_seconds<br>backend/tests/test_durations.py::test_net_equals_gross_when_no_pauses<br>backend/tests/test_durations.py::test_net_subtracts_a_single_pause<br>backend/tests/test_durations.py::test_net_subtracts_both_of_two_pauses<br>backend/tests/test_sessions.py::test_editing_a_pause_recomputes_net<br>backend/tests/test_sessions.py::test_net_equals_gross_with_no_pauses<br>backend/tests/test_sessions.py::test_net_excludes_total_paused_time |
+| FR-SESS-03 | COVERED | 003 | backend/tests/test_sessions.py::test_manual_add_foreign_category_is_404<br>backend/tests/test_sessions.py::test_manual_add_invalid_bounds_is_422<br>backend/tests/test_sessions.py::test_manual_add_with_no_pauses<br>backend/tests/test_sessions.py::test_manual_add_with_two_pauses |
+| FR-SESS-04 | COVERED | 003 | backend/tests/test_sessions.py::test_edit_another_users_session_is_404<br>backend/tests/test_sessions.py::test_edit_fields_updates_and_offers_undo<br>backend/tests/test_sessions.py::test_edit_pause_set_add_adjust_remove |
+| FR-SESS-05 | COVERED | 003 | backend/tests/test_sessions.py::test_delete_another_users_session_is_404<br>backend/tests/test_sessions.py::test_delete_removes_session_and_pauses_and_offers_undo |
+| FR-SESS-06 | COVERED | 003 | backend/tests/test_sessions.py::test_log_is_isolated_per_user<br>backend/tests/test_sessions.py::test_log_lists_sessions_with_durations_in_order<br>backend/tests/test_sessions.py::test_running_session_is_not_in_log |
 | FR-CAT-01 | COVERED | 002 | backend/tests/test_categories.py::test_create_category_happy_path<br>backend/tests/test_categories.py::test_duplicate_active_name_rejected<br>backend/tests/test_categories.py::test_same_name_allowed_for_two_users |
 | FR-CAT-02 | COVERED | 002 | backend/tests/test_categories.py::test_edit_updates_name_color_description<br>backend/tests/test_categories.py::test_rename_onto_existing_active_name_rejected<br>backend/tests/test_categories.py::test_user_cannot_edit_another_users_category |
 | FR-CAT-03 | COVERED | 002 | backend/tests/test_categories.py::test_archived_category_excluded_from_active_list<br>backend/tests/test_categories.py::test_delete_archives_category<br>backend/tests/test_categories.py::test_delete_category_with_no_sessions_removed_from_active_list<br>backend/tests/test_categories.py::test_user_cannot_delete_another_users_category |
-| FR-NOTIF-01 | GAP | 003 | (none) |
+| FR-NOTIF-01 | COVERED | 003 | backend/tests/test_undo.py::test_consumed_token_second_use_is_404<br>backend/tests/test_undo.py::test_expired_token_is_404<br>backend/tests/test_undo.py::test_undo_of_delete_reinserts_session_and_pauses<br>backend/tests/test_undo.py::test_undo_of_discard_conflicts_with_new_active_session<br>backend/tests/test_undo.py::test_undo_of_discard_restores_active_timer<br>backend/tests/test_undo.py::test_undo_of_edit_reverts_prior_values |
 | NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 24 claimed, 11 traced, 13 gap.
+Summary: 24 claimed, 24 traced, 0 gap.
 
 ## Requirements not yet claimed by any spec
 
