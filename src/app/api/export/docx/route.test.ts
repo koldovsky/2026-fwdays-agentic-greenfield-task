@@ -88,14 +88,19 @@ describe("POST /api/export/docx — server-side paywall (FR-PAYWALL-01)", () => 
   it("renders for a paid caller", async () => {
     currentUserId.mockResolvedValue("u1");
     subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    // Bulletless doc (no tailoringId needed): isolates the PAYWALL assertion
+    // from the mandatory server-side honesty gate below, which requires a
+    // tailoringId for any bullet-bearing export. Grounding coverage for a
+    // paid+tailoringId caller lives in the membership-gate describe block.
+    const bulletlessDoc = { headline: "Tailored résumé", bullets: [] };
 
-    const res = await POST(post({ document: DOC }));
+    const res = await POST(post({ document: bulletlessDoc }));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe(
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
-    expect(renderResumeDocx).toHaveBeenCalledWith(DOC);
+    expect(renderResumeDocx).toHaveBeenCalledWith(bulletlessDoc);
   });
 
   it("still 400s a malformed body before any entitlement lookup", async () => {
@@ -108,9 +113,12 @@ describe("POST /api/export/docx — server-side paywall (FR-PAYWALL-01)", () => 
 
 // ---------------------------------------------------------------------------
 // Server-side membership honesty gate (server-side-export-gate, T5 #8,
-// BC-HONESTY-02, NFR-SEC-04): active ONLY when the body carries a non-empty
-// `tailoringId`. Runs AFTER the paywall (402 still wins for a non-paid caller
-// even with a tailoringId present). Mirrors /api/export/pdf/route.test.ts.
+// BC-HONESTY-02, NFR-SEC-04): MANDATORY for any bullet-bearing export — a
+// missing/empty/non-string `tailoringId` is rejected (400 missing_tailoring)
+// rather than falling back to shape-only validation. A bulletless document has
+// nothing to ground, so it always passes without a `tailoringId`. Runs AFTER
+// the paywall (402 still wins for a non-paid caller even with a tailoringId
+// present). Mirrors /api/export/pdf/route.test.ts.
 // ---------------------------------------------------------------------------
 const TAILORING_ID = "t-1";
 const GROUNDED_TEXT = "Led migration to TypeScript.";
@@ -129,12 +137,49 @@ describe("POST /api/export/docx — server-side membership gate (BC-HONESTY-02, 
     subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
   });
 
-  it("tailoringId ABSENT: falls back to shape-only validation, never touches the DB grant lookup", async () => {
+  it("tailoringId ABSENT on a bullet-bearing doc: 400 missing_tailoring, never touches the DB, never renders — the gate is mandatory", async () => {
     const res = await POST(post({ document: DOC }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "missing_tailoring" });
+    expect(findExportGrant).not.toHaveBeenCalled();
+    expect(renderResumeDocx).not.toHaveBeenCalled();
+  });
+
+  it("tailoringId absent but non-string (e.g. a number): 400 missing_tailoring on a bullet-bearing doc", async () => {
+    const res = await POST(post({ document: DOC, tailoringId: 12345 }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "missing_tailoring" });
+    expect(findExportGrant).not.toHaveBeenCalled();
+    expect(renderResumeDocx).not.toHaveBeenCalled();
+  });
+
+  it("bulletless document + tailoringId ABSENT: renders 200 — nothing to ground, never touches the DB", async () => {
+    const bulletlessDoc = { headline: "x", bullets: [] };
+
+    const res = await POST(post({ document: bulletlessDoc }));
 
     expect(res.status).toBe(200);
     expect(findExportGrant).not.toHaveBeenCalled();
-    expect(renderResumeDocx).toHaveBeenCalledWith(DOC);
+    expect(renderResumeDocx).toHaveBeenCalledWith(bulletlessDoc);
+  });
+
+  it("allows a fabricated summary/skills value alongside a fully-grounded bullet set — profile fields are NOT grounding-gated", async () => {
+    findExportGrant.mockResolvedValue(COMPLETE_GRANT);
+    const doc = {
+      headline: "x",
+      bullets: [GROUNDED_TEXT],
+      sections: {
+        summary: ["Fabricated: personally invented the internet."],
+        skills: ["Fabricated skill: telepathy"],
+      },
+    };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(200);
+    expect(renderResumeDocx).toHaveBeenCalledWith(doc);
   });
 
   it("tailoringId present + every bullet text persisted: renders (200, docx content-type)", async () => {
@@ -229,10 +274,11 @@ describe("POST /api/export/docx — server-side membership gate (BC-HONESTY-02, 
     expect(renderResumeDocx).not.toHaveBeenCalled();
   });
 
-  it("an empty-string tailoringId is treated as absent (falls back to shape-only validation)", async () => {
+  it("an empty-string tailoringId normalizes to absent: 400 missing_tailoring on a bullet-bearing doc", async () => {
     const res = await POST(post({ document: DOC, tailoringId: "" }));
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "missing_tailoring" });
     expect(findExportGrant).not.toHaveBeenCalled();
   });
 });

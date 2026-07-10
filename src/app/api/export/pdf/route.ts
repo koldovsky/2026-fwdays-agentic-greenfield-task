@@ -11,15 +11,16 @@
 //
 // CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): the body is shape-validated
 // (isExportDocument), but the section/bullet TEXT is authored client-side. To stop
-// a crafted POST placing arbitrary/fabricated text into the export, the client now
-// sends the persisted `tailoringId`; WHEN present, enforceExportGrounding requires
-// every bullet text to be a MEMBER of that tailoring's persisted bullets (owned by
-// the caller, run complete) — the honesty gate is now SERVER-enforced for that path
-// (server-side-export-gate, T5 #8). It is a membership check, NOT an `included`
-// filter, so a legitimately re-included overclaim-risk bullet (FR-BULLETS-02) still
-// exports. WHEN `tailoringId` is absent the route falls back to shape-only
-// validation (additive, non-breaking) — the pre-existing self-authored-resume
-// boundary. Contact/summary/skills/education/headline stay client-supplied.
+// a crafted POST placing arbitrary/fabricated text into the export, the client
+// sends the persisted `tailoringId`; enforceExportGrounding requires every bullet
+// text to be a MEMBER of that tailoring's persisted bullets (owned by the caller,
+// run complete). The gate is MANDATORY for a bullet-bearing export — a caller past
+// the paywall is always authed+paid, so omitting `tailoringId` is rejected
+// (`missing_tailoring`, 400) rather than falling back to shape-only validation;
+// this closes the opt-out vector (harden-export-gate, T5 #8). It is a membership
+// check, NOT an `included` filter, so a legitimately re-included overclaim-risk
+// bullet (FR-BULLETS-02) still exports. A bulletless document has nothing to
+// ground. Contact/summary/skills/education/headline stay client-supplied.
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";
@@ -133,14 +134,17 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "payment_required" }, { status: 402 });
   }
 
-  // Server-side honesty gate (server-side-export-gate, T5 #8, BC-HONESTY-02,
-  // NFR-SEC-04). WHEN the client supplied the persisted `tailoringId`, every
-  // bullet text in `doc` MUST be a member of that tailoring's persisted bullets
-  // — this closes the trust boundary where a crafted POST could inject arbitrary
-  // (fabricated) text after shape validation. WHEN absent, fall back to today's
-  // shape-only validation (additive, non-breaking). Runs AFTER the paywall.
-  const tailoringId = (body as { tailoringId?: unknown } | null)?.tailoringId;
-  if (typeof tailoringId === "string" && tailoringId.length > 0 && userId !== null) {
+  // Server-side honesty gate (harden-export-gate, T5 #8, BC-HONESTY-02,
+  // NFR-SEC-04). Runs AFTER the paywall, so `userId` is non-null here. Every
+  // bullet text in `doc` MUST be a member of the caller's persisted, complete
+  // tailoring; a bullet-bearing export with no valid `tailoringId` is rejected
+  // (`missing_tailoring`) so the gate cannot be skipped from the request body. A
+  // bulletless document has nothing to ground. Empty / non-string `tailoringId`
+  // normalizes to null (treated as absent).
+  const rawTailoringId = (body as { tailoringId?: unknown } | null)?.tailoringId;
+  const tailoringId =
+    typeof rawTailoringId === "string" && rawTailoringId.length > 0 ? rawTailoringId : null;
+  if (userId !== null) {
     try {
       const rejection = groundingErrorResponse(
         await enforceExportGrounding(doc, tailoringId, userId),

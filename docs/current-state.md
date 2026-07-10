@@ -8,6 +8,17 @@
 
 ## Last action (most recent first)
 
+- **`harden-export-gate` (T5 #8 hardening) DONE (2026-07-10).** The base server-side export gate was
+  already built + committed (`ca103fa`); the doc had drifted. Adversarial review (2 opus red-teamers)
+  confirmed the engaged path sound but found the gate was ADDITIVE — a paid caller could OMIT `tailoringId`
+  → shape-only validation → inject fabricated bullets (self-harm, but the exact T5 #8 vector). User decision:
+  make it MANDATORY. `enforce-grounding.ts` now takes `tailoringId: string | null`, returns `ok` for a
+  bulletless doc and `missing_tailoring` (400) for a bullet-bearing doc with no id; pdf+docx normalize the id
+  and call the gate unconditionally past the paywall. Adjacent: FR-EDIT forward-guard comment, un-gated
+  profile-fields doc+test, hand-written openspec delta (`changes/harden-export-gate`, bullets capability).
+  maker(main) ≠ test-author(sonnet) ≠ checker(opus, approve; nits fixed) + verifier(sonnet). Green: lint,
+  export 72/72, full suite 148 files/1488 tests, 0 fail. Residual (accepted): cross-tailoring superset
+  smuggling. BC-HONESTY-02, NFR-SEC-04, FR-BULLETS-02/03.
 - **`fix-premium-attach-overlay` DONE (2026-07-10).** Fixed the corrupted non-premium tailor UI.
   Root cause: `PremiumAttachZone` free branch put the premium banner in an `absolute inset-0` overlay
   while a short blurred shell drove height (parent `overflow-hidden`), clipping the banner + CTA and
@@ -38,41 +49,18 @@
 
 ## Working on
 
-### `server-side-export-gate` (T5 #8) — IN PROGRESS (2026-07-10, self-paced loop)
-
-Make the export honesty gate SERVER-ENFORCED so a crafted POST can't inject fabricated bullet text into
-a pdf/docx export. Investigated (feasibility = MEDIUM, NO migration): the `bullets` table already persists
-every pipeline bullet's `text` + `grounding` for a tailoring; the gate is a text-MEMBERSHIP check, not an
-`included` filter (users may legitimately opt overclaim bullets back in — FR-BULLETS-02). BC-HONESTY-02,
-NFR-SEC-04, FR-BULLETS-02/03.
-
-**Plan (maker opus → test-author sonnet → checker opus + verifier sonnet, one workflow):**
-1. Thread the tailoring DB id to the client: add `tailoringId` to the SSE result/status event
-   (`features/run-tailoring/model/types.ts`), emit it from both `/api/tailor/generate` + `/api/tailor` once
-   `pendingId` is known; `TailorWorkspace` stores it, passes to `ExportStepper`; client export POST body
-   carries `tailoringId`.
-2. pdf + docx routes (`src/app/api/export/{pdf,docx}/route.ts`): when `tailoringId` present, load the
-   tailoring + its bullets (repo findById-with-bullets; verify/extend), enforce `record.userId ===
-   currentUserId()` (IDOR → 404) + `status === 'complete'`, then reject (400) if any `document.bullets` or
-   `document.sections.experience[].bullets` text is NOT a member of the persisted bullet-text set.
-   Contact/summary/skills/education stay client-supplied (not grounding-gated). ADDITIVE: absent
-   `tailoringId` → today's shape-only validation (non-breaking).
-3. Cover-letter route is already server-verified (two-pass LLM) — out of scope.
-Checker must verify: IDOR ownership, membership-check preserves FR-BULLETS-02 opt-in (does NOT filter by
-`included`), additive fallback, no honesty/stream-contract regression.
+Nothing actively in progress. `harden-export-gate` (T5 #8) closed — see Last action. Openspec delta
+`changes/harden-export-gate` is hand-written and awaits archival once the CLI is available (add to the
+archive backlog below). Residual accepted: cross-tailoring "superset smuggling" (export not bound to the
+viewed run/JD) — user chose "require tailoringId", not "require + bind to run".
 
 ## Next steps (code-doable, pick by value)
 
-1. **T5 #8 — server-side export honesty gate** (defense-in-depth, higher value). The `includedInExport`
-   gate is applied client-side in `buildExportDocument`; pdf/docx routes render client-authored section
-   text after shape-validation only. Harden: rebuild export sections server-side from persisted kept-bullet
-   texts + a server-parsed CvDocument so the honesty gate is server-enforced. Spec-first; needs a look at
-   whether kept-bullet texts are persisted. BC-HONESTY-02, NFR-SEC-04.
-2. **T5 #7 — per-bullet role provenance** (fidelity-only, honest today). Kept bullets attach to the
+1. **T5 #7 — per-bullet role provenance** (fidelity-only, honest today). Kept bullets attach to the
    most-recent parsed role because `Bullet` has no source-role tag. Add `Bullet.sourceRoleIndex` (model +
    migration + gen-pipeline thread) to place each kept bullet under its source role, then restore the
    stricter resume-export spec scenario. Own spec-first change.
-3. **Follow-ups from recent work:** audit `checkout`/`history` pages for a missing-locale read like the
+2. **Follow-ups from recent work:** audit `checkout`/`history` pages for a missing-locale read like the
    billing bug (billing was fixed; grep showed no others, low risk); optional token-vs-session IDOR check on
    /checkout (defense-in-depth).
 

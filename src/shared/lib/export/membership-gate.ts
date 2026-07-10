@@ -19,10 +19,14 @@
  * The minimal export-document shape this gate inspects — the two places
  * pipeline-authored bullet text can appear: the flat `bullets` list and each
  * experience role's `bullets` (improve-tailoring-quality §4.2/§4.3). Contact /
- * summary / skills / education / headline / dateRange are client-supplied and NOT
- * grounding-gated, so they are intentionally absent here. Structurally a subset
- * of `ExportDocument` (entities/export-document), so the route passes that value
- * directly without a conversion.
+ * summary / skills / education / headline / dateRange are client-supplied CANDIDATE
+ * PROFILE data (from the user's own CV), NOT pipeline-generated claims, so they are
+ * intentionally NOT grounding-gated and are absent here (BC-HONESTY-02 scopes to
+ * overclaim-risk BULLETS). This is a deliberate scope boundary, covered by an
+ * explicit "profile fields pass un-gated" test — a fabricated summary/skill affects
+ * only the caller's own résumé, not the honesty of pipeline-authored bullets.
+ * Structurally a subset of `ExportDocument` (entities/export-document), so the
+ * route passes that value directly without a conversion.
  */
 export interface ExportGateDocument {
   readonly bullets: readonly string[];
@@ -54,6 +58,15 @@ export function collectExportBulletTexts(doc: ExportGateDocument): string[] {
  * verbatim output, so a legitimate export echoes them byte-for-byte. Any edit /
  * fabrication that changes a character is (correctly) rejected — this is a
  * security boundary, not a fuzzy match (NFR-SEC-04).
+ *
+ * FR-EDIT-01/02 GUARD (not yet wired): inline bullet editing is not implemented.
+ * When it ships, an edited bullet's text will no longer be byte-equal to the
+ * persisted generation-time row, so this exact-match gate would reject a
+ * legitimate edited export. Before enabling edit, persist the edited text back to
+ * the tailoring's bullets (grounding `manual`, already in the DB enum) — or
+ * re-ground it — so the persisted set stays the source of truth the gate checks
+ * against. Do NOT relax this to a fuzzy match; that would reopen the fabrication
+ * vector this gate exists to close.
  */
 export function isExportGrounded(
   doc: ExportGateDocument,

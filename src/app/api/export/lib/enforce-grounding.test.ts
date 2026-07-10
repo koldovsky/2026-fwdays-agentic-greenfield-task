@@ -50,6 +50,22 @@ describe("enforceExportGrounding", () => {
     expect(findExportGrant).toHaveBeenCalledWith(TAILORING_ID);
   });
 
+  it("returns ok without ever calling the DB when the document has no bullet text anywhere (nothing to ground)", async () => {
+    const bulletlessDoc: ExportDocument = { headline: "x", bullets: [] };
+
+    const verdict = await enforceExportGrounding(bulletlessDoc, null, OWNER_ID);
+
+    expect(verdict).toBe("ok");
+    expect(findExportGrant).not.toHaveBeenCalled();
+  });
+
+  it("returns missing_tailoring when the doc HAS bullet text but tailoringId is null — the gate is mandatory, not opt-in", async () => {
+    const verdict = await enforceExportGrounding(DOC, null, OWNER_ID);
+
+    expect(verdict).toBe("missing_tailoring");
+    expect(findExportGrant).not.toHaveBeenCalled();
+  });
+
   it("returns not_found when the tailoring does not exist", async () => {
     findExportGrant.mockResolvedValue(null);
 
@@ -98,6 +114,22 @@ describe("enforceExportGrounding", () => {
     expect(verdict).toBe("ok");
   });
 
+  it("allows a fabricated summary/skills value alongside a fully-grounded bullet set — profile fields are NOT grounding-gated (deliberate scope boundary)", async () => {
+    findExportGrant.mockResolvedValue(COMPLETE_GRANT);
+    const doc: ExportDocument = {
+      headline: "x",
+      bullets: [GROUNDED_TEXT],
+      sections: {
+        summary: ["Fabricated: personally invented the internet."],
+        skills: ["Fabricated skill: telepathy"],
+      },
+    };
+
+    const verdict = await enforceExportGrounding(doc, TAILORING_ID, OWNER_ID);
+
+    expect(verdict).toBe("ok");
+  });
+
   it("checks bullets inside sections.experience[].bullets too, not just the flat list", async () => {
     findExportGrant.mockResolvedValue(COMPLETE_GRANT);
     const doc: ExportDocument = {
@@ -128,6 +160,13 @@ describe("enforceExportGrounding", () => {
 describe("groundingErrorResponse", () => {
   it("returns null for ok (caller proceeds to render)", () => {
     expect(groundingErrorResponse("ok")).toBeNull();
+  });
+
+  it("maps missing_tailoring to a 400 with a calm coded body", async () => {
+    const res = groundingErrorResponse("missing_tailoring");
+    expect(res).not.toBeNull();
+    expect(res!.status).toBe(400);
+    expect(await res!.json()).toEqual({ error: "missing_tailoring" });
   });
 
   it("maps not_found to a 404 with a calm coded body", async () => {
