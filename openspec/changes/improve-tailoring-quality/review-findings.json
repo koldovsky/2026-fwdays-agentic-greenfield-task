@@ -1,0 +1,30 @@
+{
+  "change": "role-provenance-best-effort",
+  "reviewer": "checker (opus, clean-context maker!=checker)",
+  "date": "2026-07-10",
+  "commit": "a54fbd8",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 1,
+  "requirementIds": [
+    "FR-EXPORT-01",
+    "FR-EXPORT-02",
+    "FR-EXPORT-03",
+    "FR-BULLETS-02",
+    "BC-HONESTY-02",
+    "NFR-SEC-04",
+    "TC-PURE-01"
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "path": "src/features/export-resume/lib/build-document.ts",
+      "line": 57,
+      "requirement": "FR-EXPORT-02",
+      "problem": "The either-direction substring matcher (normalized.includes(evidence) || evidence.includes(normalized)) can mis-attribute a short evidence sentence that is a common substring of the wrong role's line (e.g. a single shared token) to that earlier role. This only MIS-PLACES a kept bullet under a plausible-but-wrong role; it never drops or duplicates one, and the honesty gate is unaffected. Accepted as documented best-effort, but the bidirectional contains widens false-positive placement vs a directional or token-boundary match.",
+      "fix": "Optional hardening if placement fidelity matters later: require a minimum normalized-evidence length or word-boundary match before accepting the reverse (evidence.includes(line)) direction. Not required to ship; behavior is honest and covered.",
+      "status": "open"
+    }
+  ]
+}

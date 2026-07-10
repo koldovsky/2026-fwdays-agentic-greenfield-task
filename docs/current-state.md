@@ -8,6 +8,17 @@
 
 ## Last action (most recent first)
 
+- **`role-provenance-best-effort` (T5 #7, rescoped) DONE (2026-07-10).** Kept bullets now land under their
+  best-effort SOURCE ROLE on export instead of all piling onto the most-recent role. Original T5 #7 (persist
+  `Bullet.sourceRoleIndex` via migration) was proven infeasible (bullets are cross-role syntheses; no role
+  back-pointer; CV blob not persisted) → user chose CLIENT-ONLY best-effort. `build-document.ts`
+  `attributeRoleIndex` matches a cv-source bullet's grounding evidence to a role's original lines (tolerant),
+  falls back to most-recent for user-confirmed/overclaim/no-match. NO migration/LLM/persistence change; the
+  text-membership export gate is untouched (union of role bullets == kept texts — checker PROVED the honesty
+  invariant). Spec scenario + tasks.md restored to best-effort. maker(main) ≠ test-author(sonnet, 15 attribution
+  cases) ≠ checker(opus, approve/ship, 0 blockers). Green: lint, export 182/182, full suite 149 files/1503
+  tests. Residual (documented): bidirectional-`includes` matcher can mis-place (never drop/dupe) — optional
+  future word-boundary hardening; full persisted provenance deferred. FR-EXPORT-01/02/03, FR-BULLETS-02, BC-HONESTY-02.
 - **`harden-export-gate` (T5 #8 hardening) DONE (2026-07-10).** The base server-side export gate was
   already built + committed (`ca103fa`); the doc had drifted. Adversarial review (2 opus red-teamers)
   confirmed the engaged path sound but found the gate was ADDITIVE — a paid caller could OMIT `tailoringId`
@@ -49,10 +60,15 @@
 
 ## Working on
 
-Nothing actively in progress. `harden-export-gate` (T5 #8) closed — see Last action. Openspec delta
-`changes/harden-export-gate` is hand-written and awaits archival once the CLI is available (add to the
-archive backlog below). Residual accepted: cross-tailoring "superset smuggling" (export not bound to the
-viewed run/JD) — user chose "require tailoringId", not "require + bind to run".
+Nothing actively in progress. Last three closed: `role-provenance-best-effort` (T5 #7),
+`harden-export-gate` (T5 #8), `fix-premium-attach-overlay` — see Last action.
+
+Openspec deltas awaiting archival once the CLI is available: `harden-export-gate` (new), and the
+`improve-tailoring-quality` resume-export scenario was just un-relaxed to best-effort placement.
+
+Residuals accepted (documented, not scheduled): T5 #8 cross-tailoring "superset smuggling"; T5 #7
+best-effort matcher can mis-place a bullet (never drop/dupe) — optional word-boundary hardening; full
+persisted per-source-role provenance (needs CV snapshot + LLM role claim) — deferred.
 
 ## Next steps (code-doable, pick by value)
 

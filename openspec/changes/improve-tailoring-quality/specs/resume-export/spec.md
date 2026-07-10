@@ -40,10 +40,11 @@ bullets; the PDF renderer keeps its Cyrillic-complete embedded font. When no
 flat headline+bullets document rather than failing (NFR-OBS-01). Implements
 FR-EXPORT-01, FR-EXPORT-02, FR-EXPORT-03, NFR-I18N-01, NFR-OBS-01.
 
-#### Scenario: Kept bullets land inside the experience section
+#### Scenario: Kept bullets land under their source role (best-effort)
 - **WHEN** a tailoring's kept bullets are merged and the resume is exported
-- **THEN** the kept bullets appear under the most-recent parsed role (title, company, and dates intact) and no excluded overclaim bullet appears in any section
-- **NOTE** per-source-role placement (each kept bullet under the exact role whose original bullet it rewrote) needs per-bullet role provenance in the `Bullet` model, which does not exist yet; until then kept bullets attach to the most-recent role. Tracked as a follow-up.
+- **THEN** each kept bullet appears under its source role — derived best-effort from the bullet's grounding evidence (the CV sentence it is grounded in, matched to the role that sentence came from) — with role title, company, and dates intact, and no excluded overclaim bullet appears in any section
+- **AND** a kept bullet that cannot be attributed to a role (no CV-sentence evidence — a user-confirmed or opted-in overclaim bullet — or no match) falls back to the most-recent parsed role, so no grounded kept bullet is dropped
+- **NOTE** attribution is derived client-side from grounding evidence and is NOT persisted per bullet. Fully persisted per-source-role provenance surviving a history re-export would need a stored CvDocument snapshot (privacy tension) plus a model-emitted role claim (honesty risk); deferred. This best-effort placement never fabricates: it follows real evidence and falls back to the prior honest default.
 
 #### Scenario: Untouched content keeps its original language
 - **WHEN** a CV section was not rewritten by the tailoring (e.g. education, an unchanged role)
