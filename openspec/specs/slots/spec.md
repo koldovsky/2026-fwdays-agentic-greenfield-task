@@ -107,6 +107,40 @@ weekday/time preferences (FR-SLOT-01).
 - WHEN the agent proposes slots
 - THEN the proposal contains exactly 2 or 3 slots, each on Tuesday or Thursday with a start time of 16:00 or later, each present in the code-computed free list
 
+### Requirement: A lead-named concrete date is honored within the grid
+
+When the lead names a concrete or relative day, the agent SHALL resolve it to a
+calendar date (e.g. "завтра", "у пʼятницю", "14 липня") and pass it to slot
+proposal alongside the weekday/time preferences (FR-SLOT-01). Deterministic
+code — never the model — decides whether to honor it: the date is accepted
+only when it is well-formed (YYYY-MM-DD) and within the proposal horizon
+[today, today+14] (Conventions), and slots are then computed for that single
+day from the same Mon–Fri grid, using the lead's stated time window when valid
+and the full teaching day (10:00–20:00) otherwise. A date that is malformed or
+out of range is ignored and the ordinary weekday-preference path is used
+instead. A weekend or already-past named day yields no grid slots (the Mon–Fri
+grid has none), so the lead takes the kind "no free times" / weekend-refusal
+path — the grid guarantee (FR-GUARD-03) is never bypassed by a lead-named date.
+
+#### Scenario: Lead names a specific in-grid date
+
+- GIVEN today is a weekday and the lead asks to book "завтра" (the next day, itself a weekday) and that day has free grid slots
+- WHEN the agent proposes slots with the code-vetted resolved date
+- THEN every proposed slot falls on exactly that date, within Mon–Fri 10:00–19:00 starts, drawn from the code-computed free list
+- AND the lead's stated time window narrows the day when valid, otherwise the full teaching day is offered
+
+#### Scenario: Lead names a weekend day
+
+- GIVEN the lead asks to book on a Saturday (or any Sat/Sun date)
+- WHEN slots are computed for that date
+- THEN no slot is produced — the Mon–Fri grid has none for that day — and the lead receives the Ukrainian Mon–Fri redirect, never an out-of-grid offer (BC-SCHEDULE-01)
+
+#### Scenario: Out-of-range or malformed date falls back to weekday preferences
+
+- GIVEN the resolved date is malformed or falls outside [today, today+14]
+- WHEN slot proposal runs
+- THEN the named date is ignored and slots are proposed from the lead's weekday/time preferences across the proposal horizon, exactly as when no date was named
+
 ### Requirement: Slots are ranked by a pure rankSlots() function
 
 Slot ordering SHALL be produced by a pure `rankSlots()` function in `lib/`

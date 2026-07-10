@@ -24,7 +24,7 @@ Result: PASS, 20 warning(s)
 | FR-GUARD-02 | yes | yes | 3 | - |
 | FR-GUARD-06 | yes | yes | 9 | - |
 | FR-SLOT-01 | yes | yes | 24 | - |
-| FR-SLOT-02 | yes | yes | 24 | - |
+| FR-SLOT-02 | yes | yes | 26 | - |
 | FR-SLOT-03 | yes | yes | 6 | - |
 | FR-SLOT-04 | yes | yes | 5 | - |
 | FR-GUARD-03 | yes | yes | 2 | - |

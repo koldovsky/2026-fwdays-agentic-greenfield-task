@@ -88,6 +88,13 @@ before the dashboard ever receives a `RUN_STARTED` event; this requirement
 governs how the reply is displayed once streaming starts, not how quickly it
 starts.
 
+The conversation panel SHALL be durable across a page reload: on first paint it
+is seeded from the persisted message history (the messages the lead and the
+agent have already exchanged), not only from live SSE events, so a teacher who
+reloads or reconnects never sees an empty transcript for an ongoing
+conversation. Messages SHALL be ordered newest-first, and each message SHALL be
+labelled by author (lead vs school).
+
 #### Scenario: Agent reply streams into the conversation view
 
 - **GIVEN** the dashboard is open and a lead is mid-conversation with the bot
@@ -97,6 +104,16 @@ starts.
   with each `TEXT_MESSAGE_CONTENT` chunk, before `RUN_FINISHED` arrives
 - **AND** after `TEXT_MESSAGE_END` the message is displayed as a complete,
   stable message
+
+#### Scenario: Conversation history survives a page reload
+
+- **GIVEN** a lead and the agent have already exchanged several messages and the
+  teacher reloads the dashboard
+- **WHEN** the page renders from the server-provided initial snapshot, before
+  any new live event arrives
+- **THEN** the conversation view shows the prior messages — both the lead's and
+  the agent's — seeded from the persisted message history, not an empty panel
+- **AND** the messages are ordered newest-first and labelled by author
 
 #### Scenario: Multiple concurrent conversations are kept separate
 
@@ -238,7 +255,12 @@ color SHALL be decided by precedence: `confirmed` > `pending` >
 `cancelled`/`declined` (slate) > free. A seat whose only bookings in the
 current week are released renders slate — it does not revert to the free
 outline. Clicking a `pending` seat SHALL open that request's card with the
-DecisionBar.
+DecisionBar; clicking a `confirmed` seat SHALL open a read-only detail card
+(the booked student and the confirmed slot's date/time, no DecisionBar — a
+confirmed lesson is not re-decided here); a free or `cancelled` seat opens
+nothing. Each weekday row SHALL show its calendar date (DD.MM) alongside the
+weekday, so a seat is identified by a concrete date and not merely a weekday,
+and a seat's tooltip SHALL name the booked student for occupied seats.
 
 #### Scenario: Week renders as rows of seats
 
@@ -265,6 +287,21 @@ DecisionBar.
 - **THEN** no request card opens and no error is shown (administrator-side seat
   booking is not supported in MVP; lead-side picking is Future, FR-WEB-01)
 
+#### Scenario: Clicking a confirmed seat opens a read-only detail card
+
+- **GIVEN** the HallMap shows a `confirmed` seat
+- **WHEN** the administrator clicks that seat
+- **THEN** a read-only detail card opens showing the booked student and the
+  confirmed slot's date and time, with no DecisionBar (a confirmed lesson is
+  not re-decided from the HallMap)
+
+#### Scenario: Each weekday row shows its calendar date
+
+- **GIVEN** the HallMap renders the current week
+- **WHEN** the administrator reads any weekday row
+- **THEN** the row shows the weekday together with its calendar date (DD.MM),
+  so a booked seat reads as a concrete date, not only "some Wednesday"
+
 #### Scenario: HallMap reflects state changes in real time
 
 - **GIVEN** the HallMap shows a seat as free
@@ -277,6 +314,42 @@ DecisionBar.
 - **GIVEN** the administrator opens the dashboard on any day of the week
 - **WHEN** the HallMap renders
 - **THEN** Saturday and Sunday rows are absent (BC-SCHEDULE-01)
+
+### Requirement: Confirmed lessons and bookings beyond the current week
+
+The dashboard SHALL surface confirmed lessons and any booking the current-week
+HallMap grid cannot place, so no confirmed or pending lesson is ever hidden
+(FR-DASH-03, FR-HITL-01, FR-HITL-03). Confirmed lessons SHALL appear in their
+own section listing the student and the lesson's date and time, with a count.
+Bookings whose date falls beyond the current week's grid SHALL be listed
+beneath the HallMap with their date, time, and status. Both surfaces update
+live over SSE — a Confirm decision moves the lead out of the pending queue and
+into the confirmed section with no page reload.
+
+#### Scenario: Confirmed lesson appears in the confirmed section
+
+- **GIVEN** a booking has been confirmed by the administrator
+- **WHEN** the dashboard renders, or the confirming decision's state update
+  arrives on the stream
+- **THEN** the confirmed section shows the student's name and the lesson's date
+  and time, and the confirmed count reflects it
+
+#### Scenario: Confirm live-updates both surfaces without a reload
+
+- **GIVEN** a lead is in the pending queue and the administrator confirms the
+  booking
+- **WHEN** the resulting state update arrives on the stream
+- **THEN** the lead leaves the pending queue and appears under confirmed
+  lessons, with no page reload (a live queue entry never resurrects a lead the
+  authoritative snapshot has resolved)
+
+#### Scenario: A booking beyond this week is listed under the grid
+
+- **GIVEN** a confirmed or pending booking whose date is beyond the current
+  week's Mon–Fri grid
+- **WHEN** the dashboard renders
+- **THEN** that booking is listed beneath the HallMap with its date, time, and
+  status, so a lesson the week grid cannot place is never hidden
 
 ### Requirement: SSE reconnect without state loss
 
@@ -399,6 +472,7 @@ that "a lead's record ... is deletable on request via an admin action"
 - **Raw AG-UI developer panel** (FR-DASH-02) — Future; intentionally
   unsupported in MVP.
 - **Lead-facing seat picking on the HallMap** (FR-WEB-01) — Future; in MVP
-  the HallMap is read-only except for opening `pending` request cards.
+  the HallMap is read-only except for opening a `pending` request card (with
+  the DecisionBar) or a `confirmed` request card (read-only detail).
 - **Authentication / multi-user access** — intentionally unsupported; the
   dashboard is localhost-only for a single teacher.

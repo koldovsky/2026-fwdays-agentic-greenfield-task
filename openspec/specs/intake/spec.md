@@ -119,6 +119,38 @@ ADR-0001 §6)
 - **THEN** the answer (e.g. "після 17:00") is stored as a time range on the request
 - **AND** only after weekdays and time range are stored does the flow advance to `proposing`
 
+### Requirement: Relative and absolute dates in schedule preferences
+
+The agent SHALL understand a concrete or relative day the lead names (e.g.
+"сьогодні", "завтра", "післязавтра", "у пʼятницю", "14 липня") and resolve it
+against today's date (Europe/Kyiv) — which the system supplies to the agent on
+every turn — so the lead is offered that actual day rather than only a generic
+weekday (FR-INTAKE-01). Honoring and validating the resolved date is a
+deterministic code concern (owned by `slots`), never the prompt: the agent
+proposes a date, code vets it against the grid and the proposal horizon. When
+the named day is a weekend or in the past, the agent SHALL kindly redirect to
+the nearest Mon–Fri option (BC-SCHEDULE-01), pressure-free. A lead who states
+only general weekdays with no concrete day is handled by the existing
+weekday-preference path, unchanged.
+
+#### Scenario: Relative day resolves to a concrete date
+
+- **GIVEN** today's date is supplied to the agent and the lead writes "можна завтра?"
+- **WHEN** the agent proposes slots
+- **THEN** it resolves "завтра" to tomorrow's calendar date and requests slots for that specific date, not a generic weekday
+
+#### Scenario: Absolute date is honored
+
+- **GIVEN** the lead writes a concrete date ("14 липня") within the proposal horizon
+- **WHEN** the agent proposes slots
+- **THEN** it requests slots for that date, and the offered slots all fall on that day
+
+#### Scenario: Named weekend day gets a kind Mon–Fri redirect
+
+- **GIVEN** the lead names a Saturday or Sunday
+- **WHEN** the agent replies
+- **THEN** it offers no weekend slot and kindly redirects to the nearest weekday options (BC-SCHEDULE-01), with no scarcity or pressure vocabulary
+
 ### Requirement: Code-level validation before slot proposal
 
 The system SHALL validate age against BC-AGE-01 and format against

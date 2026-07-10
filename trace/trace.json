@@ -471,6 +471,8 @@
         "lib/src/slots/propose.test.ts",
         "packages/agent/src/loop.test.ts",
         "packages/agent/src/loop.test.ts",
+        "packages/agent/src/loop.test.ts",
+        "packages/agent/src/system-prompt.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
         "packages/bot/src/pipeline.test.ts",
