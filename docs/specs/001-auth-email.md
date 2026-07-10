@@ -3,6 +3,20 @@
 - **Status:** ratified
 - **Date:** 2026-07-10
 
+## Contract (OpenSpec)
+
+The detailed, machine-validated contract for this slice lives in OpenSpec as the `auth` capability,
+recorded by the completed change
+[`add-auth-email`](../../openspec/changes/archive/2026-07-10-add-auth-email/proposal.md) and applied
+to [`openspec/specs/auth/spec.md`](../../openspec/specs/auth/spec.md). That contract carries the
+GIVEN/WHEN/THEN scenarios and is checked by `openspec validate --all --strict`.
+
+This file remains the anchor for the Python traceability harness (`scripts/check-traceability`): the
+`Requirements covered` ids below are what the harness maps to `@trace` tests, so its logic is
+unchanged. See the specs<->OpenSpec bridge decision in
+[`openspec/README.md`](../../openspec/README.md). Slice 001 was recorded retroactively; slices 002+
+begin as an OpenSpec change before any code.
+
 ## Problem / goal
 
 Cadence stores per-user time-tracking data, so every later slice (timer, sessions, categories,

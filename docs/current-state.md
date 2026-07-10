@@ -4,7 +4,7 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 09:17 (Europe/Kyiv, EEST)
+- **Date and time:** 2026-07-10 10:04 (Europe/Kyiv, EEST)
 - **Phase:** 1 — slice **001 email+password auth** implemented by the Maker; **awaiting Checker +
   Judge**. Not yet done (maker ≠ checker ≠ judge). The **deterministic verification harness** (the
   loop-first gate layer) is now built and proven on 001; see below.
@@ -35,6 +35,21 @@ tests, verify the repo and update this file.
     `Refs:` trailers; **check-traceability FLAGS** that 001's tests carry no `@trace FR-AUTH-*`
     docstrings — a real, recorded gap for the 001 Checker/Judge to close (see Next steps). Overview:
     [`docs/qa/README.md`](qa/README.md).
+- **OpenSpec spec-contract layer** — added 2026-07-10 (`@fission-ai/openspec@1.5.0`; install with
+  `npm ci` at the repo root; pinned in the root [`package.json`](../package.json) and isolated from
+  the Python backend). Bootstrap used `npm install --save-dev @fission-ai/openspec@1.5.0` + `openspec
+  init --tools none`. See [`openspec/README.md`](../openspec/README.md).
+  - Slice 001 recorded **retroactively** as the completed change `add-auth-email` and archived to
+    [`openspec/specs/auth/spec.md`](../openspec/specs/auth/spec.md) — 8 requirements (FR-AUTH-01,
+    FR-AUTH-02, FR-AUTH-03, FR-AUTH-06, FR-AUTH-07 + NFR-SEC-01, NFR-SEC-02, NFR-SEC-03), each with
+    GIVEN/WHEN/THEN scenarios. It documents what was built; it does not re-plan 001.
+  - **Bridge decision (Option A):** `docs/specs/NNN-*.md` stays the Python traceability-harness
+    anchor and OpenSpec holds the detailed contract, so `check-traceability` / `check-trajectory`
+    core logic is **unchanged** (a thin pointer was added to `001-auth-email.md`). Rationale under
+    "Decision" in [`openspec/README.md`](../openspec/README.md).
+  - **Wired alongside the Python gates:** CI `harness` job runs `python scripts/check-openspec
+    --require`; pre-commit runs `openspec validate --all --strict` when a commit touches `openspec/`.
+    `openspec validate --all --strict` is green on the 001 contract.
 
 ## In review (implemented by Maker, not yet signed off)
 
@@ -77,3 +92,5 @@ tests, verify the repo and update this file.
 ## How to verify
 
 `powershell -File scripts/verify.ps1`  (or `bash scripts/verify.sh`) — must be green before "done".
+OpenSpec contract: `npm run spec:validate` (= `openspec validate --all --strict`; also run by CI and
+by pre-commit when `openspec/` changes).
