@@ -11,6 +11,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/001.md - clean
 - Commits:
+  - 29ae03f test(auth): land slice-001 @trace trail; fix a check-secrets false-positive [Refs: FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-06, FR-AUTH-07, NFR-SEC-01, NFR-SEC-02, NFR-SEC-03, BC-PROC-01]
   - 81353b5 feat(auth): email + password authentication (slice 001) [Refs: FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-06, FR-AUTH-07, NFR-SEC-01, NFR-SEC-02, NFR-SEC-03]
 - Touched code paths (24):
   - backend/alembic/versions/0001_auth_email.py
@@ -37,7 +38,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/index.css
   - frontend/src/main.tsx
   - frontend/src/pages/AuthPage.tsx
-- Other files touched (docs/config): 7
+- Other files touched (docs/config): 11
 
 ## Process / infra commits (traced, not a feature slice)
 

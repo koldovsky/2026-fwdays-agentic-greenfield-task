@@ -99,6 +99,10 @@ structural, not honor-system: a review cannot be the author re-grading themselve
 - Verification means **the commands you ran and their real output** — never "looks good".
 - State plainly what you did **not** do, skipped, or couldn't verify. No silent failures.
 - Cite code as `path:line`. Be terse; link, don't paste large dumps.
+- **Write a run record.** In addition to the chat report, every agent session appends a durable
+  record at [`docs/agent-runs/NNN-<slice>-<role>.md`](docs/agent-runs/) following
+  [`docs/agent-runs/TEMPLATE.md`](docs/agent-runs/TEMPLATE.md) — the same real-output Verification
+  and plain "what was NOT done" bars apply. See [`docs/agent-runs/README.md`](docs/agent-runs/README.md).
 
 ## Code style
 

@@ -4,12 +4,22 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 10:37 (Europe/Kyiv, EEST)
-- **Phase:** 1 — slice **001 email+password auth** implemented by the Maker; **awaiting Checker +
-  Judge**. Not yet done (maker ≠ checker ≠ judge). The **deterministic verification harness** (the
-  loop-first gate layer) is built and proven on 001, and the **agent layer** (isolated-context
-  sub-agents + the `/run-slice` loop orchestrator) that drives slices through it is now built; see
-  below.
+- **Date and time:** 2026-07-10 15:46 (Europe/Kyiv, EEST)
+- **Phase:** 1 — slice **001 email+password auth** is **engineering-complete, independently
+  audit-verified GREEN, and its trail is now committed — but NOT yet fully DONE**. An independent
+  audit (2026-07-10, see [`docs/agent-runs/001-auth-review-close.md`](agent-runs/001-auth-review-close.md))
+  re-ran the gates (`gate-slice` GREEN, exit 0: ruff/mypy/alembic/pytest 11-passed/frontend build +
+  coverage 82.97% ≥ 82) and two fresh-context reviewers (code + security) that both returned **0
+  BLOCKING**; the code is sound and the tests genuine. The audit **committed the previously-uncommitted
+  trail** (`29ae03f`): the `@trace` docstrings, review evidence, and regenerated **8/8** matrices — so
+  traceability is now closed in git — after an **owner-authorized** minimal `check-secrets` fix (test
+  fixtures skip only the soft assignment heuristic; all hard-credential patterns retained) unblocked
+  the sample-password false positive at `test_auth.py:31`. **The one remaining item keeping it from
+  DONE: CodeRabbit** has not run (no PR) — DoD item 3. Requirements are still `proposed`, so
+  `check-trajectory` correctly reports 001 **in-progress** until CodeRabbit is clean and they flip to
+  `shipped`. The **deterministic verification harness** and the **agent layer** (isolated-context
+  sub-agents + `/run-slice`) are
+  built; see below.
 
 ## What exists (done)
 
@@ -33,9 +43,10 @@ tests, verify the repo and update this file.
     [`.claude/settings.json`](../.claude/settings.json); **git hooks**
     `.githooks/{commit-msg,pre-commit}` (enable: `git config core.hooksPath .githooks`); **CI**
     extended with a `harness` job + the coverage ratchet.
-  - Retroactively run on slice 001: **gate-slice green**; **check-trajectory** confirms the 001
-    `Refs:` trailers; **check-traceability FLAGS** that 001's tests carry no `@trace FR-AUTH-*`
-    docstrings — a real, recorded gap for the 001 Checker/Judge to close (see Next steps). Overview:
+  - Run on slice 001: **gate-slice green**; **check-trajectory** confirms the 001 `Refs:` trailers
+    and now records clean review evidence ([`docs/qa/reviews/001.md`](qa/reviews/001.md));
+    **check-traceability** is now **8 claimed / 8 traced / 0 gap** — the `@trace FR-AUTH-*` /
+    `@trace NFR-SEC-*` docstrings were added during the 001 review-and-close pass. Overview:
     [`docs/qa/README.md`](qa/README.md).
 - **OpenSpec spec-contract layer** — added 2026-07-10 (`@fission-ai/openspec@1.5.0`; install with
   `npm ci` at the repo root; pinned in the root [`package.json`](../package.json) and isolated from
@@ -71,9 +82,22 @@ tests, verify the repo and update this file.
   - **Not yet exercised end-to-end:** the full loop runs only once a ratified slice (002+) is
     queued; this session built and self-checked the agents/orchestrator, it did not run a slice.
 
-## In review (implemented by Maker, not yet signed off)
+## Engineering-verified, not yet DONE (audit-corrected 2026-07-10)
 
 - **Slice 001 — email + password auth** ([`docs/specs/001-auth-email.md`](specs/001-auth-email.md)).
+  Independently audited 2026-07-10 ([`docs/agent-runs/001-auth-review-close.md`](agent-runs/001-auth-review-close.md)):
+  `gate-slice` GREEN (verify battery + coverage 82.97% ≥ floor 82); two fresh-context reviewers
+  (code + security) both **0 BLOCKING**; security spot-check clean; tests genuine, not weakened;
+  `test-first` grandfathered (pre-factory single feat commit). The code is engineering-complete and
+  sound. The audit **committed the previously-uncommitted trail** (`29ae03f`): the `@trace` docstrings,
+  the review evidence, and regenerated **8/8** matrices, so traceability is now closed in git — after
+  an **owner-authorized** minimal `check-secrets` fix (test fixtures skip only the soft assignment
+  heuristic; all hard-credential patterns retained) cleared the sample-password false positive at
+  `test_auth.py:31` (the maker commit `81353b5` had bypassed the secrets gate only because it predates
+  the git hooks). The self-attested [`docs/qa/reviews/001.md`](qa/reviews/001.md) (`Result: pass`) is
+  corroborated in substance by the audit's independent re-review. **It is NOT yet DONE:** **CodeRabbit**
+  has not run (no PR — DoD item 3), and the requirements are still `proposed` (so `check-trajectory`
+  reports 001 **in-progress**) until CodeRabbit is clean and they flip to `shipped`.
   - **Backend:** `users` + `user_sessions` tables (one Alembic migration `0001_auth_email`, citext
     enabled); bcrypt cost 12 via `passlib[bcrypt]`; `POST /api/auth/{register,login,logout}` +
     `GET /api/auth/me`; the `CurrentUser` dependency and CSRF double-submit (`app/api/deps.py`); the
@@ -88,15 +112,17 @@ tests, verify the repo and update this file.
 
 ## Next steps
 
-1. **Checker** (≠ maker): run `scripts/gate-slice` (verify + ratchet), then `/code-review` +
-   `/security-review`; confirm secrets are absent and cookie/hashing attributes are correct; report
-   pass/fail with evidence. **Close the traceability gap the harness flagged**: add `@trace FR-AUTH-*`
-   / `@trace NFR-SEC-*` docstrings to the covering tests in `backend/tests/test_auth.py` and run
-   `python scripts/check-traceability --write`. Do **not** weaken the tests to satisfy it.
-2. **Judge:** score slice 001 against its spec acceptance checks + CodeRabbit; commit clean review
-   evidence to `docs/qa/reviews/001.md` (`Result: pass`) — `check-trajectory` requires it before a
-   slice may be marked done. Only the Judge marks it done.
-3. Then proceed to the next ratified slice (brainstorm → spec → maker).
+1. **Open the PR** for slice 001 and let **CodeRabbit** review it — the sole remaining DoD sub-item
+   (item 3). Carry the accepted MINOR follow-ups forward (dev cookie `SameSite`/`Secure` combo; assert
+   `Path=/`/`Secure` in the cookie test; bcrypt off the event loop; 72-byte password bound;
+   `session_secret` fail-fast; enforce `check-secrets` on the staged set in CI — it is currently a
+   local-hook-only gate). The `@trace` trail + 8/8 matrices are already committed (`29ae03f`).
+3. Once CodeRabbit is clean, flip the slice-001 requirement statuses to `shipped` in
+   `docs/requirements.md` (the "done" signal `check-trajectory` reads) and regenerate
+   `docs/qa/trajectory.md`.
+4. Then proceed to the next ratified slice through `/run-slice` (brainstorm → OpenSpec change → RED →
+   maker → gated loop → Judge). Note: an untracked slice-002 (categories) spec has already appeared in
+   the tree (`docs/specs/002-categories.md`, `openspec/changes/add-categories/`).
 
 ## Key decisions
 
