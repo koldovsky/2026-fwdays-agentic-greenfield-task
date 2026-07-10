@@ -7,6 +7,22 @@
 
 ## Last action
 
+- **`test-tailoring-race-guard` DONE + gate green (2026-07-10).** Closed the deferred T8 coverage gap:
+  the status-race guard (`updateStatus`, `WHERE status='pending'` + child-insert skip) shipped (52c6c8e)
+  with only happy-path tests. Added 3 integration cases to
+  `src/shared/lib/db/tailoring-lifecycle.integration.test.ts` (real PGlite): (a) sweep-then-complete —
+  swept-to-failed row rejects a late `complete`, status stays failed + 0 orphan children; (b) double-terminal
+  — 2nd terminal write is a clean no-op, no dup children; (c) 0-rows guard — completing a non-pending row
+  inserts nothing. Each asserts POST-RACE DB STATE (status + match_score + child COUNT), not return values.
+  Workflow (wf_aa646120): test-author(sonnet)→checker(sonnet)+verifier(sonnet). Checker SHIP + MUTATION-TESTED
+  (removed the `AND status='pending'` guard → all 3 failed → true regression tests, not tautologies). Checker
+  minor + verifier FLAKE (1/6 full-suite runs failed all 3) had the SAME root cause: case (a) used
+  `markAbandonedPending(db, -60_000)` (future cutoff) which sweeps EVERY pending row in the shared PGlite
+  instance → collided with concurrent suites. FIXED inline (reviewer-directed): back-date only case (a)'s
+  own row + sweep with a positive 1-hour TTL (the file's existing pattern), so it catches only old rows.
+  Re-ran the FULL suite 6× → 6/6 green, 146 files / 1418 passed / 5 skipped / 0 failed. FR-TAILOR-04,
+  NFR-COST-02. Intentionally skipped the T1/AREA-2 residual (brittle Tailwind-class asserts; grid already
+  covered by the restack).
 - **`fix-billing-locale` (bug) DONE + committed `70ff874` (2026-07-10).** User-reported: subscription screen
   (/account/billing) header language switch to English did nothing. Root cause: the page never read the
   locale cookie (unlike its sibling /account/profile), so TopBar + AccountBillingView fell back to the "ua"
@@ -533,7 +549,27 @@ queue/priority, no per-plan limit. Needs a user decision (soften to honest-now v
 vs implement routing) before editing marketing copy. Plus the 3 quick fixes (offer Stripe line,
 privacy date, marketing flagship claim). Not doing until the checklist rework lands + decision made.
 
-**Nothing in flight. `fix-billing-locale` + `honest-plan-claims` both DONE (see Last action).**
+### `test-tailoring-race-guard` — DONE (2026-07-10) — see Last action
+
+Closing the deferred T8 test gap (dropped at the earlier session limit). The status-race guard
+(`updateStatus` in `src/shared/lib/db/tailoring-repo.ts:130-160`: `WHERE id=$1 AND status='pending'` +
+child-insert skip on 0 rows) shipped (52c6c8e) WITHOUT dedicated race tests. Integration file exists:
+`src/shared/lib/db/tailoring-lifecycle.integration.test.ts` (happy paths only, ~222-307). FR-TAILOR-04.
+
+**Plan (test-author → checker + verifier, separate ctx):**
+1. Add 3 integration cases to tailoring-lifecycle.integration.test.ts (pglite, mirror existing pattern):
+   (a) sweep-then-complete — a pending row swept to failed/abandoned (markAbandonedPending), then a late
+   `updateStatus('complete', payload)` must be a NO-OP: status stays failed, NO orphan checklist_items/
+   bullets inserted. (b) double-terminal — two consecutive terminal updates on one row; the second is a
+   clean no-op (no error, no double child insert). (c) 0-rows guard — when the guarded UPDATE affects 0
+   rows (status already non-pending), child inserts are skipped.
+2. checker reviews the tests genuinely exercise the guard (not tautological — assert DB state after the
+   race, not just return values); verifier runs the full gate. Commit.
+INTENTIONALLY SKIPPED (noted, not doing): T1/AREA-2 residual = ChecklistRow mobile flex-col/pill + MatchScore
+min-w-0 = brittle Tailwind-class assertions; the restack (62e686e) already covers the grid layout at the
+view level. Low-signal; not padding the suite.
+
+**Nothing else in flight. `fix-billing-locale` + `honest-plan-claims` both DONE (see Last action).**
 
 ### `fix-billing-locale` — DONE `70ff874` (2026-07-10) — see Last action
 

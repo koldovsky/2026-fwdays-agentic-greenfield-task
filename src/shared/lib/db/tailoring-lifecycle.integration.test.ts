@@ -30,7 +30,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { markAbandonedPending } from "./tailoring-cleanup";
 import { runMigrations } from "./migrate";
 import type { Queryable } from "./port";
-import { createTailoringRepo } from "./tailoring-repo";
+import { createTailoringRepo, type CompletePayload } from "./tailoring-repo";
 
 function adapter(pg: PGlite): Queryable {
   return {
@@ -536,5 +536,139 @@ describe("markAbandonedPending (task 3.3, NFR-COST-02, NFR-OBS-01, TC-PURE-01)",
       [oldId],
     );
     expect(after[0].status).toBe("failed");
+  }, 30_000);
+});
+
+// ---------------------------------------------------------------------------
+// updateStatus race guard (guard-tailoring-status-transitions, FR-TAILOR-04) —
+// closes a deferred coverage gap: the guard shipped without dedicated race
+// tests. Each case asserts DB STATE after the race (child-table row counts +
+// status/score columns), not just that the call resolved.
+// ---------------------------------------------------------------------------
+
+async function childRowCount(id: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>(
+    `SELECT
+       (SELECT count(*) FROM checklist_items WHERE tailoring_id = $1)
+     + (SELECT count(*) FROM bullets WHERE tailoring_id = $1) AS n`,
+    [id],
+  );
+  return Number(rows[0].n);
+}
+
+describe("updateStatus race guard (guard-tailoring-status-transitions, FR-TAILOR-04)", () => {
+  it("(a) sweep-then-complete: a late completion after markAbandonedPending is rejected — status stays failed, no orphan children, no score", async () => {
+    const userId = await insertUser("race-sweep-then-complete@example.com");
+    const jdId = await insertJd(userId);
+    const repo = createTailoringRepo(db);
+    const id = await repo.createPending(userId, jdId, "Race Sweep Role");
+
+    // Simulate an abandoned run: back-date THIS row past the TTL, then run the
+    // cleanup sweep with a positive TTL so it marks only sufficiently-old rows
+    // failed — matching the file's back-dating pattern. A future/negative-TTL
+    // cutoff would sweep every pending row in the shared PGlite instance,
+    // including fresh rows from other suites running concurrently, and flake.
+    await db.query(
+      `UPDATE tailorings SET created_at = now() - interval '2 hours' WHERE id = $1`,
+      [id],
+    );
+    const swept = await markAbandonedPending(db, 60 * 60 * 1000); // 1-hour TTL
+    expect(swept).toBeGreaterThanOrEqual(1);
+
+    const { rows: sweptRow } = await db.query<{ status: string }>(
+      `SELECT status FROM tailorings WHERE id = $1`,
+      [id],
+    );
+    expect(sweptRow[0].status).toBe("failed");
+
+    // A late worker races in and tries to complete the same row — the guarded
+    // UPDATE (`WHERE id = $1 AND status = 'pending'`) must affect 0 rows, so
+    // the transition AND the child inserts must both be skipped.
+    const payload: CompletePayload = {
+      matchScore: 91,
+      checklist: [
+        { requirement: "Kubernetes", importance: "must", status: "met", rationale: "3yr k8s" },
+      ],
+      bullets: [{ text: "Ran the cluster", grounding: "met", included: true }],
+    };
+    await repo.updateStatus(id, "complete", payload);
+
+    const { rows: after } = await db.query<{ status: string; match_score: number | null }>(
+      `SELECT status, match_score FROM tailorings WHERE id = $1`,
+      [id],
+    );
+    expect(after[0].status).toBe("failed");
+    expect(after[0].match_score).toBeNull();
+    expect(await childRowCount(id)).toBe(0);
+  }, 30_000);
+
+  it("(b) double-terminal: a second late write to an already-complete row is a clean no-op — no throw, status/score unchanged, children not duplicated", async () => {
+    const userId = await insertUser("race-double-terminal@example.com");
+    const jdId = await insertJd(userId);
+    const repo = createTailoringRepo(db);
+    const id = await repo.createPending(userId, jdId, "Race Double Role");
+
+    const payload: CompletePayload = {
+      matchScore: 82,
+      checklist: [
+        { requirement: "GraphQL", importance: "must", status: "met", rationale: "4yr GraphQL" },
+      ],
+      bullets: [{ text: "Built the API gateway", grounding: "met", included: true }],
+    };
+
+    // First write reaches the terminal state and inserts the children.
+    await repo.updateStatus(id, "complete", payload);
+    expect(await childRowCount(id)).toBe(2);
+
+    // A second completion, and a failure, race in after the row already left
+    // `pending` — both must resolve without throwing (guard, not an error path).
+    await repo.updateStatus(id, "complete", payload);
+    await repo.updateStatus(id, "failed");
+
+    const { rows: after } = await db.query<{ status: string; match_score: number | null }>(
+      `SELECT status, match_score FROM tailorings WHERE id = $1`,
+      [id],
+    );
+    // Status/score are unchanged from the FIRST terminal write — the second
+    // complete() and the failed() call were both no-ops.
+    expect(after[0].status).toBe("complete");
+    expect(after[0].match_score).toBe(82);
+    // Child rows were not duplicated by the repeated complete() call.
+    expect(await childRowCount(id)).toBe(2);
+  }, 30_000);
+
+  it("(c) zero-rows guard: completing a row that is already non-pending inserts no children and leaves status/score unchanged", async () => {
+    const userId = await insertUser("race-zero-rows@example.com");
+    const jdId = await insertJd(userId);
+    const repo = createTailoringRepo(db);
+    const id = await repo.createPending(userId, jdId, "Race Zero Rows Role");
+
+    // Put the row in a non-pending status up front (independent of the sweep —
+    // exercises the guard's zero-rows-affected path directly).
+    await repo.updateStatus(id, "failed");
+    const { rows: precondition } = await db.query<{ status: string }>(
+      `SELECT status FROM tailorings WHERE id = $1`,
+      [id],
+    );
+    expect(precondition[0].status).toBe("failed");
+
+    const payload: CompletePayload = {
+      matchScore: 55,
+      checklist: [
+        { requirement: "Docker", importance: "must", status: "met", rationale: "solid docker exp" },
+      ],
+      bullets: [{ text: "Containerized the service", grounding: "met", included: true }],
+    };
+    await repo.updateStatus(id, "complete", payload);
+
+    const { rows: after } = await db.query<{ status: string; match_score: number | null }>(
+      `SELECT status, match_score FROM tailorings WHERE id = $1`,
+      [id],
+    );
+    // The guarded UPDATE matched 0 rows (status was 'failed', not 'pending') —
+    // status is unchanged and no child rows were ever inserted for this id.
+    expect(after[0].status).toBe("failed");
+    expect(after[0].match_score).toBeNull();
+    expect(await childRowCount(id)).toBe(0);
   }, 30_000);
 });
