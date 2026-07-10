@@ -13,7 +13,7 @@
 // step, which spends the actual budget).
 import { useState, type FormEvent } from "react";
 import { t, type Locale } from "@/shared/lib/i18n";
-import { Button } from "@/shared/ui";
+import { Button, Skeleton } from "@/shared/ui";
 import { streamAnalyze } from "../api/stream-analyze";
 import type { AnalysisResult } from "../lib/loop";
 import type { TailorErrorCode, TailorRunPhase } from "../model/types";
@@ -160,6 +160,25 @@ export function AnalyzeForm({
       >
         {copy.wizard.analyzeAction}
       </Button>
+
+      {/* In-flight preview of the checklist that analysis will produce
+          (FR-WIZARD-01, NFR-OBS-01). The status line above is the spoken
+          progress; this is aria-hidden decoration so the wait shows structure,
+          not blank space. Opacity-only pulse → no layout shift (NFR-PERF-04). */}
+      {pending && (
+        <div
+          aria-hidden="true"
+          className="flex flex-col gap-4 rounded-xl border border-hairline bg-white p-6"
+        >
+          <Skeleton className="h-10 w-24" />
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      )}
     </form>
   );
 }

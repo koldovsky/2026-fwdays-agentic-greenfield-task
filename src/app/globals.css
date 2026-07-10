@@ -189,6 +189,23 @@ html {
   animation-delay: var(--rise-delay, 0ms);
 }
 
+/* Skeleton loading placeholder (shared/ui Skeleton). A gentle opacity pulse on a
+ * solid block signals in-flight work without layout shift (CLS 0) — only opacity
+ * animates, matching the motion contract above. The reduced-motion catch-all
+ * below neutralizes the animation to a static block (NFR-A11Y-01). */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.skeleton {
+  animation: skeleton-pulse 1.4s var(--ease-out) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

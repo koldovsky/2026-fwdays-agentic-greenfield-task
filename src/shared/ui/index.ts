@@ -20,3 +20,6 @@ export type { ChecklistRowProps, ChecklistRowStatus } from "./checklist-row";
 
 export { Reveal } from "./reveal";
 export type { RevealProps } from "./reveal";
+
+export { Skeleton } from "./skeleton";
+export type { SkeletonProps } from "./skeleton";
