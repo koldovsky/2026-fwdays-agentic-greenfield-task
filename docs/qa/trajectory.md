@@ -43,7 +43,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
-- (none)
+- 17b1d9c chore: add deterministic verification gate scripts [Refs: BC-TRAIL-01]
 
 ## Cross-slice code overlap
 
