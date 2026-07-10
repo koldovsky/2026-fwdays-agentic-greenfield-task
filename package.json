@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:db": "node scripts/dev-pglite-server.mjs",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres redis",
     "db:migrate": "node scripts/migrate.mjs",
     "build": "next build",
     "start": "next start",

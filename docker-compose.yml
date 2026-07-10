@@ -1,0 +1,44 @@
+# Local dev backing services (add-docker-dev-env; TC-STACK-04/05, TC-DEPLOY-01).
+# Postgres 16 gives real-PostgreSQL parity for schema work and `yarn test:pg`
+# (the in-process pglite path can't prove real-engine semantics). Redis 7 is
+# provisioned for the coming BullMQ queue (TC-STACK-04) and is NOT yet consumed
+# by the app. The zero-install pglite path (`yarn dev:db`) stays the default —
+# compose is the parity option (see docs/dev-setup.md).
+#
+# The web app is NOT containerized (deploys via Vercel, TC-DEPLOY-01); this file
+# runs backing services only. The queue-worker Dockerfile is deferred until the
+# worker graduates to BullMQ (add-agent-loop).
+#
+# SECURITY (design.md D3, defense-in-depth): ports bound to 127.0.0.1 only,
+# images version-pinned (no :latest), credentials are DEV-ONLY (`vouch_dev`) and
+# MUST NEVER be reused outside local development. No production secret belongs in
+# this file. `docker compose down -v` wipes the named volume (destructive reset).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vouch_dev
+      POSTGRES_PASSWORD: vouch_dev
+      POSTGRES_DB: vouch
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - vouch_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vouch_dev -d vouch"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  vouch_pg:

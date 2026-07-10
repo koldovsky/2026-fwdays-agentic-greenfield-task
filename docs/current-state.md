@@ -8,6 +8,15 @@
 
 ## Last action (most recent first)
 
+- **`add-docker-dev-env` (impl, Sections 1+2) DONE (2026-07-10).** Added `docker-compose.yml`
+  (`postgres:16-alpine` + `redis:7-alpine`, `127.0.0.1`-bound, named volume `vouch_pg`, healthchecks,
+  dev-only `vouch_dev` creds, no `:latest`, no obsolete `version:`) + `db:up`/`db:down`/`db:reset` scripts
+  + dev-setup "Compose" section; tasks.md marked. Gives the `db-test-seam` `test:pg` a NATIVE Postgres.
+  maker(main) ≠ checker(opus, approve-with-nits; both doc nits fixed — inert `DATABASE_SSL` on migrate,
+  duplicate test:pg blocks) + verifier(sonnet): `docker compose config` validates (exit 0), loopback binds,
+  pinned images, `.env*` gitignore intact, NO Dockerfile added, lint green. DEFERRED: `worker/Dockerfile`
+  (Section 3 — blocked on BullMQ). PENDING DAEMON (Docker daemon down here): boot + migrate + `test:pg`
+  real-PG divergence check. TC-STACK-04/05, TC-DEPLOY-01.
 - **`db-test-seam` DONE (2026-07-10).** Added `src/shared/lib/db/test-db.ts` `makeTestDb()` — the seam to
   run the DB-integration suite against a real Postgres (env `TEST_DATABASE_URL`, per-file schema isolation)
   while defaulting to in-process PGlite. Refactored the 4 `*.integration.test.ts` onto it (dropped the
@@ -71,9 +80,15 @@
 
 ## Working on
 
-Nothing actively in progress. Recently closed (see Last action): `db-test-seam`,
-`role-provenance-best-effort` (T5 #7), `harden-export-gate` (T5 #8), `fix-premium-attach-overlay`, and the
-checkout/history follow-up audit.
+Nothing actively in progress. Recently closed (see Last action): `add-docker-dev-env` (Sections 1+2),
+`db-test-seam`, `role-provenance-best-effort` (T5 #7), `harden-export-gate` (T5 #8),
+`fix-premium-attach-overlay`, and the checkout/history follow-up audit.
+
+**One human action unlocks the next high-value verification:** start the Docker daemon, then
+`yarn db:up && DATABASE_URL=postgres://vouch_dev:vouch_dev@127.0.0.1:5432/vouch yarn db:migrate` and
+`TEST_DATABASE_URL=postgres://vouch_dev:vouch_dev@127.0.0.1:5432/vouch yarn test:pg` — the real
+PGlite-vs-Postgres divergence check on the security-critical DB paths (reserve / status-guard /
+findExportGrant). Everything is committed and correct-by-construction for it.
 
 **Highest-value next (now unblocked-ish):** implement the spec'd `add-docker-dev-env` change — a native
 `docker-compose.yml` (Postgres 16) + `db:up`/`db:down`. That gives `test:pg` a REAL engine so the new DB

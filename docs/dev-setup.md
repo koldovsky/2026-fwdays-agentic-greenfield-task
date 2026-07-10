@@ -45,9 +45,37 @@ yarn dev:db     # terminal 1 — pglite on :5544, migrations applied
 yarn dev        # terminal 2 — Next.js dev server
 ```
 
-For production-parity Postgres + Redis via Docker Compose, see the planned
-`add-docker-dev-env` change (`openspec/changes/add-docker-dev-env/`) — not yet
-implemented; pglite is the supported dev path today.
+### Compose (production-parity Postgres + Redis)
+
+For real-PostgreSQL semantics (schema work, `yarn test:pg`) and data that
+survives restarts, use the Docker Compose services instead of pglite. Requires
+Docker; pglite stays the zero-install default for everyone else.
+
+```sh
+export DATABASE_URL=postgres://vouch_dev:vouch_dev@127.0.0.1:5432/vouch
+yarn db:up          # postgres:16 + redis:7 on 127.0.0.1
+yarn db:migrate     # local Postgres accepts non-TLS; no DATABASE_SSL needed
+DATABASE_SSL=disable yarn dev
+yarn db:down        # stop (keeps data on the named volume)
+yarn db:reset       # DESTRUCTIVE: down -v wipes the volume, then re-up
+```
+
+- Ports bind to `127.0.0.1` only; images are version-pinned.
+- `DATABASE_SSL` is read only by the app (`yarn dev`), not by `yarn db:migrate`
+  (that runner takes SSL from the connection string's `sslmode`); local Postgres
+  accepts non-TLS so neither needs a flag here.
+- The credentials (`vouch_dev`) are **dev-only** and must never be used outside
+  local development. Real secrets never live in `docker-compose.yml`.
+- Redis is provisioned for the coming BullMQ queue and is not consumed by the
+  app yet.
+
+To run the DB-integration suite against this compose Postgres, use its URL with
+`test:pg` (see the next section for the isolation + ephemeral-DB caveat):
+
+```sh
+TEST_DATABASE_URL=postgres://vouch_dev:vouch_dev@127.0.0.1:5432/vouch yarn test:pg
+# a dirtied run can be wiped with `yarn db:reset`
+```
 
 ### Running the DB-integration tests against real Postgres
 
