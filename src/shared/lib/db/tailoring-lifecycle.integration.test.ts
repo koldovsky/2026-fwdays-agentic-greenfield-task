@@ -25,34 +25,27 @@
 //
 // FR-TAILOR-04, FR-HISTORY-01/02, NFR-COST-02, NFR-OBS-01, NFR-SEC-01,
 // NFR-SEC-02, TC-PURE-01
-import { PGlite } from "@electric-sql/pglite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { markAbandonedPending } from "./tailoring-cleanup";
 import { runMigrations } from "./migrate";
 import type { Queryable } from "./port";
+import { makeTestDb, type TestDb } from "./test-db";
 import { createTailoringRepo, type CompletePayload } from "./tailoring-repo";
-
-function adapter(pg: PGlite): Queryable {
-  return {
-    async query<Row>(sql: string, params?: readonly unknown[]) {
-      const res = await pg.query<Row>(sql, params ? [...params] : undefined);
-      return { rows: res.rows };
-    },
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
 let db: Queryable;
-let pgRaw: PGlite;
+let t: TestDb;
 
 beforeAll(async () => {
-  pgRaw = new PGlite();
-  db = adapter(pgRaw);
+  t = await makeTestDb();
+  db = t.db;
   await runMigrations(db);
 }, 30_000);
+
+afterAll(() => t.close());
 
 // Helpers that insert minimal rows for FK satisfaction.
 async function insertUser(email: string): Promise<string> {

@@ -16,7 +16,8 @@
     "demo:render": "remotion render remotion/index.ts Main out/final.mp4",
     "demo": "yarn demo:capture && yarn demo:convert && yarn demo:render",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:pg": "vitest run --project pure src/shared/lib/db src/shared/lib/account src/shared/lib/auth"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",

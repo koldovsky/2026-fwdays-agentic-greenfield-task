@@ -49,6 +49,22 @@ For production-parity Postgres + Redis via Docker Compose, see the planned
 `add-docker-dev-env` change (`openspec/changes/add-docker-dev-env/`) — not yet
 implemented; pglite is the supported dev path today.
 
+### Running the DB-integration tests against real Postgres
+
+`yarn test` runs the DB-integration suites (`src/shared/lib/db|account|auth/*.integration.test.ts`)
+on in-process pglite — no DB required. To exercise the same tests against a **real
+Postgres** and catch pglite-vs-Postgres divergence (the atomic usage-counter reserve,
+the status-race guarded update, `findExportGrant`, `subscription.upsert`), point
+`TEST_DATABASE_URL` at a Postgres instance and run:
+
+```sh
+TEST_DATABASE_URL=postgres://user:pass@127.0.0.1:5432/db yarn test:pg
+```
+
+Each test file isolates itself in a throwaway schema (created and dropped per run,
+see `src/shared/lib/db/test-db.ts`), so point this at a dedicated/ephemeral DB — not
+one holding data you care about. Unset, `test:pg` runs the same files on pglite.
+
 ## 3. Verify
 
 - `GET /sign-in` renders with no `[auth][error] MissingSecret` in the server log.

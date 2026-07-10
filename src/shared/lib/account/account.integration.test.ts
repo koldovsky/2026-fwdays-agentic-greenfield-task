@@ -2,35 +2,30 @@
 // profile and a tailoring exports everything we hold (including decrypted CV
 // text) and can hard-delete the account, cascading to every child table.
 import { randomBytes } from "node:crypto";
-import { PGlite } from "@electric-sql/pglite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { createCvProfileRepo } from "@/shared/lib/db/cv-profile-repo";
 import { runMigrations } from "@/shared/lib/db/migrate";
 import type { Queryable } from "@/shared/lib/db/port";
+import { makeTestDb, type TestDb } from "@/shared/lib/db/test-db";
 import { createTailoringRepo } from "@/shared/lib/db/tailoring-repo";
 import { createUserRepo } from "@/shared/lib/db/user-repo";
 import type { CvProfile } from "@/shared/lib/scoring";
 import { deleteAccount, exportAccountData } from "./service";
-
-function adapter(pg: PGlite): Queryable {
-  return {
-    async query<Row>(sql: string, params?: readonly unknown[]) {
-      const res = await pg.query<Row>(sql, params ? [...params] : undefined);
-      return { rows: res.rows };
-    },
-  };
-}
 
 const key = randomBytes(32);
 const profile: CvProfile = { skills: ["react"], sentences: ["Built an API"] };
 const rawText = "Ada Lovelace — React engineer, приватні дані";
 
 let db: Queryable;
+let t: TestDb;
 
 beforeAll(async () => {
-  db = adapter(new PGlite());
+  t = await makeTestDb();
+  db = t.db;
   await runMigrations(db);
 }, 30_000);
+
+afterAll(() => t.close());
 
 function stores() {
   return {

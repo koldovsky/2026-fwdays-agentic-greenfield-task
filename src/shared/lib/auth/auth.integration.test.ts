@@ -2,33 +2,28 @@
 // real migrations, then drives the service through the actual user + credentials
 // repos. Proves register/authenticate work, errors don't enumerate accounts, and
 // the stored credential is a hash, not plaintext (FR-AUTH-01, task 2.1 / 4.2).
-import { PGlite } from "@electric-sql/pglite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { createCredentialsRepo } from "@/shared/lib/db/credentials-repo";
 import { runMigrations } from "@/shared/lib/db/migrate";
 import type { Queryable } from "@/shared/lib/db/port";
+import { makeTestDb, type TestDb } from "@/shared/lib/db/test-db";
 import { createUserRepo } from "@/shared/lib/db/user-repo";
 import { authenticateWithPassword, registerWithPassword, type AuthDeps } from "./service";
-
-function adapter(pg: PGlite): Queryable {
-  return {
-    async query<Row>(sql: string, params?: readonly unknown[]) {
-      const res = await pg.query<Row>(sql, params ? [...params] : undefined);
-      return { rows: res.rows };
-    },
-  };
-}
 
 const email = "ada@example.com";
 const password = "correct horse battery staple";
 let db: Queryable;
 let deps: AuthDeps;
+let t: TestDb;
 
 beforeAll(async () => {
-  db = adapter(new PGlite());
+  t = await makeTestDb();
+  db = t.db;
   await runMigrations(db);
   deps = { users: createUserRepo(db), credentials: createCredentialsRepo(db) };
 }, 30_000);
+
+afterAll(() => t.close());
 
 describe("registerWithPassword", () => {
   it("creates an account and stores a hash, not the plaintext", async () => {

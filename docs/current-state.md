@@ -8,6 +8,17 @@
 
 ## Last action (most recent first)
 
+- **`db-test-seam` DONE (2026-07-10).** Added `src/shared/lib/db/test-db.ts` `makeTestDb()` — the seam to
+  run the DB-integration suite against a real Postgres (env `TEST_DATABASE_URL`, per-file schema isolation)
+  while defaulting to in-process PGlite. Refactored the 4 `*.integration.test.ts` onto it (dropped the
+  copy-pasted adapter), added `test:pg` script + `.env.example` (keys only, `!.env.example` is git-tracked)
+  + dev-setup note. NEW integration coverage for two previously-zero-coverage security-critical paths:
+  `findExportGrant` (returns ALL bullet texts incl. `included=false` per FR-BULLETS-02 + owner/status/IDOR)
+  and `subscription.upsert` (ON CONFLICT path). maker(main) ≠ test-author(sonnet) ≠ checker(opus,
+  approve-with-nits; close()-robustness nit applied) + verifier. No-regression gate GREEN: 151 files /
+  1509 tests. Discovered `127.0.0.1:5544` is PGlite-over-wire (`@electric-sql/pglite-socket`), not native
+  PG — `test:pg` against it fails on the socket shim's connection limits (endpoint limitation, NOT a seam
+  defect; seam is correct for native PG). NFR-SEC-04, NFR-COST-02, BC-HONESTY-02, TC-STACK-05.
 - **`role-provenance-best-effort` (T5 #7, rescoped) DONE (2026-07-10).** Kept bullets now land under their
   best-effort SOURCE ROLE on export instead of all piling onto the most-recent role. Original T5 #7 (persist
   `Bullet.sourceRoleIndex` via migration) was proven infeasible (bullets are cross-role syntheses; no role
@@ -60,15 +71,22 @@
 
 ## Working on
 
-Nothing actively in progress. Last three closed: `role-provenance-best-effort` (T5 #7),
-`harden-export-gate` (T5 #8), `fix-premium-attach-overlay` — see Last action.
+Nothing actively in progress. Recently closed (see Last action): `db-test-seam`,
+`role-provenance-best-effort` (T5 #7), `harden-export-gate` (T5 #8), `fix-premium-attach-overlay`, and the
+checkout/history follow-up audit.
 
-Openspec deltas awaiting archival once the CLI is available: `harden-export-gate` (new), and the
-`improve-tailoring-quality` resume-export scenario was just un-relaxed to best-effort placement.
+**Highest-value next (now unblocked-ish):** implement the spec'd `add-docker-dev-env` change — a native
+`docker-compose.yml` (Postgres 16) + `db:up`/`db:down`. That gives `test:pg` a REAL engine so the new DB
+seam actually catches PGlite-vs-Postgres divergence (the local 5544 is PGlite-over-wire and its socket
+shim can't serve the pooled/isolated `test:pg` path). Spec + design already exist in
+`openspec/changes/add-docker-dev-env/`; implement + archive.
 
-Residuals accepted (documented, not scheduled): T5 #8 cross-tailoring "superset smuggling"; T5 #7
-best-effort matcher can mis-place a bullet (never drop/dupe) — optional word-boundary hardening; full
-persisted per-source-role provenance (needs CV snapshot + LLM role claim) — deferred.
+Openspec deltas awaiting archival (CLI env-blocked): `harden-export-gate` + the un-relaxed
+`improve-tailoring-quality` resume-export scenario.
+
+Accepted residuals (documented, not scheduled): T5 #8 cross-tailoring "superset smuggling"; T5 #7 matcher
+can mis-place a bullet (never drop/dupe); `findExportGrant` IDOR is repo-level-tested — a route-level
+404-on-mismatch e2e is a nice follow-up (NFR-SEC-04).
 
 ## Next steps (code-doable, pick by value)
 
