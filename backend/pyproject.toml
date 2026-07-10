@@ -24,6 +24,9 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.6",
     "mypy>=1.11",
+    # Coverage measurement for the gate-slice ratchet (scripts/gate-slice); the
+    # [toml] extra lets coverage read its config from this file on Python 3.10.
+    "coverage[toml]>=7.6",
 ]
 
 [build-system]
@@ -57,3 +60,15 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 ignore_missing_imports = true
 exclude = ["alembic/"]
+
+# Coverage config for the gate-slice ratchet. Measures the `app` package only;
+# the migrations and the test suite itself are not product code under test.
+[tool.coverage.run]
+source = ["app"]
+branch = false
+omit = ["tests/*", "alembic/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = false
+

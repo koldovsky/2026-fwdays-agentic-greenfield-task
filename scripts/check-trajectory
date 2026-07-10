@@ -1,0 +1,390 @@
+#!/usr/bin/env python3
+"""check-trajectory - the process half of the engineering trail that git can prove.
+
+HONESTY BOUNDARY (read this before trusting the output):
+    This gate is DETERMINISTIC and proves ONLY facts git can show:
+      * each slice's commits carry a `Slice:` and/or `Refs:` trailer;
+      * a slice marked done has clean review evidence committed BEFORE it is done;
+      * which code paths each slice touched, flagging cross-slice overlap.
+    It does NOT and CANNOT verify test-first ordering, that a test was not weakened,
+    deleted, or made vacuous to go green, or that a review was substantive. Those are
+    judgment calls graded later by the trajectory-eval (an LLM judge), not here. Do
+    not read a green result as "the process was followed" - only as "the git-visible
+    process facts hold."
+
+A slice is identified by a `Slice:` trailer, else by mapping a commit's `Refs:`
+requirement ids to the spec that claims them (docs/specs/NNN-*.md). "Done" means the
+slice's spec Status is done/shipped or all its requirements are shipped in
+docs/requirements.md. Review evidence lives at docs/qa/reviews/<slice>.md and is
+"clean" when it records `Result: pass|clean|approved` with no open blocker.
+
+Emits a generated, diff-safe report at docs/qa/trajectory.md.
+
+Modes:
+    (default)        Print a report; exit 1 on a hard process violation.
+    --write          (Re)generate docs/qa/trajectory.md. Exit 0.
+    --check-fresh    Verify the committed report matches a fresh regenerate AND
+                     enforce process checks. Exit 3 if stale, 1 on violation.
+
+Exit codes: 0 ok / 1 violation / 2 usage / 3 stale.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+REPORT_PATH = "docs/qa/trajectory.md"
+REVIEW_DIR = "docs/qa/reviews"
+
+# Code paths where cross-slice overlap is a real ownership/merge signal. Shared docs
+# and root config are edited by many slices and are intentionally excluded.
+CODE_PREFIXES = ("backend/app/", "backend/tests/", "backend/alembic/", "frontend/src/")
+
+RESULT_CLEAN_RE = re.compile(r"(?im)^result:\s*(pass|clean|approved)\b")
+RESULT_BAD_RE = re.compile(r"(?im)^result:\s*(fail|blocked|reject)")
+BLOCKER_OPEN_RE = re.compile(r"(?im)^blocker:\s*open")
+
+
+class Commit:
+    def __init__(self, sha: str, short: str, subject: str, body: str, files: list[str]):
+        self.sha = sha
+        self.short = short
+        self.subject = subject
+        self.body = body
+        self.files = files
+        self.refs = H._ordered_unique(H.REQ_ID_RE.findall(_trailer_lines(body, "Refs")))
+        self.slice_trailer = _slice_trailer(body)
+
+    @property
+    def code_files(self) -> list[str]:
+        return [f for f in self.files if f.startswith(CODE_PREFIXES)]
+
+
+def _trailer_lines(body: str, key: str) -> str:
+    return "\n".join(
+        ln for ln in body.splitlines() if re.match(rf"(?i)^{key}\s*:", ln.strip())
+    )
+
+
+def _slice_trailer(body: str) -> str | None:
+    for ln in body.splitlines():
+        m = re.match(r"(?i)^slice\s*:\s*(.+)$", ln.strip())
+        if m:
+            digits = re.search(r"\d{3}", m.group(1))
+            return digits.group(0) if digits else m.group(1).strip()
+    return None
+
+
+def read_commits(root) -> list[Commit]:
+    fmt = "%H%x1f%h%x1f%s%x1f%b%x1e"
+    proc = H.git(root, "log", "--no-merges", f"--format={fmt}")
+    commits: list[Commit] = []
+    for record in proc.out.split("\x1e"):
+        record = record.strip("\n")
+        if not record.strip():
+            continue
+        parts = record.split("\x1f")
+        if len(parts) < 4:
+            continue
+        sha, short, subject, body = parts[0], parts[1], parts[2], parts[3]
+        files_proc = H.git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", sha)
+        files = sorted(f for f in files_proc.out.splitlines() if f.strip())
+        commits.append(Commit(sha, short, subject, body, files))
+    return commits
+
+
+def slice_is_done(slice_id: str, specs, reqs) -> tuple[bool, str]:
+    """Done if the spec Status is done/shipped or every claimed requirement is shipped."""
+    spec = next((s for s in specs if s.slice_id == slice_id), None)
+    if spec is not None:
+        status_line = ""
+        for ln in spec.path.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"(?i)^-?\s*\*\*status:?\*\*\s*(.+)$", ln.strip())
+            if m:
+                status_line = m.group(1).strip().lower()
+                break
+        if any(w in status_line for w in ("done", "shipped")):
+            return True, f"spec status: {status_line}"
+    if spec is not None and spec.covered_ids:
+        statuses = {reqs[r].status for r in spec.covered_ids if r in reqs}
+        if statuses and statuses <= {"shipped"}:
+            return True, "all claimed requirements shipped"
+        return False, f"requirements: {', '.join(sorted(statuses)) or 'unknown'}"
+    return False, "no covering spec"
+
+
+def review_evidence(root, slice_id: str) -> tuple[str, bool]:
+    """Return (human status, is_clean) for a slice's review-evidence file."""
+    path = root / REVIEW_DIR / f"{slice_id}.md"
+    if not path.is_file():
+        return f"{H.rel(path, root)} - absent", False
+    text = path.read_text(encoding="utf-8")
+    clean = bool(RESULT_CLEAN_RE.search(text)) and not RESULT_BAD_RE.search(text) \
+        and not BLOCKER_OPEN_RE.search(text)
+    return f"{H.rel(path, root)} - {'clean' if clean else 'present but not clean'}", clean
+
+
+def build_model() -> dict:
+    root = H.repo_root()
+    specs = H.parse_specs(root)
+    reqs = H.parse_requirements(root)
+    commits = read_commits(root)
+
+    claimed: dict[str, set[str]] = {}
+    for spec in specs:
+        for rid in spec.covered_ids:
+            claimed.setdefault(rid, set()).add(spec.slice_id)
+
+    slices: dict[str, list[Commit]] = {}
+    unattributed: list[Commit] = []
+    infra: list[Commit] = []          # traced to a real requirement, not a feature slice
+    dangling: list[tuple[Commit, list[str]]] = []
+    for c in commits:
+        if c.slice_trailer:
+            slices.setdefault(c.slice_trailer, []).append(c)
+            continue
+        if c.refs:
+            valid = [r for r in c.refs if r in reqs]
+            invalid = [r for r in c.refs if r not in reqs]
+            if invalid:
+                dangling.append((c, invalid))
+            mapped = sorted({s for rid in valid for s in claimed.get(rid, set())})
+            if len(mapped) == 1:
+                slices.setdefault(mapped[0], []).append(c)
+            elif len(mapped) > 1:
+                slices.setdefault("MULTI:" + "+".join(mapped), []).append(c)
+            else:
+                # Valid requirement refs but no owning spec -> cross-cutting process /
+                # infra work (e.g. the BC-* trail/process constraints). It is traced to
+                # a requirement, just not a numbered feature slice: informational.
+                infra.append(c)
+            continue
+        if c.code_files:
+            unattributed.append(c)
+
+    violations: list[str] = []
+    for c, ids in dangling:
+        violations.append(
+            f"commit {c.short} references requirement id(s) absent from "
+            f"docs/requirements.md: {', '.join(ids)}."
+        )
+    spec_slice_ids = {s.slice_id for s in specs}
+
+    slice_models = []
+    for sid in sorted(slices):
+        cs = slices[sid]
+        code_paths = sorted({f for c in cs for f in c.code_files})
+        other_count = len({f for c in cs for f in c.files}) - len(code_paths)
+        missing_trailer = [c.short for c in cs if not c.refs and not c.slice_trailer]
+
+        done = evidence = None
+        clean = False
+        why = ""
+        if sid.startswith("MULTI:") or sid == "unspecified":
+            violations.append(
+                f"slice {sid}: commits {', '.join(c.short for c in cs)} do not map to a "
+                f"single spec - add an explicit `Slice:` trailer."
+            )
+            done, why = False, "ambiguous slice"
+            evidence = "n/a"
+        else:
+            if sid not in spec_slice_ids:
+                violations.append(
+                    f"slice {sid}: `Slice:` trailer references a non-existent spec "
+                    f"docs/specs/{sid}-*.md."
+                )
+            done, why = slice_is_done(sid, specs, reqs)
+            evidence, clean = review_evidence(H.repo_root(), sid)
+            if done and not clean:
+                violations.append(
+                    f"slice {sid} is marked done but review evidence is not clean "
+                    f"({evidence}). Maker != checker != judge: commit clean review "
+                    f"evidence to {REVIEW_DIR}/{sid}.md before marking done."
+                )
+
+        slice_models.append(
+            {
+                "id": sid,
+                "commits": [
+                    {
+                        "short": c.short,
+                        "subject": c.subject,
+                        "refs": c.refs,
+                        "slice_trailer": c.slice_trailer,
+                    }
+                    for c in cs
+                ],
+                "code_paths": code_paths,
+                "other_count": other_count,
+                "missing_trailer": missing_trailer,
+                "done": done,
+                "why": why,
+                "evidence": evidence,
+            }
+        )
+
+    # Cross-slice code-path overlap (only real numbered slices, code paths only).
+    real = [m for m in slice_models if not m["id"].startswith("MULTI:")]
+    overlaps = []
+    for i in range(len(real)):
+        for j in range(i + 1, len(real)):
+            shared = sorted(set(real[i]["code_paths"]) & set(real[j]["code_paths"]))
+            if shared:
+                overlaps.append((real[i]["id"], real[j]["id"], shared))
+    for a, b, shared in overlaps:
+        violations.append(
+            f"cross-slice overlap: slices {a} and {b} both touch "
+            f"{', '.join(shared)}."
+        )
+
+    return {
+        "slices": slice_models,
+        "infra": [
+            {"short": c.short, "subject": c.subject, "refs": c.refs} for c in infra
+        ],
+        "unattributed": [{"short": c.short, "subject": c.subject} for c in unattributed],
+        "overlaps": overlaps,
+        "violations": violations,
+    }
+
+
+def render_report(model: dict) -> str:
+    lines: list[str] = []
+    lines.append("# Trajectory report")
+    lines.append("")
+    lines.append(
+        "Generated by `scripts/check-trajectory` - do not edit by hand. Regenerate "
+        "with `python scripts/check-trajectory --write` (the pre-commit hook does this "
+        "automatically)."
+    )
+    lines.append("")
+    lines.append("## Honesty boundary")
+    lines.append("")
+    lines.append(
+        "This report proves only the process facts git can show: trailers, "
+        "review-evidence-before-done, and cross-slice code overlap. It does NOT verify "
+        "test-first ordering, that no test was weakened or deleted to go green, or that "
+        "a review was substantive - those are graded by the trajectory-eval (LLM "
+        "judge), not by this deterministic gate."
+    )
+    lines.append("")
+    for m in model["slices"]:
+        lines.append(f"## Slice {m['id']}")
+        lines.append("")
+        done_txt = "yes" if m["done"] else "no"
+        lines.append(f"- Done: {done_txt} ({m['why']})")
+        lines.append(f"- Review evidence: {m['evidence']}")
+        if m["missing_trailer"]:
+            lines.append(
+                f"- Commits missing a Refs:/Slice: trailer: {', '.join(m['missing_trailer'])}"
+            )
+        lines.append("- Commits:")
+        for c in m["commits"]:
+            trailer = ""
+            if c["refs"]:
+                trailer = f" [Refs: {', '.join(c['refs'])}]"
+            elif c["slice_trailer"]:
+                trailer = f" [Slice: {c['slice_trailer']}]"
+            lines.append(f"  - {c['short']} {c['subject']}{trailer}")
+        lines.append(f"- Touched code paths ({len(m['code_paths'])}):")
+        if m["code_paths"]:
+            for p in m["code_paths"]:
+                lines.append(f"  - {p}")
+        else:
+            lines.append("  - (none)")
+        lines.append(f"- Other files touched (docs/config): {m['other_count']}")
+        lines.append("")
+
+    lines.append("## Process / infra commits (traced, not a feature slice)")
+    lines.append("")
+    lines.append(
+        "Commits that reference a real requirement (e.g. the BC-* trail/process "
+        "constraints) but that no numbered spec owns. Traced, so not a violation."
+    )
+    lines.append("")
+    if model["infra"]:
+        for c in model["infra"]:
+            refs = f" [Refs: {', '.join(c['refs'])}]" if c["refs"] else ""
+            lines.append(f"- {c['short']} {c['subject']}{refs}")
+    else:
+        lines.append("- (none)")
+    lines.append("")
+
+    lines.append("## Cross-slice code overlap")
+    lines.append("")
+    if model["overlaps"]:
+        for a, b, shared in model["overlaps"]:
+            lines.append(f"- slices {a} and {b}: {', '.join(shared)}")
+    else:
+        lines.append("- (none)")
+    lines.append("")
+
+    lines.append("## Unattributed product-code commits (informational)")
+    lines.append("")
+    lines.append(
+        "Commits that touch product code with no Refs:/Slice: trailer. New commits are "
+        "rejected by the commit-msg hook; anything listed here predates it."
+    )
+    lines.append("")
+    if model["unattributed"]:
+        for c in model["unattributed"]:
+            lines.append(f"- {c['short']} {c['subject']}")
+    else:
+        lines.append("- (none)")
+    return "\n".join(lines)
+
+
+def main(argv: list[str]) -> int:
+    mode = "report"
+    for arg in argv:
+        if arg in ("--write", "--check-fresh", "--report"):
+            mode = arg.lstrip("-")
+        elif arg in ("-h", "--help"):
+            print(__doc__)
+            return H.EXIT_OK
+        else:
+            print(f"check-trajectory: unknown argument {arg!r}", file=sys.stderr)
+            return H.EXIT_USAGE
+
+    root = H.repo_root()
+    model = build_model()
+    content = render_report(model)
+    path = root / REPORT_PATH
+
+    if mode == "write":
+        H.write_generated(path, content)
+        print(f"check-trajectory: wrote {REPORT_PATH} ({len(model['slices'])} slice(s), "
+              f"{len(model['violations'])} violation(s))")
+        return H.EXIT_OK
+
+    n_viol = len(model["violations"])
+    if mode == "check-fresh":
+        fresh, diff = H.check_fresh(path, content)
+        if not fresh:
+            print(f"check-trajectory: {REPORT_PATH} is STALE - regenerate with "
+                  f"`python scripts/check-trajectory --write`.", file=sys.stderr)
+            print(diff, file=sys.stderr)
+            return H.EXIT_STALE
+
+    # report (and enforce) for both default and --check-fresh
+    print(f"check-trajectory: {len(model['slices'])} slice(s) analyzed.")
+    for m in model["slices"]:
+        marker = "done" if m["done"] else "in-progress"
+        print(f"  - slice {m['id']}: {len(m['commits'])} commit(s), "
+              f"{len(m['code_paths'])} code path(s), {marker}")
+    if n_viol:
+        print("\nProcess violations:")
+        for v in model["violations"]:
+            print(f"  - {v}")
+        return H.EXIT_CHECK_FAILED
+    print("No git-visible process violations. (See the honesty boundary above.)")
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

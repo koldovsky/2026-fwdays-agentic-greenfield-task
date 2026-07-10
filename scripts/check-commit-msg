@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""check-commit-msg - reject a commit that has no Refs: or Slice: trailer.
+
+Used by the commit-msg git hook (.githooks/commit-msg). Every change must trace to a
+requirement (`Refs: FR-...`) or a slice (`Slice: 001`). Merge/revert/autosquash
+messages are exempt because git generates them.
+
+Usage: check-commit-msg <path-to-commit-message-file>
+Exit codes: 0 ok/exempt / 1 no trailer / 2 usage.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+TRAILER_RE = re.compile(r"(?im)^(?:refs|slice)\s*:\s*\S")
+EXEMPT_SUBJECT_RE = re.compile(r"(?i)^(merge |revert |fixup!|squash!)")
+SCISSORS = "# ------------------------ >8 ------------------------"
+
+
+def strip_message(raw: str) -> str:
+    """Drop git comment lines and everything below the verbose-commit scissors line."""
+    lines: list[str] = []
+    for line in raw.splitlines():
+        if line.strip() == SCISSORS.strip():
+            break
+        if line.lstrip().startswith("#"):
+            continue
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 1:
+        print("usage: check-commit-msg <path-to-commit-message-file>", file=sys.stderr)
+        return H.EXIT_USAGE
+    path = argv[0]
+    try:
+        with open(path, encoding="utf-8") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        print(f"check-commit-msg: cannot read {path}: {exc}", file=sys.stderr)
+        return H.EXIT_USAGE
+
+    msg = strip_message(raw).strip()
+    if not msg:
+        # An empty message aborts the commit anyway; don't add a confusing error.
+        return H.EXIT_OK
+
+    subject = msg.splitlines()[0].strip()
+    if EXEMPT_SUBJECT_RE.match(subject):
+        return H.EXIT_OK
+
+    if TRAILER_RE.search(msg):
+        return H.EXIT_OK
+
+    print(
+        "commit-msg: missing a `Refs:` or `Slice:` trailer.\n"
+        "  Every change must trace to a requirement or a slice, e.g.:\n"
+        "    Refs: FR-AUTH-01\n"
+        "    Slice: 001\n"
+        "  (Merge/revert/fixup messages are exempt.)",
+        file=sys.stderr,
+    )
+    return H.EXIT_CHECK_FAILED
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

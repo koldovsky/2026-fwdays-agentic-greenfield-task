@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""gate-slice - the per-slice green battery: verify.* plus a coverage ratchet.
+
+Runs the repo's existing end-to-end verification (ruff, mypy, alembic upgrade,
+pytest with RUN_DB_TESTS=1, frontend build) by delegating to scripts/verify.ps1 or
+scripts/verify.sh (no duplicated checks), THEN enforces a coverage ratchet: backend
+line coverage of the `app` package must stay at or above the committed floor in
+docs/qa/coverage-floor.txt. Coverage may rise (bump the floor with --bump-floor); it
+may never silently fall.
+
+Green = every verify step passed AND coverage >= floor -> exit 0.
+
+Modes:
+    (default)       Full battery: verify.* then the coverage ratchet.
+    --ratchet       Coverage ratchet only (assumes the DB is up and deps installed);
+                    used by CI after the stack steps have already run.
+    --bump-floor    Measure coverage and write floor(coverage) to the floor file (the
+                    sanctioned way to raise the ratchet). Implies --ratchet.
+
+Exit codes: 0 green / 1 a check failed / coverage below floor / 2 usage/env error.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+FLOOR_PATH = "docs/qa/coverage-floor.txt"
+
+
+def run_verify(root) -> int:
+    """Delegate the full stack battery to the platform verify script."""
+    if os.name == "nt":
+        script = root / "scripts" / "verify.ps1"
+        cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)]
+    else:
+        script = root / "scripts" / "verify.sh"
+        cmd = ["bash", str(script)]
+    if not script.is_file():
+        print(f"gate-slice: missing verify script {H.rel(script, root)}", file=sys.stderr)
+        return H.EXIT_USAGE
+    print(f"==> gate-slice: running {H.rel(script, root)} (full stack battery)")
+    return H.stream(cmd, cwd=root)
+
+
+def read_floor(root) -> float | None:
+    path = root / FLOOR_PATH
+    if not path.is_file():
+        return None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            return float(line)
+        except ValueError:
+            return None
+    return None
+
+
+def measure_coverage(root) -> tuple[int, float | None]:
+    """Run backend tests under coverage; return (exit_code, percent_covered)."""
+    backend = root / "backend"
+    py = H.venv_python(root)
+
+    probe = H.capture([py, "-c", "import coverage"], cwd=backend)
+    if probe.code != 0:
+        print("gate-slice: `coverage` is not installed in the backend venv. Install "
+              "the dev extra (`pip install -e \".[dev]\"`) or run the full battery "
+              "first.", file=sys.stderr)
+        return H.EXIT_USAGE, None
+
+    env = {"RUN_DB_TESTS": "1"}
+    print("==> gate-slice: measuring backend coverage (pytest under coverage, RUN_DB_TESTS=1)")
+    run = H.stream([py, "-m", "coverage", "run", "-m", "pytest", "-q"], cwd=backend, env=env)
+    if run != 0:
+        print("gate-slice: pytest failed under coverage.", file=sys.stderr)
+        return H.EXIT_CHECK_FAILED, None
+
+    fd, tmp = tempfile.mkstemp(suffix="-coverage.json")
+    os.close(fd)
+    try:
+        rep = H.capture([py, "-m", "coverage", "json", "-o", tmp], cwd=backend)
+        if rep.code != 0:
+            print(f"gate-slice: coverage json failed:\n{rep.err or rep.out}", file=sys.stderr)
+            return H.EXIT_USAGE, None
+        with open(tmp, encoding="utf-8") as fh:
+            data = json.load(fh)
+        percent = float(data["totals"]["percent_covered"])
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    return H.EXIT_OK, percent
+
+
+def ratchet(root, bump: bool) -> int:
+    code, percent = measure_coverage(root)
+    if percent is None:
+        return code
+    floor = read_floor(root)
+    print(f"==> gate-slice: backend coverage = {percent:.2f}%")
+
+    if bump:
+        new_floor = math.floor(percent)
+        content = (
+            "# Backend coverage floor (percent), enforced by scripts/gate-slice.\n"
+            "# Ratchet: coverage may rise, never silently fall. Raise this only with a\n"
+            "# deliberate `--bump-floor` when coverage has genuinely improved.\n"
+            "# Measured on the `app` package with RUN_DB_TESTS=1.\n"
+            f"{new_floor}\n"
+        )
+        H.write_generated(root / FLOOR_PATH, content)
+        print(f"gate-slice: floor set to {new_floor} in {FLOOR_PATH} "
+              f"(measured {percent:.2f}%).")
+        return H.EXIT_OK
+
+    if floor is None:
+        print(f"gate-slice: no coverage floor committed yet ({FLOOR_PATH} absent). "
+              "Establish the ratchet with `python scripts/gate-slice --bump-floor`.")
+        return H.EXIT_OK
+
+    if percent + 1e-9 < floor:
+        print(f"gate-slice: FAIL - coverage {percent:.2f}% is below the floor {floor:g}%. "
+              "Add tests, or (only if the drop is justified) lower the floor deliberately.",
+              file=sys.stderr)
+        return H.EXIT_CHECK_FAILED
+
+    headroom = percent - floor
+    print(f"gate-slice: coverage ratchet OK ({percent:.2f}% >= floor {floor:g}%).")
+    if headroom >= 2.0:
+        print(f"  Coverage is {headroom:.1f} points above the floor - consider "
+              "`--bump-floor` to lock in the gain.")
+    return H.EXIT_OK
+
+
+def main(argv: list[str]) -> int:
+    mode_full = True
+    bump = False
+    for arg in argv:
+        if arg == "--ratchet":
+            mode_full = False
+        elif arg == "--bump-floor":
+            mode_full = False
+            bump = True
+        elif arg in ("-h", "--help"):
+            print(__doc__)
+            return H.EXIT_OK
+        else:
+            print(f"gate-slice: unknown argument {arg!r}", file=sys.stderr)
+            return H.EXIT_USAGE
+
+    root = H.repo_root()
+
+    if mode_full:
+        code = run_verify(root)
+        if code != 0:
+            print("gate-slice: FAIL - verify.* battery did not pass.", file=sys.stderr)
+            return H.EXIT_CHECK_FAILED if code == 1 else code
+
+    rc = ratchet(root, bump=bump)
+    if rc != 0:
+        return rc
+
+    if mode_full:
+        print("\ngate-slice: GREEN - stack verified and coverage ratchet held.")
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

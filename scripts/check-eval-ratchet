@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""check-eval-ratchet - coach eval scores may tighten, never silently loosen.
+
+Compares the latest coach-eval scores against a committed baseline, per dimension.
+Higher is better by default (a score may rise; it may not silently fall). Dimensions
+listed under ``lower_is_better`` invert (e.g. latency, grounding-violation count).
+
+Dropping a dimension that the baseline tracks is itself a silent loosening and fails.
+
+This gate is intentionally built BEFORE the coach slice (006) so the ratchet exists
+the moment eval cases land. Until a baseline file is committed it is a clean no-op
+that exits 0 with an explanatory message.
+
+Files (JSON), both optional until slice 006 creates them:
+    docs/qa/eval/baseline.json   the committed floor  (the ratchet)
+    docs/qa/eval/latest.json     the newest eval run  (produced by the eval runner)
+
+Schema (both files):
+    {
+      "lower_is_better": ["grounding_violations", "p95_latency_ms"],   # optional
+      "dimensions": { "grounding_pass_rate": 1.0, "insight_usefulness": 0.82 }
+    }
+
+Modes:
+    (default)     Compare latest against baseline; exit 1 on a regression.
+    --promote     Copy latest.json over baseline.json (the sanctioned "raise the
+                  floor" action; run this only after a judge accepts the new scores).
+
+Exit codes: 0 ok / no-op / 1 regression / 2 usage or malformed input.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+BASELINE_PATH = "docs/qa/eval/baseline.json"
+LATEST_PATH = "docs/qa/eval/latest.json"
+EPS = 1e-9
+
+
+def _load(path) -> dict | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{H.rel(path)}: invalid JSON ({exc})") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("dimensions"), dict):
+        raise ValueError(f"{H.rel(path)}: expected an object with a 'dimensions' map")
+    return data
+
+
+def main(argv: list[str]) -> int:
+    mode = "check"
+    for arg in argv:
+        if arg == "--promote":
+            mode = "promote"
+        elif arg in ("-h", "--help"):
+            print(__doc__)
+            return H.EXIT_OK
+        else:
+            print(f"check-eval-ratchet: unknown argument {arg!r}", file=sys.stderr)
+            return H.EXIT_USAGE
+
+    root = H.repo_root()
+    baseline_path = root / BASELINE_PATH
+    latest_path = root / LATEST_PATH
+
+    try:
+        baseline = _load(baseline_path)
+        latest = _load(latest_path)
+    except ValueError as exc:
+        print(f"check-eval-ratchet: {exc}", file=sys.stderr)
+        return H.EXIT_USAGE
+
+    if mode == "promote":
+        if latest is None:
+            print(f"check-eval-ratchet: nothing to promote - {LATEST_PATH} is absent.",
+                  file=sys.stderr)
+            return H.EXIT_USAGE
+        H.write_generated(baseline_path, json.dumps(latest, indent=2, sort_keys=True))
+        print(f"check-eval-ratchet: promoted {LATEST_PATH} -> {BASELINE_PATH}.")
+        return H.EXIT_OK
+
+    # No baseline yet -> deliberate no-op (the coach slice 006 will add one).
+    if baseline is None:
+        print("check-eval-ratchet: no eval baseline yet "
+              f"({BASELINE_PATH} absent) - no-op until the coach slice (006) adds "
+              "eval cases. The gate is in place.")
+        return H.EXIT_OK
+
+    if latest is None:
+        print(f"check-eval-ratchet: baseline exists but {LATEST_PATH} is absent - "
+              "run the eval runner to produce the latest scores.", file=sys.stderr)
+        return H.EXIT_CHECK_FAILED
+
+    lower_is_better = set(baseline.get("lower_is_better", []))
+    base_dims = baseline["dimensions"]
+    latest_dims = latest["dimensions"]
+
+    regressions: list[str] = []
+    for dim, base_val in sorted(base_dims.items()):
+        if dim not in latest_dims:
+            regressions.append(f"{dim}: tracked by baseline but MISSING from latest "
+                               "(a dropped dimension is a silent loosening)")
+            continue
+        cur = latest_dims[dim]
+        if dim in lower_is_better:
+            if cur > base_val + EPS:
+                regressions.append(f"{dim}: {cur} worse than floor {base_val} "
+                                   "(lower is better)")
+        else:
+            if cur < base_val - EPS:
+                regressions.append(f"{dim}: {cur} below floor {base_val}")
+
+    new_dims = sorted(set(latest_dims) - set(base_dims))
+
+    if regressions:
+        print("check-eval-ratchet: REGRESSION - scores loosened vs the committed "
+              "baseline:")
+        for r in regressions:
+            print(f"  - {r}")
+        print("\nIf the new scores are intentional and judge-approved, run "
+              "`python scripts/check-eval-ratchet --promote`.")
+        return H.EXIT_CHECK_FAILED
+
+    print(f"check-eval-ratchet: {len(base_dims)} dimension(s) hold at or above the "
+          "baseline.")
+    if new_dims:
+        print(f"  New (untracked) dimensions in latest: {', '.join(new_dims)} - add "
+              "them to the baseline via --promote to ratchet them too.")
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
