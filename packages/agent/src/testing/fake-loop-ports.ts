@@ -77,7 +77,7 @@ type HoldSlotResult = Awaited<ReturnType<HoldStorePort["holdSlot"]>>;
  *  default: a test that forgets to script a result gets a Calendar-apology
  *  reply, not a silently-wrong "ok" result. */
 export class FakeSlotsPort implements SlotsPort {
-  readonly calls: Array<{ weekdays: string[]; timeWindow: { start: string; end: string } }> = [];
+  readonly calls: Array<{ weekdays: string[]; timeWindow: { start: string; end: string }; date?: string }> = [];
 
   constructor(
     private readonly result: SlotsProposeResult = {
@@ -89,6 +89,7 @@ export class FakeSlotsPort implements SlotsPort {
   async proposeSlots(input: {
     weekdays: string[];
     timeWindow: { start: string; end: string };
+    date?: string;
   }): Promise<SlotsProposeResult> {
     this.calls.push(input);
     return this.result;

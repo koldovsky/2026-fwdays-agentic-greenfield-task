@@ -183,6 +183,7 @@ import {
   CALENDAR_UNAVAILABLE_APOLOGY,
 } from "@kamerton/lib/src/slots/propose.ts";
 import type { Preferences } from "@kamerton/lib/src/slots/rank.ts";
+import { WEEKDAYS } from "@kamerton/lib/src/booking/validate-preferences.ts";
 import { utcToKyivWallClock } from "@kamerton/lib/src/slots/timezone.ts";
 import {
   ANTHROPIC_PROCESSING_NOTICE,
@@ -353,21 +354,64 @@ function nowKyivWallClock(): string {
  *  `applyToolUse`, defense in depth) — this function trusts its caller
  *  the same way `holdWithRecovery` trusts `createHold`'s own collision
  *  re-check. */
+/** Zero-padded "YYYY-MM-DD" `days` after `dateStr` — calendar-date arithmetic
+ *  only (UTC-midnight anchored, timezone-independent), same convention as
+ *  `slots/propose.ts`'s own `addDays`. */
+function addDaysStr(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number) as [number, number, number];
+  const shifted = new Date(Date.UTC(y, m - 1, d) + days * 86_400_000);
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(shifted.getUTCDate()).padStart(2, "0")}`;
+}
+
+const FULL_DAY_WINDOW = { start: "10:00", end: "20:00" };
+
 async function performProposeSlots(
   deps: HandleUpdateDeps,
   request: RequestRow,
-  input: { weekdays: string[]; timeWindow: { start: string; end: string } },
+  input: { weekdays: string[]; timeWindow: { start: string; end: string }; date?: string },
 ): Promise<
   | { status: "ok"; slots: OfferedSlot[] }
   | { status: "no_free_times" }
   | { status: "unavailable"; apology: string }
 > {
   void request; // the structured preference comes entirely from the model-supplied, code-validated `input` — no `requests` column this port needs.
-  const preferences: Preferences = { weekdays: input.weekdays, timeWindow: input.timeWindow };
+  const today = todayKyivDate();
+
+  // A concrete date the lead named (e.g. "завтра") — GUARDRAIL: the code, not
+  // the model, decides whether to honour it. Accepted only if it is a
+  // well-formed date within [today, today+horizon]; then slots are proposed for
+  // THAT single day (weekday preference is irrelevant — the date IS the
+  // choice), with the lead's time window if valid, else the full teaching day.
+  // A weekend date yields no slots deterministically (the Mon–Fri grid has
+  // none), so the lead gets the kind "no free times" path. Anything invalid or
+  // out of range falls back to the weekday horizon below.
+  const timeWindowIsValid =
+    typeof input.timeWindow?.start === "string" &&
+    typeof input.timeWindow?.end === "string" &&
+    input.timeWindow.start !== "" &&
+    input.timeWindow.start < input.timeWindow.end;
+
+  let from = today;
+  let days = PROPOSE_HORIZON_DAYS;
+  let preferences: Preferences = { weekdays: input.weekdays, timeWindow: input.timeWindow };
+
+  if (
+    input.date !== undefined &&
+    /^\d{4}-\d{2}-\d{2}$/.test(input.date) &&
+    input.date >= today &&
+    input.date <= addDaysStr(today, PROPOSE_HORIZON_DAYS)
+  ) {
+    from = input.date;
+    days = 1;
+    preferences = {
+      weekdays: [...WEEKDAYS],
+      timeWindow: timeWindowIsValid ? input.timeWindow : FULL_DAY_WINDOW,
+    };
+  }
 
   const result = await proposeSlots(deps.calendar, {
-    from: todayKyivDate(),
-    days: PROPOSE_HORIZON_DAYS,
+    from,
+    days,
     preferences,
     now: nowKyivWallClock(),
   });
@@ -668,12 +712,28 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
             finalFields = result.state.fields;
             replyText = HOLD_CONFIRMATION_COPY;
             // design.md Decision 6 item 1's trigger: publish the instant a
-            // hold succeeds so a connected dashboard tab re-reads and
-            // re-renders the new pending request without a reload.
+            // hold succeeds so a connected dashboard tab renders the new
+            // pending request without a reload. The payload carries the FULL
+            // queue-entry shape (studentName, slot times, brief) — not just
+            // {requestId, bookingId} — so the live card shows who/when
+            // immediately (the dashboard's `BookingPendingPayload`), and no
+            // consumer ever dereferences an absent `slotStart`.
+            const pickedSlot = offeredSlots[event.slotIndex]!;
             safePublish({
               type: "CUSTOM",
               name: "BOOKING_PENDING",
-              value: { requestId: request.id, bookingId: holdResult.bookingId },
+              value: {
+                requestId: request.id,
+                leadId: request.lead_id,
+                telegramChatId: update.telegramChatId,
+                studentName: request.student_name,
+                studentAge: request.student_age,
+                brief: compileFirstLessonBriefFromLib(request),
+                bookingId: holdResult.bookingId,
+                calendarEventId: null,
+                slotStart: pickedSlot.start,
+                slotEnd: pickedSlot.end,
+              },
             });
           }
         }
@@ -786,6 +846,7 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
         ports,
         kbText,
         history,
+        today: todayKyivDate(),
       });
 
       // Auto-propose on profile completion (flow fix). The turn that collects
@@ -814,6 +875,7 @@ export async function handleUpdate(update: InboundUpdate, deps: HandleUpdateDeps
           message: "",
           ports,
           kbText,
+          today: todayKyivDate(),
           history: [
             ...history,
             { role: "user", content: update.text },

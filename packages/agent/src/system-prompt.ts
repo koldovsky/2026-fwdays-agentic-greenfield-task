@@ -127,6 +127,27 @@ function buildKnowledgeBaseBlock(kbText: string): string {
   ].join("\n");
 }
 
+/** Ukrainian weekday names, indexed by `Date.getUTCDay()` (0 = Sunday) — used
+ *  only to render "today" for the model; a calendar date's weekday is
+ *  timezone-independent, so UTC-midnight arithmetic on the date parts is safe
+ *  (same discipline as the slots grid). */
+const UA_WEEKDAYS = ["неділя", "понеділок", "вівторок", "середа", "четвер", "пʼятниця", "субота"] as const;
+
+/** kb/date awareness: when the caller supplies "today" (Europe/Kyiv
+ *  "YYYY-MM-DD"), the model is told the date + its weekday and how to turn a
+ *  relative/absolute day the lead names ("завтра", "у пʼятницю", "14 липня")
+ *  into a concrete date for `propose_slots`'s `date` field. Returns "" when no
+ *  date is supplied, so the block is simply absent (backward-compatible). */
+function buildTodayBlock(today: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return "";
+  const [y, m, d] = today.split("-").map(Number) as [number, number, number];
+  const weekday = UA_WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return [
+    `- Сьогодні: ${today} (${weekday}). Школа працює Пн–Пт, 10:00–20:00.`,
+    "- Якщо лід називає конкретний або відносний день (сьогодні, завтра, післязавтра, у пʼятницю, 14 липня) — визнач точну дату у форматі YYYY-MM-DD відносно «сьогодні» і виклич propose_slots з полем date (а не лише weekdays). Якщо названий день — вихідний (Сб/Нд) або в минулому, лагідно поясни, що заняття лише Пн–Пт, і запропонуй найближчий робочий день. Якщо лід дає загальні дні тижня — використовуй weekdays, як раніше.",
+  ].join("\n");
+}
+
 /** The DYNAMIC block: this turn's actual conversation context, rebuilt
  *  fresh from the deterministic state machine's own `IntakeState` every
  *  call — the state machine plus the persisted `requests` row IS the
@@ -134,12 +155,13 @@ function buildKnowledgeBaseBlock(kbText: string): string {
  *  why a verbatim transcript replay is a deferred follow-up, not missing
  *  scope). `kbText` (kb-learning design.md Decision 1) is folded in via
  *  `buildKnowledgeBaseBlock` as its own trailing section. */
-function buildDynamicBlock(state: IntakeState, kbText: string): string {
+function buildDynamicBlock(state: IntakeState, kbText: string, today: string): string {
   const next = nextNeededField(state);
   const nextLine = next
     ? `Наступне потрібне поле: ${next.field} — ${next.instruction}`
     : "Наступного поля для збору в цьому стані немає.";
 
+  const todayBlock = buildTodayBlock(today);
   return [
     "## Поточний стан розмови (динамічний контекст, від стейт-машини)",
     "",
@@ -147,6 +169,7 @@ function buildDynamicBlock(state: IntakeState, kbText: string): string {
     `- Уже зібрано: ${formatCollectedFields(state.fields)}`,
     `- ${nextLine}`,
     `- ${addressingInstruction(state.fields)}`,
+    ...(todayBlock ? [todayBlock] : []),
     "",
     buildKnowledgeBaseBlock(kbText),
   ].join("\n");
@@ -167,6 +190,6 @@ function buildDynamicBlock(state: IntakeState, kbText: string): string {
  * `readKnowledgeBaseText()` result (`kb-context.ts`), folded into the
  * dynamic block via `buildKnowledgeBaseBlock(kbText)`.
  */
-export function buildSystemPrompt(state: IntakeState, kbText: string = ""): string {
-  return `${STATIC_SYSTEM_PROMPT}\n\n${buildDynamicBlock(state, kbText)}`;
+export function buildSystemPrompt(state: IntakeState, kbText: string = "", today: string = ""): string {
+  return `${STATIC_SYSTEM_PROMPT}\n\n${buildDynamicBlock(state, kbText, today)}`;
 }

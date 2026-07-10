@@ -228,7 +228,15 @@ export type ReleaseHoldFn = (calendarEventId: string) => Promise<void>;
  *  port is ever called (defense in depth, same shape as `save_format`'s
  *  schema-plus-validator pattern). */
 export interface SlotsPort {
-  proposeSlots(input: { weekdays: string[]; timeWindow: { start: string; end: string } }): Promise<
+  proposeSlots(input: {
+    weekdays: string[];
+    timeWindow: { start: string; end: string };
+    /** A concrete "YYYY-MM-DD" the lead named (e.g. "завтра" resolved against
+     *  today). When present, slots are proposed for THAT day; the adapter
+     *  (pipeline) validates it against today's horizon and ignores an
+     *  invalid/out-of-range value, falling back to `weekdays`. */
+    date?: string;
+  }): Promise<
     | { status: "ok"; slots: OfferedSlot[] }
     | { status: "no_free_times" }
     | { status: "unavailable"; apology: string }
@@ -325,6 +333,13 @@ export interface LoopInput {
   // lead gives across several terse turns (the experienceComfort two-fact
   // loop) instead of re-asking a field it already asked.
   history?: ModelMessage[];
+  // Date awareness (FR-SLOT-02): today's Europe/Kyiv "YYYY-MM-DD", threaded
+  // into `buildSystemPrompt` so the model can resolve a relative/absolute day
+  // the lead names ("завтра", "у пʼятницю", "14 липня") into a concrete date
+  // for `propose_slots`'s `date`. OPTIONAL, defaulting to "" — the pure core
+  // takes no clock (TC-PURE-01); the production caller (`pipeline.ts`) supplies
+  // it, unit tests stay hermetic (no date block unless supplied).
+  today?: string;
 }
 
 /** How a single tool-use block resolved once run through the reducer
@@ -411,7 +426,7 @@ export type { ModelConfig };
  * 4.4's six behavioural bullets, implemented below).
  */
 export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
-  const { state, message, ports, kbText = "", history = [] } = input;
+  const { state, message, ports, kbText = "", history = [], today = "" } = input;
   // The model receives TWO layers of prior-turn context every turn:
   //   1. the deterministic `IntakeState` (conversationState + validator-
   //      approved `fields`), turned into the dynamic system block by
@@ -428,7 +443,7 @@ export async function runIntakeTurn(input: LoopInput): Promise<LoopResult> {
   // two-field `save_experience_comfort` tool, and loops re-asking forever.
   // The `messages` table (packages/db/src/messages.ts) is that log; the
   // production caller (`pipeline.ts`) threads its tail in via `history`.
-  const system = buildSystemPrompt(state, kbText);
+  const system = buildSystemPrompt(state, kbText, today);
   const messages: ModelMessage[] = [...history, { role: "user", content: message }];
 
   let response;
@@ -871,21 +886,34 @@ async function applyProposeSlots(
   state: IntakeState,
   ports: LoopPorts,
 ): Promise<AppliedToolUse> {
-  const rawInput = block.input as { weekdays?: unknown; timeWindow?: unknown };
+  const rawInput = block.input as { weekdays?: unknown; timeWindow?: unknown; date?: unknown };
+  // A concrete date the model resolved from the lead's "завтра"/"у пʼятницю"/
+  // "14 липня" (system prompt supplies today). Only a well-formed YYYY-MM-DD is
+  // carried through; the pipeline re-validates it against today's horizon
+  // (guardrail: code decides, model only proposes).
+  const date =
+    typeof rawInput.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawInput.date) ? rawInput.date : undefined;
   const input = {
     weekdays: Array.isArray(rawInput.weekdays) ? (rawInput.weekdays as string[]) : [],
     timeWindow:
       typeof rawInput.timeWindow === "object" && rawInput.timeWindow !== null
         ? (rawInput.timeWindow as { start: string; end: string })
         : { start: "", end: "" },
+    ...(date !== undefined ? { date } : {}),
   };
 
-  const validation = validatePreferences(input);
-  if (!validation.ok) {
-    return {
-      state,
-      logEntry: { tool: block.name, input: block.input, outcome: "rejected" },
-    };
+  // The weekday/time validator guards the WEEKDAY path only — when the lead
+  // named a concrete day, `date` IS the constraint and `weekdays` may be a
+  // filler value, so the validator is skipped (the pipeline validates the
+  // date instead).
+  if (date === undefined) {
+    const validation = validatePreferences(input);
+    if (!validation.ok) {
+      return {
+        state,
+        logEntry: { tool: block.name, input: block.input, outcome: "rejected" },
+      };
+    }
   }
 
   const result = await ports.slots.proposeSlots(input);

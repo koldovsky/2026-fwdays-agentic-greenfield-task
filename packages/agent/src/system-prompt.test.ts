@@ -48,6 +48,29 @@ describe("buildSystemPrompt — static block (DESIGN.md voice, verbatim)", () =>
     expect(system).toContain("адміністратор уточнить");
   });
 
+  // @trace FR-SLOT-02 — date awareness: given "today", the prompt states the
+  // date + its Ukrainian weekday and instructs the model to resolve a
+  // relative/absolute day the lead names into a concrete date + propose_slots
+  // `date`. Absent when no "today" is supplied (backward-compatible).
+  describe("date awareness (today + relative-date resolution guidance)", () => {
+    it("states today's date and Ukrainian weekday when `today` is supplied", () => {
+      const system = buildSystemPrompt(initialIntakeState(), "", "2026-07-10");
+      expect(system).toContain("2026-07-10");
+      expect(system).toContain("пʼятниця"); // 2026-07-10 is a Friday
+    });
+
+    it("instructs the model to resolve a named day into a concrete date and call propose_slots with `date`", () => {
+      const system = buildSystemPrompt(initialIntakeState(), "", "2026-07-10");
+      expect(system).toContain("завтра");
+      expect(system).toContain("date");
+    });
+
+    it("omits the date line entirely when `today` is not supplied (unchanged behaviour)", () => {
+      const system = buildSystemPrompt(initialIntakeState());
+      expect(system).not.toContain("Сьогодні:");
+    });
+  });
+
   // --- kb-learning tasks.md C.5 (RED) — design.md Decision 1's rewrite of --
   // --- the FR-FAQ-02 static-block sentence -------------------------------
   // The pre-kb-learning FR-FAQ-02 sentence literally says "do not call a

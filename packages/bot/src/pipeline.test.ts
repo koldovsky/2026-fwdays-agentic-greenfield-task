@@ -783,6 +783,13 @@ describe("handleUpdate — booking-hitl lead-side proposal/hold wiring (tasks.md
         event.type === "CUSTOM" && event.name === "BOOKING_PENDING",
     );
     expect(bookingPendingEvents.length).toBeGreaterThan(0);
+    // The payload carries the FULL queue-entry shape, not just {requestId,
+    // bookingId} — so the live dashboard card shows who/when immediately and no
+    // consumer dereferences an absent slotStart (admin-crash regression).
+    const value = bookingPendingEvents[0]!.value as { requestId?: number; slotStart?: string; slotEnd?: string };
+    expect(value.requestId).toEqual(expect.any(Number));
+    expect(value.slotStart).toBe(SAMPLE_OFFERED_SLOTS[0]!.start);
+    expect(value.slotEnd).toBe(SAMPLE_OFFERED_SLOTS[0]!.end);
   });
 
   // Baseline `slots` spec's own hold-race scenario, cross-capability

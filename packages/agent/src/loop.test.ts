@@ -686,6 +686,45 @@ describe("runIntakeTurn", () => {
       expect(result.toolCalls[0]!.outcome).not.toBe("applied");
     });
 
+    // @trace FR-SLOT-02 — a specific-date propose ("завтра" resolved by the
+    // model): the concrete `date` is passed through to the slots port, and the
+    // weekday validator is SKIPPED (the date is the constraint), so an empty
+    // weekdays filler does NOT reject the call.
+    it("a propose_slots call carrying a concrete `date` passes it through and is NOT rejected for empty weekdays", async () => {
+      const state = proposingState();
+      const slots = new FakeSlotsPort({ status: "ok", slots: SAMPLE_OFFERED_SLOTS });
+      const model = new FakeModelPort([
+        toolUseResponse("propose_slots", {
+          weekdays: [],
+          timeWindow: { start: "10:00", end: "20:00" },
+          date: "2026-07-15",
+        }),
+      ]);
+      const ports = makePorts(model, { slots });
+
+      const result = await runIntakeTurn({ state, message: "Можна завтра?", ports, today: "2026-07-14" });
+
+      expect(slots.calls).toEqual([
+        { weekdays: [], timeWindow: { start: "10:00", end: "20:00" }, date: "2026-07-15" },
+      ]);
+      expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "applied" });
+    });
+
+    it("a propose_slots call with a malformed `date` drops the date and falls back to weekday validation", async () => {
+      const state = proposingState();
+      const slots = new FakeSlotsPort({ status: "ok", slots: SAMPLE_OFFERED_SLOTS });
+      const model = new FakeModelPort([
+        toolUseResponse("propose_slots", { weekdays: [], timeWindow: { start: "10:00", end: "20:00" }, date: "завтра" }),
+      ]);
+      const ports = makePorts(model, { slots });
+
+      const result = await runIntakeTurn({ state, message: "завтра", ports, today: "2026-07-14" });
+
+      // Malformed date ignored -> weekday path -> empty weekdays rejected before the port.
+      expect(slots.calls).toEqual([]);
+      expect(result.toolCalls[0]).toMatchObject({ tool: "propose_slots", outcome: "rejected" });
+    });
+
     // @trace NFR-REL-01
     it("a propose_slots call whose port resolves {status:'unavailable'} returns the calendar-unavailable apology, state unchanged", async () => {
       const state = proposingState();
