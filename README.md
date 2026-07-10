@@ -1,68 +1,86 @@
-# Agentic Engineering: Greenfield — домашнє завдання
+PR submission — Vitalii Yurkov
 
-Курс **fwdays Academy · Agentic Engineering: Greenfield**.
+    Ready-to-paste body for the homework PR on
+    arabuga/2026-fwdays-agentic-greenfield-task.
+    Add video URL before opening the PR.
 
-Це завдання — **не про розмір продукту, а про процес**: показати, що ти вмієш будувати з нуля, керуючи AI-агентами **інженерно** (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодити».
+Автор
 
-> Стек — **будь-який**. Цей репозиторій навмисно майже порожній: він не привʼязаний до жодної технології. Ти приносиш свій проєкт і свій підхід.
+Vitalii Yurkov
+Проєкт
 
----
+Weather Explorer — україномовний веб-застосунок для планування вихідних за погодою.
+Стек: Next.js 16, React 19, TypeScript, Tailwind 4, Open-Meteo, Leaflet/OSM.
+Допомагає обрати місто, побачити 7-денний прогноз, comfort score на вихідні,
+порівняти до 3 міст на карті — без акаунтів, cookies і платних API.
 
-## Цей форк: Weather Explorer
+Live demo: https://2026-fwdays-agentic-greenfield-task.vercel.app
+Відео-демо (1–2 хв)
 
-У цій гілці — повний MVP **Weather Explorer** (Next.js 16, React 19): прогноз на 7 днів,
-comfort score на вихідні, пошук міста, карта OSM, порівняння до 3 міст, анімований фон.
+Video: https://github.com/arabuga/2026-fwdays-agentic-greenfield-task/blob/homework/submission/docs/homework-demo/homework-demo-final.mp4
+Які практики Agentic Engineering застосовано
+Контекст-інженерія
 
-| Артефакт | Де |
-|----------|-----|
-| Запуск | `npm install && npm run dev` |
-| Правила агентів | [`AGENTS.md`](./AGENTS.md) |
-| Memory Bank | [`docs/memory/`](./docs/memory/README.md) |
-| Вимоги | [`docs/requirements.md`](./docs/requirements.md) |
-| OpenSpec | [`openspec/specs/`](./openspec/specs/) |
-| QA / демо-записи | [`docs/qa/`](./docs/qa/) |
-| **Інструкція здачі** | [**`docs/homework-submission.md`**](./docs/homework-submission.md) |
+    AGENTS.md — канонічні правила для всіх агентів (стек, коректність, валідація).
+    Статичний контекст: .cursor/rules/ (project-factory, memory-bank, docs-maintenance).
+    Динамічний контекст: skills (project-factory, vercel-react-best-practices), OpenSpec specs,
+    Memory Bank (docs/memory/) — підвантажуються за потреби.
+    docs/current-state.md + Memory Bank — handoff між сесіями агентів.
 
-Upstream (шаблон завдання): [koldovsky/2026-fwdays-agentic-greenfield-task](https://github.com/koldovsky/2026-fwdays-agentic-greenfield-task).
+Цикли (loop engineering)
 
----
+    Project Factory — детермінований цикл: propose → test-first → implement → review gate → archive.
+    9 capability slices (add-shell … add-weekend-compare) з OpenSpec контрактами.
+    scripts/check-* + git hooks + CI — автоматичні гейти замість ручного промптингу.
 
-## Що зробити
+Maker ≠ checker
 
-1. **Побудуй невеликий власний проєкт** — будь-який, який тобі цікавий.
-   - Стек вільний: Next.js, Python, Go, Rust, мобільний застосунок, CLI, бот — на твій вибір.
-   - Масштаб скромний. Краще маленький проєкт, проведений через повний інженерний цикл, ніж великий «наче працює».
-2. **Застосуй практики Agentic Engineering** з курсу — стільки, скільки доречно для твого проєкту:
-   - контекст-інженерія (правила / `AGENTS.md`, статичний vs динамічний контекст);
-   - цикли (loop engineering) замість ручного покрокового промптингу;
-   - верифікація: тести / evals / перевірки замість «здається, працює»;
-   - maker ≠ checker (окремий агент або прохід на рев'ю);
-   - специфікації наперед (SDD), якщо доречно.
-   - **Project Factory — за бажанням, не обовʼязково** (хочеш повну фабрику — запусти `/project-factory:init` у себе).
-3. **Запиши відео-демо на 1–2 хвилини**: коротко покажи продукт і розкажи, **як саме ти будував(ла) його агентно**.
+    Окремі суб-агенти: code-reviewer, spec-compliance-auditor, security-reviewer, eval-judge.
+    Review findings у openspec/changes/archive/*/review-findings.json.
+    Trajectory check (check-trajectory.mjs) — свіжий суддя, не той самий агент що писав код.
 
-## Як здати
+Верифікація
 
-1. Зроби **fork** цього репозиторію (разом із ним приїдуть конфіг CodeRabbit і шаблон PR).
-2. Увімкни **CodeRabbit** на своєму форку (безкоштовно для публічних репо) — він рев'юитиме твій PR як ментор, українською.
-3. Поклади свій проєкт у форк на окрему гілку (будь-яким стеком). Якщо зручніше тримати код в окремому репозиторії — додай на нього посилання в описі PR.
-4. Відкрий **Pull Request** і заповни шаблон:
-   - **Імʼя** (справжнє);
-   - **посилання на відео-демо** (1–2 хв);
-   - **опис застосованих практик Agentic Engineering** — що саме ти робив(ла) агентно, які інструменти / MCP використав(ла), що вирішував(ла) ти, а що агент.
-5. Прочитай фідбек CodeRabbit, поітеруй за потреби — і **надішли посилання на свій PR** як здачу.
+    50 unit-тестів Vitest з @trace FR-*.
+    OpenSpec validate --strict.
+    QA proof pack: traceability matrix, manual test plan, 9 Playwright demo clips.
+    Output evals (evals/cases/) — якість comfort rationale.
+    npm run check:trace, check:recordings, check:trajectory.
 
-## Як оцінюється
+SDD (специфікації наперед)
 
-Дивимось на **докази процесу**, а не на стек:
+    docs/requirements.md (32 FR) → openspec/specs/ → slice deltas → archive.
+    Тести зі сценаріїв spec спочатку (red → green).
 
-- ✅ вказане справжнє імʼя;
-- ✅ є відео-демо (1–2 хв);
-- ✅ є **змістовний опис** застосованих агентних практик;
-- ✅ результат доведено до кінця (а не «згенерував і кинув»).
+Інструменти
 
-**Бонус** — видимі артефакти інженерії: правила / `AGENTS.md`, специфікації, тести / evals, сліди верифікації, окреме рев'ю, записи демо.
+    Cursor Agent mode, суб-агенти, MCP (browser smoke, Context7 для Next.js 16).
+    Playwright — demo recordings як артефакт верифікації.
 
----
+Що робив я, що — агент
 
-Питання — у каналі курсу. Успіхів, і нехай цикли працюють на тебе 🟢
+    Я (Vitalii): вибір продукту, scope, архітектурні рішення, фінальний sign-off, відео.
+    Агент: scaffold, імплементація слайсів за spec, тести, review passes, QA pack, Memory Bank.
+
+(Опційно) Посилання на код
+
+https://github.com/arabuga/2026-fwdays-agentic-greenfield-task
+Чекліст
+
+    Вказано справжнє імʼя
+    Додано посилання на відео-демо (1–2 хв)
+    Описано застосовані практики Agentic Engineering
+    Результат робочий і доведений до кінця
+
+Summary by CodeRabbit
+
+    New Features
+        Added end-to-end homework demo recording and export to a final MP4, with optional Ukrainian narration audio.
+        Added a slide-based “homework demo flow” presentation page.
+    Documentation
+        Expanded onboarding and submission guidance (homework submission page, demo readme, and improved Memory Bank/project documentation hub).
+        Updated README with the “Weather Explorer” fork overview and how to run/verify.
+    Bug Fixes
+        Improved CI checkout reliability by fetching full repository history.
+    Chores
+        Updated ignore rules for generated homework demo media artifacts.
