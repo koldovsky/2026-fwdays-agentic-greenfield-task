@@ -13,6 +13,10 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  path_filters:
+    - "!.agents/**"
+    - "!validation/**"
+    - "!**/*.tsbuildinfo"
   path_instructions:
     - path: "**"
       instructions: >-
