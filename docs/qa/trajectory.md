@@ -9,7 +9,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 ## Slice 001
 
 - Done: no (requirements: proposed)
-- Review evidence: docs/qa/reviews/001.md - absent
+- Review evidence: docs/qa/reviews/001.md - clean
 - Commits:
   - 81353b5 feat(auth): email + password authentication (slice 001) [Refs: FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-06, FR-AUTH-07, NFR-SEC-01, NFR-SEC-02, NFR-SEC-03]
 - Touched code paths (24):
@@ -43,6 +43,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- c206814 docs: wire the agent layer into AGENTS.md, OpenSpec context, and state [Refs: BC-PROC-01]
 - c019a60 commands: add the /run-slice loop orchestrator [Refs: BC-PROC-01]
 - bc64d3d evals: add the trajectory-quality rubric and evals README [Refs: BC-TRAIL-01]
 - a2c0b8d agents: add isolated-context sub-agents for the slice loop [Refs: BC-PROC-01]

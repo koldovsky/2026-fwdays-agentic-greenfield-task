@@ -8,16 +8,16 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 
 | Requirement | Coverage | Slice(s) | Trace test(s) |
 | --- | --- | --- | --- |
-| FR-AUTH-01 | GAP | 001 | (none) |
-| FR-AUTH-02 | GAP | 001 | (none) |
-| FR-AUTH-03 | GAP | 001 | (none) |
-| FR-AUTH-06 | GAP | 001 | (none) |
-| FR-AUTH-07 | GAP | 001 | (none) |
-| NFR-SEC-01 | GAP | 001 | (none) |
-| NFR-SEC-02 | GAP | 001 | (none) |
-| NFR-SEC-03 | GAP | 001 | (none) |
+| FR-AUTH-01 | COVERED | 001 | backend/tests/test_auth.py::test_register_duplicate_email_rejected<br>backend/tests/test_auth.py::test_register_happy_path |
+| FR-AUTH-02 | COVERED | 001 | backend/tests/test_auth.py::test_login_success_sets_session_cookie<br>backend/tests/test_auth.py::test_login_wrong_password_rejected |
+| FR-AUTH-03 | COVERED | 001 | backend/tests/test_auth.py::test_logout_clears_session |
+| FR-AUTH-06 | COVERED | 001 | backend/tests/test_auth.py::test_protected_route_401_without_session |
+| FR-AUTH-07 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
+| NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
+| NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
+| NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 8 claimed, 0 traced, 8 gap.
+Summary: 8 claimed, 8 traced, 0 gap.
 
 ## Requirements not yet claimed by any spec
 

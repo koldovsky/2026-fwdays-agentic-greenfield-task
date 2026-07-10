@@ -81,6 +81,7 @@ async def _cleanup_test_users() -> AsyncIterator[None]:
 
 
 async def test_register_happy_path(client: AsyncClient) -> None:
+    """New email + password creates a user (201). @trace FR-AUTH-01"""
     email = unique_email()
     resp = await client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
 
@@ -96,6 +97,7 @@ async def test_register_happy_path(client: AsyncClient) -> None:
 
 
 async def test_register_duplicate_email_rejected(client: AsyncClient) -> None:
+    """A second register with the same email (CITEXT) is rejected (409). @trace FR-AUTH-01"""
     email = unique_email()
     first = await client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
     assert first.status_code == 201
@@ -111,6 +113,10 @@ async def test_register_duplicate_email_rejected(client: AsyncClient) -> None:
 
 
 async def test_login_success_sets_session_cookie(client: AsyncClient) -> None:
+    """Valid credentials set an HttpOnly; SameSite=None cookie + CSRF token; session row exists.
+
+    @trace FR-AUTH-02
+    """
     email = unique_email()
     await client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
 
@@ -135,6 +141,7 @@ async def test_login_success_sets_session_cookie(client: AsyncClient) -> None:
 
 
 async def test_login_wrong_password_rejected(client: AsyncClient) -> None:
+    """Wrong password returns 401 and sets no session cookie. @trace FR-AUTH-02"""
     email = unique_email()
     await client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
 
@@ -152,6 +159,10 @@ async def test_login_wrong_password_rejected(client: AsyncClient) -> None:
 
 
 async def test_logout_clears_session(client: AsyncClient) -> None:
+    """Logout deletes the session row and clears the cookie; old cookie no longer authorizes.
+
+    @trace FR-AUTH-03
+    """
     email = unique_email()
     csrf = await register_and_login(client, email)
     old_token = client.cookies.get(SETTINGS.session_cookie_name)
@@ -178,6 +189,7 @@ async def test_logout_clears_session(client: AsyncClient) -> None:
 
 
 async def test_protected_route_401_without_session(client: AsyncClient) -> None:
+    """GET /api/auth/me with no / invalid / expired cookie returns 401. @trace FR-AUTH-06"""
     # No cookie.
     assert (await client.get("/api/auth/me")).status_code == 401
 
@@ -215,6 +227,11 @@ async def test_protected_route_401_without_session(client: AsyncClient) -> None:
 
 
 async def test_current_user_is_isolated() -> None:
+    """Each session yields only its own account via the user_id-scoped repo pattern.
+
+    @trace FR-AUTH-07
+    @trace NFR-SEC-03
+    """
     email_a = unique_email()
     email_b = unique_email()
     async with make_client() as client_a, make_client() as client_b:
@@ -236,6 +253,7 @@ async def test_current_user_is_isolated() -> None:
 
 
 async def test_csrf_required_on_mutation(client: AsyncClient) -> None:
+    """A mutating request without the CSRF header is rejected (double-submit). @trace NFR-SEC-02"""
     email = unique_email()
     csrf = await register_and_login(client, email)
 
@@ -254,6 +272,7 @@ async def test_csrf_required_on_mutation(client: AsyncClient) -> None:
 
 
 async def test_password_stored_hashed(client: AsyncClient) -> None:
+    """Stored password_hash is a bcrypt hash (cost 12), never the plaintext. @trace NFR-SEC-01"""
     email = unique_email()
     await client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
 
