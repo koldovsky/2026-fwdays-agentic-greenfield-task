@@ -1,0 +1,93 @@
+// The single HTTP boundary for the app (TC-STACK-03). Every request is credentialed
+// so the session cookie flows; every mutating request carries the CSRF double-submit
+// header read from the JS-readable CSRF cookie (architecture §8.2).
+
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
+// Must match backend Settings.csrf_cookie_name / csrf_header_name (app/config.py).
+const CSRF_COOKIE = 'cadence_csrf'
+const CSRF_HEADER = 'X-CSRF-Token'
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+export class ApiError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
+export interface User {
+  id: number
+  email: string
+  timezone: string
+  coach_language: string
+}
+
+export interface LoginResponse {
+  user: User
+  csrf_token: string
+}
+
+function readCookie(name: string): string | null {
+  for (const part of document.cookie.split('; ')) {
+    const eq = part.indexOf('=')
+    if (eq > -1 && part.slice(0, eq) === name) {
+      return decodeURIComponent(part.slice(eq + 1))
+    }
+  }
+  return null
+}
+
+async function apiFetch<T>(
+  path: string,
+  options: { method?: string; body?: unknown } = {},
+): Promise<T> {
+  const method = (options.method ?? 'GET').toUpperCase()
+  const headers: Record<string, string> = {}
+
+  if (options.body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+  }
+  if (!SAFE_METHODS.has(method)) {
+    const csrf = readCookie(CSRF_COOKIE)
+    if (csrf) headers[CSRF_HEADER] = csrf
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    credentials: 'include',
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  })
+
+  if (res.status === 204) {
+    return undefined as T
+  }
+
+  const data: unknown = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiError(res.status, errorMessage(data, res.status))
+  }
+  return data as T
+}
+
+function errorMessage(data: unknown, status: number): string {
+  if (data && typeof data === 'object' && 'detail' in data) {
+    const detail = (data as { detail: unknown }).detail
+    if (typeof detail === 'string') return detail
+  }
+  return `Request failed (${status})`
+}
+
+export const register = (email: string, password: string): Promise<User> =>
+  apiFetch<User>('/api/auth/register', { method: 'POST', body: { email, password } })
+
+export const login = (email: string, password: string): Promise<LoginResponse> =>
+  apiFetch<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password } })
+
+export const logout = (): Promise<void> => apiFetch<void>('/api/auth/logout', { method: 'POST' })
+
+export const getMe = (): Promise<User> => apiFetch<User>('/api/auth/me')

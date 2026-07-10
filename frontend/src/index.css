@@ -1,0 +1,235 @@
+/* Cadence design tokens (DESIGN §3) applied to the slice-001 auth screen.
+   Tailwind adoption (TC-STACK-03) is deferred to the UI-shell slice; this slice
+   ships the auth card + authenticated placeholder as scoped CSS over the tokens. */
+
+:root {
+  color-scheme: dark;
+
+  --bg-base: #0a0a0c;
+  --bg-elevated: #131316;
+  --bg-sunken: #08080a;
+  --border-subtle: #1f1f24;
+  --border-strong: #2a2a30;
+
+  --text-primary: #ededf0;
+  --text-secondary: #8b8b94;
+  --text-tertiary: #5a5a63;
+
+  --accent: #7c6cf0;
+  --accent-soft: #9a8cf5;
+  --accent-glow: #7c6cf033;
+
+  --danger: #ef4444;
+
+  --font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-card: 16px;
+  --radius-btn: 10px;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  background: var(--bg-base);
+  background-image:
+    radial-gradient(1200px 600px at 0% 0%, #1a181255, transparent),
+    radial-gradient(1200px 600px at 100% 100%, #0c141855, transparent);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-glow);
+}
+
+/* --- Auth screen (DESIGN §7.1) --------------------------------------------- */
+
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  box-shadow: 0 24px 60px -20px #000000cc;
+  animation: rise 320ms var(--ease-out) both;
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  text-align: center;
+  line-height: 1.15;
+  margin-bottom: 24px;
+}
+
+.wordmark .thin {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.wordmark .bold {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.auth-title {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  caret-color: var(--accent);
+  outline: none;
+  transition: border-color 140ms var(--ease-out);
+}
+
+.field input:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 11px 16px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a0a0c;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background 140ms var(--ease-out);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-error {
+  font-size: 13px;
+  color: var(--danger);
+  margin: 0 0 16px;
+  min-height: 1em;
+}
+
+.auth-footer {
+  margin-top: 20px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* --- Authenticated placeholder (real shell = later slice) ------------------ */
+
+.placeholder {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.placeholder .micro-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.placeholder .email {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--accent-soft);
+  margin: 8px 0 24px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

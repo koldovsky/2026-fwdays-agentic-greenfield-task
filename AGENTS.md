@@ -1,0 +1,113 @@
+# AGENTS.md
+
+Operating guide for AI agents in this repo. Human docs: [README.md](README.md).
+Backend coding rules: [`.claude/skills/python-fastapi/SKILL.md`](.claude/skills/python-fastapi/SKILL.md).
+
+**Stack:** FastAPI + PostgreSQL (async SQLAlchemy/Alembic) · React + Vite + TypeScript.
+**Status:** verified skeleton. New behavior starts as a spec in [`docs/specs/`](docs/specs/) — design approved before code (start with the `brainstorming` skill).
+
+## Project context — source of truth
+Read before any task. Do not contradict these; propose edits rather than diverging.
+- `docs/product-brief.md` — ratified product brief (the north star).
+- `docs/requirements.md` — numbered requirements (FR/NFR/TC/BC) with stable IDs.
+  Reference IDs in specs, tests, and commit trailers (e.g. `Refs: FR-METR-03`).
+- `docs/architecture.md` — engineering design: data model, metric formulas, coach
+  contract, sync, undo (resolves O-1..O-9). The HOW behind the requirements.
+- `docs/DESIGN.md` — visual/UI design: tokens, screens, components, states.
+  Frontend work follows this; icons are SVG, never emoji.
+- `docs/positioning.md` — market/positioning rationale (human-facing, non-binding).
+- `docs/current-state.md` — current build status. `docs/adr/` — decisions. `docs/specs/` — specs.
+
+## Start here — current state
+
+Read [`docs/current-state.md`](docs/current-state.md) first: current phase, what's done, and the next step. Keep it updated at each milestone (spec approved, capability shipped, blocker changes) with a Kyiv-time timestamp. It is a **handoff aid, not the source of truth** — if it disagrees with code/specs/tests, trust the repo and fix the file.
+
+## Setup & run
+
+```powershell
+docker compose up -d db                                          # PostgreSQL
+cd backend; python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"; Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload      # http://localhost:8000/docs
+cd ..\frontend; npm install; npm run dev                         # http://localhost:5173
+```
+
+POSIX venv path is `.venv/bin/python`. `PY` below = the venv python.
+
+## Verify — source of truth (run before claiming anything is done)
+
+```powershell
+powershell -File scripts/verify.ps1    # one shot: db → ruff → mypy → alembic → pytest(+DB) → frontend build
+```
+
+Granular (backend/ unless noted):
+
+```powershell
+$PY -m ruff check .                     # lint + import order
+$PY -m mypy app                         # types
+$PY -m alembic upgrade head             # migrations apply
+$env:RUN_DB_TESTS=1; $PY -m pytest -q   # tests, incl. real Postgres connectivity
+cd ../frontend; npm run build           # tsc strict + bundle
+```
+
+"Green" = lint ✓ types ✓ migrations ✓ tests ✓ build ✓. Same checks run in [CI](.github/workflows/ci.yml).
+
+## Roles — maker ≠ checker ≠ judge (never the same pass)
+
+- **Maker** — implements one spec. Writes/updates tests with the change and an Alembic
+  migration for every schema change. Follows the `python-fastapi` skill. Does **not** self-approve.
+- **Checker** — independent verification. Runs every command under **Verify**, then
+  `/code-review` (correctness) and `/security-review` (secrets/security). Confirms the tests
+  actually exercise the change. Reports pass/fail **with the command output as evidence**.
+- **Judge** — owns the Definition of Done. Scores the change against the spec's acceptance
+  checks, adjudicates Checker findings, and (for eval work) rates outputs. **Only the Judge
+  marks a task complete.**
+
+## Reporting rules
+
+- Structure every report as **Summary · Changes · Verification · Risks/Follow-ups**.
+- Verification means **the commands you ran and their real output** — never "looks good".
+- State plainly what you did **not** do, skipped, or couldn't verify. No silent failures.
+- Cite code as `path:line`. Be terse; link, don't paste large dumps.
+
+## Code style
+
+- Backend: `async` everywhere; all config via `app/config.py` (never read `os.environ`
+  elsewhere); DB access via `SessionDep`. Enforced by ruff + mypy — see the `python-fastapi` skill.
+- **Auth & isolation (slice 001):** protected routes take the `CurrentUser` dependency
+  (`app/api/deps.py`); **every repository method that touches a user's data takes `user_id` and
+  scopes every query by it** (FR-AUTH-07) — the only exceptions are the auth-bootstrap methods that
+  *establish* identity (see [`app/repos/__init__.py`](backend/app/repos/__init__.py)). Passwords are
+  hashed with bcrypt cost 12 via `passlib[bcrypt]` (`app/core/security.py`).
+- Frontend: TypeScript strict; all HTTP goes through `src/api.ts`, which sends credentials and
+  attaches the CSRF double-submit header (from the `cadence_csrf` cookie) on every mutating request.
+
+## Skills
+
+Canonical in [`.agents/skills/`](.agents/skills/) (cross-agent), mirrored to `.claude/skills/` via `scripts/sync-skills.*` — edit in `.agents/`, then sync. Provenance/audit log: [`.agents/skills/README.md`](.agents/skills/README.md).
+
+- **Before coding a feature:** `brainstorming` (idea → approved spec, hard gate) then `grill-me` (relentless, one-question-at-a-time stress test).
+- **Writing backend code:** the `python-fastapi` conventions apply.
+- Only add third-party skills whose audits all pass; log them in the README.
+
+## Boundaries & safety
+
+- **Never commit secrets.** `.env*` is git-ignored; commit only `*.env.example`.
+- Schema change ⇒ Alembic migration, with the autogenerated SQL hand-reviewed.
+- **Skills are a trust boundary** — vet and log audits in
+  [`.claude/skills/README.md`](.claude/skills/README.md) before adding third-party ones.
+- Don't hand-edit generated/vendored paths: `dist/`, `node_modules/`, `.venv/`, and merged
+  files in `backend/alembic/versions/`.
+
+## Git & PR
+
+- One branch per change (`feat/…`, `fix/…`); never commit to `main` directly.
+- Commits: imperative and scoped, e.g. `backend: add notes endpoint`.
+- PRs fill [`.github/pull_request_template.md`](.github/pull_request_template.md); CodeRabbit reviews.
+
+## Definition of done (Judge gate)
+
+1. Meets its `docs/specs/` acceptance checks.
+2. `scripts/verify.*` is fully green.
+3. Passed an independent Checker (maker ≠ checker) **and** CodeRabbit.
+4. No secrets committed; this file / skills updated if conventions changed.
