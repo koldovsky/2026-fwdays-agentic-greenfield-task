@@ -82,6 +82,13 @@ export default defineConfig({
     passWithNoTests: true,
     testTimeout: 30000,
     hookTimeout: 30000,
+    // Coverage ratchet plumbing (scripts/check-coverage-ratchet.mjs): the
+    // ratchet reads coverage/coverage-summary.json, which only the
+    // "json-summary" reporter emits — without it `check:coverage` SKIPs
+    // forever and guards nothing. text/html kept for humans.
+    coverage: {
+      reporter: ["text", "html", "json-summary"],
+    },
     // The integration suite's files share one external resource (the real
     // DEMO Google Calendar) and each file's beforeAll/afterAll performs a
     // namespace-wide "[itest-slots]" sweep for hermetic reruns — running

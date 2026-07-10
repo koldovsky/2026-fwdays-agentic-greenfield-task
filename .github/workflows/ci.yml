@@ -52,12 +52,15 @@ jobs:
         run: npm run test:coverage
       - name: Coverage ratchet
         run: node scripts/check-coverage-ratchet.mjs
-      - name: DB integration tests
-        run: npm run test:integration
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-      - name: E2E tests
-        run: npm run test:e2e
+      # DB integration tests and the rendered-UI/E2E gates are LOCAL-ONLY by
+      # design, exactly as this workflow's header states: the integration
+      # suite talks to the REAL DEMO Google Calendar (service-account key
+      # never leaves the dev machine, NFR-SEC-01) and the agent smoke uses
+      # the developer's local OAuth token; the rendered-UI checks
+      # (check-a11y, vision-verify, recordings) run via local scripts, with
+      # their evidence committed under docs/qa/. Running `test:integration`
+      # or `playwright test` here without those credentials/configs can only
+      # false-fail.
 
       # --- production build ---
       - name: Build
