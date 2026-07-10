@@ -13,11 +13,27 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-AUTH-03 | COVERED | 001 | backend/tests/test_auth.py::test_logout_clears_session |
 | FR-AUTH-06 | COVERED | 001 | backend/tests/test_auth.py::test_protected_route_401_without_session |
 | FR-AUTH-07 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
+| FR-TIMER-01 | GAP | 003 | (none) |
+| FR-TIMER-02 | GAP | 003 | (none) |
+| FR-TIMER-03 | GAP | 003 | (none) |
+| FR-TIMER-04 | GAP | 003 | (none) |
+| FR-TIMER-05 | GAP | 003 | (none) |
+| FR-TIMER-06 | GAP | 003 | (none) |
+| FR-SESS-01 | GAP | 003 | (none) |
+| FR-SESS-02 | GAP | 003 | (none) |
+| FR-SESS-03 | GAP | 003 | (none) |
+| FR-SESS-04 | GAP | 003 | (none) |
+| FR-SESS-05 | GAP | 003 | (none) |
+| FR-SESS-06 | GAP | 003 | (none) |
+| FR-CAT-01 | GAP | 002 | (none) |
+| FR-CAT-02 | GAP | 002 | (none) |
+| FR-CAT-03 | GAP | 002 | (none) |
+| FR-NOTIF-01 | GAP | 003 | (none) |
 | NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 8 claimed, 8 traced, 0 gap.
+Summary: 24 claimed, 8 traced, 16 gap.
 
 ## Requirements not yet claimed by any spec
 
@@ -27,21 +43,6 @@ Informational - these await a future slice; not counted as gaps.
 - FR-SHELL-02
 - FR-AUTH-04
 - FR-AUTH-05
-- FR-TIMER-01
-- FR-TIMER-02
-- FR-TIMER-03
-- FR-TIMER-04
-- FR-TIMER-05
-- FR-TIMER-06
-- FR-SESS-01
-- FR-SESS-02
-- FR-SESS-03
-- FR-SESS-04
-- FR-SESS-05
-- FR-SESS-06
-- FR-CAT-01
-- FR-CAT-02
-- FR-CAT-03
 - FR-HEAT-01
 - FR-HEAT-02
 - FR-STATS-01
@@ -66,7 +67,6 @@ Informational - these await a future slice; not counted as gaps.
 - FR-EXT-01
 - FR-EXT-02
 - FR-EXT-03
-- FR-NOTIF-01
 - NFR-PERF-01
 - NFR-DET-01
 - NFR-COST-01

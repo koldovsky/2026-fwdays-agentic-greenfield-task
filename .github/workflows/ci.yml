@@ -76,6 +76,10 @@ jobs:
         # exists), so freshness cannot be gated here. This re-derives from the full
         # history (incl. HEAD) and fails only on a real process violation.
         run: python scripts/check-trajectory
+      - name: Gate self-tests (trajectory overlap policy)
+        # Locks in the entry-point-allowlist vs business-logic-conflict distinction.
+        # Pure stdlib unittest -- no pip install needed in this job.
+        run: python -m unittest discover -s scripts/tests -p 'test_*.py'
       - name: Eval ratchet (no-op until the coach slice adds a baseline)
         run: python scripts/check-eval-ratchet
       - name: OpenSpec contract is valid (validate --all --strict)

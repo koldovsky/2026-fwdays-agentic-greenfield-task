@@ -44,6 +44,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- c6c7d8d docs: establish the agent-run record system and record the 001 audit [Refs: BC-PROC-01, BC-TRAIL-01]
 - c206814 docs: wire the agent layer into AGENTS.md, OpenSpec context, and state [Refs: BC-PROC-01]
 - c019a60 commands: add the /run-slice loop orchestrator [Refs: BC-PROC-01]
 - bc64d3d evals: add the trajectory-quality rubric and evals README [Refs: BC-TRAIL-01]
@@ -57,6 +58,14 @@ Commits that reference a real requirement (e.g. the BC-* trail/process constrain
 - 17b1d9c chore: add deterministic verification gate scripts [Refs: BC-TRAIL-01]
 
 ## Cross-slice code overlap
+
+Two slices co-editing the same business-logic module (an ownership conflict). Overlap limited to allowlisted entry-point files is not listed here -- see the next section.
+
+- (none)
+
+## Shared entry points (additive, allowed)
+
+Overlap limited to allowlisted entry-point / aggregation files (the app factory, the single HTTP boundary, the model package, the app shell). Every slice appends to these, so it is normal participation, not an ownership conflict -- reported here, not failed. A pure-deletion edit to a co-owned entry point is still a violation (listed below and above).
 
 - (none)
 

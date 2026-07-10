@@ -132,6 +132,17 @@ Canonical in [`.agents/skills/`](.agents/skills/) (cross-agent), mirrored to `.c
   [`.claude/skills/README.md`](.claude/skills/README.md) before adding third-party ones.
 - Don't hand-edit generated/vendored paths: `dist/`, `node_modules/`, `.venv/`, and merged
   files in `backend/alembic/versions/`.
+- **Cross-slice overlap (trajectory gate).** `check-trajectory` flags two slices co-editing the
+  same **business-logic** module as an ownership conflict. **Entry-point / aggregation files that
+  every slice legitimately appends to are allowlisted** and never counted as overlap:
+  `backend/app/main.py`, `backend/app/models/__init__.py`, `frontend/src/api.ts`,
+  `frontend/src/App.tsx` (the `ENTRY_POINT_ALLOWLIST` in [`scripts/check-trajectory`](scripts/check-trajectory),
+  same spirit as the docs/config exclusions). When adding a slice: **append** your router
+  registration / HTTP call / model import / screen mount to these (a pure-deletion edit that
+  strips another slice's lines is still flagged); put everything else in **new** files — do not
+  edit another slice's modules (e.g. `index.css`, `conftest.py`, another router). Keep the
+  allowlist small; broadening it needs owner sign-off + the gate self-test
+  ([`scripts/tests/test_trajectory_overlap.py`](scripts/tests/test_trajectory_overlap.py)).
 
 ## Git & PR
 

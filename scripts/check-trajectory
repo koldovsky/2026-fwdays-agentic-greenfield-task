@@ -5,7 +5,8 @@ HONESTY BOUNDARY (read this before trusting the output):
     This gate is DETERMINISTIC and proves ONLY facts git can show:
       * each slice's commits carry a `Slice:` and/or `Refs:` trailer;
       * a slice marked done has clean review evidence committed BEFORE it is done;
-      * which code paths each slice touched, flagging cross-slice overlap.
+      * which code paths each slice touched, flagging cross-slice overlap on
+        business-logic modules (shared entry-point/aggregation files are allowlisted).
     It does NOT and CANNOT verify test-first ordering, that a test was not weakened,
     deleted, or made vacuous to go green, or that a review was substantive. Those are
     judgment calls graded later by the trajectory-eval (an LLM judge), not here. Do
@@ -45,18 +46,47 @@ REVIEW_DIR = "docs/qa/reviews"
 # and root config are edited by many slices and are intentionally excluded.
 CODE_PREFIXES = ("backend/app/", "backend/tests/", "backend/alembic/", "frontend/src/")
 
+# Entry-point / aggregation files that EVERY slice legitimately appends to: the FastAPI
+# app factory (router registration), the single frontend HTTP boundary, the model package
+# Alembic autogenerate imports, and the app-shell mount point. Two slices sharing one of
+# these is normal ADDITIVE participation, not a business-logic ownership conflict, so
+# file-level overlap on them is allowed (reported informationally, never a violation) --
+# the same spirit as excluding shared docs/config above. Kept deliberately small and
+# documented in AGENTS.md ("Cross-slice overlap"). Overlap on any OTHER code module stays
+# a violation. For an allowlisted file a later slice must still be additive (append its
+# own registration); a pure-deletion edit that strips another slice's lines is flagged
+# (see classify_cross_slice). This encodes the entry-point-vs-ownership distinction the
+# coarse "any shared path is a conflict" rule got wrong.
+ENTRY_POINT_ALLOWLIST = frozenset(
+    {
+        "backend/app/main.py",
+        "backend/app/models/__init__.py",
+        "frontend/src/api.ts",
+        "frontend/src/App.tsx",
+    }
+)
+
 RESULT_CLEAN_RE = re.compile(r"(?im)^result:\s*(pass|clean|approved)\b")
 RESULT_BAD_RE = re.compile(r"(?im)^result:\s*(fail|blocked|reject)")
 BLOCKER_OPEN_RE = re.compile(r"(?im)^blocker:\s*open")
 
 
 class Commit:
-    def __init__(self, sha: str, short: str, subject: str, body: str, files: list[str]):
+    def __init__(
+        self,
+        sha: str,
+        short: str,
+        subject: str,
+        body: str,
+        files: list[str],
+        numstat: dict[str, tuple[int, int]] | None = None,
+    ):
         self.sha = sha
         self.short = short
         self.subject = subject
         self.body = body
         self.files = files
+        self.numstat = numstat or {}
         self.refs = H._ordered_unique(H.REQ_ID_RE.findall(_trailer_lines(body, "Refs")))
         self.slice_trailer = _slice_trailer(body)
 
@@ -69,6 +99,27 @@ def _trailer_lines(body: str, key: str) -> str:
     return "\n".join(
         ln for ln in body.splitlines() if re.match(rf"(?i)^{key}\s*:", ln.strip())
     )
+
+
+def _parse_numstat(out: str) -> dict[str, tuple[int, int]]:
+    """Parse ``git diff-tree --numstat`` output into ``{path: (added, deleted)}``.
+
+    Binary files report ``-`` for both counts (treated as zero). Rename entries carry a
+    ``=>`` in the path field and are skipped -- irrelevant to the entry-point additive
+    check and not worth the ambiguity.
+    """
+    result: dict[str, tuple[int, int]] = {}
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 3:
+            continue
+        added_s, deleted_s, path = parts
+        if "=>" in path:
+            continue
+        added = 0 if added_s == "-" else int(added_s)
+        deleted = 0 if deleted_s == "-" else int(deleted_s)
+        result[path] = (added, deleted)
+    return result
 
 
 def _slice_trailer(body: str) -> str | None:
@@ -94,7 +145,9 @@ def read_commits(root) -> list[Commit]:
         sha, short, subject, body = parts[0], parts[1], parts[2], parts[3]
         files_proc = H.git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", sha)
         files = sorted(f for f in files_proc.out.splitlines() if f.strip())
-        commits.append(Commit(sha, short, subject, body, files))
+        num_proc = H.git(root, "diff-tree", "--no-commit-id", "--numstat", "-r", sha)
+        numstat = _parse_numstat(num_proc.out)
+        commits.append(Commit(sha, short, subject, body, files, numstat))
     return commits
 
 
@@ -127,6 +180,67 @@ def review_evidence(root, slice_id: str) -> tuple[str, bool]:
     clean = bool(RESULT_CLEAN_RE.search(text)) and not RESULT_BAD_RE.search(text) \
         and not BLOCKER_OPEN_RE.search(text)
     return f"{H.rel(path, root)} - {'clean' if clean else 'present but not clean'}", clean
+
+
+def classify_cross_slice(
+    real_slices: list[dict], allowlist: frozenset[str]
+) -> tuple[
+    list[tuple[str, str, list[str]]],
+    list[tuple[str, str, list[str]]],
+    list[tuple[str, str]],
+]:
+    """Classify code-path sharing between real numbered slices (PURE, unit-tested).
+
+    ``real_slices`` are slice models -- dicts with ``id``, ``code_paths`` (list) and a
+    ``line_delta`` map ``path -> (added, deleted)`` covering at least the allowlisted files
+    the slice touched. Pass only real numbered slices (no ``MULTI:``/ambiguous ids).
+
+    Returns ``(conflicts, entry_shared, non_additive)``:
+
+    * ``conflicts`` -- ``(id_a, id_b, [paths])`` where two slices share a NON-allowlisted
+      module: a real ownership conflict -> the caller raises a violation.
+    * ``entry_shared`` -- ``(id_a, id_b, [paths])`` where the only shared paths are
+      allowlisted entry points: normal additive participation -> reported, not a violation.
+    * ``non_additive`` -- ``(slice_id, path)`` where a slice's edit to an allowlisted file
+      that is co-owned (touched by >= 2 slices) is a pure deletion (added == 0, deleted > 0):
+      it stripped/rewrote instead of appending -> the caller raises a violation. A modify
+      that also adds a line (e.g. extending an ``__all__`` list) is additive and passes;
+      line-level ownership is not deterministically knowable at file granularity, hence
+      "additive where feasible".
+
+    Determinism: iterates ``real_slices`` in the given order (the caller sorts by slice id)
+    and sorts every path list, so identical input yields identical output.
+    """
+    conflicts: list[tuple[str, str, list[str]]] = []
+    entry_shared: list[tuple[str, str, list[str]]] = []
+    for i in range(len(real_slices)):
+        for j in range(i + 1, len(real_slices)):
+            shared = set(real_slices[i]["code_paths"]) & set(real_slices[j]["code_paths"])
+            if not shared:
+                continue
+            conflict = sorted(p for p in shared if p not in allowlist)
+            entry = sorted(p for p in shared if p in allowlist)
+            if conflict:
+                conflicts.append((real_slices[i]["id"], real_slices[j]["id"], conflict))
+            if entry:
+                entry_shared.append((real_slices[i]["id"], real_slices[j]["id"], entry))
+
+    # Additive safeguard on co-owned (shared by >= 2 slices) allowlisted files only.
+    touch_count: dict[str, int] = {}
+    for m in real_slices:
+        for p in m["code_paths"]:
+            if p in allowlist:
+                touch_count[p] = touch_count.get(p, 0) + 1
+    co_owned = sorted(p for p, n in touch_count.items() if n >= 2)
+    non_additive: list[tuple[str, str]] = []
+    for m in real_slices:
+        for p in co_owned:
+            if p not in m["code_paths"]:
+                continue
+            added, deleted = m.get("line_delta", {}).get(p, (0, 0))
+            if added == 0 and deleted > 0:
+                non_additive.append((m["id"], p))
+    return conflicts, entry_shared, non_additive
 
 
 def build_model() -> dict:
@@ -182,6 +296,15 @@ def build_model() -> dict:
         other_count = len({f for c in cs for f in c.files}) - len(code_paths)
         missing_trailer = [c.short for c in cs if not c.refs and not c.slice_trailer]
 
+        # Per-slice line deltas on allowlisted entry-point files (summed across the
+        # slice's commits) -- feeds the additive safeguard in classify_cross_slice.
+        line_delta: dict[str, tuple[int, int]] = {}
+        for c in cs:
+            for path, (added, deleted) in c.numstat.items():
+                if path in ENTRY_POINT_ALLOWLIST:
+                    prev_a, prev_d = line_delta.get(path, (0, 0))
+                    line_delta[path] = (prev_a + added, prev_d + deleted)
+
         done = evidence = None
         clean = False
         why = ""
@@ -220,6 +343,7 @@ def build_model() -> dict:
                     for c in cs
                 ],
                 "code_paths": code_paths,
+                "line_delta": line_delta,
                 "other_count": other_count,
                 "missing_trailer": missing_trailer,
                 "done": done,
@@ -228,18 +352,21 @@ def build_model() -> dict:
             }
         )
 
-    # Cross-slice code-path overlap (only real numbered slices, code paths only).
+    # Cross-slice code-path overlap (real numbered slices, code paths only). Overlap on a
+    # business-logic module is a violation; overlap only on an allowlisted entry-point file
+    # is normal additive participation (reported, not failed). A pure-deletion edit to a
+    # co-owned entry point is flagged. See classify_cross_slice + ENTRY_POINT_ALLOWLIST.
     real = [m for m in slice_models if not m["id"].startswith("MULTI:")]
-    overlaps = []
-    for i in range(len(real)):
-        for j in range(i + 1, len(real)):
-            shared = sorted(set(real[i]["code_paths"]) & set(real[j]["code_paths"]))
-            if shared:
-                overlaps.append((real[i]["id"], real[j]["id"], shared))
+    overlaps, entry_shared, non_additive = classify_cross_slice(real, ENTRY_POINT_ALLOWLIST)
     for a, b, shared in overlaps:
         violations.append(
             f"cross-slice overlap: slices {a} and {b} both touch "
             f"{', '.join(shared)}."
+        )
+    for sid, path in non_additive:
+        violations.append(
+            f"non-additive edit to co-owned entry point {path} by slice {sid}: the change "
+            f"deletes lines without adding any (a rewrite/strip, not an append)."
         )
 
     return {
@@ -249,6 +376,8 @@ def build_model() -> dict:
         ],
         "unattributed": [{"short": c.short, "subject": c.subject} for c in unattributed],
         "overlaps": overlaps,
+        "entry_shared": entry_shared,
+        "non_additive": non_additive,
         "violations": violations,
     }
 
@@ -317,12 +446,40 @@ def render_report(model: dict) -> str:
 
     lines.append("## Cross-slice code overlap")
     lines.append("")
+    lines.append(
+        "Two slices co-editing the same business-logic module (an ownership conflict). "
+        "Overlap limited to allowlisted entry-point files is not listed here -- see the "
+        "next section."
+    )
+    lines.append("")
     if model["overlaps"]:
         for a, b, shared in model["overlaps"]:
             lines.append(f"- slices {a} and {b}: {', '.join(shared)}")
     else:
         lines.append("- (none)")
     lines.append("")
+
+    lines.append("## Shared entry points (additive, allowed)")
+    lines.append("")
+    lines.append(
+        "Overlap limited to allowlisted entry-point / aggregation files (the app factory, "
+        "the single HTTP boundary, the model package, the app shell). Every slice appends "
+        "to these, so it is normal participation, not an ownership conflict -- reported "
+        "here, not failed. A pure-deletion edit to a co-owned entry point is still a "
+        "violation (listed below and above)."
+    )
+    lines.append("")
+    if model["entry_shared"]:
+        for a, b, shared in model["entry_shared"]:
+            lines.append(f"- slices {a} and {b}: {', '.join(shared)}")
+    else:
+        lines.append("- (none)")
+    lines.append("")
+    if model["non_additive"]:
+        lines.append("Non-additive entry-point edits (flagged as violations above):")
+        for sid, path in model["non_additive"]:
+            lines.append(f"- slice {sid}: {path}")
+        lines.append("")
 
     lines.append("## Unattributed product-code commits (informational)")
     lines.append("")
