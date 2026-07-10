@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs ESLint before each commit (NFR-DX-01).
+
+set -e
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root" || exit 1
+
+echo "pre-commit: running linter..."
+npm run lint
