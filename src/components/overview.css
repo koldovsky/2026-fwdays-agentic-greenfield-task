@@ -1,0 +1,91 @@
+.ov {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 16px;
+  font-family: system-ui, sans-serif;
+}
+.ov h2 {
+  font-size: 1.3rem;
+  margin: 8px 0;
+}
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.ov-card {
+  text-align: left;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.05s;
+  font: inherit;
+}
+.ov-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+.ov-card:active {
+  transform: translateY(1px);
+}
+.ov-card__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+.ov-card__big {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+.ov-card__big--late {
+  color: #dc2626;
+}
+.ov-card__big--crit {
+  color: #dc2626;
+}
+.ov-card__list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.ov-card__list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 0;
+}
+.ov-card__empty {
+  font-size: 0.8rem;
+  color: #15803d;
+  margin: 4px 0 0;
+}
+.ov-delay {
+  margin-left: auto;
+  font-weight: 600;
+  color: #dc2626;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot--ok {
+  background: #16a34a;
+}
+.dot--risk {
+  background: #d97706;
+}
+.dot--late {
+  background: #dc2626;
+}
+.dot--blocked {
+  background: #6b7280;
+}

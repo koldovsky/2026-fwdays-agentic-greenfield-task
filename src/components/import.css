@@ -1,0 +1,223 @@
+.import {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  font-family: system-ui, sans-serif;
+  color: #1a1a1a;
+}
+.import__header h1 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+}
+.muted {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+.ok {
+  color: #15803d;
+  font-size: 0.9rem;
+}
+
+/* Drop zones */
+.dropzone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.dropzone {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dropzone--over {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.dropzone--selected {
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 1px #2563eb inset;
+}
+.dropzone__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.dropzone__status {
+  font-size: 0.78rem;
+  color: #475569;
+  margin: 6px 0;
+}
+.dropzone__file {
+  font-size: 0.72rem;
+  color: #2563eb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dropzone__error {
+  font-size: 0.72rem;
+  color: #dc2626;
+}
+.dropzone__btn {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.dropzone__badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #dc2626;
+}
+
+/* Plan bar */
+.planbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f1f5f9;
+}
+.planbar__run {
+  padding: 8px 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+.planbar__run:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+.planbar__status {
+  font-size: 0.82rem;
+  color: #475569;
+}
+.planresult {
+  padding: 12px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #065f46;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+/* Tables */
+.table-section {
+  margin-top: 8px;
+}
+.table-section h2 {
+  font-size: 1.1rem;
+  margin: 12px 0 8px;
+}
+.grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8rem;
+  margin: 8px 0;
+}
+.grid th,
+.grid td {
+  border: 1px solid #e2e8f0;
+  padding: 3px 6px;
+  text-align: left;
+}
+.grid th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+.grid__rownum {
+  color: #94a3b8;
+  width: 32px;
+  text-align: right;
+}
+.grid__cell {
+  width: 100%;
+  min-width: 90px;
+  border: none;
+  font: inherit;
+  padding: 2px;
+  background: transparent;
+}
+.grid__cell:focus {
+  outline: 2px solid #93c5fd;
+  border-radius: 3px;
+}
+.grid__del {
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+}
+.grid--errors td,
+.grid--errors th {
+  font-size: 0.78rem;
+}
+.err--error td {
+  background: #fef2f2;
+}
+.err--warning td {
+  background: #fffbeb;
+}
+.editable__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* Diff */
+.diff {
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.diff__summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.diff__badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.diff__badge--added {
+  background: #dcfce7;
+  color: #166534;
+}
+.diff__badge--removed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.diff__badge--changed {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.diff__list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.78rem;
+  max-height: 160px;
+  overflow: auto;
+}
+.diff__fields {
+  color: #854d0e;
+}

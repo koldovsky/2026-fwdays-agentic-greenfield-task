@@ -1,0 +1,57 @@
+.exp {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+  font-family: system-ui, sans-serif;
+}
+.exp h2 {
+  font-size: 1.2rem;
+  margin: 8px 0;
+}
+.exp__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.exp-btn {
+  font-size: 0.82rem;
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.exp-btn:hover {
+  background: #f1f5f9;
+}
+.exp-btn--pdf {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.exp__hint {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Print only the Gantt (FR-EXP-04) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .gantt,
+  .gantt * {
+    visibility: visible;
+  }
+  .gantt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .gantt__toolbar,
+  .op-panel {
+    display: none !important;
+  }
+}

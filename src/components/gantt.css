@@ -1,0 +1,195 @@
+.gantt {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+  font-family: system-ui, sans-serif;
+}
+.gantt__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gantt__header h2 {
+  font-size: 1.2rem;
+  margin: 8px 0;
+}
+.gantt__legend {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lg {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+}
+.lg--ok {
+  background: #2563eb;
+}
+.lg--risk {
+  background: #d97706;
+}
+.lg--late {
+  background: #dc2626;
+}
+.lg--blocked {
+  background: #6b7280;
+}
+.lg--locked {
+  color: #1a1a1a;
+  background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 4px, #cbd5e1 4px, #cbd5e1 8px);
+}
+
+/* Toolbar */
+.gantt__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 10px 0;
+  padding: 8px;
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tb-label {
+  font-size: 0.8rem;
+  color: #475569;
+}
+.tb-btn {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.tb-btn--active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.tb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tb-group select {
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+}
+.tb-check {
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Body + chart */
+.gantt__body {
+  position: relative;
+  display: flex;
+  gap: 12px;
+}
+.gantt-container {
+  flex: 1;
+  height: 520px;
+  min-width: 0;
+}
+
+/* Status colours on task bars (FR-GANTT-03) */
+.gantt_task_line.gop--ok {
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+.gantt_task_line.gop--risk {
+  background: #d97706;
+  border-color: #b45309;
+}
+.gantt_task_line.gop--late {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+.gantt_task_line.gop--blocked {
+  background: #6b7280;
+  border-color: #4b5563;
+}
+.gantt_task_line.gop--locked {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.35) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+.gantt_task_line.gop--critical {
+  box-shadow: 0 0 0 2px #111827;
+  outline: 2px solid #111827;
+}
+
+/* Today marker (FR-GANTT-09) */
+.gantt_marker.gantt-today {
+  background: #dc2626;
+}
+.gantt_marker.gantt-today .gantt_marker_content {
+  color: #dc2626;
+  font-weight: 600;
+}
+/* Fallback-лінія «Сьогодні» (розширення marker відсутнє у dhtmlx-gantt@10 npm) */
+.gantt-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dc2626;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Detail side panel (FR-GANTT-04) */
+.op-panel {
+  position: relative;
+  width: 260px;
+  flex: 0 0 260px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+.op-panel__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+}
+.op-panel h3 {
+  margin: 0 24px 8px 0;
+  font-size: 1rem;
+}
+.op-panel dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+}
+.op-panel dt {
+  color: #6b7280;
+}
+.op-panel dd {
+  margin: 0;
+  word-break: break-word;
+}
