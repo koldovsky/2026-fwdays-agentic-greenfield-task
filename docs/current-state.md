@@ -72,13 +72,19 @@ persisted per-source-role provenance (needs CV snapshot + LLM role claim) — de
 
 ## Next steps (code-doable, pick by value)
 
-1. **T5 #7 — per-bullet role provenance** (fidelity-only, honest today). Kept bullets attach to the
-   most-recent parsed role because `Bullet` has no source-role tag. Add `Bullet.sourceRoleIndex` (model +
-   migration + gen-pipeline thread) to place each kept bullet under its source role, then restore the
-   stricter resume-export spec scenario. Own spec-first change.
-2. **Follow-ups from recent work:** audit `checkout`/`history` pages for a missing-locale read like the
-   billing bug (billing was fixed; grep showed no others, low risk); optional token-vs-session IDOR check on
-   /checkout (defense-in-depth).
+- **Backlog is drained of the queued code items.** T5 #7 + T5 #8 shipped; the checkout/history
+  follow-ups were audited and closed as verified-safe (below). Next work is either the blocked items
+  (need env/human, see below) or new scope from the product owner.
+
+**Audited & closed (2026-07-10, no code change needed):**
+- **checkout/history missing-locale read** — both pages already read the locale cookie with the exact
+  fixed-billing pattern (`parseLocale((await cookies()).get(LOCALE_COOKIE)?.value)`). No gap. NFR-I18N-01.
+- **/checkout token-vs-session IDOR** — NO vulnerability. The checkout token is HMAC-signed and embeds
+  `userId` (minted from `currentUserId()`); completion (`/api/payments/checkout/complete`) builds the
+  event `userId` from the VERIFIED TOKEN (not the session) and returns it signed; the webhook grants to
+  `event.userId`. So a grant always binds to the token's user regardless of who views `/checkout`. A hard
+  `token.userId === session.userId` page gate would add no security and regress the no-cookie context.
+  The page's display-only session resolve is correct. NFR-SEC-04, FR-PAYWALL-03.
 
 ## Blocked (env / tooling / human — no code here)
 
