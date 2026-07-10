@@ -54,18 +54,26 @@ export function PremiumAttachZone({
   if (!paid) {
     return (
       <div className="relative overflow-hidden rounded-xl">
+        {/* Decorative blurred backdrop. Absolute so the banner content below —
+            NOT this short shell — drives the container height. The previous
+            layout had these swapped: the banner was the absolute overlay and
+            this shell sized the box, so with `overflow-hidden` the taller banner
+            (headline + body + CTA) was clipped / overlapped the form beneath it
+            for non-paid users. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none select-none blur-sm"
+          className="pointer-events-none absolute inset-0 select-none blur-sm"
         >
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-hairline bg-white px-6 py-8 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-hairline bg-white px-6 py-8 text-center">
             <p className="text-base font-semibold text-ink">
               {copy.attach.addOriginalPdf}
             </p>
             <p className="text-sm text-ink-soft">{banner.body}</p>
           </div>
         </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-canvas/90 p-6 text-center shadow-card">
+        {/* Premium banner in normal flow: it sizes the container, so nothing is
+            clipped regardless of copy length or locale. */}
+        <div className="relative flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-canvas/90 p-6 text-center shadow-card">
           <span className="inline-flex items-center rounded-xs bg-brand-wash px-[7px] py-[2px] font-body text-[10px] font-bold uppercase tracking-wide leading-[1.6] text-brand">
             {copy.attach.premiumBadge}
           </span>

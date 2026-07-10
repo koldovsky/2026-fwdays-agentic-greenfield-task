@@ -4,6 +4,20 @@
 // is no client path to a file read without paid status, only a cosmetic blur +
 // banner. `PremiumAttachZone` is a same-slice internal component (not part of
 // the public barrel); the composer test covers it through `UploadCvDropzone`.
+//
+// Layout regression guard (folded in from the former
+// PremiumAttachZone.layout.test.tsx): the fix inverted which !paid branch
+// layer is `absolute`. Before the fix, the Premium banner (headline + body +
+// upgrade CTA) was the `absolute inset-0` overlay and the blurred shell drove
+// the container height, so with `overflow-hidden` the taller banner was
+// clipped. After the fix, the blurred shell is the `aria-hidden` `absolute
+// inset-0` backdrop, and the Premium banner is a normal-flow sibling that
+// drives the container height. jsdom has no layout engine, so we can't assert
+// pixel clipping directly — instead we lock in the structural invariant the
+// fix depends on: the upgrade CTA's ancestor chain must contain no
+// `absolute`-classed element. Note the backdrop echoes the same body copy as
+// the banner (decorative duplication), so any query for body text must be
+// scoped to the banner (not the aria-hidden backdrop) or use getAllByText.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -18,24 +32,36 @@ function pdfFile(): File {
   return new File(["%PDF-1.4 tiny"], "cv.pdf", { type: PDF_MIME });
 }
 
-/** The visible Premium overlay (as opposed to the blurred, aria-hidden shell
- * behind it, which also echoes the body copy per the component's own markup). */
-function overlay(container: HTMLElement): HTMLElement {
+/** The aria-hidden decorative backdrop (blurred shell). It echoes the same
+ * body copy as the visible banner, but must never surface via accessible
+ * queries (role/name), and is not where the upgrade CTA lives. */
+function backdrop(container: HTMLElement): HTMLElement {
   return container.querySelector(".absolute.inset-0") as HTMLElement;
 }
 
+/** The visible Premium banner: a normal-flow sibling of the backdrop that
+ * contains the badge, headline, body, and upgrade CTA, and drives the
+ * container's height (the layout fix under test). */
+function banner(container: HTMLElement): HTMLElement {
+  const node = backdrop(container).nextElementSibling as HTMLElement;
+  return node;
+}
+
 describe("PremiumAttachZone — non-paid (blurred, inert shell)", () => {
-  it("renders a blurred element and the Premium banner copy (ua)", () => {
+  it("renders a blurred aria-hidden backdrop and the Premium banner copy (ua)", () => {
     const { container } = render(
       <PremiumAttachZone paid={false} onFileSelected={vi.fn()} onClearAttachment={vi.fn()} />,
     );
 
     expect(container.querySelector(".blur-sm")).not.toBeNull();
-    const banner = within(overlay(container));
-    expect(banner.getByText(ua.uploadCv.premiumZone.headline)).toBeInTheDocument();
-    expect(banner.getByText(ua.uploadCv.premiumZone.body)).toBeInTheDocument();
+    expect(backdrop(container)).toHaveAttribute("aria-hidden", "true");
+
+    const bannerScope = within(banner(container));
+    expect(bannerScope.getByText(ua.uploadCv.attach.premiumBadge)).toBeInTheDocument();
+    expect(bannerScope.getByText(ua.uploadCv.premiumZone.headline)).toBeInTheDocument();
+    expect(bannerScope.getByText(ua.uploadCv.premiumZone.body)).toBeInTheDocument();
     expect(
-      banner.getByRole("button", { name: ua.uploadCv.premiumZone.upgradeAction }),
+      screen.getByRole("button", { name: ua.uploadCv.premiumZone.upgradeAction }),
     ).toBeInTheDocument();
   });
 
@@ -49,12 +75,20 @@ describe("PremiumAttachZone — non-paid (blurred, inert shell)", () => {
       />,
     );
 
-    const banner = within(overlay(container));
-    expect(banner.getByText(en.uploadCv.premiumZone.headline)).toBeInTheDocument();
-    expect(banner.getByText(en.uploadCv.premiumZone.body)).toBeInTheDocument();
+    const bannerScope = within(banner(container));
+    expect(bannerScope.getByText(en.uploadCv.premiumZone.headline)).toBeInTheDocument();
+    expect(bannerScope.getByText(en.uploadCv.premiumZone.body)).toBeInTheDocument();
     expect(
-      banner.getByRole("button", { name: en.uploadCv.premiumZone.upgradeAction }),
+      screen.getByRole("button", { name: en.uploadCv.premiumZone.upgradeAction }),
     ).toBeInTheDocument();
+  });
+
+  it("the body copy is duplicated in the decorative backdrop and the banner (both present, exactly twice)", () => {
+    render(
+      <PremiumAttachZone paid={false} onFileSelected={vi.fn()} onClearAttachment={vi.fn()} />,
+    );
+
+    expect(screen.getAllByText(ua.uploadCv.premiumZone.body)).toHaveLength(2);
   });
 
   it("renders NO file input — no client path to a file read without paid status", () => {
@@ -63,6 +97,18 @@ describe("PremiumAttachZone — non-paid (blurred, inert shell)", () => {
     );
 
     expect(container.querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it("attaches no drop/dragover handlers in the free branch (cosmetic-only, NFR-SEC-04)", () => {
+    const { container } = render(
+      <PremiumAttachZone paid={false} onFileSelected={vi.fn()} onClearAttachment={vi.fn()} />,
+    );
+
+    const onFileSelected = vi.fn();
+    fireEvent.drop(container.firstElementChild as HTMLElement, {
+      dataTransfer: { files: [pdfFile()] },
+    });
+    expect(onFileSelected).not.toHaveBeenCalled();
   });
 
   it("the upgrade button calls onUpgrade", async () => {
@@ -88,6 +134,38 @@ describe("PremiumAttachZone — non-paid (blurred, inert shell)", () => {
     expect(html).toContain(ua.uploadCv.premiumZone.headline);
     expect(html).toContain(ua.uploadCv.premiumZone.upgradeAction);
     expect(html).not.toContain('type="file"');
+  });
+
+  describe("layout regression guard (clipped premium CTA)", () => {
+    it("renders the premium badge, banner headline/body, and the upgrade CTA button", () => {
+      render(
+        <PremiumAttachZone paid={false} onFileSelected={vi.fn()} onClearAttachment={vi.fn()} />,
+      );
+
+      expect(screen.getAllByText(ua.uploadCv.attach.premiumBadge).length).toBeGreaterThan(0);
+      expect(screen.getByText(ua.uploadCv.premiumZone.headline)).toBeInTheDocument();
+      expect(screen.getAllByText(ua.uploadCv.premiumZone.body).length).toBeGreaterThan(0);
+      expect(
+        screen.getByRole("button", { name: ua.uploadCv.premiumZone.upgradeAction }),
+      ).toBeInTheDocument();
+    });
+
+    it("the upgrade CTA button's ancestor chain contains no 'absolute'-classed element (banner is in normal flow, not clipped)", () => {
+      render(
+        <PremiumAttachZone paid={false} onFileSelected={vi.fn()} onClearAttachment={vi.fn()} />,
+      );
+
+      const button = screen.getByRole("button", { name: ua.uploadCv.premiumZone.upgradeAction });
+
+      let node: HTMLElement | null = button;
+      const offendingAncestors: HTMLElement[] = [];
+      while (node) {
+        if (node.classList.contains("absolute")) offendingAncestors.push(node);
+        node = node.parentElement;
+      }
+
+      expect(offendingAncestors).toHaveLength(0);
+    });
   });
 });
 

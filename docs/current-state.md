@@ -8,6 +8,17 @@
 
 ## Last action (most recent first)
 
+- **`fix-premium-attach-overlay` DONE (2026-07-10).** Fixed the corrupted non-premium tailor UI.
+  Root cause: `PremiumAttachZone` free branch put the premium banner in an `absolute inset-0` overlay
+  while a short blurred shell drove height (parent `overflow-hidden`), clipping the banner + CTA and
+  overlapping `AnalyzeForm`. Fix inverts the layers (blurred shell → aria-hidden absolute backdrop;
+  banner → normal flow, drives height). Non-premium now cleanly shows PDF-upload + premium banner +
+  résumé textarea + JD + Analyze. Audited the other 3 asks (auth-gate, free-exhausted upgrade UI,
+  premium drag&drop) — all already shipped. maker(main) ≠ checker(opus, approved: security/DESIGN/FSD
+  clean) ≠ test-author(sonnet: retargeted the tests that encoded the old buggy structure, added a
+  structural regression guard — CTA has no `absolute` ancestor — consolidated to one test file).
+  Verifier green: lint pass, PremiumAttachZone 15/15, full suite 148 files/1478 tests, no upload-cv
+  typecheck errors. FR-CV-01/02/03, FR-SALES-03, NFR-SEC-04, DESIGN.md.
 - **`test-tailoring-race-guard` DONE `c872595` (2026-07-10).** 3 PGlite integration cases for the
   `updateStatus` status-race guard: (a) sweep-then-complete rejected, (b) double-terminal no-op,
   (c) zero-rows child-skip. Checker mutation-tested (guard removed → all 3 fail). A future-cutoff-sweep
