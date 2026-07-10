@@ -7,7 +7,7 @@
 // this suite proves `buildStateSnapshot` is testable with zero I/O.
 
 import { describe, expect, it } from "vitest";
-import type { LeadRow, RequestRow } from "@kamerton/db";
+import type { LeadRow, MessageRow, RequestRow } from "@kamerton/db";
 import { buildStateSnapshot, type DashboardBookingRow } from "./dashboard-state.ts";
 
 function lead(overrides: Partial<LeadRow> = {}): LeadRow {
@@ -53,6 +53,17 @@ function booking(overrides: Partial<DashboardBookingRow> = {}): DashboardBooking
     calendar_event_id: "cal-evt-1",
     request_id: 1,
     created_at: "2026-07-06T09:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function message(overrides: Partial<MessageRow> = {}): MessageRow {
+  return {
+    id: 1,
+    request_id: 1,
+    role: "user",
+    content: "Привіт",
+    created_at: "2026-07-06T10:00:00.000Z",
     ...overrides,
   };
 }
@@ -114,6 +125,123 @@ describe("buildStateSnapshot (apps/dashboard/lib/dashboard-state.ts, dashboard t
     expect(state.pendingQueue).toHaveLength(0);
     expect(state.hallMap.length).toBeGreaterThan(0); // the grid itself is always present
     expect(state.hallMap.every((seat) => seat.status === "free")).toBe(true);
+    expect(state.hallMap.every((seat) => seat.occupantName == null)).toBe(true); // no bookings, nobody on any seat
+    expect(state.conversationMessages).toEqual({}); // no threads, no persisted transcripts
+    expect(state.confirmedBookings).toEqual([]);
+  });
+
+  // @trace FR-DASH-03 — the HallMap hover tooltip: a booked seat must reveal
+  // WHO is on it, for confirmed seats too (not just pending). The seat carries
+  // the precedence-winning booking's student name so `HallMap` can render it.
+  it("a confirmed seat carries the student's name as its occupant", () => {
+    const state = buildStateSnapshot(
+      {
+        leads: [lead()],
+        requests: [request({ id: 1, student_name: "Оля", state: "awaiting_admin" })],
+        bookings: [booking({ id: 1, request_id: 1, status: "confirmed", slot_start: "2026-07-06T10:00:00+03:00" })],
+      },
+      MONDAY_WEEK_START,
+    );
+
+    const seat = state.hallMap.find((s) => s.weekday === 1 && s.hour === 10)!;
+    expect(seat.status).toBe("confirmed");
+    expect(seat.occupantName).toBe("Оля");
+  });
+
+  // @trace FR-DASH-03 — precedence: confirmed wins over pending for the seat's
+  // status AND its occupant (the tooltip names the confirmed student, matching
+  // the green seat, never the released pending one).
+  it("when a seat has both a pending and a confirmed booking, the occupant is the confirmed student", () => {
+    const state = buildStateSnapshot(
+      {
+        leads: [lead()],
+        requests: [
+          request({ id: 1, student_name: "Пендінг", state: "awaiting_admin" }),
+          request({ id: 2, student_name: "Конфірм", state: "awaiting_admin" }),
+        ],
+        bookings: [
+          booking({ id: 1, request_id: 1, status: "pending", slot_start: "2026-07-06T10:00:00+03:00" }),
+          booking({ id: 2, request_id: 2, status: "confirmed", slot_start: "2026-07-06T10:00:00+03:00" }),
+        ],
+      },
+      MONDAY_WEEK_START,
+    );
+
+    const seat = state.hallMap.find((s) => s.weekday === 1 && s.hour === 10)!;
+    expect(seat.status).toBe("confirmed");
+    expect(seat.occupantName).toBe("Конфірм");
+  });
+
+  // @trace FR-DASH-01 — confirmed bookings need their own display with date &
+  // time (they leave the pending queue the moment they're confirmed). Every
+  // confirmed booking, with its student and slot times, sorted by start.
+  it("confirmedBookings lists every confirmed booking with its student and slot times, sorted by start", () => {
+    const state = buildStateSnapshot(
+      {
+        leads: [lead()],
+        requests: [
+          request({ id: 1, student_name: "Пізніше", student_age: 10, state: "awaiting_admin" }),
+          request({ id: 2, student_name: "Раніше", student_age: 8, state: "done" }),
+        ],
+        bookings: [
+          booking({ id: 1, request_id: 1, status: "confirmed", slot_start: "2026-07-08T15:00", slot_end: "2026-07-08T16:00" }),
+          booking({ id: 2, request_id: 2, status: "confirmed", slot_start: "2026-07-06T11:00", slot_end: "2026-07-06T12:00" }),
+          booking({ id: 3, request_id: 1, status: "pending", slot_start: "2026-07-09T10:00", slot_end: "2026-07-09T11:00" }),
+        ],
+      },
+      MONDAY_WEEK_START,
+    );
+
+    expect(state.confirmedBookings).toEqual([
+      { requestId: 2, studentName: "Раніше", studentAge: 8, slotStart: "2026-07-06T11:00", slotEnd: "2026-07-06T12:00" },
+      { requestId: 1, studentName: "Пізніше", studentAge: 10, slotStart: "2026-07-08T15:00", slotEnd: "2026-07-08T16:00" },
+    ]);
+  });
+
+  // @trace FR-DASH-01 — the durable conversation transcript, keyed by the
+  // active request's Telegram chat id, so the dashboard's live "Розмови"
+  // panel can be rehydrated from SQLite on a page refresh (not just from the
+  // ephemeral SSE stream). Regression: the panel went blank after reload
+  // because the persisted `messages` never reached the snapshot.
+  it("groups an active request's persisted messages under its telegram_chat_id, oldest-first, role-labelled", () => {
+    const state = buildStateSnapshot(
+      {
+        leads: [lead({ id: 1, telegram_chat_id: "tg-chat-1" })],
+        requests: [request({ id: 1, telegram_chat_id: "tg-chat-1", state: "collecting" })],
+        bookings: [],
+        messages: [
+          message({ id: 1, request_id: 1, role: "user", content: "Хочу записати доньку" }),
+          message({ id: 2, request_id: 1, role: "assistant", content: "Радо! Як звати дитину?" }),
+          message({ id: 3, request_id: 1, role: "user", content: "Саша, 7" }),
+        ],
+      },
+      MONDAY_WEEK_START,
+    );
+
+    expect(state.conversationMessages["tg-chat-1"]).toEqual([
+      { role: "user", content: "Хочу записати доньку" },
+      { role: "assistant", content: "Радо! Як звати дитину?" },
+      { role: "user", content: "Саша, 7" },
+    ]);
+  });
+
+  // @trace FR-DASH-01 — a message whose request is terminal (`done`/
+  // `soft_decline`, so it never appears in `activeRequests`) is not carried
+  // in the live panel's transcript map: the panel only shows active
+  // conversations (the full transcript of a closed request is still reachable
+  // via the pending-card's on-demand `/api/requests/:id/messages` route).
+  it("omits transcripts for requests that are not active", () => {
+    const state = buildStateSnapshot(
+      {
+        leads: [lead({ id: 1, telegram_chat_id: "tg-chat-1" })],
+        requests: [request({ id: 1, telegram_chat_id: "tg-chat-1", state: "done" })],
+        bookings: [],
+        messages: [message({ id: 1, request_id: 1, role: "user", content: "давня розмова" })],
+      },
+      MONDAY_WEEK_START,
+    );
+
+    expect(state.conversationMessages).toEqual({});
   });
 
   // -------------------------------------------------------------------

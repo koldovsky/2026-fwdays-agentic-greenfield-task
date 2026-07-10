@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   openDatabase,
   insertLead,
+  insertMessage,
   insertRequest,
   updateRequestFields,
   updateRequestState,
@@ -97,5 +98,64 @@ describe("readDashboardSnapshot (apps/dashboard/lib/dashboard-db.ts, dashboard t
 
     expect(snapshot.pendingQueue).toHaveLength(0);
     expect(snapshot.hallMap.every((seat) => seat.status === "free")).toBe(true);
+    expect(snapshot.conversationMessages).toEqual({});
+  });
+
+  // @trace FR-DASH-01 — the real `messages`-table read that makes the live
+  // "Розмови" panel survive a page reload. Regression guard against the panel
+  // going blank: the persisted transcript of an ACTIVE request must reach the
+  // snapshot, keyed by its Telegram chat id, oldest-first.
+  it("carries an active request's persisted transcript in conversationMessages, keyed by chat id", () => {
+    const db = openDatabase(":memory:");
+
+    const lead = insertLead(db, {
+      telegramUserId: "tg-user-1",
+      telegramChatId: "tg-chat-1",
+      telegramDisplayName: "Тестова Лідка",
+    });
+    const activeRequest = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-1" });
+    updateRequestState(db, activeRequest.id, "collecting");
+    insertMessage(db, { requestId: activeRequest.id, role: "user", content: "Хочу записати доньку" });
+    insertMessage(db, { requestId: activeRequest.id, role: "assistant", content: "Радо! Як звати дитину?" });
+
+    const snapshot = readDashboardSnapshot(db, MONDAY_WEEK_START);
+
+    expect(snapshot.conversationMessages["tg-chat-1"]).toEqual([
+      { role: "user", content: "Хочу записати доньку" },
+      { role: "assistant", content: "Радо! Як звати дитину?" },
+    ]);
+  });
+
+  // @trace FR-DASH-01 / FR-DASH-03 — a confirmed booking surfaces both in the
+  // confirmed-bookings list (with student + slot times) and as the seat's
+  // named occupant for the HallMap hover tooltip.
+  it("a confirmed booking appears in confirmedBookings and names the HallMap seat's occupant", () => {
+    const db = openDatabase(":memory:");
+
+    const lead = insertLead(db, {
+      telegramUserId: "tg-user-1",
+      telegramChatId: "tg-chat-1",
+      telegramDisplayName: "Тестова Лідка",
+    });
+    const req = insertRequest(db, { leadId: lead.id, telegramChatId: "tg-chat-1" });
+    updateRequestFields(db, req.id, { studentName: "Соломія", studentAge: 12 });
+    updateRequestState(db, req.id, "awaiting_admin");
+    seedBooking(db, req.id, "confirmed", "cal-evt-confirmed", "2026-07-07T14:00", "2026-07-07T15:00");
+
+    const snapshot = readDashboardSnapshot(db, MONDAY_WEEK_START);
+
+    expect(snapshot.confirmedBookings).toEqual([
+      {
+        requestId: req.id,
+        studentName: "Соломія",
+        studentAge: 12,
+        slotStart: "2026-07-07T14:00",
+        slotEnd: "2026-07-07T15:00",
+      },
+    ]);
+
+    const seat = snapshot.hallMap.find((s) => s.weekday === 2 && s.hour === 14)!;
+    expect(seat.status).toBe("confirmed");
+    expect(seat.occupantName).toBe("Соломія");
   });
 });

@@ -16,7 +16,7 @@ import type { DashboardState, HallMapSeat } from "./dashboard-state.ts";
 const WEEK_START_ISO = "2026-07-06";
 
 function emptyDashboardState(hallMap: HallMapSeat[]): DashboardState {
-  return { activeRequests: [], pendingQueue: [], hallMap };
+  return { activeRequests: [], pendingQueue: [], hallMap, conversationMessages: {}, confirmedBookings: [] };
 }
 
 describe("candidateProposalSlots (booking-hitl S4, DecisionBar slot-picker)", () => {

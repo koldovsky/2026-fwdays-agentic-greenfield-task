@@ -47,7 +47,7 @@ describe("safeParseAguiEvent (dashboard tasks.md §6.2)", () => {
 });
 
 function emptyDashboard(): DashboardState {
-  return { activeRequests: [], pendingQueue: [], hallMap: [] };
+  return { activeRequests: [], pendingQueue: [], hallMap: [], conversationMessages: {}, confirmedBookings: [] };
 }
 
 function stateWithActiveRequest(requestId: number, threadId: string): DashboardClientState {
@@ -286,9 +286,58 @@ describe("seedConversationsFromActiveRequests (review-gate FIX 2)", () => {
     expect(seeded.requestCards["tg-chat-1"]).toMatchObject({ studentName: "Оксана", studentAge: 9 });
   });
 
+  // Regression (page-refresh loses the conversation): when a persisted
+  // transcript is supplied for a thread, the seeded conversation is
+  // pre-populated with it (role-labelled, not streaming) so the live panel
+  // shows the history on first paint instead of going blank after reload.
+  it("seeds a thread's conversation with its persisted transcript when one is supplied", () => {
+    const seeded = seedConversationsFromActiveRequests(
+      {},
+      {},
+      [
+        {
+          id: 1,
+          lead_id: 1,
+          telegram_chat_id: "tg-chat-1",
+          state: "collecting",
+          student_name: "Оксана",
+          student_age: 9,
+          format: null,
+          goal_tag: null,
+          goal_text: null,
+          tastes: null,
+          dream_song: null,
+          experience: null,
+          comfort: null,
+          preferred_weekdays: null,
+          preferred_time_range: null,
+          created_at: "2026-07-06T10:00:00.000Z",
+          offered_slots: null,
+        },
+      ],
+      {
+        "tg-chat-1": [
+          { role: "user", content: "Хочу записати доньку" },
+          { role: "assistant", content: "Радо! Як звати дитину?" },
+        ],
+      },
+    );
+
+    const seededMessages = seeded.conversations["tg-chat-1"]!.messages;
+    expect(seededMessages).toHaveLength(2);
+    expect(seededMessages[0]).toMatchObject({ role: "user", text: "Хочу записати доньку", streaming: false });
+    expect(seededMessages[1]).toMatchObject({ role: "assistant", text: "Радо! Як звати дитину?", streaming: false });
+    // Distinct, stable React keys (never the ephemeral live AG-UI uuid space).
+    expect(seededMessages[0]!.id).not.toBe(seededMessages[1]!.id);
+  });
+
   it("never clobbers an existing conversation or request card for a thread it has already seen", () => {
     const existingConversations = {
-      "tg-chat-1": { threadId: "tg-chat-1", runActive: true, messages: [{ id: "m1", text: "hi", streaming: false }] },
+      "tg-chat-1": {
+        threadId: "tg-chat-1",
+        runActive: true,
+        messages: [{ id: "m1", role: "assistant", text: "hi", streaming: false }],
+      },
     };
     const existingRequestCards = { "tg-chat-1": { ...EMPTY_REQUEST_CARD_FIELDS, studentName: "Вже є" } };
 
@@ -331,6 +380,10 @@ describe("applyAguiEvent — TEXT_MESSAGE_* (dashboard tasks.md §6.2)", () => {
     const mid = state.conversations["tg-chat-1"]!.messages[0]!;
     expect(mid.text).toBe("Привіт, як справи?");
     expect(mid.streaming).toBe(true);
+    // Live streamed text is always the agent (school) side — the lead's own
+    // messages are not streamed over AG-UI (they arrive via the persisted
+    // transcript seed instead).
+    expect(mid.role).toBe("assistant");
 
     state = applyAguiEvent(state, { type: "TEXT_MESSAGE_END", messageId: "msg-1" });
     const done = state.conversations["tg-chat-1"]!.messages[0]!;

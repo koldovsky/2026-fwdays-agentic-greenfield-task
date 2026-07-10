@@ -8,7 +8,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type Database from "better-sqlite3";
-import type { LeadRow, RequestRow } from "@kamerton/db";
+import type { LeadRow, MessageRow, RequestRow } from "@kamerton/db";
 import { buildStateSnapshot, type DashboardBookingRow, type DashboardState } from "./dashboard-state.ts";
 
 // Re-exported so every existing server-side import site keeps compiling
@@ -30,8 +30,15 @@ export function readDashboardSnapshot(db: Database.Database, weekStartIso: strin
   const leads = db.prepare(`SELECT * FROM leads`).all() as LeadRow[];
   const requests = db.prepare(`SELECT * FROM requests`).all() as RequestRow[];
   const bookings = db.prepare(`SELECT * FROM bookings`).all() as DashboardBookingRow[];
+  // The persisted conversation transcript feeds `conversationMessages`, so the
+  // live "Розмови" panel survives a page reload (design.md Decision 1's
+  // snapshot-on-connect discipline — the transcript is DB truth too, not just
+  // the ephemeral SSE stream). `buildStateSnapshot` keeps only the rows whose
+  // request is active, so reading all rows here is correct and simple; ordered
+  // oldest-first to match `findMessagesForRequest`'s own contract.
+  const messages = db.prepare(`SELECT * FROM messages ORDER BY id ASC`).all() as MessageRow[];
 
-  return buildStateSnapshot({ leads, requests, bookings }, weekStartIso);
+  return buildStateSnapshot({ leads, requests, bookings, messages }, weekStartIso);
 }
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");

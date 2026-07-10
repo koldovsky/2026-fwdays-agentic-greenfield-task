@@ -14,7 +14,7 @@
 // `dashboard-db.ts`'s raw `SELECT *` will actually return the column, so this
 // extension is the accurate row shape this layer receives, not a guess.
 
-import type { BookingRow, LeadRow, RequestRow } from "@kamerton/db";
+import type { BookingRow, LeadRow, MessageRole, MessageRow, RequestRow } from "@kamerton/db";
 import { compileFirstLessonBrief } from "@kamerton/lib/src/intake/first-lesson-brief.ts";
 import { hallSeatStatus, type SeatStatus } from "@kamerton/lib/src/dashboard/hall-status.ts";
 import { weekSeatGrid, type SeatCoordinate } from "@kamerton/lib/src/dashboard/week-grid.ts";
@@ -27,6 +27,19 @@ export interface DashboardRows {
   leads: LeadRow[];
   requests: RequestRow[];
   bookings: DashboardBookingRow[];
+  /** The persisted `messages` transcript rows for (at least) every ACTIVE
+   *  request — the source for `DashboardState.conversationMessages`. Optional
+   *  so existing pure-assembly tests that don't exercise transcripts can omit
+   *  it (treated as `[]`); the live read (`dashboard-db.ts`) always supplies
+   *  the active requests' rows. */
+  messages?: MessageRow[];
+}
+
+/** One transcript line as the dashboard's live "Розмови" panel needs it — the
+ *  wire subset of a `MessageRow` (role + content), dropped ids/timestamps. */
+export interface ConversationMessage {
+  role: MessageRole;
+  content: string;
 }
 
 /** One pending request in the admin queue (baseline spec's DecisionBar
@@ -50,6 +63,23 @@ export interface PendingQueueEntry {
  *  its precedence-resolved rendered status (`lib/`'s `hallSeatStatus`). */
 export interface HallMapSeat extends SeatCoordinate {
   status: SeatStatus;
+  /** The student on the seat's precedence-WINNING booking (confirmed >
+   *  pending) — so the HallMap hover tooltip can reveal WHO is booked, for
+   *  confirmed seats too, not only pending ones. `null`/absent for a free seat,
+   *  a cancelled-only seat, or a booking whose student name isn't known yet. */
+  occupantName?: string | null;
+}
+
+/** One confirmed booking, for the dashboard's confirmed-bookings section —
+ *  it carries the slot's date/time (which the pending queue shows but a
+ *  confirmed booking otherwise loses, since it leaves the queue the moment
+ *  it's confirmed) plus the student it's for. */
+export interface ConfirmedBooking {
+  requestId: number;
+  studentName: string | null;
+  studentAge: number | null;
+  slotStart: string;
+  slotEnd: string;
 }
 
 /** The assembled shape a `STATE_SNAPSHOT` AG-UI event carries and the
@@ -66,6 +96,17 @@ export interface DashboardState {
    *  (FR-DASH-03). Exactly 5 weekdays x 10 hourly-start seats
    *  (`weekSeatGrid`'s own contract), in `weekSeatGrid`'s order. */
   hallMap: HallMapSeat[];
+  /** Each ACTIVE request's durable conversation transcript, keyed by its
+   *  Telegram chat id (the conversation panel's `threadId`), oldest-first —
+   *  so the live "Розмови" panel can be rehydrated from SQLite on a page
+   *  reload rather than going blank until the next live SSE turn (the AG-UI
+   *  stream only carries messages sent while a tab is open). A thread with no
+   *  persisted messages yet simply has no entry. */
+  conversationMessages: Record<string, ConversationMessage[]>;
+  /** Every confirmed booking, sorted by slot start (chronological) — the
+   *  confirmed-bookings section's data source. Not week-scoped (unlike
+   *  `hallMap`): the teacher sees every confirmed lesson with its date/time. */
+  confirmedBookings: ConfirmedBooking[];
 }
 
 const TERMINAL_REQUEST_STATES = new Set(["done", "soft_decline"]);
@@ -125,25 +166,71 @@ export function buildStateSnapshot(rows: DashboardRows, weekStartIso: string): D
     });
   }
 
+  const requestById = new Map<number, RequestRow>();
+  for (const request of rows.requests) requestById.set(request.id, request);
+
+  /** The student name on a booking, via its request row (`null` when the
+   *  request is unknown — e.g. `request_id` set null after a lead delete). */
+  function studentNameOf(booking: DashboardBookingRow): string | null {
+    return booking.request_id !== null ? (requestById.get(booking.request_id)?.student_name ?? null) : null;
+  }
+
   const seats = weekSeatGrid(weekStartIso);
   const weekdayForDate = weekdayByDate(seats);
 
-  const bookingsBySeatKey = new Map<string, { status: DashboardBookingRow["status"] }[]>();
+  const bookingsBySeatKey = new Map<
+    string,
+    { status: DashboardBookingRow["status"]; studentName: string | null }[]
+  >();
   for (const booking of rows.bookings) {
     const { dateStr, hour } = dateAndHourOf(booking.slot_start);
     const weekday = weekdayForDate.get(dateStr);
     if (weekday === undefined) continue; // outside this week's Mon-Fri span
     const key = `${weekday}-${hour}`;
     const bucket = bookingsBySeatKey.get(key) ?? [];
-    bucket.push({ status: booking.status });
+    bucket.push({ status: booking.status, studentName: studentNameOf(booking) });
     bookingsBySeatKey.set(key, bucket);
   }
 
   const hallMap: HallMapSeat[] = seats.map((seat) => {
     const key = `${seat.weekday}-${seat.hour}`;
     const seatBookings = bookingsBySeatKey.get(key) ?? [];
-    return { ...seat, status: hallSeatStatus(seatBookings) };
+    const status = hallSeatStatus(seatBookings);
+    // The occupant is the student on the booking whose status WON the seat's
+    // precedence (confirmed, else pending) — so the tooltip name always matches
+    // the colour shown. Free/cancelled seats name nobody.
+    const occupantName =
+      status === "confirmed" || status === "pending"
+        ? (seatBookings.find((b) => b.status === status)?.studentName ?? null)
+        : null;
+    return { ...seat, status, occupantName };
   });
 
-  return { activeRequests, pendingQueue, hallMap };
+  const confirmedBookings: ConfirmedBooking[] = rows.bookings
+    .filter((booking) => booking.status === "confirmed")
+    .map((booking) => ({
+      requestId: booking.request_id ?? 0,
+      studentName: studentNameOf(booking),
+      studentAge: booking.request_id !== null ? (requestById.get(booking.request_id)?.student_age ?? null) : null,
+      slotStart: booking.slot_start,
+      slotEnd: booking.slot_end,
+    }))
+    .sort((a, b) => (a.slotStart < b.slotStart ? -1 : a.slotStart > b.slotStart ? 1 : 0));
+
+  // Group each ACTIVE request's transcript under its Telegram chat id. Only
+  // active requests are keyed (the live panel shows active conversations); a
+  // closed request's full transcript stays reachable via the pending-card's
+  // on-demand `/api/requests/:id/messages` route. `messages` is already
+  // oldest-first from the read layer (`findMessagesForRequest`'s `ORDER BY id
+  // ASC`), so a stable-sort push preserves that order.
+  const threadIdByRequestId = new Map<number, string>();
+  for (const request of activeRequests) threadIdByRequestId.set(request.id, request.telegram_chat_id);
+  const conversationMessages: Record<string, ConversationMessage[]> = {};
+  for (const row of rows.messages ?? []) {
+    const threadId = threadIdByRequestId.get(row.request_id);
+    if (threadId === undefined) continue; // message for a non-active (or unknown) request
+    (conversationMessages[threadId] ??= []).push({ role: row.role, content: row.content });
+  }
+
+  return { activeRequests, pendingQueue, hallMap, conversationMessages, confirmedBookings };
 }

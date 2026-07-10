@@ -61,7 +61,7 @@ function stubEventSource(): void {
 }
 
 function emptyDashboard(): DashboardState {
-  return { activeRequests: [], pendingQueue: [], hallMap: [] };
+  return { activeRequests: [], pendingQueue: [], hallMap: [], conversationMessages: {}, confirmedBookings: [] };
 }
 
 function activeRequestRow(overrides: Partial<RequestRow> = {}): RequestRow {
@@ -183,5 +183,28 @@ describe("DashboardApp (review-gate FIX 2, FIX 7)", () => {
     // Still exactly one queue card — "Черга очікування · 1", not 2.
     expect(screen.getByText("Черга очікування · 1")).toBeInTheDocument();
     expect(screen.getAllByText("Оксана Тестова")).toHaveLength(2); // conversation card + ONE queue card
+  });
+
+  // --- Confirmed bookings section ------------------------------------------
+  it("renders a confirmed booking with the student's name and its date/time", () => {
+    stubEventSource();
+    const initialSnapshot: DashboardState = {
+      ...emptyDashboard(),
+      confirmedBookings: [
+        {
+          requestId: 7,
+          studentName: "Данило",
+          studentAge: 11,
+          slotStart: "2026-07-10T14:00",
+          slotEnd: "2026-07-10T15:00",
+        },
+      ],
+    };
+    render(<DashboardApp initialSnapshot={initialSnapshot} />);
+
+    expect(screen.getByText("Данило")).toBeInTheDocument();
+    // The confirmed slot's date & time is visible (the "Записаний на" banner).
+    expect(screen.getByText(/10\.07/)).toBeInTheDocument();
+    expect(screen.getByText(/14:00/)).toBeInTheDocument();
   });
 });

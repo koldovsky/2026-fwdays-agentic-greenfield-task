@@ -12,7 +12,7 @@
 import type { RequestRow } from "@kamerton/db";
 import type { AguiEvent } from "@kamerton/lib/src/agui/events.ts";
 import { applyJsonPatch } from "@kamerton/lib/src/dashboard/json-patch.ts";
-import type { DashboardState } from "./dashboard-state.ts";
+import type { ConversationMessage, DashboardState } from "./dashboard-state.ts";
 
 /** The `AguiEvent["type"]` discriminant values this client recognizes —
  *  anything else is a "recognized-shape-but-unknown type" per the baseline
@@ -29,11 +29,16 @@ const KNOWN_EVENT_TYPES = new Set<AguiEvent["type"]>([
   "CUSTOM",
 ]);
 
-/** One streamed chat message inside a conversation's `ChatStream`
- *  (baseline spec's "Live conversation view" requirement). `streaming` is
- *  true between `TEXT_MESSAGE_START` and `TEXT_MESSAGE_END`. */
+/** One chat message inside a conversation's `ChatStream` (baseline spec's
+ *  "Live conversation view" requirement). `streaming` is true between
+ *  `TEXT_MESSAGE_START` and `TEXT_MESSAGE_END`. `role` distinguishes the
+ *  lead's own lines from the agent's: live AG-UI text is always the agent
+ *  (`"assistant"`) side; the lead's lines enter only via the persisted-
+ *  transcript seed (`seedConversationsFromActiveRequests`), so the panel
+ *  survives a page reload showing both sides. */
 export interface ChatMessage {
   id: string;
+  role: "user" | "assistant";
   text: string;
   streaming: boolean;
 }
@@ -252,13 +257,25 @@ export function seedConversationsFromActiveRequests(
   conversations: Record<string, ConversationState>,
   requestCards: Record<string, RequestCardFields>,
   activeRequests: RequestRow[],
+  messagesByThread: Record<string, ConversationMessage[]> = {},
 ): { conversations: Record<string, ConversationState>; requestCards: Record<string, RequestCardFields> } {
   let nextConversations = conversations;
   let nextRequestCards = requestCards;
   for (const request of activeRequests) {
     const threadId = request.telegram_chat_id;
     if (nextConversations[threadId] === undefined) {
-      nextConversations = { ...nextConversations, [threadId]: { threadId, runActive: false, messages: [] } };
+      // Rehydrate the panel from the durable transcript (if any) so a page
+      // reload shows the conversation on first paint instead of an empty box
+      // until the next live SSE turn. Seeded lines are never `streaming` and
+      // carry a stable, synthetic id (never the ephemeral live AG-UI uuid
+      // space), so a subsequent live `TEXT_MESSAGE_*` appends cleanly on top.
+      const seededMessages: ChatMessage[] = (messagesByThread[threadId] ?? []).map((message, index) => ({
+        id: `seed-${threadId}-${index}`,
+        role: message.role,
+        text: message.content,
+        streaming: false,
+      }));
+      nextConversations = { ...nextConversations, [threadId]: { threadId, runActive: false, messages: seededMessages } };
     }
     if (nextRequestCards[threadId] === undefined) {
       nextRequestCards = { ...nextRequestCards, [threadId]: requestRowToInitialCardFields(request) };
@@ -358,7 +375,10 @@ export function applyAguiEvent(state: DashboardClientState, event: AguiEvent): D
     case "TEXT_MESSAGE_START": {
       const conversations = ensureConversation(state.conversations, event.threadId);
       const conversation = conversations[event.threadId]!;
-      const newMessage: ChatMessage = { id: event.messageId, text: "", streaming: true };
+      // Live streamed text is always the agent's reply — the lead's own
+      // messages are never streamed over AG-UI (they arrive via the persisted
+      // transcript seed, see `seedConversationsFromActiveRequests`).
+      const newMessage: ChatMessage = { id: event.messageId, role: "assistant", text: "", streaming: true };
       return {
         ...state,
         conversations: {
@@ -404,6 +424,7 @@ export function applyAguiEvent(state: DashboardClientState, event: AguiEvent): D
           state.conversations,
           state.requestCards,
           snapshot.activeRequests,
+          snapshot.conversationMessages,
         );
         return {
           ...state,

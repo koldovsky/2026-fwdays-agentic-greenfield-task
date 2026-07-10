@@ -83,8 +83,11 @@ export function HallMap({ seats, pendingQueue }: HallMapProps) {
                 {WEEKDAY_LABELS[weekday]}
               </span>
               {rowSeats.map((seat) => {
-                const entry = entryForSeat(pendingQueue, seat);
-                const label = `${WEEKDAY_LABELS[weekday]} ${String(seat.hour).padStart(2, "0")}:00 — ${STATUS_LABELS[seat.status]}${entry?.studentName ? `, ${entry.studentName}` : ""}`;
+                // Who is booked on this seat — carried on the seat itself
+                // (`occupantName`, the precedence-winning booking's student) so
+                // the hover tooltip names them for confirmed seats too, not only
+                // the pending ones reachable via `pendingQueue`.
+                const label = `${WEEKDAY_LABELS[weekday]} ${String(seat.hour).padStart(2, "0")}:00 — ${STATUS_LABELS[seat.status]}${seat.occupantName ? `, ${seat.occupantName}` : ""}`;
                 return (
                   <button
                     key={`${seat.weekday}-${seat.hour}`}

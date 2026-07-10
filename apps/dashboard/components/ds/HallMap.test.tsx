@@ -112,6 +112,18 @@ describe("HallMap (dashboard tasks.md §6.7, @trace FR-DASH-03, @trace BC-SCHEDU
     expect(screen.getByText("Оксана")).toBeInTheDocument();
   });
 
+  it("a booked seat names its occupant in the hover tooltip (aria-label + title), confirmed included", () => {
+    const seats = fixtureSeats({ "2-11": ["confirmed"] }).map((seat) =>
+      seat.weekday === 2 && seat.hour === 11 ? { ...seat, occupantName: "Марічка" } : seat,
+    );
+    render(<HallMap seats={seats} pendingQueue={[]} />);
+
+    const seatEl = screen.getAllByTestId("hall-seat").find((el) => el.getAttribute("data-seat-key") === "2-11")!;
+    expect(seatEl.getAttribute("aria-label")).toContain("Марічка");
+    expect(seatEl.getAttribute("title")).toContain("Марічка");
+    expect(seatEl.getAttribute("aria-label")).toContain("підтверджено");
+  });
+
   it("clicking a free seat opens no request card", async () => {
     const seats = fixtureSeats({});
     const user = userEvent.setup();

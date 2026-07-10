@@ -61,7 +61,12 @@ function mergePendingQueue(
  *  `seedConversationsFromActiveRequests`'s own header for why
  *  `requestCards` is seeded too, not just `conversations`). */
 function buildInitialClientState(initialSnapshot: DashboardState): DashboardClientState {
-  const seeded = seedConversationsFromActiveRequests({}, {}, initialSnapshot.activeRequests);
+  const seeded = seedConversationsFromActiveRequests(
+    {},
+    {},
+    initialSnapshot.activeRequests,
+    initialSnapshot.conversationMessages,
+  );
   return {
     connected: false,
     dashboard: initialSnapshot,
@@ -176,6 +181,39 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
                 />
                 <DeleteLeadButton leadId={entry.leadId} />
               </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section aria-label="Підтверджені заняття" className="flex flex-col gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+          Підтверджені заняття · {dashboard.confirmedBookings.length}
+        </h2>
+        {dashboard.confirmedBookings.length === 0 ? (
+          <EmptyState message="Підтверджених занять поки немає" icon="calendar" />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {dashboard.confirmedBookings.map((b) => (
+              <RequestCard
+                key={`${b.requestId}-${b.slotStart}`}
+                fields={{
+                  studentName: b.studentName,
+                  studentAge: b.studentAge,
+                  format: null,
+                  goalTag: null,
+                  goalText: null,
+                  tastes: null,
+                  dreamSong: null,
+                  experience: null,
+                  comfort: null,
+                  preferredWeekdays: null,
+                  preferredTimeRange: null,
+                }}
+                status="confirmed"
+                requestId={b.requestId}
+                bookedSlotStart={b.slotStart}
+              />
             ))}
           </div>
         )}
