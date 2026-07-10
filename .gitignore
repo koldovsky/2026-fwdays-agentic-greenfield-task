@@ -25,3 +25,6 @@ venv/
 target/
 bin/
 obj/
+
+# Demo presentation assets (local only)
+demo_presentation/
