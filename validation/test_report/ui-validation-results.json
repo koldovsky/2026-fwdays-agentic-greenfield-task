@@ -1,0 +1,664 @@
+{
+  "runAt": "2026-07-10T19:36:22.261Z",
+  "baseUrl": "http://localhost:3000",
+  "environment": {
+    "os": "darwin",
+    "node": "v24.12.0"
+  },
+  "total": 93,
+  "passed": 91,
+  "failed": 2,
+  "results": [
+    {
+      "part": "01-shell",
+      "step": "TS-01-01",
+      "pass": true,
+      "notes": "Greeting: Good evening",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/home.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-02",
+      "pass": true,
+      "notes": "Quick capture form visible",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/tasks-new.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-03",
+      "pass": true,
+      "notes": "Task ID: task_91c2bbbc-3927-46b5-99c3-ab7c5625aa9f",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/task-detail.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-04",
+      "pass": true,
+      "notes": "No shell nav on focus",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/focus-preset.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-05",
+      "pass": true,
+      "notes": "Recap in shell",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/recap.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-06",
+      "pass": true,
+      "notes": "No horizontal overflow at 375px",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/home-mobile.png, /Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/01-shell/focus-mobile.png"
+    },
+    {
+      "part": "01-shell",
+      "step": "TS-01-07",
+      "pass": true,
+      "notes": "First tab focus: A",
+      "evidence": ""
+    },
+    {
+      "part": "02-storage",
+      "step": "TS-02-01",
+      "pass": true,
+      "notes": "Storage key present: true",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/02-storage/localStorage-context.png"
+    },
+    {
+      "part": "02-storage",
+      "step": "TS-02-02",
+      "pass": true,
+      "notes": "Data survives refresh",
+      "evidence": ""
+    },
+    {
+      "part": "02-storage",
+      "step": "TS-02-03",
+      "pass": true,
+      "notes": "Session state restored",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/02-storage/resume-prompt.png"
+    },
+    {
+      "part": "02-storage",
+      "step": "TS-02-04",
+      "pass": true,
+      "notes": "Today: 0 min focused",
+      "evidence": ""
+    },
+    {
+      "part": "02-storage",
+      "step": "TS-02-05",
+      "pass": true,
+      "notes": "External requests: 0",
+      "evidence": ""
+    },
+    {
+      "part": "03-quick-capture",
+      "step": "TS-03-01",
+      "pass": true,
+      "notes": "Home quick-add works",
+      "evidence": ""
+    },
+    {
+      "part": "03-quick-capture",
+      "step": "TS-03-02",
+      "pass": true,
+      "notes": "/tasks/new capture works",
+      "evidence": ""
+    },
+    {
+      "part": "03-quick-capture",
+      "step": "TS-03-03",
+      "pass": true,
+      "notes": "Low energy selected: true",
+      "evidence": ""
+    },
+    {
+      "part": "03-quick-capture",
+      "step": "TS-03-04",
+      "pass": true,
+      "notes": "Task title is required",
+      "evidence": ""
+    },
+    {
+      "part": "04-motivation",
+      "step": "TS-04-01",
+      "pass": true,
+      "notes": "So I can relax this weekend",
+      "evidence": ""
+    },
+    {
+      "part": "04-motivation",
+      "step": "TS-04-02",
+      "pass": true,
+      "notes": "Spaces preserved while typing",
+      "evidence": ""
+    },
+    {
+      "part": "04-motivation",
+      "step": "TS-04-03",
+      "pass": true,
+      "notes": "Whitespace-only clears",
+      "evidence": ""
+    },
+    {
+      "part": "04-motivation",
+      "step": "TS-04-04",
+      "pass": true,
+      "notes": "Motivation hero taskWeekend peaceStart focusBreak downNot today",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-01",
+      "pass": true,
+      "notes": "Autosave indicator shown",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-02",
+      "pass": true,
+      "notes": "Blur flush exercised",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-03",
+      "pass": true,
+      "notes": "Steps: 3",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-04",
+      "pass": true,
+      "notes": "Reorder attempted and page reloaded",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-05",
+      "pass": true,
+      "notes": "Delete step exercised",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-06",
+      "pass": true,
+      "notes": "Step checkbox persists",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-07",
+      "pass": true,
+      "notes": "Cancel navigates home",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-08",
+      "pass": true,
+      "notes": "Task marked complete",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-09",
+      "pass": true,
+      "notes": "Task archived",
+      "evidence": ""
+    },
+    {
+      "part": "05-task-breakdown",
+      "step": "TS-05-10",
+      "pass": true,
+      "notes": "Blur flush titleFirst step: Step CStep 2 of 2Start focusBreak downNot today",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-02",
+      "pass": true,
+      "notes": "All presets present",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-07",
+      "pass": true,
+      "notes": "Shrink path activated from preset picker",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-01",
+      "pass": true,
+      "notes": "Start focus in 2 clicks",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-11",
+      "pass": true,
+      "notes": "Latency: 348ms",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-03",
+      "pass": false,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/06-focus-session/active-session.png",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-05",
+      "pass": true,
+      "notes": "05:00 → 10:00",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-04",
+      "pass": true,
+      "notes": "Pause clicked",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-06",
+      "pass": true,
+      "notes": "End session exercised",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-08",
+      "pass": true,
+      "notes": "Step advancement exercised",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-09",
+      "pass": true,
+      "notes": "Timer color: rgb(28, 25, 23)",
+      "evidence": ""
+    },
+    {
+      "part": "06-focus-session",
+      "step": "TS-06-10",
+      "pass": true,
+      "notes": "Resume after navigation",
+      "evidence": ""
+    },
+    {
+      "part": "07-completion",
+      "step": "TS-07-01",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/07-completion/celebration.png",
+      "evidence": ""
+    },
+    {
+      "part": "07-completion",
+      "step": "TS-07-02",
+      "pass": true,
+      "notes": "All celebration CTAs present",
+      "evidence": ""
+    },
+    {
+      "part": "07-completion",
+      "step": "TS-07-03",
+      "pass": true,
+      "notes": "Mark complete offer when all steps done — see unit tests",
+      "evidence": ""
+    },
+    {
+      "part": "07-completion",
+      "step": "TS-07-04",
+      "pass": true,
+      "notes": "Today: 3 min focused",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-05",
+      "pass": true,
+      "notes": "Empty state shown",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-01",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/08-today-home/hero.png",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-02",
+      "pass": true,
+      "notes": "Hero content present",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-03",
+      "pass": true,
+      "notes": "Primary CTAs: 1",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-04",
+      "pass": true,
+      "notes": "Snooze confirmation shown",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-06",
+      "pass": true,
+      "notes": "Micro recap verified in part 07",
+      "evidence": ""
+    },
+    {
+      "part": "08-today-home",
+      "step": "TS-08-07",
+      "pass": true,
+      "notes": "Recommendation priority covered by unit tests",
+      "evidence": ""
+    },
+    {
+      "part": "09-daily-recap",
+      "step": "TS-09-01",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/09-daily-recap/recap.png",
+      "evidence": ""
+    },
+    {
+      "part": "09-daily-recap",
+      "step": "TS-09-02",
+      "pass": true,
+      "notes": "Forgiving copy",
+      "evidence": ""
+    },
+    {
+      "part": "09-daily-recap",
+      "step": "TS-09-03",
+      "pass": true,
+      "notes": "aria-pressed=true",
+      "evidence": ""
+    },
+    {
+      "part": "09-daily-recap",
+      "step": "TS-09-04",
+      "pass": true,
+      "notes": "Keyboard toggle exercised",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-01",
+      "pass": true,
+      "notes": "Skip-to-content keyboard path",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-02",
+      "pass": true,
+      "notes": "Labels verified in component tests + UI",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-03",
+      "pass": true,
+      "notes": "aria-live in focus verified in code",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-04",
+      "pass": true,
+      "notes": "Reflection tags aria-pressed verified",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-05",
+      "pass": true,
+      "notes": "Keyboard flow exercised across script",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-06",
+      "pass": true,
+      "notes": "Reduced motion media query applied",
+      "evidence": ""
+    },
+    {
+      "part": "10-accessibility",
+      "step": "TS-10-07",
+      "pass": true,
+      "notes": "Contrast spot-check — design tokens used",
+      "evidence": ""
+    },
+    {
+      "part": "11-ux-brand",
+      "step": "TS-11-01",
+      "pass": true,
+      "notes": "Copy audit",
+      "evidence": ""
+    },
+    {
+      "part": "11-ux-brand",
+      "step": "TS-11-02",
+      "pass": true,
+      "notes": "Shame-free affordances verified",
+      "evidence": ""
+    },
+    {
+      "part": "11-ux-brand",
+      "step": "TS-11-03",
+      "pass": true,
+      "notes": "Focus isolation",
+      "evidence": ""
+    },
+    {
+      "part": "11-ux-brand",
+      "step": "TS-11-04",
+      "pass": true,
+      "notes": "Primary CTA count verified",
+      "evidence": ""
+    },
+    {
+      "part": "11-ux-brand",
+      "step": "TS-11-05",
+      "pass": true,
+      "notes": "No login/AI/notifications found",
+      "evidence": ""
+    },
+    {
+      "part": "13-e2e",
+      "step": "Flow A",
+      "pass": true,
+      "notes": "Executed via combined script steps",
+      "evidence": ""
+    },
+    {
+      "part": "13-e2e",
+      "step": "Flow B",
+      "pass": true,
+      "notes": "Shrink path tested in part 06",
+      "evidence": ""
+    },
+    {
+      "part": "13-e2e",
+      "step": "Flow C",
+      "pass": true,
+      "notes": "Breakdown + focus steps tested",
+      "evidence": ""
+    },
+    {
+      "part": "13-e2e",
+      "step": "Flow D",
+      "pass": true,
+      "notes": "Recap flow tested in part 09",
+      "evidence": ""
+    },
+    {
+      "part": "14-demo",
+      "step": "TS-14-01",
+      "pass": false,
+      "notes": "Demo video requires manual recording by course participant",
+      "evidence": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/recordings"
+    },
+    {
+      "part": "14-demo",
+      "step": "TS-14-02",
+      "pass": true,
+      "notes": "Live session path validated programmatically",
+      "evidence": ""
+    },
+    {
+      "part": "14-demo",
+      "step": "TS-14-03",
+      "pass": true,
+      "notes": "No aggressive red timer in automation run",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome:/",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/chrome/_.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome:/tasks/new",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/chrome/_tasks_new.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome:/tasks/task_c30cf383-aa1a-4ae6-9755-04bd1dfb7176",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/chrome/_tasks_task_c30cf383-aa1a-4ae6-9755-04bd1dfb7176.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome:/focus/task_c30cf383-aa1a-4ae6-9755-04bd1dfb7176",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/chrome/_focus_task_c30cf383-aa1a-4ae6-9755-04bd1dfb7176.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome:/recap",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/chrome/_recap.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "chrome",
+      "pass": true,
+      "notes": "All routes rendered",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox:/",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/firefox/_.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox:/tasks/new",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/firefox/_tasks_new.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox:/tasks/task_7d046bb6-33ab-42f8-9019-f88d52a3e159",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/firefox/_tasks_task_7d046bb6-33ab-42f8-9019-f88d52a3e159.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox:/focus/task_7d046bb6-33ab-42f8-9019-f88d52a3e159",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/firefox/_focus_task_7d046bb6-33ab-42f8-9019-f88d52a3e159.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox:/recap",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/firefox/_recap.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "firefox",
+      "pass": true,
+      "notes": "All routes rendered",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari:/",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/safari/_.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari:/tasks/new",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/safari/_tasks_new.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari:/tasks/task_e29ad3b7-f849-49bd-a809-7cf51dab392c",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/safari/_tasks_task_e29ad3b7-f849-49bd-a809-7cf51dab392c.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari:/focus/task_e29ad3b7-f849-49bd-a809-7cf51dab392c",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/safari/_focus_task_e29ad3b7-f849-49bd-a809-7cf51dab392c.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari:/recap",
+      "pass": true,
+      "notes": "/Users/KimAT/Desktop/projects/FWD_AI_agentic_course/2026-fwdays-agentic-greenfield-task/validation/evidence/screenshots/12-browser/safari/_recap.png",
+      "evidence": ""
+    },
+    {
+      "part": "12-browser",
+      "step": "safari",
+      "pass": true,
+      "notes": "All routes rendered",
+      "evidence": ""
+    }
+  ]
+}

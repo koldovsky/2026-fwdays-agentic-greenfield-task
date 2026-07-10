@@ -1,0 +1,79 @@
+#!/bin/sh
+# Validates commit messages:
+# - First line max 120 characters
+# - Branch must be feat/<task>-* or fix/<task>-*
+# - Message must start with feat: or fix: (matching branch) and include the task number
+
+set -e
+
+commit_msg_file="$1"
+if [ -z "$commit_msg_file" ] || [ ! -f "$commit_msg_file" ]; then
+  echo "commit-msg: missing commit message file" >&2
+  exit 1
+fi
+
+first_line="$(sed -n '1p' "$commit_msg_file" | tr -d '\r')"
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+# Allow merge/revert commits and protected base branches.
+case "$first_line" in
+  Merge\ *|Revert\ *)
+    exit 0
+    ;;
+esac
+
+case "$branch" in
+  main|master|develop|"")
+    exit 0
+    ;;
+esac
+
+max_length=120
+msg_length="$(printf '%s' "$first_line" | awk '{ print length }')"
+
+if [ "$msg_length" -gt "$max_length" ]; then
+  echo "commit-msg: first line is ${msg_length} characters (max ${max_length})." >&2
+  echo "  \"$first_line\"" >&2
+  exit 1
+fi
+
+branch_type=""
+task_number=""
+
+case "$branch" in
+  feat/[0-9]*)
+    branch_type="feat"
+    task_number="${branch#feat/}"
+  ;;
+  fix/[0-9]*)
+    branch_type="fix"
+    task_number="${branch#fix/}"
+  ;;
+  *)
+    echo "commit-msg: branch \"$branch\" must match feat/<task>-<description> or fix/<task>-<description>." >&2
+    echo "  Example: feat/42-add-home-screen" >&2
+    exit 1
+    ;;
+esac
+
+task_number="${task_number%%-*}"
+
+if ! printf '%s' "$task_number" | grep -Eq '^[0-9]+$'; then
+  echo "commit-msg: could not read task number from branch \"$branch\"." >&2
+  echo "  Use feat/<task>-<description> or fix/<task>-<description>." >&2
+  exit 1
+fi
+
+if ! printf '%s' "$first_line" | grep -Eq "^${branch_type}(\(${task_number}\))?: .+"; then
+  echo "commit-msg: message must start with \"${branch_type}(${task_number}): \" or \"${branch_type}: \" and include task ${task_number}." >&2
+  echo "  Got: \"$first_line\"" >&2
+  echo "  Example: ${branch_type}(${task_number}): add today home screen" >&2
+  exit 1
+fi
+
+if ! printf '%s' "$first_line" | grep -Eq "${task_number}"; then
+  echo "commit-msg: message must include task number ${task_number} from branch \"$branch\"." >&2
+  exit 1
+fi
+
+exit 0

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Point this repo at hooks/ and ensure hook scripts are executable.
+# Run once after clone: npm run hooks:install
+
+set -e
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$root" || exit 1
+
+git config core.hooksPath hooks
+chmod +x hooks/pre-commit hooks/commit-msg hooks/install
+
+echo "Git hooks installed (core.hooksPath=hooks)."
