@@ -76,6 +76,12 @@ export function TailorWorkspace({
   const [cvText, setCvText] = useState("");
   const [result, setResult] = useState<TailoringRunResult | null>(null);
   const [bullets, setBullets] = useState<Bullet[]>([]);
+  // Persisted tailoring id, streamed as a `persisted` event during generation
+  // (server-side-export-gate, T5 #8). Forwarded to ExportStepper → the résumé
+  // export request so the server can enforce the bullet-membership honesty gate
+  // against the persisted bullets (BC-HONESTY-02). null when the run persisted
+  // no row (best-effort) — the export then falls back to shape-only validation.
+  const [tailoringId, setTailoringId] = useState<string | null>(null);
   // Confirmed wizard answers retained past generation so the export step can
   // forward them as a second evidence lane to the grounded cover letter (T5
   // §3.1, BC-HONESTY-03). Never merged with the CV sentences.
@@ -129,6 +135,9 @@ export function TailorWorkspace({
     // Retain for the export-time grounded letter (T5 §3.1) — same lane the
     // generation pass already treats as confirmed evidence (BC-HONESTY-03).
     setConfirmedAnswers(confirmedAnswers);
+    // Clear any id from a prior run so a re-generate never exports against a
+    // stale tailoring (server-side-export-gate, T5 #8).
+    setTailoringId(null);
     setPhase("generate");
     // A healthy run ends in a terminal `result` or `error`; a stream that closes
     // without one surfaces a calm failure rather than hanging (NFR-OBS-01).
@@ -162,6 +171,12 @@ export function TailorWorkspace({
           } else {
             setPhase("failed");
           }
+          continue;
+        }
+        if (event.type === "persisted") {
+          // Capture the persisted tailoring id for the server-side export gate
+          // (T5 #8). Non-terminal: the run continues to its `result`.
+          setTailoringId(event.tailoringId);
           continue;
         }
         if (event.type === "result") {
@@ -201,6 +216,7 @@ export function TailorWorkspace({
     setJdText("");
     setPaywall(null);
     setAttachment(null);
+    setTailoringId(null);
     setPhase("analyze");
   };
 
@@ -308,6 +324,10 @@ export function TailorWorkspace({
             // the export path only; it is NOT part of letterEvidence and never
             // reaches an LLM request (NFR-SEC-01/02).
             {...(cvDocument ? { cvDocument } : {})}
+            // Persisted tailoring id (T5 #8): forwarded to the résumé export
+            // request so the server enforces the bullet-membership honesty gate
+            // (BC-HONESTY-02). Absent → shape-only validation, non-breaking.
+            {...(tailoringId !== null ? { tailoringId } : {})}
             // Grounded-letter evidence (T5 §3.1): the candidate's own CV
             // sentences + confirmed answers, plus requirements (emphasis) and
             // careerStage (tone). The server verifies before it ships; on any

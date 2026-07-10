@@ -59,6 +59,15 @@ export interface ExportStepperProps {
    * strictly separate from `letterEvidence` (the only LLM-bound input here).
    */
   readonly cvDocument?: CvDocument;
+  /**
+   * Optional persisted-tailoring id (server-side-export-gate, T5 #8). Streamed
+   * as a `persisted` event during generation and forwarded to the résumé export
+   * request, where the server enforces the bullet-membership honesty gate
+   * against the persisted bullets (BC-HONESTY-02). Absent → the route falls back
+   * to shape-only validation (additive, non-breaking). The cover-letter export
+   * ignores it (that route is already server-verified two-pass).
+   */
+  readonly tailoringId?: string;
   /** UI locale; Ukrainian-first (NFR-I18N-01). */
   readonly locale?: Locale;
   /** Open the export paywall when a gated action is used without paid access. */
@@ -85,6 +94,7 @@ export function ExportStepper({
   paid,
   letterEvidence,
   cvDocument,
+  tailoringId,
   locale = "ua",
   onPaywall,
   onStartOver,
@@ -141,7 +151,7 @@ export function ExportStepper({
     setCopied(false);
     setPending(format);
     try {
-      const blob = await requestExport(doc, format);
+      const blob = await requestExport(doc, format, tailoringId);
       onDownload(blob, filename);
     } catch {
       setError(true);

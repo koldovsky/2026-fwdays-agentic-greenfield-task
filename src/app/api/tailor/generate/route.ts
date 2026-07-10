@@ -296,6 +296,15 @@ export async function POST(request: Request): Promise<Response> {
             }
           }
 
+          // Hand the persisted row id to the client (server-side-export-gate,
+          // T5 #8): the export request echoes it back so the pdf/docx routes can
+          // enforce the bullet-membership honesty gate (BC-HONESTY-02). Only
+          // when a row was actually persisted; a best-effort null skips it (the
+          // export then falls back to shape-only validation, NFR-OBS-01).
+          if (pendingId !== null) {
+            send({ type: "persisted", tailoringId: pendingId });
+          }
+
           // Resolve the provider inside the stream: a missing key / bad
           // config throws here, and must surface as a calm failure event on
           // the open stream — never a raw 500 or a blank body (NFR-OBS-01).

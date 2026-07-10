@@ -8,16 +8,20 @@
 // non-paid caller (anonymous or free) gets 402, never a render.
 //
 // CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): same as /api/export/pdf —
-// the body is shape-validated but the section/bullet TEXT is client-authored, where
-// buildExportDocument applies the includedInExport honesty gate; the server renders
-// it verbatim. Accepted (self-authored export of the candidate's own resume; same
-// boundary as the flat-bullets path). Defense-in-depth follow-up in docs/current-state.md.
+// the body is shape-validated but the section/bullet TEXT is client-authored. WHEN
+// the client sends the persisted `tailoringId`, enforceExportGrounding requires
+// every bullet text to be a MEMBER of that tailoring's persisted bullets (owned by
+// the caller, run complete) so a crafted POST cannot inject fabricated text — the
+// honesty gate is SERVER-enforced (server-side-export-gate, T5 #8). Membership, not
+// an `included` filter, so re-included overclaim-risk bullets (FR-BULLETS-02) still
+// export. WHEN absent, fall back to shape-only validation (additive, non-breaking).
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";
 import { createSubscriptionRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 
+import { enforceExportGrounding, groundingErrorResponse } from "../lib/enforce-grounding";
 import { renderResumeDocx } from "./resume-docx";
 
 export const runtime = "nodejs";
@@ -124,6 +128,24 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (!paid) {
     return Response.json({ error: "payment_required" }, { status: 402 });
+  }
+
+  // Server-side honesty gate (server-side-export-gate, T5 #8, BC-HONESTY-02,
+  // NFR-SEC-04). Same contract as /api/export/pdf: WHEN the client supplied the
+  // persisted `tailoringId`, every bullet text in `doc` MUST be a member of that
+  // tailoring's persisted bullets (closes the fabrication trust boundary); WHEN
+  // absent, fall back to shape-only validation (additive). Runs AFTER the paywall.
+  const tailoringId = (body as { tailoringId?: unknown } | null)?.tailoringId;
+  if (typeof tailoringId === "string" && tailoringId.length > 0 && userId !== null) {
+    try {
+      const rejection = groundingErrorResponse(
+        await enforceExportGrounding(doc, tailoringId, userId),
+      );
+      if (rejection !== null) return rejection;
+    } catch (error) {
+      console.error("[api/export/docx] grounding gate failed", error);
+      return Response.json({ error: "export_failed" }, { status: 500 });
+    }
   }
 
   try {

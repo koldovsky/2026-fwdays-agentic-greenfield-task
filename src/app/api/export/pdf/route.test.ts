@@ -9,7 +9,15 @@ const currentUserId = vi.hoisted(() => vi.fn());
 vi.mock("@/app/auth", () => ({ currentUserId }));
 
 const subscriptionRepo = vi.hoisted(() => ({ get: vi.fn() }));
-vi.mock("@/shared/lib/db", () => ({ createSubscriptionRepo: () => subscriptionRepo }));
+// server-side-export-gate (T5 #8, BC-HONESTY-02, NFR-SEC-04): `findExportGrant`
+// mocks the DB read the membership gate uses. The real
+// `enforceExportGrounding`/`isExportGrounded` logic runs unmocked — only the
+// persisted-row lookup is faked.
+const findExportGrant = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/lib/db", () => ({
+  createSubscriptionRepo: () => subscriptionRepo,
+  createTailoringRepo: () => ({ findExportGrant }),
+}));
 vi.mock("@/shared/lib/db/pg", () => ({ getDb: vi.fn(() => ({})) }));
 
 const renderResumePdf = vi.hoisted(() => vi.fn());
@@ -95,5 +103,134 @@ describe("POST /api/export/pdf — server-side paywall (FR-PAYWALL-01)", () => {
 
     expect(res.status).toBe(400);
     expect(currentUserId).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Server-side membership honesty gate (server-side-export-gate, T5 #8,
+// BC-HONESTY-02, NFR-SEC-04): active ONLY when the body carries a non-empty
+// `tailoringId`. Runs AFTER the paywall (402 still wins for a non-paid caller
+// even with a tailoringId present).
+// ---------------------------------------------------------------------------
+const TAILORING_ID = "t-1";
+const GROUNDED_TEXT = "Led migration to TypeScript.";
+const FABRICATED_TEXT = "Personally briefed the board of directors weekly.";
+
+const COMPLETE_GRANT = {
+  id: TAILORING_ID,
+  userId: "u1",
+  status: "complete",
+  bullets: [{ text: GROUNDED_TEXT }],
+};
+
+describe("POST /api/export/pdf — server-side membership gate (BC-HONESTY-02, NFR-SEC-04)", () => {
+  beforeEach(() => {
+    currentUserId.mockResolvedValue("u1");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+  });
+
+  it("tailoringId ABSENT: falls back to shape-only validation, never touches the DB grant lookup", async () => {
+    const res = await POST(post({ document: DOC }));
+
+    expect(res.status).toBe(200);
+    expect(findExportGrant).not.toHaveBeenCalled();
+    expect(renderResumePdf).toHaveBeenCalledWith(DOC);
+  });
+
+  it("tailoringId present + every bullet text persisted: renders (200, application/pdf)", async () => {
+    findExportGrant.mockResolvedValue(COMPLETE_GRANT);
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("application/pdf");
+    expect(renderResumePdf).toHaveBeenCalledWith(doc);
+  });
+
+  it("tailoringId present + a fabricated bullet text: 400 ungrounded_export, never renders", async () => {
+    findExportGrant.mockResolvedValue(COMPLETE_GRANT);
+    const doc = { headline: "x", bullets: [FABRICATED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "ungrounded_export" });
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("tailoringId owned by ANOTHER user: 404 not_found (IDOR), never renders", async () => {
+    findExportGrant.mockResolvedValue({ ...COMPLETE_GRANT, userId: "someone-else" });
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_found" });
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("tailoringId for a nonexistent tailoring: 404 not_found, never renders", async () => {
+    findExportGrant.mockResolvedValue(null);
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(404);
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("tailoringId for a NOT-complete tailoring: 400 tailoring_incomplete, never renders", async () => {
+    findExportGrant.mockResolvedValue({ ...COMPLETE_GRANT, status: "pending" });
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "tailoring_incomplete" });
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("allows a persisted overclaim-risk bullet re-included by the caller (FR-BULLETS-02) — membership, not an `included` filter", async () => {
+    const OVERCLAIM_TEXT = "Scaled the platform to ten million daily users.";
+    findExportGrant.mockResolvedValue({
+      ...COMPLETE_GRANT,
+      bullets: [{ text: GROUNDED_TEXT }, { text: OVERCLAIM_TEXT }],
+    });
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT, OVERCLAIM_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(200);
+    expect(renderResumePdf).toHaveBeenCalledWith(doc);
+  });
+
+  it("a non-paid caller still gets 402 even with a tailoringId present — the paywall runs FIRST", async () => {
+    subscriptionRepo.get.mockResolvedValue(null);
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(402);
+    expect(findExportGrant).not.toHaveBeenCalled();
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("a grant-lookup throw is a calm coded 500, never renders, never leaks internals", async () => {
+    findExportGrant.mockRejectedValue(new Error("db down"));
+    const doc = { headline: "x", bullets: [GROUNDED_TEXT] };
+
+    const res = await POST(post({ document: doc, tailoringId: TAILORING_ID }));
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "export_failed" });
+    expect(renderResumePdf).not.toHaveBeenCalled();
+  });
+
+  it("an empty-string tailoringId is treated as absent (falls back to shape-only validation)", async () => {
+    const res = await POST(post({ document: DOC, tailoringId: "" }));
+
+    expect(res.status).toBe(200);
+    expect(findExportGrant).not.toHaveBeenCalled();
   });
 });

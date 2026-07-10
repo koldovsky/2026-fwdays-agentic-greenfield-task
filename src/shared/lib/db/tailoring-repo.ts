@@ -256,6 +256,37 @@ export function createTailoringRepo(db: Queryable) {
       };
     },
 
+    /**
+     * Minimal read for the server-side export honesty gate
+     * (server-side-export-gate, T5 #8, BC-HONESTY-02, NFR-SEC-04). Returns the
+     * tailoring's owner + lifecycle status + the TEXTS of every persisted bullet
+     * (regardless of `included` — see membership-gate.ts), or null if absent.
+     *
+     * Leaner than `findById` on purpose: the export gate needs neither the
+     * checklist nor the JD/score/timestamps, only ownership (IDOR check), status
+     * (must be `complete`), and the allowed bullet texts. No PII, no CV text.
+     */
+    async findExportGrant(
+      id: string,
+    ): Promise<{ id: string; userId: string; status: string; bullets: { text: string }[] } | null> {
+      const { rows } = await db.query<{ id: string; user_id: string; status: string }>(
+        `SELECT id, user_id, status FROM tailorings WHERE id = $1`,
+        [id],
+      );
+      if (rows.length === 0) return null;
+      const t = rows[0];
+      const bullets = await db.query<{ text: string }>(
+        `SELECT text FROM bullets WHERE tailoring_id = $1 ORDER BY ord`,
+        [id],
+      );
+      return {
+        id: t.id,
+        userId: t.user_id,
+        status: t.status,
+        bullets: bullets.rows.map((b) => ({ text: b.text })),
+      };
+    },
+
     /** Delete a tailoring; FK cascade removes its checklist items + bullets. */
     async deleteById(id: string): Promise<void> {
       await db.query(`DELETE FROM tailorings WHERE id = $1`, [id]);

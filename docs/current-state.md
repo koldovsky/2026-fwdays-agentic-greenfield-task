@@ -27,7 +27,28 @@
 
 ## Working on
 
-**Nothing in flight.** All batches (10-task + 6-task + 8-task) complete — see `git log`.
+### `server-side-export-gate` (T5 #8) — IN PROGRESS (2026-07-10, self-paced loop)
+
+Make the export honesty gate SERVER-ENFORCED so a crafted POST can't inject fabricated bullet text into
+a pdf/docx export. Investigated (feasibility = MEDIUM, NO migration): the `bullets` table already persists
+every pipeline bullet's `text` + `grounding` for a tailoring; the gate is a text-MEMBERSHIP check, not an
+`included` filter (users may legitimately opt overclaim bullets back in — FR-BULLETS-02). BC-HONESTY-02,
+NFR-SEC-04, FR-BULLETS-02/03.
+
+**Plan (maker opus → test-author sonnet → checker opus + verifier sonnet, one workflow):**
+1. Thread the tailoring DB id to the client: add `tailoringId` to the SSE result/status event
+   (`features/run-tailoring/model/types.ts`), emit it from both `/api/tailor/generate` + `/api/tailor` once
+   `pendingId` is known; `TailorWorkspace` stores it, passes to `ExportStepper`; client export POST body
+   carries `tailoringId`.
+2. pdf + docx routes (`src/app/api/export/{pdf,docx}/route.ts`): when `tailoringId` present, load the
+   tailoring + its bullets (repo findById-with-bullets; verify/extend), enforce `record.userId ===
+   currentUserId()` (IDOR → 404) + `status === 'complete'`, then reject (400) if any `document.bullets` or
+   `document.sections.experience[].bullets` text is NOT a member of the persisted bullet-text set.
+   Contact/summary/skills/education stay client-supplied (not grounding-gated). ADDITIVE: absent
+   `tailoringId` → today's shape-only validation (non-breaking).
+3. Cover-letter route is already server-verified (two-pass LLM) — out of scope.
+Checker must verify: IDOR ownership, membership-check preserves FR-BULLETS-02 opt-in (does NOT filter by
+`included`), additive fallback, no honesty/stream-contract regression.
 
 ## Next steps (code-doable, pick by value)
 

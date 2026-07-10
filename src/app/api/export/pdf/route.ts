@@ -10,20 +10,23 @@
 // state; a non-paid caller (anonymous or free) gets 402, never a render.
 //
 // CONTENT TRUST BOUNDARY (BC-HONESTY-02, NFR-SEC-04): the body is shape-validated
-// (isExportDocument), but the section/bullet TEXT is authored client-side, where
-// buildExportDocument applies the includedInExport honesty gate. The server renders
-// that text verbatim, so a crafted POST could place arbitrary text into the export.
-// Accepted here because (a) it is the candidate's OWN resume — a self-authored
-// export is not the product overclaiming on the user's behalf — and (b) it is the
-// same boundary the pre-existing flat-bullets path already had. Defense-in-depth
-// follow-up (docs/current-state.md): rebuild sections server-side from the persisted
-// kept-bullet texts + a server-parsed CvDocument so the gate is server-enforced.
+// (isExportDocument), but the section/bullet TEXT is authored client-side. To stop
+// a crafted POST placing arbitrary/fabricated text into the export, the client now
+// sends the persisted `tailoringId`; WHEN present, enforceExportGrounding requires
+// every bullet text to be a MEMBER of that tailoring's persisted bullets (owned by
+// the caller, run complete) — the honesty gate is now SERVER-enforced for that path
+// (server-side-export-gate, T5 #8). It is a membership check, NOT an `included`
+// filter, so a legitimately re-included overclaim-risk bullet (FR-BULLETS-02) still
+// exports. WHEN `tailoringId` is absent the route falls back to shape-only
+// validation (additive, non-breaking) — the pre-existing self-authored-resume
+// boundary. Contact/summary/skills/education/headline stay client-supplied.
 import { currentUserId } from "@/app/auth";
 import { hasPaidAccess } from "@/entities/subscription";
 import type { ExportDocument } from "@/entities/export-document";
 import { createSubscriptionRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 
+import { enforceExportGrounding, groundingErrorResponse } from "../lib/enforce-grounding";
 import { renderResumePdf } from "./resume-pdf";
 
 export const runtime = "nodejs";
@@ -128,6 +131,25 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (!paid) {
     return Response.json({ error: "payment_required" }, { status: 402 });
+  }
+
+  // Server-side honesty gate (server-side-export-gate, T5 #8, BC-HONESTY-02,
+  // NFR-SEC-04). WHEN the client supplied the persisted `tailoringId`, every
+  // bullet text in `doc` MUST be a member of that tailoring's persisted bullets
+  // — this closes the trust boundary where a crafted POST could inject arbitrary
+  // (fabricated) text after shape validation. WHEN absent, fall back to today's
+  // shape-only validation (additive, non-breaking). Runs AFTER the paywall.
+  const tailoringId = (body as { tailoringId?: unknown } | null)?.tailoringId;
+  if (typeof tailoringId === "string" && tailoringId.length > 0 && userId !== null) {
+    try {
+      const rejection = groundingErrorResponse(
+        await enforceExportGrounding(doc, tailoringId, userId),
+      );
+      if (rejection !== null) return rejection;
+    } catch (error) {
+      console.error("[api/export/pdf] grounding gate failed", error);
+      return Response.json({ error: "export_failed" }, { status: 500 });
+    }
   }
 
   try {

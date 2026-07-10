@@ -352,4 +352,38 @@ describe("POST /api/tailor — persist-on-start wiring (task 5.4, FR-TAILOR-04, 
     );
     expect(completeCalls).toHaveLength(1);
   });
+
+  // server-side-export-gate (T5 #8, BC-HONESTY-02): the createPending id is
+  // handed to the client as a `persisted` event so the résumé export request
+  // can later prove bullet-membership against it. Must arrive BEFORE the
+  // terminal `result` event and carry the SAME id createPending returned.
+  it("emits a `persisted` event carrying the createPending id, before the terminal result", async () => {
+    currentUserId.mockResolvedValue("user-free-persisted-event");
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue("pending-id-persisted-event");
+
+    const res = await POST(post(INPUT, freshIp()));
+    const events = await readNdjson(res);
+
+    const persistedIndex = events.findIndex((e) => e.type === "persisted");
+    const resultIndex = events.findIndex((e) => e.type === "result");
+    expect(persistedIndex).toBeGreaterThanOrEqual(0);
+    expect(events[persistedIndex]).toEqual({
+      type: "persisted",
+      tailoringId: "pending-id-persisted-event",
+    });
+    expect(resultIndex).toBeGreaterThan(persistedIndex);
+  });
+
+  it("emits no `persisted` event when createPending throws (pendingId stays null, non-breaking)", async () => {
+    currentUserId.mockResolvedValue("user-createpending-throws-2");
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockRejectedValue(new Error("DB unavailable"));
+
+    const res = await POST(post(INPUT, freshIp()));
+    const events = await readNdjson(res);
+
+    expect(events.some((e) => e.type === "persisted")).toBe(false);
+    expect(events.find((e) => e.type === "result")).toBeDefined();
+  });
 });

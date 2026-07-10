@@ -30,6 +30,11 @@ export type TailorRunEvent =
   | { readonly type: "status"; readonly phase: TailorRunPhase }
   | { readonly type: "step"; readonly skill: SkillName }
   | { readonly type: "result"; readonly result: TailoringRunResult }
+  // Emitted by the route (not the pure loop) once a `pending` row is persisted
+  // for the authenticated caller — carries the tailoring's DB id so the client
+  // can attach it to the export request, which the server uses to enforce the
+  // bullet-membership honesty gate (server-side-export-gate, T5 #8, BC-HONESTY-02).
+  | { readonly type: "persisted"; readonly tailoringId: string }
   | { readonly type: "error"; readonly code: TailorErrorCode };
 
 export interface TailoringRunInput {

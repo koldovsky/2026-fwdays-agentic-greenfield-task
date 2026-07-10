@@ -6,7 +6,7 @@
 // (that lives in the feature's own tests).
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ua } from "@/shared/lib/i18n";
 import type { AnalysisResult, TailoringRunResult } from "@/features/run-tailoring";
@@ -144,5 +144,86 @@ describe("TailorWorkspace wizard (FR-WIZARD-01/05)", () => {
     await userEvent.click(toggle);
 
     expect(within(row).getByRole("checkbox")).toBeChecked();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Persisted tailoringId threading (server-side-export-gate, T5 #8, BC-HONESTY-02):
+// the `persisted` SSE event carries the pending row's id; the workspace must
+// hold it and forward it to ExportStepper's résumé-export request so the
+// server can enforce the bullet-membership honesty gate. `@/features/export-resume`
+// is NOT mocked in this file, so ExportStepper's `requestExport` runs for
+// real — only the global `fetch` it calls is stubbed here.
+// ---------------------------------------------------------------------------
+describe("TailorWorkspace: persisted tailoringId → export request (server-side-export-gate, T5 #8)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("forwards the tailoringId from a `persisted` event into the PDF export request body", async () => {
+    const eventsWithPersisted = [{ type: "persisted", tailoringId: "t-999" }, ...RESULT_EVENTS];
+    streamGenerateMock.mockImplementation(scriptedGen(eventsWithPersisted));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(["pdf"]), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TailorWorkspace paid />);
+    await analyze();
+    await proceed();
+    await screen.findByText(overclaimBullet.text);
+
+    await userEvent.click(screen.getByRole("button", { name: ua.export.pdfAction }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/export/pdf");
+    const sentBody = JSON.parse(init.body as string) as Record<string, unknown>;
+    expect(sentBody.tailoringId).toBe("t-999");
+  });
+
+  it("omits tailoringId from the export request when no `persisted` event was streamed (non-breaking fallback)", async () => {
+    streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(["pdf"]), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TailorWorkspace paid />);
+    await analyze();
+    await proceed();
+    await screen.findByText(overclaimBullet.text);
+
+    await userEvent.click(screen.getByRole("button", { name: ua.export.pdfAction }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const sentBody = JSON.parse(init.body as string) as Record<string, unknown>;
+    expect(sentBody).not.toHaveProperty("tailoringId");
+  });
+
+  it("clears a prior run's tailoringId when a new generation starts (never exports against a stale run)", async () => {
+    const eventsWithPersisted = [{ type: "persisted", tailoringId: "t-old" }, ...RESULT_EVENTS];
+    streamGenerateMock.mockImplementation(scriptedGen(eventsWithPersisted));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(["pdf"]), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TailorWorkspace paid />);
+    await analyze();
+    await proceed();
+    await screen.findByText(overclaimBullet.text);
+
+    // Start over clears local state, including the persisted tailoringId.
+    await userEvent.click(screen.getByRole("button", { name: ua.wizard.startOverAction }));
+
+    // Second run streams the SAME events again but a real re-run scenario would
+    // not necessarily re-emit `persisted` before result events resolve; verify
+    // the state was reset by re-driving without a persisted event this time.
+    streamGenerateMock.mockImplementation(scriptedGen(RESULT_EVENTS));
+    await analyze();
+    await proceed();
+    await screen.findByText(overclaimBullet.text);
+
+    await userEvent.click(screen.getByRole("button", { name: ua.export.pdfAction }));
+
+    const lastCall = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+    const sentBody = JSON.parse(lastCall[1].body as string) as Record<string, unknown>;
+    expect(sentBody).not.toHaveProperty("tailoringId");
   });
 });

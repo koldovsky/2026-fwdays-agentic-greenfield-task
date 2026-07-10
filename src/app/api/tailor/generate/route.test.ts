@@ -312,6 +312,42 @@ describe("POST /api/tailor/generate history persistence (add-tailoring-history, 
     expect(tailoringRepo.save).not.toHaveBeenCalled();
   });
 
+  // server-side-export-gate (T5 #8, BC-HONESTY-02): the route hands the
+  // persisted pending-row id to the client as a `persisted` event so the export
+  // request can later prove membership against it. Must carry the SAME id
+  // createPending returned, and arrive BEFORE the terminal `result` event so
+  // the client has it in hand before the export step ever renders.
+  it("emits a `persisted` event carrying the createPending id, before the terminal result", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue("t-pending-xyz");
+
+    const events = await readNdjson(await POST(post(VALID_BODY, "198.51.100.63")));
+
+    const persistedIndex = events.findIndex((e) => e.type === "persisted");
+    const resultIndex = events.findIndex((e) => e.type === "result");
+    expect(persistedIndex).toBeGreaterThanOrEqual(0);
+    expect(events[persistedIndex]).toEqual({ type: "persisted", tailoringId: "t-pending-xyz" });
+    expect(resultIndex).toBeGreaterThan(persistedIndex);
+  });
+
+  // When persistence is best-effort-skipped (createPending resolves null, e.g.
+  // an anonymous-shaped edge or a swallowed pre-LLM failure), the route must
+  // NOT fabricate a `persisted` event — the client then falls back to
+  // shape-only export validation (non-breaking).
+  it("emits no `persisted` event when createPending yields no row id", async () => {
+    currentUserId.mockResolvedValue("user-paid");
+    subscriptionRepo.get.mockResolvedValue(PAID_SUBSCRIPTION);
+    resolveLlmProvider.mockReturnValue(groundedProvider());
+    tailoringRepo.createPending.mockResolvedValue(null);
+
+    const events = await readNdjson(await POST(post(VALID_BODY, "198.51.100.64")));
+
+    expect(events.some((e) => e.type === "persisted")).toBe(false);
+    expect(events.find((e) => e.type === "result")).toBeDefined();
+  });
+
   // persist-tailoring-lifecycle: persistence is now for ALL logged-in users,
   // including free users — the old paid-only guard is removed (FR-TAILOR-04).
   it("persists history for a logged-in free user via createPending+updateStatus", async () => {
