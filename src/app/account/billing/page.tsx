@@ -5,10 +5,11 @@
 // widget below renders pure state. A failed read degrades to the Free view —
 // calm, and never grants access it can't verify (NFR-OBS-01).
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/auth";
 import type { SubscriptionAccess } from "@/entities/subscription";
-import { t } from "@/shared/lib/i18n";
+import { LOCALE_COOKIE, parseLocale, t } from "@/shared/lib/i18n";
 import { createSubscriptionRepo } from "@/shared/lib/db";
 import { getDb } from "@/shared/lib/db/pg";
 import { AccountBillingView } from "@/views/account-billing";
@@ -28,6 +29,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AccountBillingPage() {
+  const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (userId === null) redirect("/sign-in");
@@ -43,8 +45,8 @@ export default async function AccountBillingPage() {
 
   return (
     <div className="flex flex-1 flex-col bg-surface-warm font-body">
-      <TopBar user={session?.user ?? null} />
-      <AccountBillingView subscription={subscription} />
+      <TopBar user={session?.user ?? null} locale={locale} />
+      <AccountBillingView subscription={subscription} locale={locale} />
     </div>
   );
 }

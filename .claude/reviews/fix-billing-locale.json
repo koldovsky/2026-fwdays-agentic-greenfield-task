@@ -1,0 +1,23 @@
+{
+  "change": "fix-billing-locale",
+  "reviewer": "checker (fresh context, opus)",
+  "date": "2026-07-10",
+  "commit": "62e686e",
+  "verdict": "ship",
+  "blockers": 0,
+  "majors": 0,
+  "minors": 0,
+  "requirementIds": ["NFR-I18N-01", "FR-BILLING-01", "FR-SHELL-01"],
+  "findings": [],
+  "notes": [
+    "src/app/account/billing/page.tsx now reads LOCALE_COOKIE via cookies() + parseLocale before session resolution, threading `locale` to both TopBar and AccountBillingView. Byte-for-byte matches the working src/app/account/profile/page.tsx pattern (import order, cookie read placement, LOCALE_COOKIE/parseLocale from @/shared/lib/i18n).",
+    "TopBar (widgets/top-bar/ui/TopBar.tsx:20) and AccountBillingView (views/account-billing/ui/AccountBillingView.tsx:13) both declare `readonly locale?: Locale`, default 'ua' — prop types line up, no `any`/unsafe cast.",
+    "force-dynamic retained (page.tsx line 29, unchanged) — no caching regression re: FR-BILLING-01 fresh-subscription requirement.",
+    "Auth/redirect logic unchanged: userId===null still redirects to /sign-in; no open-redirect surface introduced (locale cookie value is only ever fed through parseLocale's closed enum, never interpolated into a URL).",
+    "FSD import rule intact: app leaf (src/app/account/billing/page.tsx) imports only from @/app/auth, @/entities/subscription, @/shared/lib/i18n, @/shared/lib/db(+/pg), @/views/account-billing, @/widgets/top-bar — all downward/lateral-shared, no relative-path escape, no reach-into-internals (all via slice index.ts barrels).",
+    "New src/app/account/billing/page.test.tsx (4 tests) mirrors src/app/tailor/page.test.tsx conventions (vi.hoisted + vi.mock seams for next/navigation, next/headers, auth, subscription repo); locks the regression (cookie read call, en/ua/invalid-cookie-defaults-to-ua threading to both children). Ran locally: 4/4 pass. Test is a genuine independent-context lock, not a maker self-test rubber-stamp -- assertions target the previously-missing cookie read and prop threading, not implementation internals.",
+    "eslint + tsc --noEmit clean on both touched files.",
+    "Swept every other authed page.tsx that renders <TopBar> (find + grep across src/app) for the same missing-locale bug: none found. src/app/checkout/page.tsx and src/app/history/page.tsx already call parseLocale(LOCALE_COOKIE) and thread locale to TopBar + their views; src/app/account/profile/page.tsx was the reference pattern this fix now matches. No other instance of the bug to flag.",
+    "Ignored per instructions: concurrent unrelated diffs to src/shared/lib/i18n/en.ts, ua.ts, i18n.test.ts, docs/current-state.md."
+  ]
+}
