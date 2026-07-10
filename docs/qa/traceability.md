@@ -25,15 +25,15 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-SESS-04 | GAP | 003 | (none) |
 | FR-SESS-05 | GAP | 003 | (none) |
 | FR-SESS-06 | GAP | 003 | (none) |
-| FR-CAT-01 | GAP | 002 | (none) |
-| FR-CAT-02 | GAP | 002 | (none) |
-| FR-CAT-03 | GAP | 002 | (none) |
+| FR-CAT-01 | COVERED | 002 | backend/tests/test_categories.py::test_create_category_happy_path<br>backend/tests/test_categories.py::test_duplicate_active_name_rejected<br>backend/tests/test_categories.py::test_same_name_allowed_for_two_users |
+| FR-CAT-02 | COVERED | 002 | backend/tests/test_categories.py::test_edit_updates_name_color_description<br>backend/tests/test_categories.py::test_rename_onto_existing_active_name_rejected<br>backend/tests/test_categories.py::test_user_cannot_edit_another_users_category |
+| FR-CAT-03 | COVERED | 002 | backend/tests/test_categories.py::test_archived_category_excluded_from_active_list<br>backend/tests/test_categories.py::test_delete_archives_category<br>backend/tests/test_categories.py::test_delete_category_with_no_sessions_removed_from_active_list<br>backend/tests/test_categories.py::test_user_cannot_delete_another_users_category |
 | FR-NOTIF-01 | GAP | 003 | (none) |
 | NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 24 claimed, 8 traced, 16 gap.
+Summary: 24 claimed, 11 traced, 13 gap.
 
 ## Requirements not yet claimed by any spec
 

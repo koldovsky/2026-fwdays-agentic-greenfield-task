@@ -44,6 +44,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- 5a8a3b8 harness: distinguish entry-point sharing from cross-slice ownership conflicts [Refs: BC-PROC-01]
 - c6c7d8d docs: establish the agent-run record system and record the 001 audit [Refs: BC-PROC-01, BC-TRAIL-01]
 - c206814 docs: wire the agent layer into AGENTS.md, OpenSpec context, and state [Refs: BC-PROC-01]
 - c019a60 commands: add the /run-slice loop orchestrator [Refs: BC-PROC-01]
