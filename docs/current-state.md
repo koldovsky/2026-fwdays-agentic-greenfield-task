@@ -4,9 +4,10 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 08:15 (Europe/Kyiv, EEST)
+- **Date and time:** 2026-07-10 09:17 (Europe/Kyiv, EEST)
 - **Phase:** 1 — slice **001 email+password auth** implemented by the Maker; **awaiting Checker +
-  Judge**. Not yet done (maker ≠ checker ≠ judge).
+  Judge**. Not yet done (maker ≠ checker ≠ judge). The **deterministic verification harness** (the
+  loop-first gate layer) is now built and proven on 001; see below.
 
 ## What exists (done)
 
@@ -17,6 +18,23 @@ tests, verify the repo and update this file.
   - **Infra** — Docker Compose (Postgres 16); CI runs both stacks.
 - **Engineering setup** — `AGENTS.md` (+ `CLAUDE.md`), `docs/specs/` (SDD template), `docs/adr/`,
   and `.agents/skills/` (brainstorming, grill-me/grilling, python-fastapi, find-skills).
+- **Deterministic verification harness** (loop-first gates; Python stdlib, no LLM) — built
+  2026-07-10:
+  - Gate scripts: `scripts/gate-slice` (delegates to `verify.*` then a backend coverage **ratchet**,
+    floor in [`docs/qa/coverage-floor.txt`](qa/coverage-floor.txt) = 82); `scripts/check-traceability`
+    (FR/NFR → spec → `@trace` test; generates [`docs/qa/traceability.md`](qa/traceability.md));
+    `scripts/check-trajectory` (git-visible process facts; generates
+    [`docs/qa/trajectory.md`](qa/trajectory.md); carries an explicit **honesty boundary** — it does
+    *not* judge test-first order or test-weakening); `scripts/check-eval-ratchet` (coach-eval score
+    ratchet, a no-op until slice 006).
+  - Inner-loop **Claude hooks** `.claude/hooks/{post-edit-lint,stop-verify}` wired in
+    [`.claude/settings.json`](../.claude/settings.json); **git hooks**
+    `.githooks/{commit-msg,pre-commit}` (enable: `git config core.hooksPath .githooks`); **CI**
+    extended with a `harness` job + the coverage ratchet.
+  - Retroactively run on slice 001: **gate-slice green**; **check-trajectory** confirms the 001
+    `Refs:` trailers; **check-traceability FLAGS** that 001's tests carry no `@trace FR-AUTH-*`
+    docstrings — a real, recorded gap for the 001 Checker/Judge to close (see Next steps). Overview:
+    [`docs/qa/README.md`](qa/README.md).
 
 ## In review (implemented by Maker, not yet signed off)
 
@@ -35,10 +53,14 @@ tests, verify the repo and update this file.
 
 ## Next steps
 
-1. **Checker** (≠ maker): run `scripts/verify.*`, then `/code-review` + `/security-review`; confirm
-   secrets are absent and cookie/hashing attributes are correct; report pass/fail with evidence.
-2. **Judge:** score slice 001 against its spec acceptance checks + CodeRabbit; only the Judge marks
-   it done.
+1. **Checker** (≠ maker): run `scripts/gate-slice` (verify + ratchet), then `/code-review` +
+   `/security-review`; confirm secrets are absent and cookie/hashing attributes are correct; report
+   pass/fail with evidence. **Close the traceability gap the harness flagged**: add `@trace FR-AUTH-*`
+   / `@trace NFR-SEC-*` docstrings to the covering tests in `backend/tests/test_auth.py` and run
+   `python scripts/check-traceability --write`. Do **not** weaken the tests to satisfy it.
+2. **Judge:** score slice 001 against its spec acceptance checks + CodeRabbit; commit clean review
+   evidence to `docs/qa/reviews/001.md` (`Result: pass`) — `check-trajectory` requires it before a
+   slice may be marked done. Only the Judge marks it done.
 3. Then proceed to the next ratified slice (brainstorm → spec → maker).
 
 ## Key decisions

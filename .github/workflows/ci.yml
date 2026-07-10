@@ -45,6 +45,33 @@ jobs:
         run: python -m alembic upgrade head
       - name: Test (pytest, with DB)
         run: python -m pytest -q
+      - name: Coverage ratchet (gate-slice)
+        # Re-runs the suite under coverage and fails if backend coverage of `app`
+        # drops below docs/qa/coverage-floor.txt (the ratchet). venv is absent in CI,
+        # so gate-slice falls back to this job's interpreter (which has the dev deps).
+        run: python ../scripts/gate-slice --ratchet
+
+  harness:
+    # Deterministic verification layer: the trace matrices must be fresh and the
+    # git-visible process facts must hold. Pure stdlib + git; no DB, no venv.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # check-trajectory needs full history + commit trailers
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Traceability matrix is fresh
+        run: python scripts/check-traceability --check-fresh
+      - name: Trajectory has no process violations
+        # Enforce mode, not --check-fresh: the committed trajectory.md is a snapshot
+        # that necessarily lags its own commit (it is generated before that commit
+        # exists), so freshness cannot be gated here. This re-derives from the full
+        # history (incl. HEAD) and fails only on a real process violation.
+        run: python scripts/check-trajectory
+      - name: Eval ratchet (no-op until the coach slice adds a baseline)
+        run: python scripts/check-eval-ratchet
 
   frontend:
     runs-on: ubuntu-latest

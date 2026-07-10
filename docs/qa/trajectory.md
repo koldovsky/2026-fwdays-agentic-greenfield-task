@@ -43,6 +43,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- 0464762 chore: add inner-loop Claude hooks and git hooks [Refs: BC-PROC-01]
 - 17b1d9c chore: add deterministic verification gate scripts [Refs: BC-TRAIL-01]
 
 ## Cross-slice code overlap
