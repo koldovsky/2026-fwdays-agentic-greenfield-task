@@ -53,7 +53,8 @@ jobs:
 
   harness:
     # Deterministic verification layer: the trace matrices must be fresh and the
-    # git-visible process facts must hold. Pure stdlib + git; no DB, no venv.
+    # git-visible process facts must hold. Pure stdlib + git (no DB, no venv), plus
+    # Node for the OpenSpec spec-contract gate, which runs ALONGSIDE the Python gates.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +63,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install OpenSpec (repo-root Node tooling, isolated from the backend)
+        run: npm ci
       - name: Traceability matrix is fresh
         run: python scripts/check-traceability --check-fresh
       - name: Trajectory has no process violations
@@ -72,6 +78,11 @@ jobs:
         run: python scripts/check-trajectory
       - name: Eval ratchet (no-op until the coach slice adds a baseline)
         run: python scripts/check-eval-ratchet
+      - name: OpenSpec contract is valid (validate --all --strict)
+        # Node CLI pinned in the repo-root package.json; --require so a missing CLI is
+        # a hard error in CI (npm ci above guarantees it). Does not touch the Python
+        # gates' logic; it is an additional, parallel spec-contract check.
+        run: python scripts/check-openspec --require
 
   frontend:
     runs-on: ubuntu-latest

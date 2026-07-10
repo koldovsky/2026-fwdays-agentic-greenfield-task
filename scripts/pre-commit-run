@@ -60,6 +60,18 @@ def main() -> int:
               file=sys.stderr)
         return H.EXIT_CHECK_FAILED
 
+    # 4. OpenSpec contract: validate only when the commit touches openspec/ (fast, and
+    #    mirrors the selective ruff step above). This runs ALONGSIDE the Python gates;
+    #    check-openspec skips gracefully when the Node CLI is absent, so a commit is
+    #    never hard-blocked for lack of Node. CI runs `check-openspec --require`.
+    staged_openspec = [f for f in staged if f.startswith("openspec/")]
+    if staged_openspec:
+        print(f"pre-commit: openspec validate ({len(staged_openspec)} staged "
+              f"openspec/ file(s))")
+        if _script(root, "check-openspec") != 0:
+            print("pre-commit: OpenSpec validation failed.", file=sys.stderr)
+            return H.EXIT_CHECK_FAILED
+
     return H.EXIT_OK
 
 

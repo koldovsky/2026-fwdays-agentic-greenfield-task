@@ -15,7 +15,7 @@ only line of defense.
 | Hook | Runs | Blocks the commit when |
 | --- | --- | --- |
 | `commit-msg` | `scripts/check-commit-msg` | the message has no `Refs:` or `Slice:` trailer (merge/revert/fixup messages are exempt). |
-| `pre-commit` | `scripts/pre-commit-run` | a staged secret / real `.env` is detected, or ruff fails on staged backend files. It also regenerates `docs/qa/traceability.md` and `docs/qa/trajectory.md` and **self-stages** them so a committed matrix is never stale. |
+| `pre-commit` | `scripts/pre-commit-run` | a staged secret / real `.env` is detected, or ruff fails on staged backend files, or `openspec validate --all --strict` fails when the commit touches `openspec/`. It also regenerates `docs/qa/traceability.md` and `docs/qa/trajectory.md` and **self-stages** them so a committed matrix is never stale. |
 
 Both wrappers are POSIX `sh` and delegate to stdlib-Python helpers, so they work on
 Linux, macOS, and Windows (Git for Windows runs hooks under its bundled `sh`). If

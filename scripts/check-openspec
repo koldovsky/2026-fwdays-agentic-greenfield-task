@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""check-openspec - run ``openspec validate --all --strict`` as a harness gate.
+
+OpenSpec is the spec-contract layer for this repo (Node tooling declared in the
+repo-root ``package.json``, installed under ``node_modules/`` and kept isolated from
+the Python backend). This thin wrapper lets the Python-centric harness and the git
+hooks invoke that Node CLI uniformly and cross-platform.
+
+It runs ALONGSIDE the deterministic Python gates (``check-traceability`` /
+``check-trajectory``); it does not replace them and it does not touch their logic. The
+Python gates own requirement -> spec -> ``@trace`` traceability; this gate owns the
+OpenSpec proposal/design/tasks + GIVEN/WHEN/THEN scenario contract.
+
+The CLI is invoked as ``node node_modules/@fission-ai/openspec/bin/openspec.js`` (the
+package's ``bin`` entry) rather than via the ``.bin`` shim, so it behaves the same on
+Windows and POSIX and always uses the version pinned in ``package.json``.
+
+Modes:
+    (default)   Validate. If the OpenSpec CLI is not installed, SKIP with a notice and
+                exit 0 -- this mirrors the ruff-skip in ``pre-commit-run`` so a machine
+                without Node never has its commit hard-blocked. Exit 1 on a real
+                validation failure.
+    --require   The CLI must be present; its absence is an environment error (exit 2).
+                Used by CI, where ``npm ci`` at the repo root guarantees the CLI.
+
+Exit codes: 0 ok / skipped | 1 validation failed | 2 CLI required but absent.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import sys
+from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+# The package's bin entry (see @fission-ai/openspec package.json "bin"). Invoked via
+# node so there is no dependence on the platform-specific .bin shim.
+CLI_ENTRY = Path("node_modules") / "@fission-ai" / "openspec" / "bin" / "openspec.js"
+
+
+def resolve_cli(root: Path) -> list[str] | None:
+    """Return the argv prefix that runs the pinned OpenSpec CLI, or None if unavailable."""
+    node = shutil.which("node")
+    entry = root / CLI_ENTRY
+    if node and entry.is_file():
+        return [node, str(entry)]
+    return None
+
+
+def main(argv: list[str]) -> int:
+    require = "--require" in argv
+    root = H.repo_root()
+    cli = resolve_cli(root)
+
+    if cli is None:
+        msg = ("check-openspec: OpenSpec CLI not found "
+               f"({H.rel(root / CLI_ENTRY, root)}); run `npm ci` at the repo root.")
+        if require:
+            print(msg, file=sys.stderr)
+            return H.EXIT_USAGE
+        print(msg + " Skipping (not required locally).")
+        return H.EXIT_OK
+
+    print("check-openspec: openspec validate --all --strict")
+    code = H.stream([*cli, "validate", "--all", "--strict"], cwd=root)
+    if code != 0:
+        print("check-openspec: `openspec validate --all --strict` failed.",
+              file=sys.stderr)
+        return H.EXIT_CHECK_FAILED
+    print("check-openspec: OpenSpec contract is valid.")
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
