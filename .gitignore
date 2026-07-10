@@ -1,27 +1,18 @@
-# Стек у цьому завданні — будь-який. Додавай сюди ігнори свого стеку за потреби.
-
-# OS / редактори
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.log
-
-# Секрети / змінні середовища
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
 .env
 .env.*
 !.env.example
-
-# Залежності та артефакти збірки (типові для різних стеків)
-node_modules/
 dist/
 build/
-out/
-.next/
-__pycache__/
-*.pyc
-.venv/
-venv/
-target/
-bin/
-obj/
+tmp/
+logs/
+*.stl
+*.png
+*.html
+!tests/fixtures/*.html
+!templates/*.html

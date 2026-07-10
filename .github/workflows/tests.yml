@@ -1,0 +1,36 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest tests/ -v
+      - name: Run demo comparison (smoke test)
+        run: |
+          python3 -c "
+          import cadquery as cq
+          box = cq.Workplane('XY').box(10, 20, 5)
+          cyl = cq.Workplane('XY').cylinder(15, 3)
+          assy = cq.Assembly(name='Demo')
+          assy.add(box, name='Box1')
+          assy.add(cyl, name='Cylinder1', loc=cq.Location(cq.Vector(20,0,0)))
+          assy.save('demo.stp', exportType='STEP')
+          "
+          python3 cli.py demo.stp demo.stp -o /tmp/report.html
+          test -s /tmp/report.html

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>{{ tr('app_title') }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #0f1115; color: #e8e8e8;
+         min-height: 100vh; display: flex; align-items: center; justify-content: center;
+         margin: 0; padding: 24px; }
+  .card { background: #171a21; border-radius: 14px; padding: 40px 44px;
+          width: 100%; max-width: 560px; box-shadow: 0 8px 40px #0008; }
+  .langbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .lang-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #7f8aa5; }
+  .lang-links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lang-link { color: #aeb9ff; text-decoration: none; border: 1px solid #30364a; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+  .lang-link.active { color: #fff; border-color: #5b6af0; background: rgba(91, 106, 240, .18); }
+  h1 { margin: 0 0 6px; font-size: 22px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 30px; }
+  .fields { display: grid; gap: 18px; }
+  label { font-size: 12px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: .07em; color: #aaa; display: block; margin-bottom: 6px; }
+  .drop-zone { border: 2px dashed #2e3347; border-radius: 8px; padding: 22px 16px;
+               text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+               position: relative; }
+  .drop-zone:hover, .drop-zone.over { border-color: #5b6af0; background: #1c2035; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .drop-zone .hint { font-size: 13px; color: #666; pointer-events: none; }
+  .drop-zone .filename { font-size: 13px; color: #81c784; font-weight: 600; pointer-events: none; }
+  .drop-icon { font-size: 28px; margin-bottom: 6px; pointer-events: none; }
+  .advanced-toggle { background: none; border: none; color: #5b6af0; font-size: 12px;
+                     cursor: pointer; padding: 0; margin-top: 4px; }
+  .advanced { display: none; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .advanced.open { display: grid; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
+  input[type=number] { background: #1e2330; border: 1px solid #2e3347; border-radius: 6px;
+                        color: #e8e8e8; font-size: 13px; padding: 7px 10px; outline: none;
+                        transition: border-color .2s; }
+  input[type=number]:focus { border-color: #5b6af0; }
+  .hint-text { font-size: 11px; color: #555; }
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 8px; font-size: 15px;
+         font-weight: 700; cursor: pointer; margin-top: 6px;
+         background: linear-gradient(135deg, #5b6af0, #7c3aed); color: #fff;
+         transition: opacity .2s, transform .1s; }
+  .btn:hover { opacity: .92; }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .loading { display: none; text-align: center; padding: 14px 0 4px; font-size: 13px; color: #888; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #333;
+             border-top-color: #5b6af0; border-radius: 50%; animation: spin .7s linear infinite;
+             vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { background: #3b1a1a; color: #f48fb1; border-radius: 8px; padding: 10px 14px;
+           font-size: 13px; display: none; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="langbar">
+    <div class="lang-label">{{ tr('lang_switch_label') }}</div>
+    <div class="lang-links">
+      {% for code in languages %}
+      <a href="/?lang={{ code }}" class="lang-link{% if code == lang %} active{% endif %}">{{ tr_for(code, 'language_label') }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <h1>⚙ {{ tr('app_heading') }}</h1>
+  <p class="subtitle">{{ tr('app_subtitle') }}</p>
+  <form id="frm" method="post" action="/compare" enctype="multipart/form-data">
+    <input type="hidden" name="lang" value="{{ lang }}">
+    <div class="fields">
+      <div>
+        <label for="inp-a">{{ tr('file_a_label') }}</label>
+        <div class="drop-zone" id="dz-a">
+          <input type="file" name="file_a" accept=".stp,.step" required id="inp-a">
+          <div class="drop-icon">📂</div>
+          <div class="hint" id="lbl-a">{{ tr('file_hint') }}</div>
+        </div>
+      </div>
+      <div>
+        <label for="inp-b">{{ tr('file_b_label') }}</label>
+        <div class="drop-zone" id="dz-b">
+          <input type="file" name="file_b" accept=".stp,.step" required id="inp-b">
+          <div class="drop-icon">📂</div>
+          <div class="hint" id="lbl-b">{{ tr('file_hint') }}</div>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="advanced-toggle" onclick="toggleAdv()">▸ {{ tr('tolerance_toggle') }}</button>
+        <div class="advanced" id="adv">
+          <div class="input-group">
+            <label for="volume_tol">{{ tr('volume_tol_label') }}</label>
+            <input type="number" id="volume_tol" name="volume_tol" value="0.5" min="0" step="0.1">
+            <span class="hint-text">{{ tr('volume_tol_hint') }}</span>
+          </div>
+          <div class="input-group">
+            <label for="com_tol">{{ tr('com_tol_label') }}</label>
+            <input type="number" id="com_tol" name="com_tol" value="0.1" min="0" step="0.01">
+            <span class="hint-text">{{ tr('com_tol_hint') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn" id="btn">{{ tr('compare_button') }}</button>
+    <div class="loading" id="loading">
+      <span class="spinner"></span>{{ tr('loading_text') }}
+    </div>
+    <div class="error" id="err"></div>
+  </form>
+</div>
+<script>
+const toleranceToggleLabel = {{ tolerance_toggle_label|tojson }};
+function toggleAdv() {
+  var el = document.getElementById('adv');
+  var btn = event.target;
+  var open = el.classList.toggle('open');
+  btn.textContent = (open ? '▾' : '▸') + ' ' + toleranceToggleLabel;
+}
+function bindDrop(dzId, inpId, lblId) {
+  var inp = document.getElementById(inpId);
+  var lbl = document.getElementById(lblId);
+  var dz  = document.getElementById(dzId);
+  inp.addEventListener('change', function() {
+    if (inp.files[0]) {
+      lbl.textContent = inp.files[0].name;
+      lbl.className = 'filename';
+    }
+  });
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('over'); });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault(); dz.classList.remove('over');
+    var file = e.dataTransfer.files[0];
+    if (!file) return;
+    var dt = new DataTransfer(); dt.items.add(file);
+    inp.files = dt.files;
+    lbl.textContent = file.name; lbl.className = 'filename';
+  });
+}
+bindDrop('dz-a', 'inp-a', 'lbl-a');
+bindDrop('dz-b', 'inp-b', 'lbl-b');
+document.getElementById('frm').addEventListener('submit', function() {
+  document.getElementById('btn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+});
+</script>
+</body>
+</html>

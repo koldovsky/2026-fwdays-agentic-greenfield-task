@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<title>{{ tr('error_title') }}</title>
+<style>
+body{font-family:sans-serif;background:#0f1115;color:#e8e8e8;
+  display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.box{background:#3b1a1a;color:#f48fb1;border-radius:10px;padding:28px 36px;max-width:480px}
+a{color:#90caf9;text-decoration:none} .back{display:inline-block;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>{{ tr('error_title') }}</h2>
+  <p>{{ message }}</p>
+  <a class="back" href="/?lang={{ lang }}">← {{ tr('error_back') }}</a>
+</div>
+</body>
+</html>
