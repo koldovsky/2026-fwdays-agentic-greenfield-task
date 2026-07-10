@@ -6,7 +6,12 @@
 import type { ParseCvOutcome, UploadCvErrorCode } from "../model/types";
 import { resolveCvMime } from "../lib/validate-file";
 
-const KNOWN_CODES: readonly UploadCvErrorCode[] = ["unsupported_type", "too_large", "unparseable"];
+const KNOWN_CODES: readonly UploadCvErrorCode[] = [
+  "unsupported_type",
+  "too_large",
+  "unparseable",
+  "rate_limited",
+];
 
 function toErrorCode(code: unknown): UploadCvErrorCode {
   return KNOWN_CODES.find((known) => known === code) ?? "failed";
@@ -25,12 +30,24 @@ export async function parseCvFile(file: File): Promise<ParseCvOutcome> {
 
   try {
     const response = await fetch("/api/cv/parse", { method: "POST", body });
-    const payload: unknown = await response.json();
+    // A crashed / timed-out serverless function answers 5xx with an HTML body,
+    // so response.json() throws — read defensively and treat that as the honest
+    // `server_error` (distinct from a client-side network `failed`) so prod
+    // triage can tell them apart from the copy alone (NFR-OBS-01).
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
     const { text, error } = (payload ?? {}) as { text?: unknown; error?: unknown };
     if (response.ok && typeof text === "string") return { ok: true, text };
-    return { ok: false, error: toErrorCode(error) };
+    if (typeof error === "string") return { ok: false, error: toErrorCode(error) };
+    // No coded body: a 5xx / non-JSON answer is a server fault; anything else
+    // (a 4xx with no code) degrades to the generic retry.
+    return { ok: false, error: response.status >= 500 ? "server_error" : "failed" };
   } catch {
-    // Rejected fetch or a non-JSON body — same calm outcome as a coded error.
+    // Rejected fetch (offline / DNS) — a client-side network failure.
     return { ok: false, error: "failed" };
   }
 }

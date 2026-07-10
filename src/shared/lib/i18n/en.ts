@@ -46,6 +46,8 @@ export const en: Dictionary = {
       unsupportedType: "Only PDF and DOCX files are supported.",
       tooLarge: "The file is too large. The maximum size is 5 MB.",
       unparseable: "We could not read text from this file. Paste your resume below instead.",
+      rateLimited: "Too many upload attempts. Wait a few minutes and try again.",
+      serverError: "The service is temporarily unavailable. Try again in a minute.",
       failed: "The upload failed. Try again.",
     },
     attach: {

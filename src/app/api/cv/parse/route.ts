@@ -90,12 +90,25 @@ export async function POST(request: Request): Promise<Response> {
     try {
       const text = await extractDocumentText(verdict.type, Buffer.from(bytes));
       return Response.json({ text });
-    } catch {
+    } catch (cause) {
+      // A genuine parse failure OR an empty (scanned) extraction. Log the CAUSE
+      // (type + message only, never the bytes or extracted text — NFR-SEC-01)
+      // so Sentry/Vercel surface the real reason; the client still gets the
+      // calm coded `unparseable` (NFR-OBS-01) with no library internals leaked.
+      console.error("[cv-parse] extraction failed", {
+        docType: verdict.type,
+        cause: cause instanceof Error ? `${cause.name}: ${cause.message}` : "unknown",
+      });
       return errorResponse("unparseable", 422);
     }
-  } catch {
-    // Last-resort guard: whatever happened, the caller gets a calm coded
-    // JSON error — never a raw exception or 500 (NFR-OBS-01).
+  } catch (cause) {
+    // Last-resort guard: whatever happened, the caller gets a calm coded JSON
+    // error — never a raw exception or 500 (NFR-OBS-01). Log the cause (no
+    // request body, no file content — NFR-SEC-01) so an otherwise-silent prod
+    // failure is diagnosable instead of collapsing to a mute generic error.
+    console.error("[cv-parse] unexpected failure", {
+      cause: cause instanceof Error ? `${cause.name}: ${cause.message}` : "unknown",
+    });
     return errorResponse("failed", 400);
   }
 }

@@ -63,6 +63,10 @@ export interface Dictionary {
       readonly tooLarge: string;
       /** Points to the paste path as the fallback (FR-CV-02). */
       readonly unparseable: string;
+      /** Per-IP parse throttle tripped (429): actionable "wait" copy. */
+      readonly rateLimited: string;
+      /** Endpoint answered 5xx / non-JSON (crashed function): honest downtime copy. */
+      readonly serverError: string;
       readonly failed: string;
     };
     /** Premium "attach original PDF" control (add-premium-pdf-attach, T5, FR-PAYWALL-02). */
