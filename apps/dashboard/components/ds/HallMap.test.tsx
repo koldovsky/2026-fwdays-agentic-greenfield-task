@@ -49,6 +49,14 @@ describe("HallMap (dashboard tasks.md §6.7, @trace FR-DASH-03, @trace BC-SCHEDU
     expect(screen.getAllByTestId("hall-seat")).toHaveLength(50);
   });
 
+  it("each weekday row header shows its calendar date (DD.MM), not just the weekday", () => {
+    const seats = fixtureSeats({});
+    render(<HallMap seats={seats} pendingQueue={[]} />);
+    // MONDAY_WEEK_START = 2026-07-06 -> Monday row shows 06.07, Friday 10.07.
+    expect(screen.getByText("06.07")).toBeInTheDocument();
+    expect(screen.getByText("10.07")).toBeInTheDocument();
+  });
+
   it("exposes a valid ARIA grid structure (grid > row > rowheader/gridcell)", () => {
     const seats = fixtureSeats({});
     render(<HallMap seats={seats} pendingQueue={[]} />);
@@ -122,6 +130,24 @@ describe("HallMap (dashboard tasks.md §6.7, @trace FR-DASH-03, @trace BC-SCHEDU
     expect(seatEl.getAttribute("aria-label")).toContain("Марічка");
     expect(seatEl.getAttribute("title")).toContain("Марічка");
     expect(seatEl.getAttribute("aria-label")).toContain("підтверджено");
+  });
+
+  it("clicking a CONFIRMED seat opens a read-only detail card (student + slot), without a DecisionBar", async () => {
+    const seats = fixtureSeats({ "2-11": ["confirmed"] });
+    const seat = seats.find((s) => s.weekday === 2 && s.hour === 11)!;
+    const confirmedBookings = [
+      { requestId: 5, studentName: "Оленка", studentAge: 7, slotStart: `${seat.slotStartIso}:00`, slotEnd: `${seat.slotStartIso}:00` },
+    ];
+    const user = userEvent.setup();
+    render(<HallMap seats={seats} pendingQueue={[]} confirmedBookings={confirmedBookings} />);
+
+    expect(screen.queryByText("Оленка")).not.toBeInTheDocument();
+    const seatEl = screen.getAllByTestId("hall-seat").find((el) => el.getAttribute("data-seat-key") === "2-11")!;
+    await user.click(seatEl);
+
+    expect(screen.getByText("Оленка")).toBeInTheDocument();
+    // Confirmed is a done deal — no teacher decision to make here.
+    expect(screen.queryByTestId("decision-bar")).not.toBeInTheDocument();
   });
 
   it("clicking a free seat opens no request card", async () => {

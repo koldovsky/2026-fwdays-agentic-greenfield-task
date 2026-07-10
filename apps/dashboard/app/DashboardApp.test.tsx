@@ -185,6 +185,46 @@ describe("DashboardApp (review-gate FIX 2, FIX 7)", () => {
     expect(screen.getAllByText("Оксана Тестова")).toHaveLength(2); // conversation card + ONE queue card
   });
 
+  // --- Live update after a HITL decision -----------------------------------
+  it("live-updates after confirm: the lead leaves the queue and appears under confirmed, no reload", () => {
+    stubEventSource();
+    const initialSnapshot: DashboardState = {
+      ...emptyDashboard(),
+      activeRequests: [activeRequestRow({ id: 7, student_name: "Віктор", student_age: 7 })],
+      pendingQueue: [pendingQueueEntry({ requestId: 7, studentName: "Віктор" })],
+    };
+    render(<DashboardApp initialSnapshot={initialSnapshot} />);
+    const source = FakeEventSource.instances[0]!;
+
+    // A live BOOKING_PENDING for the same lead arrives (as it would when they
+    // hold a slot) — now tracked in the client's livePendingQueue too.
+    act(() =>
+      source.emit(
+        JSON.stringify({ type: "CUSTOM", name: "BOOKING_PENDING", value: pendingQueueEntry({ requestId: 7, studentName: "Віктор" }) }),
+      ),
+    );
+    expect(screen.getByText("Черга очікування · 1")).toBeInTheDocument();
+
+    // Teacher confirms -> /api/decisions broadcasts a fresh dashboard snapshot:
+    // the booking is now confirmed (no longer pending), so the queue is empty
+    // and the lesson is under "Підтверджені заняття".
+    const afterConfirm: DashboardState = {
+      ...emptyDashboard(),
+      activeRequests: [activeRequestRow({ id: 7, student_name: "Віктор", student_age: 7 })],
+      pendingQueue: [],
+      confirmedBookings: [
+        { requestId: 7, studentName: "Віктор", studentAge: 7, slotStart: "2026-07-14T16:00", slotEnd: "2026-07-14T17:00" },
+      ],
+    };
+    act(() => source.emit(JSON.stringify({ type: "STATE_SNAPSHOT", threadId: "dashboard", snapshot: afterConfirm })));
+
+    // The confirmed lesson is now visible...
+    expect(screen.getByText("Підтверджені заняття · 1")).toBeInTheDocument();
+    // ...and the lead no longer lingers in the pending queue (livePendingQueue
+    // must not resurrect a lead the authoritative snapshot has resolved).
+    expect(screen.getByText("Черга очікування · 0")).toBeInTheDocument();
+  });
+
   // --- Confirmed bookings section ------------------------------------------
   it("renders a confirmed booking with the student's name and its date/time", () => {
     stubEventSource();
@@ -206,5 +246,17 @@ describe("DashboardApp (review-gate FIX 2, FIX 7)", () => {
     // The confirmed slot's date & time is visible (the "Записаний на" banner).
     expect(screen.getByText(/10\.07/)).toBeInTheDocument();
     expect(screen.getByText(/14:00/)).toBeInTheDocument();
+  });
+
+  // Regression (admin crash "Cannot read properties of undefined (reading
+  // 'length')" that a page reload cleared): a dashboard object missing the
+  // newer `confirmedBookings`/`hallMap` fields (a dev hot-reload preserving
+  // reducer state hydrated before those fields existed) must not crash the
+  // render — the sections default to empty.
+  it("does not crash when the dashboard snapshot lacks confirmedBookings/hallMap (stale-state guard)", () => {
+    stubEventSource();
+    const partial = { activeRequests: [], pendingQueue: [], conversationMessages: {} } as unknown as DashboardState;
+    expect(() => render(<DashboardApp initialSnapshot={partial} />)).not.toThrow();
+    expect(screen.getByText("Підтверджені заняття · 0")).toBeInTheDocument();
   });
 });

@@ -426,11 +426,29 @@ export function applyAguiEvent(state: DashboardClientState, event: AguiEvent): D
           snapshot.activeRequests,
           snapshot.conversationMessages,
         );
+        // Reconcile the client-only `livePendingQueue` against this now-
+        // authoritative snapshot: drop any live entry for a request the
+        // snapshot shows as RESOLVED — active but no longer in its
+        // `pendingQueue` (confirmed/declined), or already under
+        // `confirmedBookings`. Without this a lead the teacher just confirmed
+        // (or declined) via `/api/decisions` — which broadcasts a fresh
+        // snapshot — would linger in the queue forever, because `mergePendingQueue`
+        // lets a live entry win on a shared requestId. Entries the snapshot
+        // does not know about yet (a hold that arrived after it was built) are
+        // kept, so a genuinely-newer live pending is never dropped.
+        const stillPendingIds = new Set(snapshot.pendingQueue.map((entry) => entry.requestId));
+        const resolvedIds = new Set<number>();
+        for (const request of snapshot.activeRequests) {
+          if (!stillPendingIds.has(request.id)) resolvedIds.add(request.id);
+        }
+        for (const booking of snapshot.confirmedBookings ?? []) resolvedIds.add(booking.requestId);
+        const livePendingQueue = state.livePendingQueue.filter((entry) => !resolvedIds.has(entry.requestId));
         return {
           ...state,
           dashboard: snapshot,
           conversations: seeded.conversations,
           requestCards: seeded.requestCards,
+          livePendingQueue,
         };
       }
       return {

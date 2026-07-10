@@ -17,7 +17,9 @@ import {
   HallMap,
   QuestionInbox,
   RequestCard,
+  StatusBadge,
 } from "../components/ds/index.ts";
+import { upcomingBeyondGrid } from "../lib/upcoming-bookings.ts";
 import {
   applyAguiEvent,
   connectAgui,
@@ -36,6 +38,20 @@ import { requestRowToCardFields } from "../lib/request-card-fields.ts";
 
 export interface DashboardAppProps {
   initialSnapshot: DashboardState;
+}
+
+/** Ukrainian short weekday labels (0 = Sunday), same vocabulary as
+ *  RequestCard/HallMap. */
+const WEEKDAY_LABELS = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"] as const;
+
+/** "2026-07-14T16:00" -> "Вт, 14.07 о 16:00" (Kyiv wall clock, already local —
+ *  parsed as a calendar date so the weekday never shifts by timezone). */
+function formatSlot(slotStartIso: string): string {
+  const [datePart, timePart = ""] = slotStartIso.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  if (!y || !m || !d) return slotStartIso;
+  const weekday = WEEKDAY_LABELS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${weekday}, ${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")} о ${timePart.slice(0, 5)}`;
 }
 
 /** Merges the SQLite-backed pending queue with any live `BOOKING_PENDING`
@@ -89,17 +105,29 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
   }, []);
 
   const dashboard = state.dashboard ?? initialSnapshot;
+  // Default the array fields up front: a `dashboard` object hydrated before a
+  // field existed (a dev hot-reload preserving reducer state) would otherwise
+  // crash the render on `.length`/`.map`/`.filter` (admin-crash regression,
+  // cleared by a reload). Production fresh loads always carry them.
+  const hallMapSeats = dashboard.hallMap ?? [];
+  const confirmedBookings = dashboard.confirmedBookings ?? [];
   const pendingQueue = useMemo(
-    () => mergePendingQueue(dashboard.pendingQueue, state.livePendingQueue),
+    () => mergePendingQueue(dashboard.pendingQueue ?? [], state.livePendingQueue),
     [dashboard.pendingQueue, state.livePendingQueue],
   );
   // The DecisionBar "Propose another time" picker's on-grid candidates
   // (booking-hitl S4, review-gate CRITICAL fix): this week's grid minus
-  // every seat the current `dashboard.hallMap` reports as taken — recomputed
-  // whenever a fresh `hallMap` arrives via `STATE_SNAPSHOT`/`STATE_DELTA`.
+  // every seat the current `hallMap` reports as taken — recomputed whenever a
+  // fresh `hallMap` arrives via `STATE_SNAPSHOT`/`STATE_DELTA`.
   const candidateSlots = useMemo(
-    () => candidateProposalSlots(dashboard, currentWeekStartIso()),
-    [dashboard],
+    () => candidateProposalSlots({ ...dashboard, hallMap: hallMapSeats }, currentWeekStartIso()),
+    [dashboard, hallMapSeats],
+  );
+  // Bookings the week-scoped grid can't show (next week onward) — listed
+  // beneath the HallMap so no confirmed/pending lesson is ever hidden.
+  const upcoming = useMemo(
+    () => upcomingBeyondGrid(hallMapSeats.map((seat) => seat.slotStartIso), confirmedBookings, pendingQueue),
+    [hallMapSeats, confirmedBookings, pendingQueue],
   );
 
   const conversations = Object.values(state.conversations);
@@ -188,13 +216,13 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
 
       <section aria-label="Підтверджені заняття" className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
-          Підтверджені заняття · {dashboard.confirmedBookings.length}
+          Підтверджені заняття · {confirmedBookings.length}
         </h2>
-        {dashboard.confirmedBookings.length === 0 ? (
+        {confirmedBookings.length === 0 ? (
           <EmptyState message="Підтверджених занять поки немає" icon="calendar" />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {dashboard.confirmedBookings.map((b) => (
+            {confirmedBookings.map((b) => (
               <RequestCard
                 key={`${b.requestId}-${b.slotStart}`}
                 fields={{
@@ -220,8 +248,26 @@ export function DashboardApp({ initialSnapshot }: DashboardAppProps) {
       </section>
 
       <section aria-label="Розклад залу" className="flex flex-col gap-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Розклад залу</h2>
-        <HallMap seats={dashboard.hallMap} pendingQueue={pendingQueue} />
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">Розклад залу · цей тиждень</h2>
+        <HallMap seats={hallMapSeats} pendingQueue={pendingQueue} confirmedBookings={confirmedBookings} />
+        {upcoming.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <h3 className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
+              Майбутні заняття (поза цим тижнем) · {upcoming.length}
+            </h3>
+            <ul className="flex flex-col divide-y divide-border rounded-md border border-border bg-surface">
+              {upcoming.map((b) => (
+                <li key={`${b.requestId}-${b.slotStart}`} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="min-w-0 truncate text-sm text-text">{b.studentName ?? "Заявка"}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="font-mono text-sm text-text-secondary">{formatSlot(b.slotStart)}</span>
+                    <StatusBadge status={b.status} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
 
       <section aria-label="Питання лідів" className="flex flex-col gap-4">

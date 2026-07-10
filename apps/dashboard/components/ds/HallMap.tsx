@@ -15,12 +15,16 @@
 
 import { useState } from "react";
 import { EMPTY_REQUEST_CARD_FIELDS } from "../../lib/agui-client.ts";
-import type { HallMapSeat, PendingQueueEntry } from "../../lib/dashboard-state.ts";
+import type { ConfirmedBooking, HallMapSeat, PendingQueueEntry } from "../../lib/dashboard-state.ts";
 import { RequestCard } from "./RequestCard.tsx";
 
 export interface HallMapProps {
   seats: HallMapSeat[];
   pendingQueue: PendingQueueEntry[];
+  /** Confirmed bookings for the week's seats — lets a CONFIRMED seat open a
+   *  read-only detail card on click (a pending seat opens its DecisionBar
+   *  card; a free/cancelled seat opens nothing). */
+  confirmedBookings?: ConfirmedBooking[];
 }
 
 const WEEKDAY_LABELS: Record<number, string> = { 1: "Пн", 2: "Вт", 3: "Ср", 4: "Чт", 5: "Пт" };
@@ -55,32 +59,54 @@ const STATUS_LABELS: Record<HallMapSeat["status"], string> = {
  *  with the seat's own fixed-width local slot start ("...T10:00") — see
  *  `dashboard-state.ts`'s own header comment on why string-prefix matching
  *  is the timezone-safe way to bucket bookings onto seats. */
+// A live BOOKING_PENDING event carries only {requestId, bookingId} (no
+// slotStart), so a merged pending entry's slotStart can be undefined — guard
+// the prefix match so it is skipped, never dereferenced (admin-crash
+// regression: "Cannot read properties of undefined (reading 'startsWith')").
 function entryForSeat(pendingQueue: PendingQueueEntry[], seat: HallMapSeat): PendingQueueEntry | undefined {
-  return pendingQueue.find((entry) => entry.slotStart.startsWith(seat.slotStartIso));
+  return pendingQueue.find((entry) => typeof entry.slotStart === "string" && entry.slotStart.startsWith(seat.slotStartIso));
 }
 
-export function HallMap({ seats, pendingQueue }: HallMapProps) {
+/** The confirmed booking on a seat, matched the same timezone-safe way as
+ *  `entryForSeat` (string-prefix on the seat's fixed-width local slot start). */
+function confirmedForSeat(confirmedBookings: ConfirmedBooking[], seat: HallMapSeat): ConfirmedBooking | undefined {
+  return confirmedBookings.find(
+    (booking) => typeof booking.slotStart === "string" && booking.slotStart.startsWith(seat.slotStartIso),
+  );
+}
+
+export function HallMap({ seats, pendingQueue, confirmedBookings = [] }: HallMapProps) {
   const [openSeatKey, setOpenSeatKey] = useState<string | null>(null);
 
   function handleSeatClick(seat: HallMapSeat) {
-    if (seat.status !== "pending") return; // free/confirmed/cancelled: nothing opens in MVP
-    const entry = entryForSeat(pendingQueue, seat);
-    if (entry === undefined) return; // no known pending entry for this seat — nothing to show
+    // A pending seat opens its DecisionBar card; a confirmed seat opens a
+    // read-only detail card; free/cancelled seats open nothing.
+    if (seat.status === "pending" && entryForSeat(pendingQueue, seat) === undefined) return;
+    if (seat.status === "confirmed" && confirmedForSeat(confirmedBookings, seat) === undefined) return;
+    if (seat.status !== "pending" && seat.status !== "confirmed") return;
     setOpenSeatKey(`${seat.weekday}-${seat.hour}`);
   }
 
   const openSeat = openSeatKey !== null ? seats.find((s) => `${s.weekday}-${s.hour}` === openSeatKey) : undefined;
   const openEntry = openSeat !== undefined ? entryForSeat(pendingQueue, openSeat) : undefined;
+  const openConfirmed =
+    openSeat !== undefined && openSeat.status === "confirmed" ? confirmedForSeat(confirmedBookings, openSeat) : undefined;
 
   return (
     <div className="flex flex-col gap-4">
       <div role="grid" aria-label="Розклад залу на тиждень" className="flex flex-col gap-1.5">
         {WEEKDAYS.map((weekday) => {
           const rowSeats = seats.filter((seat) => seat.weekday === weekday);
+          // The row's calendar date (DD.MM) — every seat in the row shares it;
+          // shown under the weekday so a seat's real date is never ambiguous
+          // (a booking is "Ср 15:00" AND "08.07", not just "some Wednesday").
+          const rowIso = rowSeats[0]?.slotStartIso ?? "";
+          const rowDate = rowIso.length >= 10 ? `${rowIso.slice(8, 10)}.${rowIso.slice(5, 7)}` : "";
           return (
             <div role="row" key={weekday} className="flex items-center gap-1.5">
-              <span role="rowheader" className="w-7 shrink-0 font-mono text-xs text-text-secondary">
-                {WEEKDAY_LABELS[weekday]}
+              <span role="rowheader" className="flex w-12 shrink-0 flex-col font-mono text-xs leading-tight text-text-secondary">
+                <span>{WEEKDAY_LABELS[weekday]}</span>
+                {rowDate ? <span className="text-[10px] text-text-muted">{rowDate}</span> : null}
               </span>
               {rowSeats.map((seat) => {
                 // Who is booked on this seat — carried on the seat itself
@@ -119,6 +145,13 @@ export function HallMap({ seats, pendingQueue }: HallMapProps) {
           requestId={openEntry.requestId}
           status="pending"
           showDecisionBar
+        />
+      ) : openConfirmed !== undefined ? (
+        <RequestCard
+          fields={{ ...EMPTY_REQUEST_CARD_FIELDS, studentName: openConfirmed.studentName, studentAge: openConfirmed.studentAge }}
+          requestId={openConfirmed.requestId}
+          status="confirmed"
+          bookedSlotStart={openConfirmed.slotStart}
         />
       ) : null}
     </div>

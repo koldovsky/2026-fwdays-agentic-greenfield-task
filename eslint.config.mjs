@@ -15,6 +15,7 @@ export default tseslint.config(
       "coverage/**",
       "trace/**",
       ".claude/**",
+      ".demo/**",
     ],
   },
   js.configs.recommended,
