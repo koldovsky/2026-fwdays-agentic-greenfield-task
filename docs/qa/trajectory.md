@@ -43,6 +43,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- a2c0b8d agents: add isolated-context sub-agents for the slice loop [Refs: BC-PROC-01]
 - 95fb931 docs: bridge docs/specs to OpenSpec and document the per-slice flow [Refs: BC-TRAIL-01]
 - 43074e2 chore: wire openspec validate --all --strict into the gates [Refs: BC-PROC-01]
 - 6d899d8 docs: record slice 001 as an archived OpenSpec change [Refs: BC-TRAIL-01]
