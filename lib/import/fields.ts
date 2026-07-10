@@ -69,7 +69,15 @@ function utcMidnight(d: Date): Date {
 }
 function mk(y: number, m: number, d: number): Date | null {
   const date = new Date(Date.UTC(y, m, d))
-  return Number.isNaN(date.getTime()) ? null : date
+  if (Number.isNaN(date.getTime())) return null
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== m ||
+    date.getUTCDate() !== d
+  ) {
+    return null
+  }
+  return date
 }
 
 /** Обов'язковий рядковий рядок. Порожньо → помилка, повертає ''. */
