@@ -116,6 +116,28 @@ describe("TextUploadZone (FR-CV-01, FR-ONBOARD-01)", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(ua.uploadCv.error.failed);
   });
 
+  it("surfaces the rate-limited copy when the parse throttle trips", async () => {
+    parseCvFileMock.mockResolvedValue({ ok: false, error: "rate_limited" });
+    const onExtracted = vi.fn();
+    render(<TextUploadZone onExtracted={onExtracted} />);
+
+    drop(dropzone(), pdfFile());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(ua.uploadCv.error.rateLimited);
+    expect(onExtracted).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the server-unavailable copy for a 5xx/non-JSON server fault", async () => {
+    parseCvFileMock.mockResolvedValue({ ok: false, error: "server_error" });
+    const onExtracted = vi.fn();
+    render(<TextUploadZone onExtracted={onExtracted} />);
+
+    drop(dropzone(), pdfFile());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(ua.uploadCv.error.serverError);
+    expect(onExtracted).not.toHaveBeenCalled();
+  });
+
   it("clears a previous error once a following upload succeeds", async () => {
     parseCvFileMock.mockResolvedValueOnce({ ok: false, error: "failed" });
     parseCvFileMock.mockResolvedValueOnce({ ok: true, text: "second try" });
