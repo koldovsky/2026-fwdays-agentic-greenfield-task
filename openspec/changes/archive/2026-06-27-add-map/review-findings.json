@@ -1,0 +1,38 @@
+{
+  "slice": "add-map",
+  "clean": true,
+  "status": "passed_after_fixes",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean-after-fixes"
+    }
+  ],
+  "confirmedFindingsFixed": [
+    {
+      "title": "Leaflet marker iconUrl not set under Turbopack",
+      "resolution": "Added explicit L.icon via map-icons.ts with stable CDN URLs passed to Marker."
+    },
+    {
+      "title": "Map tiles rendered as broken chunks under Tailwind preflight",
+      "resolution": "Reset Leaflet img max-width rules in globals.css and fixed map container height."
+    },
+    {
+      "title": "Open-Meteo reverse geocoding endpoint returns 404",
+      "resolution": "Switched map click reverse lookup to Nominatim with coordinate fallback and synced city search on external selection."
+    }
+  ],
+  "residualRisks": [
+    "Nominatim usage policy requires conservative client-side request volume.",
+    "Map marker CDN icons depend on unpkg availability."
+  ]
+}

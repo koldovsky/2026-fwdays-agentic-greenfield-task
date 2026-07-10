@@ -1,0 +1,25 @@
+{
+  "slice": "add-animated-bg",
+  "clean": true,
+  "status": "passed",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean"
+    }
+  ],
+  "confirmedFindingsFixed": [],
+  "residualRisks": [
+    "Canvas animation cost on very low-end devices if particle cap is raised.",
+    "Day/night resolution depends on geocoding timezone and Open-Meteo sunrise strings."
+  ]
+}

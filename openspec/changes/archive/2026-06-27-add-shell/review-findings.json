@@ -1,0 +1,38 @@
+{
+  "slice": "add-shell",
+  "clean": true,
+  "status": "passed_after_fixes",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    "code-reviewer",
+    "security-reviewer",
+    "spec-compliance-auditor"
+  ],
+  "confirmedFindingsFixed": [
+    {
+      "severity": "critical",
+      "area": "spec-compliance",
+      "summary": "Desktop three-column layout started at Tailwind lg instead of the required 1280 px breakpoint.",
+      "fix": "Changed shell grid to use the xl breakpoint and placed hero/search, forecast, and map in the three-column layout."
+    },
+    {
+      "severity": "major",
+      "area": "privacy",
+      "summary": "Placeholder search was a real form and could submit typed city text into the URL before search was implemented.",
+      "fix": "Changed the placeholder to a non-submitting search region with a read-only unnamed input."
+    },
+    {
+      "severity": "major",
+      "area": "i18n",
+      "summary": "Shell UI strings were not centralized in the required i18n scaffold.",
+      "fix": "Added `lib/i18n/uk.ts` and `lib/i18n/en.ts`, then routed shell content through the Ukrainian scaffold."
+    },
+    {
+      "severity": "minor",
+      "area": "ui-copy",
+      "summary": "Theme indicator said light theme even when system dark mode was active.",
+      "fix": "Changed the placeholder copy to a neutral system-theme label."
+    }
+  ],
+  "remainingFindings": []
+}

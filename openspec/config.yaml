@@ -1,0 +1,19 @@
+schema: spec-driven
+
+context: |
+  Project: Weather Explorer — Ukrainian-first weekend trip weather planner.
+  Stack: Next.js 16 App Router, React 19, TypeScript strict, Tailwind CSS 4, shadcn/ui base-nova.
+  Data: keyless Open-Meteo (forecast + geocoding), OSM tiles via Leaflet.
+  Constraints: no accounts, no analytics, no cookies, geolocation opt-in only.
+  Source of truth: docs/requirements.md (FR/NFR/TC/BC IDs), docs/product-brief.md (narrative), DESIGN.md (visual identity).
+  lib/ is framework-free (TC-PURE-01). UI strings in lib/i18n/uk.ts.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <title>Agentic Engineering — Vitalii Yurkov</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: linear-gradient(145deg, #0f1419 0%, #1a2332 55%, #243044 100%);
+        color: #e8edf4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .slide {
+        display: none;
+        max-width: 960px;
+        width: 100%;
+        animation: fade 0.6s ease;
+      }
+      .slide.active {
+        display: block;
+      }
+      h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        color: #6b9fff;
+      }
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin: 0 0 1.5rem;
+        color: #8b9bb0;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        font-size: 1.15rem;
+        line-height: 1.7;
+      }
+      li {
+        margin-bottom: 0.5rem;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 1.5rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(45, 159, 131, 0.2);
+        color: #4fd1a5;
+        font-size: 0.9rem;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="slides">
+      <section class="slide active" data-ms="5000">
+        <h1>Agentic Engineering</h1>
+        <h2>Як будував Weather Explorer</h2>
+        <ul>
+          <li>Project Factory — 9 capability slices</li>
+          <li>OpenSpec specs → test-first → review → archive</li>
+          <li>Memory Bank для handoff між сесіями</li>
+        </ul>
+        <span class="badge">Vitalii Yurkov · fwdays Greenfield</span>
+      </section>
+      <section class="slide" data-ms="5000">
+        <h1>Контекст</h1>
+        <h2>Статичний vs динамічний</h2>
+        <ul>
+          <li><strong>AGENTS.md</strong> + Cursor rules — кожен хід</li>
+          <li>Skills, OpenSpec, docs/memory — за потреби</li>
+          <li>docs/current-state.md — handoff</li>
+        </ul>
+      </section>
+      <section class="slide" data-ms="5000">
+        <h1>Верифікація</h1>
+        <h2>Не «здається, працює»</h2>
+        <ul>
+          <li>50 unit-тестів з @trace FR-*</li>
+          <li>check-trace, check-recordings, check-trajectory</li>
+          <li>9 Playwright demo clips + QA proof pack</li>
+        </ul>
+      </section>
+      <section class="slide" data-ms="5000">
+        <h1>Maker ≠ checker</h1>
+        <h2>Окремі проходи рев'ю</h2>
+        <ul>
+          <li>code-reviewer, spec-compliance-auditor</li>
+          <li>review-findings.json у кожному archive</li>
+          <li>eval-judge для якості rationale</li>
+        </ul>
+      </section>
+    </div>
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      let i = 0;
+      const advance = () => {
+        slides[i].classList.remove("active");
+        i = (i + 1) % slides.length;
+        slides[i].classList.add("active");
+        setTimeout(advance, Number(slides[i].dataset.ms) || 5000);
+      };
+      setTimeout(advance, Number(slides[0].dataset.ms) || 5000);
+    </script>
+  </body>
+</html>

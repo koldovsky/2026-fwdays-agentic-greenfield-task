@@ -1,0 +1,34 @@
+{
+  "slice": "add-city-search",
+  "clean": true,
+  "status": "passed_after_fixes",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean"
+    }
+  ],
+  "confirmedFindingsFixed": [
+    {
+      "title": "Selecting a city could trigger a second geocoding request",
+      "resolution": "Added `shouldRequestGeocoding()` and guarded the debounced effect when the query matches the selected location."
+    },
+    {
+      "title": "Suggestion list used incomplete combobox/listbox ARIA semantics",
+      "resolution": "Simplified suggestions to a plain list of buttons with accessible labels, avoiding invalid nested option controls."
+    }
+  ],
+  "residualRisks": [
+    "Manual browser smoke is still required before archive to prove live Open-Meteo suggestions and URL sync in the rendered app.",
+    "Forecast and map remain deferred to later slices."
+  ]
+}

@@ -1,0 +1,500 @@
+{
+  "generatedBy": "scripts/check-traceability.mjs",
+  "requirements": {
+    "FR-SHELL-01": "MVP",
+    "FR-SHELL-02": "MVP",
+    "FR-SHELL-03": "MVP",
+    "FR-CLOCK-01": "MVP",
+    "FR-SEARCH-01": "MVP",
+    "FR-SEARCH-02": "MVP",
+    "FR-SEARCH-03": "MVP",
+    "FR-SEARCH-04": "MVP",
+    "FR-SEARCH-05": "MVP",
+    "FR-JOKES-01": "MVP",
+    "FR-FORECAST-01": "MVP",
+    "FR-FORECAST-02": "MVP",
+    "FR-FORECAST-03": "MVP",
+    "FR-FORECAST-04": "MVP",
+    "FR-FORECAST-05": "MVP",
+    "FR-MAP-01": "MVP",
+    "FR-MAP-02": "MVP",
+    "FR-MAP-03": "MVP",
+    "FR-MAP-04": "MVP",
+    "FR-MAP-05": "MVP",
+    "FR-COMFORT-01": "MVP",
+    "FR-COMFORT-02": "MVP",
+    "FR-COMFORT-03": "MVP",
+    "FR-COMFORT-04": "MVP",
+    "FR-COMFORT-05": "MVP",
+    "FR-ANIM-01": "MVP",
+    "FR-ANIM-02": "MVP",
+    "FR-ANIM-03": "MVP",
+    "FR-ANIM-04": "MVP",
+    "FR-COMPARE-01": "MVP",
+    "FR-COMPARE-02": "MVP",
+    "FR-COMPARE-03": "MVP",
+    "NFR-PERF-01": "MVP",
+    "NFR-PERF-02": "MVP",
+    "NFR-PERF-03": "MVP",
+    "NFR-A11Y-01": "MVP",
+    "NFR-A11Y-02": "MVP",
+    "NFR-COST-01": "MVP",
+    "NFR-OBS-01": "MVP",
+    "NFR-DX-01": "MVP",
+    "NFR-I18N-01": "MVP",
+    "TC-STACK-01": "MVP",
+    "TC-STACK-02": "MVP",
+    "TC-STACK-03": "MVP",
+    "TC-STACK-04": "MVP",
+    "TC-STACK-05": "MVP",
+    "TC-DEPLOY-01": "MVP",
+    "TC-DATA-01": "MVP",
+    "TC-MAP-01": "MVP",
+    "TC-PURE-01": "MVP",
+    "BC-PRIVACY-01": "MVP",
+    "BC-PRIVACY-02": "MVP",
+    "BC-PRIVACY-03": "MVP",
+    "BC-BRAND-01": "MVP",
+    "BC-BRAND-02": "MVP",
+    "BC-DEMO-01": "MVP"
+  },
+  "links": [
+    {
+      "id": "FR-SHELL-01",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/shell/shell-content.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SHELL-02",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/shell/shell-content.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SHELL-03",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/shell/shell-content.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-CLOCK-01",
+      "specs": [
+        "openspec/specs/top-clock/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/top-clock/format-local-time.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SEARCH-01",
+      "specs": [
+        "openspec/specs/city-search/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/city-search/geocoding.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SEARCH-02",
+      "specs": [
+        "openspec/specs/city-search/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/city-search/geocoding.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SEARCH-03",
+      "specs": [
+        "openspec/specs/city-search/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/city-search/geocoding.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SEARCH-04",
+      "specs": [
+        "openspec/specs/city-search/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/city-search/geocoding.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-SEARCH-05",
+      "specs": [
+        "openspec/specs/city-search/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/city-search/geocoding.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-JOKES-01",
+      "specs": [
+        "openspec/specs/bottom-jokes/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/bottom-jokes/jokes.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-FORECAST-01",
+      "specs": [
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-FORECAST-02",
+      "specs": [
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts",
+        "components/forecast/forecast-panel.test.tsx"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-FORECAST-03",
+      "specs": [
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts",
+        "components/forecast/forecast-panel.test.tsx"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-FORECAST-04",
+      "specs": [
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts",
+        "components/forecast/forecast-panel.test.tsx"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-FORECAST-05",
+      "specs": [
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-MAP-01",
+      "specs": [
+        "openspec/specs/map/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/map/map.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-MAP-02",
+      "specs": [
+        "openspec/specs/map/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/map/map.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-MAP-03",
+      "specs": [
+        "openspec/specs/map/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/map/map.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-MAP-04",
+      "specs": [
+        "openspec/specs/map/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/map/map.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-MAP-05",
+      "specs": [
+        "openspec/specs/map/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/map/map.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMFORT-01",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMFORT-02",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMFORT-03",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "evals/cases/comfort.eval.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMFORT-04",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md",
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "components/forecast/forecast-panel.test.tsx"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMFORT-05",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md",
+        "openspec/specs/forecast/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/forecast/forecast.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "lib/scoring/comfort.test.ts",
+        "components/forecast/forecast-panel.test.tsx"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-ANIM-01",
+      "specs": [
+        "openspec/specs/animated-bg/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/animated-bg/weather-condition.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-ANIM-02",
+      "specs": [
+        "openspec/specs/animated-bg/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/animated-bg/daytime.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-ANIM-03",
+      "specs": [
+        "openspec/specs/animated-bg/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/animated-bg/background-visual.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-ANIM-04",
+      "specs": [
+        "openspec/specs/animated-bg/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/animated-bg/background-visual.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMPARE-01",
+      "specs": [
+        "openspec/specs/weekend-compare/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/weekend-compare/pins.test.ts",
+        "lib/weekend-compare/pins.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMPARE-02",
+      "specs": [
+        "openspec/specs/comfort-score/spec.md",
+        "openspec/specs/weekend-compare/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/weekend-compare/compare-table.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    },
+    {
+      "id": "FR-COMPARE-03",
+      "specs": [
+        "openspec/specs/weekend-compare/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "lib/weekend-compare/compare-table.test.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/manifest.json"
+      ]
+    }
+  ],
+  "failures": [],
+  "warnings": []
+}

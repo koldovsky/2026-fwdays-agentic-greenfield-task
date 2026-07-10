@@ -1,0 +1,96 @@
+{
+  "kind": "demo",
+  "generatedAt": "2026-06-27T09:06:41.996Z",
+  "results": [
+    {
+      "id": "01-shell-empty",
+      "title": "Empty shell hero and search",
+      "proof": "FR-SHELL-01, FR-SHELL-02, FR-SHELL-03",
+      "video": "docs/qa/demo-recordings/01-shell-empty.webm",
+      "screenshot": "docs/qa/demo-recordings/01-shell-empty.png",
+      "explainer": "docs/qa/demo-recordings/01-shell-empty.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "02-header-clock",
+      "title": "Header live clock",
+      "proof": "FR-CLOCK-01",
+      "video": "docs/qa/demo-recordings/02-header-clock.webm",
+      "screenshot": "docs/qa/demo-recordings/02-header-clock.png",
+      "explainer": "docs/qa/demo-recordings/02-header-clock.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "03-search-forecast",
+      "title": "City search with forecast and comfort",
+      "proof": "FR-SEARCH-01, FR-SEARCH-02, FR-SEARCH-03, FR-SEARCH-04, FR-SEARCH-05, FR-FORECAST-01, FR-FORECAST-02, FR-FORECAST-03, FR-FORECAST-04, FR-FORECAST-05, FR-COMFORT-01, FR-COMFORT-02, FR-COMFORT-03, FR-COMFORT-04, FR-COMFORT-05",
+      "video": "docs/qa/demo-recordings/03-search-forecast.webm",
+      "screenshot": "docs/qa/demo-recordings/03-search-forecast.png",
+      "explainer": "docs/qa/demo-recordings/03-search-forecast.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "04-map-panel",
+      "title": "Interactive OSM map with attribution",
+      "proof": "FR-MAP-01, FR-MAP-02, FR-MAP-03, FR-MAP-04, FR-MAP-05",
+      "video": "docs/qa/demo-recordings/04-map-panel.webm",
+      "screenshot": "docs/qa/demo-recordings/04-map-panel.png",
+      "explainer": "docs/qa/demo-recordings/04-map-panel.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "05-animated-background",
+      "title": "Animated sky does not block interaction",
+      "proof": "FR-ANIM-01, FR-ANIM-02, FR-ANIM-04",
+      "video": "docs/qa/demo-recordings/05-animated-background.webm",
+      "screenshot": "docs/qa/demo-recordings/05-animated-background.png",
+      "explainer": "docs/qa/demo-recordings/05-animated-background.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "06-reduced-motion",
+      "title": "Reduced motion static fallback",
+      "proof": "FR-ANIM-03",
+      "video": "docs/qa/demo-recordings/06-reduced-motion.webm",
+      "screenshot": "docs/qa/demo-recordings/06-reduced-motion.png",
+      "explainer": "docs/qa/demo-recordings/06-reduced-motion.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "07-weekend-compare",
+      "title": "Weekend compare table",
+      "proof": "FR-COMPARE-01, FR-COMPARE-02, FR-COMPARE-03",
+      "video": "docs/qa/demo-recordings/07-weekend-compare.webm",
+      "screenshot": "docs/qa/demo-recordings/07-weekend-compare.png",
+      "explainer": "docs/qa/demo-recordings/07-weekend-compare.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "08-footer-jokes",
+      "title": "Footer joke and data credits",
+      "proof": "FR-JOKES-01, BC-BRAND-02",
+      "video": "docs/qa/demo-recordings/08-footer-jokes.webm",
+      "screenshot": "docs/qa/demo-recordings/08-footer-jokes.png",
+      "explainer": "docs/qa/demo-recordings/08-footer-jokes.md",
+      "asserted": true,
+      "error": null
+    },
+    {
+      "id": "09-mobile-layout",
+      "title": "Mobile responsive layout",
+      "proof": "FR-SHELL-02",
+      "video": "docs/qa/demo-recordings/09-mobile-layout.webm",
+      "screenshot": "docs/qa/demo-recordings/09-mobile-layout.png",
+      "explainer": "docs/qa/demo-recordings/09-mobile-layout.md",
+      "asserted": true,
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "slice": "add-weekend-compare",
+  "clean": true,
+  "status": "passed",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean"
+    }
+  ],
+  "confirmedFindingsFixed": [
+    {
+      "title": "ESLint react-hooks/set-state-in-effect in compare panel",
+      "resolution": "Derived loading from pinned-key snapshot instead of synchronous setState in useEffect."
+    }
+  ],
+  "residualRisks": [
+    "Compare mode triggers up to three parallel forecast fetches; slow networks may show loading longer than single-city view.",
+    "Pinned cities are session-only; refresh clears pins."
+  ]
+}

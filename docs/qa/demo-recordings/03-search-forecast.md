@@ -1,0 +1,7 @@
+# City search with forecast and comfort
+
+**Proves:** FR-SEARCH-01, FR-SEARCH-02, FR-SEARCH-03, FR-SEARCH-04, FR-SEARCH-05, FR-FORECAST-01, FR-FORECAST-02, FR-FORECAST-03, FR-FORECAST-04, FR-FORECAST-05, FR-COMFORT-01, FR-COMFORT-02, FR-COMFORT-03, FR-COMFORT-04, FR-COMFORT-05
+
+**Result:** asserted ✓
+
+![still](03-search-forecast.png)

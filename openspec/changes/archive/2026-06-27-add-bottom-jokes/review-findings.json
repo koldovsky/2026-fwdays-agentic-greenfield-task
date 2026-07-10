@@ -1,0 +1,25 @@
+{
+  "slice": "add-bottom-jokes",
+  "clean": true,
+  "status": "passed",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean"
+    }
+  ],
+  "confirmedFindingsFixed": [],
+  "residualRisks": [
+    "Joke rotation is hash-based; two nearby coordinates may occasionally share the same joke.",
+    "Footer joke date seed uses visitor runtime date, not location timezone midnight."
+  ]
+}

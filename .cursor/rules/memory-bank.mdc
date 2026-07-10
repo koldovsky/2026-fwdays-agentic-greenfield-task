@@ -1,0 +1,53 @@
+---
+description: Use the Memory Bank as the primary project knowledge layer
+globs:
+alwaysApply: true
+---
+
+# Memory Bank Rule
+
+The project uses a structured Memory Bank under `docs/memory/`.
+
+Primary files:
+- `docs/memory/projectbrief.md`
+- `docs/memory/productContext.md`
+- `docs/memory/techContext.md`
+- `docs/memory/systemPatterns.md`
+- `docs/memory/activeContext.md`
+- `docs/memory/progress.md`
+- `docs/memory/decisionLog.md`
+
+## Relationship to Project Factory handoff
+
+- `docs/current-state.md` — phase, gates, slice status (read at session start).
+- `docs/memory/activeContext.md` — current focus and where to record updates.
+- Do not duplicate gate/slice detail in memory files; link to `current-state.md`.
+
+## Required behavior
+
+Before making non-trivial code changes:
+1. Read relevant Memory Bank files first.
+2. Treat `systemPatterns.md` as the source of system behavior and constraints.
+3. Treat `activeContext.md` as the current investigation and maintenance policy.
+4. Load deeper docs from `openspec/specs/`, `docs/requirements.md`, and `docs/qa/` only when the task requires them.
+
+## Do not
+
+- Do not assume architecture from local code snippets alone.
+- Do not ignore documented constraints in Memory Bank files.
+- Do not duplicate deep technical detail into memory files.
+- Do not make behavior-changing edits without checking whether docs must be updated.
+
+## If the task reveals new shared truth
+
+Update docs in the same effort:
+- architecture/behavior → `docs/memory/systemPatterns.md` and possibly `openspec/specs/*`
+- tooling/setup → `docs/memory/techContext.md`
+- product/domain → `docs/memory/productContext.md` and/or `docs/product-brief.md`
+- decisions → `docs/memory/decisionLog.md` and `docs/adr/` when present
+- current status / backlog → `docs/memory/progress.md`, `docs/memory/activeContext.md`, and `docs/current-state.md`
+
+## How to verify
+
+- Before merge: for non-trivial behavior edits, spot-check that `docs/memory/systemPatterns.md` / `activeContext.md` still match the stated constraints.
+- Confirm cross-links: memory summaries point to specs and QA docs for proofs, not duplicate full narratives.

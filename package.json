@@ -1,0 +1,51 @@
+{
+  "name": "2026-fwdays-agentic-greenfield-task",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "audit:code": "fallow audit",
+    "test:run": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:coverage": "vitest run --coverage",
+    "qa:verify": "node scripts/qa-verify.mjs",
+    "qa:record-demos": "node scripts/record-demos.mjs",
+    "qa:record-homework": "node scripts/record-homework-demo.mjs",
+    "qa:mux-homework-voice": "node scripts/mux-homework-voice.mjs",
+    "qa:record-proof": "OUT_DIR=docs/qa/proof node scripts/record-demos.mjs",
+    "check:trace": "node scripts/check-traceability.mjs",
+    "check:coverage": "node scripts/check-coverage-ratchet.mjs",
+    "check:eval": "node scripts/check-eval-ratchet.mjs",
+    "check:trajectory": "node scripts/check-trajectory.mjs",
+    "check:recordings": "node scripts/check-recordings.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "gate:status": "node scripts/gate-status.mjs"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.9.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "fallow": "^2.102.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}

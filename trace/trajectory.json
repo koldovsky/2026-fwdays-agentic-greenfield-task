@@ -1,0 +1,114 @@
+{
+  "generatedBy": "scripts/check-trajectory.mjs",
+  "slices": [
+    {
+      "slice": "2026-06-26-add-comfort-score",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "scoring"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-animated-bg",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "animated-bg"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-bottom-jokes",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "bottom-jokes",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-city-search",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "city-search",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-forecast",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "forecast",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-map",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "map",
+        "i18n"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-shell",
+      "reviewEvidence": "clean",
+      "trailerCommits": 1,
+      "libDomains": [
+        "i18n",
+        "shell"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-top-clock",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "i18n",
+        "top-clock"
+      ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-06-27-add-weekend-compare",
+      "reviewEvidence": "clean",
+      "trailerCommits": 2,
+      "libDomains": [
+        "i18n",
+        "weekend-compare"
+      ],
+      "processComplete": true
+    }
+  ],
+  "overlaps": [
+    {
+      "domain": "i18n",
+      "slices": [
+        "2026-06-27-add-bottom-jokes",
+        "2026-06-27-add-city-search",
+        "2026-06-27-add-forecast",
+        "2026-06-27-add-map",
+        "2026-06-27-add-shell",
+        "2026-06-27-add-top-clock",
+        "2026-06-27-add-weekend-compare"
+      ]
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "check": "in-scope",
+      "msg": "lib/i18n/ modified by 7 slices (2026-06-27-add-bottom-jokes, 2026-06-27-add-city-search, 2026-06-27-add-forecast, 2026-06-27-add-map, 2026-06-27-add-shell, 2026-06-27-add-top-clock, 2026-06-27-add-weekend-compare) — review for scope drift"
+    }
+  ]
+}

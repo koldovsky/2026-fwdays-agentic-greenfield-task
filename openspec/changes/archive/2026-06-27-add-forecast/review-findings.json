@@ -1,0 +1,43 @@
+{
+  "slice": "add-forecast",
+  "clean": true,
+  "status": "passed_after_fixes",
+  "reviewedAt": "2026-06-27",
+  "reviewers": [
+    {
+      "role": "code-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "security-reviewer",
+      "verdict": "clean-after-fixes"
+    },
+    {
+      "role": "spec-compliance-auditor",
+      "verdict": "clean-after-fixes"
+    }
+  ],
+  "confirmedFindingsFixed": [
+    {
+      "title": "Forecast cache reuses stale data after location switches",
+      "resolution": "Changed ForecastMemoryCache to single-entry semantics so selecting A, then B, then A requires a fresh A fetch."
+    },
+    {
+      "title": "Hourly chart can show today's first 48 hours instead of next 48 hours",
+      "resolution": "Added forecast_hours=48 to the Open-Meteo request and asserted it in tests."
+    },
+    {
+      "title": "Forecast UI behavior is implemented but not directly tested",
+      "resolution": "Added ForecastPanelView render-level test for cards, chart section, sun note, comfort text, and weekend highlight."
+    },
+    {
+      "title": "FR-FORECAST-01 test does not assert all required API fields",
+      "resolution": "Expanded URL-builder test to assert the full daily field set plus forecast_hours=48."
+    }
+  ],
+  "residualRisks": [
+    "Direct Open-Meteo browser request exposes selected coordinates and visitor IP to Open-Meteo.",
+    "Selected city URL params are low-sensitivity but shareable.",
+    "npm audit reported moderate dependency advisories through the existing Next/PostCSS tree."
+  ]
+}
