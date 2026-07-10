@@ -45,6 +45,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/002.md - clean
 - Commits:
+  - ee63e98 docs(categories): close slice 002 - review evidence, records, archive [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
   - 3db7600 feat(categories): per-user CRUD + delete-as-archive to green [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
   - ec0c30d test(categories): ratified contract + RED acceptance tests [Refs: FR-CAT-01, FR-CAT-02, FR-CAT-03]
 - Touched code paths (14):
@@ -62,7 +63,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/api.ts
   - frontend/src/pages/Categories/CategoriesPage.tsx
   - frontend/src/pages/Categories/categories.css
-- Other files touched (docs/config): 12
+- Other files touched (docs/config): 25
 
 ## Process / infra commits (traced, not a feature slice)
 
