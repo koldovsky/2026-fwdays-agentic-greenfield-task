@@ -42,12 +42,19 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-METR-05 | COVERED | 004 | backend/tests/test_metrics_extra.py::test_longest_streak_across_a_multi_millennium_gap_is_correct_and_fast<br>backend/tests/test_metrics_m5_streaks.py::test_an_untracked_today_does_not_break_a_live_streak<br>backend/tests/test_metrics_m5_streaks.py::test_current_streak_counts_consecutive_active_days_through_today<br>backend/tests/test_metrics_m5_streaks.py::test_empty_history_yields_zero_streaks<br>backend/tests/test_metrics_m5_streaks.py::test_longest_streak_is_the_maximum_run_over_all_history |
 | FR-METR-06 | COVERED | 004 | backend/tests/test_metrics_m6_baseline.py::test_a_lower_better_metric_is_normalized_before_zoning<br>backend/tests/test_metrics_m6_baseline.py::test_a_zero_baseline_is_neutral<br>backend/tests/test_metrics_m6_baseline.py::test_baseline_spans_the_trailing_30_days_ending_yesterday<br>backend/tests/test_metrics_m6_baseline.py::test_between_7_and_29_days_deltas_and_zones_compute_on_available_history<br>backend/tests/test_metrics_m6_baseline.py::test_green_at_or_within_5_percent_below_baseline<br>backend/tests/test_metrics_m6_baseline.py::test_red_more_than_20_percent_below_baseline<br>backend/tests/test_metrics_m6_baseline.py::test_streak_carries_no_baseline_zone<br>backend/tests/test_metrics_m6_baseline.py::test_under_7_days_of_history_the_zone_is_building<br>backend/tests/test_metrics_m6_baseline.py::test_yellow_between_5_and_20_percent_below_baseline |
 | FR-METR-07 | COVERED | 004 | backend/tests/test_metrics_days.py::test_active_day_is_any_day_with_at_least_one_attributed_minute<br>backend/tests/test_metrics_days.py::test_daily_net_minutes_excludes_days_a_session_never_touches<br>backend/tests/test_metrics_days.py::test_day_attribution_uses_user_timezone_at_a_boundary<br>backend/tests/test_metrics_days.py::test_local_start_day_attributes_a_midnight_spanning_session_to_its_start_day<br>backend/tests/test_metrics_days.py::test_midnight_spanning_session_splits_net_minutes_across_two_local_days<br>backend/tests/test_metrics_extra.py::test_intervals_net_seconds_merges_overlapping_pauses_unlike_the_naive_helper<br>backend/tests/test_metrics_extra.py::test_overlapping_pauses_agree_between_m1_day_totals_and_m3_focus_denominator<br>backend/tests/test_metrics_m3_focus.py::test_deep_block_stays_whole_and_is_attributed_to_its_start_day |
+| FR-COACH-01 | GAP | 006 | (none) |
+| FR-COACH-02 | GAP | 006 | (none) |
+| FR-COACH-03 | GAP | 006 | (none) |
+| FR-COACH-04 | GAP | 006 | (none) |
+| FR-COACH-05 | GAP | 006 | (none) |
+| FR-COACH-06 | GAP | 006 | (none) |
+| FR-COACH-07 | GAP | 006 | (none) |
 | FR-NOTIF-01 | COVERED | 003 | backend/tests/test_undo.py::test_consumed_token_second_use_is_404<br>backend/tests/test_undo.py::test_expired_token_is_404<br>backend/tests/test_undo.py::test_undo_of_delete_reinserts_session_and_pauses<br>backend/tests/test_undo.py::test_undo_of_discard_conflicts_with_new_active_session<br>backend/tests/test_undo.py::test_undo_of_discard_restores_active_timer<br>backend/tests/test_undo.py::test_undo_of_edit_reverts_prior_values |
 | NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 38 claimed, 38 traced, 0 gap.
+Summary: 45 claimed, 38 traced, 7 gap.
 
 ## Requirements not yet claimed by any spec
 
@@ -57,13 +64,6 @@ Informational - these await a future slice; not counted as gaps.
 - FR-SHELL-02
 - FR-AUTH-04
 - FR-AUTH-05
-- FR-COACH-01
-- FR-COACH-02
-- FR-COACH-03
-- FR-COACH-04
-- FR-COACH-05
-- FR-COACH-06
-- FR-COACH-07
 - FR-EXT-01
 - FR-EXT-02
 - FR-EXT-03
