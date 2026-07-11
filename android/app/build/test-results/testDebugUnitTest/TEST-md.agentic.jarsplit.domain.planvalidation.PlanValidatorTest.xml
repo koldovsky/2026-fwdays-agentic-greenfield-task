@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-07-11T17:54:53" hostname="LT-M-4850.local" time="0.003">
+  <properties/>
+  <testcase name="valid row produces an entry" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.001"/>
+  <testcase name="other valid rows are unaffected by one invalid row" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.0"/>
+  <testcase name="negative, zero, decimal and non-numeric amounts are invalid" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.001"/>
+  <testcase name="empty name is flagged and excluded" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.001"/>
+  <testcase name="thousands-separator whitespace is tolerated" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.0"/>
+  <testcase name="byte-identical duplicate names are both flagged" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.0"/>
+  <testcase name="case-only duplicate names are flagged, not treated as distinct" classname="md.agentic.jarsplit.domain.planvalidation.PlanValidatorTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

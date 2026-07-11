@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="md.agentic.jarsplit.domain.run.RunUseCaseTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-07-11T17:54:53" hostname="LT-M-4850.local" time="0.013">
+  <properties/>
+  <testcase name="all matched with no warnings is Complete" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.004"/>
+  <testcase name="unreachable maps to Fatal Unreachable" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.002"/>
+  <testcase name="missing token maps to Fatal MissingToken" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <testcase name="mixed matched and skipped rows is Partial" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <testcase name="zero matched despite a successful fetch is Fatal NothingMatched" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <testcase name="invalid token maps to Fatal InvalidToken" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <testcase name="zero valid rows is Fatal NoValidEntries before any fetch" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <testcase name="rate limited maps to Fatal RateLimited" classname="md.agentic.jarsplit.domain.run.RunUseCaseTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
