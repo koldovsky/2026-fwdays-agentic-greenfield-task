@@ -43,11 +43,11 @@ requirements grilling:
 | ID | Status | Requirement | Notes |
 | -- | ------ | ----------- | ----- |
 | **FR-INPUT-01** | accepted | The plan is read from a single explicit file-path argument (`jarsplit plan.txt`). **stdin is not supported.** A missing or unreadable path is a fatal error (see FR-EXIT-01). | Deviation from brief — see [Deviations](#deviations-from-the-brief). |
-| **FR-INPUT-02** | accepted | Each data line has the grammar `Name = amount`. Whitespace around the name and around the amount is trimmed. | The separator is `=`. |
+| **FR-INPUT-02** | accepted | Each data line has the grammar `<amount> - <jar name>`. The line is split on its **first** `-`: the segment before it is the amount, the entire remainder is the jar name. Whitespace around the amount and around the name is trimmed. | The separator is `-`; jar names may contain `-`. |
 | **FR-PARSE-01** | accepted | Blank and whitespace-only lines are skipped silently. | |
-| **FR-PARSE-02** | accepted | `#` begins a comment when it is the first non-whitespace character of a line **or** when it is preceded by whitespace (inline trailing comment). A `#` adjacent to non-space text is literal, so jar names may contain `#`. Text from the comment `#` to end-of-line is stripped before parsing. | e.g. `Заощ. = 5000 # note` → amount `5000`; `C#фонд = 100` → name `C#фонд`. |
-| **FR-AMOUNT-01** | accepted | The amount must be a **positive whole-UAH integer** (`> 0`). Decimals, zero, negatives, and digit separators (`_`, `,`) make the line malformed. | Kopiyka precision is out of scope (BC-SCOPE-02). |
-| **FR-MALFORMED-01** | accepted | A structurally malformed line (no `=`, empty name, or invalid amount) is skipped with a warning to stderr that includes the line number; remaining valid lines are still processed. The run exits non-zero. | Same philosophy as FR-RESOLVE-03 — never block everything, never guess. |
+| **FR-PARSE-02** | accepted | `#` begins a comment when it is the first non-whitespace character of a line **or** when it is preceded by whitespace (inline trailing comment). A `#` adjacent to non-space text is literal, so jar names may contain `#`. Text from the comment `#` to end-of-line is stripped before parsing. | e.g. `5000 - Заощ. # note` → amount `5000`; `100 - C#фонд` → name `C#фонд`. |
+| **FR-AMOUNT-01** | accepted | The amount must be a **positive whole-UAH integer** (`> 0`). Internal whitespace in the amount is stripped before parsing, so a thousands space is accepted (`12 000` → `12000`). Decimals, zero, negatives, and non-whitespace digit separators (`_`, `,`) make the line malformed. | Kopiyka precision is out of scope (BC-SCOPE-02). |
+| **FR-MALFORMED-01** | accepted | A structurally malformed line (no `-`, empty name, or invalid amount) is skipped with a warning to stderr that includes the line number; remaining valid lines are still processed. The run exits non-zero. | Same philosophy as FR-RESOLVE-03 — never block everything, never guess. |
 | **FR-DUP-01** | accepted | If the same jar name appears on more than one plan line, that name is skipped with a warning (with the offending line numbers) and **no link is emitted** for it. Amounts are never summed or replaced. | Ambiguous intent → never guess. |
 | **FR-RESOLVE-01** | accepted | Jar names are resolved live via a single `GET /personal/client-info`. Only the `jars[]` array is considered; `accounts[]` is ignored. | See TC-API-01, FR-API-01. |
 | **FR-RESOLVE-02** | accepted | A plan name matches a jar when, after trimming, it equals the jar `title` case-insensitively (Unicode-aware) as a full string. | No substring/fuzzy matching. |
@@ -101,6 +101,32 @@ requirements grilling:
 | **BC-SCOPE-02** | accepted | **Fixed amounts only.** Percentages and "remainder" splitting are out of scope. | |
 | **BC-SAFE-01** | accepted | Money is never silently misrouted. Anything that is not an unambiguous UAH-jar match (unknown, ambiguous, duplicate, non-UAH, malformed) is skipped and warned — never guessed. | The core safety property. |
 | **BC-PRIVACY-01** | accepted | No analytics or telemetry. The plan and token are never persisted. | |
+
+---
+
+## Android app requirements
+
+`jarsplit` ships a second, independent interface: an Android app (`android/`),
+reimplementing the same business rules natively in Kotlin (no shared code with
+the Go module). The CLI's requirements above (`FR-RESOLVE-*`, `FR-CURRENCY-01`,
+`FR-LINK-01`, `NFR-SEC-*`, `BC-SAFE-01`, etc.) describe implementation-agnostic
+business rules that both interfaces must independently satisfy. The IDs below
+cover only what's specific to the Android interface — its form-based input,
+token storage, and UI presentation — where it deliberately diverges from the
+CLI's file/env-var/stdout-stderr shape. Full detail and scenarios live in
+`openspec/specs/android-client/spec.md`.
+
+| ID | Status | Requirement | Notes |
+| -- | ------ | ----------- | ----- |
+| **FR-ANDROID-INPUT-01** | accepted | The plan is entered as rows in an in-app form (jar name + amount per row), not a file path or stdin. | Android analog of FR-INPUT-01, deliberately different shape. |
+| **FR-ANDROID-INPUT-02** | accepted | Each row is validated independently: positive whole-UAH amount tolerant of internal whitespace as a thousands separator (same rule as FR-AMOUNT-01), non-empty name, duplicate-name detection by **case-insensitive** (Unicode-aware) equality on the trimmed name. Errors are shown inline per row, not per line number. | Deliberate divergence from FR-DUP-01's exact-string rule — a phone keyboard makes a case-only duplicate a more plausible accident, and jar matching would already treat the two names as the same jar. |
+| **FR-ANDROID-TOKEN-01** | accepted | The token is entered and stored via a Settings screen, not an env var. Once saved, only a masked "token set/not set" status is shown — never the value. | |
+| **FR-ANDROID-CACHE-01** | accepted | Jars may be fetched once per session to power name autocomplete, but every "Generate" action re-fetches and re-matches against fresh data; a cached suggestion never substitutes for a fresh match. | Prevents autocomplete from silently reintroducing guessing. |
+| **FR-ANDROID-LINK-01** | accepted | Generated links open via an `ACTION_VIEW` Intent to the user's browser or the monobank app — never an in-app WebView. | Needed for the Android-specific V-1 gate to mean anything. |
+| **FR-ANDROID-RESULT-01** | accepted | The Results screen presents one of Complete / Partial / Fatal, the UI analog of the CLI's exit codes 0 / 1 / 2 (FR-EXIT-01), with the links table/total and the warnings list always shown separately. | |
+| **NFR-ANDROID-SEC-01** | accepted | The token is stored only via Android Keystore-backed encrypted storage (e.g. `EncryptedSharedPreferences`), never logged, never included in any analytics/crash-reporter event (there are none, per BC-PRIVACY-01). | Android analog of NFR-SEC-01/02. |
+| **TC-ANDROID-01** | accepted | Kotlin, Jetpack Compose, OkHttp + kotlinx.serialization, single-module Gradle project (`android/app`), no DI framework. | See `openspec/changes/add-android-client/design.md` for rationale. |
+| **BC-ANDROID-01** | accepted | BC-SAFE-01 holds end-to-end on Android: a link is only ever generated for a plan row that unambiguously matches exactly one live UAH jar; anything else is skipped and warned, regardless of autocomplete/cache state. | |
 
 ---
 

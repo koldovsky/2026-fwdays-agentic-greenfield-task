@@ -3,16 +3,14 @@
 ## Purpose
 
 Parses and validates a user-authored `plan.txt` file into an ordered list of
-jar-name/amount entries. Applies the `Name = amount` grammar, comment and
+jar-name/amount entries. Applies the `<amount> - <jar name>` grammar, comment and
 whitespace handling, positive-whole-UAH amount validation, and
 malformed/duplicate-line detection rules from the product requirements
 (FR-INPUT-01/02, FR-PARSE-01/02, FR-AMOUNT-01, FR-MALFORMED-01, FR-DUP-01).
 This capability is pure and offline — it does not read `MONO_TOKEN`, call
 monobank, or expose the `jarsplit` binary. Downstream capabilities
 (`jar-matching`, `cli-orchestration`) consume its output.
-
 ## Requirements
-
 ### Requirement: Read plan from an explicit file path
 The system SHALL read the plan from a single explicit file-path argument. A
 missing or unreadable path SHALL be treated as a fatal error, distinct from
@@ -31,13 +29,18 @@ per-line warnings.
 - **THEN** parsing returns a fatal error and no entries or warnings are produced
 
 ### Requirement: Plan line grammar
-Each data line SHALL follow the grammar `Name = amount`, with the name and
-the amount both trimmed of surrounding whitespace. The separator SHALL be
-`=`.
+Each data line SHALL follow the grammar `<amount> - <jar name>`, with the amount and
+the jar name both trimmed of surrounding whitespace. The separator SHALL be `-`, and
+a line SHALL be split on its **first** `-`: the segment before it is the amount and
+the entire remainder is the jar name (so a jar name MAY contain `-`).
 
-#### Scenario: Name and amount are trimmed of surrounding whitespace
-- **WHEN** a line reads `  Заощадження   =   5000  `
-- **THEN** the parsed entry has name `Заощадження` and amount `5000`
+#### Scenario: Amount and name are trimmed of surrounding whitespace
+- **WHEN** a line reads `  5000  -  Заощадження  `
+- **THEN** the parsed entry has amount `5000` and name `Заощадження`
+
+#### Scenario: Jar name may contain a hyphen
+- **WHEN** a line reads `5000 - новий-рік`
+- **THEN** the parsed entry has amount `5000` and name `новий-рік`
 
 ### Requirement: Blank line handling
 Blank and whitespace-only lines SHALL be skipped silently, without producing
@@ -59,49 +62,54 @@ stripped before the rest of the line is parsed.
 - **THEN** the line produces no entry and no warning
 
 #### Scenario: Inline trailing comment after whitespace is stripped
-- **WHEN** a line reads `Заощ. = 5000 # note`
-- **THEN** the parsed entry has name `Заощ.` and amount `5000`
+- **WHEN** a line reads `5000 - Заощ. # note`
+- **THEN** the parsed entry has amount `5000` and name `Заощ.`
 
 #### Scenario: `#` adjacent to non-space text is treated as literal
-- **WHEN** a line reads `C#фонд = 100`
-- **THEN** the parsed entry has name `C#фонд` and amount `100`
+- **WHEN** a line reads `100 - C#фонд`
+- **THEN** the parsed entry has amount `100` and name `C#фонд`
 
 ### Requirement: Amount validation
-The amount SHALL be a positive whole-UAH integer (`> 0`). Decimals, zero,
-negative values, and digit separators (`_`, `,`) SHALL make the line
-malformed.
+The amount SHALL be a positive whole-UAH integer (`> 0`). Internal whitespace in the
+amount SHALL be stripped before parsing, so a thousands space is accepted (`12 000`
+parses as `12000`). Decimals, zero, negative values, and non-whitespace digit
+separators (`_`, `,`) SHALL make the line malformed.
 
 #### Scenario: Positive whole integer is valid
-- **WHEN** a line reads `Подорожі = 3000`
+- **WHEN** a line reads `3000 - Подорожі`
 - **THEN** the parsed entry has amount `3000`
 
-#### Scenario: Zero amount is malformed
-- **WHEN** a line reads `Подушка = 0`
-- **THEN** the line is skipped as malformed
+#### Scenario: Amount with an internal space is valid
+- **WHEN** a line reads `12 000 - donates`
+- **THEN** the parsed entry has amount `12000` and name `donates`
 
-#### Scenario: Negative amount is malformed
-- **WHEN** a line reads `Подушка = -100`
+#### Scenario: Zero amount is malformed
+- **WHEN** a line reads `0 - Подушка`
 - **THEN** the line is skipped as malformed
 
 #### Scenario: Decimal amount is malformed
-- **WHEN** a line reads `Подушка = 100.50`
+- **WHEN** a line reads `100.50 - Подушка`
 - **THEN** the line is skipped as malformed
 
-#### Scenario: Digit-separator amount is malformed
-- **WHEN** a line reads `Подушка = 1_000` or `Подушка = 1,000`
+#### Scenario: Non-whitespace digit-separator amount is malformed
+- **WHEN** a line reads `1_000 - Подушка` or `1,000 - Подушка`
 - **THEN** the line is skipped as malformed
 
 ### Requirement: Malformed line handling
-A structurally malformed line (no `=`, empty name, or invalid amount) SHALL
+A structurally malformed line (no `-`, empty name, or invalid amount) SHALL
 be skipped with a warning that includes the line number. Remaining valid
 lines SHALL still be processed.
 
-#### Scenario: Line without `=` is skipped with a warning
-- **WHEN** a data line contains no `=` separator
+#### Scenario: Line without `-` is skipped with a warning
+- **WHEN** a data line contains no `-` separator
+- **THEN** the line is skipped and a warning referencing its line number is produced
+
+#### Scenario: Old `=` grammar line is skipped with a warning
+- **WHEN** a line reads `Заощадження = 5000`
 - **THEN** the line is skipped and a warning referencing its line number is produced
 
 #### Scenario: Line with empty name is skipped with a warning
-- **WHEN** a line reads `= 5000`
+- **WHEN** a line reads `5000 -`
 - **THEN** the line is skipped and a warning referencing its line number is produced
 
 #### Scenario: Malformed line does not block remaining valid lines
@@ -114,8 +122,8 @@ skipped entirely with a warning listing the offending line numbers.
 Amounts for a duplicated name SHALL never be summed or replaced.
 
 #### Scenario: Same name on multiple lines is skipped for all occurrences
-- **WHEN** the plan contains `Заощадження = 5000` on line 1 and
-  `Заощадження = 2000` on line 3
+- **WHEN** the plan contains `5000 - Заощадження` on line 1 and
+  `2000 - Заощадження` on line 3
 - **THEN** neither line produces an entry
 
 #### Scenario: Duplicate warning lists all offending line numbers
@@ -130,3 +138,4 @@ output.
 #### Scenario: Valid entries preserve file order
 - **WHEN** the plan lists `Заощадження`, then `Подорожі`, then `Подушка`
 - **THEN** the returned entries appear in that same order
+

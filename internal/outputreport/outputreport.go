@@ -62,7 +62,7 @@ func WriteWarnings(w io.Writer, links []linkgen.Link, parseWarnings []planparsin
 
 // formatParseWarning renders a plan-parsing warning as
 // "warning: line(s) <Lines>: [<Name>: ]<Reason>", omitting the name
-// segment when the warning has no associated jar name (a missing '='
+// segment when the warning has no associated jar name (a missing '-'
 // separator or an empty name never resolved one).
 func formatParseWarning(pw planparsing.Warning) string {
 	loc := formatLines(pw.Lines)

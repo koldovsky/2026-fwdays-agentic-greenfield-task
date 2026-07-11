@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-11T17:54:53" hostname="LT-M-4850.local" time="0.285">
+  <properties/>
+  <testcase name="429 maps to RateLimited" classname="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" time="0.249"/>
+  <testcase name="401 maps to InvalidToken" classname="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" time="0.007"/>
+  <testcase name="missing token throws MissingToken without issuing a request" classname="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" time="0.007"/>
+  <testcase name="success decodes jars and issues exactly one request" classname="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" time="0.014"/>
+  <testcase name="malformed JSON on 200 maps to Unreachable" classname="md.agentic.jarsplit.data.monoclient.MonoApiJarFetcherTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

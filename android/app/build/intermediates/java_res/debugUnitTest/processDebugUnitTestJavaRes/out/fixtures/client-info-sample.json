@@ -1,0 +1,10 @@
+{
+  "jars": [
+    { "id": "jar1", "sendId": "jar/4xR000000000", "title": "Заощадження", "description": "", "currencyCode": 980, "balance": 500000, "goal": 0 },
+    { "id": "jar2", "sendId": "jar/8kP000000000", "title": "Подорожі", "description": "", "currencyCode": 980, "balance": 300000, "goal": 0 },
+    { "id": "jar3", "sendId": "jar/2wQ000000000", "title": "Подушка", "description": "", "currencyCode": 980, "balance": 150000, "goal": 0 },
+    { "id": "jar4", "sendId": "jar/9zN000000000", "title": "Подарунки", "description": "", "currencyCode": 980, "balance": 0, "goal": 0 },
+    { "id": "jar5", "sendId": "jar/9zN000000001", "title": "Подарунки", "description": "", "currencyCode": 980, "balance": 0, "goal": 0 },
+    { "id": "jar6", "sendId": "jar/1uS000000000", "title": "USD заощадження", "description": "", "currencyCode": 840, "balance": 0, "goal": 0 }
+  ]
+}

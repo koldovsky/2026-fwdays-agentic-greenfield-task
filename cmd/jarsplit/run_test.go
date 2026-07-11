@@ -104,7 +104,7 @@ func TestRun_EmptyPlan(t *testing.T) {
 		t.Errorf("stdout = %q, want empty", stdout.String())
 	}
 	errOut := stderr.String()
-	if !strings.Contains(errOut, "missing '='") {
+	if !strings.Contains(errOut, "missing '-'") {
 		t.Errorf("stderr = %q, want the parse warning", errOut)
 	}
 	if !strings.Contains(errOut, "fatal") {
@@ -116,7 +116,7 @@ func TestRun_EmptyPlan(t *testing.T) {
 }
 
 func TestRun_FetchErrors(t *testing.T) {
-	path := writeTempFile(t, "Заощадження = 5000\n")
+	path := writeTempFile(t, "5000 - Заощадження\n")
 
 	tests := []struct {
 		name string
@@ -154,7 +154,7 @@ func TestRun_FetchErrors(t *testing.T) {
 }
 
 func TestRun_AllMatchedNoWarnings(t *testing.T) {
-	path := writeTempFile(t, "Заощадження = 5000\nПодорожі = 3000\n")
+	path := writeTempFile(t, "5000 - Заощадження\n3000 - Подорожі\n")
 	fetcher := &fakeFetcher{jars: []monoclient.Jar{
 		{Title: "Заощадження", SendID: "sid-1", CurrencyCode: 980},
 		{Title: "Подорожі", SendID: "sid-2", CurrencyCode: 980},
@@ -178,7 +178,7 @@ func TestRun_AllMatchedNoWarnings(t *testing.T) {
 }
 
 func TestRun_MixedScenario(t *testing.T) {
-	path := writeTempFile(t, "Заощадження = 5000\nТипо = 100\nnotvalidline\n")
+	path := writeTempFile(t, "5000 - Заощадження\n100 - Типо\nnotvalidline\n")
 	fetcher := &fakeFetcher{jars: []monoclient.Jar{
 		{Title: "Заощадження", SendID: "sid-1", CurrencyCode: 980},
 	}}
@@ -197,7 +197,7 @@ func TestRun_MixedScenario(t *testing.T) {
 		t.Errorf("stdout unexpectedly contains an unmatched entry: %q", out)
 	}
 	errOut := stderr.String()
-	for _, want := range []string{"missing '='", "Типо", "planned", "5100 ₴", "100 ₴", "1 jar"} {
+	for _, want := range []string{"missing '-'", "Типо", "planned", "5100 ₴", "100 ₴", "1 jar"} {
 		if !strings.Contains(errOut, want) {
 			t.Errorf("stderr missing %q; got:\n%s", want, errOut)
 		}
@@ -205,7 +205,7 @@ func TestRun_MixedScenario(t *testing.T) {
 }
 
 func TestRun_ZeroMatched(t *testing.T) {
-	path := writeTempFile(t, "Типо = 100\n")
+	path := writeTempFile(t, "100 - Типо\n")
 	fetcher := &fakeFetcher{jars: []monoclient.Jar{
 		{Title: "Заощадження", SendID: "sid-1", CurrencyCode: 980},
 	}}
@@ -226,7 +226,7 @@ func TestRun_ZeroMatched(t *testing.T) {
 }
 
 func TestRun_FetcherCalledExactlyOnce(t *testing.T) {
-	path := writeTempFile(t, "Заощадження = 5000\nПодорожі = 3000\nПодушка = 1500\n")
+	path := writeTempFile(t, "5000 - Заощадження\n3000 - Подорожі\n1500 - Подушка\n")
 	fetcher := &fakeFetcher{jars: []monoclient.Jar{
 		{Title: "Заощадження", SendID: "sid-1", CurrencyCode: 980},
 		{Title: "Подорожі", SendID: "sid-2", CurrencyCode: 980},
@@ -249,7 +249,7 @@ func TestRun_EndToEndWithRealFixtureFetcher(t *testing.T) {
 	t.Setenv("MONO_CLIENT_INFO_FILE", fixturePath)
 	t.Setenv("MONO_TOKEN", "")
 
-	planPath := writeTempFile(t, "Заощадження = 5000\nПодорожі = 3000\nТипо = 100\n")
+	planPath := writeTempFile(t, "5000 - Заощадження\n3000 - Подорожі\n100 - Типо\n")
 
 	var stdout, stderr bytes.Buffer
 	code := run([]string{planPath}, &stdout, &stderr, monoclient.NewJarFetcher())

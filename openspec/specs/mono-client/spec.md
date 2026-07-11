@@ -14,6 +14,10 @@ of `plan-parsing`; downstream capabilities (`jar-matching`,
 `cli-orchestration`) consume its exported `Jar` type and `FetchJars`
 interface.
 
+These requirements are implementation-agnostic business rules: the Go CLI
+(`internal/monoclient`) and the Android app (`data/monoclient`, see
+`android-client`) each independently satisfy this same contract.
+
 ## Requirements
 
 ### Requirement: Single authenticated client-info call
