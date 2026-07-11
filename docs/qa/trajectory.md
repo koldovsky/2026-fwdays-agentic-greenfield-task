@@ -201,6 +201,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- fb50f35 factory: add the spec-autopilot loop (author -> grill+fidelity -> judge -> ratify) [Refs: BC-PROC-01]
 - 20c4469 backend: sort test-local imports for ruff 0.15 isort (tooling drift) [Refs: BC-PROC-01]
 - 5a8a3b8 harness: distinguish entry-point sharing from cross-slice ownership conflicts [Refs: BC-PROC-01]
 - c6c7d8d docs: establish the agent-run record system and record the 001 audit [Refs: BC-PROC-01, BC-TRAIL-01]

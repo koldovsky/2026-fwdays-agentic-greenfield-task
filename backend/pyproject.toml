@@ -26,7 +26,11 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "httpx>=0.27",
-    "ruff>=0.6",
+    # Pinned to a single minor: ruff's isort tightens between minors, so a floating
+    # `>=0.6` silently re-flags older slices' import order (I001) on a fresh venv and
+    # blocks the shared gate for every branch on this base (see the slice-005 drift
+    # incident). Bump this deliberately, re-running `ruff --fix` in the same commit.
+    "ruff>=0.15,<0.16",
     "mypy>=1.11",
     # Coverage measurement for the gate-slice ratchet (scripts/gate-slice); the
     # [toml] extra lets coverage read its config from this file on Python 3.10.
