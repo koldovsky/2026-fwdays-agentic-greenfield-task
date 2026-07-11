@@ -1,0 +1,232 @@
+/* JobStatusPanel — progress bar + chunk list + status surface. */
+
+.job-status {
+  width: 100%;
+  max-width: 560px;
+  background-color: var(--color-surface);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.job-status__title {
+  font-size: var(--font-heading-size);
+  font-weight: var(--font-heading-weight);
+  line-height: var(--font-heading-line);
+  margin: 0;
+}
+
+.job-status__jobid {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.job-status__jobid code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.job-status__connection {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  padding: 4px var(--space-sm);
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.job-status__connection[data-connected="true"] {
+  color: #166534; /* green-800 */
+  background-color: #dcfce7; /* green-100 */
+}
+
+.job-status__progress {
+  width: 100%;
+  height: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #e2e8f0; /* slate-200 */
+}
+
+.job-status__progress::-webkit-progress-bar {
+  background-color: #e2e8f0;
+  border-radius: 6px;
+}
+
+.job-status__progress::-webkit-progress-value {
+  background-color: var(--color-accent);
+  border-radius: 6px;
+  transition: width 150ms ease-out;
+}
+
+.job-status__progress::-moz-progress-bar {
+  background-color: var(--color-accent);
+  border-radius: 6px;
+}
+
+.job-status__progress-text {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.job-status__last-chunk {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.job-status__last-chunk code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.job-status__chunk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-label-size);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: var(--color-text);
+}
+
+.job-status__chunk-list li {
+  padding: 4px var(--space-sm);
+  background-color: #f1f5f9;
+  border-radius: 4px;
+}
+
+.job-status__completed {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: #166534; /* green-800 */
+  margin: 0;
+  padding: var(--space-sm);
+  background-color: #dcfce7; /* green-100 */
+  border-radius: 8px;
+}
+
+.job-status__download-link {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.job-status__download-link:hover {
+  color: #4338ca;
+}
+
+/* Download links row — completed state (04-UI-SPEC §4). */
+
+.job-status__downloads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.job-status__download-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.job-status__download-link {
+  min-height: var(--min-target);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-md);
+  border-radius: 8px;
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+  text-decoration: none;
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  transition: background-color 150ms ease-out;
+}
+
+.job-status__download-link:hover {
+  background-color: #4338ca;
+  color: var(--color-text-on-accent);
+}
+
+.job-status__download-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.job-status__download-filename {
+  margin: 0;
+  padding-left: var(--space-md);
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-status__completed-copy {
+  margin: 0;
+  font-weight: var(--font-label-weight);
+}
+
+.job-status__combined-banner {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  background-color: #e0e7ff; /* indigo-100 */
+  color: #3730a3; /* indigo-800 */
+  border-radius: 8px;
+  font-size: var(--font-label-size);
+  line-height: var(--font-label-line);
+}
+
+/* Quick 260710-oih / JOBS-06: Cancel button row (non-terminal state) +
+ * "Back to Workflow Choice" button row (completed state). The two
+ * rows share the same flex-row shape so the panel renders a
+ * consistent action surface; the danger button modifier on the
+ * ghost base styles the destructive action in the existing
+ * destructive palette (--color-destructive from globals.css). */
+
+.job-status__actions,
+.job-status__post-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.btn--danger {
+  color: var(--color-destructive, #dc2626);
+  border-color: var(--color-error-border, #fecaca);
+}
+
+.btn--danger:hover {
+  color: var(--color-destructive-hover, #b91c1c);
+  background-color: var(--color-error-bg, #fef2f2);
+}

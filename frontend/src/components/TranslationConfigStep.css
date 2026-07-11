@@ -1,0 +1,171 @@
+/* TranslationConfigStep — 4-field translation configuration panel. */
+
+.translation-config {
+  width: 100%;
+  max-width: 560px;
+  background-color: var(--color-surface);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.translation-config__title {
+  font-size: var(--font-heading-size);
+  font-weight: var(--font-heading-weight);
+  line-height: var(--font-heading-line);
+  margin: 0;
+}
+
+.translation-config__hint {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+  padding: var(--space-sm);
+  background-color: #f1f5f9;
+  border-radius: 8px;
+}
+
+.translation-config__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.target-language-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.target-language-select__label {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text);
+}
+
+.target-language-select__select {
+  min-height: var(--min-target);
+  padding: 0 var(--space-sm);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  color: var(--color-text);
+}
+
+.target-language-select__select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-color: var(--color-accent);
+}
+
+.target-language-select__warning {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-destructive);
+  margin: 0;
+  padding: var(--space-sm);
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  border-radius: 8px;
+}
+
+.provider-model-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.provider-model-select__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.provider-model-select__label {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text);
+}
+
+.provider-model-select__select,
+.provider-model-select__input {
+  min-height: var(--min-target);
+  padding: 0 var(--space-sm);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  font-size: var(--font-body-size);
+  color: var(--color-text);
+}
+
+.provider-model-select__select:focus-visible,
+.provider-model-select__input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-color: var(--color-accent);
+}
+
+.provider-model-select__apikey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.provider-model-select__apikey-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.provider-model-select__apikey-row .provider-model-select__input {
+  flex: 1;
+  width: 100%;
+}
+
+.provider-model-select__hint {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.provider-model-select__error {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-destructive);
+  margin: 0;
+}
+
+/* Phase 1 plan 02: provider-conditional Base URL field + Load Models
+   row. The base URL field is a full-width text input; the Load
+   Models row holds the model `<select>` + the "Load Model List"
+   button + the in-flight spinner. */
+.provider-model-select__base-url-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.provider-model-select__load-models-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.provider-model-select__load-models-row .provider-model-select__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}

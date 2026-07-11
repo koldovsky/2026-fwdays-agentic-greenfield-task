@@ -1,0 +1,203 @@
+/* UploadCard — card surface + dropzone / metadata-preview states.
+ *
+ * Visual contract: 01-UI-SPEC.md §Color (slate-50 dominant, white surface,
+ * indigo-600 accent, slate-300 dashed dropzone border, 2px dashed indigo-600
+ * on drag-over) + §Spacing (xs–2xl) + §Typography (Display/Heading/Label/
+ * Body) + §Card states (150ms ease-out opacity + translateY 8px).
+ */
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid #e2e8f0; /* slate-200 — soft card border */
+  border-radius: 12px;
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+  outline: none;
+}
+
+.card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.card--drag-over {
+  border-color: var(--color-dropzone-border-active);
+  border-style: dashed;
+  border-width: 2px;
+  padding: calc(var(--space-lg) - 1px); /* keep inner padding stable */
+}
+
+.card__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Dropzone state */
+.card__section--dropzone {
+  border: 2px dashed var(--color-dropzone-border);
+  border-radius: 8px;
+  padding: var(--space-lg);
+  align-items: center;
+  text-align: center;
+  transition: border-color 150ms ease-out;
+}
+
+.card--drag-over .card__section--dropzone {
+  border-color: var(--color-dropzone-border-active);
+}
+
+.card__dropzone-title {
+  font-size: var(--font-heading-size);
+  font-weight: var(--font-heading-weight);
+  line-height: var(--font-heading-line);
+  margin: 0;
+}
+
+.card__dropzone-hint {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card__loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  justify-content: center;
+  padding-top: var(--space-sm);
+}
+
+.card__loading-label {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  color: var(--color-text);
+}
+
+.card__client-reject {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  color: var(--color-destructive);
+  margin: 0;
+  padding-top: var(--space-sm);
+}
+
+/* Metadata-preview state */
+.card__section--metadata {
+  align-items: stretch;
+  text-align: left;
+}
+
+.card__metadata-title {
+  font-size: var(--font-heading-size);
+  font-weight: var(--font-heading-weight);
+  line-height: var(--font-heading-line);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.card__metadata {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.card__metadata-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.card__metadata-row dt {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.card__metadata-row dd {
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  line-height: var(--font-body-line);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.card__metadata-fallback {
+  color: var(--color-text-muted);
+}
+
+/* Buttons */
+.btn {
+  min-height: var(--min-target);
+  min-width: var(--min-target);
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  border-radius: 8px;
+  padding: 0 var(--space-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: 1px solid transparent;
+  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.btn--primary {
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+  border-color: var(--color-accent);
+}
+
+.btn--primary:hover {
+  background-color: #4338ca; /* indigo-700 */
+  border-color: #4338ca;
+}
+
+.btn--secondary {
+  background-color: #3730a3; /* indigo-800 — darker than primary (indigo-600) */
+  color: var(--color-text-on-accent);
+  border-color: #3730a3;
+}
+
+.btn--secondary:hover {
+  background-color: #312e81; /* indigo-900 — hover darker than primary hover (indigo-700) */
+  border-color: #312e81;
+}
+
+.btn--tertiary {
+  background-color: transparent;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn--tertiary:hover {
+  background-color: var(--color-accent-tint);
+}
+
+.btn:disabled,
+.btn--primary:disabled,
+.btn--secondary:disabled,
+.btn--tertiary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

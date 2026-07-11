@@ -1,0 +1,65 @@
+/* NoticeBanner — inline banner with optional copy + dismiss. */
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 8px;
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  border: 1px solid;
+}
+
+.notice__message {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice--info {
+  background-color: #eff6ff; /* blue-50 */
+  border-color: #bfdbfe; /* blue-200 */
+  color: #1e3a8a; /* blue-900 */
+}
+
+.notice--warning {
+  background-color: #fffbeb; /* amber-50 */
+  border-color: #fde68a; /* amber-200 */
+  color: #78350f; /* amber-900 */
+}
+
+.notice--error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error-border);
+  color: var(--color-destructive);
+}
+
+.notice__copy {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  padding: 4px var(--space-sm);
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+  min-height: 28px;
+}
+
+.notice__copy:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.notice__dismiss {
+  font-size: 18px;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 var(--space-xs);
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

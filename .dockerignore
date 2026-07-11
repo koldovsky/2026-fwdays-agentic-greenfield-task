@@ -1,0 +1,8 @@
+**/node_modules
+**/.venv
+**/.ruff_cache
+**/.mypy_cache
+**/.pytest_cache
+backend/db
+backend/data
+backend/scratch

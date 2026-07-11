@@ -1,0 +1,198 @@
+# Demo stack — ADR-0003 + DOCKER-01/02 (Phase 1 plan 05).
+#
+# Two services: `mock-llm` + `backend`. Both share the same
+# repo-root `Dockerfile` (a single source of truth for the image;
+# the build cache is re-used by compose). The `mock-llm` service
+# runs the consolidated mock (D-05 + plan 04 + plan 260711-1ww) at
+# `python -m epubtv.tools.mock_llm_service`; the `backend`
+# service points at it via the in-network `http://mock-llm:8765/v1`
+# URL. The `mock-llm` port is exposed ONLY to the compose network
+# (`expose: ["8765"]`, no `ports:`) — the host cannot reach it.
+#
+# Architecture:
+#   - `mock-llm`: same `image: epubtv` as `backend`; runs
+#     `python -m epubtv.tools.mock_llm_service`; binds
+#     `0.0.0.0:8765` inside the container (the `MOCK_LLM_HOST`
+#     env var); `expose: ["8765"]` (no host port); `healthcheck:`
+#     polls `/healthz` on `127.0.0.1:8765`; `restart: "no"` (the
+#     `backend` `depends_on` gate handles startup order). The
+#     service exposes BOTH the OpenAI-compatible wire shape
+#     (`/v1/chat/completions`, `/v1/audio/speech`, `/v1/models`,
+#     `/v1/audio/voices`) AND the Ollama wire shape
+#     (`/api/tags`, `/api/generate`) per the Ollama OpenAPI
+#     specs in `docs/ollama-models-spec.yml` +
+#     `docs/ollama-text-spec.yml`. NOTE: `/api/chat` is NOT in
+#     the Ollama spec as of 0.1.0, so the mock implements
+#     `/api/generate` only; callers that default to `/api/chat`
+#     must override the endpoint.
+#   - `backend` (uvicorn --workers 1, mandatory per
+#     backend/AGENTS.md). Built from the repo-root `Dockerfile`
+#     (the production single-container image, unchanged). Depends
+#     on `mock-llm: { condition: service_healthy }` so the
+#     backend only starts once the mock-llm healthcheck is green.
+#   - The SPA is served by uvicorn on the same origin (no CORS):
+#     `EPUBTV_ENV=prod` + `EPUBTV_SERVE_STATIC=true` + the
+#     `frontend/out/` tree baked into the image at
+#     `/app/frontend/out`.
+#   - SQLite lives on a named volume (`epubtv-db`) mounted on
+#     `/app/db` (parent dir, NOT the file — see Pitfall 3 in
+#     260707-cxw-RESEARCH.md: bind-mounting a single file would
+#     leave the WAL/SHM sidecars in the image layer).
+#   - The 4 named volumes (`epubtv-db`, `epubtv-scratch`,
+#     `epubtv-audio`, `epubtv-artifacts`) keep the demo state
+#     across `docker compose down` (use `docker compose down --volumes`
+#     to reset). The `mock-llm` service is stateless and does
+#     not need a volume mount.
+#
+# Runtime env vars (WR-06):
+#   - `EPUBTV_DEFAULT_OLLAMA_URL=http://mock-llm:8765/` — the
+#     in-network URL the `backend` lifespan passes to
+#     `OllamaHttpTranslationAdapter` (TRAN-02). Ollama's native
+#     endpoints live at `/api/generate` + `/api/tags` (no `/v1`
+#     prefix), so the base URL is the bare service root. The
+#     `OllamaHttpTranslationAdapter` constructor strips a trailing
+#     `/v1` if the user supplies it (forward-compat), so either
+#     shape works against the mock.
+#   - `EPUBTV_DEFAULT_OPENAI_URL=http://mock-llm:8765/v1` — the
+#     in-network URL the `backend` lifespan passes to
+#     `OpenAIHttpTranslationAdapter` (TRAN-02) +
+#     `OpenAIHttpTTSAdapter` (TTS-02). The OpenAI-compatible wire
+#     shape is mounted at `/v1/...` so the base URL carries the
+#     `/v1` suffix. The legacy single `MOCK_LLM_URL` env var is
+#     REMOVED — the per-provider split lets the OpenAI-compatible
+#     adapter point at a different upstream than the Ollama adapter
+#     (e.g. a real `https://api.openai.com/v1` for OpenAI + a local
+#     `http://localhost:11434/` for Ollama) without one URL
+#     shadowing the other.
+#   - The legacy `MOCK_TRANSLATOR_BEHAVIOUR` + `MOCK_TTS_BEHAVIOUR`
+#     env vars (per-chunk failure-mode injection for the in-process
+#     mock adapters) were retired in plan 01-02 Task 1: the
+#     in-process `MockTranslationAdapter` + `MockTTSAdapter` moved
+#     to test-only fixtures in `tests/unit/_adapters/`; the
+#     production failure-injection seam is dead (the
+#     `tests/unit/_behaviour/test_behaviour_spec.py` module owns
+#     it per plan 01-02 Task 1).
+#
+# Healthcheck: `urllib.request` is the only HTTP tool the slim
+# Python image ships. The `/health` route is the Phase 1
+# walking-skeleton liveness probe; `/healthz` is the mock-llm
+# liveness probe. The cold-start budget (10s start_period) absorbs
+# the 2-stage build + uv sync + NLTK bake.
+#
+# Quickstart:
+#   docker compose up -d
+#   docker compose ps  # wait until BOTH services report 'healthy'
+#   open http://localhost:8000
+
+services:
+  mock-llm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Inherit the same image as `backend` (the build above
+    # produces the same image; the service block is duplicated
+    # so the service gets its own container + healthcheck +
+    # depends_on entry. Compose re-uses the build cache.)
+    command: ["run-in-venv.sh", "-m", "epubtv.tools.mock_llm_service"]
+    environment:
+      # The host that the `backend` service resolves via compose
+      # DNS. The mock service binds 0.0.0.0 INSIDE the container
+      # (all container interfaces); the in-network DNS name is
+      # `mock-llm` (the service name).
+      MOCK_LLM_HOST: "0.0.0.0"
+      # Loopback port inside the container; the `backend`
+      # service reaches it via the in-network DNS name
+      # `mock-llm` on the same port.
+      MOCK_LLM_PORT: "8765"
+    expose:
+      - "8765"  # only inside the compose network; no host port
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "run-in-venv.sh",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/healthz').read()",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s  # cold start: 3-stage build + venv install + NLTK bake
+    restart: "no"  # the backend's depends_on gate handles startup order
+    networks:
+      - public
+      - mock
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["run-in-venv.sh", "-m", "epubtv.main",
+              "--workers", "1", "--log-level", "debug"]
+    environment:
+      # EPUBTV_FRONTEND_OUT and EPUBTV_SERVE_STATIC are intentionally
+      # NOT set in the compose env so the wheel's package.json
+      # carries tackes precedence.
+      EPUBTV_DB_PATH: /app/db/epubtv.db
+      EPUBTV_SCRATCH_DIR: /app/scratch
+      EPUBTV_AUDIO_DIR: /app/audio
+      EPUBTV_ARTIFACT_DIR: /app/artifacts
+      EPUBTV_ENV: dev
+      # DOCKER-01 + plan 04 + WR-06 + plan 260711-1ww: per-provider
+      # in-network URLs the backend lifespan passes to the 3
+      # per-provider HTTP adapter subclasses. Ollama points at the
+      # bare service root (Ollama's native endpoints are at
+      # `/api/generate` + `/api/tags`); OpenAI-compatible points at
+      # the `/v1` prefix (the OpenAI wire shape mounts chat +
+      # speech + models under `/v1/...`). The
+      # `OllamaHttpTranslationAdapter` strips a trailing `/v1` for
+      # forward-compat with users who type the OpenAI shape. Per
+      # `docs/ollama-text-spec.yml` — `/api/chat` is NOT in the
+      # Ollama OpenAPI spec as of 0.1.0, so the mock implements
+      # `/api/generate` only; callers that default to `/api/chat`
+      # must override the endpoint.
+      EPUBTV_DEFAULT_OLLAMA_URL: http://mock-llm:8765/
+      EPUBTV_DEFAULT_OPENAI_URL: http://mock-llm:8765/v1
+      EPUBTV_LOG_LEVEL: DEBUG
+      EPUBTV_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:8000:8000"  # loopback-only (T-02-18 mitigation)
+    depends_on:
+      mock-llm:
+        condition: service_healthy
+    volumes:
+      # Named volumes for SQLite + scratch + audio + artifacts.
+      # Mount the parent dir for the db so WAL/SHM sidecars stay on
+      # the same volume (Pitfall 3).
+      - epubtv-db:/app/db
+      - epubtv-scratch:/app/scratch
+      - epubtv-audio:/app/audio
+      - epubtv-artifacts:/app/artifacts
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "run-in-venv.sh",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s  # cold start: 3-stage build + venv install + NLTK bake
+    networks:
+      - public
+      - mock
+
+networks:
+  public:
+    driver: bridge
+
+  mock:
+    driver: bridge
+    internal: true
+
+volumes:
+  epubtv-db:
+  epubtv-scratch:
+  epubtv-audio:
+  epubtv-artifacts:

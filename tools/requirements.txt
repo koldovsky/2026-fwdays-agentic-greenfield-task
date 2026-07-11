@@ -1,0 +1,15 @@
+# Pinned dev dependencies for `tools/build_fixtures.py` (mimesis fixture generator).
+# Run from the repo root in a standalone venv:
+#     python3 -m venv .tools-venv
+#     .tools-venv/bin/pip install -r tools/requirements.txt
+#     .tools-venv/bin/python tools/build_fixtures.py
+#
+# Inside the backend project uv venv (which is committed), the same packages
+# are already available via `uv run python tools/build_fixtures.py`.
+#
+# These pins are dev-only — the runtime image does NOT need mimesis
+# (ADR-0006 + D-01). Versions verified against PyPI 2026-07-03.
+mimesis>=11.0,<20.0
+ebooklib>=0.19,<0.21
+beautifulsoup4>=4.12,<5.0
+html5lib>=1.1,<2.0

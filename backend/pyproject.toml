@@ -1,0 +1,138 @@
+[project]
+name = "epubtv"
+version = "0.1.0"
+description = "EPUB Translator & Voice-Over platform — backend (FastAPI, hexagonal, SQLite WAL)."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Oleksandr Ostrenko", email = "oleksandr.ostrenko@gmail.com" },
+]
+dependencies = [
+    "fastapi>=0.115,<0.140",
+    "uvicorn[standard]>=0.30",
+    "sqlmodel>=0.0.30",
+    "alembic>=1.16",
+    "aiosqlite>=0.20",
+    "ebooklib>=0.19",
+    "beautifulsoup4>=4.12",
+    "html5lib>=1.1",
+    "httpx>=0.27",
+    "python-multipart>=0.0.20",
+    "anyio>=4.4",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.4",
+    "nltk>=3.9.4,<3.10",
+    "pydub==0.25.1",
+    "aiofiles>=25.1.0",
+    "openai>=1.50,<2.0",
+    "ollama>=0.4,<1.0",
+    "audioop-lts; python_version >= '3.13'",
+]
+
+[project.optional-dependencies]
+
+[project.scripts]
+epubtv = "epubtv.main:app"
+mock-llm = "epubtv.tools.mock_llm_service:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/epubtv"]
+
+[tool.hatch.build]
+include = [
+    "LICENSE",
+    "README.md",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"www" = "epubtv/www"
+"package.json" = "epubtv/package.json"
+
+# Custom hatchling build hook: copies the frontend dist +
+# writes the prod-defaults package.json into backend dir
+# BEFORE the wheel is packaged. The hook lives at
+# `backend/hatch_build.py` (project root relative to
+# pyproject.toml). See `backend/hatch_build.py` header
+# for the FRONTEND_OUT env-var contract + the G1/G3
+# gray-area resolution.
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "pytest-asyncio>=0.24",
+    "pytest-bdd>=8.0",
+    "mimesis>=11.0",
+    "ruff",
+    "pyrefly>=1.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Default marker filter: exclude `defer_scaling` (D-02 post-sprint hardening)
+# and `defer_combined` (Phase 4 combined-workflow re-enable hook). To opt
+# in, pass an explicit `-m` (e.g. `pytest -m defer_scaling`) — pytest
+# takes the last `-m` expression, so the command-line flag wins.
+addopts = "-m 'not defer_scaling and not defer_combined and not slow'"
+markers = [
+    "api: REST + WS contract tests via httpx.ASGITransport against FastAPI",
+    "integration: end-to-end slice tests with fixtures",
+    "web: SPA / browser tests (Playwright)",
+    "smoke: live demo path subset",
+    "regression: full CI gate, not live demo",
+    "future: deferred scenarios, skipped by sprint runner",
+    "slow: tests that exercise slow / real-time behaviour",
+    "defer_scaling: post-sprint hardening scenarios (D-02); pytest -m 'not defer_scaling' skips them",
+    "defer_combined: Phase 4 combined-workflow scenarios; pytest -m 'not defer_combined' skips them (the 2 F4 Combined-workflow scenarios are tagged for the Phase 4 re-enable hook)",
+    "feature_F1: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook)",
+    "feature_F2: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook)",
+    "feature_F3: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook)",
+    "feature_F4: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook)",
+    "feature_F5: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook)",
+    "feature_F6: BDD feature-tag passthrough (auto-applied by pytest-bdd, ``:`` rewritten to ``_`` by pytest_bdd_apply_tag hook) — Phase 4 plan 04-04",
+    "feature_[F3]: BDD feature-tag passthrough for the F3 feature (brackets are part of the tag name)",
+    "wip: work-in-progress scenarios (the F6 retention TTL @wip scenario in export-and-download.feature)",
+    "tcid: Test Case ID per D-07 ({REQ-ID}-SC{NN} or {REQ-ID}-UT{NN}); see docs/traceability/requirements-traceability.md",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",   # line length handled by formatter
+    "RUF002", # ambiguous en dash in docstrings is intentional typography
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B008"]  # allow FastAPI() in fixtures
+"src/epubtv/api/**" = ["B008"]  # FastAPI Depends() in route signature defaults
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pyrefly]
+python_version = "3.11"
+project_includes = ["src/**/*", "tests/**/*"]
+project_excludes = ["**/alembic/**", ".venv/**", "build/**", "dist/**"]
+untyped_def_behavior = "skip-and-infer-return-any"
+search_path = ["src", "tests", "tests/unit"]

@@ -1,0 +1,85 @@
+/* VoiceoverConfigStep — voiceover configuration panel (D-16). */
+
+.voiceover-config {
+  width: 100%;
+  max-width: 560px;
+  background-color: var(--color-surface);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.voiceover-config__title {
+  font-size: var(--font-heading-size);
+  font-weight: var(--font-heading-weight);
+  line-height: var(--font-heading-line);
+  margin: 0;
+}
+
+.voiceover-config__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.voiceover-config__label {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text);
+}
+
+.voiceover-config__read-only-value {
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  line-height: var(--font-body-line);
+  color: var(--color-text);
+  margin: 0;
+  padding: var(--space-sm);
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  font-family: var(--font-mono, monospace);
+}
+
+.voiceover-config__hint {
+  font-size: var(--font-label-size);
+  font-weight: var(--font-label-weight);
+  line-height: var(--font-label-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.voiceover-config__select,
+.voiceover-config__input {
+  min-height: var(--min-target);
+  padding: 0 var(--space-sm);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  color: var(--color-text);
+}
+
+.voiceover-config__select:focus-visible,
+.voiceover-config__input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-color: var(--color-accent);
+}
+
+.voiceover-config__select:disabled {
+  background-color: #f1f5f9;
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.voiceover-config__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}

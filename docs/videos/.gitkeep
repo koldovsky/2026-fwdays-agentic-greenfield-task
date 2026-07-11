@@ -1,0 +1,12 @@
+# Placeholder so the docs/videos/ directory exists in git.
+# The F1 happy-path video (f1-epub-upload.webm, D-05) is recorded by
+# the document-bdd-feature skill after the Phase 1 quality gate passes.
+# Plan 02-04 added f2-f3-translation-pipeline.webm; plan 03-05 added
+# f4-voiceover-happy-path.webm. f1 is plan 01-03's deliverable.
+#
+# F5 has no committed webm — the F5 @web @smoke scenario
+# "WS-driven JobStatusPanel renders + connects after a translation
+# job is created" is the D-06 BDD test's inline recording target
+# (backend/tests/bdd/test_documentation_video_dimensions.py asserts
+# the produced webm is 1280x720 + duration>=3s). Re-recorded against
+# the new defaults in quick 260707-rom (2026-07-07) — see SUMMARY.md.

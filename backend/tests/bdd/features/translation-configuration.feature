@@ -1,0 +1,1 @@
+../../../../docs/features/translation-configuration.feature

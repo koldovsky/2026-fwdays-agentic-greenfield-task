@@ -1,0 +1,31 @@
+# Node / Next
+node_modules/
+.next/
+out/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Yarn
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*
+yarn-error.log
+
+# Editor
+.vscode/
+.idea/
+*.log
+.DS_Store
