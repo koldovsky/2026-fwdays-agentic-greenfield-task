@@ -1,13 +1,17 @@
 import { defineConfig } from 'vitest/config'
 
-// Minimal frontend unit-test runner (introduced in slice 003 for FR-TIMER-05).
-// Pure-logic units only: `node` environment, no jsdom / testing-library — the one
-// thing under test here is the pure keyboard-shortcut mapper (src/pages/Timer/
-// resolveShortcut.ts), which the Timer component then calls for real. `npm test`
-// runs this and is wired into scripts/verify.* so gate-slice executes it.
+// Frontend unit-test runner. Slice 003 introduced a minimal `node` runner for the
+// pure keyboard-shortcut mapper. Slice 005 (Stats UI) adds component-render tests, so
+// the environment is upgraded to `jsdom` (a superset of `node` for the pure logic
+// tests — the pre-existing resolveShortcut.test.ts still passes) and `.test.tsx` files
+// are included. `setupFiles` registers @testing-library/jest-dom matchers. Chart.js
+// components are NOT rendered here (jsdom has no canvas); the chart tests exercise the
+// pure data-transform layer instead (see src/pages/Stats/__tests__).
 export default defineConfig({
   test: {
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
+    environment: 'jsdom',
+    globals: false,
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    setupFiles: ['./vitest.setup.ts'],
   },
 })
