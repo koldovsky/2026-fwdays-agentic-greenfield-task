@@ -28,12 +28,21 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-CAT-01 | COVERED | 002 | backend/tests/test_categories.py::test_create_category_happy_path<br>backend/tests/test_categories.py::test_duplicate_active_name_rejected<br>backend/tests/test_categories.py::test_same_name_allowed_for_two_users |
 | FR-CAT-02 | COVERED | 002 | backend/tests/test_categories.py::test_edit_updates_name_color_description<br>backend/tests/test_categories.py::test_rename_onto_existing_active_name_rejected<br>backend/tests/test_categories.py::test_user_cannot_edit_another_users_category |
 | FR-CAT-03 | COVERED | 002 | backend/tests/test_categories.py::test_archived_category_excluded_from_active_list<br>backend/tests/test_categories.py::test_delete_archives_category<br>backend/tests/test_categories.py::test_delete_category_with_no_sessions_removed_from_active_list<br>backend/tests/test_categories.py::test_user_cannot_delete_another_users_category |
+| FR-HEAT-01 | GAP | 004 | (none) |
+| FR-HEAT-02 | GAP | 004 | (none) |
+| FR-METR-01 | GAP | 004 | (none) |
+| FR-METR-02 | GAP | 004 | (none) |
+| FR-METR-03 | GAP | 004 | (none) |
+| FR-METR-04 | GAP | 004 | (none) |
+| FR-METR-05 | GAP | 004 | (none) |
+| FR-METR-06 | GAP | 004 | (none) |
+| FR-METR-07 | GAP | 004 | (none) |
 | FR-NOTIF-01 | COVERED | 003 | backend/tests/test_undo.py::test_consumed_token_second_use_is_404<br>backend/tests/test_undo.py::test_expired_token_is_404<br>backend/tests/test_undo.py::test_undo_of_delete_reinserts_session_and_pauses<br>backend/tests/test_undo.py::test_undo_of_discard_conflicts_with_new_active_session<br>backend/tests/test_undo.py::test_undo_of_discard_restores_active_timer<br>backend/tests/test_undo.py::test_undo_of_edit_reverts_prior_values |
 | NFR-SEC-01 | COVERED | 001 | backend/tests/test_auth.py::test_password_stored_hashed |
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 24 claimed, 24 traced, 0 gap.
+Summary: 33 claimed, 24 traced, 9 gap.
 
 ## Requirements not yet claimed by any spec
 
@@ -43,20 +52,11 @@ Informational - these await a future slice; not counted as gaps.
 - FR-SHELL-02
 - FR-AUTH-04
 - FR-AUTH-05
-- FR-HEAT-01
-- FR-HEAT-02
 - FR-STATS-01
 - FR-STATS-02
 - FR-STATS-03
 - FR-STATS-04
 - FR-STATS-05
-- FR-METR-01
-- FR-METR-02
-- FR-METR-03
-- FR-METR-04
-- FR-METR-05
-- FR-METR-06
-- FR-METR-07
 - FR-COACH-01
 - FR-COACH-02
 - FR-COACH-03

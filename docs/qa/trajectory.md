@@ -70,6 +70,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/003.md - present but not clean
 - Commits:
+  - 2b76fd2 docs(timer-sessions): close slice 003 - records, review evidence, archive [Refs: FR-TIMER-01, FR-SESS-01, FR-NOTIF-01]
   - de995c4 feat(timer-sessions): the active timer, session store, and undo to green [Refs: FR-TIMER-01, FR-TIMER-02, FR-TIMER-03, FR-TIMER-04, FR-TIMER-05, FR-TIMER-06, FR-SESS-01, FR-SESS-02, FR-SESS-03, FR-SESS-04, FR-SESS-05, FR-SESS-06, FR-NOTIF-01]
   - f359689 test(timer-sessions): RED acceptance tests for the 003 contract [Refs: FR-TIMER-01, FR-SESS-01, FR-NOTIF-01]
   - 0220018 harness(frontend): add a minimal vitest unit runner, wired into verify [Refs: FR-TIMER-05]
@@ -110,7 +111,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/pages/Timer/resolveShortcut.test.ts
   - frontend/src/pages/Timer/resolveShortcut.ts
   - frontend/src/pages/Timer/timer.css
-- Other files touched (docs/config): 14
+- Other files touched (docs/config): 30
 
 ## Process / infra commits (traced, not a feature slice)
 
