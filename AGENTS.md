@@ -37,7 +37,7 @@ POSIX venv path is `.venv/bin/python`. `PY` below = the venv python.
 ## Verify — source of truth (run before claiming anything is done)
 
 ```powershell
-powershell -File scripts/verify.ps1    # one shot: db → ruff → mypy → alembic → pytest(+DB) → frontend build
+powershell -File scripts/verify.ps1    # one shot: db → ruff → mypy → alembic → pytest(+DB) → frontend build + unit tests
 ```
 
 Granular (backend/ unless noted):
@@ -47,10 +47,10 @@ $PY -m ruff check .                     # lint + import order
 $PY -m mypy app                         # types
 $PY -m alembic upgrade head             # migrations apply
 $env:RUN_DB_TESTS=1; $PY -m pytest -q   # tests, incl. real Postgres connectivity
-cd ../frontend; npm run build           # tsc strict + bundle
+cd ../frontend; npm run build; npm test # tsc strict + bundle, then vitest unit (slice 003+)
 ```
 
-"Green" = lint ✓ types ✓ migrations ✓ tests ✓ build ✓. Same checks run in [CI](.github/workflows/ci.yml).
+"Green" = lint ✓ types ✓ migrations ✓ tests ✓ build ✓ fe-unit ✓. Same checks run in [CI](.github/workflows/ci.yml).
 
 ## Roles — maker ≠ checker ≠ judge (never the same pass)
 

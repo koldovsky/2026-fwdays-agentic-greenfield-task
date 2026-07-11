@@ -4,19 +4,31 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-10 19:22 (Europe/Kyiv, EEST)
-- **Phase:** 2 — slice **002 categories** ran end-to-end through `/run-slice` (the first full pass
-  through the factory) and is **engineering-DONE**: the maker≠checker≠judge loop converged in **one
-  iteration** — `gate-slice` GREEN (27 passed, coverage 97.04%), `check-trajectory` clean, both
-  independent reviewers 0 BLOCKING, trajectory-eval pass (93), Judge DONE. `openspec archive
-  add-categories` applied (`openspec/specs/categories/spec.md`). Same single outstanding DoD sub-item
-  as slice 001 — **CodeRabbit at PR time** (no push/PR here; the owner opens it). Full observable
-  trace: [`docs/agent-runs/002-categories-trace.md`](agent-runs/002-categories-trace.md); review
-  evidence [`docs/qa/reviews/002.md`](qa/reviews/002.md); run record
-  [`docs/agent-runs/002-categories-run.md`](agent-runs/002-categories-run.md). One process artifact:
-  `check-trajectory` gained a small, tested `ENTRY_POINT_ALLOWLIST` (owner-directed) so entry-point
-  *sharing* is no longer miscounted as a cross-slice ownership conflict (commit `5a8a3b8`,
-  `Refs: BC-PROC-01`).
+- **Date and time:** 2026-07-11 00:20 (Europe/Kyiv, EEST)
+- **Phase:** 3 — slice **003 timer-sessions** (the product's core loop) ran end-to-end through
+  `/run-slice` and is **engineering-DONE**: the maker≠checker≠judge loop converged in **one
+  iteration** — `gate-slice` GREEN (70 passed, coverage 96.33%), `check-traceability` 0 gap (all 13
+  ids COVERED), `check-trajectory` 0 violations, both independent reviewers 0 BLOCKING,
+  trajectory-eval pass (94), Judge DONE. `openspec archive add-timer-sessions` applied
+  (`openspec/specs/timer-sessions/spec.md`). **Delivered:** the active timer
+  (start/pause/continue/stop+save/confirmed-discard) as the single server-authoritative
+  `active_sessions` row with optimistic `version`; the saved-session store with discrete
+  `pause_segments` + derived (never-stored) net/gross; manual add/edit/delete; and the 5-second undo
+  (immediate write + before-image compensating restore) — reusing slice-001 auth (FR-AUTH-07) and
+  slice-002 categories (`category_id` FK). Ran in an **isolated git worktree** after a parallel
+  slice-004/005 session contended for the shared checkout (owner-approved; **standing rule: one
+  worktree per concurrently-active execution session**). One convention artifact: a minimal **vitest**
+  frontend unit runner joined the `verify.*` battery (owner-ratified, for the FR-TIMER-05
+  keyboard-shortcut mapper). Same single outstanding DoD sub-item as 001/002 — **CodeRabbit at PR
+  time** (no push/PR here; the owner opens it). Full trace:
+  [`docs/agent-runs/007-timer-sessions-trace.md`](agent-runs/007-timer-sessions-trace.md); review
+  evidence [`docs/qa/reviews/003.md`](qa/reviews/003.md); run record
+  [`docs/agent-runs/012-timer-sessions-run.md`](agent-runs/012-timer-sessions-run.md).
+- **Phase (prior):** 2 — slice **002 categories** engineering-DONE (loop converged in one iteration;
+  `gate-slice` GREEN 27 passed / 97.04%, reviewers 0 BLOCKING, trajectory-eval 93, Judge DONE;
+  `openspec archive add-categories` applied). `check-trajectory` gained a tested
+  `ENTRY_POINT_ALLOWLIST` (owner-directed, `5a8a3b8`, `Refs: BC-PROC-01`). Trace/records under
+  `docs/agent-runs/002-*`.
 - **Phase (prior):** 1 — slice **001 email+password auth** is **engineering-complete, independently
   audit-verified GREEN, and its trail is now committed — but NOT yet fully DONE**. An independent
   audit (2026-07-10, see [`docs/agent-runs/001-auth-review-close.md`](agent-runs/001-auth-review-close.md))

@@ -68,17 +68,48 @@ This report proves only the process facts git can show: trailers, review-evidenc
 ## Slice 003
 
 - Done: no (requirements: proposed)
-- Review evidence: docs/qa/reviews/003.md - absent
+- Review evidence: docs/qa/reviews/003.md - present but not clean
 - Commits:
+  - de995c4 feat(timer-sessions): the active timer, session store, and undo to green [Refs: FR-TIMER-01, FR-TIMER-02, FR-TIMER-03, FR-TIMER-04, FR-TIMER-05, FR-TIMER-06, FR-SESS-01, FR-SESS-02, FR-SESS-03, FR-SESS-04, FR-SESS-05, FR-SESS-06, FR-NOTIF-01]
   - f359689 test(timer-sessions): RED acceptance tests for the 003 contract [Refs: FR-TIMER-01, FR-SESS-01, FR-NOTIF-01]
   - 0220018 harness(frontend): add a minimal vitest unit runner, wired into verify [Refs: FR-TIMER-05]
   - 2697dc3 docs(timer-sessions): ratify the slice 003 contract (spec-first) [Refs: FR-TIMER-01]
-- Touched code paths (5):
+- Touched code paths (35):
+  - backend/alembic/versions/0003_timer_sessions.py
+  - backend/app/api/sessions.py
+  - backend/app/api/timer.py
+  - backend/app/api/undo.py
+  - backend/app/core/durations.py
+  - backend/app/core/model.py
+  - backend/app/main.py
+  - backend/app/models/__init__.py
+  - backend/app/models/active_session.py
+  - backend/app/models/pause_segment.py
+  - backend/app/models/session.py
+  - backend/app/models/undo_entry.py
+  - backend/app/repos/active_sessions.py
+  - backend/app/repos/sessions.py
+  - backend/app/repos/undo.py
+  - backend/app/schemas/sessions.py
+  - backend/app/services/sessions.py
+  - backend/app/services/timer.py
+  - backend/app/services/undo.py
+  - backend/app/services/undo_support.py
   - backend/tests/test_durations.py
   - backend/tests/test_sessions.py
   - backend/tests/test_timer.py
+  - backend/tests/test_timer_stop_paused.py
   - backend/tests/test_undo.py
+  - frontend/src/App.tsx
+  - frontend/src/api.ts
+  - frontend/src/pages/Timer/SessionForm.tsx
+  - frontend/src/pages/Timer/SessionLog.tsx
+  - frontend/src/pages/Timer/TimerPage.tsx
+  - frontend/src/pages/Timer/format.ts
+  - frontend/src/pages/Timer/icons.tsx
   - frontend/src/pages/Timer/resolveShortcut.test.ts
+  - frontend/src/pages/Timer/resolveShortcut.ts
+  - frontend/src/pages/Timer/timer.css
 - Other files touched (docs/config): 14
 
 ## Process / infra commits (traced, not a feature slice)
@@ -110,6 +141,8 @@ Two slices co-editing the same business-logic module (an ownership conflict). Ov
 Overlap limited to allowlisted entry-point / aggregation files (the app factory, the single HTTP boundary, the model package, the app shell). Every slice appends to these, so it is normal participation, not an ownership conflict -- reported here, not failed. A pure-deletion edit to a co-owned entry point is still a violation (listed below and above).
 
 - slices 001 and 002: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
+- slices 001 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
+- slices 002 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 
 ## Unattributed product-code commits (informational)
 
