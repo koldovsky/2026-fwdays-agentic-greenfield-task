@@ -162,12 +162,25 @@ This report proves only the process facts git can show: trailers, review-evidenc
 ## Slice 005
 
 - Done: no (requirements: proposed)
-- Review evidence: docs/qa/reviews/005.md - absent
+- Review evidence: docs/qa/reviews/005.md - clean
 - Commits:
+  - 58c27fc docs(stats-ui): close slice 005 - review evidence, records, archive [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
+  - 3f63e53 frontend(stats-ui): render the snapshot to green [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 484cc46 frontend(stats-ui): RED acceptance tests + jsdom test infra [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 2e9eb01 docs(stats-ui): ratify the slice 005 contract (spec-first) [Refs: FR-STATS-01]
   - aa7db87 harness: cut repeated verify work + add spec-hygiene gate (speed/cost) [Refs: BC-PROC-01]
-- Touched code paths (11):
+- Touched code paths (25):
+  - frontend/src/App.tsx
+  - frontend/src/api.ts
+  - frontend/src/pages/Stats/BarByDay.tsx
+  - frontend/src/pages/Stats/CategoryLine.tsx
+  - frontend/src/pages/Stats/DonutByCategory.tsx
+  - frontend/src/pages/Stats/ScoreCard.tsx
+  - frontend/src/pages/Stats/StatsPage.tsx
+  - frontend/src/pages/Stats/StatsView.tsx
+  - frontend/src/pages/Stats/StreakCard.tsx
+  - frontend/src/pages/Stats/SummaryTiles.tsx
+  - frontend/src/pages/Stats/UndoNotice.tsx
   - frontend/src/pages/Stats/__fixtures__/sampleSnapshot.ts
   - frontend/src/pages/Stats/__fixtures__/snapshot.schema.json
   - frontend/src/pages/Stats/__tests__/BarByDay.test.ts
@@ -179,7 +192,10 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/pages/Stats/__tests__/StreakCard.test.tsx
   - frontend/src/pages/Stats/__tests__/SummaryTiles.test.tsx
   - frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts
-- Other files touched (docs/config): 27
+  - frontend/src/pages/Stats/icons.tsx
+  - frontend/src/pages/Stats/stats.css
+  - frontend/src/pages/Stats/types.ts
+- Other files touched (docs/config): 39
 
 ## Process / infra commits (traced, not a feature slice)
 
@@ -213,9 +229,12 @@ Overlap limited to allowlisted entry-point / aggregation files (the app factory,
 - slices 001 and 002: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 001 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 001 and 004: backend/app/main.py
+- slices 001 and 005: frontend/src/App.tsx, frontend/src/api.ts
 - slices 002 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 002 and 004: backend/app/main.py
+- slices 002 and 005: frontend/src/App.tsx, frontend/src/api.ts
 - slices 003 and 004: backend/app/main.py
+- slices 003 and 005: frontend/src/App.tsx, frontend/src/api.ts
 
 ## Unattributed product-code commits (informational)
 

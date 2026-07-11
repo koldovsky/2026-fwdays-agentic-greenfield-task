@@ -4,8 +4,38 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-11 12:35 (Europe/Kyiv, EEST)
-- **Phase:** 4 — slice **004 metrics** ran through `/run-slice` in an isolated worktree
+- **Date and time:** 2026-07-11 16:39 (Europe/Kyiv, EEST)
+- **Phase:** 5 — slice **005 stats-ui** ran through `/run-slice` in an isolated worktree
+  (`.claude/worktrees/005-stats-ui`, branch `feat/005-stats-ui`, based on `feat/004-metrics`) and is
+  **engineering-DONE**: the maker≠checker≠judge loop **converged in one iteration**. `gate-slice`
+  GREEN (146 passed, coverage 97.47% ≥ floor 82%), `check-traceability` 0 gap (FR-STATS-01..05 all
+  COVERED), `check-trajectory` 0 violations, `check-specs` clean; frontend `tsc` strict + vite build
+  clean and **vitest 32/32**. Both independent reviewers 0 BLOCKING (`code-reviewer` 2 non-blocking
+  MINOR, `security-reviewer` 0 findings, `check-secrets` clean), trajectory-eval **pass (92)**, Judge
+  DONE. `openspec archive add-stats-ui` applied → `changes/archive/2026-07-11-add-stats-ui`, the
+  `stats-ui` capability written to `openspec/specs/stats-ui/spec.md`. This is a **render-only**
+  frontend slice: it draws the shipped slice-004 `GET /api/stats/snapshot` (summary tiles, four zoned
+  score cards + a plain streak card, bar/donut/line charts via Chart.js, all four DESIGN §10 states)
+  and **composes** the slice-003 `SessionLog` (import + mount only) — recomputing no metric and adding
+  no backend endpoint, schema, or migration. The seam test asserts the TS types against a
+  backend-generated `SnapshotResponse` JSON Schema, so slice-004 producer drift fails a test. New
+  vetted MIT deps: `chart.js` + jsdom + Testing Library (the first jsdom component-test infra in the
+  repo). Three snapshot fields are documented, gracefully-degraded follow-up gaps
+  (`baselines.streak`, `history_days`, `top_categories[].archived`;
+  [`docs/followups/metrics-snapshot-extension.md`](followups/metrics-snapshot-extension.md)). One
+  out-of-scope infra fix landed as a traced commit (`20c4469`, `Refs: BC-PROC-01`, no `Slice:` trailer):
+  the floating `ruff>=0.6` dev pin now resolves to ruff 0.15.x, which flagged 8 pre-existing import
+  blocks in slice-004's metrics tests — cleared by an owner-authorized inert `ruff --fix` import-sort
+  rather than editing slice-004 under this slice's ownership. Same single outstanding DoD sub-item as
+  001–004 — **CodeRabbit at PR time**; requirements FR-STATS-01..05 stay `proposed` until it is clean,
+  then flip to `shipped`. The owner opens the PR; this loop does **not** push. Trail:
+  [`docs/qa/reviews/005.md`](qa/reviews/005.md), run records
+  [`018`](agent-runs/018-stats-ui-test-engineer.md)/[`019`](agent-runs/019-stats-ui-implementer.md)/[`020`](agent-runs/020-stats-ui-judge.md).
+- **Phase (prior):** 4 — slice **004 metrics** _(updated: subsequently **closed, engineering-DONE**
+  via the owner-authorized iteration-4 fix `2a7533f` that cleared the 3 escalated performance
+  findings; `openspec archive add-metrics` applied, evidence `docs/qa/reviews/004.md` — commit
+  `f18738a`. The NOT-DONE narrative below is the state at the 3-iteration cap, kept for the trail.)_
+  ran through `/run-slice` in an isolated worktree
   (`.claude/worktrees/004-metrics`, branch `feat/004-metrics`, based on slice 003's tip so it
   reads slice 003's real code, not `spec/004-metrics`'s pre-implementation fork point) and is
   **NOT DONE — STOPPED at the loop's 3-iteration cap and escalated to the owner**, per
