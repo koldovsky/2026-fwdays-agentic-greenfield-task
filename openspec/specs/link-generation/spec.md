@@ -12,6 +12,10 @@ including the token or any data beyond `sendId` and amount
 (NFR-SEC-02, NFR-SEC-04). It sits between `jar-matching` and
 `cli-orchestration` in the jarsplit pipeline.
 
+These requirements are implementation-agnostic business rules: the Go CLI
+(`internal/linkgen`) and the Android app (`domain/linkgen`, see
+`android-client`) each independently satisfy this same contract.
+
 ## Requirements
 
 ### Requirement: Jar top-up link construction

@@ -12,6 +12,10 @@ match is exact and unambiguous, never guessed. Downstream capabilities
 (`link-generation`, `cli-orchestration`) consume its matched
 `(name, amount, sendId)` results and skip warnings.
 
+These requirements are implementation-agnostic business rules: the Go CLI
+(`internal/jarmatching`) and the Android app (`domain/jarmatching`, see
+`android-client`) each independently satisfy this same contract.
+
 ## Requirements
 
 ### Requirement: Case-insensitive exact title matching

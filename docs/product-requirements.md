@@ -104,6 +104,32 @@ requirements grilling:
 
 ---
 
+## Android app requirements
+
+`jarsplit` ships a second, independent interface: an Android app (`android/`),
+reimplementing the same business rules natively in Kotlin (no shared code with
+the Go module). The CLI's requirements above (`FR-RESOLVE-*`, `FR-CURRENCY-01`,
+`FR-LINK-01`, `NFR-SEC-*`, `BC-SAFE-01`, etc.) describe implementation-agnostic
+business rules that both interfaces must independently satisfy. The IDs below
+cover only what's specific to the Android interface — its form-based input,
+token storage, and UI presentation — where it deliberately diverges from the
+CLI's file/env-var/stdout-stderr shape. Full detail and scenarios live in
+`openspec/specs/android-client/spec.md`.
+
+| ID | Status | Requirement | Notes |
+| -- | ------ | ----------- | ----- |
+| **FR-ANDROID-INPUT-01** | accepted | The plan is entered as rows in an in-app form (jar name + amount per row), not a file path or stdin. | Android analog of FR-INPUT-01, deliberately different shape. |
+| **FR-ANDROID-INPUT-02** | accepted | Each row is validated independently: positive whole-UAH amount tolerant of internal whitespace as a thousands separator (same rule as FR-AMOUNT-01), non-empty name, duplicate-name detection by **case-insensitive** (Unicode-aware) equality on the trimmed name. Errors are shown inline per row, not per line number. | Deliberate divergence from FR-DUP-01's exact-string rule — a phone keyboard makes a case-only duplicate a more plausible accident, and jar matching would already treat the two names as the same jar. |
+| **FR-ANDROID-TOKEN-01** | accepted | The token is entered and stored via a Settings screen, not an env var. Once saved, only a masked "token set/not set" status is shown — never the value. | |
+| **FR-ANDROID-CACHE-01** | accepted | Jars may be fetched once per session to power name autocomplete, but every "Generate" action re-fetches and re-matches against fresh data; a cached suggestion never substitutes for a fresh match. | Prevents autocomplete from silently reintroducing guessing. |
+| **FR-ANDROID-LINK-01** | accepted | Generated links open via an `ACTION_VIEW` Intent to the user's browser or the monobank app — never an in-app WebView. | Needed for the Android-specific V-1 gate to mean anything. |
+| **FR-ANDROID-RESULT-01** | accepted | The Results screen presents one of Complete / Partial / Fatal, the UI analog of the CLI's exit codes 0 / 1 / 2 (FR-EXIT-01), with the links table/total and the warnings list always shown separately. | |
+| **NFR-ANDROID-SEC-01** | accepted | The token is stored only via Android Keystore-backed encrypted storage (e.g. `EncryptedSharedPreferences`), never logged, never included in any analytics/crash-reporter event (there are none, per BC-PRIVACY-01). | Android analog of NFR-SEC-01/02. |
+| **TC-ANDROID-01** | accepted | Kotlin, Jetpack Compose, OkHttp + kotlinx.serialization, single-module Gradle project (`android/app`), no DI framework. | See `openspec/changes/add-android-client/design.md` for rationale. |
+| **BC-ANDROID-01** | accepted | BC-SAFE-01 holds end-to-end on Android: a link is only ever generated for a plan row that unambiguously matches exactly one live UAH jar; anything else is skipped and warned, regardless of autocomplete/cache state. | |
+
+---
+
 ## Deviations from the brief
 
 Decided during requirements grilling and recorded here so the brief and this PRD do
