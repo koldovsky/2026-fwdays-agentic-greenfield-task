@@ -18,10 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import md.agentic.jarsplit.domain.planvalidation.PlanRow
@@ -105,11 +109,21 @@ private fun PlanRowEditor(
         if (row.name.isBlank()) emptyList() else suggestions.filter { it.contains(row.name, ignoreCase = true) }.take(3)
     }
 
+    // Kept as TextFieldValue (not just row.name) so a suggestion tap can place
+    // the cursor at the end of the inserted text — the plain-String overload
+    // leaves the caret wherever it was before the text underneath it changed.
+    var nameFieldValue by remember(row.id) {
+        mutableStateOf(TextFieldValue(text = row.name, selection = TextRange(row.name.length)))
+    }
+
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = row.name,
-                onValueChange = onNameChange,
+                value = nameFieldValue,
+                onValueChange = {
+                    nameFieldValue = it
+                    onNameChange(it.text)
+                },
                 label = { Text("Jar name") },
                 isError = nameError != null,
                 supportingText = nameError?.let { { Text(it) } },
@@ -130,7 +144,10 @@ private fun PlanRowEditor(
         if (filteredSuggestions.isNotEmpty()) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 filteredSuggestions.forEach { suggestion ->
-                    TextButton(onClick = { onNameChange(suggestion) }) { Text(suggestion) }
+                    TextButton(onClick = {
+                        nameFieldValue = TextFieldValue(text = suggestion, selection = TextRange(suggestion.length))
+                        onNameChange(suggestion)
+                    }) { Text(suggestion) }
                 }
             }
         }

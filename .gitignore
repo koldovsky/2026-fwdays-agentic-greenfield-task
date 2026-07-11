@@ -40,6 +40,18 @@ go.work.sum
 # Go: vendor (розкоментуй, якщо НЕ комітиш vendor/)
 # vendor/
 
+# Android / Gradle
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/.cxx/
+*.iml
+.navigation/
+/local.properties
+
 sample-input.txt
 /.github/pull_request.md
 *.txt
