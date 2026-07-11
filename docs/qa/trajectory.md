@@ -159,6 +159,16 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - backend/tests/test_stats_api_extra.py
 - Other files touched (docs/config): 24
 
+## Slice 005
+
+- Done: no (requirements: proposed)
+- Review evidence: docs/qa/reviews/005.md - absent
+- Commits:
+  - aa7db87 harness: cut repeated verify work + add spec-hygiene gate (speed/cost) [Refs: BC-PROC-01]
+- Touched code paths (0):
+  - (none)
+- Other files touched (docs/config): 15
+
 ## Process / infra commits (traced, not a feature slice)
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
