@@ -11,7 +11,7 @@ from datetime import date, datetime, timedelta
 from statistics import median, pstdev
 from zoneinfo import ZoneInfo
 
-from app.core.metrics.days import active_days, daily_net_minutes, local_start_day
+from app.core.metrics.days import daily_net_minutes, local_start_day
 from app.core.model import SessionData
 
 _WINDOW_DAYS = 14
@@ -75,19 +75,29 @@ def _first_start_minutes_by_day(
 
 
 def compute_consistency(
-    sessions: Sequence[SessionData], tz: str, today: date
+    sessions: Sequence[SessionData],
+    tz: str,
+    today: date,
+    *,
+    daily_totals: dict[date, int] | None = None,
 ) -> ConsistencyMetrics:
+    """``daily_totals`` (optional): the full-history ``daily_net_minutes(sessions, tz)`` the
+    caller has already computed. Passing it lets the snapshot assembler share one day-split
+    across every metric instead of each re-deriving it; the active-day set is exactly that
+    dict's keys (``daily_net_minutes`` only ever keys days with > 0 minutes), so the result
+    is identical either way — this only removes recomputation.
+    """
     zone = ZoneInfo(tz)
     window_start = today - timedelta(days=_WINDOW_DAYS - 1)
     window_dates = [window_start + timedelta(days=offset) for offset in range(_WINDOW_DAYS)]
 
-    window_active = {day for day in active_days(sessions, tz) if window_start <= day <= today}
+    totals = daily_net_minutes(sessions, tz) if daily_totals is None else daily_totals
+    window_active = {day for day in totals if window_start <= day <= today}
     if len(window_active) < _MIN_ACTIVE_DAYS:
         return _low_confidence()
 
-    totals = daily_net_minutes(sessions, tz)
-    daily_totals = [totals.get(day, 0) for day in window_dates]
-    regularity = _regularity(daily_totals)
+    window_totals = [totals.get(day, 0) for day in window_dates]
+    regularity = _regularity(window_totals)
 
     first_starts = _first_start_minutes_by_day(sessions, tz, zone, window_active)
     median_minutes = median(first_starts.values()) if first_starts else None

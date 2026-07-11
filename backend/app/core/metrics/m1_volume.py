@@ -23,13 +23,24 @@ def _monday_of(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
-def compute_volume(sessions: Sequence[SessionData], tz: str, today: date) -> VolumeMetrics:
+def compute_volume(
+    sessions: Sequence[SessionData],
+    tz: str,
+    today: date,
+    *,
+    daily_totals: dict[date, int] | None = None,
+) -> VolumeMetrics:
     """``today``/``week``/``month``/``all_time`` are real calendar windows anchored on ``today``.
 
     Not the caller-selected reporting ``window`` — that only re-scopes the snapshot's
     ``volume.per_day``, assembled separately in ``app/core/snapshot.py`` (NFR-DET-01).
+
+    ``daily_totals`` (optional): the full-history ``daily_net_minutes(sessions, tz)`` the
+    caller has already computed. Passing it lets the snapshot assembler compute that
+    expensive day-split **once** and share it across every metric that needs it, instead of
+    each re-deriving it — the value is identical either way, this only removes recomputation.
     """
-    totals = daily_net_minutes(sessions, tz)
+    totals = daily_net_minutes(sessions, tz) if daily_totals is None else daily_totals
     week_start = _monday_of(today)
     month_start = today.replace(day=1)
     trailing_30_start = today - timedelta(days=_TRAILING_30_DAYS - 1)

@@ -75,10 +75,19 @@ def _build_switching_block(
     baseline_start = today - timedelta(days=_SWITCHING_BASELINE_WINDOW_DAYS - 1)
     baseline_mean = mean_switch_load(sessions, tz, baseline_start, today)
 
+    # Bucket every session by its local start day ONCE (O(sessions)), then look each
+    # reporting day up in its bucket -- so this block is O(reporting_days + total_sessions),
+    # not O(reporting_days x total_sessions). The old per-day re-filter of the whole history
+    # went quadratic on an ordinary large history under a legitimate ~1-year window.
+    # ``compute_day_switch_load`` sorts its input by ``started_at`` internally, so bucket
+    # insertion order is irrelevant and the result is byte-for-byte identical to the filter.
+    sessions_by_day: dict[date, list[CategorizedSession]] = {}
+    for entry in sessions:
+        sessions_by_day.setdefault(local_start_day(entry.session, tz), []).append(entry)
+
     per_day = []
     for day in reporting_days:
-        day_sessions = [entry for entry in sessions if local_start_day(entry.session, tz) == day]
-        counts = compute_day_switch_load(day_sessions, day)
+        counts = compute_day_switch_load(sessions_by_day.get(day, []), day)
         per_day.append(
             {
                 "date": day,
@@ -92,13 +101,11 @@ def _build_switching_block(
 
 
 def _build_top_categories(
-    sessions: Sequence[CategorizedSession],
+    per_category: dict[int, dict[date, int]],
     categories: Sequence[CategoryInfo],
-    tz: str,
     week_start: date,
     today: date,
 ) -> list[dict[str, object]]:
-    per_category = _per_category_daily_minutes(sessions, tz)
     categories_by_id = {category.id: category for category in categories}
 
     entries = []
@@ -123,12 +130,10 @@ def _build_top_categories(
 
 
 def _build_per_category_per_day(
-    sessions: Sequence[CategorizedSession],
+    per_category: dict[int, dict[date, int]],
     categories: Sequence[CategoryInfo],
-    tz: str,
     reporting_days: list[date],
 ) -> list[dict[str, object]]:
-    per_category = _per_category_daily_minutes(sessions, tz)
     categories_by_id = {category.id: category for category in categories}
 
     entries = []
@@ -158,23 +163,28 @@ def build_snapshot(
 ) -> dict[str, object]:
     plain_sessions = [entry.session for entry in sessions]
 
+    # The full-history per-day net-minute split (FR-METR-07) is the single most expensive
+    # shared quantity: M1/M2/M5 and both sides of M6 all need it. Compute it **once** here
+    # and thread it through every consumer via their ``daily_totals`` param, so a snapshot
+    # assembles with the day-split evaluated once instead of ~a dozen times (NFR-PERF-01).
+    full_totals = daily_net_minutes(plain_sessions, tz)
+
     range_start, range_end = window if window is not None else (_monday_of(today), today)
     reporting_days = _date_range(range_start, range_end)
 
     # --- volume (per_day re-scoped by window; the windows below never are) -----------
-    volume = compute_volume(plain_sessions, tz, today)
-    totals = daily_net_minutes(plain_sessions, tz)
+    volume = compute_volume(plain_sessions, tz, today, daily_totals=full_totals)
     volume_block = {
         "today_min": volume.today_min,
         "week_min": volume.week_min,
         "month_min": volume.month_min,
         "all_time_min": volume.all_time_min,
         "daily_avg_30d_min": volume.daily_avg_30d_min,
-        "per_day": [{"date": day, "min": totals.get(day, 0)} for day in reporting_days],
+        "per_day": [{"date": day, "min": full_totals.get(day, 0)} for day in reporting_days],
     }
 
     # --- consistency (fixed 14-day window, §3.2 -- never re-scoped) -------------------
-    consistency = compute_consistency(plain_sessions, tz, today)
+    consistency = compute_consistency(plain_sessions, tz, today, daily_totals=full_totals)
     consistency_block = {
         "score": consistency.score,
         "low_confidence": consistency.low_confidence,
@@ -196,11 +206,21 @@ def build_snapshot(
     switching_block = _build_switching_block(sessions, tz, today, reporting_days)
 
     # --- streaks (fixed, never re-scoped) -----------------------------------------------
-    streaks = compute_streaks(plain_sessions, tz, today)
+    streaks = compute_streaks(plain_sessions, tz, today, daily_totals=full_totals)
     streaks_block = {"current": streaks.current, "longest": streaks.longest}
 
     # --- baselines (fixed 30-day windows, §3.6 -- never re-scoped) ----------------------
-    baselines = compute_baselines(sessions, tz, today)
+    # Reuse the one full-history split plus the ``today`` volume/consistency already built
+    # above, so M6 never re-derives them (its four zoned scores otherwise recompute the
+    # snapshot's own work per request).
+    baselines = compute_baselines(
+        sessions,
+        tz,
+        today,
+        daily_totals=full_totals,
+        volume_today=volume,
+        consistency_today=consistency,
+    )
     baselines_block = {
         "volume": _entry_dict(baselines.volume),
         "consistency": _entry_dict(baselines.consistency),
@@ -208,12 +228,14 @@ def build_snapshot(
         "switch_load": _entry_dict(baselines.switch_load),
     }
 
-    # --- top_categories (always the current week -- never re-scoped) --------------------
+    # --- category-keyed blocks (one per-category split, shared by both) -----------------
+    # top_categories is always the current week (never re-scoped); per_category_per_day is
+    # re-scoped to the reporting range. Both attribute the same §3.7 per-category net
+    # minutes, so build that mapping once and hand it to each.
+    per_category = _per_category_daily_minutes(sessions, tz)
     week_start = _monday_of(today)
-    top_categories = _build_top_categories(sessions, categories, tz, week_start, today)
-
-    # --- per_category_per_day (re-scoped to the reporting range) ------------------------
-    per_category_per_day = _build_per_category_per_day(sessions, categories, tz, reporting_days)
+    top_categories = _build_top_categories(per_category, categories, week_start, today)
+    per_category_per_day = _build_per_category_per_day(per_category, categories, reporting_days)
 
     return {
         "window": {"start": range_start, "end": range_end, "days": len(reporting_days)},

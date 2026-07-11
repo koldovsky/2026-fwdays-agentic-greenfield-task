@@ -317,3 +317,197 @@ def test_longest_streak_across_a_multi_millennium_gap_is_correct_and_fast() -> N
         f"took {elapsed:.3f}s for a 2-run, ~9800-year-gap history -- looks like a "
         "day-by-day calendar walk regressed back in"
     )
+
+
+# --- Session pause-count defensive cap (owner-approved iteration 4, BLOCKING finding 1) ---
+
+
+def _pause_segments(count: int) -> list[object]:
+    """``count`` transient ``PauseSegment`` rows -- only their number is read by the cap."""
+    from app.models.pause_segment import PauseSegment
+
+    start = datetime(2020, 1, 1, 9, 0, 0, tzinfo=UTC)
+    end = start + timedelta(minutes=1)
+    return [PauseSegment(paused_at=start, resumed_at=end) for _ in range(count)]
+
+
+def _session_with_pause_count(count: int) -> object:
+    """A 1-hour transient ``Session`` carrying ``count`` pause segments (never flushed)."""
+    from app.models.session import Session
+
+    start = datetime(2020, 1, 1, tzinfo=UTC)
+    return Session(
+        started_at=start,
+        ended_at=start + timedelta(hours=1),
+        pauses=_pause_segments(count),
+    )
+
+
+def test_within_pause_count_cap_pins_the_1000_1001_segment_boundary() -> None:
+    """``_within_pause_count_cap`` accepts exactly 1000 pause segments, rejects 1001.
+
+    The second defensive axis at ``StatsService``'s single load-time choke point (the first
+    being the 90-day span cap pinned above). ``app.core.metrics.intervals.net_intervals``
+    **sorts** a session's pauses, and that sweep drives day attribution (FR-METR-07) and
+    M3/M4 on every stats read; nothing in slice 003 upstream bounds a saved session's pause
+    count, so an unbounded array makes every read pay an unbounded sort. Pinned at the exact
+    edge, the same way this slice pins every other threshold (the span cap, M3's 60-minute
+    floor, M4's switch_load thresholds, the ``window`` param's 366-day cap).
+    """
+    from app.services.stats import _within_pause_count_cap
+
+    assert _within_pause_count_cap(_session_with_pause_count(1000)) is True
+    assert _within_pause_count_cap(_session_with_pause_count(1001)) is False
+
+
+def test_defensive_caps_reject_either_an_absurd_span_or_a_pause_flood() -> None:
+    """``_within_defensive_caps`` -- the predicate ``_load`` actually filters on -- rejects a
+    session that busts EITHER cap and admits an ordinary one, so the single choke point now
+    bounds both axes (gross span AND pause count) at once.
+    """
+    from app.models.session import Session
+    from app.services.stats import _within_defensive_caps
+
+    start = datetime(2020, 1, 1, tzinfo=UTC)
+    ordinary = Session(started_at=start, ended_at=start + timedelta(hours=1), pauses=[])
+    huge_span = Session(started_at=start, ended_at=start + timedelta(days=91), pauses=[])
+
+    assert _within_defensive_caps(ordinary) is True
+    assert _within_defensive_caps(huge_span) is False
+    assert _within_defensive_caps(_session_with_pause_count(1001)) is False
+
+
+# --- Snapshot shared-quantity memoization (owner-approved iteration 4, BLOCKING finding 2) -
+
+
+def _even_two_category_history(days_each: int) -> list[object]:
+    """``days_each`` days of one 30-min session in EACH of two categories.
+
+    Evenly split across two categories, so any per-category day-split always covers strictly
+    fewer sessions than the whole history -- letting the spy tell the single full-history
+    split apart from the (inherent, partitioned) per-category splits by input length.
+    """
+    SessionData, CategorizedSession, _CategoryInfo, _build = _load()
+    today = date(2026, 1, 20)
+    sessions: list[object] = []
+    for offset in range(days_each):
+        day = today - timedelta(days=offset)
+        for cat in (1, 2):
+            start = datetime(day.year, day.month, day.day, 9 + cat, 0, 0, tzinfo=UTC)
+            sessions.append(
+                CategorizedSession(
+                    session=SessionData(
+                        started_at=start, ended_at=start + timedelta(minutes=30), pauses=[]
+                    ),
+                    category_id=cat,
+                )
+            )
+    return sessions
+
+
+def test_snapshot_splits_the_full_history_into_daily_minutes_exactly_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``build_snapshot`` computes the full-history day-split once, not once per metric.
+
+    Finding: ``daily_net_minutes``/``compute_volume``/``compute_consistency`` were recomputed
+    ~21 times per snapshot request (M1/M2/M5 and both sides of M6 each re-deriving the same
+    full-history split), ~1.07-1.28s at 10k ordinary sessions -- over 2x the NFR-PERF-01
+    <500ms budget with no crafted input. The fix threads one precomputed split through every
+    consumer. This spies on ``app.core.snapshot``'s own ``daily_net_minutes`` reference:
+    after the fix the only day-splits the assembler triggers are the single full-history one
+    plus one small per-category one each. It asserts the full-history split runs exactly
+    once and that the split count does NOT grow with the amount of history -- a per-metric
+    recomputation creeping back in would fail both.
+    """
+    import app.core.snapshot as snapshot_mod
+
+    _S, _C, CategoryInfo, build_snapshot = _load()
+    today = date(2026, 1, 20)
+    categories = [
+        CategoryInfo(id=1, name="A", color="#111111"),
+        CategoryInfo(id=2, name="B", color="#222222"),
+    ]
+
+    original = snapshot_mod.daily_net_minutes
+    split_input_lengths: list[int] = []
+
+    def counting(session_list, tz):
+        split_input_lengths.append(len(session_list))
+        return original(session_list, tz)
+
+    monkeypatch.setattr(snapshot_mod, "daily_net_minutes", counting)
+
+    def _measure(sessions: list[object]) -> tuple[int, int]:
+        split_input_lengths.clear()
+        build_snapshot(sessions, categories, "UTC", today)
+        total = len(sessions)
+        full_history = sum(1 for n in split_input_lengths if n == total)
+        return full_history, len(split_input_lengths)
+
+    full_small, total_small = _measure(_even_two_category_history(3))  # 6 sessions
+    full_large, total_large = _measure(_even_two_category_history(30))  # 60 sessions
+
+    # The expensive full-history split is computed exactly once, however much history.
+    assert full_small == 1
+    assert full_large == 1
+    # Total day-splits stay constant (1 full + one per category), independent of session
+    # count -- no metric re-derives the full-history split.
+    assert total_small == total_large == 1 + len(categories)
+
+
+# --- Switching-block linearity (owner-approved iteration 4, BLOCKING finding 3) ------------
+
+
+def test_switching_block_is_linear_not_quadratic_in_reporting_days(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The switching block is O(reporting_days + sessions), not O(reporting_days x sessions).
+
+    Finding: ``_build_switching_block`` re-filtered the whole history once per reporting day,
+    so a legitimate ~1-year window over an ordinary large history went quadratic (~5.84s at
+    10k sessions with a 366-day window). The fix buckets sessions by local start day once.
+    This spies on ``app.core.snapshot``'s ``local_start_day`` and asserts its call count is
+    IDENTICAL for a 3-day and a 366-day reporting window over the same sessions -- the per-day
+    loop no longer calls it at all, so widening the window cannot add work proportional to
+    the session count. Before the fix, the 366-day window alone drove ~363 x sessions extra
+    calls.
+    """
+    import app.core.snapshot as snapshot_mod
+
+    SessionData, CategorizedSession, CategoryInfo, build_snapshot = _load()
+    today = date(2026, 1, 20)
+    categories = [CategoryInfo(id=1, name="A", color="#111111")]
+    sessions = [
+        CategorizedSession(
+            session=SessionData(
+                started_at=datetime(2026, 1, day, 9, 0, 0, tzinfo=UTC),
+                ended_at=datetime(2026, 1, day, 9, 30, 0, tzinfo=UTC),
+                pauses=[],
+            ),
+            category_id=1,
+        )
+        for day in range(1, 11)  # 10 ordinary sessions, one per day
+    ]
+
+    original = snapshot_mod.local_start_day
+    call_count = 0
+
+    def counting(session, tz):
+        nonlocal call_count
+        call_count += 1
+        return original(session, tz)
+
+    monkeypatch.setattr(snapshot_mod, "local_start_day", counting)
+
+    def _count(window: tuple[date, date]) -> int:
+        nonlocal call_count
+        call_count = 0
+        build_snapshot(sessions, categories, "UTC", today, window=window)
+        return call_count
+
+    narrow = _count((date(2026, 1, 18), date(2026, 1, 20)))  # 3 reporting days
+    wide = _count((date(2025, 1, 20), date(2026, 1, 20)))  # 366 reporting days
+
+    assert narrow > 0  # sanity: the spy actually intercepted the assembler's own calls
+    assert narrow == wide  # widening the window adds no session-proportional work

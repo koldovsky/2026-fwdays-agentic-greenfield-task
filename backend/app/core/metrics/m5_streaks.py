@@ -49,8 +49,19 @@ def _current_run(days: set[date], today: date) -> int:
     return current
 
 
-def compute_streaks(sessions: Sequence[SessionData], tz: str, today: date) -> StreakMetrics:
-    days = active_days(sessions, tz)
+def compute_streaks(
+    sessions: Sequence[SessionData],
+    tz: str,
+    today: date,
+    *,
+    daily_totals: dict[date, int] | None = None,
+) -> StreakMetrics:
+    """``daily_totals`` (optional): the full-history ``daily_net_minutes(sessions, tz)`` the
+    caller has already computed. The active-day set is exactly that dict's keys
+    (``daily_net_minutes`` only ever keys days with > 0 minutes), so passing it lets the
+    snapshot assembler reuse one day-split instead of re-deriving it — identical result.
+    """
+    days = active_days(sessions, tz) if daily_totals is None else set(daily_totals)
     if not days:
         return StreakMetrics(current=0, longest=0)
     return StreakMetrics(current=_current_run(days, today), longest=_longest_run(days))

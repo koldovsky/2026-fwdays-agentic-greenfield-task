@@ -14,9 +14,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from app.core.metrics.days import local_start_day
-from app.core.metrics.m1_volume import compute_volume
-from app.core.metrics.m2_consistency import compute_consistency
+from app.core.metrics.days import daily_net_minutes, local_start_day
+from app.core.metrics.m1_volume import VolumeMetrics, compute_volume
+from app.core.metrics.m2_consistency import ConsistencyMetrics, compute_consistency
 from app.core.metrics.m3_focus import compute_focus
 from app.core.metrics.m4_switching import mean_switch_load
 from app.core.metrics.model import CategorizedSession
@@ -102,9 +102,25 @@ def _score_or_zero(score: float | None) -> float:
 
 
 def compute_baselines(
-    sessions: Sequence[CategorizedSession], tz: str, today: date
+    sessions: Sequence[CategorizedSession],
+    tz: str,
+    today: date,
+    *,
+    daily_totals: dict[date, int] | None = None,
+    volume_today: VolumeMetrics | None = None,
+    consistency_today: ConsistencyMetrics | None = None,
 ) -> Baselines:
+    """``daily_totals`` / ``volume_today`` / ``consistency_today`` (optional): quantities the
+    snapshot assembler already computed for ``today``. Threading them in stops M6 from
+    re-deriving, per snapshot request, the exact same full-history day-split and the same
+    ``today`` volume/consistency the snapshot just built (the NFR-PERF-01 hot path). Every
+    value is identical whether supplied or recomputed here — this only removes redundant
+    work; the ``yesterday`` side still computes, but reuses ``daily_totals`` for its
+    day-split instead of re-splitting the whole history. When nothing is supplied (a direct
+    caller, e.g. a unit test) M6 computes the day-split once and threads it internally.
+    """
     plain_sessions = [entry.session for entry in sessions]
+    totals = daily_net_minutes(plain_sessions, tz) if daily_totals is None else daily_totals
     history_days = _history_days(sessions, tz, today)
 
     current_start = today - timedelta(days=_BASELINE_WINDOW_DAYS - 1)
@@ -116,14 +132,28 @@ def compute_baselines(
     current_range_sessions = [entry.session for entry in current_range]
     baseline_range_sessions = [entry.session for entry in baseline_range]
 
-    volume_value = compute_volume(plain_sessions, tz, today).daily_avg_30d_min
-    volume_baseline = compute_volume(plain_sessions, tz, yesterday).daily_avg_30d_min
+    volume_current = (
+        compute_volume(plain_sessions, tz, today, daily_totals=totals)
+        if volume_today is None
+        else volume_today
+    )
+    volume_value = volume_current.daily_avg_30d_min
+    volume_baseline = compute_volume(
+        plain_sessions, tz, yesterday, daily_totals=totals
+    ).daily_avg_30d_min
     volume_entry = sparse_data_floor(
         zone_for(volume_value, volume_baseline, higher_is_better=True), history_days=history_days
     )
 
-    consistency_value = _score_or_zero(compute_consistency(plain_sessions, tz, today).score)
-    consistency_baseline = _score_or_zero(compute_consistency(plain_sessions, tz, yesterday).score)
+    consistency_current = (
+        compute_consistency(plain_sessions, tz, today, daily_totals=totals)
+        if consistency_today is None
+        else consistency_today
+    )
+    consistency_value = _score_or_zero(consistency_current.score)
+    consistency_baseline = _score_or_zero(
+        compute_consistency(plain_sessions, tz, yesterday, daily_totals=totals).score
+    )
     consistency_entry = sparse_data_floor(
         zone_for(consistency_value, consistency_baseline, higher_is_better=True),
         history_days=history_days,

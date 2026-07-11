@@ -118,6 +118,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/004.md - absent
 - Commits:
+  - 3fc7459 docs(metrics): stop the slice-004 loop at its iteration cap, escalate [Refs: FR-METR-01, NFR-DET-01]
   - 95332e9 fix(metrics): bound per-session span and fix the O(gap) streak walk [Refs: FR-METR-05, FR-METR-07, NFR-DET-01]
   - 4afc084 fix(metrics): bound the window span and unify overlap-aware net time [Refs: FR-METR-03, FR-METR-07, NFR-DET-01]
   - 6a1c799 feat(metrics): the metrics engine, heatmap, and stats endpoints to green [Refs: FR-METR-01, FR-METR-07, FR-HEAT-01, NFR-DET-01]
@@ -154,7 +155,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - backend/tests/test_metrics_snapshot.py
   - backend/tests/test_stats_api.py
   - backend/tests/test_stats_api_extra.py
-- Other files touched (docs/config): 13
+- Other files touched (docs/config): 15
 
 ## Process / infra commits (traced, not a feature slice)
 

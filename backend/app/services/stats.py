@@ -6,9 +6,9 @@ service performs no cross-user filtering of its own beyond passing the caller's
 ``user_id`` straight through to already-scoped repository methods.
 
 Also the **single choke point** every pure ``app/core/metrics/*`` call gets its session
-list from, so it is where ``_within_session_span_cap`` (below) enforces a defensive bound
-on one saved session's own gross span before that session ever reaches the pure core --
-see that constant's own docstring for why.
+list from, so it is where ``_within_defensive_caps`` (below) enforces the defensive bounds
+on one saved session -- both its own gross span and its discrete-pause count -- before that
+session ever reaches the pure core; see each cap constant's own comment for why.
 """
 
 from datetime import date, datetime, timedelta, timezone
@@ -51,10 +51,48 @@ from app.repos.users import UserRepository
 # ends up reading it.
 _MAX_SESSION_SPAN_DAYS = 90
 
+# Defensive bound on a single saved session's own discrete-pause count -- the second axis
+# (alongside gross span, above) on which one saved session can make every stats read
+# expensive, for the same underlying reason and reached through the same choke point.
+#
+# ``app/core/metrics/intervals.py``'s ``net_intervals`` **sorts** a session's pauses
+# (``O(p log p)`` in the pause count ``p``) and that sweep is what both day attribution
+# (``daily_net_minutes``, FR-METR-07) and M3 focus build their net-time on; M4 also sums
+# every segment as an interruption. Nothing upstream bounds how many pause segments a
+# saved session may carry: slice-003's ``app/services/sessions.py`` /
+# ``app/schemas/sessions.py`` (out of this slice's reach) validate each segment's ordering
+# and containment but never its *count*. So one session with a pathological pause array
+# turns every stats read into an unbounded sort -- reachable, like the span vector, via an
+# ordinary ``POST /api/sessions`` followed by a bare ``GET /api/stats/snapshot``.
+#
+# A pause is a manual stop/resume of the timer. Even an always-on timer forgotten for the
+# entire 90-day span cap and toggled ~11 times every single day tops out near 1000
+# segments, so 1000 sits comfortably above any legitimate session while keeping the
+# per-session pause sort trivially cheap (and holding even a hypothetical old-code-style
+# repeated sweep well under the NFR-PERF-01 budget the reviewer measured 10k pauses
+# blowing past). The offending session is skipped, not clipped -- identical skip-not-clip
+# semantics to the span cap: no "correct" truncation exists for corrupt/adversarial data,
+# and the rest of the caller's history still reports correctly.
+_MAX_SESSION_PAUSE_SEGMENTS = 1000
+
 
 def _within_session_span_cap(row: Session) -> bool:
     """False if ``row``'s own gross span exceeds the defensive cap (see above)."""
     return (row.ended_at - row.started_at) <= timedelta(days=_MAX_SESSION_SPAN_DAYS)
+
+
+def _within_pause_count_cap(row: Session) -> bool:
+    """False if ``row`` carries more discrete pause segments than the defensive cap (see above)."""
+    return len(row.pauses) <= _MAX_SESSION_PAUSE_SEGMENTS
+
+
+def _within_defensive_caps(row: Session) -> bool:
+    """Both load-time defensive bounds a saved session must clear to reach the pure core.
+
+    The single choke point (``_load``) filters on this, so *both* the span cap and the
+    pause-count cap hold regardless of which metric ends up reading the session list.
+    """
+    return _within_session_span_cap(row) and _within_pause_count_cap(row)
 
 
 class UserNotFoundError(Exception):
@@ -98,7 +136,7 @@ class StatsService:
         sessions = [
             _to_categorized_session(row)
             for row in session_rows
-            if _within_session_span_cap(row)
+            if _within_defensive_caps(row)
         ]
         categories = [
             CategoryInfo(
