@@ -35,7 +35,6 @@ def _load() -> tuple[object, object, object]:
     Returns ``(SessionData, PauseData, compute_focus)``.
     """
     from app.core.metrics.m3_focus import compute_focus
-
     from app.core.model import PauseData, SessionData
 
     return SessionData, PauseData, compute_focus

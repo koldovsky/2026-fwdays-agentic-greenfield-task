@@ -31,7 +31,6 @@ def _load() -> tuple[object, object]:
     Returns ``(SessionData, compute_streaks)``.
     """
     from app.core.metrics.m5_streaks import compute_streaks
-
     from app.core.model import SessionData
 
     return SessionData, compute_streaks

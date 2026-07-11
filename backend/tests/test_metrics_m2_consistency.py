@@ -45,7 +45,6 @@ def _load() -> tuple[object, object, object]:
     Returns ``(SessionData, PauseData, compute_consistency)``.
     """
     from app.core.metrics.m2_consistency import compute_consistency
-
     from app.core.model import PauseData, SessionData
 
     return SessionData, PauseData, compute_consistency

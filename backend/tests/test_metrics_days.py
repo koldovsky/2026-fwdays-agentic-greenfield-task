@@ -49,7 +49,6 @@ def _load() -> tuple[object, object, object, object, object]:
     ``(SessionData, PauseData, daily_net_minutes, active_days, local_start_day)`` at GREEN.
     """
     from app.core.metrics.days import active_days, daily_net_minutes, local_start_day
-
     from app.core.model import PauseData, SessionData
 
     return SessionData, PauseData, daily_net_minutes, active_days, local_start_day

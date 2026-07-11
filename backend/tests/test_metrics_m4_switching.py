@@ -67,7 +67,6 @@ def _load() -> tuple[object, object, object, object, object]:
     """
     from app.core.metrics.m4_switching import compute_day_switch_load, is_fragmented
     from app.core.metrics.model import CategorizedSession
-
     from app.core.model import PauseData, SessionData
 
     return SessionData, PauseData, CategorizedSession, compute_day_switch_load, is_fragmented

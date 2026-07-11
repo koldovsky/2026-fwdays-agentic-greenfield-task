@@ -35,7 +35,6 @@ def _load() -> tuple[object, object, object]:
     Returns ``(SessionData, PauseData, compute_volume)``.
     """
     from app.core.metrics.m1_volume import compute_volume
-
     from app.core.model import PauseData, SessionData
 
     return SessionData, PauseData, compute_volume

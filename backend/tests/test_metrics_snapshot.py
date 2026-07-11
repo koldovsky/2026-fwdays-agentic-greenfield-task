@@ -82,9 +82,8 @@ def _load() -> tuple[object, object, object, object]:
     Returns ``(SessionData, CategorizedSession, CategoryInfo, build_snapshot)``.
     """
     from app.core.metrics.model import CategorizedSession, CategoryInfo
-    from app.core.snapshot import build_snapshot
-
     from app.core.model import SessionData
+    from app.core.snapshot import build_snapshot
 
     return SessionData, CategorizedSession, CategoryInfo, build_snapshot
 

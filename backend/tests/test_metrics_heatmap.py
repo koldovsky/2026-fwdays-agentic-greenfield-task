@@ -48,7 +48,6 @@ def _load() -> tuple[object, object]:
     Returns ``(SessionData, compute_heatmap)``.
     """
     from app.core.metrics.heatmap import compute_heatmap
-
     from app.core.model import SessionData
 
     return SessionData, compute_heatmap

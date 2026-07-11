@@ -30,11 +30,11 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | FR-CAT-03 | COVERED | 002 | backend/tests/test_categories.py::test_archived_category_excluded_from_active_list<br>backend/tests/test_categories.py::test_delete_archives_category<br>backend/tests/test_categories.py::test_delete_category_with_no_sessions_removed_from_active_list<br>backend/tests/test_categories.py::test_user_cannot_delete_another_users_category |
 | FR-HEAT-01 | COVERED | 004 | backend/tests/test_metrics_heatmap.py::test_a_midnight_spanning_session_shades_both_local_days<br>backend/tests/test_metrics_heatmap.py::test_a_zero_minute_day_is_level_0<br>backend/tests/test_metrics_heatmap.py::test_buckets_self_normalize_to_the_user<br>backend/tests/test_metrics_heatmap.py::test_empty_history_yields_an_all_level_0_grid<br>backend/tests/test_metrics_heatmap.py::test_non_zero_days_bucket_by_quartile_of_non_zero_totals |
 | FR-HEAT-02 | COVERED | 004 | backend/tests/test_metrics_heatmap.py::test_changing_the_period_re_normalizes_the_buckets<br>backend/tests/test_stats_api.py::test_heatmap_happy_path_defaults_to_month<br>backend/tests/test_stats_api.py::test_heatmap_period_query_param_is_honored |
-| FR-STATS-01 | GAP | 005 | (none) |
-| FR-STATS-02 | GAP | 005 | (none) |
-| FR-STATS-03 | GAP | 005 | (none) |
-| FR-STATS-04 | GAP | 005 | (none) |
-| FR-STATS-05 | GAP | 005 | (none) |
+| FR-STATS-01 | COVERED | 005 | frontend/src/pages/Stats/__tests__/StatsView.loaded.test.tsx<br>frontend/src/pages/Stats/__tests__/StatsView.test.tsx<br>frontend/src/pages/Stats/__tests__/SummaryTiles.test.tsx<br>frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts |
+| FR-STATS-02 | COVERED | 005 | frontend/src/pages/Stats/__tests__/BarByDay.test.ts<br>frontend/src/pages/Stats/__tests__/StatsView.test.tsx<br>frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts |
+| FR-STATS-03 | COVERED | 005 | frontend/src/pages/Stats/__tests__/DonutByCategory.test.ts<br>frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts |
+| FR-STATS-04 | COVERED | 005 | frontend/src/pages/Stats/__tests__/CategoryLine.test.ts<br>frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts |
+| FR-STATS-05 | COVERED | 005 | frontend/src/pages/Stats/__tests__/ScoreCard.test.tsx<br>frontend/src/pages/Stats/__tests__/StatsView.loaded.test.tsx<br>frontend/src/pages/Stats/__tests__/StreakCard.test.tsx<br>frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts |
 | FR-METR-01 | COVERED | 004 | backend/tests/test_metrics_extra.py::test_overlapping_pauses_agree_between_m1_day_totals_and_m3_focus_denominator<br>backend/tests/test_metrics_m1_volume.py::test_empty_history_yields_zero_volume<br>backend/tests/test_metrics_m1_volume.py::test_net_minutes_exclude_paused_spans<br>backend/tests/test_metrics_m1_volume.py::test_volume_sums_net_minutes_per_window<br>backend/tests/test_metrics_snapshot.py::test_all_time_volume_is_exposed_in_the_snapshot |
 | FR-METR-02 | COVERED | 004 | backend/tests/test_metrics_extra.py::test_exactly_3_active_days_meets_the_m2_floor_and_is_not_low_confidence<br>backend/tests/test_metrics_m2_consistency.py::test_empty_window_returns_null_consistency<br>backend/tests/test_metrics_m2_consistency.py::test_fewer_than_3_active_days_is_low_confidence_not_an_error<br>backend/tests/test_metrics_m2_consistency.py::test_m2_is_the_50_50_blend_with_zero_days_counted_against_regularity<br>backend/tests/test_metrics_m2_consistency.py::test_start_stability_uses_the_60_minute_band_around_the_median_start |
 | FR-METR-03 | COVERED | 004 | backend/tests/test_metrics_extra.py::test_intervals_net_seconds_merges_overlapping_pauses_unlike_the_naive_helper<br>backend/tests/test_metrics_extra.py::test_overlapping_pauses_agree_between_m1_day_totals_and_m3_focus_denominator<br>backend/tests/test_metrics_m3_focus.py::test_a_short_pause_disqualifies_an_otherwise_deep_session<br>backend/tests/test_metrics_m3_focus.py::test_a_sub_60_minute_session_is_not_deep<br>backend/tests/test_metrics_m3_focus.py::test_deep_block_stays_whole_and_is_attributed_to_its_start_day<br>backend/tests/test_metrics_m3_focus.py::test_deep_share_divides_deep_minutes_by_total_window_net_minutes<br>backend/tests/test_metrics_m3_focus.py::test_exactly_60_minute_zero_pause_session_counts_as_a_deep_block |
@@ -47,7 +47,7 @@ Every requirement a `docs/specs/` slice claims to cover is mapped to the test(s)
 | NFR-SEC-02 | COVERED | 001 | backend/tests/test_auth.py::test_csrf_required_on_mutation |
 | NFR-SEC-03 | COVERED | 001 | backend/tests/test_auth.py::test_current_user_is_isolated |
 
-Summary: 38 claimed, 33 traced, 5 gap.
+Summary: 38 claimed, 38 traced, 0 gap.
 
 ## Requirements not yet claimed by any spec
 

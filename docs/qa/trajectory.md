@@ -164,10 +164,11 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/005.md - absent
 - Commits:
+  - 2e9eb01 docs(stats-ui): ratify the slice 005 contract (spec-first) [Refs: FR-STATS-01]
   - aa7db87 harness: cut repeated verify work + add spec-hygiene gate (speed/cost) [Refs: BC-PROC-01]
 - Touched code paths (0):
   - (none)
-- Other files touched (docs/config): 15
+- Other files touched (docs/config): 23
 
 ## Process / infra commits (traced, not a feature slice)
 
