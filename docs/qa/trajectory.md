@@ -164,7 +164,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/005.md - clean
 - Commits:
-  - 58c27fc docs(stats-ui): close slice 005 - review evidence, records, archive [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
+  - 7f365c7 docs(stats-ui): close slice 005 - review evidence, records, archive [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 3f63e53 frontend(stats-ui): render the snapshot to green [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 484cc46 frontend(stats-ui): RED acceptance tests + jsdom test infra [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 2e9eb01 docs(stats-ui): ratify the slice 005 contract (spec-first) [Refs: FR-STATS-01]
