@@ -203,11 +203,15 @@ tests, verify the repo and update this file.
 
 ## Known blockers / risks
 
-- **Slice 004 (metrics) is NOT DONE** — escalated to the owner after the `/run-slice` loop's
-  3-iteration cap; see Phase 4 above. 3 open `[BLOCKING]` performance findings against
-  architecture §1's NFR-PERF-01 budget (<500ms at 10k sessions), none touching formula
-  correctness or isolation. Blocks marking slice 004 done and `openspec archive add-metrics`;
-  does not block slice 005/006 planning against the snapshot's already-stable shape.
+- **Slice 004 (metrics) is DONE** (2026-07-11) — the 3 escalated `[BLOCKING]` performance findings
+  were resolved in an owner-authorized iteration-4 targeted fix (`2a7533f`: pause-count cap,
+  day-split memoization, linearized switching), independently verified (146 passed, coverage 97.47%,
+  wire shape unchanged) and reviewed clean (code + security, 0 BLOCKING — `docs/qa/reviews/004.md`,
+  run record `docs/agent-runs/017-metrics-judge.md`). `openspec archive add-metrics` applied.
+  Remaining items are accepted non-blocking follow-ups (`docs/followups/metrics-snapshot-extension.md`):
+  a cross-slice pause-hydration MINOR, an optional memoization-test strengthening, and the M2
+  spillover-day denominator MINOR (owner ruling, not a fix). `feat/004-metrics` is a clean base for
+  slice 005 (Stats UI).
 - `find-skills` carries a Snyk "Warn" (documented; optional to remove for strict
   all-audits-pass compliance).
 

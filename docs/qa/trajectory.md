@@ -116,8 +116,9 @@ This report proves only the process facts git can show: trailers, review-evidenc
 ## Slice 004
 
 - Done: no (requirements: proposed)
-- Review evidence: docs/qa/reviews/004.md - absent
+- Review evidence: docs/qa/reviews/004.md - present but not clean
 - Commits:
+  - 2a7533f perf(metrics): bound pause-count, memoize the day-split, linearize switching [Refs: NFR-PERF-01]
   - 3fc7459 docs(metrics): stop the slice-004 loop at its iteration cap, escalate [Refs: FR-METR-01, NFR-DET-01]
   - 95332e9 fix(metrics): bound per-session span and fix the O(gap) streak walk [Refs: FR-METR-05, FR-METR-07, NFR-DET-01]
   - 4afc084 fix(metrics): bound the window span and unify overlap-aware net time [Refs: FR-METR-03, FR-METR-07, NFR-DET-01]
