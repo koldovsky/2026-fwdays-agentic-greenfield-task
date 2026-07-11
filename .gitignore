@@ -1,4 +1,4 @@
-# Стек у цьому завданні — будь-який. Додавай сюди ігнори свого стеку за потреби.
+# Стек у цьому завданні — Go.
 
 # OS / редактори
 .DS_Store
@@ -12,16 +12,46 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Залежності та артефакти збірки (типові для різних стеків)
-node_modules/
-dist/
-build/
-out/
-.next/
-__pycache__/
-*.pyc
-.venv/
-venv/
-target/
-bin/
-obj/
+# Go: скомпільовані бінарники та об'єктні файли
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+
+# Go: вихідні директорії збірки
+/bin/
+/build/
+/dist/
+/out/
+
+# Go: тестові артефакти та профілі покриття
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Go: робочий простір (локальні налаштування модулів)
+go.work
+go.work.sum
+
+# Go: vendor (розкоментуй, якщо НЕ комітиш vendor/)
+# vendor/
+
+# Android / Gradle
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/.cxx/
+*.iml
+.navigation/
+/local.properties
+
+sample-input.txt
+/.github/pull_request.md
+*.txt
