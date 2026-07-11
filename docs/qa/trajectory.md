@@ -118,10 +118,20 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/004.md - absent
 - Commits:
+  - 1d65762 test(metrics): RED acceptance tests for the 004 contract [Refs: FR-METR-01, FR-HEAT-01, NFR-DET-01]
   - 93517e3 docs(metrics): bring the owner-ratified slice 004 contract onto feat/004-metrics [Refs: FR-METR-01]
-- Touched code paths (0):
-  - (none)
-- Other files touched (docs/config): 9
+- Touched code paths (10):
+  - backend/tests/test_metrics_days.py
+  - backend/tests/test_metrics_heatmap.py
+  - backend/tests/test_metrics_m1_volume.py
+  - backend/tests/test_metrics_m2_consistency.py
+  - backend/tests/test_metrics_m3_focus.py
+  - backend/tests/test_metrics_m4_switching.py
+  - backend/tests/test_metrics_m5_streaks.py
+  - backend/tests/test_metrics_m6_baseline.py
+  - backend/tests/test_metrics_snapshot.py
+  - backend/tests/test_stats_api.py
+- Other files touched (docs/config): 10
 
 ## Process / infra commits (traced, not a feature slice)
 

@@ -73,7 +73,6 @@ def _load() -> tuple[object, object, object, object, object, object, object, obj
         zone_for,
     )
     from app.core.metrics.model import CategorizedSession
-
     from app.core.model import SessionData
 
     return (
@@ -186,7 +185,7 @@ def test_baseline_spans_the_trailing_30_days_ending_yesterday() -> None:
     start, end = baseline_window(date(2026, 3, 15))
 
     assert end == date(2026, 3, 14)  # yesterday
-    assert start == date(2026, 2, 14)  # 30 days ending yesterday, inclusive
+    assert start == date(2026, 2, 13)  # 30 days ending yesterday, inclusive
     assert (end - start).days + 1 == 30
 
 
