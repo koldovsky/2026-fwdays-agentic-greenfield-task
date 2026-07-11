@@ -5,6 +5,37 @@ what happened and what to do next. Update this after completing a unit of work.
 
 ## Last action
 
+**2026-07-11T18:32:57+00:00** — Fixed two Android UI bugs reported against a
+running build, both pure presentation issues with no FR/BC contract impact
+(handled as direct fixes rather than through the OpenSpec propose/gate flow,
+which this skill reserves for changes to the parsing/matching/link contract):
+
+1. **Status bar overlap.** `targetSdk 35` forces edge-to-edge on Android 15+,
+   and none of the three screens (`PlanFormScreen`, `SettingsScreen`,
+   `ResultsScreen`) accounted for system-bar insets, so the top row (title +
+   Settings/Back button) rendered underneath the status bar/clock. Fixed once
+   at the root in `MainActivity.kt` by adding
+   `Modifier.windowInsetsPadding(WindowInsets.safeDrawing)` to the top-level
+   `Surface`, so every screen gets correct top padding without per-screen
+   duplication; a no-op on pre-edge-to-edge devices since insets are zero
+   there.
+2. **Cursor position after autocomplete.** In `PlanFormScreen.kt`'s
+   `PlanRowEditor`, the jar-name field used the plain-`String` `OutlinedTextField`
+   overload; tapping a suggestion replaced the text but the caret stayed at
+   its pre-tap offset instead of moving to the end. Switched the field to the
+   `TextFieldValue` overload with a `remember(row.id)`-scoped local state, and
+   explicitly set `selection = TextRange(suggestion.length)` when a suggestion
+   is applied (typing still updates selection normally via the field's own
+   `onValueChange`).
+
+Verified with `./gradlew :app:testDebugUnitTest` (all existing unit tests
+green — neither change touches `domain/*` business logic) and
+`./gradlew :app:assembleDebug` (builds clean); no emulator/device available
+in this sandbox to visually re-confirm, so a real-device check of both fixes
+is still worth doing before considering this closed.
+
+### Prior action
+
 **2026-07-11T17:29:11+00:00** — Added an Android app as a second, independent
 interface to jarsplit, spec-first via the OpenSpec change
 `add-android-client` (branch `add-android-client`). The Go CLI (`cmd/`,
