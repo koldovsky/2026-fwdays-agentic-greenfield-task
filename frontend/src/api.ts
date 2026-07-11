@@ -215,3 +215,12 @@ export const deleteSession = (id: number): Promise<UndoToken> =>
 
 export const applyUndo = (token: string): Promise<void> =>
   apiFetch<void>(`/api/undo/${token}`, { method: 'POST' })
+
+// --- Stats snapshot (slice 005) ---------------------------------------------
+// Read-only fetch of the shipped slice-004 GET /api/stats/snapshot payload. The Stats
+// page renders this; no metric is recomputed client-side. Rides apiFetch, so credentials
+// flow. (The 5-second live poll that keeps it fresh across devices is slice 007.)
+import type { SnapshotResponse } from './pages/Stats/types'
+
+export const getStatsSnapshot = (): Promise<SnapshotResponse> =>
+  apiFetch<SnapshotResponse>('/api/stats/snapshot')

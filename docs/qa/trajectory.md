@@ -164,11 +164,22 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/005.md - absent
 - Commits:
+  - 484cc46 frontend(stats-ui): RED acceptance tests + jsdom test infra [Refs: FR-STATS-01, FR-STATS-02, FR-STATS-03, FR-STATS-04, FR-STATS-05]
   - 2e9eb01 docs(stats-ui): ratify the slice 005 contract (spec-first) [Refs: FR-STATS-01]
   - aa7db87 harness: cut repeated verify work + add spec-hygiene gate (speed/cost) [Refs: BC-PROC-01]
-- Touched code paths (0):
-  - (none)
-- Other files touched (docs/config): 23
+- Touched code paths (11):
+  - frontend/src/pages/Stats/__fixtures__/sampleSnapshot.ts
+  - frontend/src/pages/Stats/__fixtures__/snapshot.schema.json
+  - frontend/src/pages/Stats/__tests__/BarByDay.test.ts
+  - frontend/src/pages/Stats/__tests__/CategoryLine.test.ts
+  - frontend/src/pages/Stats/__tests__/DonutByCategory.test.ts
+  - frontend/src/pages/Stats/__tests__/ScoreCard.test.tsx
+  - frontend/src/pages/Stats/__tests__/StatsView.loaded.test.tsx
+  - frontend/src/pages/Stats/__tests__/StatsView.test.tsx
+  - frontend/src/pages/Stats/__tests__/StreakCard.test.tsx
+  - frontend/src/pages/Stats/__tests__/SummaryTiles.test.tsx
+  - frontend/src/pages/Stats/__tests__/snapshotSeam.test.ts
+- Other files touched (docs/config): 27
 
 ## Process / infra commits (traced, not a feature slice)
 

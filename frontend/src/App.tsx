@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import { ApiError, getMe, logout, type User } from './api'
 import AuthPage from './pages/AuthPage'
 import CategoriesPage from './pages/Categories/CategoriesPage'
+import StatsPage from './pages/Stats/StatsPage'
 import TimerPage from './pages/Timer/TimerPage'
 
 type Session = { status: 'loading' } | { status: 'anon' } | { status: 'authed'; user: User }
 
-type Tab = 'timer' | 'categories'
+type Tab = 'timer' | 'categories' | 'stats'
 
 export default function App() {
   const [session, setSession] = useState<Session>({ status: 'loading' })
@@ -78,13 +79,14 @@ export default function App() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
           <span className="micro-label">{session.user.email}</span>
           {navBtn('timer', 'Timer')}
+          {navBtn('stats', 'Stats')}
           {navBtn('categories', 'Categories')}
         </nav>
         <button className="link-btn" type="button" onClick={onSignOut}>
           Sign out
         </button>
       </header>
-      {tab === 'timer' ? <TimerPage /> : <CategoriesPage />}
+      {tab === 'timer' ? <TimerPage /> : tab === 'stats' ? <StatsPage /> : <CategoriesPage />}
     </div>
   )
 }
