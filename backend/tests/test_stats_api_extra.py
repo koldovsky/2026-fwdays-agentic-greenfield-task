@@ -94,6 +94,54 @@ async def test_snapshot_rejects_a_window_ending_before_it_starts(client: AsyncCl
     assert resp.status_code == 422, resp.text
 
 
+async def test_snapshot_accepts_a_window_exactly_at_the_span_cap(client: AsyncClient) -> None:
+    """A window spanning exactly the 366-day cap (inclusive) is accepted, not rejected.
+
+    2025-01-01..2026-01-01 spans 365 calendar days apart -> 366 inclusive days, exactly
+    the cap `_parse_window` enforces (security-reviewer finding: an unbounded window is a
+    single-request resource-exhaustion vector). Pins the boundary the same way this
+    slice's other formulas pin their edges (M3's 60-min, M4's switch_load thresholds).
+    """
+    await register_and_login(client, unique_email())
+
+    resp = await client.get(
+        "/api/stats/snapshot", params={"window": "2025-01-01..2026-01-01"}
+    )
+
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["window"] == {"start": "2025-01-01", "end": "2026-01-01", "days": 366}
+
+
+async def test_snapshot_rejects_a_window_spanning_more_than_the_cap(client: AsyncClient) -> None:
+    """A window spanning one day more than the cap is a 422, not a multi-million-day scan.
+
+    Guards the security-reviewer's finding: without a span cap, a single authenticated
+    request (e.g. ``?window=0001-01-01..9999-12-31``) forces ``snapshot.py``'s
+    ``_date_range`` to materialize ~3.65M ``date`` objects, which then drives unbounded
+    O(days) / O(days x sessions) list-building in ``volume.per_day`` / ``switching.per_day``
+    / ``per_category_per_day`` -- a single-request resource-exhaustion DoS reachable by
+    any self-registered account with zero sessions.
+    """
+    await register_and_login(client, unique_email())
+
+    resp = await client.get(
+        "/api/stats/snapshot", params={"window": "2025-01-01..2026-01-02"}
+    )
+
+    assert resp.status_code == 422, resp.text
+
+
+async def test_snapshot_rejects_an_extreme_full_range_window(client: AsyncClient) -> None:
+    """The exact attack shape from the finding (min..max ISO date) is rejected, not hung on."""
+    await register_and_login(client, unique_email())
+
+    resp = await client.get(
+        "/api/stats/snapshot", params={"window": "0001-01-01..9999-12-31"}
+    )
+
+    assert resp.status_code == 422, resp.text
+
+
 async def test_heatmap_rejects_an_invalid_period(client: AsyncClient) -> None:
     """A period outside week|month|quarter|6mo|year is a 422, not silently defaulted."""
     await register_and_login(client, unique_email())

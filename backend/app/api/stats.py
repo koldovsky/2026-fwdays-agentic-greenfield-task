@@ -21,6 +21,18 @@ _VALID_PERIODS = ("week", "month", "quarter", "6mo", "year")
 _DEFAULT_PERIOD = "month"
 _WINDOW_SEPARATOR = ".."
 
+# Upper bound on a custom `window`'s inclusive day span. Without this, an authenticated
+# caller with zero sessions can request e.g. `?window=0001-01-01..9999-12-31` and force
+# `snapshot.py`'s `_date_range` to materialize ~3.65M `date` objects, driving unbounded
+# O(days) / O(days x sessions) list-building in `volume.per_day` / `switching.per_day` /
+# `per_category_per_day` -- a single-request resource-exhaustion DoS against the shared
+# backend process. 366 days (~1 year, +1 to comfortably cover a leap year) mirrors the
+# longest trailing period the heatmap endpoint itself ever computes (`year` = 365 days,
+# `app/core/metrics/heatmap.py`'s `_PERIOD_SPAN_DAYS`) while still comfortably covering
+# any legitimate custom-range query -- a full year of daily data is already far more than
+# a snapshot chart usefully renders.
+_MAX_WINDOW_DAYS = 366
+
 
 def _bad_request(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail)
@@ -40,6 +52,9 @@ def _parse_window(raw: str | None) -> tuple[date, date] | None:
         raise _bad_request("window dates must be ISO format (YYYY-MM-DD)") from exc
     if end < start:
         raise _bad_request("window end must not be before start")
+    span_days = (end - start).days + 1
+    if span_days > _MAX_WINDOW_DAYS:
+        raise _bad_request(f"window must not span more than {_MAX_WINDOW_DAYS} days")
     return start, end
 
 

@@ -8,33 +8,17 @@ entity attributed to exactly one day (a deep block, a day's switch grouping) use
 if it receives >= 1 attributed net minute.
 
 Pure and framework-free (no FastAPI/SQLAlchemy/I/O imports, NFR-DET-01); every other
-metric module builds on these three functions.
+metric module builds on these three functions. The pause-overlap-merging sweep this
+module's splitting is built on lives in ``app.core.metrics.intervals`` (``net_intervals``)
+so M3 focus can share the exact same net-time computation (see that module's docstring).
 """
 
 from collections.abc import Iterator, Sequence
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from app.core.metrics.intervals import net_intervals
 from app.core.model import SessionData
-
-
-def _net_intervals(session: SessionData) -> list[tuple[datetime, datetime]]:
-    """The session's net time as sorted, pause-excluded ``[start, end)`` sub-intervals.
-
-    Pauses are sorted by ``paused_at`` and subtracted in order; a zero-length or
-    inverted remainder (defensive against out-of-order/overlapping pause input) is
-    simply skipped.
-    """
-    intervals: list[tuple[datetime, datetime]] = []
-    cursor = session.started_at
-    for pause in sorted(session.pauses, key=lambda p: p.paused_at):
-        if pause.paused_at > cursor:
-            intervals.append((cursor, pause.paused_at))
-        if pause.resumed_at > cursor:
-            cursor = pause.resumed_at
-    if session.ended_at > cursor:
-        intervals.append((cursor, session.ended_at))
-    return intervals
 
 
 def _local_midnight(day: date, zone: ZoneInfo) -> datetime:
@@ -71,7 +55,7 @@ def daily_net_minutes(sessions: Sequence[SessionData], tz: str) -> dict[date, in
     zone = ZoneInfo(tz)
     seconds_by_day: dict[date, int] = {}
     for session in sessions:
-        for start, end in _net_intervals(session):
+        for start, end in net_intervals(session):
             for day, seconds in _split_seconds_by_local_day(start, end, zone):
                 seconds_by_day[day] = seconds_by_day.get(day, 0) + seconds
     minutes_by_day = {day: seconds // 60 for day, seconds in seconds_by_day.items()}

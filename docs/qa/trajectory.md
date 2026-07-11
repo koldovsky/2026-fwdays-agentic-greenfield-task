@@ -118,11 +118,29 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/004.md - absent
 - Commits:
+  - 6a1c799 feat(metrics): the metrics engine, heatmap, and stats endpoints to green [Refs: FR-METR-01, FR-METR-07, FR-HEAT-01, NFR-DET-01]
   - 130cf39 fix(metrics): correct a self-contradictory date literal in the RED M6 test [Refs: FR-METR-06]
   - 1d65762 test(metrics): RED acceptance tests for the 004 contract [Refs: FR-METR-01, FR-HEAT-01, NFR-DET-01]
   - 93517e3 docs(metrics): bring the owner-ratified slice 004 contract onto feat/004-metrics [Refs: FR-METR-01]
-- Touched code paths (10):
+- Touched code paths (28):
+  - backend/app/api/stats.py
+  - backend/app/core/metrics/__init__.py
+  - backend/app/core/metrics/days.py
+  - backend/app/core/metrics/heatmap.py
+  - backend/app/core/metrics/m1_volume.py
+  - backend/app/core/metrics/m2_consistency.py
+  - backend/app/core/metrics/m3_focus.py
+  - backend/app/core/metrics/m4_switching.py
+  - backend/app/core/metrics/m5_streaks.py
+  - backend/app/core/metrics/m6_baseline.py
+  - backend/app/core/metrics/model.py
+  - backend/app/core/snapshot.py
+  - backend/app/main.py
+  - backend/app/repos/category_reads.py
+  - backend/app/schemas/stats.py
+  - backend/app/services/stats.py
   - backend/tests/test_metrics_days.py
+  - backend/tests/test_metrics_extra.py
   - backend/tests/test_metrics_heatmap.py
   - backend/tests/test_metrics_m1_volume.py
   - backend/tests/test_metrics_m2_consistency.py
@@ -132,7 +150,8 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - backend/tests/test_metrics_m6_baseline.py
   - backend/tests/test_metrics_snapshot.py
   - backend/tests/test_stats_api.py
-- Other files touched (docs/config): 10
+  - backend/tests/test_stats_api_extra.py
+- Other files touched (docs/config): 11
 
 ## Process / infra commits (traced, not a feature slice)
 
@@ -164,7 +183,10 @@ Overlap limited to allowlisted entry-point / aggregation files (the app factory,
 
 - slices 001 and 002: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 001 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
+- slices 001 and 004: backend/app/main.py
 - slices 002 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
+- slices 002 and 004: backend/app/main.py
+- slices 003 and 004: backend/app/main.py
 
 ## Unattributed product-code commits (informational)
 

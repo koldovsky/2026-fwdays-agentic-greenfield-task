@@ -5,12 +5,19 @@ parameters. The caller (the snapshot assembler) pre-filters ``sessions`` to whic
 window applies, so M3 itself never needs to know about calendar days: a deep block is a
 property of one whole session (net duration + pause count), never split by day
 attribution (§3.7).
+
+Net minutes are computed via ``app.core.metrics.intervals.net_seconds`` (the same
+pause-overlap-merging sweep ``days.py`` uses for day splitting), **not**
+``app.core.durations.net_seconds`` -- the latter sums each pause's own duration naively
+and so disagrees with day attribution whenever two pause segments on the same session
+overlap (M1's per-day totals and M3's ``deep_share`` denominator must agree on one
+session's own net time).
 """
 
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from app.core.durations import net_seconds
+from app.core.metrics.intervals import net_seconds
 from app.core.model import SessionData
 
 _DEEP_BLOCK_MIN_MINUTES = 60
