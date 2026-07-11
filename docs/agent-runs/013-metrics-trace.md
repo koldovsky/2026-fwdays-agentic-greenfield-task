@@ -480,4 +480,154 @@ slice-002/003 traces did.
   run-slice.md, a BLOCKING finding here means STOP and escalate to the owner, not a
   4th loop.
 
+## 2026-07-11 12:20 (Europe/Kyiv, EEST) — STAGE 7: Independent parallel review (iteration 3, the cap)
+
+- **Sub-agents:** fresh `code-reviewer` + `security-reviewer`, launched in parallel
+  (background), told explicitly this is the final iteration and to hunt broadly for
+  *any other* unbounded-work vector, not just re-verify the two named fixes.
+- **`security-reviewer` result (returned first): BLOCK — a third, independent instance
+  of the same finding-class, on a different axis than either of the first two.** The
+  90-day session-*span* cap and the sorted-gap `_longest_run` rewrite both verified
+  sound and correctly scoped (property-tested `_longest_run` against a naive O(gap)
+  reference over 2000 trials, 0 mismatches; confirmed `StatsService._load` is the sole
+  choke point for both endpoints). But a saved session's **`pauses` array has no length
+  bound anywhere** — not in `app/schemas/sessions.py` (a gap already logged as an
+  *accepted* MINOR at slice 003 under a "self-scoped, CSRF-gated" risk model — this
+  slice invalidates that model by reading the same field ~10+ times per stats request),
+  not in `_validate_bounds`, not at the DB, and **not covered by this slice's own new
+  choke-point guard** (`_within_session_span_cap` checks only `ended_at - started_at`,
+  never `len(pauses)`). Measured, not estimated: a single ordinary-span session with
+  100k pauses -> `build_snapshot()` **5.0s** (already **0.53s at just 10k pauses**,
+  itself over the <500ms/10k-*session* NFR-PERF-01 budget, from a *single* crafted
+  session). Same mechanism as the two already-fixed findings (synchronous, event-loop-
+  blocking compute), same severity class, different unbounded axis (pause *count*, not
+  session *span* or *calendar gap*). 1 further `[MINOR]`: no per-user category-count
+  cap either (lower risk — needs many individual CSRF-gated requests to build up, not
+  one crafted request).
+- **`code-reviewer` result:** pending.
+- **DECISION — the loop's cap is reached.** Per run-slice.md: "Cap reached: if after 3
+  iterations the slice is still blocking on any stage, STOP and escalate to the owner...
+  Do not loop forever... a slice that cannot converge in three honest iterations needs
+  the owner, not another lap." This is iteration 3's review stage finding BLOCKING —
+  **no 4th rework will be dispatched.** Waiting on `code-reviewer`'s outcome only to
+  present the owner a complete picture, not to decide whether to stop (that is already
+  decided by process, not by what code-reviewer says).
+- **`code-reviewer` result: BLOCK — two further, independent findings, neither a
+  rediscovery of any of the four already-fixed vectors.** Confirmed both prior fixes
+  hold with no bypass (`StatsService._load` is the sole choke point; `_longest_run`
+  matches a naive O(gap) reference over edge cases + a 200-trial random check; the
+  `130cf39` test-literal fix independently re-derived as correct, not a weakening;
+  no acceptance test touched across any commit). But — following the brief's explicit
+  instruction to sanity-check against architecture §1's own **named number**
+  (NFR-PERF-01: "<500ms at 10k sessions") rather than "in theory" — **measured the
+  slice at that exact scale for the first time in this loop** (all three prior findings
+  used 1-2 total sessions; the "10k" comparisons in this trace so far were rhetorical
+  budget citations, never an actual test at that count) and found the compounding
+  effect of un-memoized recomputation genuinely fails the named budget with entirely
+  **ordinary, non-adversarial** data: (a) `snapshot.py`/`m6_baseline.py` call
+  `daily_net_minutes`/`compute_volume`/`compute_consistency` **21 separate times** for
+  one request (cProfile-confirmed), each a full O(total-sessions) walk over the
+  complete history with no memoization — measured **1.07-1.28s** at 10k ordinary
+  sessions (architecture's own literal 30-day/10k scenario), **>2x over budget**, no
+  crafted `window` needed; (b) `_build_switching_block` (`snapshot.py:79-81`) re-filters
+  the **entire** unwindowed session list once **per reporting day** instead of grouping
+  once — O(days x sessions) — measured **5.84s** (**~11.7x over budget**) at 10k
+  sessions with a legitimate 366-day (already-capped) window, isolated to **4.3s** for
+  that one function alone. Both reproduce with all sessions comfortably inside the
+  90-day span cap and a ~13-month calendar spread (not years) — a third, distinct
+  unbounded axis (session **count**, via redundant full-history recomputation) from the
+  security-reviewer's pause-**count** finding in the same iteration. 1 restated
+  `[MINOR]` (M2 spillover-day denominator, previously disclosed, independently
+  re-confirmed accurate, not new).
+- **Combined iteration-3 result: 3 BLOCKING findings (pauses-count DoS; un-memoized
+  21x recomputation; O(days x sessions) switching-block re-filter), 0 overlap between
+  the two reviewers' BLOCKING items, both reviewers independently confirmed the four
+  previously-fixed vectors hold.** All three are genuinely new — none is a rediscovery
+  of the window-span, session-span, or streak-gap findings from iterations 1-2.
+- **DECISION: STOP. Escalate to the owner. No 4th rework dispatched.** Per
+  run-slice.md's cap rule, confirmed and now executed. Across 3 loop iterations, 5
+  independent review passes (2 code-reviewer, 2 security-reviewer, cross-confirmed by
+  the orchestrator each time via direct reproduction, not report-trusting) found and
+  fixed 2 real BLOCKING issues (window-span DoS; session-span-driven day-walk DoS and
+  the O(gap) streak-walk correctness/perf issue) and surfaced a **pattern**: this
+  slice's snapshot assembly repeatedly recomputes over a caller's *entire* session
+  history — with no caching (architecture §1's own explicit, accepted design choice) —
+  from multiple independent, differently-shaped unbounded axes (window span, one
+  session's own span, one session's pause count, and now sheer session count via
+  redundant un-memoized recomputation and an O(days x sessions) grouping bug). Three of
+  these are now fixed and independently verified working, not just tested. Three remain
+  open. This is no longer "find one bug, fix it" — it is a recurring shape across every
+  review pass, which is exactly the signal run-slice.md's cap is designed to surface to
+  a human rather than have an agent loop patch indefinitely. See the end-of-run summary
+  below and the chat report for the full open-findings list and the orchestrator's
+  assessment of what a real fix looks like.
+
 ---
+
+## END OF LOOP — STOPPED AT THE ITERATION CAP, ESCALATED (NOT DONE)
+
+**Final state:** `feat/004-metrics` at commit `95332e9`, `gate-slice` GREEN (142 tests,
+coverage 97.46% >= floor 82%), `check-traceability` 33/33/0 gap, `check-trajectory` 4
+slices/0 violations — the slice is **functionally correct and its formulas are
+independently verified** against architecture §3 by two separate reviewer passes. It is
+**not performance-safe at realistic personal scale** per its own governing NFR
+(NFR-PERF-01, <500ms at 10k sessions) and carries one further live resource-exhaustion
+vector (unbounded pause count). Per `.claude/commands/run-slice.md`'s explicit cap rule,
+the loop stops here rather than attempting a 4th automated iteration. **The Judge step
+does not run** — run-slice.md gates it on the loop having exited green, which it did
+not. No `openspec archive` was run (that is a DONE-only step). No push, no PR — none
+were in scope regardless of outcome.
+
+**Open findings for the owner (none touched by any of the 3 completed rework passes):**
+
+1. `[BLOCKING]` **Unbounded `pauses` array length** (security-reviewer, iteration 3).
+   `backend/app/schemas/sessions.py` (slice 003, out of this slice's reach) has no
+   `max_length` on `SessionCreate.pauses`/`SessionUpdate.pauses` — a gap already logged
+   as an *accepted* slice-003 MINOR (`docs/qa/reviews/003.md:44`) under a risk model
+   ("self-scoped, CSRF-gated") this slice invalidates by reading that field ~10+ times
+   per stats request. Measured 5.0s at 100k pauses on one ordinary-span session; already
+   0.53s at 10k pauses. Remediation direction: a sibling guard next to
+   `_within_session_span_cap` in `backend/app/services/stats.py::StatsService._load`
+   (the established choke point), excluding a session whose `len(pauses)` exceeds a
+   generous cap — same pattern as the already-shipped span cap, no slice-003 file needs
+   to change.
+2. `[BLOCKING]` **Un-memoized, repeated full-history recomputation** (code-reviewer,
+   iteration 3). `daily_net_minutes`/`compute_volume`/`compute_consistency` are called
+   21 separate times per `GET /api/stats/snapshot` (`backend/app/core/snapshot.py`,
+   `backend/app/core/metrics/m6_baseline.py`'s today+yesterday baseline calls), each a
+   full O(total-sessions) walk. Measured 1.07-1.28s at 10k ordinary sessions —
+   architecture's own named NFR-PERF-01 scenario — >2x over the <500ms budget, with no
+   crafted input at all. Remediation direction: compute the day-split once per request
+   in `build_snapshot` and thread the result through, mirroring how
+   `compute_heatmap` already does this correctly in the same file (0.058s for the same
+   session count/span).
+3. `[BLOCKING]` **O(days x sessions) re-filter in the switching block**
+   (code-reviewer, iteration 3). `snapshot.py`'s `_build_switching_block` re-scans the
+   *entire* unwindowed session list once per reporting day instead of grouping once.
+   Measured 4.3s isolated (5.84s whole-snapshot, ~11.7x over budget) at 10k sessions
+   with a legitimate 366-day window (already inside the iteration-1 cap). Remediation
+   direction: group sessions by `local_start_day` once into a `dict[date, list[...]]`
+   before the per-day loop.
+4. `[MINOR]`, disclosed and unchanged since iteration 2: M2's `start_stability`
+   denominator can include a spillover-only active day that can never land in its own
+   numerator, silently understating the score for that edge case. Needs an owner
+   ruling, not urgent.
+
+**Orchestrator's assessment, offered as input to the owner's decision, not a
+recommendation the loop can act on itself:** all three open BLOCKING findings are one
+recurring shape — this slice's `compute-on-read, no caching` design (architecture §1,
+an explicit, deliberate choice: *"pure recompute keeps a single source of truth... NFR-PERF-01
+trivially satisfiable"*) is not, in fact, trivially satisfying that budget once the
+session count in a real personal history (the exact scale architecture.md itself names,
+10k) is actually tested rather than assumed. Two of the three remaining items
+(un-memoized recomputation, the switching-block re-filter) are ordinary algorithmic
+fixes with no architectural disagreement attached — internal to this slice, no
+cross-slice edit needed, comparable in shape to the two fixes already shipped this loop.
+The third (pauses count) is a defensive-cap fix of the same shape as the two already
+shipped. None appear to require reopening any ratified decision or touching a
+slice-001/002/003-owned file. The reason to stop here rather than let the loop attempt
+these automatically is the **pattern**, not the individual fixes' difficulty: three loop
+iterations have each surfaced a *differently-shaped* instance of the same underlying
+scaling gap, which is the specific signal this repo's process designed the 3-iteration
+cap to hand to a human rather than have an agent patch indefinitely.
+

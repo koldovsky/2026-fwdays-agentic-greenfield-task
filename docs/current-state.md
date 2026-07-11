@@ -4,8 +4,37 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-11 00:20 (Europe/Kyiv, EEST)
-- **Phase:** 3 — slice **003 timer-sessions** (the product's core loop) ran end-to-end through
+- **Date and time:** 2026-07-11 12:35 (Europe/Kyiv, EEST)
+- **Phase:** 4 — slice **004 metrics** ran through `/run-slice` in an isolated worktree
+  (`.claude/worktrees/004-metrics`, branch `feat/004-metrics`, based on slice 003's tip so it
+  reads slice 003's real code, not `spec/004-metrics`'s pre-implementation fork point) and is
+  **NOT DONE — STOPPED at the loop's 3-iteration cap and escalated to the owner**, per
+  `.claude/commands/run-slice.md`'s explicit rule (a slice still blocking after 3 honest
+  iterations needs the owner, not a 4th automated lap). This is the **first slice this
+  factory has not converged in one iteration**. `gate-slice` is GREEN (142 passed, coverage
+  97.46%), `check-traceability` 0 gap (33/33), `check-trajectory` 0 violations, and 5
+  independent review passes (across the 3 iterations) confirmed the 6 metric formulas
+  (M1-M6), the §3.7 day-attribution/midnight-split logic, and per-user isolation all correct
+  — but **3 open `[BLOCKING]` performance/resource-exhaustion findings remain**, each a
+  differently-shaped instance of the same pattern (this slice's compute-on-read design
+  repeatedly recomputing over a caller's *entire* session history, unbounded on one axis or
+  another): an uncapped `pauses`-array length (measured 5.0s at 100k pauses), un-memoized
+  recomputation (21x per request, 1.07-1.28s at the architecture doc's own named 10k-session
+  scenario, >2x its <500ms NFR-PERF-01 budget), and an O(days x sessions) re-filter in the
+  switching block (5.84s, ~11.7x over budget, at 10k sessions with a legitimate window). 2
+  *other* BLOCKING findings this same loop surfaced (an unbounded `window` query-param span;
+  a session-span-driven day-walk plus an O(calendar-gap) streak-walk) **were** fixed and
+  independently reproduced as actually working, not just green-tested. The Judge step did
+  **not** run (it gates on the loop exiting green) and `openspec archive add-metrics` was
+  **not** applied — this slice is correctly not marked done. Full detail, every command's
+  real output, and the remediation direction for each open finding:
+  [`docs/agent-runs/013-metrics-trace.md`](agent-runs/013-metrics-trace.md) (the live trace)
+  and [`docs/agent-runs/016-metrics-run.md`](agent-runs/016-metrics-run.md) (the orchestrator's
+  final run record). One process note: a mid-session machine restart lost one sub-agent's own
+  chat report (iteration 2's implementer); the orchestrator independently re-verified that
+  diff from scratch rather than trust or fabricate a report, documented in
+  [`docs/agent-runs/015-metrics-implementer.md`](agent-runs/015-metrics-implementer.md).
+- **Phase (prior):** 3 — slice **003 timer-sessions** (the product's core loop) ran end-to-end through
   `/run-slice` and is **engineering-DONE**: the maker≠checker≠judge loop converged in **one
   iteration** — `gate-slice` GREEN (70 passed, coverage 96.33%), `check-traceability` 0 gap (all 13
   ids COVERED), `check-trajectory` 0 violations, both independent reviewers 0 BLOCKING,
@@ -136,6 +165,19 @@ tests, verify the repo and update this file.
 
 ## Next steps
 
+0. **Decide how to close out slice 004 (metrics).** `feat/004-metrics` is functionally
+   correct and gate-green but carries 3 open `[BLOCKING]` performance findings (see the
+   Phase 4 entry above and `docs/agent-runs/013-metrics-trace.md`'s END OF LOOP block for
+   full detail + remediation directions). All three look like same-shape, same-file fixes
+   to what the loop already shipped twice this run — the orchestrator's read is that an
+   owner-approved resumption of `/run-slice 004` targeting just these 3 items would likely
+   converge, but did not self-authorize a 4th automated iteration past the process's
+   3-iteration cap. Alternative: revisit architecture §1's compute-on-read/no-caching
+   NFR-PERF-01 budget directly if the owner judges the numeric target itself (not the
+   code) should change. This blocks slice 005 (Stats UI) and slice 006 (coach) only in
+   the sense that both build on `GET /api/stats/snapshot` staying within its stated
+   latency budget at real scale — neither is blocked on the *shape* of the snapshot,
+   which is stable and already what both slices were planned against.
 1. **Open the PR** for slice 001 and let **CodeRabbit** review it — the sole remaining DoD sub-item
    (item 3). Carry the accepted MINOR follow-ups forward (dev cookie `SameSite`/`Secure` combo; assert
    `Path=/`/`Secure` in the cookie test; bcrypt off the event loop; 72-byte password bound;
@@ -161,7 +203,12 @@ tests, verify the repo and update this file.
 
 ## Known blockers / risks
 
-- None blocking. `find-skills` carries a Snyk "Warn" (documented; optional to remove for strict
+- **Slice 004 (metrics) is NOT DONE** — escalated to the owner after the `/run-slice` loop's
+  3-iteration cap; see Phase 4 above. 3 open `[BLOCKING]` performance findings against
+  architecture §1's NFR-PERF-01 budget (<500ms at 10k sessions), none touching formula
+  correctness or isolation. Blocks marking slice 004 done and `openspec archive add-metrics`;
+  does not block slice 005/006 planning against the snapshot's already-stable shape.
+- `find-skills` carries a Snyk "Warn" (documented; optional to remove for strict
   all-audits-pass compliance).
 
 ## How to verify
