@@ -118,6 +118,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/004.md - absent
 - Commits:
+  - 130cf39 fix(metrics): correct a self-contradictory date literal in the RED M6 test [Refs: FR-METR-06]
   - 1d65762 test(metrics): RED acceptance tests for the 004 contract [Refs: FR-METR-01, FR-HEAT-01, NFR-DET-01]
   - 93517e3 docs(metrics): bring the owner-ratified slice 004 contract onto feat/004-metrics [Refs: FR-METR-01]
 - Touched code paths (10):
