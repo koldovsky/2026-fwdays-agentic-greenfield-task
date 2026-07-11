@@ -13,6 +13,12 @@ orchestrator, which decides whether the implementer reworks.
 
 Read `AGENTS.md` (roles, Verify, reporting rules) first.
 
+**Context packet first.** The orchestrator's prompt normally includes a distilled
+context packet (the diff scope, spec + scenarios, requirement ids, the gate output it
+already ran). Treat it as your primary context: review the diff against it — do
+**not** re-read the whole doc corpus or re-run the full battery the orchestrator
+already ran; re-run something only to verify a specific suspicion.
+
 ## Hard boundaries (do not cross)
 
 - **READ-ONLY.** You may Read, Grep, Glob, and run **read-only** Bash to verify a claim

@@ -52,6 +52,15 @@ cd ../frontend; npm run build; npm test # tsc strict + bundle, then vitest unit 
 
 "Green" = lint ✓ types ✓ migrations ✓ tests ✓ build ✓ fe-unit ✓. Same checks run in [CI](.github/workflows/ci.yml).
 
+Speed notes (no check is weakened): `verify.*` skips venv/pip/npm **re-install** when
+`pyproject.toml`/`package-lock.json` are unchanged (hash stamps inside `.venv`/`node_modules`;
+`VERIFY_FRESH=1` forces a full reinstall). `gate-slice` runs the pytest suite **once, under
+coverage** (it passes `VERIFY_SKIP_PYTEST=1` to `verify.*`), and DB-touching test runs are
+serialized machine-wide by an advisory lock shared with the `stop-verify` hook
+(`scripts/_harness.py`). The first gate on a fresh worktree still builds the venv + `node_modules`
+once (unavoidable); every run after that skips the reinstall. `python scripts/check-specs` guards
+spec hygiene (single-owner ids, no open questions in ratified changes).
+
 ## Roles — maker ≠ checker ≠ judge (never the same pass)
 
 - **Maker** — implements one spec. Writes/updates tests with the change and an Alembic

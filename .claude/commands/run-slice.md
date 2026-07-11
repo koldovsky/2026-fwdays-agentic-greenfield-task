@@ -15,6 +15,43 @@ genuinely independent, not the author re-grading themselves.
 Read `AGENTS.md` (roles, Verify, Definition of Done, reporting rules) and
 `openspec/README.md` (the per-slice flow) before you begin.
 
+## Cost discipline (same bar, no repeated work)
+
+The loop's guarantees come from the deterministic gates and the fresh-context reviews —
+**not** from re-reading or re-running what is already proven. Hold these alongside the
+invariants; none of them weakens a check, they only remove duplicated work:
+
+- **Lean preflight.** Read the slice's contract (the anchor + its OpenSpec change), the
+  requirement texts behind its ids, and the specific `architecture.md`/`DESIGN.md`
+  sections the change cites — and stop. Do **not** re-read stable machinery every run
+  (the five agent defs, the gate scripts, `_harness.py`, the rubric, past traces): you
+  invoke it, you don't re-audit it; trust its exit codes.
+- **Context packet, not "go read everything".** When spawning a sub-agent, paste a
+  distilled packet into its prompt: the spec path + scenario list, the requirement ids,
+  the relevant architecture/DESIGN **excerpts** (sections, not whole documents), the
+  reuse-surface file list it may read/touch, and the artifact it must act on (RED
+  output, `[BLOCKING]` findings, diagnosis). The isolation that makes maker ≠ checker
+  real is about *reasoning*, not about every agent re-collecting the same context.
+- **Verify by spot-check, not by re-doing.** After the test-engineer, read the test
+  file itself and re-run **only the new test file**, not the world. After the
+  implementer, do **not** re-read every produced file or re-run the battery it just ran
+  — the one authoritative `gate-slice` at the Gate stage is the proof. Full manual
+  re-verification is reserved for incidents (interrupted agent, contradictory report).
+- **Logs to files, tails to context.** Run gates with output redirected to a log file
+  (session scratchpad or another git-ignored location) and read the tail + exit code.
+  Never let full pytest/npm output stream into the conversation repeatedly.
+- **Terse trace.** The live trace records facts — timestamp, stage, agent, result,
+  decision, a few lines each — not narrative prose. Cite the log file instead of
+  restating output. Add a `Cost:` line per stage (tool calls / ~tokens / gate runtime)
+  whenever known.
+- **The gate battery is fast now (no check weakened).** `verify.*` skips venv/pip/npm
+  **re-install** when `pyproject.toml`/`package-lock.json` are unchanged (hash stamps;
+  `VERIFY_FRESH=1` forces a full reinstall); `gate-slice` runs the pytest suite **once,
+  under coverage** (passing `VERIFY_SKIP_PYTEST=1` to `verify.*`) and serializes
+  DB-touching runs via an advisory lock shared with the `stop-verify` hook. Orchestrator
+  sessions may export `STOP_VERIFY=0` — the turn-end pytest hook just duplicates the gate
+  you run explicitly.
+
 ## Invariants (hold these the entire run)
 
 - **The orchestrator drives; agents return verdicts up.** Sub-agents never call or command
@@ -80,6 +117,7 @@ iteration** (re-run from the gate — do not review code that does not build).
    python scripts/gate-slice          # verify.* battery + backend coverage ratchet
    python scripts/check-traceability  # the slice's ids must be COVERED, not GAP
    python scripts/check-trajectory    # git-visible process facts (trailers, evidence)
+   python scripts/check-specs         # single-owner ids + no open questions in ratified changes
    ```
 
    RED -> hand the failing output to the implementer -> next iteration.

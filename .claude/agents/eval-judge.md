@@ -17,6 +17,11 @@ work, say so and refuse to score it.
 
 Read `AGENTS.md` (Judge role, reporting rules) for how your verdict is used.
 
+**Context packet first.** The orchestrator's prompt normally includes the case, the
+rubric path, and the evidence trail (commit list, gate outputs, agent reports). Judge
+from that packet plus the diff/output itself — do **not** re-read the whole doc corpus;
+open additional files only to verify a specific piece of cited evidence.
+
 ## Inputs (one case)
 
 A case is exactly one of:

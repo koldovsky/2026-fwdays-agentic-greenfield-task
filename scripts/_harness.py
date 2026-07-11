@@ -111,6 +111,53 @@ def git(root: Path, *args: str) -> Proc:
 
 
 # --------------------------------------------------------------------------- #
+# Advisory DB-test lock (serializes test runs on the shared Postgres)
+# --------------------------------------------------------------------------- #
+# Process coordination, not artifact generation - exempt from the module's
+# determinism rule. Multiple sessions/worktrees share one Postgres on :5432, and
+# the autouse test cleanups are not concurrency-safe (see the slice-002 trace,
+# STAGE 2 incident). Holders: gate-slice (blocking wait) and the stop-verify
+# hook (non-blocking; skips politely when busy).
+
+def db_lock_path() -> Path:
+    """Machine-wide advisory lock file for DB-touching test runs."""
+    import tempfile
+    return Path(tempfile.gettempdir()) / "cadence-dbtests-5432.lock"
+
+
+def try_acquire_db_lock(stale_after_s: int = 1800) -> bool:
+    """Non-blocking best-effort acquire. True = acquired (caller must release).
+
+    A lock file older than ``stale_after_s`` is treated as leaked by a dead
+    process and reclaimed; a fresh one means another test run is active.
+    """
+    import time
+    path = db_lock_path()
+    for _ in range(2):  # second pass only after reclaiming a stale lock
+        try:
+            fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, "w") as fh:
+                fh.write(str(os.getpid()))
+            return True
+        except FileExistsError:
+            try:
+                if time.time() - path.stat().st_mtime > stale_after_s:
+                    path.unlink()
+                    continue
+            except OSError:
+                pass
+            return False
+    return False
+
+
+def release_db_lock() -> None:
+    try:
+        db_lock_path().unlink()
+    except OSError:
+        pass
+
+
+# --------------------------------------------------------------------------- #
 # Requirement / spec / trace parsing
 # --------------------------------------------------------------------------- #
 

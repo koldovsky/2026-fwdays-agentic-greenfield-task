@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""check-specs - deterministic spec-hygiene and cross-slice seam gate.
+
+Three checks, all pure filesystem + stdlib (no LLM, no network, no git):
+
+1. SINGLE-OWNER IDS. Every requirement id inside an anchor's "Requirements
+   covered" section is an ownership claim (that is literally how ``parse_specs``
+   feeds the traceability and trajectory gates). An id claimed by two anchors
+   makes the commit->slice mapping ambiguous - the exact cause of a
+   ``MULTI:<a>+<b>`` violation in check-trajectory. Reused ids (e.g. FR-AUTH-07)
+   belong in a "Reused / applied" or "Problem / goal" section, never in
+   "Requirements covered". FAIL on any id claimed by more than one
+   ``docs/specs/NNN-*.md`` anchor.
+
+2. KNOWN IDS. Every claimed id must exist in ``docs/requirements.md`` (the id
+   registry; ids are stable and never reused). FAIL on unknown ids - a typo here
+   silently breaks the whole trace chain downstream.
+
+3. OPEN QUESTIONS ARE CLOSED AT RATIFICATION. Ratification means the contract is
+   decided: a slice whose anchor says ``Status: ratified`` must not carry
+   textually open questions in its in-flight OpenSpec change - every numbered
+   item under the change design.md's "## Open questions" heading must contain a
+   "Resolution" marker. For draft anchors this only WARNS (open questions are
+   exactly what ratification exists to settle). This is the deterministic half of
+   the seam rule; the judgment half (does the consumer quote the producer's real
+   schema?) lives with the reviewers and the run-slice packet rules.
+
+Exit codes: 0 ok / 1 violation / 2 usage or environment error.
+Run: python scripts/check-specs
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+# The OpenSpec change a spec anchor points at, e.g. "openspec/changes/add-metrics".
+CHANGE_LINK_RE = re.compile(r"openspec/changes/([a-z0-9][a-z0-9-]*)")
+# The anchor's status line, e.g. "- **Status:** ratified (owner-approved ...)".
+STATUS_RE = re.compile(r"^\s*-\s*\*\*Status:\*\*\s*([A-Za-z-]+)", re.MULTILINE)
+# A numbered open-question item, e.g. "1. **Heatmap default period.** ...".
+NUMBERED_ITEM_RE = re.compile(r"^\d+\.\s", re.MULTILINE)
+
+
+def find_dual_claims(specs: list) -> dict[str, list[str]]:
+    """Map each requirement id claimed by MORE than one anchor -> sorted slice ids."""
+    owners: dict[str, list[str]] = {}
+    for spec in specs:
+        for rid in spec.covered_ids:
+            owners.setdefault(rid, []).append(spec.slice_id)
+    return {rid: sorted(slices) for rid, slices in owners.items() if len(slices) > 1}
+
+
+def find_unknown_ids(specs: list, known_ids: set[str]) -> dict[str, list[str]]:
+    """Map each slice id -> claimed ids that do not exist in requirements.md."""
+    unknown: dict[str, list[str]] = {}
+    for spec in specs:
+        missing = sorted(rid for rid in spec.covered_ids if rid not in known_ids)
+        if missing:
+            unknown[spec.slice_id] = missing
+    return unknown
+
+
+def find_unresolved_open_questions(design_text: str) -> list[str]:
+    """Titles (first line) of numbered Open-questions items lacking a Resolution marker.
+
+    Pure text function: takes design.md content, looks at the section whose heading
+    contains "Open questions", splits it on numbered items, and reports every item
+    whose body does not mention "resolution" or "resolved" (case-insensitive).
+    """
+    body = H._section_body(design_text, "Open questions")
+    if not body.strip():
+        return []
+    # Split the section into numbered items; text before the first number is preamble.
+    positions = [m.start() for m in NUMBERED_ITEM_RE.finditer(body)]
+    unresolved: list[str] = []
+    for i, start in enumerate(positions):
+        end = positions[i + 1] if i + 1 < len(positions) else len(body)
+        item = body[start:end]
+        if not re.search(r"resol(?:ution|ved)", item, re.IGNORECASE):
+            title = item.splitlines()[0].strip()
+            unresolved.append(title)
+    return unresolved
+
+
+def anchor_status_and_change(anchor_text: str) -> tuple[str, str | None]:
+    """(status word lowercased or 'unknown', linked in-flight change name or None)."""
+    m = STATUS_RE.search(anchor_text)
+    status = m.group(1).lower() if m else "unknown"
+    link = CHANGE_LINK_RE.search(anchor_text)
+    return status, (link.group(1) if link else None)
+
+
+def main() -> int:
+    root = H.repo_root()
+    specs = H.parse_specs(root)
+    if not specs:
+        print("check-specs: no docs/specs/NNN-*.md anchors found; nothing to check.")
+        return H.EXIT_OK
+    reqs = H.parse_requirements(root)
+    if not reqs:
+        print("check-specs: docs/requirements.md missing or unparsable.", file=sys.stderr)
+        return H.EXIT_USAGE
+
+    violations: list[str] = []
+    warnings: list[str] = []
+
+    # 1. Single-owner ids.
+    for rid, slices in sorted(find_dual_claims(specs).items()):
+        violations.append(
+            f"id {rid} is claimed by {len(slices)} anchors ({', '.join(slices)}) - "
+            "an id has exactly one owning slice; move reused ids out of the "
+            "'Requirements covered' section."
+        )
+
+    # 2. Known ids.
+    for slice_id, missing in sorted(find_unknown_ids(specs, set(reqs)).items()):
+        violations.append(
+            f"slice {slice_id} claims id(s) not present in docs/requirements.md: "
+            f"{', '.join(missing)}"
+        )
+
+    # 3. Open questions closed at ratification.
+    for spec in specs:
+        text = spec.path.read_text(encoding="utf-8")
+        status, change = anchor_status_and_change(text)
+        if change is None:
+            continue  # pre-OpenSpec slice (001) or no linked change
+        design = root / "openspec" / "changes" / change / "design.md"
+        if not design.is_file():
+            continue  # change archived (applied) or carries no design doc
+        unresolved = find_unresolved_open_questions(design.read_text(encoding="utf-8"))
+        if not unresolved:
+            continue
+        lines = "".join(f"\n      - {t}" for t in unresolved)
+        msg = (f"slice {spec.slice_id} ({change}/design.md) has "
+               f"{len(unresolved)} open question(s) without a Resolution:{lines}")
+        if status == "ratified":
+            violations.append(
+                msg + "\n    A ratified change may not carry open questions - resolve "
+                      "them into the contract (design/spec), not a side trace.")
+        else:
+            warnings.append(msg + f"  [status: {status} - OK until ratification]")
+
+    print(f"check-specs: {len(specs)} anchor(s), {len(reqs)} known id(s).")
+    for w in warnings:
+        print(f"  WARN: {w}")
+    if violations:
+        print("\nSpec-hygiene violations:", file=sys.stderr)
+        for v in violations:
+            print(f"  - {v}", file=sys.stderr)
+        return H.EXIT_CHECK_FAILED
+    print("check-specs: no violations (single-owner ids, known ids, "
+          "ratified changes carry no open questions).")
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

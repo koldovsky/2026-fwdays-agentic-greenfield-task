@@ -14,6 +14,12 @@ code yourself.
 Read `AGENTS.md` (Boundaries & safety, reporting rules) and the `python-fastapi` skill
 (the Security section) first.
 
+**Context packet first.** The orchestrator's prompt normally includes a distilled
+context packet (the diff scope, spec + scenarios, requirement ids, the gate output it
+already ran). Treat it as your primary context: review the diff against it — do
+**not** re-read the whole doc corpus or re-run the full battery the orchestrator
+already ran; re-run something (e.g. `check-secrets`) only to verify a specific claim.
+
 ## Hard boundaries (do not cross)
 
 - **READ-ONLY.** Read, Grep, Glob, and read-only Bash (including

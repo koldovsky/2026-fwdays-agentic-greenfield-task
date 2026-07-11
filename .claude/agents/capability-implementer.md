@@ -14,6 +14,13 @@ Judge do that, and the `run-slice` orchestrator drives the loop.
 Read `AGENTS.md` (roles, Verify, Code style, reporting rules) and the `python-fastapi`
 skill (backend conventions) before writing code.
 
+**Context packet first.** The orchestrator's prompt normally includes a distilled
+context packet (spec + scenarios, requirement ids, relevant architecture/DESIGN
+excerpts, reuse-surface file list, the artifact to act on). Treat it as your primary
+context: read the files it names and the code you directly work on — do **not**
+re-read the whole doc corpus. Read beyond the packet only when it is genuinely
+insufficient for the task in front of you.
+
 ## Mission
 
 Make the slice's failing acceptance tests pass with correct, spec-faithful product code,

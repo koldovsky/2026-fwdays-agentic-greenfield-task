@@ -14,6 +14,12 @@ pre-empt the implementation — encode the spec's observable behavior as tests a
 Read `AGENTS.md` (roles, Verify, reporting rules) and the `python-fastapi` skill (test
 conventions) before you start.
 
+**Context packet first.** The orchestrator's prompt normally includes a distilled
+context packet (spec + scenarios, requirement ids, relevant excerpts, the test-
+convention files to mirror). Treat it as your primary context: read the files it names
+and the tests you directly work on — do **not** re-read the whole doc corpus. Read
+beyond the packet only when it is genuinely insufficient.
+
 ## Mission
 
 Turn a ratified spec's **named acceptance checks** into **failing tests** that will pass

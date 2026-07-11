@@ -35,7 +35,13 @@ FLOOR_PATH = "docs/qa/coverage-floor.txt"
 
 
 def run_verify(root) -> int:
-    """Delegate the full stack battery to the platform verify script."""
+    """Delegate the full stack battery to the platform verify script.
+
+    Passes VERIFY_SKIP_PYTEST=1: the ratchet step that always follows in full mode
+    runs the exact same suite under coverage, so running it twice proves nothing
+    extra. If coverage/pytest are unavailable the ratchet fails loudly - the gate
+    can never go green without the tests having run.
+    """
     if os.name == "nt":
         script = root / "scripts" / "verify.ps1"
         cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)]
@@ -45,8 +51,9 @@ def run_verify(root) -> int:
     if not script.is_file():
         print(f"gate-slice: missing verify script {H.rel(script, root)}", file=sys.stderr)
         return H.EXIT_USAGE
-    print(f"==> gate-slice: running {H.rel(script, root)} (full stack battery)")
-    return H.stream(cmd, cwd=root)
+    print(f"==> gate-slice: running {H.rel(script, root)} (full stack battery; "
+          "pytest deferred to the coverage run)")
+    return H.stream(cmd, cwd=root, env={"VERIFY_SKIP_PYTEST": "1"})
 
 
 def read_floor(root) -> float | None:
@@ -141,6 +148,25 @@ def ratchet(root, bump: bool) -> int:
     return H.EXIT_OK
 
 
+def acquire_db_lock_blocking(timeout_s: int = 600) -> bool:
+    """Wait for the shared-Postgres advisory lock (gate-slice is authoritative, so
+    it waits rather than skips). On timeout, proceed with a loud warning - never
+    weaker than the historical no-lock behavior."""
+    import time
+    waited = 0
+    while not H.try_acquire_db_lock():
+        if waited == 0:
+            print(f"==> gate-slice: another DB test run holds {H.db_lock_path()}; "
+                  f"waiting (max {timeout_s}s)")
+        time.sleep(5)
+        waited += 5
+        if waited >= timeout_s:
+            print("gate-slice: lock wait timed out - proceeding anyway "
+                  "(risk of shared-DB test interference).", file=sys.stderr)
+            return False
+    return True
+
+
 def main(argv: list[str]) -> int:
     mode_full = True
     bump = False
@@ -159,15 +185,23 @@ def main(argv: list[str]) -> int:
 
     root = H.repo_root()
 
-    if mode_full:
-        code = run_verify(root)
-        if code != 0:
-            print("gate-slice: FAIL - verify.* battery did not pass.", file=sys.stderr)
-            return H.EXIT_CHECK_FAILED if code == 1 else code
+    # Every mode runs pytest against the shared Postgres -> serialize via the
+    # advisory lock (shared with the stop-verify hook) so concurrent sessions
+    # cannot wipe each other's in-flight test rows.
+    acquired = acquire_db_lock_blocking()
+    try:
+        if mode_full:
+            code = run_verify(root)
+            if code != 0:
+                print("gate-slice: FAIL - verify.* battery did not pass.", file=sys.stderr)
+                return H.EXIT_CHECK_FAILED if code == 1 else code
 
-    rc = ratchet(root, bump=bump)
-    if rc != 0:
-        return rc
+        rc = ratchet(root, bump=bump)
+        if rc != 0:
+            return rc
+    finally:
+        if acquired:
+            H.release_db_lock()
 
     if mode_full:
         print("\ngate-slice: GREEN - stack verified and coverage ratchet held.")
