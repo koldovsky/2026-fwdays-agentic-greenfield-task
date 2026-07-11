@@ -17,6 +17,23 @@ two code-reviewer findings (both "should fix", not the acceptance bar):
     pinned at the edge, alongside the existing 2-active-days (low-confidence) case in
     the acceptance file.
 
+This file also carries the coverage for a second rework pass (two independent
+resource-exhaustion / algorithmic-complexity findings, both `[BLOCKING]`):
+
+  - `app.services.stats._within_session_span_cap` -- the single choke point every saved
+    session passes through before it can reach ``app.core.metrics.days``' day-by-day
+    splitting -- is pinned at its exact 90/91-day boundary, the same way this slice pins
+    every other threshold (M3's 60-minute floor, M4's switch_load thresholds, the
+    ``window`` query param's 366-day cap in ``test_stats_api_extra.py``). The end-to-end
+    proof that the cap actually protects a live ``GET /api/stats/snapshot`` /
+    ``/heatmap`` call is DB-backed and lives in ``test_stats_api_extra.py`` instead
+    (same split as the ``window``-cap tests).
+  - M5's ``_longest_run`` (``app.core.metrics.m5_streaks``) no longer costs
+    O(calendar-day span between the earliest and latest active day) -- an ordinary user
+    with two active periods years apart used to pay for walking every day in between.
+    The rewrite is O(n log n) in the actual number of active days; pinned here for both
+    correctness (unchanged streak numbers) and a non-regression time bound.
+
 Pure, no DB -- imports mirror the acceptance tests' own ``_load()`` style.
 """
 
@@ -201,3 +218,102 @@ def test_exactly_3_active_days_meets_the_m2_floor_and_is_not_low_confidence() ->
     assert result.score is not None
     assert result.regularity is not None
     assert result.start_stability is not None
+
+
+# --- Session span defensive cap (rework iteration 3, BLOCKING finding 1) ----------------
+
+
+def test_within_session_span_cap_pins_the_90_91_day_boundary() -> None:
+    """``app.services.stats._within_session_span_cap`` accepts exactly 90 days, rejects 91.
+
+    This is the single choke point every saved session passes through before it can
+    reach ``app.core.metrics.days``' day-by-day splitting (FR-METR-07): without it, one
+    absurdly-dated session (a mistyped year on a manual add, or a deliberately crafted
+    request -- nothing upstream bounds a session's own span beyond ``ended_at >
+    started_at``) forces every metrics function that reads a caller's session history
+    into an unbounded, event-loop-blocking walk on every stats read. Pinned at the exact
+    edge the same way this slice pins every other threshold (M3's 60-minute floor, M4's
+    switch_load thresholds, the ``window`` query param's 366-day cap). No DB needed --
+    ``Session`` is a plain SQLAlchemy-mapped object here, never added to a session or
+    flushed, so constructing one with just the two fields this predicate reads is safe
+    and side-effect-free. The end-to-end proof that this cap actually protects a live
+    ``GET /api/stats/snapshot``/``/heatmap`` call (with real before/after timings) is
+    DB-backed and lives in ``test_stats_api_extra.py`` instead, mirroring how the
+    ``window``-cap tests are split across these same two files.
+    """
+    from app.models.session import Session
+    from app.services.stats import _within_session_span_cap
+
+    start = datetime(2020, 1, 1, tzinfo=UTC)
+
+    at_cap = Session(started_at=start, ended_at=start + timedelta(days=90))
+    assert _within_session_span_cap(at_cap) is True
+
+    over_cap = Session(started_at=start, ended_at=start + timedelta(days=91))
+    assert _within_session_span_cap(over_cap) is False
+
+
+# --- M5's longest-run algorithm (rework iteration 3, BLOCKING finding 2) ----------------
+
+
+def _sessions_on(days: list[date]) -> list[object]:
+    """One 30-min zero-pause session at 09:00 UTC on each of ``days`` (mirrors the
+    acceptance file's own ``_sessions_on_days`` helper, duplicated locally rather than
+    imported across test files)."""
+    from app.core.model import SessionData
+
+    sessions = []
+    for day in days:
+        start = datetime(day.year, day.month, day.day, 9, 0, 0, tzinfo=UTC)
+        sessions.append(
+            SessionData(started_at=start, ended_at=start + timedelta(minutes=30), pauses=[])
+        )
+    return sessions
+
+
+def _consecutive(end: date, count: int) -> list[date]:
+    return [end - timedelta(days=offset) for offset in range(count)][::-1]
+
+
+def test_longest_streak_across_a_multi_millennium_gap_is_correct_and_fast() -> None:
+    """A 7-day run ~9800 years ago plus a current 6-day run: correct numbers, and fast.
+
+    Code-reviewer finding: ``_longest_run`` used to walk every calendar day between the
+    earliest and latest active day one at a time, so its cost was
+    O(calendar-day gap), not O(actual active days) -- and this needs no crafted session
+    data at all, only two ordinary, short active periods far apart in calendar time (the
+    reviewer's own repro: "tracked a week two years ago, resumed recently", measured at
+    ~1.4s for exactly 2 sessions in their environment).
+
+    This fixture deliberately pushes the gap far beyond "a couple of years" (~9800
+    years, comfortably within ``datetime.date``'s year 1..9999 range and safe from
+    ``_current_run``'s own earliest-representable-date edge, since these are two
+    *isolated* short runs, not one continuous run reaching back to day 1) so the
+    contrast is unmistakable on any machine, however fast: this repo's own environment
+    measured the pre-fix algorithm directly (not estimated) at 6.41s for a similar
+    ~9998-year gap between two ordinary sessions (see the rework's run record) -- so a
+    2-second budget here is already >3x below where the old algorithm would land, while
+    the fixed O(n log n)-in-active-days algorithm finishes in microseconds regardless of
+    how far apart the two runs are.
+
+    @trace FR-METR-05
+    """
+    import time
+
+    from app.core.metrics.m5_streaks import compute_streaks
+
+    today = date(9900, 3, 6)
+    past_run = _consecutive(date(105, 3, 7), 7)  # year 105, 7 consecutive days
+    current_run = _consecutive(today, 6)  # year 9900, 6 consecutive days through today
+    sessions = _sessions_on(past_run + current_run)
+
+    started = time.perf_counter()
+    result = compute_streaks(sessions, "UTC", today)
+    elapsed = time.perf_counter() - started
+
+    assert result.current == 6
+    assert result.longest == 7  # the older 7-day run, still the longest over all history
+    assert elapsed < 2.0, (
+        f"took {elapsed:.3f}s for a 2-run, ~9800-year-gap history -- looks like a "
+        "day-by-day calendar walk regressed back in"
+    )

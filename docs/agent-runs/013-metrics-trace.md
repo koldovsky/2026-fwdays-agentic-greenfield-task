@@ -189,4 +189,295 @@ slice-002/003 traces did.
   the pure-core API shape test-engineer pinned, the `model.py`/repo reuse boundaries from
   STAGE 0a, and the `tzdata` dependency gap to fix as their first step.
 
+## 2026-07-11 07:05 (Europe/Kyiv, EEST) — STAGE 2: Implement to green
+
+- **Sub-agent:** `capability-implementer` (fresh isolated context, worktree-pinned,
+  **synchronous**). **Skills used (self-declared):** python-fastapi.
+- **Did:** built the full pure `app/core/metrics/` package + `app/core/snapshot.py` to
+  the API test-engineer pinned; a new `app/repos/category_reads.py` (archived-inclusive,
+  does not touch slice 002's `CategoryRepository`); `app/services/stats.py`;
+  `app/schemas/stats.py` + `app/api/stats.py`; additive `app/main.py` router
+  registration; added `tzdata>=2024.1` to `backend/pyproject.toml` (fixes the flagged
+  `ZoneInfoNotFoundError` gap); two supplementary test files for its own defensive
+  branches (never touching the 10 acceptance-test files). **Never edited**
+  `app/core/model.py` or `app/repos/sessions.py`/`categories.py` — respected the
+  cross-slice overlap boundary from STAGE 0a throughout.
+- **Escalation (correctly handled, not a rework loop iteration):** flagged
+  `test_metrics_m6_baseline.py::test_baseline_spans_the_trailing_30_days_ending_yesterday`
+  as internally self-contradictory (`start`/`end` literals + the `+1 == 30` assertion
+  cannot all hold; proved via real date arithmetic) rather than either editing the test
+  itself or bending `baseline_window` to chase the wrong literal. This is exactly the
+  hard-boundary behavior its agent definition requires ("if a test looks wrong, stop and
+  escalate — you do not fix a spec test by making it assert less").
+- **Orchestrator response:** did **not** trust the claim blindly. Independently
+  re-derived the arithmetic myself (`date(2026,3,14) - date(2026,2,14) = 28` days, not
+  29 -> confirmed self-contradictory). Rather than patch the test myself, spawned a
+  **fresh, narrow `test-engineer` pass** — scoped to this one literal, explicitly
+  forbidden from reading the implementation (`m6_baseline.py`) so the correction is
+  derivable from the test's own stated invariant + architecture §3.6 +
+  `test_metrics_m1_volume.py`'s already-correct sibling convention, not reverse-engineered
+  from the implementation. It independently re-derived the same arithmetic, changed
+  exactly one literal (`date(2026,2,14)` -> `date(2026,2,13)`), and self-caught a
+  line-ending regression from its first edit attempt before I ever saw it. Verified via
+  `git diff --stat` -> `1 file changed, 1 insertion(+), 1 deletion(-)`, LF endings intact.
+- **Second, unrelated ruff finding (orchestrator, mechanical, fixed directly — no
+  sub-agent round-trip):** `python scripts/gate-slice` then failed on an `I001`
+  import-order violation in the same test file's `_load()` helper, pre-existing since
+  the original RED-test commit (confirmed via `git show 1d65762:...`, unrelated to the
+  date fix). `ruff check . --diff` showed a single blank-line removal as the entire fix
+  (zero semantic content, not a test-content or scope change) — applied
+  `ruff check . --fix` directly, confirmed `ruff check .` clean afterward. Judgment: a
+  mechanical, deterministic, tool-verified whitespace fix carries none of the
+  "judgment call that could hide weakening" risk the sub-agent-isolation rule exists to
+  guard against, so a dedicated agent round-trip would have been pure overhead.
+- **Gate (orchestrator, serial, authoritative — run twice: once mid-diagnosis, once
+  clean after both fixes):**
+
+  ```
+  python scripts/gate-slice
+  -> ruff: All checks passed! / mypy: no issues found in 58 source files /
+     alembic upgrade head: no-op (confirms no migration, as required) /
+     pytest -q: 132 passed in 87.24s / frontend build + vitest: 4 passed /
+     coverage 97.50% >= floor 82% -> gate-slice: GREEN
+  python scripts/check-traceability -> 33 claimed, 33 traced, 0 gap. EXIT=0
+  python scripts/check-trajectory   -> 4 slices, 0 violations. EXIT=0
+  ```
+
+- **Committed** (orchestrator, after reviewing each diff — neither sub-agent commits its
+  own work in this loop):
+  - `130cf39` `fix(metrics): correct a self-contradictory date literal in the RED M6
+    test` (`Slice: 004-metrics`) — the isolated one-line test correction, fully
+    evidenced in the commit body.
+  - `6a1c799` `feat(metrics): the metrics engine, heatmap, and stats endpoints to green`
+    (`Slice: 004-metrics`) — the full implementation, gate output in the commit body.
+- **RESULT:** Gate stage of the SLICE LOOP is green on the first authoritative run.
+  `git status --porcelain` confirmed no unexpected file touches at any point (main.py +
+  pyproject.toml only, both additive, everything else new files).
+- **DECISION:** Proceed to the SLICE LOOP's review stage — `code-reviewer` and
+  `security-reviewer` in parallel, read-only, against `git diff 2b76fd2...HEAD` (the
+  slice-003 tip, not `main` — `main` predates slices 001-003).
+
+## 2026-07-11 08:45 (Europe/Kyiv, EEST) — STAGE 3: Independent parallel review (iteration 1)
+
+- **Sub-agents:** `code-reviewer` and `security-reviewer`, both fresh isolated contexts,
+  both launched in parallel (background), both told the correct diff scope
+  (`2b76fd2..HEAD`, not `main...HEAD`) and explicitly told **not** to run
+  pytest/gate-slice/docker themselves (DB serial-access hazard) — static review only,
+  citing the orchestrator's already-captured gate output instead.
+- **`security-reviewer` result (returned first): BLOCK.** 1 `[BLOCKING]`:
+  `backend/app/api/stats.py:29-43` `_parse_window` validates format/ordering but never
+  bounds the `window` span; an unbounded span flows into `snapshot.py`'s `_date_range`
+  and drives O(days) / O(days x sessions) list-building with no request size/timeout
+  guard anywhere in `app/main.py` — a single authenticated, unauthenticated-data GET
+  (`?window=0001-01-01..9999-12-31`) can force ~3.65M-entry structures, a self-service
+  DoS. 1 `[MINOR]`: the DB-level cross-user isolation test only asserts on
+  `volume.today_min`, not on `top_categories`/`per_category_per_day` (the
+  category-identity-bearing fields) — not exploitable today (properly scoped at the repo
+  + snapshot layer) but a coverage gap. **Orchestrator independently verified the
+  BLOCKING finding before accepting it**: read `_parse_window` directly — confirmed it
+  checks only ISO-parseable + `end >= start`, no upper bound on `(end - start)` anywhere.
+  Finding accepted as real.
+- **`code-reviewer` result: PASS-with-minors** (no BLOCKING of its own; independently
+  re-derived M1/M2/M3/M4/M6 formulas and 4 `days.py` boundary fixtures beyond the shipped
+  suite — all correct; independently confirmed the `130cf39` date-literal fix is a
+  legitimate correction, not a weakening; independently confirmed the security
+  finding too, citing it for completeness without duplicating it). 2 `[MINOR]`:
+  (1) `app/core/metrics/m3_focus.py`'s `_net_minutes` reuses slice 003's
+  `durations.py::net_seconds`, which naively sums each pause's own duration with no
+  overlap handling, while `days.py`'s `_net_intervals` (built for this slice) correctly
+  merges overlapping pauses — for a session with two overlapping pauses, M1's
+  `daily_net_minutes` and M3's `deep_share` denominator disagree about the same
+  session's own net minutes. (2) M2's exactly-3-active-days floor (a named boundary in
+  the spec) has no dedicated test, unlike every other pinned boundary in this slice.
+  **Orchestrator independently reproduced finding (1)**: ran `net_seconds` directly
+  against a 60-min session with two 30-min pauses overlapping 10 minutes (true paused
+  time 40 min, correct net = 20 min) -> got **0** net minutes. Confirmed real.
+- **Combined result: 1 BLOCKING (security-reviewer, independently confirmed by both the
+  orchestrator and code-reviewer) + 2 MINOR (code-reviewer).** Per run-slice.md,
+  >=1 BLOCKING from either reviewer routes to rework.
+- **DECISION:** rework, iteration 2. Route the BLOCKING finding (must-fix) plus both
+  MINORs (in-scope, cheap, bundled into the same pass rather than spending a second loop
+  iteration on them later) to a **fresh** `capability-implementer` invocation — never a
+  continuation of the same agent instance, per run-slice.md's "each rework is a fresh
+  invocation." The M3 fix must stay inside slice-004-owned files (extract/reuse
+  `days.py`'s interval-merging logic locally) — `durations.py` remains slice-003-owned
+  and off-limits.
+
+## 2026-07-11 09:35 (Europe/Kyiv, EEST) — STAGE 4: Rework (iteration 1 -> 2)
+
+- **Sub-agent:** `capability-implementer`, fresh isolated context (no memory of the
+  original `6a1c799` build), given the 3 findings as a self-contained artifact.
+  **Skills used (self-declared):** python-fastapi.
+- **Did:** (1) added `_MAX_WINDOW_DAYS = 366` + a span check to `_parse_window`
+  (`app/api/stats.py`), 422 above the cap, tested at the exact boundary plus the
+  finding's literal attack shape; (2) extracted the overlap-merging sweep out of
+  `days.py`'s private `_net_intervals` into a new shared, slice-004-owned
+  `app/core/metrics/intervals.py` (`net_intervals`/`net_seconds`) — a behavior-preserving
+  relocation, not a rewrite — and pointed `m3_focus.py` at it instead of slice 003's
+  naive `app.core.durations.net_seconds`; `durations.py` itself untouched; (3) added the
+  missing M2 exactly-3-active-days boundary test (no code change needed, reviewer had
+  already confirmed correctness there). Wrote its own run record,
+  `docs/agent-runs/014-metrics-implementer.md`.
+- **Orchestrator verification (independent, before accepting):** `git status`/`git diff`
+  confirmed the change set matched the report exactly, including that
+  `docs/agent-runs/013-metrics-trace.md`'s pending diff was my own (untouched by the
+  sub-agent). Read `intervals.py` and the `days.py` diff directly: confirmed the sweep
+  was *moved*, not duplicated (one call site updated in `days.py`, `_net_intervals`
+  fully removed). Read the new tests in `test_metrics_extra.py`/`test_stats_api_extra.py`
+  directly: specific, non-vacuous, and one test pins the literal
+  `0001-01-01..9999-12-31` attack payload from the finding to a `422`. Re-ran
+  `python scripts/gate-slice` myself, serially, from a clean state:
+  ruff/mypy clean, `alembic upgrade head` no-op, **138 passed**, frontend build + 4
+  vitest passed, coverage **97.52% >= floor 82%**, GREEN — matches the sub-agent's
+  claim exactly. `docker ps -a` showed two inert, never-started containers
+  (`004-metrics-db-1`, `003-timer-sessions-db-1`, both `Created` not `Up`) left over from
+  earlier `COMPOSE_PROJECT_NAME`-less attempts — harmless, left alone (no destructive
+  action against unverified state).
+- **Committed** (orchestrator, after review): `4afc084`
+  `fix(metrics): bound the window span and unify overlap-aware net time`
+  (`Slice: 004-metrics`), plus the run record. `check-traceability` -> 33/33/0 gap,
+  EXIT=0. `check-trajectory` -> 4 slices (003: unchanged 5 commits; 004 now 5 commits,
+  29 code paths), **0 violations**, EXIT=0.
+- **RESULT:** Gate green, both findings addressed with evidence I independently
+  reproduced, not just accepted on report.
+- **DECISION (per run-slice.md: "the first stage that produces a blocking result...
+  starts the next iteration — re-run from the gate").** Gate re-run above already
+  satisfies the iteration-2 gate step. **Do not skip straight to trajectory-eval on the
+  assumption the fix is clean** — the fix touched logic shared between two metric
+  modules (`intervals.py` now feeds both `days.py` and `m3_focus.py`) and added a new
+  security control, exactly the kind of change an independent review should re-check
+  rather than the orchestrator self-certifying. Spawning **fresh** `code-reviewer` +
+  `security-reviewer` instances (iteration 2's review step), not reusing or trusting the
+  iteration-1 instances' now-stale view of the tree.
+
+## 2026-07-11 10:10 (Europe/Kyiv, EEST) — STAGE 5: Independent parallel review (iteration 2)
+
+- **Sub-agents:** fresh `code-reviewer` + `security-reviewer`, launched in parallel
+  (background), explicitly asked to independently verify the iteration-1 fix rather than
+  trust its commit message, and explicitly prompted to hunt for "a second code path that
+  reaches `_date_range` (or an equivalent) bypassing `_parse_window`'s check."
+- **`security-reviewer` result (returned first): BLOCK — a second, independent
+  resource-exhaustion vector, not a re-occurrence of the first.** The `window`-span cap
+  genuinely closes the hole it targeted (traced the single reachable path
+  `_parse_window -> StatsService -> snapshot.py::_date_range`, confirmed no bypass,
+  confirmed the boundary tests are real DB-backed HTTP tests, not mocked). But
+  `app/core/metrics/days.py::_split_seconds_by_local_day`/`daily_net_minutes` is a
+  **second, wholly independent** unbounded day-walk — an uncapped `while True` loop over
+  a **single session's own** `started_at..ended_at` span, with **no window/period
+  parameter involved at all**. It runs unconditionally on the caller's **full, unfiltered
+  session history** (not window-scoped) from >= 5 call sites in `snapshot.py`
+  (`compute_volume`, `compute_consistency`, `compute_streaks`/`active_days`,
+  `compute_baselines` — which calls the first two **twice** each, today + yesterday —
+  and `compute_heatmap`). Root cause: slice 003 never bounded a saved session's own
+  duration (only `ended_at > started_at`), which was harmless before this slice existed
+  (durations were O(1) per session) but is a live compute primitive now. Exploit: a
+  single `POST /api/sessions` with an absurd `started_at`/`ended_at` span (any
+  authenticated user, own category, satisfies the only existing check), then a **bare**
+  `GET /api/stats/snapshot` with **no query parameters at all**. Measured, not estimated
+  (offline reproduction of the exact algorithm, no app/DB touched): one such session ->
+  **3,651,692** dict entries, **57.6 seconds** wall time, 167MB for the dict container
+  alone — and this fires >=5-8x per request, synchronously on the event loop (no
+  `await`/thread offload in `StatsService`). **Orchestrator independently verified
+  before accepting**: read `days.py` directly — `_split_seconds_by_local_day` is a
+  `while True` loop keyed only on `day += timedelta(days=1)` until it reaches `end`, no
+  cap of any kind; traced `snapshot.py` — confirmed `plain_sessions` (the full,
+  un-window-filtered list) feeds `compute_volume`/`daily_net_minutes`/
+  `compute_consistency`/`compute_streaks`/`compute_baselines` directly at
+  lines 165-203. Finding accepted as real and independent of the first.
+  Also verified closed/correct (no action needed): the `window` cap itself, the heatmap
+  `period` bound (real, but does not protect against *this* vector either — noted), the
+  `intervals.py` refactor (pure relocation, no auth/isolation surface), per-user
+  isolation, no raw-row leakage, no injection, no secret (`check-secrets` exit 0).
+- **`code-reviewer` result: BLOCK — independently found the same class of bug via a
+  different route, plus a second, distinct instance.** Confirmed the `window` cap and
+  the `intervals.py` relocation are both sound (fuzzed `_parse_window` directly: 366 OK,
+  367 and the literal full-range attack both 422; diffed `intervals.py`'s body against
+  the old private `_net_intervals` — verbatim). Then, independently probing "does
+  anything else compute an unbounded date range" (the same brief given to the
+  security-reviewer, unprompted by its finding — the two ran in parallel with no shared
+  context), reproduced **the same `days.py` vulnerability** the security-reviewer found
+  (measured independently: one 200-year session -> `build_snapshot()` with **no window
+  param at all** took **9.09 s**, ~18x the architecture §1 budget of <500ms at 10k
+  sessions — using 2 total sessions) **and found a second, distinct BLOCKING instance**:
+  `app/core/metrics/m5_streaks.py::_longest_run` walks every calendar day between the
+  earliest and latest active day one at a time, so its cost is
+  O(calendar-day gap), not O(active days) — independent of the `days.py` finding even if
+  that one is fixed. Worse: this one needs **no crafted/malicious data at all** — two
+  ordinary sessions years apart (e.g., a user who tracked a week two years ago and
+  resumed recently) reproduce it (measured: 1.4s for exactly 2 sessions). 1 `[MINOR]`
+  (already self-disclosed in the code's own docstring, unchanged by this commit): M2's
+  `start_stability` denominator can include a spillover-only active day that can never
+  land in its own numerator, silently understating the score — not blocking, flagged for
+  an owner ruling.
+- **Combined iteration-2 result: 2 BLOCKING (one confirmed by both reviewers
+  independently via different reproductions; one found only by `code-reviewer`) + 1
+  MINOR.** Both BLOCKING findings share a root cause: pure-core functions that need only
+  a small, fixed window (or a bounded count of *active* days) are instead being handed —
+  or themselves walking — an attacker- or history-length-controlled **calendar-day
+  span**, which the `window` query-param fix (iteration 1) does not and cannot touch
+  (neither vector goes through `window` at all).
+- **DECISION:** rework, **iteration 3 — the cap.** Per run-slice.md, if this iteration
+  is *also* still blocking on any stage, the loop STOPS and escalates to the owner rather
+  than looping a 4th time. Briefing the implementer to fix the *systemic* pattern (audit
+  every `app/core/metrics/*` function for any other unbounded date-range walk, not just
+  patch the two named instances) rather than risk a differently-shaped third instance
+  surviving into the iteration-3 review with no iterations left to absorb it.
+
+## 2026-07-11 12:00 (Europe/Kyiv, EEST) — STAGE 6: Rework (iteration 2 -> 3, the cap) — INCIDENT: machine restart
+
+- **Incident:** the user's machine restarted mid-session, between dispatching the
+  iteration-3 `capability-implementer` rework and receiving its report. The dispatch
+  evidently ran to completion — its diff is present on disk, matching the two findings
+  precisely — but the sub-agent's own chat report/notification never reached this
+  conversation and cannot be recovered. **Handled as data, not assumed:** rather than
+  trust or narrate a report that was never actually seen, the orchestrator independently
+  verified the on-disk diff from scratch, exactly as every other stage in this loop —
+  see `docs/agent-runs/015-metrics-implementer.md` (written by the orchestrator
+  after the fact, provenance gap disclosed plainly in its own header) for the full
+  record.
+- **Diff reviewed (orchestrator, before accepting):**
+  `backend/app/core/metrics/m5_streaks.py::_longest_run` rewritten from a day-by-day
+  cursor walk to a sort + single linear pass over consecutive-day gaps — O(n log n) in
+  the actual active-day count, independent of calendar span (fixes Finding B). A new,
+  well-commented choke-point defense in `backend/app/services/stats.py`
+  (`_MAX_SESSION_SPAN_DAYS = 90`, `_within_session_span_cap`) excludes any saved session
+  whose own gross span exceeds 90 days from `StatsService._load`'s output — the single
+  place every pure-core function gets its session list from — rather than clipping it
+  (documented reasoning: no correct truncation exists, so omission beats fabrication)
+  (fixes Finding A). Neither touches any slice-001/002/003-owned file.
+- **Orchestrator's own independent sweep** (`grep -n "while \|for .* in range(\|
+  timedelta(days=1)"` across `app/core/metrics/*.py` + `snapshot.py`, done unprompted —
+  not just checking the two named findings) found no third unbounded instance: every
+  remaining day-by-day construct is now transitively bounded by the new 90-day session
+  cap, a small fixed constant (heatmap period <= 365d, M2's 14-day window), the
+  iteration-1 `window` cap, or is self-limiting by construction (the current-streak walk
+  only ever goes as far as the streak itself).
+- **Orchestrator's own independent reproduction of both original attacks against the
+  fixed code** (not just re-running the tests written to prove it): the exact
+  pathological session from the security-reviewer's finding, mixed into an ordinary
+  session list and fed through the real `StatsService` filter + `build_snapshot()`:
+  **0.047s** (was 9.09s) and correctly excluded from the result while the ordinary
+  session's minutes still count. The exact "two ordinary sessions ~2 years apart"
+  scenario from the code-reviewer's finding: `compute_streaks()` in **0.055s** (was
+  1.4s). Both fixes independently confirmed to actually work, not just pass their own
+  tests.
+- **Environment recovery:** Docker Desktop and the shared Postgres container had
+  stopped in the restart (`2026-fwdays-agentic-greenfield-task-db-1` showed `Exited
+  (255)`); restarted Docker Desktop, re-ran `docker compose up -d db` with the same
+  pinned `COMPOSE_PROJECT_NAME` — confirmed it reattached to the **same** existing
+  container (not a new one) — waited for `healthy` before running anything DB-touching.
+- **Re-ran `python scripts/gate-slice` myself, serially, from the post-restart state:**
+  ruff clean, mypy clean, `alembic upgrade head` no-op, **142 passed** (138 -> 142, +4
+  for the two fixes), frontend build + 4 vitest passed, coverage **97.46% >= floor 82%**,
+  GREEN.
+- **Committed** (orchestrator, after independent review): pending, see below. Wrote
+  `docs/agent-runs/015-metrics-implementer.md` myself (the sub-agent's own report being
+  unrecoverable) documenting exactly what was verified and disclosing the provenance gap.
+- **RESULT:** Both iteration-2 BLOCKING findings fixed, independently verified as
+  actually working (not just green tests), gate green.
+- **DECISION:** proceed to iteration 3's review step — fresh `code-reviewer` +
+  `security-reviewer`, one more time. **This is the loop's last iteration**: per
+  run-slice.md, a BLOCKING finding here means STOP and escalate to the owner, not a
+  4th loop.
+
 ---

@@ -118,15 +118,17 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/004.md - absent
 - Commits:
+  - 4afc084 fix(metrics): bound the window span and unify overlap-aware net time [Refs: FR-METR-03, FR-METR-07, NFR-DET-01]
   - 6a1c799 feat(metrics): the metrics engine, heatmap, and stats endpoints to green [Refs: FR-METR-01, FR-METR-07, FR-HEAT-01, NFR-DET-01]
   - 130cf39 fix(metrics): correct a self-contradictory date literal in the RED M6 test [Refs: FR-METR-06]
   - 1d65762 test(metrics): RED acceptance tests for the 004 contract [Refs: FR-METR-01, FR-HEAT-01, NFR-DET-01]
   - 93517e3 docs(metrics): bring the owner-ratified slice 004 contract onto feat/004-metrics [Refs: FR-METR-01]
-- Touched code paths (28):
+- Touched code paths (29):
   - backend/app/api/stats.py
   - backend/app/core/metrics/__init__.py
   - backend/app/core/metrics/days.py
   - backend/app/core/metrics/heatmap.py
+  - backend/app/core/metrics/intervals.py
   - backend/app/core/metrics/m1_volume.py
   - backend/app/core/metrics/m2_consistency.py
   - backend/app/core/metrics/m3_focus.py
@@ -151,7 +153,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - backend/tests/test_metrics_snapshot.py
   - backend/tests/test_stats_api.py
   - backend/tests/test_stats_api_extra.py
-- Other files touched (docs/config): 11
+- Other files touched (docs/config): 12
 
 ## Process / infra commits (traced, not a feature slice)
 

@@ -15,17 +15,27 @@ class StreakMetrics:
 
 
 def _longest_run(days: set[date]) -> int:
-    longest = 0
-    run = 0
-    cursor = min(days)
-    last = max(days)
-    while cursor <= last:
-        if cursor in days:
-            run += 1
-            longest = max(longest, run)
-        else:
-            run = 0
-        cursor += timedelta(days=1)
+    """The longest run of calendar-consecutive dates in ``days``.
+
+    O(n log n) in ``len(days)`` -- the actual number of *active* days -- via one sort
+    plus a single linear pass over consecutive gaps. Deliberately **not** a day-by-day
+    cursor walk from the earliest to the latest active day: that would cost
+    O(calendar-day span between the earliest and latest active day), which nothing
+    bounds (a user's history can span years with only a handful of active days in it,
+    e.g. a week tracked years ago plus a week tracked recently), so it scales with how
+    far apart two active days happen to be in time rather than with how much actual
+    activity there is.
+    """
+    if not days:
+        return 0
+    ordered = sorted(days)
+    longest = 1
+    run = 1
+    # Consecutive pairs: ``ordered[1:]`` is deliberately one element shorter than
+    # ``ordered`` (the last day has no successor), so this zip is never ``strict``.
+    for previous, current in zip(ordered, ordered[1:], strict=False):
+        run = run + 1 if (current - previous).days == 1 else 1
+        longest = max(longest, run)
     return longest
 
 
