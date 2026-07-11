@@ -113,6 +113,16 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/pages/Timer/timer.css
 - Other files touched (docs/config): 30
 
+## Slice 004
+
+- Done: no (requirements: proposed)
+- Review evidence: docs/qa/reviews/004.md - absent
+- Commits:
+  - 93517e3 docs(metrics): bring the owner-ratified slice 004 contract onto feat/004-metrics [Refs: FR-METR-01]
+- Touched code paths (0):
+  - (none)
+- Other files touched (docs/config): 9
+
 ## Process / infra commits (traced, not a feature slice)
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
