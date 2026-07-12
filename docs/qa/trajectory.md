@@ -225,6 +225,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.
 
+- e1739d7 backend: wire the coach API key via config (owner setup) [Refs: TC-STACK-02]
 - 9b7dc7c backend: pin ruff to a single minor (>=0.15,<0.16) to stop isort drift [Refs: BC-PROC-01]
 - fb50f35 factory: add the spec-autopilot loop (author -> grill+fidelity -> judge -> ratify) [Refs: BC-PROC-01]
 - 20c4469 backend: sort test-local imports for ruff 0.15 isort (tooling drift) [Refs: BC-PROC-01]

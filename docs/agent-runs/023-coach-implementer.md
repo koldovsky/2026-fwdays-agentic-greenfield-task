@@ -6,7 +6,7 @@
 - **Slice:** 006-coach
 - **Role:** implementer (maker)
 - **Branch:** claude/sleepy-spence-101307
-- **Commits:** the slice commit on this branch (subject `backend: add AI coach (grounding, ladder, cache) + eval suite`)
+- **Commits:** `d2f2e56` (slice: `backend: add AI coach (grounding, ladder, cache) + eval suite`, `Slice: 006-coach`) and `e1739d7` (infra: `backend: wire the coach API key via config (owner setup)`, `Refs: TC-STACK-02`), plus this record-correction follow-up.
 
 ## Objective
 
@@ -46,8 +46,12 @@ weakening any test**.
 - **Added maker tests** (not touching the acceptance bar): `tests/test_coach_service_units.py`,
   `tests/test_coach_grounding_units.py` — cover parse/validate branches, emoji, provider wiring,
   and validator robustness edges.
-- `git add`-ed the owner-provided `backend/.env.example` + `backend/app/config.py` (key wiring,
-  TC-STACK-02); `backend/.env` stays git-ignored.
+- Committed the owner-provided `backend/.env.example` + `backend/app/config.py` (key wiring,
+  TC-STACK-02) as a **separate infra commit** (`Refs: TC-STACK-02`, no `Slice:` trailer) rather
+  than under the slice: `check-trajectory` flags `backend/app/config.py` (slice-001-owned, not in
+  the entry-point allowlist) as a cross-slice overlap if it lands under `Slice: 006-coach`. As
+  infra traced to a constraint no spec owns, it classifies as cross-cutting setup, not a slice
+  code path (the documented BC-*/infra-commit pattern). `backend/.env` stays git-ignored.
 
 ## Verification
 
