@@ -4,8 +4,47 @@ Persistent handoff for agents (and humans). **Read this first**, then [`AGENTS.m
 This is a handoff aid, **not the source of truth** — if it conflicts with code, specs, ADRs, or
 tests, verify the repo and update this file.
 
-- **Date and time:** 2026-07-11 16:39 (Europe/Kyiv, EEST)
-- **Phase:** 5 — slice **005 stats-ui** ran through `/run-slice` in an isolated worktree
+- **Date and time:** 2026-07-12 (Europe/Kyiv, EEST)
+- **Phase:** 6 — slice **006 coach** (the backend AI coach) was built **end-to-end through the
+  automated factory** — `/author-slice 6` (the spec autopilot) then `/run-slice 6` (the code loop) —
+  and is **engineering-DONE**. The **spec loop** auto-authored the `add-coach` OpenSpec contract from
+  the ratified docs and converged over 3 author passes (adversarial griller BLOCKING 6→1→1→0, fidelity
+  94→95→96), auto-ratified spec-first (`f2f8fdc`). The **code loop** converged in **two iterations**:
+  `gate-slice` GREEN (coverage **97.91% ≥ floor 82%**), `check-traceability` **45/45, 0 gap**
+  (FR-COACH-01..07 COVERED), `check-trajectory` **0 violations**, `check-specs` clean, and
+  `check-eval-ratchet` **5 programmatic dimensions** hold (the coach output-eval that AGENTS.md said
+  "arrives with slice 006"). Both independent reviewers returned **0 BLOCKING**; the `code-reviewer`
+  found 3 MINOR edges in the pure grounding validator — including one **false-negative fabrication
+  passthrough** (a `uk`-locale comma-decimal) — which were **routed and fixed red-first at root cause**
+  (`f1403db`) without weakening a test; `security-reviewer` 0 BLOCKING (`check-secrets` clean, no key
+  in history, no IDOR, data-minimized prompt). Trajectory-eval **pass (95)**, Judge **DONE**. `openspec
+  archive add-coach` applied → `changes/archive/2026-07-12-add-coach`, the `coach` capability written to
+  `openspec/specs/coach/spec.md`. **Delivered (backend + eval only):** a pure, unit-testable
+  **grounding validator** (`app/core/grounding.py`) that makes "no fabricated number" (FR-COACH-02, the
+  eval's CRITICAL criterion) a mechanical check over the shipped slice-004 `SnapshotResponse`; **one
+  provider/degradation ladder** (`gemma-4-31b-it` → one corrective retry → a single `Gemini 3 Flash`
+  attempt → a §4.2-conforming fallback card, never crashing — NFR-REL-01); a **read-through weekly
+  insight cache** (`coach_insights`, only grounded non-fallback cards cached, degraded cards self-heal);
+  **grounded chat** with newest-first 20-turn/~2,000-token memory (`coach_messages`) and both-or-neither
+  persistence; the two `POST /api/coach/{insight,chat}` routes behind `CurrentUser` + `require_csrf`;
+  and the deterministic **offline eval suite** (`evals/rubrics/coach-output.md`, `evals/cases/coach/*`,
+  `docs/qa/eval/{baseline,latest}.json`). One Alembic migration (`0004_coach`) adds `coach_messages` +
+  `coach_insights` (it does **not** re-add `users.coach_language`, shipped by slice 001). It **reuses**
+  the slice-004 snapshot builder (`StatsService.get_snapshot`) and the slice-001 per-user boundary
+  (FR-AUTH-07), and ships **no frontend** — the coach **drawer** (DESIGN §7.5, FR-SHELL-02) is a later
+  shell slice. The LLM key is read **only** via `app/config.py::Settings.google_ai_api_key` (wired as a
+  separate infra commit `e1739d7`, `Refs: TC-STACK-02`, so it isn't a cross-slice-overlap edit of
+  slice-001's config under `Slice: 006-coach`); `backend/.env` is git-ignored and **no secret is
+  committed**. Accepted non-blocking follow-ups: per-user **rate-limiting** of the coach endpoints
+  (out of slice scope; degrades gracefully); a §4.4 **thousands-separator** grounding refinement
+  (a pre-existing extraction-mechanism limitation that errs safe); and a **live smoke test** of the
+  real Google AI Studio transport (`# pragma: no cover`) + confirmation that the doc model ids
+  `gemma-4-31b-it` / `Gemini 3 Flash` resolve at the API. Same single outstanding DoD sub-item as
+  001–005 — **CodeRabbit at PR time**; FR-COACH-01..07 stay `proposed` until it is clean, then flip to
+  `shipped`. The owner opens the PR; this loop does **not** push. Trail:
+  [`docs/qa/reviews/006.md`](qa/reviews/006.md), records
+  [`021`](agent-runs/021-coach-spec-author.md)/[`022`](agent-runs/022-coach-test-engineer.md)/[`023`](agent-runs/023-coach-implementer.md)/[`024`](agent-runs/024-coach-judge.md).
+- **Phase (prior):** 5 — slice **005 stats-ui** ran through `/run-slice` in an isolated worktree
   (`.claude/worktrees/005-stats-ui`, branch `feat/005-stats-ui`, based on `feat/004-metrics`) and is
   **engineering-DONE**: the maker≠checker≠judge loop **converged in one iteration**. `gate-slice`
   GREEN (146 passed, coverage 97.47% ≥ floor 82%), `check-traceability` 0 gap (FR-STATS-01..05 all
