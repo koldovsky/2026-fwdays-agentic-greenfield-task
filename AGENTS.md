@@ -1,8 +1,9 @@
 # Project instructions
 
-Each prompt: assess `STATUS.md`. Log only substantive product, artifact, workflow-decision, or next-work change. Skip acknowledgement, liveness, read-only check, and bookkeeping of pre-existing work.
+Each prompt: assess `STATUS.md`. `STATUS.md` is not a transcript. Log only a direct, substantive product/artifact change or durable workflow decision. Skip acknowledgement, liveness, read-only check, discovery, and bookkeeping of pre-existing work.
 
 - Log: prepend one terse English entry. `Did` starts `Codex:` or `Claude:` and records only that actor's direct action.
+- Moving a pre-existing completed task to `TODO.md` Done records truth; it never creates a `STATUS.md` entry.
 - Use current `Europe/Kyiv` local time formatted as `YYYY-MM-DD HH:MM` (24-hour).
 - Keep only the three newest entries, deleting all older entries on every update.
 - Preserve `STATUS.md` header/rule block unless task changes status rules.
