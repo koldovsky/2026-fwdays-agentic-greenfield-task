@@ -1,0 +1,13 @@
+# Repo lives on Windows but is worked on from WSL. Without this, editors on the
+# Windows side rewrite files with CRLF and every file shows up as fully changed.
+# Normalize everything to LF in the repository; checkout uses the platform default.
+* text=auto eol=lf
+
+# Transcripts and generated output are text too — keep them normalized.
+*.md   text eol=lf
+*.txt  text eol=lf
+*.vtt  text eol=lf
+*.srt  text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.json text eol=lf
