@@ -202,10 +202,24 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/006.md - absent
 - Commits:
+  - d2f2e56 backend: add AI coach (grounding, ladder, cache) + eval suite [Refs: FR-COACH-01]
   - f2f8fdc spec(coach): ratify slice 006 add-coach contract [Refs: FR-COACH-01]
-- Touched code paths (0):
-  - (none)
-- Other files touched (docs/config): 8
+- Touched code paths (14):
+  - backend/alembic/versions/0004_coach.py
+  - backend/app/api/coach.py
+  - backend/app/core/grounding.py
+  - backend/app/main.py
+  - backend/app/models/__init__.py
+  - backend/app/models/coach.py
+  - backend/app/repos/coach.py
+  - backend/app/schemas/coach.py
+  - backend/app/services/coach.py
+  - backend/tests/test_coach_api.py
+  - backend/tests/test_coach_assembly.py
+  - backend/tests/test_coach_grounding.py
+  - backend/tests/test_coach_grounding_units.py
+  - backend/tests/test_coach_service_units.py
+- Other files touched (docs/config): 17
 
 ## Process / infra commits (traced, not a feature slice)
 
@@ -242,11 +256,15 @@ Overlap limited to allowlisted entry-point / aggregation files (the app factory,
 - slices 001 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 001 and 004: backend/app/main.py
 - slices 001 and 005: frontend/src/App.tsx, frontend/src/api.ts
+- slices 001 and 006: backend/app/main.py, backend/app/models/__init__.py
 - slices 002 and 003: backend/app/main.py, backend/app/models/__init__.py, frontend/src/App.tsx, frontend/src/api.ts
 - slices 002 and 004: backend/app/main.py
 - slices 002 and 005: frontend/src/App.tsx, frontend/src/api.ts
+- slices 002 and 006: backend/app/main.py, backend/app/models/__init__.py
 - slices 003 and 004: backend/app/main.py
 - slices 003 and 005: frontend/src/App.tsx, frontend/src/api.ts
+- slices 003 and 006: backend/app/main.py, backend/app/models/__init__.py
+- slices 004 and 006: backend/app/main.py
 
 ## Unattributed product-code commits (informational)
 

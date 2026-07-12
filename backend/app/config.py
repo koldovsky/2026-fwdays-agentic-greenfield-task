@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     # bcrypt work factor for password hashing (NFR-SEC-01, architecture §8.1).
     bcrypt_rounds: int = 12
 
+    # --- AI coach (slice 006-coach) --------------------------------------------
+    # Google AI Studio API key for the Gemma coach (TC-LLM-01). Optional so the app
+    # never crashes when it is absent (NFR-REL-01): with no key configured the coach
+    # degrades gracefully to its deterministic fallback. Read ONLY here via
+    # pydantic-settings (maps env GOOGLE_AI_API_KEY); never hardcode, log, or print it
+    # (TC-STACK-02). backend/.env is git-ignored — only the placeholder in
+    # .env.example is committed.
+    google_ai_api_key: str | None = None
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
