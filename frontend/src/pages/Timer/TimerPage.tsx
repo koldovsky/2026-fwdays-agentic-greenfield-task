@@ -5,19 +5,19 @@ import {
   applyUndo,
   continueTimer,
   discardTimer,
+  getActiveTimer,
   listCategories,
-  listSessions,
   pauseTimer,
   startTimer,
   stopTimer,
   type ActiveTimer,
   type Category,
-  type SavedSession,
 } from '../../api'
 import { elapsedSeconds, formatDuration } from './format'
 import { IconClose, IconPause, IconPlay, IconStop, IconUndo } from './icons'
 import { resolveShortcut, type TimerAction, type TimerState } from './resolveShortcut'
-import SessionLog from './SessionLog'
+import CategorySelect from './CategorySelect'
+import Heatmap from './Heatmap'
 import './timer.css'
 
 interface UndoState {
@@ -28,7 +28,6 @@ interface UndoState {
 
 export default function TimerPage() {
   const [categories, setCategories] = useState<Category[]>([])
-  const [sessions, setSessions] = useState<SavedSession[]>([])
   const [active, setActive] = useState<ActiveTimer | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const [nowMs, setNowMs] = useState<number>(Date.now())
@@ -41,14 +40,6 @@ export default function TimerPage() {
 
   const state: TimerState = active ? active.state : 'idle'
 
-  async function reloadSessions() {
-    try {
-      setSessions(await listSessions())
-    } catch {
-      /* the log stays as-is on a transient read error */
-    }
-  }
-
   useEffect(() => {
     let alive = true
     listCategories()
@@ -60,17 +51,23 @@ export default function TimerPage() {
       .catch(() => {
         if (alive) setError('Could not load categories.')
       })
-    listSessions()
-      .then((rows) => alive && setSessions(rows))
+    // Resume a timer that is still running server-side (survives reload / tab switch).
+    getActiveTimer()
+      .then((t) => {
+        if (alive && t) setActive(t)
+      })
       .catch(() => undefined)
     return () => {
       alive = false
     }
   }, [])
 
-  // Tick the local display only while running; paused/idle freezes it.
+  // Tick the local display only while running; paused/idle freezes it. Sync nowMs
+  // immediately on entering the running state (start / resume / reload-resume) so
+  // the first frame never uses a clock frozen during the previous pause.
   useEffect(() => {
     if (!active || active.state !== 'running') return
+    setNowMs(Date.now())
     const id = window.setInterval(() => setNowMs(Date.now()), 250)
     return () => window.clearInterval(id)
   }, [active])
@@ -83,7 +80,7 @@ export default function TimerPage() {
   }, [undo])
 
   function offerUndo(token: string, message: string, restore?: () => void) {
-    setUndo({ token, message, restore: restore ?? (() => void reloadSessions()) })
+    setUndo({ token, message, restore: restore ?? (() => undefined) })
   }
 
   async function onStart() {
@@ -93,7 +90,9 @@ export default function TimerPage() {
     }
     setError('')
     try {
-      setActive(await startTimer(selectedCategoryId))
+      const started = await startTimer(selectedCategoryId)
+      setNowMs(Date.now())
+      setActive(started)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not start the timer.')
     }
@@ -113,7 +112,12 @@ export default function TimerPage() {
     if (!active) return
     setError('')
     try {
-      setActive(await continueTimer(active.version))
+      const resumed = await continueTimer(active.version)
+      // Refresh the clock in the same commit as the resume, so the display never
+      // renders with a nowMs frozen during the pause — otherwise elapsed briefly
+      // reads (old elapsed − pause length), i.e. it jumps backwards for one tick.
+      setNowMs(Date.now())
+      setActive(resumed)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not continue.')
     }
@@ -134,7 +138,6 @@ export default function TimerPage() {
       await stopTimer(active.version, saveCategoryId, saveNotes.trim() ? saveNotes.trim() : null)
       setActive(null)
       setShowSave(false)
-      await reloadSessions()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save the session.')
     }
@@ -207,53 +210,52 @@ export default function TimerPage() {
 
   const activeCategory = active ? categories.find((c) => c.id === active.category_id) : undefined
   const display = active ? formatDuration(elapsedSeconds(active, nowMs)) : '00:00:00'
+  const clock = display.split(':')
 
   return (
-    <main className="timer-screen">
-      <section className={`timer-card timer-card--${state}`}>
-        {state === 'idle' ? (
-          <div className="timer-picker">
-            <label className="field-label" htmlFor="timer-category">
-              Category
-            </label>
-            {categories.length === 0 ? (
-              <p className="timer-hint">Create a category first to start tracking.</p>
+    <div className="view">
+      <section className="card timer-card">
+        <div className="cat-pill-wrap">
+          <div className="micro-label">Category</div>
+          {state === 'idle' ? (
+            categories.length === 0 ? (
+              <p className="hint">Create a category first to start tracking.</p>
             ) : (
-              <select
-                id="timer-category"
-                className="cdd"
-                value={selectedCategoryId ?? ''}
-                onChange={(e) => setSelectedCategoryId(Number(e.target.value))}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        ) : (
-          <div className="timer-active-category">
-            <span
-              className="timer-swatch"
-              style={{ backgroundColor: activeCategory?.color ?? 'var(--accent)' }}
-              aria-hidden="true"
-            />
-            <span className="timer-category-name">{activeCategory?.name ?? 'Session'}</span>
-            <span className="timer-state-tag">{state}</span>
-          </div>
-        )}
+              <CategorySelect
+                categories={categories}
+                value={selectedCategoryId}
+                onChange={setSelectedCategoryId}
+                onCreated={(c) => setCategories((prev) => [...prev, c])}
+              />
+            )
+          ) : (
+            <div className="cat-pill">
+              <span
+                className="cat-dot"
+                style={{
+                  background: activeCategory?.color ?? 'var(--accent)',
+                  color: activeCategory?.color ?? 'var(--accent)',
+                }}
+                aria-hidden="true"
+              />
+              <span className="cat-pill-name">{activeCategory?.name ?? 'Session'}</span>
+            </div>
+          )}
+        </div>
 
-        <div className={`timer-readout ${state === 'paused' ? 'timer-readout--paused' : ''}`}>
-          {display}
+        <div className={`timer-display${state === 'running' ? ' running' : ''}`}>
+          {clock[0]}
+          <span className="colon">:</span>
+          {clock[1]}
+          <span className="colon">:</span>
+          {clock[2]}
         </div>
 
         <div className="timer-controls">
           {state === 'idle' && (
             <button
               type="button"
-              className="btn-accent btn-timer"
+              className="btn btn-primary"
               onClick={onStart}
               disabled={categories.length === 0}
             >
@@ -263,11 +265,11 @@ export default function TimerPage() {
           )}
           {state === 'running' && (
             <>
-              <button type="button" className="btn-ghost btn-timer" onClick={onPause}>
+              <button type="button" className="btn btn-ghost" onClick={onPause}>
                 <IconPause />
                 Pause
               </button>
-              <button type="button" className="btn-accent btn-timer" onClick={onStopRequest}>
+              <button type="button" className="btn btn-primary" onClick={onStopRequest}>
                 <IconStop />
                 Stop
               </button>
@@ -275,26 +277,29 @@ export default function TimerPage() {
           )}
           {state === 'paused' && (
             <>
-              <button type="button" className="btn-accent btn-timer" onClick={onContinue}>
+              <button type="button" className="btn btn-primary" onClick={onContinue}>
                 <IconPlay />
                 Continue
               </button>
-              <button type="button" className="btn-ghost btn-timer" onClick={onStopRequest}>
+              <button type="button" className="btn btn-ghost" onClick={onStopRequest}>
                 <IconStop />
                 Stop
               </button>
             </>
           )}
+          {state !== 'idle' && (
+            <button type="button" className="btn btn-text" onClick={onDiscardRequest}>
+              Discard
+            </button>
+          )}
         </div>
 
-        {state !== 'idle' && (
-          <button type="button" className="link-btn timer-discard" onClick={onDiscardRequest}>
-            Discard
-          </button>
-        )}
-
-        <p className="timer-shortcuts micro-label">
-          Space start/pause · S stop · Esc discard
+        <p className="hint">
+          <kbd>Space</kbd> start / pause
+          <span className="dot-sep">·</span>
+          <kbd>S</kbd> save
+          <span className="dot-sep">·</span>
+          <kbd>Esc</kbd> discard
         </p>
 
         {error && (
@@ -304,12 +309,7 @@ export default function TimerPage() {
         )}
       </section>
 
-      <SessionLog
-        categories={categories}
-        sessions={sessions}
-        onChanged={reloadSessions}
-        offerUndo={offerUndo}
-      />
+      <Heatmap />
 
       {showSave && active && (
         <div className="modal-scrim" role="dialog" aria-modal="true" aria-label="Save session">
@@ -331,7 +331,7 @@ export default function TimerPage() {
             </label>
             <select
               id="save-category"
-              className="cdd"
+              className="cat-input"
               value={saveCategoryId}
               onChange={(e) => setSaveCategoryId(Number(e.target.value))}
             >
@@ -390,6 +390,6 @@ export default function TimerPage() {
           </button>
         </div>
       )}
-    </main>
+    </div>
   )
 }

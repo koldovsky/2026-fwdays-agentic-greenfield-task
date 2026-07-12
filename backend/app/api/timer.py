@@ -41,6 +41,15 @@ def _conflict() -> HTTPException:
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_CONFLICT_DETAIL)
 
 
+@router.get("/active", response_model=ActiveSessionRead | None)
+async def get_active_timer(
+    session: SessionDep, user: CurrentUser
+) -> ActiveSessionRead | None:
+    """Return the caller's active timer, or null — lets the UI resume on load."""
+    row = await TimerService(session).current(user_id=user.id)
+    return ActiveSessionRead.from_orm_active(row) if row is not None else None
+
+
 @router.post(
     "/start",
     response_model=ActiveSessionRead,

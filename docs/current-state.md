@@ -5,6 +5,20 @@ This is a handoff aid, **not the source of truth** — if it conflicts with code
 tests, verify the repo and update this file.
 
 - **Date and time:** 2026-07-12 (Europe/Kyiv, EEST)
+- **Consolidated app branch (`feat/app-final`).** Brings the full backend (slices 001–006, incl. the
+  AI coach) together with the frontend redesign + coach drawer into one deliverable for the PR.
+- **Frontend redesign + coach drawer (post-005).** The web UI was reskinned 1:1 to the owner's
+  "Skills-Kiln" (delibra) dark design system — `frontend/src/delibra.css`, **lime `#84cc16` + Geist**
+  (the DESIGN §2 violet/Space-Grotesk deviation was consciously reversed; DESIGN.md updated). New
+  components: `CategorySelect` (custom `cdd` dropdown + inline "+ New category"), `DateTimeField`
+  (custom calendar replacing native `datetime-local`), `Heatmap` (GitHub-style SVG); `SessionLog`
+  moved to Stats. The **AI coach drawer** (FR-SHELL-02) wires the slice-006 backend into the UI — a
+  floating button opens a chat panel with the week's grounded insight, a conversational thread (that
+  retries transient failures), a mini activity chart, and replies in the user's message language.
+  Small backend add: `GET /api/timer/active` (resume a running/paused timer on load — FR-TIMER-06) +
+  a pause→resume clock-glitch fix. The coach prompt was empirically tuned (grounded, conversational,
+  non-repetitive) and the fallback model pinned to `gemini-flash-latest`. `tsc` strict clean; 55
+  coach tests green.
 - **Phase:** 6 — slice **006 coach** (the backend AI coach) was built **end-to-end through the
   automated factory** — `/author-slice 6` (the spec autopilot) then `/run-slice 6` (the code loop) —
   and is **engineering-DONE**. The **spec loop** auto-authored the `add-coach` OpenSpec contract from

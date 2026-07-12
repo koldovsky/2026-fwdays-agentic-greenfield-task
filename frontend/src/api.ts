@@ -179,6 +179,11 @@ export interface SessionEdit {
   pauses?: Pause[]
 }
 
+// Resume support: the active timer survives a reload / tab switch, so the Timer
+// screen fetches it on mount instead of showing idle while one is still running.
+export const getActiveTimer = (): Promise<ActiveTimer | null> =>
+  apiFetch<ActiveTimer | null>('/api/timer/active')
+
 export const startTimer = (categoryId: number): Promise<ActiveTimer> =>
   apiFetch<ActiveTimer>('/api/timer/start', { method: 'POST', body: { category_id: categoryId } })
 
@@ -224,3 +229,42 @@ import type { SnapshotResponse } from './pages/Stats/types'
 
 export const getStatsSnapshot = (): Promise<SnapshotResponse> =>
   apiFetch<SnapshotResponse>('/api/stats/snapshot')
+
+// Slice-004 activity-heatmap data plane (GET /api/stats/heatmap). The grid UI (delibra
+// style) lives on the Timer home; the backend returns one bucketed entry per day.
+export type HeatmapPeriod = 'week' | 'month' | 'quarter' | '6mo' | 'year'
+export interface HeatmapDay {
+  date: string
+  min: number
+  level: number
+}
+export interface HeatmapResponse {
+  period: string
+  days: HeatmapDay[]
+}
+export const getHeatmap = (period: HeatmapPeriod): Promise<HeatmapResponse> =>
+  apiFetch<HeatmapResponse>(`/api/stats/heatmap?period=${encodeURIComponent(period)}`)
+
+// --- AI coach (slice 006 backend; FR-COACH-*, FR-SHELL-02 drawer) -----------
+// Both endpoints return the same structured "card": observations + recommendations,
+// each citing the snapshot leaves it draws on (grounding, FR-COACH-02). `insight` is the
+// week's read-through card; `chat` answers one grounded turn. `fallback`/`quiet` mark the
+// graceful-degradation and nothing-notable states (FR-COACH-07). Rides apiFetch (credentials
+// + CSRF on the POSTs).
+export interface CoachItem {
+  text: string
+  metric_refs: string[]
+}
+export interface CoachCard {
+  language: string
+  quiet: boolean
+  observations: CoachItem[]
+  recommendations: CoachItem[]
+  fallback: boolean
+}
+
+export const getCoachInsight = (): Promise<CoachCard> =>
+  apiFetch<CoachCard>('/api/coach/insight', { method: 'POST' })
+
+export const sendCoachChat = (message: string): Promise<CoachCard> =>
+  apiFetch<CoachCard>('/api/coach/chat', { method: 'POST', body: { user_message: message } })

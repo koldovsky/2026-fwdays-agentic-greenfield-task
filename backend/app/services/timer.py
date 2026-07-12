@@ -59,6 +59,14 @@ class TimerService:
         self._undo = UndoRepo(session)
         self._categories = CategoryRepository(session)
 
+    async def current(self, *, user_id: int) -> ActiveSession | None:
+        """Return the caller's single active timer, or None (read-only).
+
+        Lets the UI resume a running/paused timer after a reload or a tab switch
+        instead of showing idle while the server still holds an active session.
+        """
+        return await self._active.get(user_id=user_id)
+
     async def start(self, *, user_id: int, category_id: int) -> ActiveSession:
         """Start the single active timer for a category the user owns (FR-TIMER-01)."""
         category = await self._categories.get(user_id=user_id, category_id=category_id)

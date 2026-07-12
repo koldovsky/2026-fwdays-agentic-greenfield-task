@@ -1,0 +1,268 @@
+/* AI coach: a floating button (bottom-right, every screen) that opens the coach
+   drawer — the week's insight card on top, a grounded chat thread below. Built on
+   the delibra side-panel + tokens (DESIGN 7.5 / FR-SHELL-02). No emoji (NFR-DES-01). */
+
+.coach-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 55;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #0a0a0c;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(132, 204, 22, 0.25), 0 10px 30px -8px rgba(132, 204, 22, 0.55);
+  transition: transform 150ms var(--ease-out), background 150ms ease, box-shadow 150ms ease;
+}
+.coach-fab:hover {
+  transform: translateY(-2px);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px rgba(132, 204, 22, 0.35), 0 14px 36px -8px rgba(132, 204, 22, 0.65);
+}
+.coach-fab--open {
+  background: var(--bg-elevated);
+  color: var(--accent);
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+.coach-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgba(5, 5, 7, 0.5);
+  animation: fade-in 160ms var(--ease-out);
+}
+
+/* Override the side-panel's uniform padding: a fixed header, a scrolling middle,
+   and a pinned input row. */
+.coach-drawer {
+  width: 420px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.coach-header {
+  padding: 16px 20px;
+  margin: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  flex: none;
+}
+.coach-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.coach-title-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.coach-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.coach-section-label {
+  margin: 0;
+}
+.coach-section-sep {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+.coach-quiet {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --- Weekly activity strip (mini bar chart, Whoop-style) -------------------- */
+.coach-mini {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 4px 2px 2px;
+}
+.coach-mini-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.coach-mini-track {
+  display: flex;
+  align-items: flex-end;
+  height: 36px;
+}
+.coach-mini-bar {
+  width: 12px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+.coach-mini-bar--peak {
+  opacity: 1;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.coach-mini-bar--zero {
+  background: var(--border-strong);
+  opacity: 1;
+}
+.coach-mini-day {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-tertiary);
+}
+
+/* --- Insight / reply card (flowing chat prose, no technical chips) ----------- */
+.coach-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.coach-card--fallback {
+  opacity: 0.85;
+}
+.coach-say {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+.coach-say--rec {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-secondary);
+  padding-top: 2px;
+}
+.coach-rec-arrow {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* --- Chat thread ---------------------------------------------------------- */
+.coach-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.coach-msg {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.coach-msg--user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #0a0a0c;
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+}
+.coach-msg--coach {
+  align-self: flex-start;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+.coach-msg--pending {
+  padding: 12px 14px;
+}
+.coach-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.coach-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  animation: coach-blink 1.2s ease-in-out infinite;
+}
+.coach-dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.coach-dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes coach-blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* --- Input row ------------------------------------------------------------ */
+.coach-input-row {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+.coach-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 13px;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--text-primary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  outline: none;
+  caret-color: var(--accent);
+  transition: border-color 150ms ease;
+}
+.coach-input:focus {
+  border-color: var(--accent);
+}
+.coach-send {
+  flex: none;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a0a0c;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 150ms ease, opacity 150ms ease;
+}
+.coach-send:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.coach-send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .coach-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}

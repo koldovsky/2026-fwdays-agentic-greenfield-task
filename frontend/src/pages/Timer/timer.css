@@ -11,127 +11,10 @@
 }
 
 /* --- Timer card ----------------------------------------------------------- */
-
-.timer-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 24px 60px -30px #000000cc;
-  transition: border-color 200ms var(--ease-out), opacity 200ms var(--ease-out);
-}
-
-.timer-card--running {
-  border-color: var(--accent);
-}
-
-.timer-card--paused {
-  opacity: 0.72;
-}
-
-.timer-picker {
-  width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.timer-hint,
-.timer-text {
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin: 0;
-}
-
-.timer-active-category {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.timer-swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.timer-category-name {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.timer-state-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-
-.timer-readout {
-  font-family: var(--font-mono);
-  font-size: 64px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.timer-card--running .timer-readout {
-  animation: soft-pulse 2.4s var(--ease-out) infinite;
-}
-
-.timer-readout--paused {
-  color: var(--text-secondary);
-}
-
-.timer-controls {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-timer {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-size: 15px;
-}
-
-.timer-discard {
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.timer-discard:hover {
-  color: var(--danger);
-}
-
-.timer-shortcuts {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-@keyframes soft-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.82;
-  }
-}
+/* The timer card, the big display, its controls and the kbd shortcut hint are
+   owned by delibra.css (.card.timer-card, .timer-display[.running] with .colon
+   spans, .timer-controls, .hint + <kbd>) so the screen matches the Skills-Kiln
+   reference 1:1. Only the session log / form / modals / undo below stay here. */
 
 /* --- Shared buttons / inputs (aligned with the categories screen) --------- */
 
@@ -152,8 +35,10 @@
   color: var(--text-secondary);
 }
 
-.cat-input,
-.cdd {
+/* NOTE: .cdd is the custom CategorySelect wrapper (delibra owns it: a compact
+   inline-block pill). It must NOT be styled as a full-width input box here, or
+   the timer's category picker grows a big bordered field around it. */
+.cat-input {
   width: 100%;
   padding: 10px 12px;
   font-family: var(--font-ui);
@@ -166,8 +51,7 @@
   transition: border-color 140ms var(--ease-out);
 }
 
-.cat-input:focus-visible,
-.cdd:focus-visible {
+.cat-input:focus-visible {
   border-color: var(--accent);
   outline: 2px solid var(--accent);
   outline-offset: 2px;

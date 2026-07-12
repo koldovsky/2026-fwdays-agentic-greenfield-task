@@ -202,6 +202,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/006.md - clean
 - Commits:
+  - f9054a8 backend(coach): tune the prompt for grounded conversational coaching + fix fallback id [Refs: FR-COACH-02, TC-LLM-01, FR-COACH-06]
   - e050fb7 docs(coach): close slice 006 - review evidence, records, archive [Refs: FR-COACH-01]
   - f1403db backend: tighten coach grounding (uk decimals, share%, h:mm hours) [Refs: FR-COACH-02]
   - 45a0d1c docs: correct the 006 implementer run record (commit split) [Refs: FR-COACH-01]
@@ -222,7 +223,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - backend/tests/test_coach_grounding.py
   - backend/tests/test_coach_grounding_units.py
   - backend/tests/test_coach_service_units.py
-- Other files touched (docs/config): 25
+- Other files touched (docs/config): 26
 
 ## Process / infra commits (traced, not a feature slice)
 

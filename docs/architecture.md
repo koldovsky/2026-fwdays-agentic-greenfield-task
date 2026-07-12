@@ -407,6 +407,7 @@ over a test Postgres; API -> a happy-path contract test per router.
 | POST `/api/timer/start` · `/pause` · `/continue` | active-session actions (FR-TIMER-01/02) |
 | POST `/api/timer/stop` | save modal payload -> persists session (FR-TIMER-03) |
 | POST `/api/timer/discard` | confirmed discard -> undo_token (FR-TIMER-04, 6) |
+| GET `/api/timer/active` | the caller's active (running/paused) timer or `null` — lets the UI resume on load (FR-TIMER-06) |
 | GET/POST/PATCH/DELETE `/api/sessions[/{id}]` | log, manual add (with pauses), edit, delete -> undo_token (FR-SESS-*) |
 | GET `/api/stats/snapshot?window=` | the 4.1 JSON (FR-STATS-*, FR-METR-*) |
 | GET `/api/stats/heatmap?period=` | bucketed day grid (FR-HEAT-*) |

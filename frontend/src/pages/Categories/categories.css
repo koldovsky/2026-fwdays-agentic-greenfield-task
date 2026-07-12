@@ -2,22 +2,13 @@
    (index.css); Tailwind adoption is the later UI-shell slice. No emoji anywhere
    (NFR-DES-01) — icons are inline SVG in CategoriesPage.tsx. */
 
-.categories-screen {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 28px 80px;
-}
+/* Layout (.view, .categories-header, .categories-grid, .category-card base) is
+   owned by delibra.css; this file only carries the Cadence-specific form layer. */
 
-.categories-header {
-  margin-bottom: 24px;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
-  color: var(--text-primary);
+.categories-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .page-subtitle {
@@ -194,82 +185,22 @@
   flex: none;
 }
 
-/* --- Grid + cards ---------------------------------------------------------- */
-
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-}
-
-@media (max-width: 900px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
+/* --- Cards (delibra.css owns .categories-grid + .category-card / .cat-card-*) - */
 
 @media (max-width: 760px) {
-  .categories-grid {
-    grid-template-columns: 1fr;
-  }
-
   .new-category-fields .cat-input {
     flex-basis: 100%;
   }
-}
-
-.category-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  animation: rise 320ms var(--ease-out) both;
 }
 
 .category-card--editing {
   outline: 1px solid var(--accent);
 }
 
-.category-swatch {
-  position: relative;
-  height: 80px;
-  background-image: linear-gradient(to bottom, transparent 40%, #00000055);
-}
-
-.category-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: flex;
-  gap: 6px;
-  opacity: 0;
-  transition: opacity 140ms var(--ease-out);
-}
-
-.category-card:hover .category-actions,
-.category-card:focus-within .category-actions {
-  opacity: 1;
-}
-
-.category-body {
-  padding: 16px 18px 18px;
-}
-
-.category-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 4px;
-  word-break: break-word;
-}
-
-.category-description {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-  word-break: break-word;
+/* A slim colour band at the top of the edit form (the full 80px swatch is only
+   for the display card). */
+.cat-card-swatch--edit {
+  height: 8px;
 }
 
 .cat-form-row {

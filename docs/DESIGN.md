@@ -5,8 +5,10 @@
 > design lives in [`docs/architecture.md`](architecture.md); numbered behavior in
 > [`docs/requirements.md`](requirements.md).
 > Captured from the owner's existing prototype design system and reconciled with the ratified
-> requirements. Status: DRAFT — refine during the UI slice. **Two ratified deviations from the
-> prototype are pending final color/type confirmation (section 2).**
+> requirements. Status: **BUILT** — the web UI is implemented against the owner's "Skills-Kiln"
+> (delibra) design system; tokens below mirror the shipped `frontend/src/delibra.css` `:root`.
+> **The two ratified prototype deviations in section 2 were consciously reversed** at the owner's
+> direction, restoring the prototype's original lime + Geist look.
 
 ## 1. Identity and principles
 
@@ -22,26 +24,30 @@
 - **SVG only, never emoji.** Every icon is an inline SVG (stroke 1.5, `currentColor`). Emoji are
   forbidden anywhere in the UI and in coach output (NFR-DES-01).
 
-## 2. Ratified deviations from the prototype (NFR-DES-01)
+## 2. Prototype fidelity — NFR-DES-01
 
-The prototype's bones stay; its two strongest "generic AI" tells are replaced. **These are the
-values to confirm/adjust first during the UI slice** — everything else in this doc is settled.
+The build follows the owner's "Skills-Kiln" (delibra) prototype **as-is**. Two anti-"generic-AI"
+deviations were previously ratified here and are now **consciously reversed** at the owner's
+direction — the shipped UI restores the prototype's originals:
 
-**Decision (proposed, confirm during UI slice):**
-- **UI typeface: Geist -> `Space Grotesk`.** Geist is the most recognizable default tell; Space
-  Grotesk keeps the technical-but-distinct feel with real character. Mono stays `Roboto Mono`
-  (not a tell). *Alternative: `Archivo` or `Instrument Sans`.*
-- **Accent: lime `#84cc16` -> `#7c6cf0` (violet).** The lime is the second tell and it collided
-  with the green heatmap, making everything read monochrome-AI. A violet accent **decouples brand
-  from data**: the heatmap keeps its green activity scale, the accent (buttons, focus, active
-  states, dots) becomes violet. *Alternative: cyan `#22d3ee`.*
+- **UI typeface: `Geist`** (not Space Grotesk), with `Roboto Mono` for numbers/labels.
+- **Accent: lime `#84cc16`** (not violet `#7c6cf0`) for buttons, focus, active states, dots, and
+  the running-timer glow.
+
+> **Superseded deviation (kept for the record).** The earlier decision swapped the UI face to
+> `Space Grotesk` and the accent to violet `#7c6cf0`, reasoning that Geist is a recognizable
+> default "tell" and that lime sits close to the green heatmap (risking a monochrome-AI read).
+> After reviewing the built delibra look, the owner chose to keep **lime + Geist**; the
+> accent-vs-heatmap proximity is an accepted trade-off. If the "generic-AI" angle matters for a
+> given audience, re-open this and square it with [`positioning.md`](positioning.md).
 
 Everything else — the dark base, radial-gradient wash, film grain, card system, mono labels,
-custom heatmap, segmented controls — is kept as-is.
+custom heatmap, segmented controls — is kept as in the prototype.
 
 ## 3. Design tokens
 
-Values below reflect the prototype with the two deviations applied (changed rows marked *).
+Values below are the **shipped** tokens (`frontend/src/delibra.css` `:root`) — the prototype's
+originals (the section-2 deviations were reversed).
 
 ```
 /* Surfaces */
@@ -56,10 +62,10 @@ Values below reflect the prototype with the two deviations applied (changed rows
 --text-secondary: #8b8b94
 --text-tertiary:  #5a5a63
 
-/* Brand accent (decoupled from data) */
---accent:         #7c6cf0      /* * was #84cc16 */
---accent-soft:    #9a8cf5      /* * was #a3e635  (big timer glow, emphasis) */
---accent-glow:    #7c6cf033    /* * selection, shadows */
+/* Brand accent (prototype lime; intentionally close to the heatmap green — see 2) */
+--accent:         #84cc16      /* lime */
+--accent-soft:    #a3e635      /* brighter lime — hovers, running-timer glow */
+--accent-glow:    #84cc1633    /* selection, shadows */
 
 /* Metric zones (score cards) + status */
 --zone-good:      #34d399      /* green — at/above baseline */
@@ -73,8 +79,8 @@ Values below reflect the prototype with the two deviations applied (changed rows
 --hm-3: #65a83a  --hm-4: #84cc16  --hm-5: #a3e635
 
 /* Type */
---font-ui:   'Space Grotesk', -apple-system, sans-serif   /* * was Geist */
---font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+--font-ui:   'Geist', -apple-system, sans-serif                       /* wght 400/500/600 */
+--font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace  /* wght 200-500 */
 
 /* Shape + motion */
 --radius-card: 16px    --radius-btn: 10px
@@ -96,15 +102,15 @@ scrollbars; `::selection` uses `--accent-glow`.
 | Body | UI | 13-14 / 400 | |
 | **Micro-label** | mono | 11 / 500, tracking 0.14em, UPPERCASE, secondary | the signature label style over cards, tiles, sections |
 | Metadata / time | mono | 11-12, tabular-nums | timestamps, counts, durations |
-| Big timer / duration | mono | 30-56 / 300, tabular, `--accent-soft` + glow | the hero number |
-| Wordmark | mono | 14, two lines (thin secondary over bold primary) | header + auth |
+| Big timer / duration | mono | `clamp(72px, 14vw, 132px)` / **200**, tabular, `--text-primary` with a lime glow pulse while running; colons dimmed to `--text-tertiary` | the hero number |
+| Wordmark | mono | 16 / 600, **single line `cadence`** in the header; larger + letter-spaced on auth | header + auth |
 
 ## 5. Layout system
 
 - **Header** (sticky, `z-20`): translucent `--bg-base`/0.72 with `backdrop-blur(14px) saturate`,
-  bottom hairline. Left: two-line mono **wordmark** + nav (Timer / Stats / Categories, active =
-  subtle filled pill). Right: **streak badge** (mono pill, pulsing `--accent` dot) + **user menu**
-  (monogram avatar in `--accent`, dropdown: account, sign out in `--danger`).
+  bottom hairline. Left: single-line mono **wordmark** (`cadence`) + nav (Timer / Stats /
+  Categories, active = subtle filled pill). Right: **streak badge** (mono pill, pulsing `--accent`
+  dot) + **user menu** (monogram avatar in `--accent`, dropdown: sign out in `--danger`).
 - **Main:** `max-width: 1100px`, centered, padding `40px 28px 80px`.
 - **View rhythm:** each screen is a vertical stack (`gap: 24px`) of cards; children **rise in**
   (translateY 8px -> 0, fade) with a 40/100/160/220 ms stagger.
@@ -130,36 +136,44 @@ that (no "forgot password" link).
 
 ### 7.2 Timer (home) — FR-TIMER-*, FR-HEAT-*
 - **Timer card** (centered, tall): a **category pill** (dot in category color + name, opens the
-  custom dropdown to pick/create a category) sits above the **big mono timer**. Controls below,
+  custom dropdown to pick a category — the dropdown carries an inline **"+ New category"** row that
+  creates one on the spot) sits above the **big mono timer** (thin weight-200 digits up to 132 px,
+  `--text-primary` with a lime glow pulse while running, dimmed colons). Controls below,
   state-driven:
   - *Idle:* single **Start** (primary).
   - *Running:* timer counts up with a soft pulse; **Pause** + **Stop** (Stop opens the save modal).
   - *Paused:* timer frozen, dimmed; **Continue** + **Stop**.
   - **Discard** is a quiet ghost/text control; it always opens a **confirm dialog** before
     discarding (FR-TIMER-04, A-8).
-  - Keyboard: Space start/pause, S stop+save, Esc discard-with-confirm (FR-TIMER-05).
-  - The active session is server-authoritative and mirrored live (5 s) from web and extension
-    (FR-TIMER-06) — if it started elsewhere, this card shows it already running.
-- **Heatmap card:** the signature custom **SVG heatmap**, centered, with a **segmented period
-  control** in the card header (Week / Month / Quarter / 6M / Year). Month = single dense row
-  (22 px cells); longer periods = calendar (Mon..Sun rows). Green `--hm-*` scale; hover tooltip
-  shows the date + tracked duration; a click opens that day's sessions in the side panel.
+  - Keyboard: Space start/pause, S stop+save, Esc discard-with-confirm (FR-TIMER-05); the shortcut
+    hint under the controls renders the keys as `<kbd>` keycaps.
+  - The active session is server-authoritative (FR-TIMER-06): on load the card **resumes** any
+    running/paused timer via `GET /api/timer/active`, so a reload or a second tab shows it already
+    running and controllable. (The ~5 s cross-device live poll from web + extension is a later
+    slice.)
+- **Heatmap card:** the signature custom **SVG heatmap** (GitHub-style: weeks as columns, Mon..Sun
+  as rows, with month + weekday labels), centered, with a **segmented period control** in the card
+  header (**Month / Quarter / 6 Months / Year**). Green `--hm-*` scale (level 0-4); a floating
+  tooltip on hover shows the date + tracked duration. (Click-to-open a day's sessions in a side
+  panel is a later slice.)
 
 ### 7.3 Stats — FR-STATS-*, FR-METR-*
 - **Summary tiles:** a row of mono-labelled tiles — Today / This Week / This Month / All-time /
   **Streak** — big tabular numbers (FR-STATS-01).
 - **Metric score cards (NEW, FR-STATS-05):** one card per metric M1-M5. Each shows the metric's
-  **micro-label**, its **value** (big mono), a **zone dot/bar** in `--zone-good/warn/bad`, and the
+  **micro-label**, its **value** (big mono, rounded to ≤2 decimals), a **zone dot/bar** in
+  `--zone-good/warn/bad`, and the
   **baseline delta** as `+N` / `-N` with an up/down SVG arrow (FR-METR-06). While the baseline is
   still forming (<7 days), the zone renders as a neutral **"building — day N/30"** chip instead of
   a color (architecture.md 3.8). A one-line plain caption states what the score means.
 - **Charts:** bar-by-day, donut-by-category, per-category line (FR-STATS-02..04). Chart.js styled
   to tokens: no gridline clutter, rounded bars, mono tabular tooltips (`--bg-elevated`/0.95),
   category colors from the user's palette. Empty state: a centered "Start your first session…".
-- **Session log:** the list of saved sessions with manual **add / edit / delete** (FR-SESS-03..06);
-  a day's sessions also open in the **side panel** from the heatmap. Manual add/edit forms include
-  an **"add pause"** control (each pause with start/end, A-6). Every discard/edit/delete raises the
-  bottom-left **undo notification** (section 8, FR-NOTIF-01).
+- **Session log** (lives on **Stats only** — deliberately off the timer home): the list of saved
+  sessions with manual **add / edit / delete** (FR-SESS-03..06). Manual add/edit forms use the
+  custom **date-time picker** (section 8) for start/end and each pause boundary, plus an
+  **"add pause"** control (A-6). Every discard/edit/delete raises the bottom-left **undo
+  notification** (section 8, FR-NOTIF-01).
 
 ### 7.4 Categories — FR-CAT-*
 Responsive **3-col grid** of **category cards**: a color **swatch header** (80 px, category color
@@ -185,10 +199,16 @@ plus name + description.
   `--radius-btn`.
 - **Inputs:** `--bg-sunken`, subtle border, focus = `--accent` border + `--bg-elevated`, caret
   `--accent`. `time`/`date` are mono tabular. **Labels** are mono uppercase micro-labels.
-- **Custom dropdown (`cdd`):** the ONLY select control (no native `<select>`) — pill trigger (dot +
-  label + chevron), fixed-position elevated panel, a check on the selected option, an inline
-  "+ new" option, hover/highlight states, keyboard nav. Drives category pickers in the timer, save
-  modal, manual-add, and edit.
+- **Custom dropdown (`cdd`):** the primary select control — pill trigger (dot + label + chevron),
+  an elevated panel that drops directly under the trigger, a check on the selected option, an
+  inline **"+ New category"** creator (colour + name — creates on the spot and selects it), and
+  close-on-outside-click. Drives the category picker on the timer and in the manual add/edit forms.
+  (The save-session modal keeps a compact styled native `<select>`.)
+- **Date-time picker (`dtf`):** a custom calendar + time popover that replaces the native
+  `datetime-local` (whose OS popup can't be themed). Trigger shows the chosen moment + a calendar
+  glyph; the panel has a **Mon-first month grid** (prev/next month, today ring, selected day filled
+  `--accent`), a mono `HH:MM` time field, and **Now** / **Done**. Same `YYYY-MM-DDTHH:mm` value
+  contract as the native control. Used for every start/end/pause boundary in the add/edit forms.
 - **Segmented control (`seg-control`):** pill track with an animated `seg-thumb`; mono uppercase
   labels. Used for all period switches (heatmap, stats). Small variant available.
 - **Cards:** `--bg-elevated`, `--border-subtle`, `--radius-card`, 32 px padding, inset top
@@ -208,8 +228,8 @@ plus name + description.
 ## 9. Iconography
 
 Inline SVG set, stroke 1.5, `currentColor`, ~16-20 px: play, pause, stop, discard (x), plus, edit
-(pencil), trash, chevrons, arrow-up/down (deltas), category dot, coach (chat/spark), Google and
-GitHub brand glyphs. **No emoji, ever** (NFR-DES-01). Category swatches and metric zone dots are
+(pencil), trash, calendar, check, chevrons, arrow-up/down (deltas), category dot, coach
+(chat/spark), Google and GitHub brand glyphs. **No emoji, ever** (NFR-DES-01). Category swatches and metric zone dots are
 solid color chips, not icons.
 
 ## 10. States (every data surface defines all four)

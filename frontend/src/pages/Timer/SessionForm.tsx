@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 
 import { type Category, type Pause } from '../../api'
+import CategorySelect from './CategorySelect'
+import DateTimeField from './DateTimeField'
 import { isoToLocal, localToIso } from './format'
 import { IconClose, IconPlus, IconTrash } from './icons'
 
@@ -113,38 +115,18 @@ export default function SessionForm({
   return (
     <form className="session-form" onSubmit={onSubmit}>
       <div className="session-form-grid">
-        <label className="field-label">
-          Category
-          <select
-            className="cdd"
-            value={categoryId}
-            onChange={(e) => setCategoryId(Number(e.target.value))}
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field-label">
-          Start
-          <input
-            type="datetime-local"
-            className="cat-input"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
-        </label>
-        <label className="field-label">
-          End
-          <input
-            type="datetime-local"
-            className="cat-input"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
-        </label>
+        <div className="field-block">
+          <span className="field-label">Category</span>
+          <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+        </div>
+        <div className="field-block">
+          <span className="field-label">Start</span>
+          <DateTimeField value={start} onChange={setStart} ariaLabel="Start" />
+        </div>
+        <div className="field-block">
+          <span className="field-label">End</span>
+          <DateTimeField value={end} onChange={setEnd} ariaLabel="End" />
+        </div>
       </div>
 
       <label className="field-label">
@@ -169,20 +151,16 @@ export default function SessionForm({
         {pauses.length === 0 && <p className="pause-empty">No pauses.</p>}
         {pauses.map((pause, index) => (
           <div className="pause-row" key={index}>
-            <input
-              type="datetime-local"
-              className="cat-input"
-              aria-label={`Pause ${index + 1} start`}
+            <DateTimeField
               value={pause.paused_at}
-              onChange={(e) => setPauseField(index, 'paused_at', e.target.value)}
+              onChange={(v) => setPauseField(index, 'paused_at', v)}
+              ariaLabel={`Pause ${index + 1} start`}
             />
             <span className="pause-dash">to</span>
-            <input
-              type="datetime-local"
-              className="cat-input"
-              aria-label={`Pause ${index + 1} end`}
+            <DateTimeField
               value={pause.resumed_at}
-              onChange={(e) => setPauseField(index, 'resumed_at', e.target.value)}
+              onChange={(v) => setPauseField(index, 'resumed_at', v)}
+              ariaLabel={`Pause ${index + 1} end`}
             />
             <button
               type="button"

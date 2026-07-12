@@ -10,6 +10,12 @@
 import type { BaselineEntryRead } from './types'
 import { IconArrowUp, IconArrowDown } from './icons'
 
+// Trim the raw baseline floats to at most 2 decimals (trailing zeros drop
+// naturally): 60.1666… -> 60.17, 0.4958… -> 0.5, 1.3333… -> 1.33.
+function fmt(n: number): string {
+  return String(Math.round(n * 100) / 100)
+}
+
 function DeltaBadge({ delta }: { delta: number }) {
   if (delta === 0) {
     return <span className="score-delta score-delta--flat">±0</span>
@@ -20,7 +26,7 @@ function DeltaBadge({ delta }: { delta: number }) {
     <span className={`score-delta score-delta--${up ? 'up' : 'down'}`}>
       {up ? <IconArrowUp /> : <IconArrowDown />}
       {up ? '+' : '-'}
-      {magnitude}
+      {fmt(magnitude)}
     </span>
   )
 }
@@ -38,7 +44,7 @@ export default function ScoreCard({
   return (
     <div className="score-card">
       <span className="score-label micro-label">{label}</span>
-      <div className="score-value">{value}</div>
+      <div className="score-value">{fmt(value)}</div>
       {building ? (
         <span className="score-chip" data-zone="building">
           building

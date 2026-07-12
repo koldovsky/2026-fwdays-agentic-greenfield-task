@@ -121,8 +121,8 @@ function CategoryCard({
   if (editing) {
     return (
       <form className="category-card category-card--editing" onSubmit={onSubmit}>
-        <div className="category-swatch" style={{ backgroundColor: color }} aria-hidden="true" />
-        <div className="category-body">
+        <div className="cat-card-swatch cat-card-swatch--edit" style={{ backgroundColor: color }} aria-hidden="true" />
+        <div className="cat-card-body">
           <label className="field-label" htmlFor={`name-${category.id}`}>
             Name
           </label>
@@ -181,8 +181,8 @@ function CategoryCard({
 
   return (
     <article className="category-card">
-      <div className="category-swatch" style={{ backgroundColor: category.color }} aria-hidden="true">
-        <div className="category-actions">
+      <div className="cat-card-swatch" style={{ backgroundColor: category.color }} aria-hidden="true">
+        <div className="cat-card-actions">
           <button
             type="button"
             className="icon-btn"
@@ -193,7 +193,7 @@ function CategoryCard({
           </button>
           <button
             type="button"
-            className="icon-btn"
+            className="icon-btn del"
             onClick={() => setConfirmingDelete(true)}
             aria-label={`Delete ${category.name}`}
           >
@@ -201,9 +201,9 @@ function CategoryCard({
           </button>
         </div>
       </div>
-      <div className="category-body">
-        <h3 className="category-name">{category.name}</h3>
-        {category.description && <p className="category-description">{category.description}</p>}
+      <div className="cat-card-body">
+        <h3 className="cat-card-name">{category.name}</h3>
+        {category.description && <p className="cat-card-desc">{category.description}</p>}
         {error && (
           <p className="cat-error" role="alert">
             {error}
@@ -344,11 +344,13 @@ export default function CategoriesPage() {
   }
 
   return (
-    <main className="categories-screen">
-      <header className="categories-header">
-        <h1 className="page-title">Categories</h1>
-        <p className="page-subtitle">Organize your tracked time. Deleting a category archives it.</p>
-      </header>
+    <div className="view">
+      <div className="categories-header">
+        <div className="categories-heading">
+          <h1 className="page-title">Categories</h1>
+          <p className="page-subtitle">Organize your tracked time. Deleting a category archives it.</p>
+        </div>
+      </div>
 
       <NewCategoryForm onCreated={onCreated} />
 
@@ -373,6 +375,6 @@ export default function CategoriesPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   )
 }
