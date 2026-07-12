@@ -166,7 +166,7 @@ stored conversation history and never calculates numbers itself. No agent framew
 | TC-STACK-01 | Backend is Python + FastAPI with async SQLAlchemy 2.0, Alembic migrations, and PostgreSQL (per ADR 0001); every schema change ships an Alembic migration. | accepted |
 | TC-STACK-02 | All configuration flows through the app config layer (pydantic-settings), is env-driven, and keeps no secrets in code; only `*.env.example` is committed. | accepted |
 | TC-STACK-03 | Frontend is React + Vite + TypeScript (strict) with Tailwind, built against the project-owned design-token skill; all HTTP goes through `src/api.ts`; component libraries are allowed but restyled through the tokens. | accepted |
-| TC-LLM-01 | Coach uses Gemma 4 31B (`gemma-4-31b-it`) via Google AI Studio free tier (single owner-supplied key) with structured JSON output, falling back to Gemini 3 Flash; it is a single structured call over (snapshot + history) with no agent framework or tool-use. | accepted |
+| TC-LLM-01 | Coach uses Gemma 4 31B (`gemma-4-31b-it`) via Google AI Studio free tier (single owner-supplied key) with structured JSON output, falling back to Gemini Flash (`gemini-flash-latest`, the stable current-flash alias); it is a single structured call over (snapshot + history) with no agent framework or tool-use. | accepted |
 | TC-AUTH-01 | Sign-in integrates Google OAuth and GitHub OAuth. | accepted |
 | TC-AUTH-02 | Authentication uses a session-cookie model with a single user role and no admin surface. | accepted |
 | TC-EXT-01 | Extension is an MV3 popup-only thin client over the same API, with no content scripts and no per-site tracking; its shortcut is browser-level, not OS-global. | accepted |

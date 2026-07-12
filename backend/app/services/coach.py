@@ -10,7 +10,7 @@ unified ladder (FR-COACH-07, TC-LLM-01):
 2. on a **grounding violation**, one corrective retry on ``gemma-4-31b-it``;
 3. on a second grounding failure, a transport error, schema-invalid/malformed JSON,
    out-of-range counts, or an emoji (all but a grounding violation skip step 2), a **single**
-   ``Gemini 3 Flash`` attempt;
+   ``gemini-flash-latest`` (Gemini Flash) attempt;
 4. otherwise the defined fallback card (`quiet`, one non-numeric observation, marker `true`).
 
 The model transport is an injectable seam (``get_coach_provider``): tests override it with a
@@ -19,6 +19,10 @@ cache (only a grounded, non-fallback card is stored); chat persists both turns o
 reply and neither on the terminal fallback (both-or-neither, M3). ``trim_history`` is pure
 (§4.3) and unit-tested directly.
 """
+# The coach system prompt (_COACH_SYSTEM, below) is one long, deliberately-unwrapped string —
+# wrapping it would change the exact text the model was empirically tuned against — so the
+# line-length rule is disabled for this file only.
+# ruff: noqa: E501
 
 import json
 import logging
@@ -40,10 +44,13 @@ from app.services.stats import StatsService
 
 logger = logging.getLogger(__name__)
 
-# Model ids exactly as TC-LLM-01 / architecture §4.5 fix them (a "corrected" id would be
-# drift). A provider error for any id is caught and degrades gracefully (NFR-REL-01).
+# Model ids per TC-LLM-01 / architecture §4.5, pinned to resolvable Google AI Studio ids
+# (verified against the live models list + a real generateContent probe with this project's
+# request shape). The fallback is the stable `gemini-flash-latest` alias — TC-LLM-01 named the
+# fallback only in prose ("Gemini 3 Flash"), which is not a resolvable id; the requirement now
+# pins this id too. Any provider error for any id degrades gracefully to the card (NFR-REL-01).
 PRIMARY_MODEL = "gemma-4-31b-it"
-FALLBACK_MODEL = "Gemini 3 Flash"
+FALLBACK_MODEL = "gemini-flash-latest"
 
 # §4.3 memory bounds: the most recent turns, newest-first, under a ~2,000-token budget
 # (approximated as len(chars)/4) AND a hard cap of 20 turns; older turns are dropped with no
@@ -77,7 +84,7 @@ CoachProvider = Callable[..., Awaitable[str]]
 _OUTPUT_SCHEMA: dict[str, object] = {
     "type": "object",
     "properties": {
-        "language": {"type": "string", "enum": ["en", "uk"]},
+        "language": {"type": "string"},  # the reply's language code; matches the user's message
         "quiet": {"type": "boolean"},
         "observations": {
             "type": "array",
@@ -143,10 +150,23 @@ def _counts_ok(card: _ModelCard) -> bool:
     return 2 <= observations <= 4 and 1 <= recommendations <= 2
 
 
+def _strip_fences(raw: str) -> str:
+    """Recover the JSON when a model wraps it in a ```json ... ``` markdown fence — a common
+    small-model habit that otherwise fails json.loads and needlessly degrades the reply."""
+    s = raw.strip()
+    if s.startswith("```"):
+        nl = s.find("\n")
+        s = s[nl + 1 :] if nl != -1 else s[3:]
+        end = s.rfind("```")
+        if end != -1:
+            s = s[:end]
+    return s.strip()
+
+
 def _parse_and_validate(raw: str) -> _ModelCard | None:
     """Parse raw model text into a §4.2 card, or None if malformed / schema- or count-invalid."""
     try:
-        data = json.loads(raw)
+        data = json.loads(_strip_fences(raw))
     except (json.JSONDecodeError, TypeError):
         return None
     try:
@@ -198,14 +218,39 @@ def _fallback_payload(language: str) -> dict[str, object]:
     }
 
 
+# The coach system instruction. Tuned empirically against the live model (not just authored):
+# the hard "no calendar dates / no computed decimals, use weekday names + direction words" rules
+# are what keep rich, specific answers on the grounded side of FR-COACH-02 — without them the
+# model cites dates/rounded shares and the whole reply is rejected to the fallback card. The
+# few-shot BAD/GOOD contrast drives interpretation + real plans out of the small model; the
+# "never repeat / mine different leaves" rules kill the every-turn restatement.
+_COACH_SYSTEM = """You are Cadence's focus coach — sharp, specific and genuinely useful, like Whoop's coach. This is a CHAT: talk TO the user, warm and direct, second person, like a real conversation. Reply in the SAME language the user writes their message in — match it exactly (English, Ukrainian, Russian — whatever they use); for the weekly insight (no message) reply in {LANG}. Set "language" to the reply's language. Return ONLY the JSON card: {language, quiet, observations:[{text, metric_refs}], recommendations:[{text, metric_refs}]}. No emoji.
+
+You get a metrics `snapshot`, the `history` (including YOUR past replies) and the `user_message`. Weekly insight = 2-4 observations + 1-2 recommendations; a chat reply answers the question in the same shape, sized to the question. At most 4 observations and 2 recommendations, and each must cover a DIFFERENT metric — never restate an earlier bullet or repeat a phrase.
+
+HARD GROUNDING (a validator rejects the WHOLE reply on any violation):
+- Write a number ONLY if it comes from the snapshot. You MAY round a long decimal to a whole number or ONE decimal place (e.g. write 72.7 or 73, not 72.7272) — those stay valid — but never write two-or-more decimals, and never convert, average, compute or invent a figure or percentage. If you cannot get a figure this way, use words: high, low, rose, fell, above/below baseline, green/yellow zone.
+- NEVER write a calendar date, month, or day-of-month number (no "July 9", no "the 9th", no year). Refer to days ONLY by weekday name (Monday) or relatively ("your strongest day", "a day you logged nothing", "midweek").
+- NEVER write a decimal share (no "0.59"): say "well above baseline" or a whole-number percent only if that whole number is in the snapshot.
+
+CONTENT:
+1. Read `history` incl. your own replies. If the user asks something close to what you already covered, do NOT repeat — open differently, go a layer DEEPER, or name the single lever that matters most now. Every reply pulls from DIFFERENT leaves — per-day series, baseline delta/zone, focus share, switch load, category mix — not the five headline totals.
+2. EXPLAIN like a coach reasoning about cause: say what a number MEANS and WHAT'S DRIVING it (use deltas, zones, the per-day shape), never just restate a figure. Connect two metrics when it reveals something ("focus quality held green, so the drag is WHEN you start, not HOW you work").
+3. Answer the ACTUAL question. For a plan/schedule give a REAL plan: which category, block length (reuse a length the user actually logged), in what order across weekdays, anchored to the usual start time and current streak, and which gap each fills. Never "be more consistent".
+4. Warm and direct, but punchy — no filler, no preamble, no restating the question back.
+5. metric_refs = the dotted snapshot leaf paths behind each item.
+
+Learn from the contrast (illustrative; never copy these words/numbers — fill from the snapshot):
+BAD obs: "Your consistency score is 51 and you start around 09:10." (restates, interprets nothing, repeats)
+GOOD obs: "Consistency slipped into the yellow zone, below its baseline, while your focus quality held green — the drag is uneven start times, not the depth of your work."
+BAD rec: "Establish a daily routine and allocate your Deep Work and Learning across the week." (generic filler)
+GOOD rec: "On the two weekdays you logged nothing, drop one deep-work block at your usual start and one after lunch, reusing your best day's block length — that fills the gaps and protects the streak."."""
+
+
 def _system_prompt(language: str) -> str:
-    """The coach system instruction, requesting the reply in the user's language."""
-    return (
-        "You are a focus coach. Reply only in "
-        f"{'Ukrainian' if language == 'uk' else 'English'}. "
-        "Cite only numbers present in the provided metrics snapshot. Use no emoji. "
-        "Return the fixed structured card."
-    )
+    """The coach system instruction (§4.2): grounded, non-repetitive, actionable coaching in the
+    user's language (empirically tuned — see ``_COACH_SYSTEM``)."""
+    return _COACH_SYSTEM.replace("{LANG}", "Ukrainian" if language == "uk" else "English")
 
 
 def _build_request(

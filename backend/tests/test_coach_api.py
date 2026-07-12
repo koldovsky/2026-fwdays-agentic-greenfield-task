@@ -78,7 +78,7 @@ SETTINGS = get_settings()
 COLOR_A = "#3B82F6"
 
 PRIMARY_MODEL = "gemma-4-31b-it"
-FALLBACK_MODEL = "Gemini 3 Flash"
+FALLBACK_MODEL = "gemini-flash-latest"
 
 # Constructed from a codepoint (not a literal glyph) so the source carries no emoji.
 _ROCKET = "\U0001f680"
