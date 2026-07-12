@@ -1,0 +1,46 @@
+schema: spec-driven
+
+# Injected into EVERY artifact. Keep it short — point at documents, do not retell them.
+context: |
+  Product: agentic pipeline that turns one networking lesson (captions, PDF notes,
+  PDF slides, existing Markdown summary) into a reviewed Ukrainian article plus
+  Markdown glossary cards, published to GitBook after explicit human approval.
+
+  REQUIREMENTS SOURCE — read before generating anything:
+    docs/prd.md   MVP scope. The ONLY product source for specs.
+    AGENTS.md     agent behaviour rules for this repo.
+  DO NOT spec from docs/prd-final.md — that is the week-scale target picture and is
+  explicitly out of MVP scope.
+
+  Core principle: the scarce resource is HUMAN ATTENTION, not tokens or machine time.
+    - deterministic work -> code (cheap, and has no context to be talked out of);
+    - work needing judgement -> agent;
+    - human only where nothing else can decide: facts, language, final approval.
+  Consequence: review happens per chunk (150-250 words, ~5-7 min of fact-checking),
+  never over a whole article at once.
+
+  Hard constraints:
+    - An agent may NEVER set status: approved. Only a human fills `by:`.
+    - Nothing is published without an explicit human command. No auto-publish.
+    - Glossary cards are approved BEFORE the article that uses them.
+    - Approval pins the chunk's own content hash, not a repo-wide revision.
+
+  Stack: NOT CHOSEN YET. Do not invent build/lint/test commands (`npm test`,
+  `pytest`) — verify a stack exists first. External dependency: `pdftotext`
+  (package `poppler`); a missing dependency must stop the pipeline, never silently
+  skip PDFs.
+
+  Language: specs, tasks, code, commits in English. Product output and PRD in
+  Ukrainian. Markdown must render in both Obsidian and GitHub: relative links
+  `[text](path.md)`, no wikilinks.
+
+rules:
+  proposal:
+    - State explicitly what is out of scope; docs/prd-final.md lists deferred work.
+    - Name which pipeline stage this change touches — intake, author, censor, glossary, cutter, links, checks, fact-check, assembler, or publish.
+  specs:
+    - Every requirement must be mechanically checkable, or must say plainly that a human judges it.
+    - Reuse the chunk statuses already defined in docs/prd.md — draft, changes_requested, edited, approved. Do not invent new ones.
+  tasks:
+    - Break work into chunks of at most 2 hours.
+    - Prefer a deterministic script over an agent whenever the work carries no judgement.
