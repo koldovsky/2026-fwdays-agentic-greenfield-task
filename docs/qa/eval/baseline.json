@@ -1,0 +1,10 @@
+{
+  "lower_is_better": ["grounding_violations"],
+  "dimensions": {
+    "grounding_pass_rate": 1.0,
+    "grounding_violations": 0,
+    "format_conformance": 1.0,
+    "language_correct": 1.0,
+    "no_emoji": 1.0
+  }
+}

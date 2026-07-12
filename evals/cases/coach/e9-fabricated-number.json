@@ -1,0 +1,68 @@
+{
+  "id": "E-9",
+  "requirement": "FR-COACH-02",
+  "description": "Negative control: a coach_output that plants a number (180 min) absent from its snapshot MUST be caught by the grounding validator — the core eval criterion. This card is never a shippable output; it proves the mechanism.",
+  "expected": { "grounded": false, "violations": ["180"] },
+  "snapshot": {
+    "window": { "start": "2026-07-06", "end": "2026-07-12", "days": 7 },
+    "volume": {
+      "today_min": 120,
+      "week_min": 540,
+      "month_min": 2100,
+      "all_time_min": 9000,
+      "daily_avg_30d_min": 74.6,
+      "per_day": [
+        { "date": "2026-07-06", "min": 120 },
+        { "date": "2026-07-07", "min": 60 },
+        { "date": "2026-07-08", "min": 0 },
+        { "date": "2026-07-09", "min": 90 },
+        { "date": "2026-07-10", "min": 45 },
+        { "date": "2026-07-11", "min": 75 },
+        { "date": "2026-07-12", "min": 50 }
+      ]
+    },
+    "consistency": {
+      "score": 71,
+      "low_confidence": false,
+      "regularity": 0.62,
+      "start_stability": 0.55,
+      "median_start_local": "09:40"
+    },
+    "focus": { "deep_count": 3, "deep_minutes": 262, "deep_share": 0.43 },
+    "switching": {
+      "per_day": [
+        { "date": "2026-07-06", "switches": 4, "interruptions": 2, "switch_load": 6, "flagged": false }
+      ],
+      "baseline_mean": 5.2
+    },
+    "streaks": { "current": 4, "longest": 12 },
+    "baselines": {
+      "volume": { "value": 74.0, "delta": 6.0, "zone": "steady" },
+      "consistency": { "value": 55.0, "delta": -3.0, "zone": "building" },
+      "focus_share": { "value": 0.38, "delta": 0.05, "zone": "steady" },
+      "switch_load": { "value": 5.0, "delta": 1.0, "zone": "steady" }
+    },
+    "top_categories": [
+      { "id": 10, "name": "Deep Work", "color": "#3B82F6", "week_min": 300 }
+    ],
+    "per_category_per_day": [
+      {
+        "id": 10,
+        "name": "Deep Work",
+        "color": "#3B82F6",
+        "per_day": [{ "date": "2026-07-06", "min": 120 }]
+      }
+    ]
+  },
+  "coach_output": {
+    "language": "en",
+    "quiet": false,
+    "observations": [
+      { "text": "You logged 180 min of deep work this week.", "metric_refs": ["focus"] },
+      { "text": "Your focus held steady.", "metric_refs": ["focus"] }
+    ],
+    "recommendations": [
+      { "text": "Keep protecting your mornings.", "metric_refs": [] }
+    ]
+  }
+}

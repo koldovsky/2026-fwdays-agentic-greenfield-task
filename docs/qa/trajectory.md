@@ -197,6 +197,16 @@ This report proves only the process facts git can show: trailers, review-evidenc
   - frontend/src/pages/Stats/types.ts
 - Other files touched (docs/config): 39
 
+## Slice 006
+
+- Done: no (requirements: proposed)
+- Review evidence: docs/qa/reviews/006.md - absent
+- Commits:
+  - f2f8fdc spec(coach): ratify slice 006 add-coach contract [Refs: FR-COACH-01]
+- Touched code paths (0):
+  - (none)
+- Other files touched (docs/config): 8
+
 ## Process / infra commits (traced, not a feature slice)
 
 Commits that reference a real requirement (e.g. the BC-* trail/process constraints) but that no numbered spec owns. Traced, so not a violation.

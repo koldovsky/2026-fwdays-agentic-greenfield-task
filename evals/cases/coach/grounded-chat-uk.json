@@ -1,0 +1,65 @@
+{
+  "id": "G-CHAT-UK",
+  "requirement": "FR-COACH-03",
+  "description": "A grounded Ukrainian chat reply. The number it cites (95) is absent from the snapshot but present in the user's own current message, so the chat path widens the allowed set and the reply is grounded; the language field is 'uk' (FR-COACH-06).",
+  "expected": { "grounded": true, "violations": [], "language": "uk", "quiet": true },
+  "history": [
+    { "role": "user", "content": "Привіт! Як мій тиждень?" },
+    { "role": "coach", "content": "Ти тримаєш стабільний ритм цього тижня." }
+  ],
+  "user_message": "Я зробив 95 хвилин учора, як я тримаюся?",
+  "snapshot": {
+    "window": { "start": "2026-07-06", "end": "2026-07-12", "days": 7 },
+    "volume": {
+      "today_min": 120,
+      "week_min": 540,
+      "month_min": 2100,
+      "all_time_min": 9000,
+      "daily_avg_30d_min": 74.6,
+      "per_day": [
+        { "date": "2026-07-06", "min": 120 },
+        { "date": "2026-07-07", "min": 60 }
+      ]
+    },
+    "consistency": {
+      "score": 71,
+      "low_confidence": false,
+      "regularity": 0.62,
+      "start_stability": 0.55,
+      "median_start_local": "09:40"
+    },
+    "focus": { "deep_count": 3, "deep_minutes": 262, "deep_share": 0.43 },
+    "switching": {
+      "per_day": [
+        { "date": "2026-07-06", "switches": 4, "interruptions": 2, "switch_load": 6, "flagged": false }
+      ],
+      "baseline_mean": 5.2
+    },
+    "streaks": { "current": 4, "longest": 12 },
+    "baselines": {
+      "volume": { "value": 74.0, "delta": 6.0, "zone": "steady" },
+      "consistency": { "value": 55.0, "delta": -3.0, "zone": "building" },
+      "focus_share": { "value": 0.38, "delta": 0.05, "zone": "steady" },
+      "switch_load": { "value": 5.0, "delta": 1.0, "zone": "steady" }
+    },
+    "top_categories": [
+      { "id": 10, "name": "Deep Work", "color": "#3B82F6", "week_min": 300 }
+    ],
+    "per_category_per_day": [
+      {
+        "id": 10,
+        "name": "Deep Work",
+        "color": "#3B82F6",
+        "per_day": [{ "date": "2026-07-06", "min": 120 }]
+      }
+    ]
+  },
+  "coach_output": {
+    "language": "uk",
+    "quiet": true,
+    "observations": [
+      { "text": "Порівняно з 95 хвилинами вчора, ти тримаєш свій ритм.", "metric_refs": ["volume"] }
+    ],
+    "recommendations": []
+  }
+}
