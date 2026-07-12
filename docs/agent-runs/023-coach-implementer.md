@@ -101,3 +101,56 @@ remain (owned by other roles).
   Google AI Studio is unverified here.
 - No frontend: the coach drawer is FR-SHELL-02 (a later slice), out of scope.
 - `docs/current-state.md` left untouched (the Judge marks the slice done / archives `add-coach`).
+
+## Rework (2026-07-12, grounding-contract deviations)
+
+An independent review found three deviations from the FR-COACH-02 grounding contract (the
+slice's CRITICAL "no fabricated number" criterion) plus one security-hygiene note. All four are
+closed here; each grounding fix is **red-first** and **no existing test was weakened** (the E-9
+fabrication tests, `test_coach_grounding.py`, and `test_coach_api.py` all stay green).
+
+- **Fix 1 (false NEGATIVE, a fabrication passthrough) - uk comma decimals.** The numeric-token
+  extractor knew only period decimals, so a `uk` reply citing a fabricated one-decimal in
+  `[0,10)` with a comma (e.g. `"3,5 hours"`) split into two exempt bare digits `3`/`5` and the
+  fabricated 3.5 was reported **grounded** - a hole in the anti-fabrication promise for the
+  shipped `uk` coach (FR-COACH-06). `backend/app/core/grounding.py`: `_TOKEN_RE` now accepts a
+  comma fraction (`[.,]`), and a new `_num_value` normalizes `3,5` -> `3.5` at every float
+  conversion. A fabricated `3,5` is now a **violation**; a real leaf rendered with a comma
+  (`74,6` for `daily_avg_30d_min` 74.6) stays **grounded**.
+- **Fix 2 (false POSITIVE, spec deviation) - share cited as a bare/worded percent.** `share()`
+  added the percent only to the `%`-form set, so `deep_share ~= 0.4295` cited as bare `"43"` or
+  `"43 percent"` was flagged, though spec.md enumerates `0.4295` grounds `{43, 43.0}`. `share()`
+  now also adds `round(v*100)` / `round(v*100, 1)` to the plain-number set (the `%`-form path
+  is unchanged).
+- **Fix 3 (false POSITIVE, spec deviation on named leaves) - `>=100h` h:mm.** The `h:mm`
+  extractor capped hours at two digits, so `all_time_min = 9000` rendered `"150:00"` split into
+  `"150"`/`"00"` and `150` was flagged. The hours group is now `\d+`; `all_time_min = 9000`
+  grounds `"150:00"` and a fabricated `"151:00"` is still a violation. (The allowed-set builder
+  already emitted full-width `h:mm`, so no builder change was needed.)
+- **Fix 4 (security hygiene, 1 line) - external-transport error log.**
+  `backend/app/services/coach.py`: the provider transport-error log drops `exc_info=True` and
+  now logs `type(exc).__name__` only, so a future URL-based auth change cannot echo the API key
+  via a traceback (the key is still sent as the `x-goog-api-key` header; auth unchanged).
+  Defense-in-depth (NFR-REL-01). Rate-limiting (the other security MINOR) is out of scope - no
+  ratified requirement, a documented owner follow-up.
+
+Red-first tests were added to `backend/tests/test_coach_grounding_units.py` (the acceptance bar
+untouched). Confirmed **RED** against the old validator (fabricated `3,5` -> grounded=True,
+`violations=[]`; bare `43` -> `violations=['43']`; `150:00` -> `violations=['150','00']`), then
+**GREEN** after the fix.
+
+### Rework verification
+
+```
+$ RUN_DB_TESTS=1 pytest tests/test_coach_*.py -q     -> 55 passed
+$ python scripts/gate-slice                          -> GREEN; coverage 97.91% >= floor 82%; EXIT=0
+$ python scripts/check-traceability                  -> 45 claimed, 45 traced, 0 gap
+$ python scripts/check-trajectory                    -> no git-visible process violations
+$ python scripts/check-specs                         -> no violations
+$ python scripts/check-eval-ratchet                  -> 5 dimension(s) hold at/above baseline
+$ ruff check <changed> && mypy app                   -> All checks passed / no issues (65 files)
+```
+
+All four committed coach eval cases re-verified through the updated validator: **E-9 still
+catches its planted `180`** (grounded=False, violations=['180']); E-1, G-INSIGHT, and G-CHAT-UK
+stay grounded (no new false positive from the widened extractor).

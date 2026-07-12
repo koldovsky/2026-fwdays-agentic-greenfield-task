@@ -13,7 +13,8 @@ without units (§4.4 item 3). The allowed set is enumerated by **unit type**:
 
 - every numeric leaf at raw ``v`` / ``round(v)`` / ``round(v, 1)`` (the catch-all);
 - **share-typed** leaves (``focus.deep_share``, ``baselines.focus_share.value``/``.delta``)
-  additionally as a percent — ``round(v*100)`` / ``round(v*100, 1)``;
+  additionally as a percent — ``round(v*100)`` /
+  ``round(v*100, 1)`` (grounded with or without a ``%`` glyph);
 - **minute-typed** leaves (every ``*_min``, ``focus.deep_minutes``,
   ``volume.daily_avg_30d_min``, every ``per_day[].min``, ``top_categories[].week_min``,
   ``baselines.volume.value``/``.delta``) additionally as ``h:mm`` from both ``floor(v)`` and
@@ -31,9 +32,15 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from math import floor
 
-# Times (``h:mm`` durations / ``HH:MM`` clock) and percents are matched BEFORE bare numbers
-# so "4:22" and "43%" are read whole, not split into "4"/"22"/"43".
-_TOKEN_RE = re.compile(r"(?P<time>\d{1,2}:\d{2})|(?P<pct>\d+(?:\.\d+)?%)|(?P<num>\d+(?:\.\d+)?)")
+# Times (``h:mm`` durations / ``HH:MM`` clock) and percents are matched BEFORE bare numbers so
+# "4:22" and "43%" are read whole, not split into "4"/"22"/"43". Two shapes are widened beyond
+# the obvious: the hours group is ``\d+`` (not ``\d{1,2}``) so a >=100h duration like "150:00"
+# (``all_time_min`` 9000) is read whole rather than split into "150"/"00"; and a decimal fraction
+# may use a period OR a **uk comma** (``[.,]``) so "74,6" reads as the number 74.6, not a bare
+# "74" plus a bare "6" (FR-COACH-06). Comma tokens are normalized to a float via ``_num_value``.
+_TOKEN_RE = re.compile(
+    r"(?P<time>\d+:\d{2})|(?P<pct>\d+(?:[.,]\d+)?%)|(?P<num>\d+(?:[.,]\d+)?)"
+)
 _BARE_DIGIT_RE = re.compile(r"[0-9]")
 
 
@@ -59,6 +66,11 @@ def _canon_number(value: float) -> str:
     if value == int(value):
         return str(int(value))
     return repr(value)
+
+
+def _num_value(raw: str) -> float:
+    """Float value of a numeric token, accepting a **uk comma** decimal (``3,5`` -> ``3.5``)."""
+    return float(raw.replace(",", "."))
 
 
 def _canon_time(token: str) -> str | None:
@@ -111,13 +123,19 @@ class _Allowed:
             self.times.add(f"{hours}:{mins:02d}")
 
     def share(self, value: object) -> None:
-        """A 0..1 share: the catch-all plus a percent at round and one-decimal granularity."""
+        """A 0..1 share: the catch-all plus its rounded percent at round and one-decimal.
+
+        The percent is added to BOTH the ``%``-form set AND the plain-number set, so a
+        non-clean share such as ``0.4295`` grounds "43%", bare "43", and "43 percent" alike --
+        a share cited **without** a ``%`` glyph is not a false positive (spec.md, §4.4).
+        """
         number = _to_float(value)
         if number is None:
             return
         self.plain(number)
-        self.pcts.add(_canon_number(round(number * 100)) + "%")
-        self.pcts.add(_canon_number(round(number * 100, 1)) + "%")
+        for pct in (_canon_number(round(number * 100)), _canon_number(round(number * 100, 1))):
+            self.pcts.add(pct + "%")
+            self.nums.add(pct)
 
     def time_literal(self, value: object) -> None:
         """A non-null local-time leaf (``median_start_local``) as its ``HH:MM`` literal."""
@@ -206,9 +224,9 @@ def _extend_from_message(message: str, allowed: _Allowed) -> None:
             if canon is not None:
                 allowed.times.add(canon)
         elif kind == "pct":
-            allowed.pcts.add(_canon_number(float(raw[:-1])) + "%")
+            allowed.pcts.add(_canon_number(_num_value(raw[:-1])) + "%")
         else:
-            allowed.nums.add(_canon_number(float(raw)))
+            allowed.nums.add(_canon_number(_num_value(raw)))
 
 
 def _token_ok(kind: str, raw: str, allowed: _Allowed) -> bool:
@@ -217,10 +235,10 @@ def _token_ok(kind: str, raw: str, allowed: _Allowed) -> bool:
         canon = _canon_time(raw)
         return canon is not None and canon in allowed.times
     if kind == "pct":
-        return _canon_number(float(raw[:-1])) + "%" in allowed.pcts
+        return _canon_number(_num_value(raw[:-1])) + "%" in allowed.pcts
     if _BARE_DIGIT_RE.fullmatch(raw):  # a bare integer 0-9 without units is exempt (§4.4)
         return True
-    return _canon_number(float(raw)) in allowed.nums
+    return _canon_number(_num_value(raw)) in allowed.nums
 
 
 def check_grounding(

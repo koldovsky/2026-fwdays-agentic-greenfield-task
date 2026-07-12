@@ -292,8 +292,14 @@ class CoachService:
         """One model call, then parse -> counts -> emoji -> grounding, classified for the ladder."""
         try:
             raw = await self._provider(model=model, request=request)
-        except Exception:
-            logger.warning("coach: transport error on model %s; degrading", model, exc_info=True)
+        except Exception as exc:
+            # Log the exception *type* only, never the traceback: the external-provider call
+            # carries the API key (currently an `x-goog-api-key` header, so nothing leaks
+            # today) and a full `exc_info` traceback of a future URL-auth variant could echo
+            # the key. Defense-in-depth for NFR-REL-01 without changing the header-based auth.
+            logger.warning(
+                "coach: transport error (%s) on model %s; degrading", type(exc).__name__, model
+            )
             return _AttemptResult(status="transport")
         card = _parse_and_validate(str(raw))
         if card is None:

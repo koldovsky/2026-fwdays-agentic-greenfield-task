@@ -202,6 +202,7 @@ This report proves only the process facts git can show: trailers, review-evidenc
 - Done: no (requirements: proposed)
 - Review evidence: docs/qa/reviews/006.md - absent
 - Commits:
+  - 45a0d1c docs: correct the 006 implementer run record (commit split) [Refs: FR-COACH-01]
   - d2f2e56 backend: add AI coach (grounding, ladder, cache) + eval suite [Refs: FR-COACH-01]
   - f2f8fdc spec(coach): ratify slice 006 add-coach contract [Refs: FR-COACH-01]
 - Touched code paths (14):
