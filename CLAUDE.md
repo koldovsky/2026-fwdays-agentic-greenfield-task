@@ -1,57 +1,52 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code repo orientation.
 
-## Спершу прочитай AGENTS.md
+## Read AGENTS.md first
 
-**`AGENTS.md` — єдине джерело правил поведінки агента в цьому репо.** Читай його на початку кожної сесії; усі правила ведення роботи вести й оновлювати **там**, не тут.
+`AGENTS.md`: sole agent behavior source. Read at session start. Keep workflow rules there.
 
-`CLAUDE.md` — лише орієнтація в проєкті (що це, який стан, як влаштовано). Правила — в `AGENTS.md`. Якщо вони суперечать — виграє `AGENTS.md`.
-Нове правило поведінки з'явилося? Дописуй у `AGENTS.md`, не сюди, і не дублюй його в обох файлах.
+`CLAUDE.md`: project purpose, state, structure only. Conflict: `AGENTS.md` wins. Never duplicate behavior rules here.
 
-Три файли — три ролі: `AGENTS.md` — правила, `TODO.md` — що робити далі (пріоритети), `STATUS.md` — що вже зроблено (лог).
+Roles: `AGENTS.md` rules; `TODO.md` next work + priorities; `STATUS.md` recent work.
 
-## Стан репозиторію
+## Repository state
 
-Greenfield. Коду ще нема — є лише скелет каталогів, правила агентів і конфіг рев'ю.
-Отже: **немає** `package.json`, білд-системи, лінтера, тестів. Стек не обрано.
-(Що з цим робити агенту — правило «Stack» в `AGENTS.md`.)
+Greenfield. No product code. Directory skeleton, agent rules, review config only.
+No `package.json`, build system, linter, tests. Stack undecided. Agent constraints: `AGENTS.md` section "Stack".
 
-## Що це за проєкт
+## Project
 
-Домашнє завдання курсу **fwdays Academy · Agentic Engineering: Greenfield**.
-Оцінюється **процес**, не стек: докази агентної інженерії (контекст, цикли, верифікація, maker ≠ checker), а не «вайбкодинг».
+**fwdays Academy · Agentic Engineering: Greenfield** homework. Graded on process evidence—context engineering, loops, verification, maker ≠ checker—not code volume.
 
-Сам продукт — **агентний конвеєр «транскрипт → GitBook»**:
-сирий текстовий транскрипт відеоуроку з комп'ютерних мереж перетворюється на структуровану Markdown-статтю + набір Markdown-карток технічних термінів із перехресними посиланнями та посиланнями на україномовну Вікіпедію, готових до публікації в GitBook після вичитки людиною.
+Product: agentic **transcript-to-GitBook pipeline**. Raw networking lesson transcript becomes structured Markdown article + linked Markdown glossary cards with Ukrainian Wikipedia refs.
 
-Ключове обмеження дизайну: **людина-оркестратор лишається в петлі** — агенти готують матеріал, людина погоджує й публікує.
-(Що це означає для агента — правило «Human in the loop» в `AGENTS.md`.)
+Human orchestrator stays in loop: agents prep; human reviews, approves, publishes. Constraints: `AGENTS.md` section "Human in the loop".
 
-Повний опис вимог (двомовний, UA/EN) — у `README.md`. Оригінальні шаблони курсу лежать локально в `original_templates_STASH/` (у git не трекаються).
+Bilingual product description: `README.md`. Preserved assignment: `docs/course-assignment.md`. Original templates: ignored `original_templates_STASH/`.
 
-## Потік даних
+## Data flow
 
-```
-input/transcripts/   сирі транскрипти (вхід)
+```text
+input/transcripts/   raw transcripts
         ↓
-output/articles/     структуровані Markdown-статті
-output/glossary/     Markdown-картки термінів (одна картка = один термін)
+output/articles/     structured Markdown articles
+output/glossary/     glossary cards, one term per card
 ```
 
-Каталоги наразі порожні (`.gitkeep`). Правила витягування термінів і формат карток — у `README.md` (пп. 5–8); згодом переїдуть у спеку.
+Directories empty except `.gitkeep`. Term-extraction/card-format requirements absent; define in OpenSpec before implementation.
 
 ## OpenSpec-based SDD
 
-Розробка йде через Specification-Driven Development. Порядок роботи й заборона робити щось поза спекою — правило «Spec-driven development» в `AGENTS.md`.
+Specification-Driven Development required. Mandatory order and scope: `AGENTS.md` section "Spec-driven development".
 
-## Рев'ю та здача
+## Review and submission
 
-CodeRabbit (`.coderabbit.yaml`) рев'юить PR українською як ментор курсу, у профілі `assertive`, дорадчо (не блокує мердж). Він оцінює не стільки код, скільки **докази процесу**:
+CodeRabbit (`.coderabbit.yaml`): Ukrainian course-mentor PR review; `assertive`; advisory, no merge block. Evidence targets:
 
-1. справжнє ім'я автора;
-2. посилання на відео-демо (1–2 хв);
-3. змістовний опис застосованих агентних практик (контекст-інженерія / `AGENTS.md`, цикли, maker ≠ checker / субагенти, спеки/тести/evals, інструменти та MCP, що вирішувала людина, а що агент);
-4. результат доведено до кінця.
+1. real author name;
+2. 1–2 minute demo link;
+3. concrete Agentic Engineering practices: context engineering, loops, maker ≠ checker, specs, tests/evals, tools/MCP, human decisions, agent work;
+4. finished result.
 
-`.github/pull_request_template.md` містить саме ці розділи + чекліст. Як його заповнювати й чого не видаляти — правило «PR / deliverables» в `AGENTS.md`.
+Template: `.github/pull_request_template.md`. Completion/artifact rules: `AGENTS.md` section "PR / deliverables".

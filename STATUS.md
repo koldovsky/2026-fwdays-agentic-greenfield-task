@@ -1,15 +1,17 @@
 # STATUS — session log
 > RULE: After every prompt, prepend ONE entry (newest on top). Keep only the last 3 — delete older ones every time (mandatory trim). Each entry starts with <YYYY-MM-DD HH:MM> (24h, local). English, terse. Markdown, Obsidian + GitHub compatible.
+> Claude resume: not recorded; root Claude replaces this row when current session ID is known.
+> Codex resume: `codex resume 019f557e-d742-7113-a586-aa91c275c3e8`
 ---
 
-**2026-07-12 11:44** — **Prompt:** Prepare everything for the commit, propose the message, then commit
+**2026-07-12 15:04** — **Prompt:** Audit baseline readiness; verify staging is correct; Codex stopped
 
-**Did:** Found the pre-existing diffs in `.coderabbit.yaml`, `README.md` and the PR template were pure CRLF noise — no content change. Added `.gitattributes` (normalize to LF), ran `git add --renormalize`, which made the noise vanish, so no separate EOL commit was needed. Untracked `README.original.md` (moved to the git-ignored stash). Committed the whole restructure as `docs: restructure agent context ahead of SDD`.
+**Did:** Audit passed: no secret hits, LF normalized, Markdown targets valid, `main` ahead 1 (`6e13703`), `Day-01` sources untracked as agreed. Found index stale for three files after concurrent Codex edits, plus a duplicated `TODO.md` entry (`Add local Claude settings ignore` in both `Now` and `Done`) — removed the `Now` copy. `.coderabbit.yaml` shows as modified but is byte-identical to HEAD (WSL stat noise). Restaging all before commit.
 
-**2026-07-12 11:26** — **Prompt:** Keep the code exception as-is (plugin likely fences code off so compression cannot corrupt it); park a low-priority task to research it
+**2026-07-12 14:55** — **Prompt:** Keep transcripts visible until Day-01 sample exists
 
-**Did:** Added a P2 item to `TODO.md` — investigate the caveman plugin's `Boundaries` rule, hypothesis recorded, explicit "do not optimize away the code exception" note. No rule changed.
+**Did:** Removed transcript ignore rules from `.gitignore`; kept only `.claude/settings.local.json` ignored; updated backlog to defer transcript ignore until the sample fixture lands.
 
-**2026-07-12 11:04** — **Prompt:** Create TODO.md; add rules — always consult TODO, caveman style for internal docs, Obsidian-compatible Markdown
+**2026-07-12 14:54** — **Prompt:** Add local-safety gitignore rules for transcripts and Claude settings
 
-**Did:** Created `TODO.md` (priority backlog, P0/P1/P2, Done section). Added three `AGENTS.md` rules: read `TODO.md` before picking work; internal docs caveman-compressed; every `.md` must render in both Obsidian and GitHub. `CLAUDE.md` now states the three-file split (rules / next / log). Dropped the term-extraction duplicate — `README.md` items 5–8 already own it.
+**Did:** Added `.claude/settings.local.json` to `.gitignore`; transcript ignore was later deferred until the sample fixture lands.

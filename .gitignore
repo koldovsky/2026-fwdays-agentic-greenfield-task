@@ -3,6 +3,13 @@
 # Локальний архів оригінальних шаблонів (не для репо)
 original_templates_STASH/
 
+# Local agent tooling; not product dependencies
+.agents/
+skills-lock.json
+
+# Local Claude settings
+.claude/settings.local.json
+
 # OS / редактори
 .DS_Store
 Thumbs.db
