@@ -1,0 +1,705 @@
+{
+  "generatedBy": "scripts/check-traceability.mjs",
+  "requirements": {
+    "FR-SHELL-01": "MVP",
+    "FR-SHELL-02": "MVP",
+    "FR-SHELL-03": "MVP",
+    "FR-INPUT-01": "MVP",
+    "FR-INPUT-02": "MVP",
+    "FR-INPUT-04": "MVP",
+    "FR-NACE-01": "MVP",
+    "FR-NACE-02": "MVP",
+    "FR-NACE-03": "MVP",
+    "FR-NACE-04": "MVP",
+    "FR-NACE-05": "MVP",
+    "FR-CALC-01": "MVP",
+    "FR-CALC-02": "MVP",
+    "FR-CALC-03": "MVP",
+    "FR-CALC-04": "MVP",
+    "FR-CALC-05": "MVP",
+    "FR-CALC-06": "MVP",
+    "FR-BANK-01": "MVP",
+    "FR-BANK-02": "MVP",
+    "FR-BANK-03": "MVP",
+    "FR-TPL-01": "MVP",
+    "FR-TPL-02": "MVP",
+    "FR-TPL-03": "MVP",
+    "FR-TPL-04": "MVP",
+    "FR-TPL-05": "MVP",
+    "FR-EXPORT-01": "MVP",
+    "FR-EXPORT-02": "MVP",
+    "FR-EXPORT-03": "MVP",
+    "FR-EXPORT-04": "MVP",
+    "FR-EXPORT-05": "MVP",
+    "FR-EDIT-01": "MVP",
+    "FR-EDIT-02": "MVP",
+    "FR-REG-01": "MVP",
+    "FR-REG-02": "MVP",
+    "FR-REG-03": "MVP",
+    "FR-CLIENT-01": "MVP",
+    "FR-CLIENT-02": "MVP",
+    "FR-CLIENT-03": "MVP",
+    "FR-CLIENT-04": "MVP",
+    "FR-NACE-06": "dropped",
+    "FR-INPUT-03": "dropped",
+    "NFR-PERF-01": "MVP",
+    "NFR-PERF-02": "MVP",
+    "NFR-A11Y-01": "MVP",
+    "NFR-I18N-01": "MVP",
+    "NFR-SEC-01": "MVP",
+    "NFR-DX-01": "MVP",
+    "NFR-OBS-01": "MVP",
+    "TC-STACK-01": "MVP",
+    "TC-STACK-02": "MVP",
+    "TC-STACK-03": "MVP",
+    "TC-STACK-04": "MVP",
+    "TC-STACK-05": "MVP",
+    "TC-STACK-06": "MVP",
+    "TC-DEPLOY-01": "MVP",
+    "TC-DATA-01": "MVP",
+    "TC-PDF-01": "MVP",
+    "BC-NACE-01": "MVP",
+    "BC-I18N-01": "MVP",
+    "BC-LEGAL-01": "MVP",
+    "BC-LEGAL-02": "MVP",
+    "BC-UX-01": "MVP",
+    "BC-BRAND-01": "MVP",
+    "BC-DEMO-01": "MVP",
+    "BC-LANG-01": "MVP"
+  },
+  "links": [
+    {
+      "id": "FR-SHELL-01",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SHELL-02",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-SHELL-03",
+      "specs": [
+        "openspec/specs/shell/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-INPUT-01",
+      "specs": [
+        "openspec/specs/form-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-INPUT-02",
+      "specs": [
+        "openspec/specs/form-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/validation/invoice-input.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-INPUT-04",
+      "specs": [
+        "openspec/specs/form-input/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/validation/invoice-input.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-NACE-01",
+      "specs": [
+        "openspec/specs/nace-catalog/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/nace/catalog.test.ts",
+        "src/lib/nace/catalog.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-NACE-02",
+      "specs": [
+        "openspec/specs/nace-catalog/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/nace/catalog.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-NACE-03",
+      "specs": [
+        "openspec/specs/nace-catalog/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/nace/catalog.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-NACE-04",
+      "specs": [
+        "openspec/specs/nace-catalog/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/nace/catalog.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-NACE-05",
+      "specs": [
+        "openspec/specs/nace-catalog/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/nace/match.test.ts",
+        "src/lib/nace/match.test.ts",
+        "src/lib/nace/match.test.ts",
+        "src/lib/nace/match.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-01",
+      "specs": [
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-02",
+      "specs": [
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/invoice-calc/__tests__/dates.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-03",
+      "specs": [
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/invoice-calc/__tests__/money.test.ts",
+        "src/lib/invoice-calc/__tests__/money.test.ts",
+        "src/lib/invoice-calc/__tests__/money.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-04",
+      "specs": [
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/invoice-calc/__tests__/money.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-05",
+      "specs": [
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/invoice-calc/__tests__/dates.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CALC-06",
+      "specs": [
+        "openspec/specs/document-render/spec.md",
+        "openspec/specs/invoice-calc/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/invoice-calc/__tests__/purpose.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-BANK-01",
+      "specs": [
+        "openspec/specs/banking/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/banking/supplier-block.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-BANK-02",
+      "specs": [
+        "openspec/specs/banking/spec.md",
+        "openspec/specs/supplier-profile/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/supplier-profiles.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-BANK-03",
+      "specs": [
+        "openspec/specs/banking/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/banking/supplier-block.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-TPL-01",
+      "specs": [
+        "openspec/specs/document-render/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/render/fill-template.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-TPL-02",
+      "specs": [
+        "openspec/specs/document-render/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/render/render-invoice.test.ts",
+        "src/lib/render/render-invoice.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-TPL-03",
+      "specs": [
+        "openspec/specs/document-render/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/render/service-rows.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-TPL-04",
+      "specs": [
+        "openspec/specs/document-render/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/render/render-invoice.test.ts",
+        "src/lib/render/service-rows.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-TPL-05",
+      "specs": [
+        "openspec/specs/document-render/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/render/fill-template.test.ts",
+        "src/lib/render/render-invoice.test.ts",
+        "src/lib/render/render-invoice.test.ts",
+        "src/lib/render/render-invoice.test.ts",
+        "src/lib/render/render-invoice.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-EXPORT-01",
+      "specs": [
+        "openspec/specs/export-share/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EXPORT-02",
+      "specs": [
+        "openspec/specs/export-share/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EXPORT-03",
+      "specs": [
+        "openspec/specs/export-share/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EXPORT-04",
+      "specs": [
+        "openspec/specs/export-share/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EXPORT-05",
+      "specs": [
+        "openspec/specs/export-share/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EDIT-01",
+      "specs": [
+        "openspec/specs/invoice-edit/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-EDIT-02",
+      "specs": [
+        "openspec/specs/invoice-edit/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    },
+    {
+      "id": "FR-REG-01",
+      "specs": [
+        "openspec/specs/invoice-registry/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/invoice-register.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-REG-02",
+      "specs": [
+        "openspec/specs/invoice-registry/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/invoice-register.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-REG-03",
+      "specs": [
+        "openspec/specs/invoice-registry/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/invoice-register.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CLIENT-01",
+      "specs": [
+        "openspec/specs/client-directory/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/clients.test.ts",
+        "src/lib/storage/clients.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CLIENT-02",
+      "specs": [
+        "openspec/specs/client-directory/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/clients.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CLIENT-03",
+      "specs": [
+        "openspec/specs/client-directory/spec.md"
+      ],
+      "planned": true,
+      "tests": [
+        "src/lib/storage/clients.test.ts"
+      ],
+      "recordings": []
+    },
+    {
+      "id": "FR-CLIENT-04",
+      "specs": [
+        "openspec/specs/client-directory/spec.md"
+      ],
+      "planned": true,
+      "tests": [],
+      "recordings": []
+    }
+  ],
+  "failures": [
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-01 has no test annotated \"@trace FR-SHELL-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-02 has no test annotated \"@trace FR-SHELL-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-SHELL-03 has no test annotated \"@trace FR-SHELL-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-INPUT-01 has no test annotated \"@trace FR-INPUT-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CALC-01 has no test annotated \"@trace FR-CALC-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EXPORT-01 has no test annotated \"@trace FR-EXPORT-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EXPORT-02 has no test annotated \"@trace FR-EXPORT-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EXPORT-03 has no test annotated \"@trace FR-EXPORT-03\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EXPORT-04 has no test annotated \"@trace FR-EXPORT-04\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EXPORT-05 has no test annotated \"@trace FR-EXPORT-05\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EDIT-01 has no test annotated \"@trace FR-EDIT-01\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-EDIT-02 has no test annotated \"@trace FR-EDIT-02\""
+    },
+    {
+      "check": "test-trace",
+      "msg": "FR-CLIENT-04 has no test annotated \"@trace FR-CLIENT-04\""
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-SHELL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-INPUT-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-INPUT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-INPUT-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-NACE-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-NACE-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-NACE-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-NACE-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-NACE-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CALC-06 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-BANK-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-BANK-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-BANK-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-TPL-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-TPL-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-TPL-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-TPL-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-TPL-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EXPORT-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EXPORT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EXPORT-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EXPORT-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EXPORT-05 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EDIT-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-EDIT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REG-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REG-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-REG-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CLIENT-01 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CLIENT-02 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CLIENT-03 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "recording-evidence",
+      "msg": "FR-CLIENT-04 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "tasks-complete",
+      "msg": "openspec/changes/archive/2026-07-11-add-invoice-registry/tasks.md has 2 unchecked task(s) but is archived"
+    }
+  ],
+  "warnings": []
+}

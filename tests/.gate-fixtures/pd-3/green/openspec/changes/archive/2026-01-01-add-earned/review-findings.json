@@ -1,0 +1,2 @@
+{ "clean": true, "generatedBy": "review-gate", "baseRef": "abc1234",
+  "dimensions": { "correctness": { "confirmed": 0 }, "security": { "confirmed": 0 } } }

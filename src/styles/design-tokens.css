@@ -1,0 +1,66 @@
+/* ============================================================================
+   WEG3D Fin — Invoice Maker 2026 · Design Tokens
+   Source of truth: docs/Design System/design-tokens.css
+   Light theme, Linear/Vercel-restrained, brand accent = invoice template red.
+   ========================================================================== */
+
+:root {
+  /* — Surfaces (low-contrast stack) — */
+  --wf-bg: #fbfbfc;
+  --wf-surface: #ffffff;
+  --wf-surface-2: #f7f7f8;
+  --wf-surface-3: #f1f1f3;
+
+  /* — Borders — */
+  --wf-border: #eaeaed;
+  --wf-border-2: #dededf;
+
+  /* — Text — */
+  --wf-text: #161619;
+  --wf-text-2: #6c6c76;
+  --wf-text-3: #9c9ca5;
+
+  /* — Brand accent (from invoice template identity) — */
+  --wf-accent: #ef4136;
+  --wf-accent-hover: #d5392f;
+  --wf-accent-soft: #fdecea;
+  --wf-accent-soft-2: #fbdad7;
+  --wf-accent-border: color-mix(in srgb, var(--wf-accent) 26%, #fff);
+  --wf-ink: #111b37;
+
+  /* — Status — */
+  --wf-success: #12855a;
+  --wf-success-soft: #e7f4ee;
+  --wf-warning: #a86a12;
+  --wf-danger: #d23f38;
+  --wf-danger-soft: #fbeceb;
+
+  /* — Typography — */
+  --wf-font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --wf-font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo,
+    monospace;
+
+  --wf-fs-display: 24px;
+  --wf-fs-h1: 20px;
+  --wf-fs-h2: 16px;
+  --wf-fs-body: 13.5px;
+  --wf-fs-label: 12px;
+  --wf-fs-caption: 11px;
+
+  /* — Radius — */
+  --wf-radius: 8px;
+  --wf-radius-lg: 14px;
+  --wf-radius-xl: 16px;
+  --wf-radius-pill: 999px;
+
+  /* — Elevation — */
+  --wf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--wf-border);
+  --wf-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --wf-shadow-doc: 0 1px 2px rgba(0, 0, 0, 0.04),
+    0 20px 40px -24px rgba(30, 20, 60, 0.18);
+
+  /* — Layout — */
+  --wf-control-h: 36px;
+  --wf-gap: 12px;
+}

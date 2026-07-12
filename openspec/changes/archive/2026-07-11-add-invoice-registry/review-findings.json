@@ -1,0 +1,47 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "add-invoice-registry",
+  "change": "add-invoice-registry",
+  "baseRef": "4503945",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 1,
+      "contested": 1,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 4,
+      "contested": 2,
+      "rejected": 1
+    },
+    "spec-compliance": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 2
+    },
+    "visual": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 1
+    }
+  },
+  "confirmedTitles": [
+    "deriveOverdue timestamp-normalization branch is never exercised by a test",
+    "capability-map lists invoice-registry as not_started while its code is committed and tested"
+  ],
+  "confirmed": [
+    {
+      "title": "deriveOverdue timestamp-normalization branch is never exercised by a test",
+      "severity": "minor",
+      "dimension": "correctness"
+    },
+    {
+      "title": "capability-map lists invoice-registry as not_started while its code is committed and tested",
+      "severity": "minor",
+      "dimension": "visual"
+    }
+  ],
+  "clean": false,
+  "generatedAt": "2026-07-11T10:20:16Z"
+}

@@ -1,0 +1,12 @@
+client: Nordic Build AS
+addr: Storgata 15, 0155 Oslo, Norway
+email: projects@nordicbuild.example
+phone: +47 22 11 33 44
+web: nordicbuild.no
+curr: USD
+service: Interactive 360 virtual tour visualization
+qty: 1
+amount: 8500
+prepay: 50%
+pay_days: 7
+exec_days: 28

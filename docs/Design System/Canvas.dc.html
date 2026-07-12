@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f4f4f5}
+.app{--bg:#fbfbfc;--surface:#fff;--s2:#f7f7f8;--s3:#f1f1f3;--border:#eaeaed;--border2:#dededf;--text:#161619;--text2:#6c6c76;--text3:#9c9ca5;--accent:#ef4136;--r:8px;--asoft:color-mix(in srgb,var(--accent) 8%,#fff);--asoft2:color-mix(in srgb,var(--accent) 14%,#fff);--aborder:color-mix(in srgb,var(--accent) 26%,#fff);--ahover:color-mix(in srgb,var(--accent) 88%,#000);--green:#12855a;--amber:#a86a12;--red:#d23f38;font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-feature-settings:"tnum" 1;letter-spacing:0}
+.ic{width:16px;height:16px;flex:none}
+.ic-sm{width:14px;height:14px;flex:none}
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 24px;background:color-mix(in srgb,var(--surface) 80%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px}
+.logo{width:26px;height:26px;border-radius:7px;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.tabs{display:flex;gap:2px;background:var(--s3);padding:3px;border-radius:9px}
+.tab{appearance:none;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--text2);padding:6px 14px;border-radius:7px;cursor:pointer;letter-spacing:-0.01em}
+.tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--border)}
+.pageinfo{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:13px}
+.wrap{max-width:1340px;margin:0 auto;padding:28px 24px 80px}
+/* buttons */
+.btn{appearance:none;font:inherit;font-size:13px;font-weight:500;letter-spacing:-0.01em;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;transition:background .12s,border-color .12s,box-shadow .12s;white-space:nowrap}
+.btn-pri{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(20,10,60,.2)}
+.btn-pri:hover{background:var(--ahover)}
+.btn-sec{background:var(--surface);color:var(--text);border-color:var(--border2);box-shadow:0 1px 1px rgba(0,0,0,.03)}
+.btn-sec:hover{background:var(--s2)}
+.btn-ghost{background:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--s3);color:var(--text)}
+.btn-dark{background:var(--text);color:#fff}
+.btn-dark:hover{background:#2c2c31}
+.btn-sm{height:30px;padding:0 10px;font-size:12.5px}
+.btn-block{width:100%}
+.btn-icon{width:34px;height:34px;padding:0;color:var(--text2)}
+/* cards / panels */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+/* fields */
+.label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:-0.01em}
+.input,.textarea,.select{width:100%;font:inherit;font-size:13.5px;color:var(--text);background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;transition:border-color .12s,box-shadow .12s;letter-spacing:-0.01em}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--asoft2)}
+.input::placeholder,.textarea::placeholder{color:var(--text3)}
+.textarea{resize:vertical;min-height:70px;line-height:1.5}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c6c76' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:32px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* segmented */
+.seg{display:inline-flex;background:var(--s3);padding:3px;border-radius:9px;gap:2px}
+.segbtn{appearance:none;border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:500;color:var(--text2);padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:-0.01em}
+.segbtn.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--border)}
+/* accordion */
+.acc{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.acc+.acc{margin-top:10px}
+.acchead{display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;border:0;font:inherit;padding:15px 16px;cursor:pointer;text-align:left}
+.acctitle{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.accsub{font-size:12px;color:var(--text3);font-weight:400}
+.chev{color:var(--text3);transition:transform .18s}
+.chev.up{transform:rotate(180deg)}
+.accbody{padding:2px 16px 18px}
+.secnum{width:22px;height:22px;border-radius:6px;background:var(--s3);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+/* banner */
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--text2);line-height:1.45}
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:999px;line-height:1;letter-spacing:-0.01em}
+.badge .dot{width:6px;height:6px;border-radius:50%}
+.b-draft{background:var(--s3);color:var(--text2)} .b-draft .dot{background:var(--text3)}
+.b-sent{background:color-mix(in srgb,var(--accent) 10%,#fff);color:var(--accent)} .b-sent .dot{background:var(--accent)}
+.b-paid{background:#e7f4ee;color:var(--green)} .b-paid .dot{background:var(--green)}
+.b-over{background:#fbeceb;color:var(--red)} .b-over .dot{background:var(--red)}
+/* line item row */
+.li{display:grid;grid-template-columns:1fr 58px 90px 30px;gap:8px;align-items:center;margin-bottom:8px}
+.li .input{padding:8px 10px;font-size:13px}
+.li-num{text-align:right}
+.lirm{width:30px;height:34px;border:0;background:transparent;color:var(--text3);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lirm:hover{background:#fbeceb;color:var(--red)}
+.liwrap{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px}
+.li2{display:grid;grid-template-columns:1fr 1fr 34px;gap:8px;align-items:center}
+.addrow{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:38px;border:1px dashed var(--border2);border-radius:var(--r);background:transparent;color:var(--text2);font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.addrow:hover{border-color:var(--accent);color:var(--accent);background:var(--asoft)}
+/* build layout */
+.build{display:grid;grid-template-columns:minmax(360px,430px) 1fr;gap:24px;align-items:start}
+.formcol{position:sticky;top:80px}
+.h1{font-size:24px;font-weight:600;letter-spacing:-0.03em;margin:0}
+.sub{font-size:13.5px;color:var(--text2);margin:5px 0 0}
+.previewbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pvlabel{font-size:13px;color:var(--text2);font-weight:500;margin-right:2px}
+/* invoice document */
+.doc{background:#fff;border:1px solid var(--border);border-radius:16px;padding:38px 40px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 20px 40px -24px rgba(30,20,60,.18)}
+.iv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:26px}
+.iv-title{font-size:26px;font-weight:600;letter-spacing:-0.03em;line-height:1.05}
+.iv-titleua{font-size:14px;color:var(--text3);font-weight:400;margin-top:1px}
+.iv-svc{font-size:13px;color:var(--text2);margin-top:8px}
+.iv-meta{margin-top:12px;font-size:12.5px;color:var(--text2);line-height:1.7}
+.iv-meta b{color:var(--text);font-weight:500}
+.iv-brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;justify-content:flex-end}
+.iv-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.iv-cap{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);font-weight:600;margin-bottom:8px}
+.iv-capua{text-transform:none;letter-spacing:0;color:var(--text3);font-weight:400}
+.iv-name{font-size:15px;font-weight:600;letter-spacing:-0.01em}
+.iv-line{font-size:13px;color:var(--text2);line-height:1.65}
+.iv-tbl{width:100%;border-collapse:collapse;margin-top:22px}
+.iv-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);font-weight:600;padding:0 0 11px;border-bottom:1px solid var(--border)}
+.iv-tbl td{padding:13px 0;border-bottom:1px solid var(--s3);font-size:13.5px;vertical-align:top}
+.iv-tbl .r{text-align:right}
+.iv-tbl .c{text-align:center}
+.iv-desc{font-weight:500}
+.iv-descua{font-size:11.5px;color:var(--text3);margin-top:2px}
+.iv-tot{display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding-top:18px}
+.iv-totrow{display:flex;justify-content:space-between;gap:48px;min-width:260px;font-size:13.5px;color:var(--text2)}
+.iv-totrow b{color:var(--text);font-weight:500}
+.iv-grand{border-top:1px solid var(--border);margin-top:4px;padding-top:12px;font-size:16px}
+.iv-grand b{font-weight:600;font-size:18px;letter-spacing:-0.01em}
+.iv-pay{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+.iv-paycard{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px}
+.iv-payh{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);font-weight:600;margin-bottom:12px}
+.iv-payrow{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--text2);margin-bottom:7px}
+.iv-payrow b{color:var(--text);font-weight:500}
+.iv-prepay{background:var(--asoft);border-color:var(--aborder)}
+.iv-prepayamt{font-size:22px;font-weight:600;color:var(--accent);letter-spacing:-0.02em}
+.iv-note{margin-top:22px;padding:14px 16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2);line-height:1.55}
+.d-head{display:grid;grid-template-columns:1.15fr 1fr;gap:28px;padding-bottom:22px;border-bottom:2px solid var(--text)}
+.d-brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;margin-bottom:16px}
+.d-title{font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+.d-svc{font-size:13px;color:var(--text2);margin-top:7px}
+.d-meta{margin-top:14px;font-size:12.5px;color:var(--text2);line-height:1.75}
+.d-meta .k{display:inline-block;min-width:42px;color:var(--text3)}
+.d-meta b{color:var(--text);font-weight:600}
+.d-cust{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px 16px}
+.sec{margin-top:26px}
+.sec-h{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;color:var(--text3);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:13px}
+.sec-hua{color:var(--text3);font-weight:400}
+.bankttl{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;color:var(--text3);margin-bottom:11px}
+.bank-row{margin-bottom:9px}
+.bk-l{display:block;font-size:10.5px;color:var(--text3);margin-bottom:2px}
+.bk-v{font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cpy{border:1px solid var(--border2);background:var(--surface);border-radius:5px;padding:2px 8px;font:inherit;font-size:10.5px;color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.cpy:hover{background:var(--s2);color:var(--accent);border-color:var(--aborder)}
+.bankband{margin-top:16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.bankgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
+.bank-cell{display:flex;flex-direction:column;gap:2px}
+.bank-cell.full{grid-column:1/-1}
+.sup2{display:grid;grid-template-columns:1fr 1fr;gap:6px 28px}
+.row2{display:grid;grid-template-columns:40% 60%;gap:10px;padding:3px 0;font-size:12.5px}
+.lbl2{color:var(--text2);font-weight:500}
+.val2{color:var(--text);font-weight:500}
+.val2ua{color:var(--text3);font-weight:400;font-size:11.5px;margin-top:1px}
+.thua{color:var(--text3);font-weight:500}
+.iv-tbl .totrow td{border-top:2px solid var(--text);border-bottom:none;padding-top:13px;font-size:14px}
+.pay2{display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:baseline}
+.pay2 .amt{text-align:right;font-weight:600}
+.pay-cap{text-transform:uppercase;letter-spacing:0.05em;font-size:10.5px;color:var(--text3);font-weight:600;margin-bottom:4px}
+.iv-terms{margin-top:24px;border-top:1px solid var(--border);padding-top:18px}
+.iv-terms .g{display:grid;grid-template-columns:1fr 1fr;gap:9px 22px}
+.iv-terms .cl{font-size:10.5px;line-height:1.42;color:var(--text2)}
+.iv-terms .cl .ua{color:var(--text3);display:block;margin-top:1px}
+.iv-sign{display:flex;justify-content:flex-end;margin-top:30px}
+.iv-signblk{width:220px;text-align:center}
+.iv-signname{font-size:13px;font-weight:500;margin-bottom:26px}
+.iv-signline{height:1px;background:var(--border2);margin-bottom:6px}
+.iv-signcap{font-size:11px;color:var(--text3)}
+/* design system sheet */
+.ds-sec{margin-top:44px}
+.ds-sec:first-child{margin-top:0}
+.ds-eyebrow{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:10px}
+.ds-h{font-size:20px;font-weight:600;letter-spacing:-0.02em;margin:0 0 4px}
+.ds-p{font-size:13.5px;color:var(--text2);margin:0 0 20px;max-width:600px;line-height:1.5}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.sw{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.sw-chip{height:66px}
+.sw-meta{padding:9px 11px}
+.sw-name{font-size:12.5px;font-weight:500}
+.sw-hex{font-size:11.5px;color:var(--text3)}
+.type-row{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid var(--border)}
+.type-row:last-child{border-bottom:0}
+.type-spec{font-size:12px;color:var(--text3);white-space:nowrap}
+.compgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.compcard{border:1px solid var(--border);border-radius:14px;padding:20px;background:var(--surface)}
+.compcard h4{margin:0 0 14px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);font-weight:600}
+.row-wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.dsnote{font-size:11px;color:var(--text3);margin-top:10px}
+@media(max-width:900px){.build{grid-template-columns:1fr}.formcol{position:static}}
+</style>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fbfbfc"/><rect x="30" y="24" width="40" height="52" rx="5" fill="#fff" stroke="#eaeaed" stroke-width="1.5"/><rect x="30" y="24" width="40" height="13" rx="5" fill="#ef4136"/><rect x="36" y="45" width="20" height="3" rx="1.5" fill="#161619"/><rect x="36" y="53" width="28" height="2.5" rx="1.25" fill="#c9c9d0"/><rect x="36" y="60" width="28" height="2.5" rx="1.25" fill="#c9c9d0"/><rect x="36" y="67" width="14" height="2.5" rx="1.25" fill="#ef4136"/></svg></template>
+</helmet>
+<div class="app {{ densityClass }}" ref="{{ rootRef }}">
+<header class="topbar">
+<div class="brand"><span class="logo">W</span><span>WEG3D Fin</span></div>
+<div class="tabs">
+<button class="tab {{ tabBuilderCls }}" onClick="{{ goBuilder }}">Invoice Builder</button>
+<button class="tab {{ tabSystemCls }}" onClick="{{ goSystem }}">Design System</button>
+</div>
+<div class="pageinfo"><span class="badge b-draft"><span class="dot"></span>Draft</span></div>
+</header>
+<div class="wrap">
+
+<sc-if value="{{ tabBuilder }}" hint-placeholder-val="{{ true }}">
+<div class="build">
+<!-- FORM COLUMN -->
+<div class="formcol">
+<button class="btn btn-ghost btn-sm" style="padding-left:6px;margin-bottom:10px"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>All invoices</button>
+<h1 class="h1">Create New Invoice</h1>
+<p class="sub">Fill in the details — the invoice previews live on the right.</p>
+<div class="banner" style="margin:18px 0"><svg class="ic-sm" style="margin-top:1px;color:var(--text3)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>You can save an unfinished invoice as a draft and complete it later.</span></div>
+
+<div class="grid2" style="margin-bottom:14px">
+<div><label class="label">Currency · selects IBAN</label><div class="seg" style="width:100%;display:grid;grid-template-columns:1fr 1fr"><button class="segbtn {{ curUSD_on }}" onClick="{{ onCurUSD }}">USD $</button><button class="segbtn {{ curEUR_on }}" onClick="{{ onCurEUR }}">EUR €</button></div></div>
+<div><label class="label">Supplier · Виконавець</label><select class="select" value="{{ supplierIdStr }}" onChange="{{ onPickSupplier }}"><sc-for list="{{ supplierOptions }}" as="s" hint-placeholder-count="2"><option value="{{ s.iStr }}">{{ s.label }}</option></sc-for></select></div>
+</div>
+
+<!-- Supplier -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_supplier }}"><span class="acctitle"><span class="secnum">1</span>Supplier <span class="accsub">Виконавець · ФОП</span></span><svg class="ic chev {{ chev_supplier }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_supplier }}" hint-placeholder-val="{{ true }}"><div class="accbody">
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Name (EN)</label><input class="input" value="{{ sup.nameEn }}" onInput="{{ onSupNameEn }}"></div><div><label class="label">Ім’я (UA)</label><input class="input" value="{{ sup.nameUa }}" onInput="{{ onSupNameUa }}"></div></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Role</label><input class="input" value="{{ sup.role }}" onInput="{{ onSupRole }}"></div><div><label class="label">Tax ID · ІПН</label><input class="input mono" value="{{ sup.taxId }}" onInput="{{ onSupTaxId }}"></div></div>
+<div style="margin-bottom:12px"><label class="label">Address (EN)</label><input class="input" value="{{ sup.addressEn }}" onInput="{{ onSupAddrEn }}"></div>
+<div style="margin-bottom:12px"><label class="label">Адреса (UA)</label><input class="input" value="{{ sup.addressUa }}" onInput="{{ onSupAddrUa }}"></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">NACE 2.1-UA code</label><input class="input mono" value="{{ sup.naceCode }}" onInput="{{ onSupNace }}"></div><div><label class="label">NACE activity (EN)</label><input class="input" value="{{ sup.naceName }}" onInput="{{ onSupNaceName }}"></div></div>
+<div><label class="label">NACE діяльність (UA)</label><input class="input" value="{{ sup.naceNameUa }}" onInput="{{ onSupNaceNameUa }}"></div>
+<button class="btn btn-sec btn-sm" style="margin-top:12px" onClick="{{ onAddSupplier }}"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New profile</button>
+<p class="dsnote">ФОП database — select above. Edits save to the selected profile.</p>
+</div></sc-if>
+</div>
+
+<!-- Client -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_client }}"><span class="acctitle"><span class="secnum">2</span>Client <span class="accsub">Замовник</span></span><svg class="ic chev {{ chev_client }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_client }}" hint-placeholder-val="{{ true }}"><div class="accbody">
+<div style="margin-bottom:14px"><label class="label">Load from saved clients</label><select class="select" value="{{ clientIdStr }}" onChange="{{ onPickClient }}"><option value="-1">— New / manual entry —</option><sc-for list="{{ clientOptions }}" as="c" hint-placeholder-count="3"><option value="{{ c.iStr }}">{{ c.label }}</option></sc-for></select></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Contact name</label><input class="input" value="{{ clientName }}" onInput="{{ onClientName }}"></div><div><label class="label">Company</label><input class="input" value="{{ clientCompany }}" onInput="{{ onClientCompany }}"></div></div>
+<div style="margin-bottom:12px"><label class="label">Address</label><input class="input" value="{{ clientAddress }}" onInput="{{ onClientAddress }}"></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Phone</label><input class="input" value="{{ clientPhone }}" onInput="{{ onClientPhone }}"></div><div><label class="label">Website</label><input class="input" value="{{ clientWebsite }}" onInput="{{ onClientWebsite }}"></div></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Email</label><input class="input" value="{{ clientEmail }}" onInput="{{ onClientEmail }}"></div><div><label class="label">Tax ID (optional)</label><input class="input mono" value="{{ clientTax }}" onInput="{{ onClientTax }}" placeholder="—"></div></div>
+<button class="btn btn-sec btn-sm" onClick="{{ onSaveClient }}"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Save to database</button>
+</div></sc-if>
+</div>
+
+<!-- Invoice details -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_invoice }}"><span class="acctitle"><span class="secnum">3</span>Invoice Details</span><svg class="ic chev {{ chev_invoice }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_invoice }}" hint-placeholder-val="{{ false }}"><div class="accbody">
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Issue date</label><input class="input" type="date" value="{{ issueDate }}" onInput="{{ onIssueDate }}"></div><div><label class="label">Invoice № · auto {{ autoNo }}</label><input class="input mono" value="{{ invoiceNoManual }}" onInput="{{ onInvoiceNo }}" placeholder="{{ autoNo }}"></div></div>
+<div class="banner" style="margin-bottom:12px"><svg class="ic-sm" style="margin-top:1px;color:var(--text3)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Number auto-formats as <b>DDMM/0YY</b> from the issue date ({{ dateEn }} / {{ dateUa }}). Leave blank to use <span class="mono">{{ autoNo }}</span>.</span></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Place (EN)</label><input class="input" value="{{ place }}" onInput="{{ onPlace }}"></div><div><label class="label">Місце (UA)</label><input class="input" value="{{ placeUa }}" onInput="{{ onPlaceUa }}"></div></div>
+<div><label class="label">Project reference (optional)</label><input class="input" value="{{ projectRef }}" onInput="{{ onProjectRef }}" placeholder="—"></div>
+</div></sc-if>
+</div>
+
+<!-- Line items -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_items }}"><span class="acctitle"><span class="secnum">4</span>Line Items <span class="accsub">Предмет послуг</span></span><svg class="ic chev {{ chev_items }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_items }}" hint-placeholder-val="{{ true }}"><div class="accbody">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><label class="label" style="margin:0">Amount input</label><div class="seg" style="display:grid;grid-template-columns:1fr 1fr"><button class="segbtn {{ modeUnit_on }}" onClick="{{ onModeUnit }}">Unit price</button><button class="segbtn {{ modeTotal_on }}" onClick="{{ onModeTotal }}">Total ÷ qty</button></div></div>
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="3">
+<div class="liwrap"><select class="select" value="-1" onChange="{{ it.onPickService }}" style="margin-bottom:8px"><option value="-1">＋ Choose service · NACE {{ naceCode }}</option><sc-for list="{{ serviceOptions }}" as="so" hint-placeholder-count="2"><option value="{{ so.iStr }}">{{ so.label }}</option></sc-for></select><input class="input" value="{{ it.desc }}" onInput="{{ it.onDesc }}" placeholder="Description of services (EN)"><input class="input" value="{{ it.ua }}" onInput="{{ it.onUa }}" placeholder="Опис послуг (UA)" style="margin-top:6px;color:var(--text2)"><div class="li2" style="margin-top:6px"><input class="input li-num mono" type="number" value="{{ it.qty }}" onInput="{{ it.onQty }}" placeholder="Qty"><sc-if value="{{ isUnitMode }}" hint-placeholder-val="{{ true }}"><input class="input li-num mono" type="number" value="{{ it.priceVal }}" onInput="{{ it.onPrice }}" placeholder="Unit price"></sc-if><sc-if value="{{ isTotalMode }}" hint-placeholder-val="{{ false }}"><input class="input li-num mono" type="number" value="{{ it.amountVal }}" onInput="{{ it.onAmount }}" placeholder="Total"></sc-if><button class="lirm" onClick="{{ it.onRemove }}"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div><sc-if value="{{ isTotalMode }}" hint-placeholder-val="{{ false }}"><div class="dsnote" style="margin-top:5px">Unit price = total ÷ qty → <span class="mono">{{ it.priceStr }}</span></div></sc-if></div>
+</sc-for>
+<button class="addrow" onClick="{{ addItem }}"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add line item</button>
+</div></sc-if>
+</div>
+
+<!-- Bank -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_bank }}"><span class="acctitle"><span class="secnum">5</span>Bank Details <span class="accsub">Реквізити</span></span><svg class="ic chev {{ chev_bank }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_bank }}" hint-placeholder-val="{{ false }}"><div class="accbody">
+<div style="margin-bottom:12px"><label class="label">IBAN — USD account</label><input class="input mono" value="{{ ibanUSD }}" onInput="{{ onIbanUSD }}"></div>
+<div style="margin-bottom:12px"><label class="label">IBAN — EUR account</label><input class="input mono" value="{{ ibanEUR }}" onInput="{{ onIbanEUR }}"></div>
+<div class="grid2"><div><label class="label">Bank</label><input class="input" value="{{ bank }}" onInput="{{ onBank }}"></div><div><label class="label">SWIFT</label><input class="input mono" value="{{ swift }}" onInput="{{ onSwift }}"></div></div>
+<div class="dsnote" style="margin-top:8px">Invoice shows the IBAN matching the selected currency ({{ cur }}).</div>
+</div></sc-if>
+</div>
+
+<!-- Payment terms -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_pterms }}"><span class="acctitle"><span class="secnum">6</span>Payment Terms <span class="accsub">Умови оплати</span></span><svg class="ic chev {{ chev_pterms }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_pterms }}" hint-placeholder-val="{{ false }}"><div class="accbody">
+<div style="margin-bottom:14px"><label class="label">Payment system · Схема оплати</label><div class="seg" style="width:100%;display:grid;grid-template-columns:1fr 1fr 1.2fr"><button class="segbtn {{ sysFull_on }}" onClick="{{ onSysFull }}">100%</button><button class="segbtn {{ sysHalf_on }}" onClick="{{ onSysHalf }}">50 / 50</button><button class="segbtn {{ sysStaged_on }}" onClick="{{ onSysStaged }}">50 / 25 / 25</button></div></div>
+<div class="grid2" style="margin-bottom:12px"><div><label class="label">Payment deadline</label><input class="input" value="{{ deadlineTextEn }}" onInput="{{ onDeadlineTextEn }}"></div><div><label class="label">Execution term</label><input class="input" value="{{ execTextEn }}" onInput="{{ onExecTextEn }}"></div></div>
+<div class="banner"><svg class="ic-sm" style="margin-top:1px;color:var(--text3)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Details of payment auto-fills per the standard format:<br><span class="mono" style="color:var(--text)">{{ paymentPurposeEn }}</span></span></div>
+</div></sc-if>
+</div>
+
+<!-- Signature -->
+<div class="acc">
+<button class="acchead" onClick="{{ toggle_signature }}"><span class="acctitle"><span class="secnum">7</span>Signature <span class="accsub">Підпис</span></span><svg class="ic chev {{ chev_signature }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<sc-if value="{{ open_signature }}" hint-placeholder-val="{{ false }}"><div class="accbody">
+<div class="grid2"><div><label class="label">Signatory (EN)</label><input class="input" value="{{ signatoryEn }}" onInput="{{ onSignatoryEn }}"></div><div><label class="label">Підписант (UA)</label><input class="input" value="{{ signatoryUa }}" onInput="{{ onSignatoryUa }}"></div></div>
+</div></sc-if>
+</div>
+
+<div class="grid2" style="margin-top:18px"><button class="btn btn-sec btn-block">Save as draft</button><button class="btn btn-pri btn-block"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Send invoice</button></div>
+</div>
+
+<!-- PREVIEW COLUMN -->
+<div>
+<div class="previewbar">
+<span class="pvlabel">Preview</span>
+<button class="btn btn-sec btn-sm"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+<button class="btn btn-sec btn-sm"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Email</button>
+<button class="btn btn-sec btn-sm"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Online payment</button>
+<span style="flex:1"></span>
+<button class="btn btn-dark btn-sm"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Save invoice</button>
+</div>
+
+<div class="doc">
+<div class="d-head">
+<div>
+<div class="d-brand"><span class="logo" style="width:22px;height:22px;font-size:12px">W</span>WEG3D Fin</div>
+<div class="d-title">INVOICE<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / РАХУНОК</sc-if></div>
+<div class="d-svc">{{ project }}</div>
+<div class="d-meta"><div><span class="k">№</span> <b>{{ invoiceNo }}</b></div><div><span class="k">Date</span> {{ dateEn }}<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / {{ dateUa }}</sc-if></div><div><span class="k">Place</span> {{ place }}<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / {{ placeUa }}</sc-if></div></div>
+</div>
+<div class="d-cust">
+<div class="sec-h" style="margin-bottom:10px">Customer<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="sec-hua"> / Замовник</span></sc-if></div>
+<div class="iv-name">{{ clientName }}</div>
+<div class="iv-line">{{ clientCompany }}</div>
+<div class="iv-line">{{ clientAddress }}</div>
+<div class="iv-line">Email: {{ clientEmail }}</div>
+<div class="iv-line">Phone: {{ clientPhone }}</div>
+<div class="iv-line">Website: {{ clientWebsite }}</div>
+</div>
+</div>
+
+<div class="sec">
+<div class="sec-h">Supplier<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="sec-hua"> / Виконавець</span></sc-if></div>
+<div class="sup2">
+<div>
+<div class="row2"><div class="lbl2">Supplier<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / Виконавець</sc-if></div><div class="val2">{{ sup.nameEn }}<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua">{{ sup.nameUa }}</div></sc-if></div></div>
+<div class="row2"><div class="lbl2">Tax ID<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / ІПН</sc-if></div><div class="val2 mono">{{ sup.taxId }}</div></div>
+</div>
+<div>
+<div class="row2"><div class="lbl2">Address<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / Адреса</sc-if></div><div class="val2">{{ sup.addressEn }}<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua">{{ sup.addressUa }}</div></sc-if></div></div>
+</div>
+</div>
+<div class="bankband">
+<div class="bankttl">Bank details<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / Банківські реквізити</sc-if></div>
+<div class="bankgrid">
+<div class="bank-cell"><span class="bk-l">Beneficiary</span><span class="val2">{{ sup.nameEn }}</span></div>
+<div class="bank-cell"><span class="bk-l">Bank</span><span class="val2">{{ bank }}</span></div>
+<div class="bank-cell full"><span class="bk-l">Account (IBAN)</span><span class="bk-v"><span class="mono">{{ iban }}</span><button class="cpy" onClick="{{ onCopyIban }}"><svg class="ic-sm" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button></span></div>
+<div class="bank-cell"><span class="bk-l">SWIFT</span><span class="bk-v"><span class="mono">{{ swift }}</span><button class="cpy" onClick="{{ onCopySwift }}"><svg class="ic-sm" style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</button></span></div>
+</div>
+</div>
+</div>
+
+<div class="sec">
+<div class="sec-h">Subject matter<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="sec-hua"> / Предмет послуг</span></sc-if></div>
+<table class="iv-tbl">
+<thead><tr><th style="width:6%">№</th><th style="width:46%">Description<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="thua"> / Опис послуг</span></sc-if></th><th class="c">Qty<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="thua"> / К-сть</span></sc-if></th><th class="r">Price<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="thua"> / Ціна</span></sc-if></th><th class="r">Amount<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="thua"> / Сума</span></sc-if></th></tr></thead>
+<tbody>
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="1">
+<tr><td class="mono" style="color:var(--text3)">{{ it.num }}</td><td><div class="iv-desc">{{ it.desc }}</div><sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="iv-descua">{{ it.ua }}</div></sc-if></td><td class="c mono">{{ it.qty }}</td><td class="r mono">{{ it.priceStr }}</td><td class="r mono">{{ it.amountStr }}</td></tr>
+</sc-for>
+<tr class="totrow"><td colspan="4" class="r" style="font-weight:600">TOTAL<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / УСЬОГО</sc-if></td><td class="r mono" style="font-weight:700">{{ totalStr }}</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="sec">
+<div class="sec-h">Terms of payment<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="sec-hua"> / Умови оплати</span></sc-if></div>
+<sc-for list="{{ stages }}" as="st" hint-placeholder-count="1">
+<div class="pay2" style="padding:7px 0;border-bottom:1px solid var(--s3)"><div><div class="val2">{{ st.en }}</div><sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua">{{ st.ua }}</div></sc-if></div><div class="amt mono" style="font-size:14px">{{ st.amountStr }}</div></div>
+</sc-for>
+<div style="margin-top:12px">
+<div class="val2">{{ deadlineTextEn }}</div><sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua">{{ deadlineTextUa }}</div></sc-if>
+<div class="val2" style="margin-top:6px">{{ execTextEn }}</div><sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua">{{ execTextUa }}</div></sc-if>
+</div>
+<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-top:14px">
+<div class="pay-cap">Details of payment<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / Призначення платежу</sc-if></div>
+<div class="val2">{{ paymentPurposeEn }}</div><sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><div class="val2ua" style="font-size:12px;margin-top:3px">{{ paymentPurposeUa }}</div></sc-if>
+</div>
+</div>
+
+<div class="iv-terms sec">
+<div class="sec-h" style="margin-bottom:12px">Terms and conditions<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="sec-hua"> / Умови та положення</span></sc-if></div>
+<div class="g">
+<div class="cl">1. All bank charges are paid by the Customer. All charges of correspondent banks are at the Customer's expenses (SWIFT etc).<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">1. Усі банківські комісії сплачуються Замовником. Усі комісії банків-кореспондентів сплачує замовник (комісії по SWIFT переказу тощо).</span></sc-if></div>
+<div class="cl">2. This Invoice is an offer to agree. Payment according to hereto shall be deemed as an acceptance of the offer to agree on the terms and conditions set out herein.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">2. Цей Інвойс є пропозицією укласти договір. Оплата за цим Інвойсом є прийняттям пропозиції укласти договір на умовах, викладених в цьому Інвойсі.</span></sc-if></div>
+<div class="cl">3. By making a prepayment under this invoice, the Customer confirms their consent to all the terms specified in this invoice.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">3. Здійснюючи передоплату за цим інвойсом, Замовник підтверджує свою згоду з усіма умовами, зазначеними в цьому інвойсі.</span></sc-if></div>
+<div class="cl">4. The Supplier undertakes to provide services in accordance with the terms specified in this invoice.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">4. Виконавець зобов'язується надати послуги відповідно до умов, зазначених у цьому інвойсі.</span></sc-if></div>
+<div class="cl">5. Payment according to hereto at the same time is the evidence of the work performance and the service delivery in full scope, acceptance thereof, and the confirmation of final settlements between Parties.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">5. Оплата згідно цього Інвойсу одночасно є свідченням виконання робіт та надання послуг в повному обсязі (Акту), їх прийняття, а також підтвердженням кінцевих розрахунків між Сторонами.</span></sc-if></div>
+<div class="cl">6. Payment shall also confirm that Parties have no claims to each other and have no intention to submit any claims. The agreement shall not include penalty and fine clauses.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">6. Оплата згідно цього Інвойсу є підтвердженням того, що Сторони не мають взаємних претензій та не мають наміру направляти рекламації. Договір не передбачає штрафних санкцій.</span></sc-if></div>
+<div class="cl">7. The Parties shall not be liable for non-performance or improper performance of the obligations during the term of insuperable force circumstances (Covid-19 etc).<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">7. Сторони звільняються від відповідальності за невиконання чи неналежне виконання зобов'язань за договором на час дії форс-мажорних обставин.</span></sc-if></div>
+<div class="cl">8. Any disputes arising out of the agreement between the Parties shall be settled by the competent court at the location of a defendant.<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"><span class="ua">8. Всі спори, що виникнуть між Сторонами по договору будуть розглядатись компетентним судом за місцезнаходження відповідача.</span></sc-if></div>
+</div>
+</div>
+<div class="iv-sign">
+<div class="iv-signblk">
+<div class="iv-signname">{{ signatoryEn }}<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> / {{ signatoryUa }}</sc-if></div>
+<div class="iv-signline"></div>
+<div class="iv-signcap">signature<sc-if value="{{ showUa }}" hint-placeholder-val="{{ true }}"> · підпис</sc-if></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabSystem }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1000px">
+<!-- Colors -->
+<div class="ds-sec">
+<div class="ds-eyebrow">Foundations</div>
+<h3 class="ds-h">Color</h3>
+<p class="ds-p">A near-neutral light palette with a single brand accent (invoice red, from the template identity). Surfaces stack in low-contrast steps; the accent is reserved for primary actions, focus rings, and the prepayment highlight.</p>
+<div class="sw-grid">
+<div class="sw"><div class="sw-chip" style="background:#fbfbfc;border-bottom:1px solid var(--border)"></div><div class="sw-meta"><div class="sw-name">Background</div><div class="sw-hex mono">#FBFBFC</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#ffffff;border-bottom:1px solid var(--border)"></div><div class="sw-meta"><div class="sw-name">Surface</div><div class="sw-hex mono">#FFFFFF</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#f7f7f8"></div><div class="sw-meta"><div class="sw-name">Surface 2</div><div class="sw-hex mono">#F7F7F8</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#eaeaed"></div><div class="sw-meta"><div class="sw-name">Border</div><div class="sw-hex mono">#EAEAED</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#161619"></div><div class="sw-meta"><div class="sw-name">Text</div><div class="sw-hex mono">#161619</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#6c6c76"></div><div class="sw-meta"><div class="sw-name">Text 2</div><div class="sw-hex mono">#6C6C76</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#ef4136"></div><div class="sw-meta"><div class="sw-name">Accent</div><div class="sw-hex mono">#EF4136</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#111b37"></div><div class="sw-meta"><div class="sw-name">Ink</div><div class="sw-hex mono">#111B37</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#12855a"></div><div class="sw-meta"><div class="sw-name">Success</div><div class="sw-hex mono">#12855A</div></div></div>
+<div class="sw"><div class="sw-chip" style="background:#d23f38"></div><div class="sw-meta"><div class="sw-name">Danger</div><div class="sw-hex mono">#D23F38</div></div></div>
+</div>
+</div>
+
+<!-- Type -->
+<div class="ds-sec">
+<div class="ds-eyebrow">Foundations</div>
+<h3 class="ds-h">Typography</h3>
+<p class="ds-p">Geist for the interface, Geist Mono for every number, code, and monetary value — tabular figures keep amounts aligned.</p>
+<div class="card" style="padding:6px 22px">
+<div class="type-row"><span style="font-size:32px;font-weight:600;letter-spacing:-0.03em">Get paid faster</span><span class="type-spec mono">Geist 600 · 32 / -3%</span></div>
+<div class="type-row"><span style="font-size:24px;font-weight:600;letter-spacing:-0.02em">Create new invoice</span><span class="type-spec mono">Geist 600 · 24</span></div>
+<div class="type-row"><span style="font-size:16px;font-weight:600">Section heading</span><span class="type-spec mono">Geist 600 · 16</span></div>
+<div class="type-row"><span style="font-size:13.5px;color:var(--text2)">Body and field text — clear at small sizes.</span><span class="type-spec mono">Geist 400 · 13.5</span></div>
+<div class="type-row"><span class="mono" style="font-size:15px">$8,250.00</span><span class="type-spec mono">Geist Mono · tnum</span></div>
+</div>
+</div>
+
+<!-- Buttons -->
+<div class="ds-sec">
+<div class="ds-eyebrow">Components</div>
+<h3 class="ds-h">Buttons &amp; controls</h3>
+<div class="compgrid">
+<div class="compcard"><h4>Buttons</h4><div class="row-wrap"><button class="btn btn-pri">Primary</button><button class="btn btn-dark">Dark</button><button class="btn btn-sec">Secondary</button><button class="btn btn-ghost">Ghost</button></div><div class="row-wrap" style="margin-top:12px"><button class="btn btn-sm btn-pri">Small</button><button class="btn btn-sm btn-sec">Small</button></div></div>
+<div class="compcard"><h4>Segmented</h4><div class="seg"><button class="segbtn on">USD $</button><button class="segbtn">EUR €</button><button class="segbtn">UAH ₴</button></div></div>
+<div class="compcard"><h4>Status</h4><div class="row-wrap"><span class="badge b-draft"><span class="dot"></span>Draft</span><span class="badge b-sent"><span class="dot"></span>Sent</span><span class="badge b-paid"><span class="dot"></span>Paid</span><span class="badge b-over"><span class="dot"></span>Overdue</span></div></div>
+</div>
+</div>
+
+<!-- Inputs -->
+<div class="ds-sec">
+<div class="ds-eyebrow">Components</div>
+<h3 class="ds-h">Inputs &amp; fields</h3>
+<div class="compgrid">
+<div class="compcard"><h4>Text field</h4><label class="label">Contact name</label><input class="input" value="Alex Rodriguez"></div>
+<div class="compcard"><h4>Focus state</h4><label class="label">Email</label><input class="input" value="alex@techcorp.com" style="border-color:var(--accent);box-shadow:0 0 0 3px var(--asoft2)"></div>
+<div class="compcard"><h4>Select</h4><label class="label">Currency</label><select class="select"><option>USD — US Dollar</option></select></div>
+</div>
+</div>
+
+<!-- Accordion + banner -->
+<div class="ds-sec">
+<div class="ds-eyebrow">Patterns</div>
+<h3 class="ds-h">Collapsible section &amp; banner</h3>
+<div class="acc" style="margin-bottom:14px"><button class="acchead"><span class="acctitle"><span class="secnum">2</span>Client <span class="accsub">Замовник</span></span><svg class="ic chev up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="accbody"><div class="grid2"><div><label class="label">Contact name</label><input class="input" value="Alex Rodriguez"></div><div><label class="label">Company</label><input class="input" value="TechCorp Inc."></div></div></div></div>
+<div class="banner"><svg class="ic-sm" style="margin-top:1px;color:var(--text3)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>You can save an unfinished invoice as a draft and complete it later.</span></div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#ef4136&quot;,&quot;options&quot;:[&quot;#ef4136&quot;,&quot;#6d5ef0&quot;,&quot;#111b37&quot;,&quot;#1f8a5b&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;radius&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:8,&quot;min&quot;:2,&quot;max&quot;:16,&quot;step&quot;:1,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;showUa&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Content&quot;}}">
+class Component extends DCLogic {
+  // NACE 2.1-UA seed catalog (State Statistics Service order No. 191, 2025). Replaces legacy KVED.
+  naceLib = {
+    '74.12': { nameEn:'Graphic and visual design activities', nameUa:'Діяльність із графічного та візуального дизайну', options:[
+      { en:'Graphic design services: development of logos, corporate identity, brand book and related graphic design services', ua:'Послуги графічного дизайну: розробка логотипів, фірмового стилю, брендбуку та інші послуги у сфері графічного дизайну' },
+      { en:'Graphic 3D design services (visualization): creation of an interactive 360° point for virtual tour', ua:'Послуги графічного 3Д дизайну (візуалізації): створення інтерактивної точки 360° для віртуального туру' },
+    ]},
+    '74.14': { nameEn:'Other specialised design activities', nameUa:'Інша спеціалізована діяльність із дизайну', options:[
+      { en:'Specialized design services (3D / interactive visualization) as per agreed scope', ua:'Спеціалізовані послуги з дизайну (3D / інтерактивна візуалізація) згідно узгодженого обсягу' },
+    ]},
+    '59.12': { nameEn:'Motion picture, video and TV programme post-production', nameUa:'Компонування кіно- та відеофільмів, телевізійних програм', options:[
+      { en:'Video editing services: editing, special effects, color correction and related post-production', ua:'Послуги з відеомонтажу: редагування відеоматеріалів, створення спецефектів, кольорокорекція та інші послуги з обробки відео' },
+    ]},
+  };
+  state = {
+    tab:'builder', cur:'USD', supplierId:0, clientId:0, itemInputMode:'unit',
+    issueDate:'2026-06-18', invoiceNoManual:'',
+    suppliers:[
+      { nameEn:'Sole Proprietor — Sample One', nameUa:'ФОП Зразок Перший', role:'Individual Entrepreneur · ФОП', addressEn:'1 Sample St, Kyiv, 01001, Ukraine', addressUa:'вул. Зразкова, 1, Київ, 01001', taxId:'0000000000', naceCode:'74.12', naceName:'Graphic and visual design activities', naceNameUa:'Діяльність із графічного та візуального дизайну', ibanUSD:'UA00 0000 0000 0000 0000 0000 0000 1', ibanEUR:'UA00 0000 0000 0000 0000 0000 0000 2', bank:'Sample Bank JSC', swift:'SAMPUAUX', signatoryEn:'Sample One', signatoryUa:'Зразок Перший' },
+      { nameEn:'Sole Proprietor — Sample Two', nameUa:'ФОП Зразок Другий', role:'Individual Entrepreneur · ФОП', addressEn:'2 Example Ave, Lviv, 79000, Ukraine', addressUa:'просп. Прикладу, 2, Львів, 79000', taxId:'1111111111', naceCode:'59.12', naceName:'Motion picture, video and TV programme post-production', naceNameUa:'Компонування кіно- та відеофільмів, телевізійних програм', ibanUSD:'UA11 1111 1111 1111 1111 1111 1111 1', ibanEUR:'UA11 1111 1111 1111 1111 1111 1111 2', bank:'Example Bank JSC', swift:'EXMPUA2X', signatoryEn:'Sample Two', signatoryUa:'Зразок Другий' },
+    ],
+    clients:[
+      { name:'Sample Client Ltd.', company:'Sample Client Ltd.', address:'100 Example Road, City, Country', email:'client@example.com', phone:'+1 000 000 0000', website:'example.com', tax:'' },
+      { name:'Second Client Co.', company:'Second Client Co.', address:'200 Demo Street, City, Country', email:'hello@demo.co', phone:'+1 111 111 1111', website:'demo.co', tax:'' },
+      { name:'Third Client Inc.', company:'Third Client Inc.', address:'300 Test Blvd, City, Country', email:'info@test.io', phone:'+1 222 222 2222', website:'test.io', tax:'' },
+    ],
+    place:'Kyiv, Ukraine', placeUa:'Київ, Україна',
+    projectRef:'Sample project',
+    clientName:'Sample Client Ltd.', clientCompany:'Sample Client Ltd.', clientAddress:'100 Example Road, City, Country', clientEmail:'client@example.com', clientPhone:'+1 000 000 0000', clientWebsite:'example.com', clientTax:'',
+    items:[
+      {desc:'Graphic design services: sample line item', ua:'Послуги графічного дизайну: зразковий рядок', qty:1, price:1000},
+    ],
+    paymentSystem:'full',
+    deadlineTextEn:'Payment deadline: upon issue', deadlineTextUa:'Термін оплати: при виставленні',
+    execTextEn:'Execution term: to be agreed', execTextUa:'Термін виконання: за домовленістю',
+    open:{ supplier:true, client:true, invoice:false, items:true, bank:false, pterms:false, signature:false },
+  };
+  componentDidMount(){ this.applyTheme(); }
+  componentDidUpdate(){ this.applyTheme(); }
+  applyTheme(){ const el=this.root; if(!el) return; const p=this.props||{}; el.style.setProperty('--accent', p.accent||'#ef4136'); el.style.setProperty('--r', ((p.radius??8))+'px'); }
+  fmtDateEn(iso){ const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; const m=d.toLocaleDateString('en-US',{month:'long'}); return m+' '+String(d.getDate()).padStart(2,'0')+', '+d.getFullYear(); }
+  fmtDateUa(iso){ const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
+  autoNumber(iso){ const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return ''; const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); const yy=String(d.getFullYear()).slice(-2); return dd+mm+'/0'+yy; }
+  f(key){ return e=>this.setState({[key]:e.target.value}); }
+  toggleSec(k){ this.setState(s=>({open:{...s.open,[k]:!s.open[k]}})); }
+  addItem(){ this.setState(s=>({items:[...s.items,{desc:'New item', ua:'', qty:1, price:0}]})); }
+  removeItem(i){ this.setState(s=>({items:s.items.filter((_,x)=>x!==i)})); }
+  updItem(i,key,val){ this.setState(s=>{ const items=s.items.slice(); items[i]={...items[i],[key]:val}; return {items}; }); }
+  setCur(c){ this.setState({cur:c}); }
+  setSup(i){ this.setState({supplierId:i}); }
+  updSup(key){ return e=>this.setState(s=>{ const suppliers=s.suppliers.slice(); suppliers[s.supplierId]={...suppliers[s.supplierId],[key]:e.target.value}; return {suppliers}; }); }
+  loadClient(i){ const c=this.state.clients[i]; if(!c) return; this.setState({clientId:i, clientName:c.name, clientCompany:c.company, clientAddress:c.address, clientEmail:c.email, clientPhone:c.phone, clientWebsite:c.website, clientTax:c.tax}); }
+  onPickClient(e){ const i=parseInt(e.target.value,10); if(i<0){ this.setState({clientId:-1}); } else { this.loadClient(i); } }
+  saveClient(){ this.setState(s=>{ const c={ name:s.clientName, company:s.clientCompany, address:s.clientAddress, email:s.clientEmail, phone:s.clientPhone, website:s.clientWebsite, tax:s.clientTax }; return { clients:[...s.clients, c], clientId:s.clients.length }; }); }
+  onPickSupplier(e){ this.setState({supplierId:parseInt(e.target.value,10)}); }
+  addSupplier(){ this.setState(s=>{ const blank={ nameEn:'New Supplier', nameUa:'Новий виконавець', role:'Individual Entrepreneur · ФОП', addressEn:'', addressUa:'', taxId:'', naceCode:'74.12', naceName:'Graphic and visual design activities', naceNameUa:'Діяльність із графічного та візуального дизайну', ibanUSD:'', ibanEUR:'', bank:'', swift:'', signatoryEn:'', signatoryUa:'' }; return { suppliers:[...s.suppliers, blank], supplierId:s.suppliers.length }; }); }
+  setItemService(i, idx){ const sup=this.state.suppliers[this.state.supplierId]; const lib=this.naceLib[sup.naceCode]; const o=lib&&lib.options[idx]; if(!o) return; this.setState(s=>{ const items=s.items.slice(); items[i]={...items[i], desc:o.en, ua:o.ua}; return {items}; }); }
+  curIban(){ const sup=this.state.suppliers[this.state.supplierId]; return this.state.cur==='EUR'? sup.ibanEUR : sup.ibanUSD; }
+  onCopyIban(){ try{ navigator.clipboard.writeText(this.curIban()); }catch(e){} }
+  updItemAmount(i, amount){ this.setState(s=>{ const items=s.items.slice(); const qty=Number(items[i].qty)||1; items[i]={...items[i], price:(Number(amount)||0)/(qty||1)}; return {items}; }); }
+  onCopySwift(){ try{ navigator.clipboard.writeText(this.state.suppliers[this.state.supplierId].swift); }catch(e){} }
+  renderVals(){
+    const S=this.state;
+    const symMap={USD:'$',EUR:'€'};
+    const sym=symMap[S.cur]||'$';
+    const money=(n)=> sym + (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const sup=S.suppliers[S.supplierId];
+    const dateEn=this.fmtDateEn(S.issueDate);
+    const dateUa=this.fmtDateUa(S.issueDate);
+    const invoiceNo=(S.invoiceNoManual||'').trim() || this.autoNumber(S.issueDate);
+    const iban=S.cur==='EUR'? sup.ibanEUR : sup.ibanUSD;
+    const purposeEn='Payment by the invoice №'+invoiceNo+' from '+dateEn;
+    const purposeUa='Оплата за рахунком №'+invoiceNo+' від '+dateUa;
+    const items=S.items.map((it,i)=>({
+      ...it,
+      num:(i+1)+'.',
+      priceStr:money(it.price),
+      priceVal:Math.round((Number(it.price)||0)*100)/100,
+      amountVal:Math.round((Number(it.qty)||0)*(Number(it.price)||0)*100)/100,
+      amountStr:money((Number(it.qty)||0)*(Number(it.price)||0)),
+      onDesc:e=>this.updItem(i,'desc',e.target.value),
+      onUa:e=>this.updItem(i,'ua',e.target.value),
+      onPickService:e=>{ const idx=parseInt(e.target.value,10); if(idx>=0) this.setItemService(i, idx); },
+      onQty:e=>this.updItem(i,'qty',Number(e.target.value)||0),
+      onPrice:e=>this.updItem(i,'price',Number(e.target.value)||0),
+      onAmount:e=>this.updItemAmount(i, e.target.value),
+      onRemove:()=>this.removeItem(i),
+    }));
+    const subtotal=S.items.reduce((a,it)=>a+(Number(it.qty)||0)*(Number(it.price)||0),0);
+    const paySystems={ full:[{en:'Full prepayment (100%)',ua:'Повна передоплата (100%)',pct:100}], half:[{en:'Prepayment (50%)',ua:'Передоплата (50%)',pct:50},{en:'Balance on completion (50%)',ua:'Оплата після виконання (50%)',pct:50}], staged:[{en:'Stage 1 · Prepayment (50%)',ua:'Етап 1 · Передоплата (50%)',pct:50},{en:'Stage 2 (25%)',ua:'Етап 2 (25%)',pct:25},{en:'Stage 3 (25%)',ua:'Етап 3 (25%)',pct:25}] };
+    const stages=(paySystems[S.paymentSystem]||paySystems.full).map(st=>({ en:st.en, ua:st.ua, pct:st.pct, amountStr:money(subtotal*st.pct/100) }));
+    const f=this.f.bind(this);
+    const secs=['supplier','client','invoice','items','bank','pterms','notes','signature'];
+    const secOut={};
+    secs.forEach(k=>{ secOut['open_'+k]=!!S.open[k]; secOut['toggle_'+k]=()=>this.toggleSec(k); secOut['chev_'+k]=S.open[k]?'up':''; });
+    return {
+      rootRef:(el)=>{ this.root=el; if(el) this.applyTheme(); },
+      densityClass: (this.props.density==='compact')?'compact':'',
+      showUa: this.props.showUa ?? true,
+      tab:S.tab, tabBuilder:S.tab==='builder', tabSystem:S.tab==='system',
+      tabBuilderCls:S.tab==='builder'?'on':'', tabSystemCls:S.tab==='system'?'on':'',
+      goBuilder:()=>this.setState({tab:'builder'}), goSystem:()=>this.setState({tab:'system'}),
+      cur:S.cur, curSym:sym,
+      curUSD_on:S.cur==='USD'?'on':'', curEUR_on:S.cur==='EUR'?'on':'',
+      onCurUSD:()=>this.setCur('USD'), onCurEUR:()=>this.setCur('EUR'),
+      itemInputMode:S.itemInputMode, modeUnit_on:S.itemInputMode==='unit'?'on':'', modeTotal_on:S.itemInputMode==='total'?'on':'',
+      onModeUnit:()=>this.setState({itemInputMode:'unit'}), onModeTotal:()=>this.setState({itemInputMode:'total'}),
+      isUnitMode:S.itemInputMode==='unit', isTotalMode:S.itemInputMode==='total',
+      sup, sup0name:S.suppliers[0].nameEn.split(' ')[0], sup1name:S.suppliers[1].nameEn.split(' ')[0],
+      sup0_on:S.supplierId===0?'on':'', sup1_on:S.supplierId===1?'on':'',
+      onSup0:()=>this.setSup(0), onSup1:()=>this.setSup(1),
+      onSupNameEn:this.updSup('nameEn'), onSupNameUa:this.updSup('nameUa'), onSupRole:this.updSup('role'),
+      onSupAddrEn:this.updSup('addressEn'), onSupAddrUa:this.updSup('addressUa'), onSupTaxId:this.updSup('taxId'),
+      onSupNace:this.updSup('naceCode'), onSupNaceName:this.updSup('naceName'), onSupNaceNameUa:this.updSup('naceNameUa'),
+      supplierIdStr:String(S.supplierId), supplierOptions:S.suppliers.map((s,i)=>({iStr:String(i), label:s.nameEn})),
+      onPickSupplier:e=>this.onPickSupplier(e), onAddSupplier:()=>this.addSupplier(),
+      naceCode:sup.naceCode, naceName:sup.naceName, naceNameUa:sup.naceNameUa,
+      invoiceNo, autoNo:this.autoNumber(S.issueDate), invoiceNoManual:S.invoiceNoManual, onInvoiceNo:f('invoiceNoManual'),
+      issueDate:S.issueDate, onIssueDate:f('issueDate'),
+      dateEn, dateUa,
+      place:S.place, onPlace:f('place'),
+      project:'Graphic Design Service',
+      clientName:S.clientName, onClientName:f('clientName'),
+      clientCompany:S.clientCompany, onClientCompany:f('clientCompany'),
+      clientAddress:S.clientAddress, onClientAddress:f('clientAddress'),
+      clientEmail:S.clientEmail, onClientEmail:f('clientEmail'),
+      clientTax:S.clientTax, onClientTax:f('clientTax'),
+      clientId:S.clientId, clientIdStr:String(S.clientId),
+      clientOptions:S.clients.map((c,i)=>({iStr:String(i), label:(c.company||c.name)+' — '+c.name})),
+      onPickClient:e=>this.onPickClient(e), onSaveClient:()=>this.saveClient(),
+      clientPhone:S.clientPhone, onClientPhone:f('clientPhone'),
+      clientWebsite:S.clientWebsite, onClientWebsite:f('clientWebsite'),
+      placeUa:S.placeUa, onPlaceUa:f('placeUa'),
+      projectRef:S.projectRef, onProjectRef:f('projectRef'),
+      bank:sup.bank, onBank:this.updSup('bank'),
+      iban, ibanUSD:sup.ibanUSD, ibanEUR:sup.ibanEUR, onIbanUSD:this.updSup('ibanUSD'), onIbanEUR:this.updSup('ibanEUR'),
+      swift:sup.swift, onSwift:this.updSup('swift'),
+      paymentSystem:S.paymentSystem, stages,
+      sysFull_on:S.paymentSystem==='full'?'on':'', sysHalf_on:S.paymentSystem==='half'?'on':'', sysStaged_on:S.paymentSystem==='staged'?'on':'',
+      onSysFull:()=>this.setState({paymentSystem:'full'}), onSysHalf:()=>this.setState({paymentSystem:'half'}), onSysStaged:()=>this.setState({paymentSystem:'staged'}),
+      serviceOptions:(this.naceLib[sup.naceCode]?this.naceLib[sup.naceCode].options:[]).map((o,i)=>({iStr:String(i), label:(o.en.length>52?o.en.slice(0,52)+'…':o.en)})),
+      onCopyIban:()=>this.onCopyIban(), onCopySwift:()=>this.onCopySwift(),
+      deadlineTextEn:S.deadlineTextEn, onDeadlineTextEn:f('deadlineTextEn'), deadlineTextUa:S.deadlineTextUa,
+      execTextEn:S.execTextEn, onExecTextEn:f('execTextEn'), execTextUa:S.execTextUa,
+      paymentPurposeUa:purposeUa, paymentPurposeEn:purposeEn,
+      signatoryEn:sup.signatoryEn, onSignatoryEn:this.updSup('signatoryEn'), signatoryUa:sup.signatoryUa, onSignatoryUa:this.updSup('signatoryUa'),
+      items, addItem:()=>this.addItem(),
+      subtotalStr:money(subtotal), totalStr:money(subtotal),
+      ...secOut,
+    };
+  }
+}
+</script>
+</body>
+</html>

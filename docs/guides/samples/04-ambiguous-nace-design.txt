@@ -1,0 +1,12 @@
+client: Design Hub
+addr: 5 Creative Ave, Berlin, Germany
+email: hello@designhub.example
+phone: +49 30 12345678
+web: designhub.example
+curr: USD
+service: дизайн
+qty: 1
+amount: 3000
+prepay: 50%
+pay_days: 3
+exec_days: 14

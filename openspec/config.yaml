@@ -1,0 +1,71 @@
+schema: spec-driven
+
+# Injected into OpenSpec artifact instructions (propose, design, tasks, delta specs).
+context: |
+  Project: Invoice Maker 2026 — browser-first bilingual (EN + UA) invoice generator
+  for a Ukrainian sole entrepreneur (ФОП) billing foreign clients in USD or EUR.
+
+  Authoritative spec: openspec/specs/<capability>/spec.md (validate with
+  `openspec validate --strict`). Decisions tracker: .scratch/mvp-spec-coherence/map.md.
+  Capability order and gates: docs/capability.md (human) and
+  openspec/capability-map.yaml (check with
+  `npm run capability:check -- --capability <id>` before starting work).
+  Session handoff: docs/current-state.md — read at session start; update when
+  pausing or ending work (active capability, blockers, next up).
+
+  MVP domain (settled):
+  - Form input with live HTML preview; chat/LLM input is Future (not MVP).
+  - Invoice register, supplier profiles, and client directory live in browser storage only.
+  - No accounts, multi-tenancy, payment recording, email delivery, or hosted invoice URLs.
+  - User receives a PDF file and shares it themselves (Telegram, WhatsApp, email client).
+  - PDF via stateless Route Handler: POST invoice payload → headless Chromium renders
+    docs/invoice-template.html → application/pdf; server retains no data (see ADR-0002).
+  - Stored statuses: draft, sent, paid, cancelled (user-set). overdue is derived at display
+    time (sent + payment deadline passed); never persisted.
+  - Issued invoices store a snapshot of everything printed; directories only prefill forms.
+  - App UI strings: Ukrainian. Project docs: English. Invoice document: bilingual EN + UA.
+
+  Tech stack:
+  - Next.js 16 App Router, React 19, TypeScript (strict)
+  - shadcn/ui + Tailwind CSS v4, WEG3D Fin design system (light theme)
+  - Client-side mutations (localStorage / IndexedDB); GET /api/health; POST /api/pdf (planned)
+  - Pure domain modules in src/lib/ (framework-free where possible)
+
+  Key paths:
+  - docs/current-state.md — agent session handoff (read first; update on pause/end)
+  - src/app/(dashboard)/ — app shell (dashboard, invoices, clients, settings)
+  - src/types/ — domain types
+  - src/components/ui/ — shadcn; src/components/invoices/ — domain UI
+  - docs/invoice-template.html — document layout source of truth
+  - docs/capability.md — implementation order and dependencies (read first)
+  - docs/capabilities/ — expanded scope per capability
+  - docs/requirements.md — numbered FR traceability (IDs preserved in specs)
+  - CONTEXT.md — domain glossary
+  - Design.md — WEG3D Fin UI rules
+  - .agents/skills/weg3d-fin-design/SKILL.md — WEG3D Fin UI workflow (invoke for UI; 🎨 banner on activation)
+  - docs/ARCHITECTURE.md — runtime architecture (browser-first MVP)
+  - docs/adr/0002-browser-first-mvp.md — supersedes ADR-0001
+
+  Verification: npm run typecheck && npm run lint && npm run build before merge.
+
+rules:
+  proposal:
+    - Always include Non-goals and Success criteria sections
+    - Reference matching FR IDs from docs/requirements.md when applicable
+    - Align with openspec/specs/ and map.md settled decisions; do not reintroduce chat, Supabase, or payments
+  design:
+    - Follow docs/ARCHITECTURE.md (browser storage + stateless PDF render)
+    - UI changes MUST comply with Design.md / AGENTS.md design-system rules (no raw hex)
+    - Invoke weg3d-fin-design skill for UI work; show its 🎨 session banner on activation
+    - Prefer minimal diffs; no Server Actions or database layers unless spec changes
+  tasks:
+    - Break work into independently verifiable slices (max ~2 hours each)
+    - Include verification per task (typecheck, lint, manual check, or test)
+    - Prefer minimal diffs; do not refactor unrelated code
+    - Before starting a capability, run `npm run capability:check -- --capability <id>`; if blocked, finish dependencies first and set their status to shipped in capability-map.yaml
+    - When pausing or finishing a slice, update docs/current-state.md (completed work, stopped at, blockers, next up)
+  specs:
+    - Use domain terms from CONTEXT.md consistently
+    - "Requirements use SHALL/MUST; scenarios use '#### Scenario:' headings with '- **WHEN**' / '- **THEN**' bullets (not Given/When/Then prose)"
+    - "Preserve stable FR-* IDs in requirement titles where traceability matters"
+    - "Delta specs: mark sections ADDED, MODIFIED, or REMOVED explicitly"

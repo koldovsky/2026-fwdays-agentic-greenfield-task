@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1",
+  "organization": "Invoice Maker",
+  "date": "July 2026",
+  "abstract": "WEG3D Fin design system skill for Invoice Maker frontend: light theme, CSS tokens, shadcn mapping, typography utilities, invoice surfaces, and status badge conventions. Grounded in Design.md and runtime token files.",
+  "references": [
+    "Design.md",
+    "src/styles/design-tokens.css",
+    "src/app/globals.css",
+    "src/lib/design-system.ts",
+    "docs/Design System/Canvas.dc.html",
+    "https://agentskills.io/skill-creation/best-practices"
+  ]
+}

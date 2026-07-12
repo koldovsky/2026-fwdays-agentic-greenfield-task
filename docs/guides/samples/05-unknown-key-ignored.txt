@@ -1,0 +1,13 @@
+note: цей рядок має ігноруватись
+client: Test Client Ltd
+addr: 1 Test Street, London
+email: test@client.example
+phone: +44 20 7946 0958
+web: test.example
+curr: USD
+service: logo design
+qty: 1
+amount: 650
+prepay: 0
+pay_days: 3
+exec_days: 7

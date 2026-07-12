@@ -1,0 +1,12 @@
+client: ТОВ «Сонячний Вітер»
+addr: вул. Хрещатик, 22, Київ, 01001, Україна
+email: finance@sonyachnyi.example
+phone: +380 44 123 4567
+web: sonyachnyi.example
+curr: EUR
+service: відеомонтаж і кольорокорекція
+qty: 1
+amount: 1200
+prepay: 30
+pay_days: 5
+exec_days: 21

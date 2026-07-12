@@ -1,0 +1,17 @@
+{
+  "reason": "Slices S0–S4b were implemented before Project Factory G0 install; red-first history and Slice: commit trailers cannot be reconstructed.",
+  "retrofittedAt": "2026-07-10T12:00:00Z",
+  "slices": [
+    "add-shell",
+    "add-nace-catalog",
+    "add-invoice-calc",
+    "add-supplier-profile",
+    "add-client-directory",
+    "add-banking",
+    "add-document-render",
+    "add-embedded-fonts",
+    "add-form-input",
+    "add-export-share-preview"
+  ],
+  "evidence": "Fork adversarial reviews (PRs #2, #6, #7, #8); review-findings.json retroactively stamped in archive folders."
+}

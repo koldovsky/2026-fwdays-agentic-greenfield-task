@@ -1,0 +1,269 @@
+# Capability dependency graph for Invoice Maker MVP.
+# Source of truth for implementation order and gate checks.
+#
+# Validate:  npm run capability:check
+# Gate one:   npm run capability:check -- --capability form-input
+#
+# Status values:
+#   not_started — no shipped implementation for this capability
+#   in_progress — active work; dependents remain blocked
+#   shipped     — gate open for capabilities that depend on this one
+
+version: 1
+
+# Vertical slices group capabilities into demo-ready milestones.
+# Complete slices in order; capabilities inside a slice may run in parallel
+# when they share no depends_on edge within the slice.
+slices:
+  - id: S0-foundation
+    title: App shell and health
+    capabilities: [shell]
+  - id: S1-domain-core
+    title: Pure domain modules (no UI)
+    capabilities: [nace-catalog, invoice-calc]
+  - id: S2-directories
+    title: Browser-side supplier and client directories
+    capabilities: [supplier-profile, client-directory, banking]
+  - id: S3-render-pipeline
+    title: Template fill and bilingual document output
+    capabilities: [document-render]
+  - id: S4-create-flow
+    title: Form input with live HTML preview
+    capabilities: [form-input, export-share]
+  - id: S5-persistence
+    title: Invoice register with snapshots and statuses
+    capabilities: [invoice-registry]
+  - id: S6-lifecycle
+    title: Edit, duplicate, PDF export
+    capabilities: [invoice-edit]
+
+capabilities:
+  shell:
+    owner: ui
+    status: shipped
+    spec: openspec/specs/shell/spec.md
+    owns:
+      - FR-SHELL-01
+      - FR-SHELL-02
+      - FR-SHELL-03
+    depends_on: []
+    blocks: [supplier-profile, client-directory, form-input]
+    done_when:
+      - Landing page and dashboard navigation exist
+      - GET /api/health returns ok
+      - Responsive shell at 768px breakpoint
+
+  nace-catalog:
+    owner: domain
+    status: shipped
+    spec: openspec/specs/nace-catalog/spec.md
+    owns:
+      - FR-NACE-01
+      - FR-NACE-02
+      - FR-NACE-03
+      - FR-NACE-04
+      - FR-NACE-05
+      - BC-NACE-01
+    depends_on: []
+    blocks: [form-input, document-render]
+    done_when:
+      - Typed seed catalog in src/lib/nace/
+      - Keyword matcher with clarifying fallback
+      - Vitest coverage for matcher
+
+  invoice-calc:
+    owner: domain
+    status: shipped
+    spec: openspec/specs/invoice-calc/spec.md
+    owns:
+      - FR-CALC-01
+      - FR-CALC-02
+      - FR-CALC-03
+      - FR-CALC-04
+      - FR-CALC-05
+      - FR-CALC-06
+    depends_on: []
+    blocks: [document-render, invoice-registry, invoice-edit]
+    done_when:
+      - Pure functions for numbering, dates, amounts, deadlines
+      - Integer-cents money model (see map.md issue 06)
+      - Vitest coverage for calc edge cases
+
+  supplier-profile:
+    owner: ui
+    status: shipped
+    spec: openspec/specs/supplier-profile/spec.md
+    owns:
+      - FR-BANK-02
+    depends_on: [shell]
+    blocks: [banking, form-input]
+    done_when:
+      - CRUD for supplier profiles in browser storage
+      - Settings UI with profile dropdown
+      - No tax ID or IBAN in client bundle defaults
+
+  client-directory:
+    owner: ui
+    status: shipped
+    spec: openspec/specs/client-directory/spec.md
+    owns:
+      - FR-CLIENT-01
+      - FR-CLIENT-02
+      - FR-CLIENT-03
+      - FR-CLIENT-04
+    depends_on: [shell]
+    blocks: [form-input]
+    done_when:
+      - CRUD for clients in browser storage
+      - Client records expose invoice-form prefill fields (picker ships with form-input)
+
+  banking:
+    owner: domain
+    status: shipped
+    spec: openspec/specs/banking/spec.md
+    owns:
+      - FR-BANK-01
+      - FR-BANK-03
+    depends_on: [supplier-profile]
+    blocks: [document-render, form-input]
+    done_when:
+      - Currency USD|EUR selects correct IBAN from active supplier profile
+      - Supplier block variables available to document-render
+
+  document-render:
+    owner: domain
+    status: shipped
+    spec: openspec/specs/document-render/spec.md
+    owns:
+      - FR-TPL-01
+      - FR-TPL-02
+      - FR-TPL-03
+      - FR-TPL-04
+      - FR-TPL-05
+      - BC-LEGAL-01
+    depends_on: [invoice-calc, banking, nace-catalog]
+    blocks: [form-input, export-share, invoice-registry]
+    done_when:
+      - Template fill from docs/invoice-template.html
+      - Self-contained HTML with embedded CSS
+      - SERVICE_ROWS and optional PROJECT_BLOCK expansion
+
+  form-input:
+    owner: ui
+    status: shipped
+    spec: openspec/specs/form-input/spec.md
+    owns:
+      - FR-INPUT-01
+      - FR-INPUT-02
+      - FR-INPUT-04
+      - BC-UX-01
+    depends_on: [shell, supplier-profile, client-directory, nace-catalog, banking, document-render]
+    blocks: [export-share, invoice-registry]
+    done_when:
+      - Structured and short-format input paths
+      - Client picker prefills invoice form from client-directory records
+      - Zod validation with accessible error messages
+      - Live preview wired to document-render
+
+  export-share:
+    owner: ui
+    status: in_progress
+    spec: openspec/specs/export-share/spec.md
+    owns:
+      - FR-EXPORT-01
+      - FR-EXPORT-02
+      - FR-EXPORT-03
+      - FR-EXPORT-04
+      - FR-EXPORT-05
+      - TC-PDF-01
+    depends_on: [document-render, form-input]
+    blocks: [invoice-edit]
+    gates:
+      preview:
+        status: shipped
+        depends_on: [document-render, form-input]
+        requirements: [FR-EXPORT-01, FR-EXPORT-02, FR-EXPORT-03]
+      pdf:
+        depends_on: [document-render, form-input, export-share.preview]
+        requirements: [FR-EXPORT-04, FR-EXPORT-05, TC-PDF-01]
+    done_when:
+      - HTML preview in browser (slice S4)
+      - POST /api/pdf stateless PDF (slice S6, after registry optional)
+      - Web Share API with download fallback
+
+  invoice-registry:
+    owner: ui
+    status: in_progress
+    spec: openspec/specs/invoice-registry/spec.md
+    owns:
+      - FR-REG-01
+      - FR-REG-02
+      - FR-REG-03
+      - TC-DATA-01
+    depends_on: [form-input, document-render, invoice-calc]
+    blocks: [invoice-edit]
+    done_when:
+      - Browser persistence for invoice records
+      - Stored statuses draft|sent|paid|cancelled
+      - Snapshot immutability for issued invoices
+      - Derived overdue display only
+
+  invoice-edit:
+    owner: ui
+    status: not_started
+    spec: openspec/specs/invoice-edit/spec.md
+    owns:
+      - FR-EDIT-01
+      - FR-EDIT-02
+    depends_on: [invoice-registry, form-input, invoice-calc]
+    blocks: []
+    done_when:
+      - Edit by number with recalculation
+      - Duplicate with new number and date
+
+# Every FR/NFR/TC id maps to exactly one capability owner.
+requirement_owners:
+  FR-SHELL-01: shell
+  FR-SHELL-02: shell
+  FR-SHELL-03: shell
+  FR-INPUT-01: form-input
+  FR-INPUT-02: form-input
+  FR-INPUT-04: form-input
+  FR-NACE-01: nace-catalog
+  FR-NACE-02: nace-catalog
+  FR-NACE-03: nace-catalog
+  FR-NACE-04: nace-catalog
+  FR-NACE-05: nace-catalog
+  FR-CALC-01: invoice-calc
+  FR-CALC-02: invoice-calc
+  FR-CALC-03: invoice-calc
+  FR-CALC-04: invoice-calc
+  FR-CALC-05: invoice-calc
+  FR-CALC-06: invoice-calc
+  FR-BANK-01: banking
+  FR-BANK-02: supplier-profile
+  FR-BANK-03: banking
+  FR-TPL-01: document-render
+  FR-TPL-02: document-render
+  FR-TPL-03: document-render
+  FR-TPL-04: document-render
+  FR-TPL-05: document-render
+  FR-EXPORT-01: export-share
+  FR-EXPORT-02: export-share
+  FR-EXPORT-03: export-share
+  FR-EXPORT-04: export-share
+  FR-EXPORT-05: export-share
+  FR-EDIT-01: invoice-edit
+  FR-EDIT-02: invoice-edit
+  FR-CLIENT-01: client-directory
+  FR-CLIENT-02: client-directory
+  FR-CLIENT-03: client-directory
+  FR-CLIENT-04: client-directory
+  FR-REG-01: invoice-registry
+  FR-REG-02: invoice-registry
+  FR-REG-03: invoice-registry
+  TC-DATA-01: invoice-registry
+  TC-PDF-01: export-share
+  BC-NACE-01: nace-catalog
+  BC-LEGAL-01: document-render
+  BC-UX-01: form-input

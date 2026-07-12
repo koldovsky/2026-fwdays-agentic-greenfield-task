@@ -1,0 +1,375 @@
+{
+  "generatedBy": "scripts/check-acceptance-methods.mjs",
+  "mode": "artifact",
+  "productCode": true,
+  "contracts": {
+    "FR-SHELL-01": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-SHELL-02": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-SHELL-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-INPUT-01": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-INPUT-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/validation/invoice-input.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-INPUT-04": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/validation/invoice-input.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-NACE-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/nace/catalog.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-NACE-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/nace/catalog.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-NACE-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/nace/catalog.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-NACE-04": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/nace/catalog.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-NACE-05": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/nace/match.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "tests/.gate-fixtures/pd-1/src/a.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/invoice-calc/__tests__/dates.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/invoice-calc/__tests__/money.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-04": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/invoice-calc/__tests__/money.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-05": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/invoice-calc/__tests__/dates.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CALC-06": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/invoice-calc/__tests__/purpose.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-BANK-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/banking/supplier-block.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-BANK-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/supplier-profiles.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-BANK-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/banking/supplier-block.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-TPL-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/render/fill-template.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-TPL-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/render/render-invoice.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-TPL-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/render/service-rows.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-TPL-04": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/render/render-invoice.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-TPL-05": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/render/fill-template.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-EXPORT-01": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EXPORT-02": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EXPORT-03": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EXPORT-04": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EXPORT-05": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EDIT-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-EDIT-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "FR-REG-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/invoice-register.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-REG-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/invoice-register.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-REG-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/invoice-register.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CLIENT-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/clients.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CLIENT-02": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/clients.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CLIENT-03": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": "src/lib/storage/clients.test.ts",
+        "status": "artifact-ok"
+      }
+    ],
+    "FR-CLIENT-04": [
+      {
+        "method": "recording",
+        "mechanism": "npm:check:recordings",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "NFR-PERF-01": [
+      {
+        "method": "deploy-gated",
+        "mechanism": null,
+        "artifact": null,
+        "status": "waived"
+      }
+    ],
+    "NFR-PERF-02": [
+      {
+        "method": "deploy-gated",
+        "mechanism": null,
+        "artifact": null,
+        "status": "waived"
+      }
+    ],
+    "NFR-A11Y-01": [
+      {
+        "method": "a11y",
+        "mechanism": "npm:check:a11y",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "NFR-I18N-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "NFR-SEC-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "NFR-DX-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ],
+    "NFR-OBS-01": [
+      {
+        "method": "local-verifiable",
+        "mechanism": "npm:test",
+        "artifact": null,
+        "status": "missing-artifact"
+      }
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-07-10T11:51:26.926Z",
+  "ledger": {
+    "path": "trace/ledger.jsonl",
+    "present": true,
+    "eventCount": 3,
+    "malformedLines": 0
+  },
+  "productCodePresent": true,
+  "result": "PASS",
+  "vacuousPasses": 0,
+  "warningsByClass": {},
+  "metrics": {
+    "vacuousPasses": {
+      "count": 0,
+      "events": []
+    },
+    "warningsByClass": {},
+    "notEarned": {
+      "count": 0
+    },
+    "warningTrendByClass": {},
+    "retriesPerCheck": {
+      "gate-status": {
+        "runs": 3,
+        "failures": 3,
+        "retries": 2
+      }
+    },
+    "redToGreenLatency": {
+      "perCheck": {
+        "gate-status": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": true
+        }
+      },
+      "overallAvgMs": null
+    },
+    "waivers": {
+      "ledgerEvents": 0,
+      "contractWaivers": 0,
+      "total": 0
+    },
+    "claimDivergence": {
+      "ledgerEvents": 0,
+      "unmetContracts": 0,
+      "unmet": [],
+      "total": 0
+    },
+    "uncommittedWork": {
+      "dirtyStreakEvents": 3,
+      "since": "2026-07-10T11:20:07.959Z",
+      "ageMs": 1443906
+    },
+    "corrections": {
+      "total": 0,
+      "open": 0,
+      "openIds": []
+    }
+  },
+  "inputs": {
+    "acceptanceContracts": null,
+    "corrections": 0
+  }
+}

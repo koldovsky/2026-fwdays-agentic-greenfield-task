@@ -1,0 +1,99 @@
+/* ============================================================================
+   WEG3D Fin — Invoice Maker 2026 · Design Tokens
+   Light theme, Linear/Vercel-restrained, brand accent = invoice template red.
+   ----------------------------------------------------------------------------
+   Two ways to consume:
+   (A) Raw tokens (:root below) — framework-agnostic hex + font/radius scales.
+   (B) shadcn/Tailwind v4 mapping — paste the marked block into
+       src/app/globals.css :root to align the repo theme with this system.
+   Fonts: Geist (UI) + Geist Mono (numbers/amounts). Repo already wires
+   --font-sans / --font-geist-mono via next/font.
+   ========================================================================== */
+
+:root {
+  /* — Surfaces (low-contrast stack) — */
+  --wf-bg:        #fbfbfc;  /* app background            */
+  --wf-surface:   #ffffff;  /* cards, inputs, doc         */
+  --wf-surface-2: #f7f7f8;  /* subtle fills, banks band   */
+  --wf-surface-3: #f1f1f3;  /* segmented track, chips     */
+
+  /* — Borders — */
+  --wf-border:    #eaeaed;  /* hairline dividers          */
+  --wf-border-2:  #dededf;  /* input borders              */
+
+  /* — Text — */
+  --wf-text:      #161619;  /* primary ink                */
+  --wf-text-2:    #6c6c76;  /* secondary / labels         */
+  --wf-text-3:    #9c9ca5;  /* tertiary / captions        */
+
+  /* — Brand accent (from invoice template identity) — */
+  --wf-accent:        #ef4136;  /* primary actions, focus, prepay */
+  --wf-accent-hover:  #d5392f;
+  --wf-accent-soft:   #fdecea;  /* 8% tint  */
+  --wf-accent-soft-2: #fbdad7;  /* 14% tint (focus ring)   */
+  --wf-ink:           #111b37;  /* deep navy from template */
+
+  /* — Status — */
+  --wf-success: #12855a;
+  --wf-warning: #a86a12;
+  --wf-danger:  #d23f38;
+
+  /* — Typography — */
+  --wf-font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --wf-font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* mono uses font-feature-settings:"tnum" 1 for aligned amounts */
+
+  /* type scale (px) */
+  --wf-fs-display: 24px;  /* page title      / 600 / -0.03em */
+  --wf-fs-h1:      20px;  /* section heading / 600 / -0.02em */
+  --wf-fs-h2:      16px;  /* subsection      / 600           */
+  --wf-fs-body:    13.5px;/* body / fields   / 400           */
+  --wf-fs-label:   12px;  /* field labels    / 500           */
+  --wf-fs-caption: 11px;  /* eyebrows/caps   / 600 / 0.06em  */
+
+  /* — Radius — */
+  --wf-radius:    8px;   /* inputs, buttons */
+  --wf-radius-lg: 14px;  /* cards           */
+  --wf-radius-xl: 16px;  /* panels, doc     */
+  --wf-radius-pill: 999px;
+
+  /* — Elevation — */
+  --wf-shadow-sm: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px var(--wf-border);
+  --wf-shadow-md: 0 1px 2px rgba(0,0,0,.03);
+  --wf-shadow-doc: 0 1px 2px rgba(0,0,0,.04), 0 20px 40px -24px rgba(30,20,60,.18);
+
+  /* — Layout — */
+  --wf-control-h: 36px;  /* button/input height (>=44px touch targets for mobile) */
+  --wf-gap: 12px;
+}
+
+/* ============================================================================
+   (B) shadcn / Tailwind v4 mapping — paste into src/app/globals.css :root.
+   Values in oklch to match the repo's existing token format.
+   Keeps neutral shadcn primary for dense UI; sets brand red as the accent.
+   ----------------------------------------------------------------------------
+:root {
+  --background: oklch(0.992 0 0);          /* #fbfbfc */
+  --foreground: oklch(0.19 0.004 285);      /* #161619 */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.004 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.004 285);
+
+  --primary: oklch(0.637 0.222 26.9);       /* #ef4136 brand red */
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.968 0 0);            /* #f1f1f3 */
+  --secondary-foreground: oklch(0.19 0.004 285);
+  --muted: oklch(0.972 0 0);                /* #f7f7f8 */
+  --muted-foreground: oklch(0.52 0.01 285); /* #6c6c76 */
+  --accent: oklch(0.968 0 0);
+  --accent-foreground: oklch(0.19 0.004 285);
+  --destructive: oklch(0.58 0.2 27);        /* #d23f38 */
+
+  --border: oklch(0.928 0.001 285);         /* #eaeaed */
+  --input: oklch(0.905 0.002 285);          /* #dededf */
+  --ring: oklch(0.637 0.222 26.9);          /* brand red focus ring */
+
+  --radius: 0.5rem;                          /* 8px base */
+}
+   ========================================================================== */

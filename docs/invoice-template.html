@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{INVOICE_NUMBER}}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #ef4136;
+            --secondary-color: #a5243f;
+            --dark-color: #111b37;
+            --light-color: #f5f5f7;
+            --gray-light: #eaeaea;
+            --gray-medium: #cccccc;
+            --gray-dark: #888888;
+            --border-radius: 8px;
+            --small-radius: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 9px;
+            line-height: 1.2;
+            color: var(--dark-color);
+            margin: 0;
+            background-color: white;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 10mm;
+            position: relative;
+            background: white;
+        }
+
+        .header {
+            display: flex;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .header-left { flex: 1; padding: 5px; }
+
+        .header-right {
+            flex: 1;
+            background-color: white;
+            color: var(--dark-color);
+            padding: 10px;
+            margin: -5px;
+            border-radius: var(--border-radius);
+        }
+
+        .invoice-title { font-size: 20px; font-weight: 800; margin-bottom: 3px; color: white; }
+        .invoice-subtitle { font-size: 13px; font-weight: 600; margin-bottom: 5px; color: white; }
+        .invoice-details { font-size: 11px; font-weight: 600; margin-bottom: 4px; color: white; }
+
+        .customer-title { font-weight: 600; margin-bottom: 4px; font-size: 11px; color: var(--primary-color); }
+        .customer-name { font-weight: 600; margin-bottom: 2px; font-size: 10px; }
+        .customer-detail { margin-bottom: 2px; font-size: 10px; }
+
+        .section { margin-bottom: 8px; }
+
+        .section-header {
+            color: var(--primary-color);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .section-content {
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 8px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .info-column { display: flex; flex-direction: column; }
+        .info-row { display: grid; grid-template-columns: 35% 65%; margin-bottom: 3px; }
+        .info-label { font-weight: 600; }
+        .info-value { font-weight: 500; }
+        .info-value-secondary { color: var(--gray-dark); font-size: 8px; margin-top: 1px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+        th {
+            text-align: left;
+            padding: 4px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--gray-medium);
+            background-color: var(--light-color);
+            font-size: 9px;
+        }
+        td { padding: 4px; border-bottom: 1px solid var(--gray-light); font-size: 9px; vertical-align: top; }
+
+        .total-row { background-color: var(--light-color); font-weight: 700; font-size: 10px; }
+        .total-label { text-align: right; }
+
+        .signature { display: flex; justify-content: flex-end; margin-top: 10px; padding-right: 10px; }
+        .signature-block { width: 200px; text-align: center; }
+        .signature-name { font-weight: 600; margin-bottom: 10px; }
+        .signature-line { height: 1px; background-color: var(--dark-color); margin-bottom: 3px; }
+        .signature-caption { color: var(--gray-dark); font-size: 8px; }
+
+        .payment-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+        .payment-table td { padding: 5px; vertical-align: top; border: none; }
+        .payment-amount { color: var(--primary-color); font-weight: 700; font-size: 9px; text-align: right; }
+
+        .payment-details {
+            padding: 5px;
+            background-color: rgba(239, 65, 54, 0.1);
+            border-radius: var(--small-radius);
+            margin-top: 4px;
+        }
+        .payment-details-title { font-weight: 700; font-size: 9px; margin-bottom: 2px; }
+        .payment-details-text { font-weight: 600; color: var(--primary-color); font-size: 9px; }
+
+        .terms-text { font-size: 8px; line-height: 1.25; }
+        .terms-item { margin-bottom: 4px; }
+
+        @media print {
+            @page { size: A4; margin: 0; }
+            .page { width: 100%; height: 100%; margin: 0; padding: 10mm; }
+            .header { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .header-left div { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: white !important; }
+            .section-header { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: var(--primary-color) !important; }
+            .section { page-break-inside: avoid; }
+            .payment-amount { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: var(--primary-color) !important; }
+            .payment-details-text { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: var(--primary-color) !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- HEADER SECTION -->
+        <div class="header">
+            <div class="header-left">
+                <div class="invoice-title">INVOICE / РАХУНОК</div>
+                <div class="invoice-subtitle">Graphic Design Service</div>
+                <div class="invoice-details">№ {{INVOICE_NUMBER}}</div>
+                <div class="invoice-details">Date: {{INVOICE_DATE_EN}} / {{INVOICE_DATE_UA}}</div>
+                <div class="invoice-details">Place: {{PLACE_EN}} / {{PLACE_UA}}</div>
+            </div>
+            <div class="header-right">
+                <div>
+                    <div class="customer-title">CUSTOMER / ЗАМОВНИК</div>
+                    <div class="customer-name">{{CUSTOMER_NAME}}</div>
+                    <div class="customer-detail">{{CUSTOMER_ADDRESS_1}}</div>
+                    <div class="customer-detail">Email: {{CUSTOMER_EMAIL}}</div>
+                    <div class="customer-detail">Phone: {{CUSTOMER_PHONE}}</div>
+                    <div class="customer-detail">Website: {{CUSTOMER_WEBSITE}}</div>
+                    {{PROJECT_BLOCK}}
+                </div>
+            </div>
+        </div>
+
+        <!-- SUPPLIER SECTION (ФОП — configurable; values come from the selected supplier profile in config.json) -->
+        <div class="section">
+            <div class="section-header">SUPPLIER (ВИКОНАВЕЦЬ)</div>
+            <div class="section-content">
+                <div class="info-grid">
+                    <div class="info-column">
+                        <div class="info-row">
+                            <div class="info-label">Supplier / Виконавець:</div>
+                            <div>
+                                <div class="info-value">{{SUPPLIER_NAME_EN}}</div>
+                                <div class="info-value-secondary">{{SUPPLIER_NAME_UA}}</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Address / Адреса:</div>
+                            <div>
+                                <div class="info-value">{{SUPPLIER_ADDRESS_EN}}</div>
+                                <div class="info-value-secondary">{{SUPPLIER_ADDRESS_UA}}</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Tax ID / ІПН:</div>
+                            <div>
+                                <div class="info-value">Individual Tax Number: {{SUPPLIER_TAX_ID}}</div>
+                                <div class="info-value-secondary">Індивідуальний податковий номер: {{SUPPLIER_TAX_ID}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-column">
+                        <div class="info-row">
+                            <div class="info-label">Supplier Bank Information:</div>
+                            <div>&nbsp;</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Beneficiary:</div>
+                            <div class="info-value">{{SUPPLIER_NAME_EN}}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Account (IBAN):</div>
+                            <div class="info-value">{{SUPPLIER_IBAN}}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Beneficiary's bank:</div>
+                            <div class="info-value">{{SUPPLIER_BANK}}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">SWIFT code:</div>
+                            <div class="info-value">{{SUPPLIER_SWIFT}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUBJECT MATTER SECTION -->
+        <div class="section">
+            <div class="section-header">SUBJECT MATTER / ПРЕДМЕТ ПОСЛУГ</div>
+            <div class="section-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:5%">№</th>
+                            <th style="width:45%">
+                                Description of services
+                                <div style="font-size: 8px; color: var(--gray-dark);">Опис послуг</div>
+                            </th>
+                            <th style="width:15%">
+                                QUANTITY
+                                <div style="font-size: 8px; color: var(--gray-dark);">КІЛЬКІСТЬ</div>
+                            </th>
+                            <th style="width:15%">
+                                PRICE ({{CURRENCY}})
+                                <div style="font-size: 8px; color: var(--gray-dark);">ЦІНА ({{CURRENCY}})</div>
+                            </th>
+                            <th style="width:20%">
+                                AMOUNT ({{CURRENCY}})
+                                <div style="font-size: 8px; color: var(--gray-dark);">СУМА ({{CURRENCY}})</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{SERVICE_ROWS}}
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td colspan="4" class="total-label">TOTAL / УСЬОГО:</td>
+                            <td>{{TOTAL_AMOUNT}}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- TERMS OF PAYMENTS SECTION -->
+        <div class="section">
+            <div class="section-header">TERMS OF PAYMENTS AND ACCEPTATION / УМОВИ ОПЛАТИ ТА ПЕРЕДАЧІ</div>
+            <div class="section-content">
+                <table class="payment-table">
+                    <tr>
+                        <td style="width:30%; vertical-align:top;">
+                            <div style="margin-bottom:4px;">
+                                <div style="font-size:9px; font-weight:600;">{{PREPAYMENT_TEXT_EN}}</div>
+                                <div style="font-size:8px; color: var(--gray-dark);">{{PREPAYMENT_TEXT_UA}}</div>
+                            </div>
+                            <div style="margin-bottom:4px;">
+                                <div style="font-size:9px; font-weight:600;">{{PAYMENT_DEADLINE_TEXT_EN}}</div>
+                                <div style="font-size:8px; color: var(--gray-dark);">{{PAYMENT_DEADLINE_TEXT_UA}}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:9px; font-weight:600;">{{EXECUTION_TERM_TEXT_EN}}</div>
+                                <div style="font-size:8px; color: var(--gray-dark);">{{EXECUTION_TERM_TEXT_UA}}</div>
+                            </div>
+                        </td>
+                        <td class="payment-amount" style="width:20%;">{{PREPAYMENT_AMOUNT}}</td>
+                        <td style="width:30%; vertical-align:top;">
+                            <div style="margin-bottom:4px;">
+                                <div style="font-size:9px; font-weight:600;">{{BALANCE_TEXT_EN}}</div>
+                                <div style="font-size:8px; color: var(--gray-dark);">{{BALANCE_TEXT_UA}}</div>
+                            </div>
+                            <div class="payment-details">
+                                <div class="payment-details-title">Details of payment / Призначення платежу:</div>
+                                <div class="payment-details-text">{{PAYMENT_DETAILS}}</div>
+                            </div>
+                        </td>
+                        <td class="payment-amount" style="width:20%;">{{REMAINING_AMOUNT}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- TERMS AND CONDITIONS SECTION (FIXED — never modify) -->
+        <div class="section">
+            <div class="section-header">TERMS AND CONDITIONS</div>
+            <div class="section-content">
+                <div class="terms-text">
+                    <div class="terms-item" style="display:flex;">
+                        <div style="flex:1;">
+                            <div>1. All bank charges are paid by the Customer. All charges of correspondent banks are at the Customer's expenses (SWIFT etc).</div>
+                            <div style="color: var(--gray-dark);">1. Усі банківські комісії сплачуються Замовником. Усі комісії банків-кореспондентів сплачує замовник (комісії по SWIFT переказу тощо).</div>
+                        </div>
+                        <div style="flex:1; padding-left:5px;">
+                            <div>2. This Invoice is an offer to agree. Payment according to hereto shall be deemed as an acceptance of the offer to agree on the terms and conditions set out herein.</div>
+                            <div style="color: var(--gray-dark);">2. Цей Інвойс є пропозицією укласти договір. Оплата за цим Інвойсом є прийняттям пропозиції укласти договір на умовах, викладених в цьому Інвойсі.</div>
+                        </div>
+                    </div>
+                    <div class="terms-item" style="display:flex;">
+                        <div style="flex:1;">
+                            <div>3. By making a prepayment under this invoice, the Customer confirms their consent to all the terms specified in this invoice.</div>
+                            <div style="color: var(--gray-dark);">3. Здійснюючи передоплату за цим інвойсом, Замовник підтверджує свою згоду з усіма умовами, зазначеними в цьому інвойсі.</div>
+                        </div>
+                        <div style="flex:1; padding-left:5px;">
+                            <div>4. The Supplier undertakes to provide services in accordance with the terms specified in this invoice.</div>
+                            <div style="color: var(--gray-dark);">4. Виконавець зобов'язується надати послуги відповідно до умов, зазначених у цьому інвойсі.</div>
+                        </div>
+                    </div>
+                    <div class="terms-item" style="display:flex;">
+                        <div style="flex:1;">
+                            <div>5. Please note, that payment according to hereto at the same time is the evidence of the work performance and the service delivery in full scope, acceptance thereof, and the confirmation of final settlements between Parties.</div>
+                            <div style="color: var(--gray-dark);">5. Оплата згідно цього Інвойсу одночасно є свідченням виконання робіт та надання послуг в повному обсязі (Акту), їх прийняття, а також підтвердженням кінцевих розрахунків між Сторонами.</div>
+                        </div>
+                        <div style="flex:1; padding-left:5px;">
+                            <div>6. Payment according to hereto shall be also the confirmation that Parties have no claims to each other and have no intention to submit any claims. The agreement shall not include penalty and fine clauses.</div>
+                            <div style="color: var(--gray-dark);">6. Оплата згідно цього Інвойсу є підтвердженням того, що Сторони не мають взаємних претензій та не мають наміру направляти рекламації. Договір не передбачає штрафних санкцій.</div>
+                        </div>
+                    </div>
+                    <div class="terms-item" style="display:flex;">
+                        <div style="flex:1;">
+                            <div>7. The Parties shall not be liable for non-performance or improper performance of the obligations under the agreement during the term of insuperable force circumstances (Covid-19 etc).</div>
+                            <div style="color: var(--gray-dark);">7. Сторони звільняються від відповідальності за невиконання чи неналежне виконання зобов'язaнь за договором на час дії форс-мажорних обставин (обмеження, пов'язані з Covid-19 та інші).</div>
+                        </div>
+                        <div style="flex:1; padding-left:5px;">
+                            <div>8. Any disputes arising out of the agreement between the Parties shall be settled by the competent court at the location of a defendant.</div>
+                            <div style="color: var(--gray-dark);">8. Всі спори, що виникнуть між Сторонами по договору будуть розглядатись компетентним судом за місцезнаходження відповідача.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIGNATURE SECTION (FIXED) -->
+        <div class="signature">
+            <div class="signature-block">
+                <div class="signature-name">{{SIGNATORY_EN}} / {{SIGNATORY_UA}}</div>
+                <div style="height: 30px;"></div>
+                <div class="signature-line"></div>
+                <div class="signature-caption">signature / підпис</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

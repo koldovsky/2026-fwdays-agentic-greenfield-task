@@ -1,0 +1,129 @@
+# CI — the loop nobody can skip. Mirrors the local gates deterministically:
+# if it isn't green here, it isn't done, regardless of what any agent claims.
+#
+# ADAPTED from templates/ci/github-actions.yml at G0 (project-factory init).
+# Removed, because no mechanism exists for them in this project yet — a step
+# pointing at a missing npm script would either hard-fail every PR or invite an
+# echo stub, and an echo stub is laundering, not verification (lesson:
+# declared-method-needs-mechanism):
+#   - test:integration + DATABASE_URL/BETTER_AUTH_* env (no DB; browser-first MVP)
+#   - test:e2e + `playwright install` (no Playwright installed)
+#   - test:coverage + coverage ratchet (no coverage reporter configured)
+#   - `npm audit --audit-level=high`
+# Re-add each step in the same commit that lands its mechanism.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # --- static, fast, deterministic ---
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Capability gates
+        run: npm run capability:check
+      # The red->green proofs behind every improve-PD-* commit. A proof that
+      # never runs is a decorative check; these must stay executable forever.
+      - name: Gate self-tests
+        run: |
+          node tests/check-trajectory-retrofit.test.mjs
+          node tests/check-traceability-trace-ids.test.mjs
+          node tests/check-traceability-anchor.test.mjs
+          node tests/check-dropped-status.test.mjs
+          node tests/check-slice-trailer.test.mjs
+          node tests/check-review-evidence.test.mjs
+          node tests/check-review-severity.test.mjs
+      - name: Traceability chain (and freshness of generated report)
+        run: |
+          node scripts/check-traceability.mjs --check-fresh
+          node scripts/check-traceability.mjs ${{ github.ref_name == 'main' && '--release' || '' }}
+      - name: Trajectory process audit (and freshness)
+        run: |
+          node scripts/check-trajectory.mjs --check-fresh
+          node scripts/check-trajectory.mjs ${{ github.ref_name == 'main' && '--release' || '' }}
+      - name: Factory integrity (gate-bearing script drift + stub scan)
+        run: node scripts/check-factory-integrity.mjs
+      - name: OpenSpec strict validation
+        run: npx openspec validate --all --strict
+
+      # --- test battery ---
+      - name: Unit tests
+        run: npm run test:run
+
+      # --- production build ---
+      - name: Build
+        run: npm run build
+
+      # --- evidence ---
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-evidence
+          path: |
+            docs/qa/traceability-report.md
+            docs/qa/trajectory-report.md
+            trace/trace.json
+          if-no-files-found: ignore
+
+  # PD-7: gate-status.mjs is the ONLY aggregator that carries the RETROFIT
+  # banner, the committed-evidence boundary, and three-valued NOT-EARNED
+  # semantics. CI never invoked it, so CI could render green while the local
+  # gate summary was red. It runs here, in its own job, and it prints the truth.
+  #
+  # THIS JOB IS EXPECTED TO BE RED until G6. Today it reports:
+  #   traceabilityRelease FAIL        — 34 MVP FRs carry no @trace annotation
+  #   trajectoryRelease   NOT-EARNED  — all 10 archived slices are RETROFITTED
+  #   recordings/coverage/evals/acceptance/visual  NOT-EARNED (Scope: 0)
+  #
+  # Do NOT make it green by weakening a check or by adding continue-on-error.
+  # It goes green by EARNING the evidence. Until then, keep it out of the
+  # required-checks list in branch protection so it informs without blocking —
+  # a visible red is honest; a suppressed one is not.
+  gate-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Gate status (three-valued; NOT-EARNED is red for G4+)
+        id: gates
+        # `set -o pipefail` is load-bearing: without it `tee` swallows a
+        # non-zero exit from gate-status and this job renders green over a
+        # failing gate summary — the exact vacuous pass it exists to expose.
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/gate-status.mjs | tee gate-status.txt
+      - name: Publish gate summary
+        if: always()
+        run: |
+          {
+            echo '## Gate status'
+            echo
+            echo '```text'
+            cat gate-status.txt || echo 'gate-status produced no output'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

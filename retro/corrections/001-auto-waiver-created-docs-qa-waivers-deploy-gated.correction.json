@@ -1,0 +1,18 @@
+{
+  "id": "COR-1",
+  "ts": "2026-07-10T16:57:21.231Z",
+  "utterance": "AUTO: waiver created (docs/qa/waivers/deploy-gated-perf.md) \u2014 an evidence requirement was waived; record why and disposition this correction.",
+  "contradictedClaim": null,
+  "mappedReqIds": [],
+  "gateThatShouldHaveCaught": null,
+  "failureMode": "skipped-convention",
+  "failureModeSource": "detector",
+  "source": "auto-waiver",
+  "autoKey": "waiver-created:docs/qa/waivers/deploy-gated-perf.md",
+  "disposition": {
+    "status": "waived",
+    "by": "Serhii",
+    "ts": "2026-07-10T17:03:18Z",
+    "note": "deploy-gated PERF NFRs (NFR-PERF-01/02) have no LOCAL acceptance mechanism by nature \u2014 their evidence is a live Lighthouse/p95 measurement. The waiver docs/qa/waivers/deploy-gated-perf.md is the sanctioned 'pending live measurement' state (master playbook G7). Not resolved: the deploy-verification mechanism is genuinely deferred to Phase 7. Close both the waiver and this correction in the change that adds deploy verification. User-directed disposition."
+  }
+}

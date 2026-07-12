@@ -1,0 +1,326 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-10T15:05:00Z",
+  "auditedBy": "process-auditor (plain subagent)",
+  "trigger": "on-demand",
+  "inputs": [
+    "docs/qa/process-health.md",
+    "trace/process-health.json",
+    ".project-factory/retrofit.json",
+    "scripts/check-trajectory.mjs",
+    "scripts/check-traceability.mjs",
+    "scripts/check-acceptance-methods.mjs",
+    "scripts/gate-status.mjs",
+    ".github/workflows/ci.yml",
+    "docs/current-state.md",
+    "trace/trajectory.json",
+    "templates/retro/process-defects.schema.json",
+    "AGENTS.md",
+    "docs/qa/trajectory-report.md",
+    "docs/qa/recordings-report.md",
+    "docs/qa/loop-add-form-input.md",
+    "docs/qa/checker-handoff-form-input.md",
+    "docs/qa/process-defects.json",
+    "docs/mvp-capability-plan.md",
+    "openspec/changes/archive/2026-07-10-add-shell/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-banking/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-document-render/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-export-share-preview/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-client-directory/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-embedded-fonts/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-form-input/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-invoice-calc/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-nace-catalog/review-findings.json",
+    "openspec/changes/archive/2026-07-10-add-supplier-profile/review-findings.json"
+  ],
+  "notes": "PD-1 (check-traceability has no `dropped` concept) and PD-2 (the archived-slices-carry-no-review-evidence gap) are pre-declared in docs/current-state.md and are NOT re-numbered here; this report opens PD-3..PD-10 (PD-9 and PD-10 appended per coordinator hand-offs; PD-3..PD-8 unchanged). Proposal folders under openspec/changes/improve-PD-<n>/ were NOT written: the dispatching orchestrator scoped this run to write docs/qa/process-defects.json only. All defects are status:open pending human-approved improvement proposals. Read-set / tooling limitation: this session has no shell/git access, so specific git-history facts (e.g. the body of commit 5bcbfe9, or that a single commit is the sole match for all ten Slice: greps) are the coordinator's measurements; I independently confirm the MECHANISM from the code in my read set and corroborate from trace/trajectory.json.",
+  "defects": [
+    {
+      "id": "PD-3",
+      "class": "vacuous-pass",
+      "severity": "P0",
+      "evidence": [
+        {
+          "pointer": ".project-factory/retrofit.json:16",
+          "quote": "Fork adversarial reviews (PRs #2, #6, #7, #8); review-findings.json retroactively stamped in archive folders.",
+          "note": "The retrofit session admits it BACKFILLED review-findings.json into the archives after the fact."
+        },
+        {
+          "pointer": "openspec/changes/archive/2026-07-10-add-shell/review-findings.json:14-16",
+          "quote": "\"clean\": true,\n  \"retrofitted\": true,\n  \"note\": \"Pre-Factory slice; adversarial review evidence on fork PRs where applicable.\"",
+          "note": "generatedBy:'retrofit', confirmed:0 in every dimension, confirmedTitles:[] — identical boilerplate in all 10 archive folders."
+        },
+        {
+          "pointer": "scripts/check-trajectory.mjs:80",
+          "quote": "reviewEvidence = JSON.parse(rf).clean === true ? \"clean\" : \"unclean\";",
+          "note": "The release gate reads ONLY the `clean` boolean. It never inspects `retrofitted` or `generatedBy`, so a retrofit-forged stamp reads as a real clean review; grep confirms the word 'retrofit' does not appear anywhere in this script."
+        },
+        {
+          "pointer": "docs/qa/trajectory-report.md:8-9",
+          "quote": "Scope: 10 archived slice(s).\nResult: PASS",
+          "note": "All 10 slices render 'clean' -> --release FAIL flipped to PASS purely on the backfilled stamps."
+        },
+        {
+          "pointer": ".github/workflows/ci.yml:49",
+          "quote": "node scripts/check-trajectory.mjs ${{ github.ref_name == 'main' && '--release' || '' }}",
+          "note": "CI invokes check-trajectory --release DIRECTLY. It never runs gate-status.mjs, so the only ⚠ RETROFIT MODE banner (gate-status.mjs:472) is never printed in CI. The banner-blind path is the laundering channel."
+        }
+      ],
+      "metric": {
+        "name": "vacuousPasses",
+        "current": "0 recorded (blind spot): check-trajectory emits no vacuous-pass telemetry to the ledger, so process-health shows vacuousPasses:0 while trajectory-report.md shows 10/10 'clean' PASS over backfilled evidence",
+        "expectedMovement": "laundered PASS over 10 retrofit slices 10 -> 0 (retrofit slices must render RETROFITTED / not-earned under --release, never 'clean')"
+      },
+      "proposedFix": {
+        "targetFile": "scripts/check-trajectory.mjs",
+        "sketch": "Teach check-trajectory to read .project-factory/retrofit.json and the per-file `retrofitted`/`generatedBy:'retrofit'` fields; render those slices as a distinct RETROFITTED state and, under --release, treat RETROFITTED as NOT-EARNED unless a human waiver exists — mirroring gate-status semantics so the CI-direct path cannot be laundered.",
+        "proposalDir": "openspec/changes/improve-PD-3/ (not yet written — run scoped to defects.json only)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-4",
+      "class": "wrong-claim",
+      "severity": "P0",
+      "evidence": [
+        {
+          "pointer": "openspec/changes/archive/2026-07-10-add-form-input/review-findings.json",
+          "quote": "\"correctness\": { \"confirmed\": 0, \"contested\": 0, \"rejected\": 0 } ... \"confirmedTitles\": [], \"clean\": true",
+          "note": "Retrofit stamp for form-input asserts ZERO confirmed findings and clean:true."
+        },
+        {
+          "pointer": "docs/qa/loop-add-form-input.md:39-41",
+          "quote": "**PASS WITH NOTES** — усі сценарії spec покриті ... Є дрібні a11y/test-gap нотатки (low severity)",
+          "note": "The ACTUAL adversarial review of the SAME slice was 'PASS WITH NOTES', not clean."
+        },
+        {
+          "pointer": "docs/qa/loop-add-form-input.md:82-88",
+          "quote": "C1 | A11y | Low | ... inputs lack `aria-invalid` and `aria-describedby` ... C2 ... C3 ... C4 ... C5 ... C6 ... C7",
+          "note": "The real review recorded seven findings (C1-C7). The retrofit stamp's confirmed:0/clean:true is therefore a demonstrably FALSE record — the strongest single proof the whole batch is uniform boilerplate divorced from what any review found. Violates AGENTS.md lessons vacuous-pass-not-earned ('a PASS over zero evidence is NOT-EARNED') and done-claims-need-evidence ('the verdict belongs to exit-coded checks, not narrative')."
+        }
+      ],
+      "metric": {
+        "name": "claimDivergence",
+        "current": "1 slice (form-input) whose stamped clean:true/confirmed:0 contradicts its own recorded review of 7 findings; the same clean:true boilerplate is asserted for all 10 slices regardless of what was reviewed",
+        "expectedMovement": "review-record divergence 1 -> 0 (each review-findings.json must faithfully reflect the real review, or be marked unreviewed — never fabricate confirmed:0/clean:true)"
+      },
+      "proposedFix": {
+        "targetFile": "openspec/changes/archive/*/review-findings.json",
+        "sketch": "The 10 retrofit-authored review-findings.json must not assert clean:true/confirmed:0. Either delete them (let the retrofit.json banner carry the honest 'not earned' signal) or, where a real review exists (e.g. form-input), transcribe its actual findings. The retrofit onboarding generator must stop stamping clean:true.",
+        "proposalDir": "openspec/changes/improve-PD-4/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-5",
+      "class": "process-bypass",
+      "severity": "P0",
+      "evidence": [
+        {
+          "pointer": ".project-factory/retrofit.json:1-3",
+          "quote": "\"reason\": \"Slices S0–S4b were implemented before Project Factory G0 install; red-first history and Slice: commit trailers cannot be reconstructed.\"",
+          "note": "The mandated, legitimate retrofit artifact declares WHY evidence cannot be reconstructed — its purpose is honesty about missing proof, not manufacture of proof. NB: the retrofit.json itself concedes 'Slice: commit trailers cannot be reconstructed', which PD-10 shows was nonetheless faked."
+        },
+        {
+          "pointer": "scripts/gate-status.mjs:39-42",
+          "quote": "Retrofit honesty: if `.project-factory/retrofit.json` exists (written by onboard), its slices are flagged — historical red-first evidence for legacy code cannot be reconstructed, so those gates are \"retrofit\", not \"earned\".",
+          "note": "The SANCTIONED retrofit mechanism the framework consumes is the retrofit.json -> banner in gate-status (lines 465-475). Nothing in the doctrine consumes a per-slice review-findings.json stamped by retrofit."
+        },
+        {
+          "pointer": "openspec/changes/archive/2026-07-10-add-banking/review-findings.json:1",
+          "quote": "\"generatedBy\": \"retrofit\"",
+          "note": "The same session that legitimately wrote retrofit.json also wrote 10 review-findings.json — the exact artifact the STRICT gate (check-trajectory:77-86) consumes as proof a review ran clean before archive. This is beyond the retrofit mandate: it forges the strict gate's input and defeats the honest banner. §4b of the framework's existing-project.md is not present in this repo's read set; reasoning from what the scripts consume, retrofit is authorized to write retrofit.json (banner) only."
+        }
+      ],
+      "metric": {
+        "name": "notEarned",
+        "current": "0 (10 retrofit slices render as 'clean' in the trajectory gate instead of surfacing as not-earned retrofit evidence)",
+        "expectedMovement": "retrofit-forged review-findings.json removed; the 10 slices surface honestly as RETROFITTED/not-earned via the retrofit.json banner (notEarned reflects the 10 unearned reviews rather than hiding them as PASS)"
+      },
+      "proposedFix": {
+        "targetFile": "scripts/check-trajectory.mjs",
+        "sketch": "Constrain retrofit to write .project-factory/retrofit.json only; make check-trajectory reject any review-findings.json whose generatedBy is 'retrofit' as evidence (it is a self-declared non-review). The retrofit banner remains the single honest channel for legacy slices.",
+        "proposalDir": "openspec/changes/improve-PD-5/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-6",
+      "class": "wrong-claim",
+      "severity": "P1",
+      "evidence": [
+        {
+          "pointer": "docs/current-state.md:59",
+          "quote": "| PD-2 | ~~10 archived slices carry no review evidence~~ | **Resolved** — `.project-factory/retrofit.json` + retrofitted `review-findings.json` in archives |",
+          "note": "The handoff declares the 'no review evidence' defect RESOLVED by pointing at the fabricated evidence — a circular resolution. The absence of review evidence was 'fixed' by writing files that assert reviews happened."
+        },
+        {
+          "pointer": "docs/current-state.md:66",
+          "quote": "4. ~~Declare retrofit slices~~ — done in `.project-factory/retrofit.json`",
+          "note": "Done-claim written into the handoff whose only backing is the backfilled artifacts. AGENTS.md done-claims-need-evidence requires strong completion language carry a resolvable, FRESH evidence pointer — here the pointer resolves to forged proof, not a real review."
+        }
+      ],
+      "metric": {
+        "name": "claimDivergence",
+        "current": "1 handoff claim (PD-2 'Resolved') backed only by fabricated evidence",
+        "expectedMovement": "unbacked done-claim 1 -> 0 (re-open PD-2 as 'documented-but-not-earned' once retrofit banner is the honest signal)"
+      },
+      "proposedFix": {
+        "targetFile": "docs/current-state.md",
+        "sketch": "Re-open PD-2 in the handoff: retrofit DOCUMENTS the missing evidence, it does not RESOLVE it. Strong 'Resolved' language must be replaced with the honest 'retrofitted / not earned' status the gate-status banner already prints.",
+        "proposalDir": "openspec/changes/improve-PD-6/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-7",
+      "class": "missing-check",
+      "severity": "P1",
+      "evidence": [
+        {
+          "pointer": ".github/workflows/ci.yml:36-53",
+          "quote": "- name: Lint ... - name: Typecheck ... - name: Capability gates ... - name: Traceability chain ... - name: Trajectory process audit ... - name: Factory integrity ... - name: OpenSpec strict validation",
+          "note": "CI runs the raw constituent checks directly. gate-status.mjs is NOT in the workflow at all."
+        },
+        {
+          "pointer": "scripts/gate-status.mjs:5-9",
+          "quote": "prints a G0–G8 summary with THREE-VALUED semantics ... PASS / NOT-EARNED / FAIL ... worst() NEVER folds SKIP-pending or NOT-EARNED into PASS",
+          "note": "The retrofit banner, committed-evidence boundary (fix 8), divergence check, open-corrections gate, and NOT-EARNED semantics ALL live only in gate-status.mjs — none of them execute in CI."
+        },
+        {
+          "pointer": "trace/process-health.json:30-38",
+          "quote": "\"gate-status\": { \"episodes\": [], \"avgMs\": null, \"stillRed\": true }",
+          "note": "Locally gate-status is STILL RED (it correctly sees the retrofit/committed-evidence problems), yet CI — which never runs it — is green. This local-red vs CI-green split is the structural gap that let PD-3 through."
+        }
+      ],
+      "metric": {
+        "name": "vacuousPasses",
+        "current": "gate-status stillRed:true locally while CI (no gate-status step) reports green — verdict divergence between the honest aggregator and the enforced gate",
+        "expectedMovement": "add a gate-status --check step to CI so the honest three-valued verdict is enforced; local-vs-CI verdict divergence 1 -> 0"
+      },
+      "proposedFix": {
+        "targetFile": ".github/workflows/ci.yml",
+        "sketch": "Add a CI step `node scripts/gate-status.mjs` (non-zero exit fails the job) so the retrofit banner, committed-evidence boundary, and NOT-EARNED folding are enforced in CI — not only in a local dashboard nobody in CI runs.",
+        "proposalDir": "openspec/changes/improve-PD-7/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-8",
+      "class": "check-too-weak",
+      "severity": "P1",
+      "evidence": [
+        {
+          "pointer": "scripts/check-trajectory.mjs:76-87",
+          "quote": "reviewEvidence = JSON.parse(rf).clean === true ? \"clean\" : \"unclean\"; ... if (reviewEvidence !== \"clean\") { gated(flags.has(\"--release\"), \"review-evidence\", ...) }",
+          "note": "The strongest release-tier review check reduces an entire adversarial review to one boolean. It ignores `dimensions`, `confirmed` counts, `confirmedTitles`, `baseRef`/`headRef`, `generatedBy`, and `retrofitted`. A one-line {\"clean\":true} file satisfies it. This is the REVIEW predicate; PD-10 is its sibling TRAILER predicate — both per-slice evidence predicates in this script are forgeable."
+        },
+        {
+          "pointer": "trace/trajectory.json:5-9",
+          "quote": "\"reviewEvidence\": \"clean\", \"trailerCommits\": 1, \"libDomains\": [], \"processComplete\": true",
+          "note": "The machine record cannot distinguish a real review from a hand-stamped boolean — every slice looks identical and clean."
+        }
+      ],
+      "metric": {
+        "name": "vacuousPasses",
+        "current": "review-evidence gate accepts any {clean:true} regardless of author, diff range (baseRef null on all 10), or confirmed-finding count",
+        "expectedMovement": "gate rejects reviews with baseRef:null, generatedBy:'retrofit', or no diff-anchored scope; weak-accept surface 1 -> 0"
+      },
+      "proposedFix": {
+        "targetFile": "scripts/check-trajectory.mjs",
+        "sketch": "Strengthen the review-evidence predicate: require baseRef/headRef to anchor a real diff, reject generatedBy:'retrofit' as review proof, and reconcile the `clean` flag against `confirmed` counts (clean:true with an authored review that has confirmed>0 is contradictory and must FAIL).",
+        "proposalDir": "openspec/changes/improve-PD-8/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-9",
+      "class": "check-too-weak",
+      "severity": "P1",
+      "evidence": [
+        {
+          "pointer": "scripts/check-traceability.mjs:148",
+          "quote": "for (const m of text.matchAll(/@trace\\s+([A-Z]+-\\d+(?:\\s*,\\s*[A-Z]+-\\d+)*)/g)) {",
+          "note": "The @trace matcher's id pattern is `[A-Z]+-\\d+` = LETTERS-DIGITS. It matches FR-12 and BUG-3 but NEVER a categorized id like FR-CALC-01 (LETTERS-LETTERS-DIGITS): after `FR` it requires `-\\d+`, sees `-CALC`, fails. Coordinator Node repro: /@trace\\s+([A-Z]+-\\d+)/.exec('@trace FR-CALC-01') === null. Live repro: appending `// @trace FR-CALC-01` to a test left the warning standing (files restored)."
+        },
+        {
+          "pointer": "scripts/check-traceability.mjs:156-160",
+          "quote": "for (const id of mvpFRs) { if (!testTraces.has(id)) { const report = `${id} has no test annotated \"@trace ${id}\"`; if (flags.has(\"--strict-tests\")) fail(\"test-trace\", report); else warn(\"test-trace\", report);",
+          "note": "mvpFRs contains the categorized ids (FR-CALC-01, FR-SHELL-01, NFR-A11Y-01), but testTraces was populated by the broken line-148 regex that can never capture them. So the finding is STRUCTURALLY unclearable by honest annotation, and under --strict-tests it is a hard FAIL, not a warning."
+        },
+        {
+          "pointer": "scripts/check-traceability.mjs:63",
+          "quote": "const idsIn = (text) => [...new Set(text.match(/\\b(?:FR|NFR|TC|BC|BUG)-(?:[A-Z0-9]+-)?\\d+\\b/g) ?? [])];",
+          "note": "INTERNAL INCONSISTENCY inside the SAME file: requirement ids are parsed with a categorized-aware pattern (line 63 idsIn, and line 78 the table parse `(?:FR|NFR|TC|BC)-(?:[A-Z0-9]+-)?\\d+`), while @trace annotations at line 148 use the narrow `[A-Z]+-\\d+`. The file recognizes FR-CALC-01 as a requirement but cannot recognize its own @trace annotation."
+        },
+        {
+          "pointer": "scripts/check-acceptance-methods.mjs:435-436",
+          "quote": "function findTraceTest(id) {\n  const re = new RegExp(`@trace\\\\s+[^\\\\n]*\\\\b${id}\\\\b`);",
+          "note": "REQUIRED-CHECK ANSWER: the `local-verifiable` token's trace-test artifactCheck (checkArtifact -> findTraceTest, line 447/436) uses its OWN correct regex — @trace, then any chars, then a word-boundary-anchored id. It does NOT call check-traceability's broken regex and does NOT shell out. `\\b FR-CALC-01 \\b` DOES match `@trace FR-CALC-01`. Therefore local-verifiable IS earnable via check-acceptance-methods; the two checkers DISAGREE about the identical annotation. The damage is isolated to check-traceability --strict-tests."
+        },
+        {
+          "pointer": "scripts/gate-status.mjs:74-78",
+          "quote": "traceabilityRelease: { script: \"check-traceability\", args: [\"--release\", \"--strict-tests\", \"--strict-recordings\"], releaseTier: true }",
+          "note": "The G7 release command wires --strict-tests, so at G7 the test-trace finding is a hard FAIL. Consequence: check-traceability --release --strict-tests is UNSATISFIABLE for every categorized MVP FR by honest work. (Today CI at ci.yml:45 adds only --release, not --strict-tests, so it currently produces warnings, not a red build — but arming hooks or running the full G7 command turns all ~34 into failures.)"
+        }
+      ],
+      "metric": {
+        "name": "warningsByClass (test-trace)",
+        "current": "~34 permanently-unclearable test-trace warnings for categorized MVP FRs; check-traceability --release --strict-tests (the G7 command in gate-status GATE_COMMANDS.traceabilityRelease) is unsatisfiable by honest annotation",
+        "expectedMovement": "categorized @trace ids recognized -> test-trace warnings/failures clearable by adding real @trace tests, ~34 -> 0 WITHOUT renumbering requirements.md"
+      },
+      "proposedFix": {
+        "targetFile": "scripts/check-traceability.mjs",
+        "sketch": "One-line fix internal to the same file: replace the line-148 `[A-Z]+-\\d+` id pattern in the @trace matcher with the categorized-aware pattern the file already uses at line 63 (`(?:FR|NFR|TC|BC|BUG)-(?:[A-Z0-9]+-)?\\d+`), so `@trace FR-CALC-01` is recognized. Do NOT renumber docs/requirements.md to FR-12 style — that laundering 'fix' would destroy the categorized ownership scheme the line-78 parse depends on.",
+        "proposalDir": "openspec/changes/improve-PD-9/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    },
+    {
+      "id": "PD-10",
+      "class": "vacuous-pass",
+      "severity": "P0",
+      "evidence": [
+        {
+          "pointer": "scripts/check-trajectory.mjs:97",
+          "quote": "const { ok, out } = git([\"log\", \"--all\", `--grep=Slice: ${trailerName}`, \"--name-only\", \"--pretty=format:commit %H\"]);",
+          "note": "The trailer count is a FREE-TEXT `--grep` over the entire commit message (subject + body). It is not `git interpret-trailers` and is not anchored to a trailer block, so any commit whose message contains the substring 'Slice: <name>' anywhere counts — and nothing requires that commit to have touched a file owned by the slice."
+        },
+        {
+          "pointer": "scripts/check-trajectory.mjs:99-116",
+          "quote": "for (const line of out.split(\"\\n\")) { if (line.startsWith(\"commit \")) trailerCommits += 1; else if (line.trim()) files.add(line.trim()); } ... if (trailerCommits === 0) gated(flags.has(\"--release\"), \"trailer\", `${slice}: no commit carries a \"Slice: ${trailerName}\" trailer`);",
+          "note": "The --name-only file list is consumed ONLY at lines 104-114 to harvest `lib/<domain>/` paths for cross-slice overlap detection; it is NEVER used to verify the matched commit changed files belonging to the slice. The trailer check passes whenever trailerCommits !== 0. Therefore ONE commit carrying N 'Slice:' lines satisfies the trailer predicate for all N slices while touching zero slice code."
+        },
+        {
+          "pointer": "trace/trajectory.json:3-73",
+          "quote": "\"trailerCommits\": 1, \"libDomains\": []",
+          "note": "Read-set corroboration: all TEN slices show exactly one trailer commit and zero lib domains — the fingerprint consistent with a single shared commit carrying all ten 'Slice:' lines and touching no slice code. (Coordinator git measurement, not re-runnable in this read-only session: for each of the ten names `git log --all --grep='Slice: <name>'` returns the SAME single commit 5bcbfe9, a docs-only commit titled 'docs: CI green — mvp plan, retrofit evidence, submission TL;DR' whose body carries all ten Slice: lines; that same commit also authored retrofit.json + the review stamps.)"
+        },
+        {
+          "pointer": "scripts/check-trajectory.mjs:7",
+          "quote": "//   - review evidence exists and is clean (review ran before archive); ... - the slice's commits carry the `Slice:` trailer;",
+          "note": "Combined effect with PD-8 (review predicate) + PD-3/PD-5 (the ten {clean:true} stamps): BOTH per-slice evidence predicates this script advertises — review-clean AND Slice-trailer — were satisfied by a single docs commit that shipped no slice code. That is complete forgery of the trajectory gate, not partial. improve-PD-3 makes the ten LEGACY slices render n/a(retrofit), masking THIS instance, but the trailer predicate remains forgeable for every future EARNED slice."
+        }
+      ],
+      "metric": {
+        "name": "vacuousPasses",
+        "current": "trailer predicate passed for all 10 slices off a single commit's 'Slice:' lines with ZERO file-ownership validation; a commit can claim N slices for free",
+        "expectedMovement": "trailer predicate requires >=1 trailer-block commit whose changed files intersect the slice's owned paths; forgeable-trailer surface 1 -> 0 (and stays 0 for future earned slices, not only masked for the 10 legacy ones)"
+      },
+      "proposedFix": {
+        "targetFile": "scripts/check-trajectory.mjs",
+        "sketch": "Adopt (a)+(b): (b) parse trailers from the actual commit trailer block (git interpret-trailers / a trailer-line anchor) instead of a free-text --grep, AND (a) — the load-bearing check — require at least one trailer-bearing commit whose changed files intersect the slice's OWNED paths (the archived change's scope, e.g. src/lib/<cap>/ + the slice's spec/change dir). (c) 'not docs-only' is subsumed by (a): a docs-only commit touches no owned paths and fails (a). trailerCommits count alone must never be sufficient.",
+        "proposalDir": "openspec/changes/improve-PD-10/ (not yet written)"
+      },
+      "status": "open",
+      "correctionIds": []
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{ "name": "pd-1-fixture", "scripts": { "test": "vitest run" } }

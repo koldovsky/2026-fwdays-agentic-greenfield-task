@@ -1,0 +1,44 @@
+# Keeps mentor homework PR in sync: every push/merge to main updates fwdays-submission.
+# Active mentor PR: https://github.com/koldovsky/2026-fwdays-agentic-greenfield-task/pull/56
+# (PR #50 closed — GitHub blocks reopen after force-push; see comment on #50)
+
+name: Sync homework PR branch
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-homework-pr
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into fwdays-submission
+        run: |
+          git fetch origin fwdays-submission
+          git checkout fwdays-submission
+          git merge origin/main --no-edit -m "chore: sync main into fwdays-submission [auto]"
+          git push origin fwdays-submission
+
+      # PR body lives in .github/HOMEWORK_SUBMISSION.md (English).
+      # GITHUB_TOKEN cannot edit PRs on the mentor repo; update the draft body
+      # locally when needed: gh pr edit 56 --repo koldovsky/2026-fwdays-agentic-greenfield-task --body-file .github/HOMEWORK_SUBMISSION.md

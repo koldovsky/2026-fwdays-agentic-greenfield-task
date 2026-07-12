@@ -1,0 +1,12 @@
+client: Acme Studio LLC
+addr: 10 Market St, San Francisco, CA 94103, USA
+email: billing@acme.example
+phone: +1 415 555 0100
+web: https://acme.example
+curr: USD
+service: logo design
+qty: 2
+amount: 5525
+prepay: 50%
+pay_days: 3
+exec_days: 14
