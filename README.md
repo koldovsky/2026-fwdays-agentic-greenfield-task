@@ -10,9 +10,38 @@
 
 [Оригінальна умова домашнього завдання](docs/course-assignment.md)
 
+[PRD](docs/prd.md)
+
+### Залежності
+
+Системні інструменти, потрібні конвеєру. Стек проєкту ще не обрано — цей список стосується зовнішніх утиліт, не бібліотек.
+
+| Інструмент | Навіщо | Пакет | Джерело |
+|---|---|---|---|
+| `pdftotext` | конвертує PDF (конспекти, слайди) у текст для агента-автора | `poppler` | [poppler.freedesktop.org](https://poppler.freedesktop.org/) · [Arch](https://archlinux.org/packages/extra/x86_64/poppler/) · [Fedora](https://packages.fedoraproject.org/pkgs/poppler/poppler-utils/) · [Debian](https://packages.debian.org/stable/poppler-utils) |
+| `pdfimages` | витягує схеми зі слайдів (поза MVP, потрібен пізніше) | `poppler` | те саме |
+
+Перевірити наявність:
+
+```bash
+pdftotext -v   # очікується: pdftotext version 26.07.0 або новіша
+pdfimages -v
+```
+
+Установка:
+
+```bash
+sudo pacman -S --needed poppler      # Arch
+sudo dnf install poppler-utils       # Fedora, Rocky, AlmaLinux
+sudo apt install poppler-utils       # Debian
+brew install poppler                 # macOS
+```
+
+Якщо `pdftotext` відсутній — конвеєр не має мовчки пропускати PDF. Він зупиняється й повідомляє, якої залежності бракує.
+
 ### Вхідні дані
 
-Текстовий файл із транскриптом відеоуроку.
+Матеріали одного уроку: субтитри (`.sbv`), PDF-конспект, PDF-презентація, готовий конспект у Markdown. Агент-автор приймає все й сам вирішує, що з цього джерело, а що доповнення.
 
 ### Результат
 
@@ -93,9 +122,38 @@ The goal is not to produce perfect content on the first pass. The goal is to red
 
 [Original homework assignment](docs/course-assignment.md)
 
+[PRD (Ukrainian)](docs/prd.md)
+
+### Dependencies
+
+System tools the pipeline needs. The project stack is not chosen yet — this list covers external utilities, not libraries.
+
+| Tool | Why | Package | Source |
+|---|---|---|---|
+| `pdftotext` | converts PDFs (lecture notes, slides) to text for the author agent | `poppler` | [poppler.freedesktop.org](https://poppler.freedesktop.org/) · [Arch](https://archlinux.org/packages/extra/x86_64/poppler/) · [Fedora](https://packages.fedoraproject.org/pkgs/poppler/poppler-utils/) · [Debian](https://packages.debian.org/stable/poppler-utils) |
+| `pdfimages` | extracts diagrams from slides (out of MVP scope, needed later) | `poppler` | same |
+
+Check they are present:
+
+```bash
+pdftotext -v   # expected: pdftotext version 26.07.0 or newer
+pdfimages -v
+```
+
+Install:
+
+```bash
+sudo pacman -S --needed poppler      # Arch
+sudo dnf install poppler-utils       # Fedora, Rocky, AlmaLinux
+sudo apt install poppler-utils       # Debian
+brew install poppler                 # macOS
+```
+
+If `pdftotext` is missing, the pipeline must not silently skip PDFs. It stops and reports the missing dependency.
+
 ### Input
 
-A plain-text transcript of a video lesson.
+The materials of one lesson: captions (`.sbv`), a PDF lecture summary, a PDF slide deck, and an existing Markdown summary. The author agent takes all of them and decides for itself which is source and which is supplement.
 
 ### Output
 

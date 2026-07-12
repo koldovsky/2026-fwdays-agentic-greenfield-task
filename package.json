@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "name": "transcript-to-gitbook-tooling",
+  "description": "Tooling manifest only. This pins the OpenSpec CLI version so spec artifacts are reproducible. It is NOT the product stack — the stack is still unchosen (see AGENTS.md, section Stack).",
+  "devDependencies": {
+    "@fission-ai/openspec": "1.6.0"
+  }
+}

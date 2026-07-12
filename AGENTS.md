@@ -1,11 +1,11 @@
 # Project instructions
 
-After every user prompt, update `STATUS.md` before completing the response.
+Each prompt: assess `STATUS.md`. Log only substantive product, artifact, workflow-decision, or next-work change. Skip acknowledgement, liveness, read-only check, and bookkeeping of pre-existing work.
 
-- Prepend exactly one terse English entry in the format defined in `STATUS.md`.
+- Log: prepend one terse English entry. `Did` starts `Codex:` or `Claude:` and records only that actor's direct action.
 - Use current `Europe/Kyiv` local time formatted as `YYYY-MM-DD HH:MM` (24-hour).
 - Keep only the three newest entries, deleting all older entries on every update.
-- Preserve the `STATUS.md` header and rule block unchanged.
+- Preserve `STATUS.md` header/rule block unless task changes status rules.
 - At session start, root agent reads `TODO.md`, then `STATUS.md`.
 - Root Claude/Codex agent validates its own resume row in `STATUS.md`; update only when missing or stale and current session ID is known.
 - Subagents never edit Claude/Codex resume rows.
@@ -22,6 +22,8 @@ After every user prompt, update `STATUS.md` before completing the response.
 ## Communication focus
 
 Discuss one problem or one next step at a time. If user raises multiple items, record all in `TODO.md`, then handle only highest-priority active item. Do not advance to next item until current item is resolved or user explicitly redirects focus.
+
+**Reply size budget: ≤ ~10 minutes of the user's time — reading plus thinking plus composing an answer.** Less is better. One or two topics per turn; hold the rest for the next turn instead of dumping it. Human attention is the scarce resource this whole product is built around — spend the agent's tokens, not the human's attention.
 
 ## Caveman compression — default everywhere
 
@@ -85,6 +87,8 @@ Language and register are **independent axes** — do not derive one from the ot
 
 No stack chosen yet. Do not invent build / lint / test commands (`npm test`, `pytest`) — verify a stack exists first.
 When a stack lands, replace the stack section in `CLAUDE.md` with the real build / lint / test commands.
+
+**`package.json` is a tooling manifest, not the product stack.** It exists only to pin the OpenSpec CLI version (`@fission-ai/openspec`) so spec artifacts stay reproducible. Node being present says nothing about what the product is written in. Do not add product dependencies to it, and do not read it as "the stack is Node". The stack decision belongs in an ADR, after the PRD.
 
 ## Human in the loop
 

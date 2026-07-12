@@ -1,17 +1,17 @@
 # STATUS — session log
-> RULE: After every prompt, prepend ONE entry (newest on top). Keep only the last 3 — delete older ones every time (mandatory trim). Each entry starts with <YYYY-MM-DD HH:MM> (24h, local). English, terse. Markdown, Obsidian + GitHub compatible.
+> RULE: Each prompt: assess `STATUS.md`. Log only substantive product, artifact, workflow-decision, or next-work change; skip acknowledgement, liveness, read-only check, and bookkeeping of pre-existing work. Keep newest 3; trim on log. Entry starts <YYYY-MM-DD HH:MM> (24h, local). English terse. `Did` starts `Codex:` or `Claude:` and records only that actor's direct action. Markdown, Obsidian + GitHub compatible.
 > Claude resume: not recorded; root Claude replaces this row when current session ID is known.
 > Codex resume: `codex resume 019f557e-d742-7113-a586-aa91c275c3e8`
 ---
 
-**2026-07-12 15:04** — **Prompt:** Audit baseline readiness; verify staging is correct; Codex stopped
+**2026-07-12 21:50** — **Prompt:** Clarify status-log threshold
 
-**Did:** Audit passed: no secret hits, LF normalized, Markdown targets valid, `main` ahead 1 (`6e13703`), `Day-01` sources untracked as agreed. Found index stale for three files after concurrent Codex edits, plus a duplicated `TODO.md` entry (`Add local Claude settings ignore` in both `Now` and `Done`) — removed the `Now` copy. `.coderabbit.yaml` shows as modified but is byte-identical to HEAD (WSL stat noise). Restaging all before commit.
+**Did:** Codex: status now excludes read-only inspection and bookkeeping of work already done.
 
-**2026-07-12 14:55** — **Prompt:** Keep transcripts visible until Day-01 sample exists
+**2026-07-12 21:48** — **Prompt:** Correct status-log authorship
 
-**Did:** Removed transcript ignore rules from `.gitignore`; kept only `.claude/settings.local.json` ignored; updated backlog to defer transcript ignore until the sample fixture lands.
+**Did:** Codex: corrected own log entry and rule; no agent claims another actor's work.
 
-**2026-07-12 14:54** — **Prompt:** Add local-safety gitignore rules for transcripts and Claude settings
+**2026-07-12 20:08** — **Prompt:** Review both PRDs; finalize
 
-**Did:** Added `.claude/settings.local.json` to `.gitignore`; transcript ignore was later deferred until the sample fixture lands.
+**Did:** Claude: PRD finalized. Closed five gaps in `docs/prd.md`: partial publish (approved as prose, rest dimmed in callout, page banner, human-triggered — user accepted unreviewed text going public since censor runs first); file layout (`article.md` working surface vs generated `gitbook/README.md`); status set `draft`/`changes_requested`/`edited`/`approved`; checks split into shared/card-only/article-only (12 total); card status in YAML frontmatter. `prd-final.md` aligned. Next: `openspec/config.yaml` context, then Day_02 spike.

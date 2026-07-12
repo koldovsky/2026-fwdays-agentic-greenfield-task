@@ -7,11 +7,15 @@
 
 ## Now
 
-- [ ] **P0** Commit and push clean baseline to `main` — stop before PRD/OpenSpec/product implementation.
+- [ ] **P0** Spike: dry run on `Day_02` — convert PDFs, run author, count chunks and terms. Sizes MVP by fact, not guess. Also verifies GitBook hides HTML comments.
+- [ ] **P1** Write OpenSpec changes for MVP capabilities — intake, author, censor, glossary, cutter, checks, assembler, publish.
 
 ## Later
 
-- [ ] **P1** Draft and approve PRD — human product intent before OpenSpec initialization.
+- [ ] **P1** Maintain `docs/prd-final.md` — target picture; do not let it drift from `docs/prd.md`.
+- [ ] **P1** Add GitBook content submodule after MVP — pin published book revision; support rollback and later publishing targets.
+- [ ] **P2** Define publication-state semantics after MVP — distinguish pushed, synced, and published only if workflow needs it.
+- [ ] **P2** Decide source-provenance design after MVP — add evidence mapping only if review shows need.
 - [ ] **P1** Bootstrap OpenSpec — initialize official workflow after PRD approval and before implementation.
 - [ ] **P1** Initialize Obsidian workflow — use repository as vault; add only justified root-level templates or helper skills.
 - [ ] **P1** Pick stack after PRD and record Architecture Decision Record — use one linked Markdown file with numbered decisions; then replace `CLAUDE.md` stack section with real build, lint, and test commands.
@@ -28,6 +32,13 @@
 
 <!-- move completed items here, newest on top -->
 
+- [x] **P0** Fill `openspec/config.yaml` context — MVP source, constraints, roles, language, dependency, and artifact rules added.
+- [x] **P1** Draft and approve PRD — split into `docs/prd.md` (MVP) and `docs/prd-final.md` (target). Chunk = unit of human attention; code over agents; glossary approved before article; partial publish with dimmed unreviewed chunks; first draft stashed locally.
+
+- [x] **P1** Bootstrap OpenSpec — initialized `openspec/` with `core` workflow and Codex/Claude skills; wait for approved PRD before first change.
+- [x] **P0** Commit and push clean baseline to `main` — `9c44c25` pushed; `Day-01` sources stayed untracked; stopped before PRD/OpenSpec/implementation.
+- [x] **P0** Compress status-log rule — preserve conditions; remove prose overhead.
+- [x] **P0** Refine status-log rules — log only material project state; `Did` names Codex or Claude.
 - [x] **P0** Add local Claude settings ignore — keep `.claude/settings.local.json` out of repo; defer transcript ignore until `Day-01` sample exists.
 - [x] **P1** Enable RTK for all Codex sessions — global `~/.codex/AGENTS.md` imports `RTK.md`; current root session adopted RTK immediately.
 - [x] **P0** Fix repository artifact layout — created root-level `templates/` and `verification/`; rules keep templates/reports outside `docs/` and avoid file sprawl.
