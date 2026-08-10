@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  /* Базові кольори фону */
+  --bg-page: #FCFCFC;        /* Світлий папір з ледь теплим відтінком */
+  --bg-card: #FFFFFF;        /* Чистий білий для карток та кабінету */
+  --bg-secondary: #F8FAFC;   /* Світло-сірий для таблиць, сайдбарів */
+
+  /* Текст */
+  --text-primary: #0F172A;   /* Глибокий темно-синій/чорний для заголовків та основного тексту */
+  --text-secondary: #475569; /* Приглушений сірий для підписів та описових елементів */
+  --text-muted: #94A3B8;     /* Слабкий сірий для плейсхолдерів, іконок */
+
+  /* Контури та роздільники */
+  --border: #E2E8F0;         /* Тонкі лінії сітки кабінету */
+  --border-active: #CBD5E1;  /* Акцентний контур для активних полів */
+
+  /* Акценти та Сигнали */
+  --accent-blue: #2563EB;    /* Сигнал синхронізації: активні з'єднання, кнопки, посилання */
+  --accent-amber: #D97706;   /* Енергія конверсій: сумарна цінність, ключові цифри */
+  
+  /* Статуси */
+  --status-success: #16A34A; /* Активна підписка, успішна синхронізація */
+  --status-warning: #EA580C; /* Попередження (підписка на паузі) */
+  --status-danger: #DC2626;  /* Помилка, підписка зупинена (Suspended) */
+}
+
+@theme {
+  --font-sans: var(--font-inter), sans-serif;
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  --color-bg-page: var(--bg-page);
+  --color-bg-card: var(--bg-card);
+  --color-bg-secondary: var(--bg-secondary);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-border-custom: var(--border);
+  --color-border-active: var(--border-active);
+
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-amber: var(--accent-amber);
+
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-inter), sans-serif;
+}
