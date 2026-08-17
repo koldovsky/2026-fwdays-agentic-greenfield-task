@@ -1,0 +1,82 @@
+.wizard-shell {
+  --wizard-bg: #f5f6f8;
+  --wizard-surface: #ffffff;
+  --wizard-border: #e2e4e8;
+  --wizard-text: #1a1d21;
+  --wizard-muted: #5c6370;
+  --wizard-accent: #3d5a80;
+  --wizard-radius: 5px;
+
+  background: var(--wizard-bg);
+  color: var(--wizard-text);
+  font-family: var(--font-wizard-sans), system-ui, sans-serif;
+}
+
+.wizard-shell .wizard-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--wizard-radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.wizard-shell .wizard-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wizard-shell .wizard-btn-primary {
+  background: var(--wizard-accent);
+  color: #ffffff;
+  border: 1px solid var(--wizard-accent);
+}
+
+.wizard-shell .wizard-btn-primary:not(:disabled):hover {
+  background: #334d6e;
+  border-color: #334d6e;
+}
+
+.wizard-shell .wizard-btn-secondary {
+  background: var(--wizard-surface);
+  color: var(--wizard-text);
+  border: 1px solid var(--wizard-border);
+}
+
+.wizard-shell .wizard-btn-secondary:not(:disabled):hover {
+  background: #eef0f3;
+}
+
+.wizard-shell .wizard-progress-circle {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+}
+
+.wizard-shell .wizard-progress-circle[data-state="past"] {
+  background: color-mix(in srgb, var(--wizard-accent) 55%, white);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.wizard-shell .wizard-progress-circle[data-state="current"] {
+  background: var(--wizard-accent);
+  color: #ffffff;
+  border-color: var(--wizard-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wizard-accent) 22%, transparent);
+}
+
+.wizard-shell .wizard-progress-circle[data-state="future"] {
+  background: transparent;
+  color: var(--wizard-muted);
+  border-color: var(--wizard-border);
+}

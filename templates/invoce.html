@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Рахунок-фактура</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 9.86pt;
+      line-height: 1.25;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 54pt 50pt 40pt;
+      background: #ffffff;
+    }
+
+    /* —— header parties —— */
+    .parties {
+      display: grid;
+      grid-template-columns: 92pt 1fr;
+      column-gap: 24pt;
+      row-gap: 8pt;
+      align-items: start;
+      margin-bottom: 18pt;
+    }
+
+    .parties .label {
+      font-weight: 700;
+      border-bottom: 0.74pt solid #000;
+      width: max-content;
+      padding-bottom: 1pt;
+      line-height: 1.2;
+    }
+
+    .parties .value {
+      font-weight: 400;
+      line-height: 1.27;
+    }
+
+    /* —— title —— */
+    .doc-title {
+      text-align: center;
+      font-size: 11.84pt;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 14pt 0 16pt;
+    }
+
+    .doc-title .doc-date {
+      display: block;
+    }
+
+    /* —— items table —— */
+    .items {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 9.86pt;
+    }
+
+    .items th,
+    .items td {
+      border: 0.74pt solid #000;
+      padding: 2pt 3pt;
+      vertical-align: top;
+      word-wrap: break-word;
+    }
+
+    .items thead th {
+      background: rgb(192, 192, 192);
+      font-weight: 700;
+      text-align: center;
+      vertical-align: middle;
+      padding: 2pt 2pt;
+    }
+
+    .items .col-num { width: 5.2%; text-align: center; }
+    .items .col-name { width: 43.5%; text-align: left; }
+    .items .col-unit { width: 4.6%; text-align: center; }
+    .items .col-qty { width: 15.6%; text-align: right; }
+    .items .col-price { width: 15.55%; text-align: right; }
+    .items .col-sum { width: 15.55%; text-align: right; }
+
+    .items tbody td.col-num {
+      font-size: 7.89pt;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .items tbody td.col-unit,
+    .items tbody td.col-qty,
+    .items tbody td.col-price,
+    .items tbody td.col-sum {
+      text-align: right;
+      vertical-align: top;
+    }
+
+    /* —— totals (aligned with last items column) —— */
+    .totals-block {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 0;
+    }
+
+    .totals-block td {
+      font-size: 10.85pt;
+      font-weight: 700;
+      padding: 2pt 3pt;
+      vertical-align: middle;
+    }
+
+    .totals-block .spacer {
+      width: 68.9%;
+      border: none;
+      padding: 0;
+    }
+
+    .totals-block .lbl {
+      width: 15.55%;
+      text-align: right;
+      border: none;
+      padding-right: 6pt;
+      white-space: nowrap;
+    }
+
+    .totals-block .val {
+      width: 15.55%;
+      text-align: right;
+      border-left: 0.74pt solid #000;
+      border-right: 0.74pt solid #000;
+      border-bottom: 0.74pt solid #000;
+      border-top: none;
+    }
+
+    .totals-block tr:first-child .val {
+      border-top: 0.74pt solid #000;
+    }
+
+    /* —— amount in words —— */
+    .amount-words {
+      margin-top: 14pt;
+      font-size: 10.85pt;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    /* —— signature —— */
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      justify-content: end;
+      align-items: end;
+      column-gap: 8pt;
+      margin-top: 28pt;
+      margin-left: auto;
+      width: max-content;
+      max-width: 100%;
+    }
+
+    .sign-label {
+      font-size: 10.85pt;
+      font-weight: 400;
+      padding-bottom: 2pt;
+    }
+
+    .sign-line {
+      min-width: 154pt;
+      border-bottom: 0.74pt solid #000;
+      text-align: center;
+      padding-bottom: 2pt;
+    }
+
+    .sign-name {
+      font-size: 7.89pt;
+      font-weight: 400;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="parties">
+      <div class="label">Постачальник</div>
+      <div class="value">
+        <div class="line doneBy-fullName">ФОП <span data-prefilled="done-by-full-name"></span></div>
+        <div class="line doneBy-contacts">РНОКПП <span class="doneBy-inn" data-prefilled="done-by-inn"></span>,  тел. <span class="doneBy-phone" data-prefilled="done-by-phone"></span></div>
+        <div class="line doneBy-bankLine">Р/р <span class="doneBy-acc" data-prefilled="done-by-acc"></span> в <span class="doneBy-bank" data-prefilled="done-by-bank"></span>  МФО <span class="doneBy-mfoBank" data-prefilled="done-by-mfo-bank"></span></div>
+        <div class="line doneBy-addr">Адреса: <span data-prefilled="done-by-addr"></span></div>
+      </div>
+
+      <div class="label">Одержувач</div>
+      <div class="value">
+        <div class="line client-fullName">ФОП <span data-prefilled="client-full-name"></span></div>
+      </div>
+
+      <div class="label">Платник</div>
+      <div class="value">
+        <div class="line client-payer">той самий</div>
+      </div>
+
+      <div class="label">Замовлення</div>
+      <div class="value">
+        <div class="line doc-order">Без замовлення</div>
+      </div>
+    </section>
+
+    <h1 class="doc-title">
+      <span class="doc-title-number">Рахунок-фактура № <span class="doc-number" data-prefilled="doc-number"></span></span>
+      <span class="doc-date">від <span class="doc-date-value" data-prefilled="date-cursive"></span></span>
+    </h1>
+
+    <table class="items">
+      <colgroup>
+        <col class="col-num" />
+        <col class="col-name" />
+        <col class="col-unit" />
+        <col class="col-qty" />
+        <col class="col-price" />
+        <col class="col-sum" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Назва</th>
+          <th>Од.</th>
+          <th>Кількість</th>
+          <th>Ціна без ПДВ</th>
+          <th>Сума без ПДВ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="service-row">
+          <td class="col-num service-num">1</td>
+          <td class="col-name service-name" data-prefilled="service-name"></td>
+          <td class="col-unit service-unit">грн</td>
+          <td class="col-qty service-qty">1</td>
+          <td class="col-price service-price" data-prefilled="price"></td>
+          <td class="col-sum service-sum" data-prefilled="price"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="totals-block">
+      <tr>
+        <td class="spacer"></td>
+        <td class="lbl amount-subtotal-label">Разом без ПДВ:</td>
+        <td class="val amount-subtotal" data-prefilled="price-total"></td>
+      </tr>
+      <tr>
+        <td class="spacer"></td>
+        <td class="lbl amount-vat-label">ПДВ:</td>
+        <td class="val amount-vat">0,00</td>
+      </tr>
+      <tr>
+        <td class="spacer"></td>
+        <td class="lbl amount-total-label">Всього з ПДВ:</td>
+        <td class="val amount-total" data-prefilled="price-total"></td>
+      </tr>
+    </table>
+
+    <p class="amount-words">
+      <span class="amount-cursive">Всього на суму: <span data-prefilled="amount-cursive"></span></span>
+      <br />
+      <span class="amount-cursive-suffix">без ПДВ.</span>
+    </p>
+
+    <div class="sign">
+      <div class="sign-label">Виписав(ла):</div>
+      <div class="sign-line">
+        <span class="sign-name doneBy-signName" data-prefilled="done-by-sign-name"></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

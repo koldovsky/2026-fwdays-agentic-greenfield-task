@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Акт надання послуг</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 8.69pt;
+      line-height: 1.2;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 54pt 50pt 40pt;
+      background: #ffffff;
+    }
+
+    /* —— approve header —— */
+    .approve {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 48pt;
+      margin-bottom: 28pt;
+    }
+
+    .approve-block .approve-label {
+      font-size: 8.69pt;
+      font-weight: 400;
+      margin-bottom: 22pt;
+    }
+
+    .approve-block .approve-name {
+      font-size: 7.82pt;
+      font-weight: 400;
+      margin-bottom: 0;
+    }
+
+    .approve-block .approve-line {
+      border-bottom: 0.65pt solid #000;
+      width: 100%;
+      max-width: 180pt;
+      margin-top: 12pt;
+    }
+
+    .approve-block:first-child .approve-line {
+      max-width: 144pt;
+    }
+
+    /* —— title —— */
+    .doc-title-wrap {
+      border-top: 1.3pt solid #000;
+      border-bottom: 1.3pt solid #000;
+      padding: 10pt 0 8pt;
+      margin-bottom: 10pt;
+      text-align: center;
+    }
+
+    .doc-title {
+      font-size: 12.17pt;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .doc-title .doc-number-date {
+      display: block;
+    }
+
+    /* —— intro —— */
+    .intro {
+      font-size: 8.69pt;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 14pt;
+    }
+
+    .services-intro {
+      font-size: 8.69pt;
+      margin-bottom: 8pt;
+    }
+
+    /* —— items table —— */
+    .items {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 8.69pt;
+    }
+
+    .items th,
+    .items td {
+      border: 0.65pt solid #000;
+      padding: 2pt 3pt;
+      vertical-align: middle;
+      word-wrap: break-word;
+    }
+
+    .items thead th {
+      background: rgb(252, 250, 235);
+      font-weight: 700;
+      font-size: 7.82pt;
+      text-align: center;
+      vertical-align: middle;
+      border-width: 1.3pt 0.65pt;
+      padding: 3pt 2pt;
+    }
+
+    .items thead th:first-child {
+      border-left-width: 1.3pt;
+    }
+
+    .items thead th:last-child {
+      border-right-width: 1.3pt;
+    }
+
+    .items tbody td {
+      border-top-width: 0.65pt;
+      border-bottom-width: 1.3pt;
+    }
+
+    .items tbody td:first-child {
+      border-left-width: 1.3pt;
+    }
+
+    .items tbody td:last-child {
+      border-right-width: 1.3pt;
+    }
+
+    .items .col-num { width: 4.8%; text-align: center; }
+    .items .col-name { width: 58.6%; text-align: left; }
+    .items .col-qty { width: 8.4%; text-align: center; }
+    .items .col-unit { width: 6.9%; text-align: center; }
+    .items .col-price { width: 10.3%; text-align: right; }
+    .items .col-sum { width: 11%; text-align: right; }
+
+    .items thead .th-price {
+      line-height: 1.15;
+    }
+
+    /* —— total —— */
+    .total-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      justify-content: end;
+      align-items: baseline;
+      column-gap: 10pt;
+      margin-top: 6pt;
+      margin-bottom: 16pt;
+      width: 100%;
+    }
+
+    .total-row .amount-total-label {
+      font-size: 7.82pt;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .total-row .amount-total {
+      font-size: 8.69pt;
+      font-weight: 700;
+      text-align: right;
+      min-width: 54pt;
+    }
+
+    /* —— amount / claims —— */
+    .amount-words {
+      font-size: 8.69pt;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 14pt;
+    }
+
+    .claims {
+      font-size: 8.69pt;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 4pt;
+    }
+
+    .place {
+      font-size: 8.69pt;
+      font-weight: 400;
+      margin-bottom: 10pt;
+    }
+
+    .footer-rule {
+      border: none;
+      border-top: 1.3pt solid #000;
+      margin: 0 0 10pt;
+    }
+
+    /* —— signatures —— */
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 48pt;
+    }
+
+    .sig-block .sig-label {
+      font-size: 8.69pt;
+      font-weight: 700;
+      margin-bottom: 22pt;
+    }
+
+    .sig-block .sig-line {
+      border-bottom: 0.65pt solid #000;
+      width: 100%;
+      max-width: 180pt;
+      margin-bottom: 3pt;
+    }
+
+    .sig-block:first-child .sig-line {
+      max-width: 144pt;
+    }
+
+    .sig-block .sig-name {
+      font-size: 7.82pt;
+      font-weight: 700;
+      margin-bottom: 12pt;
+    }
+
+    .sig-block .sig-date {
+      font-size: 7.82pt;
+      font-weight: 700;
+      margin-bottom: 1pt;
+    }
+
+    .sig-block .party-details {
+      font-size: 7.82pt;
+      font-weight: 400;
+      line-height: 1.17;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="approve">
+      <div class="approve-block">
+        <div class="approve-label approve-label-left">ЗАТВЕРДЖУЮ</div>
+        <div class="approve-name doneBy-fullName-approve">ФОП <span data-prefilled="done-by-full-name"></span></div>
+        <div class="approve-line"></div>
+      </div>
+      <div class="approve-block">
+        <div class="approve-label approve-label-right">ЗАТВЕРДЖУЮ</div>
+        <div class="approve-name client-fullName-approve">ФОП <span data-prefilled="client-full-name"></span></div>
+        <div class="approve-line"></div>
+      </div>
+    </section>
+
+    <div class="doc-title-wrap">
+      <h1 class="doc-title">
+        <span class="doc-title-text">АКТ надання послуг</span>
+        <span class="doc-number-date">№ <span class="doc-number" data-prefilled="complete-doc-number"></span> від <span class="doc-date-value" data-prefilled="date-cursive"></span></span>
+      </h1>
+    </div>
+
+    <p class="intro intro-line">
+      Ми, що нижче підписалися, представник Замовника,
+      <span class="client-fullName">ФОП <span data-prefilled="client-full-name"></span></span>,
+      з одного боку, і представник Виконавця,
+      <span class="doneBy-fullName">ФОП <span data-prefilled="done-by-full-name"></span></span>,
+      з іншого боку, склали цей акт про те, що на підставі наведених документів:
+    </p>
+
+    <p class="services-intro">Виконавцем були виконані наступні роботи (надані такі послуги):</p>
+
+    <table class="items">
+      <colgroup>
+        <col class="col-num" />
+        <col class="col-name" />
+        <col class="col-qty" />
+        <col class="col-unit" />
+        <col class="col-price" />
+        <col class="col-sum" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Найменування робіт, послуг</th>
+          <th>Кіл-сть</th>
+          <th>Од.</th>
+          <th class="th-price">Ціна без<br />ПДВ</th>
+          <th>Сума з ПДВ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="service-row">
+          <td class="col-num service-num">1</td>
+          <td class="col-name service-name" data-prefilled="service-name"></td>
+          <td class="col-qty service-qty">1</td>
+          <td class="col-unit service-unit">грн</td>
+          <td class="col-price service-price" data-prefilled="amount-item"></td>
+          <td class="col-sum service-sum" data-prefilled="amount-total"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="total-row">
+      <span></span>
+      <span class="amount-total-label">Всього:</span>
+      <span class="amount-total" data-prefilled="amount-total"></span>
+    </div>
+
+    <p class="amount-words amount-cursive">
+      Загальна вартість робіт (послуг) без ПДВ склала: <span data-prefilled="amount-total-cursive"></span>,
+      загальна вартість робіт (послуг) з ПДВ - <span data-prefilled="amount-total-cursive"></span>.
+    </p>
+
+    <p class="claims claims-text">
+      Замовник претензій по об'єму, якості та строкам виконання робіт (надання послуг) не має.
+    </p>
+    <p class="place">Місце складання:  <span class="place-value">м. Київ</span></p>
+
+    <hr class="footer-rule" />
+
+    <section class="signatures">
+      <div class="sig-block">
+        <div class="sig-label sign-label-doneBy">Від Виконавця</div>
+        <div class="sig-line"></div>
+        <div class="sig-name doneBy-signName" data-prefilled="done-by-full-name"></div>
+        <div class="sig-date doneBy-signDate" data-prefilled="data-cursive"></div>
+        <div class="party-details">
+          <div class="doneBy-fullName">ФОП <span data-prefilled="done-by-full-name"></span></div>
+          <div>РНОКПП <span class="doneBy-inn" data-prefilled="done-by-inn"></span></div>
+          <div>р/р <span class="doneBy-acc" data-prefilled="done-by-acc"></span></div>
+          <div class="doneBy-bank" data-prefilled="done-by-bank"></div>
+          <div>МФО <span class="doneBy-mfoBank" data-prefilled="done-by-mfo-bank"></span></div>
+          <div class="doneBy-addr">Адреса: <span data-prefilled="done-by-addr"></span></div>
+        </div>
+      </div>
+
+      <div class="sig-block">
+        <div class="sig-label sign-label-client">Від Замовника</div>
+        <div class="sig-line"></div>
+        <div class="sig-name client-signName" data-prefilled="client-sign-name"></div>
+        <div class="sig-date client-signDate" data-prefilled="date-cursive"></div>
+        <div class="party-details">
+          <div class="client-fullName">ФОП <span data-prefilled="client-full-name"></span></div>
+          <div>РНОКПП <span class="client-inn" data-prefilled="client-inn"></span></div>
+          <div>р/р <span class="client-acc" data-prefilled="client-acc"></span> в</div>
+          <div class="client-bank" data-prefilled="client-bank"></div>
+          <div>МФО <span class="client-mfoBank" data-prefilled="client-mfo-bank"></span></div>
+          <div class="client-addr">Адреса: <span data-prefilled="client-addr"></span> </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
