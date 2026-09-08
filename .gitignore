@@ -25,3 +25,13 @@ venv/
 target/
 bin/
 obj/
+
+# Python tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node
+package-lock.json.orig

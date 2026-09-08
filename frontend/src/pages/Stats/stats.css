@@ -1,0 +1,312 @@
+/* Stats screen (DESIGN §7.3, §3 tokens, §10 states). Scoped to this slice — the shared
+   index.css is another slice's module and is not edited here. The metric-zone tokens are
+   NOT in index.css yet, so they are defined here (they map the snapshot's `zone` string
+   to a color; the color is the only strong color on an otherwise calm score card). */
+
+:root {
+  --zone-good: #34d399; /* green — at/above baseline */
+  --zone-warn: #f59e0b; /* yellow — 5-20% below */
+  --zone-bad: #ef4444; /* red — >20% below */
+}
+
+.stats-screen {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.stats-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- Summary tiles (FR-STATS-01) ------------------------------------------- */
+
+.summary-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.summary-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+.summary-tile-label {
+  color: var(--text-secondary);
+}
+
+.summary-tile-value {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.summary-tile-unit {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* --- Score cards (FR-STATS-05) --------------------------------------------- */
+
+.score-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.score-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+.score-label {
+  color: var(--text-secondary);
+}
+
+.score-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.score-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-caption {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* The zone dot is the one strong color on the card; keyed to the snapshot's `zone`
+   string via a token, never a hard-coded hex. */
+.zone-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.zone-dot--green {
+  background: var(--zone-good);
+}
+
+.zone-dot--yellow {
+  background: var(--zone-warn);
+}
+
+.zone-dot--red {
+  background: var(--zone-bad);
+}
+
+.score-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-delta--up {
+  color: var(--zone-good);
+}
+
+.score-delta--down {
+  color: var(--zone-bad);
+}
+
+.score-delta--flat {
+  color: var(--text-tertiary);
+}
+
+/* Neutral "building" chip for a still-forming baseline (architecture §3.8) — no color. */
+.score-chip {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: lowercase;
+}
+
+/* --- Charts (FR-STATS-02..04) --------------------------------------------- */
+
+.stats-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.stats-chart {
+  margin: 0;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+}
+
+.stats-chart-title {
+  color: var(--text-secondary);
+}
+
+.stats-chart-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 180px;
+}
+
+/* --- Empty / error states (DESIGN §10) ------------------------------------ */
+
+.stats-empty {
+  text-align: center;
+  padding: 40px 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+}
+
+.stats-empty-title {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.stats-empty-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Contained, calm error card with a retry — never full-screen (DESIGN §10). */
+.stats-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-card);
+}
+
+.stats-error-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* --- Loading skeletons (DESIGN §10, no layout shift) ---------------------- */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  min-height: 96px;
+}
+
+.summary-tile.skeleton {
+  min-height: 96px;
+}
+
+.stats-chart.skeleton {
+  min-height: 220px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: stats-skeleton 1.4s ease-in-out infinite;
+}
+
+@keyframes stats-skeleton {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* --- Undo notice (DESIGN §8, FR-NOTIF-01) — bottom-left, 5s -------------- */
+
+.undo-toast {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-btn);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 40;
+}
+
+.undo-message {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.undo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.undo-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-soft);
+}

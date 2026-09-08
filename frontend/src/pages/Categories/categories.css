@@ -1,0 +1,256 @@
+/* Categories screen (DESIGN §7.4). Scoped CSS over the slice-001 :root tokens
+   (index.css); Tailwind adoption is the later UI-shell slice. No emoji anywhere
+   (NFR-DES-01) — icons are inline SVG in CategoriesPage.tsx. */
+
+/* Layout (.view, .categories-header, .categories-grid, .category-card base) is
+   owned by delibra.css; this file only carries the Cadence-specific form layer. */
+
+.categories-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* --- Shared label + control styles ---------------------------------------- */
+
+.micro-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 8px 0 4px;
+}
+
+.cat-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  caret-color: var(--accent);
+  outline: none;
+  transition: border-color 140ms var(--ease-out);
+}
+
+.cat-input:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The one intentional native control (DESIGN §7.4): the color picker. */
+.cat-color {
+  width: 44px;
+  height: 40px;
+  padding: 2px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  flex: none;
+}
+
+.cat-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.cat-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+/* --- Buttons (categories-scoped; index.css already owns .btn-primary) ------ */
+
+.btn-accent,
+.btn-ghost,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition:
+    background 140ms var(--ease-out),
+    border-color 140ms var(--ease-out);
+}
+
+.btn-accent {
+  color: #0a0a0c;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+
+.btn-ghost {
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.btn-danger {
+  color: #0a0a0c;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-accent:disabled,
+.btn-ghost:disabled,
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 140ms var(--ease-out);
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+}
+
+/* --- New-category form ----------------------------------------------------- */
+
+.new-category {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.new-category-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.new-category-fields .cat-input {
+  flex: 1 1 200px;
+  width: auto;
+}
+
+.new-category-submit {
+  flex: none;
+}
+
+/* --- Cards (delibra.css owns .categories-grid + .category-card / .cat-card-*) - */
+
+@media (max-width: 760px) {
+  .new-category-fields .cat-input {
+    flex-basis: 100%;
+  }
+}
+
+.category-card--editing {
+  outline: 1px solid var(--accent);
+}
+
+/* A slim colour band at the top of the edit form (the full 80px swatch is only
+   for the display card). */
+.cat-card-swatch--edit {
+  height: 8px;
+}
+
+.cat-form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.cat-form-row .field-label {
+  margin: 0;
+}
+
+.cat-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cat-error {
+  font-size: 13px;
+  color: var(--danger);
+  margin: 10px 0 0;
+}
+
+.cat-confirm {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+}
+
+.cat-confirm-text {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* --- States ---------------------------------------------------------------- */
+
+.categories-status {
+  margin: 8px 0;
+}
+
+.categories-empty {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+}

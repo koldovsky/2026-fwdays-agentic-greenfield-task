@@ -1,0 +1,412 @@
+{
+  "$defs": {
+    "BaselineEntryRead": {
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Delta"
+        },
+        "zone": {
+          "title": "Zone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "delta",
+        "zone"
+      ],
+      "title": "BaselineEntryRead",
+      "type": "object"
+    },
+    "BaselinesRead": {
+      "properties": {
+        "volume": {
+          "$ref": "#/$defs/BaselineEntryRead"
+        },
+        "consistency": {
+          "$ref": "#/$defs/BaselineEntryRead"
+        },
+        "focus_share": {
+          "$ref": "#/$defs/BaselineEntryRead"
+        },
+        "switch_load": {
+          "$ref": "#/$defs/BaselineEntryRead"
+        }
+      },
+      "required": [
+        "volume",
+        "consistency",
+        "focus_share",
+        "switch_load"
+      ],
+      "title": "BaselinesRead",
+      "type": "object"
+    },
+    "CategoryPerDayRead": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "color": {
+          "title": "Color",
+          "type": "string"
+        },
+        "per_day": {
+          "items": {
+            "$ref": "#/$defs/DailyMinRead"
+          },
+          "title": "Per Day",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "color",
+        "per_day"
+      ],
+      "title": "CategoryPerDayRead",
+      "type": "object"
+    },
+    "ConsistencyRead": {
+      "properties": {
+        "score": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "low_confidence": {
+          "title": "Low Confidence",
+          "type": "boolean"
+        },
+        "regularity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Regularity"
+        },
+        "start_stability": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Start Stability"
+        },
+        "median_start_local": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Median Start Local"
+        }
+      },
+      "required": [
+        "score",
+        "low_confidence",
+        "regularity",
+        "start_stability",
+        "median_start_local"
+      ],
+      "title": "ConsistencyRead",
+      "type": "object"
+    },
+    "DailyMinRead": {
+      "description": "One zero-filled day of a ``per_day`` net-minute series.",
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "min": {
+          "title": "Min",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "date",
+        "min"
+      ],
+      "title": "DailyMinRead",
+      "type": "object"
+    },
+    "FocusRead": {
+      "properties": {
+        "deep_count": {
+          "title": "Deep Count",
+          "type": "integer"
+        },
+        "deep_minutes": {
+          "title": "Deep Minutes",
+          "type": "integer"
+        },
+        "deep_share": {
+          "title": "Deep Share",
+          "type": "number"
+        }
+      },
+      "required": [
+        "deep_count",
+        "deep_minutes",
+        "deep_share"
+      ],
+      "title": "FocusRead",
+      "type": "object"
+    },
+    "StreaksRead": {
+      "properties": {
+        "current": {
+          "title": "Current",
+          "type": "integer"
+        },
+        "longest": {
+          "title": "Longest",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "current",
+        "longest"
+      ],
+      "title": "StreaksRead",
+      "type": "object"
+    },
+    "SwitchDayRead": {
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "switches": {
+          "title": "Switches",
+          "type": "integer"
+        },
+        "interruptions": {
+          "title": "Interruptions",
+          "type": "integer"
+        },
+        "switch_load": {
+          "title": "Switch Load",
+          "type": "integer"
+        },
+        "flagged": {
+          "title": "Flagged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "date",
+        "switches",
+        "interruptions",
+        "switch_load",
+        "flagged"
+      ],
+      "title": "SwitchDayRead",
+      "type": "object"
+    },
+    "SwitchingRead": {
+      "properties": {
+        "per_day": {
+          "items": {
+            "$ref": "#/$defs/SwitchDayRead"
+          },
+          "title": "Per Day",
+          "type": "array"
+        },
+        "baseline_mean": {
+          "title": "Baseline Mean",
+          "type": "number"
+        }
+      },
+      "required": [
+        "per_day",
+        "baseline_mean"
+      ],
+      "title": "SwitchingRead",
+      "type": "object"
+    },
+    "TopCategoryRead": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "color": {
+          "title": "Color",
+          "type": "string"
+        },
+        "week_min": {
+          "title": "Week Min",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "color",
+        "week_min"
+      ],
+      "title": "TopCategoryRead",
+      "type": "object"
+    },
+    "VolumeRead": {
+      "properties": {
+        "today_min": {
+          "title": "Today Min",
+          "type": "integer"
+        },
+        "week_min": {
+          "title": "Week Min",
+          "type": "integer"
+        },
+        "month_min": {
+          "title": "Month Min",
+          "type": "integer"
+        },
+        "all_time_min": {
+          "title": "All Time Min",
+          "type": "integer"
+        },
+        "daily_avg_30d_min": {
+          "title": "Daily Avg 30D Min",
+          "type": "number"
+        },
+        "per_day": {
+          "items": {
+            "$ref": "#/$defs/DailyMinRead"
+          },
+          "title": "Per Day",
+          "type": "array"
+        }
+      },
+      "required": [
+        "today_min",
+        "week_min",
+        "month_min",
+        "all_time_min",
+        "daily_avg_30d_min",
+        "per_day"
+      ],
+      "title": "VolumeRead",
+      "type": "object"
+    },
+    "WindowRead": {
+      "description": "The reporting range a snapshot's window-scoped blocks cover.",
+      "properties": {
+        "start": {
+          "format": "date",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date",
+          "title": "End",
+          "type": "string"
+        },
+        "days": {
+          "title": "Days",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "days"
+      ],
+      "title": "WindowRead",
+      "type": "object"
+    }
+  },
+  "description": "The full architecture \u00a74.1 snapshot -- the payload of ``GET /api/stats/snapshot``.",
+  "properties": {
+    "window": {
+      "$ref": "#/$defs/WindowRead"
+    },
+    "volume": {
+      "$ref": "#/$defs/VolumeRead"
+    },
+    "consistency": {
+      "$ref": "#/$defs/ConsistencyRead"
+    },
+    "focus": {
+      "$ref": "#/$defs/FocusRead"
+    },
+    "switching": {
+      "$ref": "#/$defs/SwitchingRead"
+    },
+    "streaks": {
+      "$ref": "#/$defs/StreaksRead"
+    },
+    "baselines": {
+      "$ref": "#/$defs/BaselinesRead"
+    },
+    "top_categories": {
+      "items": {
+        "$ref": "#/$defs/TopCategoryRead"
+      },
+      "title": "Top Categories",
+      "type": "array"
+    },
+    "per_category_per_day": {
+      "items": {
+        "$ref": "#/$defs/CategoryPerDayRead"
+      },
+      "title": "Per Category Per Day",
+      "type": "array"
+    }
+  },
+  "required": [
+    "window",
+    "volume",
+    "consistency",
+    "focus",
+    "switching",
+    "streaks",
+    "baselines",
+    "top_categories",
+    "per_category_per_day"
+  ],
+  "title": "SnapshotResponse",
+  "type": "object"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cadence-repo-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repo-level tooling manifest (not shipped). Holds the OpenSpec spec-contract CLI, isolated from the Python backend and the frontend app.",
+  "scripts": {
+    "spec:validate": "openspec validate --all --strict",
+    "spec:list": "openspec list"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.5.0"
+  }
+}

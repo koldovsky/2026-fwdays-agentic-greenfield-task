@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""post-edit-lint - PostToolUse hook: lint the file that was just edited.
+
+Reads the Claude Code PostToolUse JSON payload on stdin, pulls the edited file from
+``tool_input.file_path``, and runs the matching fast linter on the touched scope:
+
+  * ``*.py`` under ``backend/``  -> ruff (backend venv, that file only)
+  * ``*.ts`` / ``*.tsx`` under ``frontend/`` -> tsc project typecheck (strict)
+
+On a lint/type failure it writes actionable output to stderr and exits 2, which
+Claude Code surfaces back to the model as feedback. Anything else (other file types,
+missing toolchain, malformed payload, or an internal error) exits 0 so the hook never
+blocks the session spuriously. It only ever calls the same tools the repo's verify
+pipeline uses; it adds no new checks of its own.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+OK, FEEDBACK = 0, 2
+
+
+def project_root(data: dict) -> Path:
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or os.getcwd())
+
+
+def venv_python(root: Path) -> str:
+    for c in (
+        root / "backend" / ".venv" / "Scripts" / "python.exe",
+        root / "backend" / ".venv" / "bin" / "python",
+    ):
+        if c.is_file():
+            return str(c)
+    return sys.executable
+
+
+def has_module(py: str, module: str, cwd: Path) -> bool:
+    try:
+        return subprocess.run(
+            [py, "-c", f"import {module}"], cwd=str(cwd),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        ).returncode == 0
+    except OSError:
+        return False
+
+
+def lint_python(root: Path, rel: str) -> int:
+    # Only backend product code: that is where ruff config (line-length, rule set)
+    # applies. Harness/other .py are linted by CI/pre-commit, not per-keystroke.
+    if not rel.startswith("backend/"):
+        return OK
+    py = venv_python(root)
+    backend = root / "backend"
+    if not has_module(py, "ruff", backend):
+        return OK  # env not set up; stay quiet
+    target = rel[len("backend/"):]
+    proc = subprocess.run(
+        [py, "-m", "ruff", "check", target], cwd=str(backend),
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        sys.stderr.write(f"post-edit-lint: ruff reported issues in {rel}:\n")
+        sys.stderr.write((proc.stdout or "") + (proc.stderr or ""))
+        sys.stderr.write("\nFix these before continuing (run "
+                         f"`ruff check {target}` in backend/).\n")
+        return FEEDBACK
+    return OK
+
+
+def lint_typescript(root: Path, rel: str) -> int:
+    if not rel.startswith("frontend/"):
+        return OK
+    frontend = root / "frontend"
+    tsc = frontend / "node_modules" / "typescript" / "bin" / "tsc"
+    node = shutil.which("node")
+    if not tsc.is_file() or not node:
+        return OK  # frontend deps or node absent; stay quiet
+    # tsconfig has noEmit + strict; typecheck the whole project so the edited file is
+    # checked with the real settings (single-file tsc loses project config).
+    proc = subprocess.run(
+        [node, str(tsc), "--noEmit", "-p", "tsconfig.json"], cwd=str(frontend),
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        sys.stderr.write("post-edit-lint: tsc found type errors (frontend, strict):\n")
+        sys.stderr.write((proc.stdout or "") + (proc.stderr or ""))
+        sys.stderr.write("\nFix these before continuing (run `npm run build` in "
+                         "frontend/).\n")
+        return FEEDBACK
+    return OK
+
+
+def main() -> int:
+    try:
+        data = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        return OK
+    file_path = (data.get("tool_input") or {}).get("file_path") or ""
+    if not file_path:
+        return OK
+
+    root = project_root(data)
+    path = Path(file_path)
+    if not path.exists():
+        return OK
+    try:
+        rel = path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return OK
+
+    if rel.endswith(".py"):
+        return lint_python(root, rel)
+    if rel.endswith((".ts", ".tsx")):
+        return lint_typescript(root, rel)
+    return OK
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except SystemExit:
+        raise
+    except Exception as exc:  # never break the session on a hook bug
+        sys.stderr.write(f"post-edit-lint: internal error (ignored): {exc}\n")
+        raise SystemExit(0)

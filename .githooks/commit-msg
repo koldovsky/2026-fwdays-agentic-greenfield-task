@@ -1,0 +1,9 @@
+#!/bin/sh
+# Harness commit-msg gate: reject a commit with no Refs:/Slice: trailer.
+# Enable with:  git config core.hooksPath .githooks   (see .githooks/README.md)
+PY="$(command -v python 2>/dev/null || command -v python3 2>/dev/null)"
+if [ -z "$PY" ]; then
+  echo "commit-msg: python not found on PATH; skipping trailer check." >&2
+  exit 0
+fi
+exec "$PY" scripts/check-commit-msg "$1"

@@ -1,0 +1,5 @@
+# Backend coverage floor (percent), enforced by scripts/gate-slice.
+# Ratchet: coverage may rise, never silently fall. Raise this only with a
+# deliberate `--bump-floor` when coverage has genuinely improved.
+# Measured on the `app` package with RUN_DB_TESTS=1.
+82

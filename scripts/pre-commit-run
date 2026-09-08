@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""pre-commit-run - orchestrates the harness pre-commit gate.
+
+Runs, in order, blocking on the first failure:
+  1. secrets scan of staged content (scripts/check-secrets);
+  2. ruff on staged backend Python files (via the backend venv, if available);
+  3. regenerate the trace matrices (traceability + trajectory) and self-stage them,
+     so a committed matrix is never stale.
+
+Delegated to by the .githooks/pre-commit shell wrapper so the logic stays in
+cross-platform stdlib Python. Exit codes: 0 ok / 1 a gate failed.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _harness as H  # noqa: E402
+
+
+def _script(root, name: str, *args: str) -> int:
+    return H.stream([sys.executable, str(root / "scripts" / name), *args], cwd=root)
+
+
+def main() -> int:
+    root = H.repo_root()
+
+    # 1. Secrets scan (staged) - hard block.
+    if _script(root, "check-secrets") != 0:
+        return H.EXIT_CHECK_FAILED
+
+    # 2. Ruff on staged backend Python files, using the backend venv if it has ruff.
+    proc = H.git(root, "diff", "--cached", "--name-only", "--diff-filter=ACM")
+    staged = [f for f in proc.out.splitlines() if f.strip()]
+    backend_py = [f for f in staged if f.startswith("backend/") and f.endswith(".py")]
+    if backend_py:
+        py = H.venv_python(root)
+        if H.capture([py, "-c", "import ruff"], cwd=root / "backend").code == 0:
+            rels = [f[len("backend/"):] for f in backend_py]
+            print(f"pre-commit: ruff check on {len(rels)} staged backend file(s)")
+            if H.stream([py, "-m", "ruff", "check", *rels], cwd=root / "backend") != 0:
+                print("pre-commit: ruff found issues in staged backend files.",
+                      file=sys.stderr)
+                return H.EXIT_CHECK_FAILED
+        else:
+            print("pre-commit: ruff not installed in backend venv - skipping ruff "
+                  "(run `pip install -e \".[dev]\"` in backend to enable).",
+                  file=sys.stderr)
+
+    # 3. Regenerate the trace matrices and self-stage them.
+    for name in ("check-traceability", "check-trajectory"):
+        if _script(root, name, "--write") != 0:
+            print(f"pre-commit: {name} --write failed.", file=sys.stderr)
+            return H.EXIT_CHECK_FAILED
+    add = H.git(root, "add", "docs/qa/traceability.md", "docs/qa/trajectory.md")
+    if add.code != 0:
+        print(f"pre-commit: git add of refreshed matrices failed:\n{add.err}",
+              file=sys.stderr)
+        return H.EXIT_CHECK_FAILED
+
+    # 4. OpenSpec contract: validate only when the commit touches openspec/ (fast, and
+    #    mirrors the selective ruff step above). This runs ALONGSIDE the Python gates;
+    #    check-openspec skips gracefully when the Node CLI is absent, so a commit is
+    #    never hard-blocked for lack of Node. CI runs `check-openspec --require`.
+    staged_openspec = [f for f in staged if f.startswith("openspec/")]
+    if staged_openspec:
+        print(f"pre-commit: openspec validate ({len(staged_openspec)} staged "
+              f"openspec/ file(s))")
+        if _script(root, "check-openspec") != 0:
+            print("pre-commit: OpenSpec validation failed.", file=sys.stderr)
+            return H.EXIT_CHECK_FAILED
+
+    return H.EXIT_OK
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

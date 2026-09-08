@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/app
+      RUN_DB_TESTS: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Lint (ruff)
+        run: python -m ruff check .
+      - name: Type check (mypy)
+        run: python -m mypy app
+      - name: Migrate
+        run: python -m alembic upgrade head
+      - name: Test (pytest, with DB)
+        run: python -m pytest -q
+      - name: Coverage ratchet (gate-slice)
+        # Re-runs the suite under coverage and fails if backend coverage of `app`
+        # drops below docs/qa/coverage-floor.txt (the ratchet). venv is absent in CI,
+        # so gate-slice falls back to this job's interpreter (which has the dev deps).
+        run: python ../scripts/gate-slice --ratchet
+
+  harness:
+    # Deterministic verification layer: the trace matrices must be fresh and the
+    # git-visible process facts must hold. Pure stdlib + git (no DB, no venv), plus
+    # Node for the OpenSpec spec-contract gate, which runs ALONGSIDE the Python gates.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # check-trajectory needs full history + commit trailers
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install OpenSpec (repo-root Node tooling, isolated from the backend)
+        run: npm ci
+      - name: Traceability matrix is fresh
+        run: python scripts/check-traceability --check-fresh
+      - name: Trajectory has no process violations
+        # Enforce mode, not --check-fresh: the committed trajectory.md is a snapshot
+        # that necessarily lags its own commit (it is generated before that commit
+        # exists), so freshness cannot be gated here. This re-derives from the full
+        # history (incl. HEAD) and fails only on a real process violation.
+        run: python scripts/check-trajectory
+      - name: Gate self-tests (trajectory overlap policy)
+        # Locks in the entry-point-allowlist vs business-logic-conflict distinction.
+        # Pure stdlib unittest -- no pip install needed in this job.
+        run: python -m unittest discover -s scripts/tests -p 'test_*.py'
+      - name: Eval ratchet (no-op until the coach slice adds a baseline)
+        run: python scripts/check-eval-ratchet
+      - name: OpenSpec contract is valid (validate --all --strict)
+        # Node CLI pinned in the repo-root package.json; --require so a missing CLI is
+        # a hard error in CI (npm ci above guarantees it). Does not touch the Python
+        # gates' logic; it is an additional, parallel spec-contract check.
+        run: python scripts/check-openspec --require
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm install
+      - name: Build (typecheck + bundle)
+        run: npm run build

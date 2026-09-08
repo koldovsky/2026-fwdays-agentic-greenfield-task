@@ -1,0 +1,46 @@
+{
+  "id": "E-1",
+  "requirement": "FR-COACH-01",
+  "description": "Empty snapshot (a user with no saved sessions) still yields a graceful, grounded quiet card rather than a crash or a fabricated number.",
+  "expected": { "grounded": true, "violations": [], "language": "en", "quiet": true },
+  "snapshot": {
+    "window": { "start": "2026-07-06", "end": "2026-07-12", "days": 7 },
+    "volume": {
+      "today_min": 0,
+      "week_min": 0,
+      "month_min": 0,
+      "all_time_min": 0,
+      "daily_avg_30d_min": 0.0,
+      "per_day": []
+    },
+    "consistency": {
+      "score": null,
+      "low_confidence": true,
+      "regularity": null,
+      "start_stability": null,
+      "median_start_local": null
+    },
+    "focus": { "deep_count": 0, "deep_minutes": 0, "deep_share": 0.0 },
+    "switching": { "per_day": [], "baseline_mean": 0.0 },
+    "streaks": { "current": 0, "longest": 0 },
+    "baselines": {
+      "volume": { "value": 0.0, "delta": null, "zone": "building" },
+      "consistency": { "value": 0.0, "delta": null, "zone": "building" },
+      "focus_share": { "value": 0.0, "delta": null, "zone": "building" },
+      "switch_load": { "value": 0.0, "delta": null, "zone": "building" }
+    },
+    "top_categories": [],
+    "per_category_per_day": []
+  },
+  "coach_output": {
+    "language": "en",
+    "quiet": true,
+    "observations": [
+      {
+        "text": "A quiet week so far — start a session whenever you are ready and your rhythm will build.",
+        "metric_refs": []
+      }
+    ],
+    "recommendations": []
+  }
+}

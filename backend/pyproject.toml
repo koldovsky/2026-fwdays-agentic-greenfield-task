@@ -1,0 +1,91 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "FastAPI + PostgreSQL backend (greenfield init)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "pydantic-settings>=2.4",
+    # Password hashing (NFR-SEC-01, architecture §8.1: bcrypt cost 12 via passlib).
+    # bcrypt is pinned <4.1 because passlib 1.7.x reads bcrypt.__about__.__version__,
+    # which bcrypt removed in 4.1 (emits a noisy runtime warning otherwise).
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0,<4.1",
+    # IANA tzdata for zoneinfo (day attribution, architecture §3.7): some hosts
+    # (this dev image included) ship no OS-level tzdata, so `zoneinfo.ZoneInfo`
+    # raises `ZoneInfoNotFoundError` even for "UTC" without this package.
+    "tzdata>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    # Pinned to a single minor: ruff's isort tightens between minors, so a floating
+    # `>=0.6` silently re-flags older slices' import order (I001) on a fresh venv and
+    # blocks the shared gate for every branch on this base (see the slice-005 drift
+    # incident). Bump this deliberately, re-running `ruff --fix` in the same commit.
+    "ruff>=0.15,<0.16",
+    "mypy>=1.11",
+    # Coverage measurement for the gate-slice ratchet (scripts/gate-slice); the
+    # [toml] extra lets coverage read its config from this file on Python 3.10.
+    "coverage[toml]>=7.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.isort]
+# `alembic` is a third-party package; without this hint ruff mistakes it for a local
+# module because of the backend/alembic/ migrations directory.
+known-third-party = ["alembic"]
+
+[tool.mypy]
+python_version = "3.10"
+disallow_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+exclude = ["alembic/"]
+
+# Coverage config for the gate-slice ratchet. Measures the `app` package only;
+# the migrations and the test suite itself are not product code under test.
+[tool.coverage.run]
+source = ["app"]
+branch = false
+# SQLAlchemy's async engine runs each query on a greenlet, so coverage.py's tracer
+# detaches when a coroutine resumes after `await session.<execute/flush/commit>()`
+# and the resuming lines (returns, `except` handlers) read as uncovered even though
+# the tests run them. Greenlet awareness measures the async repos/services/routers
+# honestly. Slice 002 (the first async-DB-heavy data slice) surfaced this: with it
+# on, the category code goes from 30% to 100% traced by the same acceptance tests —
+# an accuracy fix, not a floor change. Needs the `greenlet` package, already an
+# install-time SQLAlchemy[asyncio] dependency.
+concurrency = ["greenlet"]
+omit = ["tests/*", "alembic/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = false
+

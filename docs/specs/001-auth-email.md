@@ -1,0 +1,207 @@
+# 001 — Email + password authentication
+
+- **Status:** ratified
+- **Date:** 2026-07-10
+
+## Contract (OpenSpec)
+
+The detailed, machine-validated contract for this slice lives in OpenSpec as the `auth` capability,
+recorded by the completed change
+[`add-auth-email`](../../openspec/changes/archive/2026-07-10-add-auth-email/proposal.md) and applied
+to [`openspec/specs/auth/spec.md`](../../openspec/specs/auth/spec.md). That contract carries the
+GIVEN/WHEN/THEN scenarios and is checked by `openspec validate --all --strict`.
+
+This file remains the anchor for the Python traceability harness (`scripts/check-traceability`): the
+`Requirements covered` ids below are what the harness maps to `@trace` tests, so its logic is
+unchanged. See the specs<->OpenSpec bridge decision in
+[`openspec/README.md`](../../openspec/README.md). Slice 001 was recorded retroactively; slices 002+
+begin as an OpenSpec change before any code.
+
+## Problem / goal
+
+Cadence stores per-user time-tracking data, so every later slice (timer, sessions, categories,
+metrics, coach, extension) sits behind an authenticated, per-user boundary. This slice builds that
+foundation: email + password accounts, server-side session cookies, and the current-user dependency
+plus the per-user-scoped repository pattern that all later data access relies on. It is slice 001 of
+the planned auth sequence; OAuth is slice 009.
+
+## Requirements covered
+
+Cited by ID only — `[docs/requirements.md](../requirements.md)` is the single source of truth; this
+spec does not restate or redefine requirement text.
+
+- **Functional:** FR-AUTH-01, FR-AUTH-02, FR-AUTH-03, FR-AUTH-06, FR-AUTH-07.
+- **Non-functional:** NFR-SEC-01, NFR-SEC-02, NFR-SEC-03.
+- **Resolved decision:** A-5 (no email verification, no password reset in v1).
+
+
+
+## Out of scope
+
+Listed FR IDs belong to other slices; this slice must not implement them.
+
+- OAuth sign-in: FR-AUTH-04 (Google), FR-AUTH-05 (GitHub) — plus the `oauth_identities` table and
+the `OR` divider + Google/GitHub buttons of DESIGN §7.1 — **slice 009**.
+- Password reset and email verification — intentionally omitted per A-5 (they are not FRs).
+- Everything downstream of auth: FR-SHELL-, FR-TIMER-, FR-SESS-, FR-CAT-, FR-HEAT-,
+FR-STATS-, FR-METR-, FR-COACH-, FR-EXT-, FR-NOTIF-01, and live sync NFR-DATA-01.
+- Timezone (A-1) and coach language (A-7) *behavior*: the `users.timezone` / `users.coach_language`
+columns are created here (the table is created once) but populating and consuming them belong to
+the metrics and coach slices (Resolved #3).
+
+
+
+## Design sketch
+
+Aligned to architecture.md §2.1 (data model), §8 (auth), and §10 (API surface). Where architecture
+already decided something, this follows it; owner-ratified gaps are in Resolved, not invented here.
+
+### Endpoints (`app/api/` auth router)
+
+
+| Method + path             | Purpose                                                                                                           | Req                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| POST `/api/auth/register` | Create an account from email + password when the email is not already registered; reject a duplicate.             | FR-AUTH-01             |
+| POST `/api/auth/login`    | Verify credentials, create a `user_sessions` row, set the session cookie, issue a CSRF token; reject on mismatch. | FR-AUTH-02             |
+| POST `/api/auth/logout`   | Delete the session row and clear the cookie.                                                                      | FR-AUTH-03             |
+| GET `/api/auth/me`        | Protected: return the current user (id, email, timezone, coach_language); 401 without a valid session.            | FR-AUTH-06, FR-AUTH-07 |
+
+
+`GET /api/auth/{google,github}` + `/callback` (architecture §10) are **slice 009**.
+
+**How a protected route reads the current user:** a FastAPI **auth dependency** (`CurrentUser`)
+reads the session cookie, looks up a non-expired `user_sessions` row, loads the owning user, and
+yields `user_id`; a missing, expired, or invalid session yields 401 (FR-AUTH-06). Mutating requests
+additionally require the CSRF double-submit header (architecture §8.2). `GET /api/auth/me` is the
+first protected route and the concrete test surface for FR-AUTH-06 / FR-AUTH-07.
+
+### Data model / migration
+
+One Alembic migration ships two tables (architecture §2.1 for `users`, §8.2 for `user_sessions`).
+Per architecture §2, both carry `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY` and
+`created_at TIMESTAMPTZ NOT NULL DEFAULT now()`.
+
+- **users** — `email CITEXT UNIQUE NOT NULL`, `password_hash TEXT NULL` (kept nullable per
+architecture for future OAuth-only accounts; email/password registration always sets it),
+`timezone TEXT NOT NULL DEFAULT 'UTC'`, `coach_language TEXT NOT NULL DEFAULT 'en'`. The migration
+also enables the `citext` extension.
+- **user_sessions** — `user_id` FK -> `users` `ON DELETE CASCADE`; an **opaque session token**
+(256-bit random, unique, indexed — distinct from the BIGINT `id`; Resolved #1) that is
+the value carried in the cookie; `expires_at TIMESTAMPTZ NOT NULL` (30-day sliding, extended on
+authenticated activity). Index on `user_id`.
+- `oauth_identities` (architecture §2.1) is **not** created here — slice 009.
+
+Autogenerated SQL is hand-reviewed (AGENTS.md); CITEXT, IDENTITY, and the token column typically
+need manual touch-up.
+
+### Auth mechanics
+
+- **Passwords (§8.1, NFR-SEC-01):** bcrypt via **passlib**, **cost factor 12**, bcrypt-native
+per-hash random salt. Hash on register, verify on login; plaintext is never stored or logged.
+- **Session cookie (§8.2, NFR-SEC-02):** the opaque 256-bit token in a cookie with attributes
+`HttpOnly; Secure; SameSite=None; Path=/` (Secure is env-driven for local http dev — Resolved #2);
+server-side record in `user_sessions`; 30-day sliding expiry. CSRF: a double-submit
+token issued at login and required on all mutating requests (SameSite=None reopens CSRF, so this
+is mandatory, per architecture §8.2 / gap G-3).
+- **Per-user isolation (§8.3, FR-AUTH-07, NFR-SEC-03):** the **user_id-scoped repository pattern** —
+every repository method takes `user_id` from the auth dependency and scopes every query by it; no
+repo method exists without a `user_id` parameter. This slice establishes the `app/repos/` and
+`app/services/auth.py` layers and this rule, which every later data slice must follow.
+
+
+
+### Config (`app/config.py`, TC-STACK-02)
+
+New pydantic-settings: session-cookie Secure flag (env-driven), SameSite, session TTL (30 days),
+CSRF settings, and the app session secret. bcrypt cost (12) is a constant/config. No secrets in
+code; only `*.env.example` is committed and updated.
+
+### UI touchpoints (DESIGN §7.1)
+
+Centered `auth-card` (max-width 360px, elevated): centered wordmark, title + one-line subtitle,
+**email + password fields**, primary submit, and the sign-in / register footer toggle. **No
+"forgot password" link** (A-5). The `OR` **divider + Google/GitHub buttons are slice 009** and are
+omitted now (Resolved #4). All HTTP goes through `src/api.ts` (TC-STACK-03), which also
+captures the CSRF token and attaches it to mutating requests. On success the app routes into the
+(later-slice) authenticated shell; a minimal authenticated placeholder that confirms the session is
+sufficient for this slice.
+
+### Notes for AGENTS.md / skills
+
+- New backend dependency `passlib[bcrypt]` in `backend/pyproject.toml`.
+- Add a convention line next to "DB access via `SessionDep`": the `CurrentUser` **auth dependency**
+and the **user_id-scoped repository rule** (every repo method takes `user_id`) — candidates for
+AGENTS.md "Code style" and/or the `python-fastapi` skill.
+- Frontend: `src/api.ts` owns CSRF-token capture and attachment.
+- Architecture gap **G-3** (SameSite=None + CSRF) is realized here by design, not scope creep.
+
+
+
+## Acceptance checks (how we verify)
+
+Named automated tests, each mapped to a requirement:
+
+- [ ] `test_register_happy_path` — new email + password creates a user (201) — FR-AUTH-01.
+- [ ] `test_register_duplicate_email_rejected` — a second register with the same email (CITEXT,
+  ```
+  case-insensitive) is rejected (409) — FR-AUTH-01.
+  ```
+- [ ] `test_login_success_sets_session_cookie` — valid credentials set an `HttpOnly; SameSite=None`
+  ```
+  session cookie and issue a CSRF token; a `user_sessions` row exists — FR-AUTH-02.
+  ```
+- [ ] `test_login_wrong_password_rejected` — wrong password returns 401 and sets no session cookie —
+  ```
+  FR-AUTH-02.
+  ```
+- [ ] `test_logout_clears_session` — logout deletes the `user_sessions` row and clears the cookie;
+  ```
+  the old cookie no longer authorizes — FR-AUTH-03.
+  ```
+- [ ] `test_protected_route_401_without_session` — `GET /api/auth/me` with no / expired / invalid
+  ```
+  cookie returns 401 — FR-AUTH-06.
+  ```
+- [ ] `test_current_user_is_isolated` — with sessions for user A and user B, each `GET /api/auth/me`
+  ```
+  returns only its own account and never the other's data; exercises the user_id-scoped repo
+  pattern — FR-AUTH-07 (account-level; per-resource isolation tests land with the sessions /
+  categories slices).
+  ```
+- [ ] `test_csrf_required_on_mutation` — a mutating request without the CSRF header is rejected —
+  ```
+  NFR-SEC-02.
+  ```
+
+Security check:
+
+- [ ] `test_password_stored_hashed` — after register, `users.password_hash` is a bcrypt hash
+  ```
+  (`$2b$...`), not the plaintext; plaintext never appears in the stored row or logs — NFR-SEC-01.
+  Server-side scoping (NFR-SEC-03) is asserted by `test_current_user_is_isolated`.
+  ```
+
+Process / gates:
+
+- [ ] `scripts/verify.*` fully green: ruff, mypy, `alembic upgrade head`, pytest incl. real Postgres
+  ```
+  (`RUN_DB_TESTS=1`), and frontend `npm run build`.
+  ```
+- [ ] Independent Checker pass: `/code-review` + `/security-review` (no secret committed; hashing and
+  ```
+  cookie attributes correct) plus CodeRabbit on the PR.
+  ```
+- [ ] Judge scores the change against these checks and marks it done (maker != checker != judge).
+
+
+
+## Resolved (owner-ratified 2026-07-10)
+
+1. `user_sessions` token column — architecture.md §8.2 updated: id BIGINT PK, user_id FK,
+   token (256-bit random, UNIQUE, indexed — the cookie value, distinct from PK), expires_at,
+   created_at. Build to this.
+2. Secure cookie — env-driven Secure flag (off for local http, on in prod), via config.
+3. Browser timezone — create users.timezone now (default 'UTC'); defer capture to the metrics
+   slice. No tz capture in this slice.
+4. OAuth buttons — omit entirely until slice 009; no disabled stubs.
+
