@@ -1,0 +1,7 @@
+interface:
+  display_name: "Email Shadow UI Roast"
+  short_description: "Roast, prioritize, and prompt UI polish"
+  default_prompt: "Audit the current Email Shadow Panel generation, transition, and inbox screens. Produce a constructive roast, prioritized polish batch, and implementation prompt."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,12 @@
+{
+  "provenance": "public-reference-derived",
+  "status": 200,
+  "headers": {
+    "content-type": "text/html; charset=UTF-8",
+    "set-cookie": [
+      "XSRF-TOKEN=redacted-xsrf-value; Path=/; Secure; SameSite=Lax",
+      "gmailnator_session=redacted-session-value; Path=/; HttpOnly; Secure; SameSite=Lax"
+    ]
+  },
+  "bodyFile": "bootstrap.public-reference.html"
+}
