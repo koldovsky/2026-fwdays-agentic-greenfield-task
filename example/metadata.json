@@ -1,0 +1,6 @@
+{
+  "name": "Pioneer Directive",
+  "description": "A minimalistic, deterministic, turn-based colony expedition game. Lead humanity's first extrasolar colony using strategic decision-making and procedural generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

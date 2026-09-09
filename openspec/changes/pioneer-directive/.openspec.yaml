@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-07-03
+goal: "Build the complete Pioneer Directive game: gameplay loop, turn engine,
+  events, planet generation, loadouts, colony ending, achievements, run history,
+  and seed system"
