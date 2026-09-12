@@ -25,3 +25,13 @@ venv/
 target/
 bin/
 obj/
+
+# Saved-page sidecar assets (CSS/JS/images from "Save As Complete Page") —
+# the fixture .html itself is tracked; the parser never resolves these.
+examples/*_files/
+
+# Playwright E2E artifacts
+test-results/
+playwright-report/
+.playwright/
+app/demo/*.webm

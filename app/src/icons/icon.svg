@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="25.6" fill="#1b2832"/>
+  <text x="10" y="84" font-family="Helvetica Neue, Arial, sans-serif" font-size="52" font-weight="700" fill="#ffffff">md</text>
+  <g fill="none" stroke="#01aaff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M104 36 L104 68"/>
+    <path d="M92 56 L104 70 L116 56"/>
+  </g>
+</svg>

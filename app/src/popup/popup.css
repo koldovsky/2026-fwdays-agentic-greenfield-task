@@ -1,0 +1,39 @@
+@import '@picocss/pico/css/pico.min.css';
+
+body {
+  width: 320px;
+  margin: 0;
+}
+
+main {
+  padding: var(--pico-spacing);
+}
+
+[data-panel] {
+  display: none;
+}
+
+body[data-state='idle'] [data-panel='idle'],
+body[data-state='progress'] [data-panel='progress'],
+body[data-state='success'] [data-panel='success'],
+body[data-state='error'] [data-panel='error'] {
+  display: block;
+}
+
+.state-success {
+  color: var(--pico-ins-color);
+}
+
+.state-error {
+  color: var(--pico-del-color);
+}
+
+.hint {
+  color: var(--pico-muted-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [aria-busy='true']::before {
+    animation: none;
+  }
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ticket2MD</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body data-state="idle">
+    <main>
+      <h1>Export ticket to MD</h1>
+
+      <section data-panel="idle">
+        <p id="ticket-hint" class="hint" hidden>Open a Jira ticket</p>
+        <label>
+          <input type="checkbox" id="anonymize" checked />
+          Anonymize names
+        </label>
+        <button type="button" id="export-btn" class="contrast">Export</button>
+      </section>
+
+      <section data-panel="progress" aria-busy="true" aria-live="polite">
+        <p>Exporting…</p>
+      </section>
+
+      <section data-panel="success" aria-live="polite">
+        <p class="state-success">Export completed successfully.</p>
+        <details id="success-caveats" hidden>
+          <summary>Some attachments couldn’t be downloaded</summary>
+          <ul id="success-caveats-list"></ul>
+        </details>
+      </section>
+
+      <section data-panel="error" aria-live="polite">
+        <p id="error-message" class="state-error">Export failed</p>
+        <details open>
+          <summary>Details</summary>
+          <ul id="error-details"></ul>
+        </details>
+      </section>
+    </main>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

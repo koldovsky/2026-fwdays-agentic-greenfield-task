@@ -1,0 +1,22 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  Ticket2MD — Chrome extension (Manifest V3) exporting the open Jira
+  ticket to Markdown + media, 100% local (no backend, no analytics).
+  Azure DevOps and other trackers are out of scope for the MVP.
+  See AGENTS.md for architecture invariants, privacy invariants, and conventions.
+  Source of truth for existing requirements: docs/requirements.md (FR-xx / NFR-xx).
+  New specs/changes here must not silently contradict an `accepted` requirement
+  in docs/requirements.md — surface conflicts instead.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
